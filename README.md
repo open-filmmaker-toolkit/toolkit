@@ -45,4 +45,4 @@ See [GOVERNANCE.md](GOVERNANCE.md) for how decisions get made.
 
 ## Contributing
 
-Contribution guidelines arrive with the public launch. Filmmakers who don't code will be able to contribute templates, corrections and tool requests without touching git.
+You don't need to code to help. Request a tool, submit a template or report a problem from the [new issue page](https://github.com/open-filmmaker-toolkit/toolkit/issues/new/choose). Code contributions are signed off under the Developer Certificate of Origin. See [CONTRIBUTING.md](CONTRIBUTING.md) for both, and our [code of conduct](CODE_OF_CONDUCT.md).

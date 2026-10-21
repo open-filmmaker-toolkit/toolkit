@@ -1,0 +1,38 @@
+name: Report a problem
+description: Something in a tool or template is broken, wrong or confusing.
+title: "Problem: "
+labels: ["problem"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Please don't attach your project file.** It may hold private details about the people in your film. If we need one, we'll ask for a version with those details removed.
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where is the problem?
+      options:
+        - Clearance log
+        - Music cue sheet
+        - A template or form
+        - The tool directory (TOOLS.md)
+        - Something else
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and computer
+      placeholder: Safari on a Mac
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: Drag screenshots here if they help. Crop out anything private.

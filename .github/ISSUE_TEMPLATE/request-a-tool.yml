@@ -1,0 +1,51 @@
+name: Request a tool
+description: Suggest a tool or template that would help documentary or independent filmmakers.
+title: "Tool request: "
+labels: ["tool request"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        You don't need to know how to code to fill this in. Describe the job you're trying to get done, and we'll work out what to build.
+  - type: dropdown
+    id: phase
+    attributes:
+      label: Which part of making a film is this for?
+      options:
+        - Development
+        - Funding
+        - Pre-production
+        - Production
+        - Post-production
+        - Legal and clearances
+        - Marketing and festivals
+        - Release and distribution
+        - Impact and outreach
+        - Close-out and archive
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: job
+    attributes:
+      label: What do you need to do?
+      description: Describe the job, not the tool. For example, "Keep track of which festivals I've submitted to, what each one cost, and when I'll hear back."
+    validations:
+      required: true
+  - type: textarea
+    id: now
+    attributes:
+      label: How do you do it now?
+      description: A spreadsheet, a paid app, a paper form? What's frustrating about it?
+  - type: textarea
+    id: who
+    attributes:
+      label: Who else would use it?
+      description: Producers, coordinators, editors, impact producers? Documentary, narrative, or both?
+  - type: checkboxes
+    id: checked
+    attributes:
+      label: Before you send
+      options:
+        - label: I checked [TOOLS.md](https://github.com/open-filmmaker-toolkit/toolkit/blob/main/TOOLS.md) and this isn't already listed.
+          required: false
