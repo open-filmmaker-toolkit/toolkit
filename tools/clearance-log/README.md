@@ -8,7 +8,7 @@ This is the first tool in the Open Filmmaker Toolkit and the first slice of the 
 
 Open `index.html` in a browser. It's one self-contained file with no installs, no accounts and no network requests, so it also works offline.
 
-To try it with data, click **Open file** and choose `sample-project.oft.json` from this folder.
+To try it with data, click **Open file** and choose [`samples/the-river-keeps.oft.json`](../../samples/the-river-keeps.oft.json) from the top of the repo. The same file opens in the [music cue sheet](../music-cue-sheet/).
 
 ## What it does
 
@@ -56,7 +56,7 @@ The file is plain JSON:
 }
 ```
 
-The clearance log only changes `project` and `thirdPartyElements`. Anything else in the file, such as data from other toolkit tools, is kept as it is when you save.
+The clearance log only changes `project` and `thirdPartyElements`. Anything else in the file, such as the cue sheet credits the music cue sheet keeps on each Music element, is kept as it is when you save.
 
 Status values are `not-started`, `requested`, `negotiating`, `licensed`, `fair-use`, `public-domain` and `replace`.
 
