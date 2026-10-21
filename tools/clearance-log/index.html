@@ -1,0 +1,1162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clearance log · Open Filmmaker Toolkit</title>
+<meta name="description" content="Track every third-party element in your film until it's cleared. Runs in your browser; your data stays on your computer.">
+<style>
+:root {
+  --paper: #f1f3f2;
+  --sheet: #ffffff;
+  --ink: #1a2130;
+  --ink-2: #4b556a;
+  --ink-3: #6d778a;
+  --rule: #d4dad8;
+  --rule-soft: #e6eae8;
+  --hover: #f6f8f7;
+  --focus: #2f6fdb;
+  --film: #2a2520;
+  --sprocket: #f1f3f2;
+  --g-none: #7f8899;
+  --g-progress: #b97d0c;
+  --g-clear: #2b7a57;
+  --g-cut: #b3392d;
+  --g-none-bg: #eceef2;
+  --g-progress-bg: #fbf0d9;
+  --g-clear-bg: #dff1e8;
+  --g-cut-bg: #f8e1de;
+  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #141922;
+    --sheet: #1b212b;
+    --ink: #e6e9ee;
+    --ink-2: #a6afbd;
+    --ink-3: #8790a0;
+    --rule: #2f3744;
+    --rule-soft: #262d38;
+    --hover: #212834;
+    --focus: #7aa7ff;
+    --film: #0d0b09;
+    --sprocket: #141922;
+    --g-none: #8f98a8;
+    --g-progress: #e2a531;
+    --g-clear: #4fb386;
+    --g-cut: #e26657;
+    --g-none-bg: #2a303b;
+    --g-progress-bg: #3a2f17;
+    --g-clear-bg: #1a3329;
+    --g-cut-bg: #3b2220;
+  }
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 15px/1.5 var(--sans);
+}
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.num { font-variant-numeric: tabular-nums; }
+[hidden] { display: none !important; }
+
+.page { max-width: 1240px; margin: 0 auto; padding: 0 24px 48px; }
+
+/* Masthead */
+.masthead {
+  display: flex; flex-wrap: wrap; gap: 16px 32px;
+  align-items: flex-end; justify-content: space-between;
+  padding: 28px 0 20px;
+}
+.tool-name { margin: 0 0 2px; font-size: 14px; font-weight: 600; color: var(--ink-2); }
+.film-title {
+  margin: 0; font: 600 32px/1.15 var(--serif); letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+}
+.film-title.is-empty { color: var(--ink-3); font-style: italic; font-weight: 400; }
+.film-meta { margin: 4px 0 0; color: var(--ink-2); font-size: 14px; }
+.film-meta button { margin-left: 4px; }
+.file { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.file-state { margin: 0; font-size: 13px; color: var(--ink-2); text-align: right; }
+.file-state .dirty { color: var(--g-progress); font-weight: 600; }
+.file-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 13px; border: 1px solid var(--rule); border-radius: 6px;
+  background: var(--sheet); font-size: 14px; font-weight: 500; cursor: pointer;
+  white-space: nowrap;
+}
+.btn:hover { border-color: var(--ink-3); }
+.btn.primary { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.btn.primary:hover { opacity: 0.88; }
+.btn.danger { color: var(--g-cut); }
+.link-btn {
+  padding: 0; border: 0; background: none; cursor: pointer;
+  color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; font-size: 14px;
+}
+.link-btn:hover { color: var(--ink); }
+
+/* Recovery banner */
+.banner {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px;
+  margin: 0 0 16px; padding: 12px 16px; border-radius: 8px;
+  background: var(--g-progress-bg); border: 1px solid color-mix(in srgb, var(--g-progress) 40%, transparent);
+}
+.banner p { margin: 0; flex: 1 1 280px; }
+.banner .actions { display: flex; gap: 8px; }
+
+/* Overview: the filmstrip */
+.overview { margin: 0 0 24px; }
+.strip {
+  position: relative;
+  display: flex; flex-wrap: wrap; gap: 4px;
+  min-height: 52px; padding: 13px 10px;
+  background: var(--film); border-radius: 4px;
+}
+.strip::before, .strip::after {
+  content: ""; position: absolute; left: 6px; right: 6px; height: 5px;
+  background: repeating-linear-gradient(90deg, var(--sprocket) 0 7px, transparent 7px 14px);
+  opacity: 0.55; border-radius: 1px;
+}
+.strip::before { top: 4px; }
+.strip::after { bottom: 4px; }
+.frame {
+  width: 18px; height: 26px; padding: 0; border: 0; border-radius: 2px; cursor: pointer;
+  background: var(--g-none);
+}
+.frame.g-progress { background: var(--g-progress); }
+.frame.g-clear { background: var(--g-clear); }
+.frame.g-cut { background: var(--g-cut); }
+.frame:hover { transform: translateY(-1px); filter: brightness(1.15); }
+.frame:focus-visible { outline-color: #ffffff; }
+.strip-empty { margin: 0; align-self: center; color: #c9c2b8; font-size: 14px; padding-left: 4px; }
+
+.tally {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 28px;
+  margin-top: 14px;
+}
+.headline { margin: 0; font: 600 22px/1.2 var(--serif); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0; padding: 0; list-style: none; font-size: 14px; color: var(--ink-2); }
+.legend li { display: inline-flex; align-items: center; gap: 6px; }
+.legend b { color: var(--ink); font-weight: 600; }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--g-none); display: inline-block; flex: none; }
+.dot.g-progress { background: var(--g-progress); }
+.dot.g-clear { background: var(--g-clear); }
+.dot.g-cut { background: var(--g-cut); }
+.totals { display: flex; gap: 24px; margin: 0 0 0 auto; font-size: 14px; }
+.totals div { display: flex; gap: 6px; }
+.totals dt { color: var(--ink-2); }
+.totals dd { margin: 0; font-weight: 600; }
+
+/* Toolbar */
+.toolbar {
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  margin: 0 0 12px;
+}
+.toolbar input[type="search"] {
+  flex: 1 1 260px; min-width: 0;
+  padding: 7px 11px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet);
+}
+.toolbar select { padding: 7px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); }
+.toolbar .spacer { flex: 1 1 0; }
+
+/* Table */
+.table-wrap {
+  overflow-x: auto; background: var(--sheet);
+  border: 1px solid var(--rule); border-radius: 8px;
+}
+table { width: 100%; border-collapse: collapse; min-width: 860px; }
+th, td { padding: 10px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--rule-soft); }
+thead th {
+  position: sticky; top: 0; background: var(--sheet);
+  border-bottom: 1px solid var(--rule); font-size: 13px; font-weight: 600; color: var(--ink-2);
+}
+thead th button {
+  padding: 0; border: 0; background: none; cursor: pointer;
+  font: inherit; color: inherit; display: inline-flex; align-items: center; gap: 4px;
+}
+thead th button::after { content: "\2191"; visibility: hidden; }
+thead th[aria-sort="ascending"] button::after { content: "\2191"; visibility: visible; }
+thead th[aria-sort="descending"] button::after { content: "\2193"; visibility: visible; }
+th.right, td.right { text-align: right; }
+th.right button { flex-direction: row-reverse; }
+.table-wrap tbody tr { cursor: pointer; }
+.table-wrap tbody tr:hover { background: var(--hover); }
+.table-wrap tbody tr:last-child td { border-bottom: 0; }
+.table-wrap td:first-child { min-width: 190px; }
+.el-name {
+  padding: 0; border: 0; background: none; cursor: pointer; text-align: left;
+  font-weight: 600; color: var(--ink);
+}
+.el-name:hover { text-decoration: underline; text-underline-offset: 2px; }
+.sub { display: block; color: var(--ink-3); font-size: 13px; margin-top: 2px; }
+td.tc { white-space: nowrap; }
+.pill {
+  display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+  padding: 2px 9px 2px 7px; border-radius: 999px; font-size: 13px; font-weight: 500;
+  background: var(--g-none-bg);
+}
+.pill.g-progress { background: var(--g-progress-bg); }
+.pill.g-clear { background: var(--g-clear-bg); }
+.pill.g-cut { background: var(--g-cut-bg); }
+.no-match { padding: 28px 12px; text-align: center; color: var(--ink-2); }
+
+.empty {
+  padding: 40px 24px; text-align: center; background: var(--sheet);
+  border: 1px dashed var(--rule); border-radius: 8px;
+}
+.empty h2 { margin: 0 0 6px; font: 600 20px/1.3 var(--serif); }
+.empty p { margin: 0 auto 16px; max-width: 52ch; color: var(--ink-2); }
+.empty .actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+
+.foot { margin-top: 28px; font-size: 13px; color: var(--ink-3); }
+
+/* Dialogs */
+dialog {
+  border: 0; padding: 0; color: var(--ink); background: var(--sheet);
+  box-shadow: 0 10px 40px rgba(10, 14, 22, 0.25);
+}
+dialog::backdrop { background: rgba(16, 20, 28, 0.42); }
+dialog.drawer {
+  margin: 0 0 0 auto; width: min(540px, 100vw); height: 100dvh; max-height: 100dvh;
+  max-width: 100vw; border-left: 1px solid var(--rule);
+}
+dialog.drawer[open] { animation: slide-in 160ms ease-out; }
+@keyframes slide-in { from { transform: translateX(24px); opacity: 0.4; } to { transform: none; opacity: 1; } }
+dialog.modal { width: min(460px, calc(100vw - 32px)); border-radius: 10px; }
+@media (prefers-reduced-motion: reduce) {
+  dialog.drawer[open] { animation: none; }
+  .frame:hover { transform: none; }
+}
+dialog form { display: flex; flex-direction: column; height: 100%; }
+.dlg-head { padding: 20px 24px 12px; border-bottom: 1px solid var(--rule-soft); }
+.dlg-head h2 { margin: 0; font: 600 22px/1.25 var(--serif); }
+.dlg-body { flex: 1; overflow-y: auto; padding: 16px 24px 24px; display: grid; gap: 14px; }
+.dlg-foot {
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  padding: 14px 24px; border-top: 1px solid var(--rule-soft);
+}
+.dlg-foot .spacer { flex: 1; }
+.field { display: grid; gap: 4px; }
+.field label { font-size: 14px; font-weight: 600; }
+.hint { margin: 0; font-size: 13px; color: var(--ink-3); }
+.tc-hint { margin-top: -6px; }
+.field input, .field select, .field textarea {
+  width: 100%; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper);
+}
+.field textarea { min-height: 76px; resize: vertical; }
+.field input:invalid:not(:placeholder-shown) { border-color: var(--g-cut); }
+.row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.req { color: var(--g-cut); font-weight: 400; }
+
+/* Toast */
+.toast {
+  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
+  max-width: calc(100vw - 32px); padding: 10px 16px; border-radius: 8px;
+  background: var(--ink); color: var(--paper); font-size: 14px;
+  box-shadow: 0 6px 24px rgba(10, 14, 22, 0.25); z-index: 10;
+}
+.toast.error { background: var(--g-cut); color: #ffffff; }
+
+/* Report (print only) */
+.report { display: none; }
+
+@media (max-width: 720px) {
+  .page { padding: 0 16px 40px; }
+  .masthead { padding-top: 20px; }
+  .film-title { font-size: 26px; }
+  .file { align-items: flex-start; }
+  .file-state { text-align: left; }
+  .totals { margin-left: 0; }
+  .row-2 { grid-template-columns: 1fr; }
+  .toolbar .spacer { display: none; }
+  .toolbar input[type="search"] { flex-basis: 100%; }
+  .toolbar select { flex: 1 1 140px; }
+  .toolbar #addBtn { order: -1; flex-basis: 100%; justify-content: center; }
+}
+
+@media print {
+  @page { size: landscape; margin: 12mm; }
+  :root { color-scheme: light; }
+  body { background: #ffffff; color: #000000; font-size: 9.5pt; }
+  .page, dialog, .toast { display: none !important; }
+  .report { display: block; }
+  .report h1 { margin: 0; font: 600 20pt/1.2 var(--serif); }
+  .report .meta { margin: 2pt 0 10pt; color: #333333; }
+  .report .meta p { margin: 0; }
+  .report table { min-width: 0; width: 100%; border-collapse: collapse; }
+  .report th, .report td { padding: 4pt 5pt; border: 0.5pt solid #999999; vertical-align: top; }
+  .report thead th { position: static; background: #eeeeee; color: #000000; font-size: 8.5pt; }
+  .report tr { page-break-inside: avoid; }
+  .report .summary { width: auto; margin: 0 0 10pt; }
+  .report .summary td, .report .summary th { border: 0; padding: 1pt 12pt 1pt 0; }
+  .report .small { font-size: 8pt; color: #333333; }
+  .report .disclaimer { margin-top: 10pt; font-size: 8pt; color: #333333; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="masthead">
+    <div>
+      <p class="tool-name">Clearance log</p>
+      <h1 class="film-title" id="filmTitle">Untitled film</h1>
+      <p class="film-meta"><span id="filmMeta"></span> <button type="button" class="link-btn" id="editProjectBtn">Edit film details</button></p>
+    </div>
+    <div class="file">
+      <p class="file-state" id="fileState">Not saved to a file yet</p>
+      <div class="file-actions">
+        <button type="button" class="btn" id="newBtn">New log</button>
+        <button type="button" class="btn" id="openBtn">Open file</button>
+        <button type="button" class="btn primary" id="saveBtn">Save file</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="banner" id="recovery" role="region" aria-label="Unsaved work" hidden>
+    <p id="recoveryText"></p>
+    <div class="actions">
+      <button type="button" class="btn primary" id="restoreBtn">Restore it</button>
+      <button type="button" class="btn" id="discardBtn">Discard it</button>
+    </div>
+  </div>
+
+  <main>
+    <section class="overview" aria-labelledby="headline">
+      <div class="strip" id="strip"></div>
+      <div class="tally">
+        <p class="headline" id="headline"></p>
+        <ul class="legend" id="legend"></ul>
+        <dl class="totals">
+          <div><dt>Licensing cost</dt><dd class="num" id="costTotal"></dd></div>
+          <div><dt>Timed footage</dt><dd class="num" id="durTotal"></dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <section aria-label="Elements">
+      <div class="toolbar" id="toolbar">
+        <input type="search" id="search" placeholder="Search elements, sources, rights holders, notes" aria-label="Search elements">
+        <select id="statusFilter" aria-label="Filter by status"></select>
+        <select id="typeFilter" aria-label="Filter by type"></select>
+        <span class="spacer"></span>
+        <button type="button" class="btn" id="csvBtn" title="Exports every element, whatever the filters">Export CSV</button>
+        <button type="button" class="btn" id="printBtn" title="Prints the elements currently shown">Print report</button>
+        <button type="button" class="btn primary" id="addBtn">Add element</button>
+      </div>
+
+      <div class="table-wrap" id="tableWrap">
+        <table>
+          <thead>
+            <tr>
+              <th data-key="description" aria-sort="none"><button type="button">Element</button></th>
+              <th data-key="type" aria-sort="none"><button type="button">Type</button></th>
+              <th data-key="rightsHolder" aria-sort="none"><button type="button">Rights holder</button></th>
+              <th data-key="tcIn" aria-sort="none"><button type="button">Timecode</button></th>
+              <th data-key="duration" aria-sort="none" class="right"><button type="button">Length</button></th>
+              <th data-key="status" aria-sort="none"><button type="button">Status</button></th>
+              <th data-key="cost" aria-sort="none" class="right"><button type="button">Cost</button></th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+
+      <div class="empty" id="empty" hidden>
+        <h2>Nothing logged yet</h2>
+        <p>Add each piece of archival footage, music, artwork or other third-party material as it goes into your cut, and track it until it's cleared.</p>
+        <div class="actions">
+          <button type="button" class="btn primary" id="emptyAddBtn">Add the first element</button>
+          <button type="button" class="btn" id="emptyOpenBtn">Open a project file</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <p>Part of the Open Filmmaker Toolkit. This page makes no network requests: everything you log stays on this computer until you save or export it. Not legal advice.</p>
+  </footer>
+</div>
+
+<section class="report" id="report" aria-hidden="true"></section>
+
+<dialog class="drawer" id="editor" aria-labelledby="editorTitle">
+  <form id="editorForm" method="dialog" novalidate>
+    <div class="dlg-head"><h2 id="editorTitle">Add element</h2></div>
+    <div class="dlg-body">
+      <div class="field">
+        <label for="f-description">What is it? <span class="req">(required)</span></label>
+        <input id="f-description" name="description" required placeholder="Protest march, Main Street, 1968">
+      </div>
+      <div class="row-2">
+        <div class="field">
+          <label for="f-type">Type</label>
+          <select id="f-type" name="type"></select>
+        </div>
+        <div class="field">
+          <label for="f-status">Status</label>
+          <select id="f-status" name="status"></select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="f-source">Source</label>
+        <input id="f-source" name="source" placeholder="Archive, collection and clip ID">
+      </div>
+      <div class="row-2">
+        <div class="field">
+          <label for="f-rightsHolder">Rights holder</label>
+          <input id="f-rightsHolder" name="rightsHolder">
+        </div>
+        <div class="field">
+          <label for="f-contact">Contact</label>
+          <input id="f-contact" name="contact" placeholder="Name, email or phone">
+        </div>
+      </div>
+      <div class="row-2">
+        <div class="field">
+          <label for="f-tcIn">Timecode in</label>
+          <input id="f-tcIn" name="tcIn" class="num" placeholder="01:02:03:04" inputmode="numeric" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="f-tcOut">Timecode out</label>
+          <input id="f-tcOut" name="tcOut" class="num" placeholder="01:02:15:00" inputmode="numeric" autocomplete="off">
+        </div>
+      </div>
+      <p class="hint tc-hint">Where it sits in your current cut, as hours:minutes:seconds:frames.</p>
+      <div class="field">
+        <label for="f-use">How it's used</label>
+        <input id="f-use" name="use" placeholder="Full screen, with narration over">
+      </div>
+      <div class="field">
+        <label for="f-rights">Rights needed</label>
+        <input id="f-rights" name="rights" placeholder="Worldwide, all media, in perpetuity">
+      </div>
+      <div class="row-2">
+        <div class="field">
+          <label for="f-cost">Cost</label>
+          <input id="f-cost" name="cost" type="number" min="0" step="0.01" class="num" placeholder="0">
+        </div>
+        <div class="field">
+          <label for="f-licenseRef">License or memo on file</label>
+          <input id="f-licenseRef" name="licenseRef" placeholder="File name or reference">
+        </div>
+      </div>
+      <div class="field">
+        <label for="f-notes">Notes</label>
+        <textarea id="f-notes" name="notes"></textarea>
+      </div>
+    </div>
+    <div class="dlg-foot">
+      <button type="submit" class="btn primary" id="editorSubmit" value="save">Add to log</button>
+      <button type="button" class="btn" id="editorCancel">Cancel</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="duplicateBtn">Duplicate</button>
+      <button type="button" class="btn danger" id="deleteBtn">Delete</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="projectDialog" aria-labelledby="projectDialogTitle">
+  <form id="projectForm" method="dialog">
+    <div class="dlg-head"><h2 id="projectDialogTitle">Film details</h2></div>
+    <div class="dlg-body">
+      <div class="field">
+        <label for="p-title">Film title</label>
+        <input id="p-title" name="title" placeholder="Working title is fine">
+      </div>
+      <div class="field">
+        <label for="p-company">Production company</label>
+        <input id="p-company" name="company">
+      </div>
+      <div class="row-2">
+        <div class="field">
+          <label for="p-frameRate">Frame rate</label>
+          <select id="p-frameRate" name="frameRate"></select>
+        </div>
+        <div class="field">
+          <label for="p-currency">Currency</label>
+          <input id="p-currency" name="currency" maxlength="3" pattern="[A-Za-z]{3}" placeholder="USD" autocomplete="off">
+        </div>
+      </div>
+      <p class="hint">Frame rate is used to work out how long each element runs. Currency is a three-letter code like USD, EUR or GBP.</p>
+    </div>
+    <div class="dlg-foot">
+      <button type="submit" class="btn primary" value="save">Save details</button>
+      <button type="button" class="btn" id="projectCancel">Cancel</button>
+    </div>
+  </form>
+</dialog>
+
+<input type="file" id="fileInput" accept=".json,application/json" hidden>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+(() => {
+  'use strict';
+
+  const FORMAT = 'open-filmmaker-toolkit/project';
+  const FORMAT_VERSION = 1;
+  const TOOL = 'clearance-log 0.1.0';
+  const DRAFT_KEY = 'oft.clearance-log.draft';
+
+  const STATUSES = [
+    { id: 'not-started', label: 'Not started', group: 'none' },
+    { id: 'requested', label: 'Requested', group: 'progress' },
+    { id: 'negotiating', label: 'Negotiating', group: 'progress' },
+    { id: 'licensed', label: 'Licensed', group: 'clear' },
+    { id: 'fair-use', label: 'Fair use', group: 'clear' },
+    { id: 'public-domain', label: 'Public domain', group: 'clear' },
+    { id: 'replace', label: 'Replace or cut', group: 'cut' },
+  ];
+  const GROUPS = [
+    { id: 'clear', label: 'Cleared' },
+    { id: 'progress', label: 'In progress' },
+    { id: 'none', label: 'Not started' },
+    { id: 'cut', label: 'Replace or cut' },
+  ];
+  const TYPES = ['Archival footage', 'Archival still', 'Music', 'Artwork', 'Logo or trademark', 'Recognizable person', 'Text or quote', 'Other'];
+  const RATES = [23.976, 24, 25, 29.97, 30, 48, 50, 59.94, 60];
+
+  const statusById = Object.fromEntries(STATUSES.map(s => [s.id, s]));
+  const statusIndex = Object.fromEntries(STATUSES.map((s, i) => [s.id, i]));
+  const $ = id => document.getElementById(id);
+
+  // ---------- State ----------
+  let doc = blankDoc();
+  let fileHandle = null;
+  let fileName = null;
+  let dirty = false;
+  let sort = { key: null, dir: 1 };
+  let editingId = null;
+
+  function blankDoc() {
+    return {
+      format: FORMAT,
+      formatVersion: FORMAT_VERSION,
+      project: { title: '', company: '', frameRate: 24, currency: 'USD' },
+      thirdPartyElements: [],
+    };
+  }
+  const els = () => doc.thirdPartyElements;
+  const rate = () => Number(doc.project.frameRate) || 24;
+
+  function normalize(d) {
+    if (!d.project || typeof d.project !== 'object') d.project = {};
+    const p = d.project;
+    if (typeof p.title !== 'string') p.title = '';
+    if (typeof p.company !== 'string') p.company = '';
+    if (!Number(p.frameRate)) p.frameRate = 24;
+    if (typeof p.currency !== 'string' || !/^[A-Za-z]{3}$/.test(p.currency)) p.currency = 'USD';
+    if (!Array.isArray(d.thirdPartyElements)) d.thirdPartyElements = [];
+    d.thirdPartyElements = d.thirdPartyElements.filter(e => e && typeof e === 'object');
+    for (const e of d.thirdPartyElements) {
+      if (!e.id) e.id = newId();
+      if (!statusById[e.status]) e.status = 'not-started';
+      for (const k of ['description', 'type', 'source', 'rightsHolder', 'contact', 'tcIn', 'tcOut', 'use', 'rights', 'licenseRef', 'notes']) {
+        if (e[k] == null) e[k] = '';
+        else e[k] = String(e[k]);
+      }
+      e.cost = (e.cost === '' || e.cost == null || !isFinite(Number(e.cost))) ? null : Number(e.cost);
+    }
+    d.format = FORMAT;
+    d.formatVersion = FORMAT_VERSION;
+    return d;
+  }
+
+  function newId() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return 'el-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  }
+
+  // ---------- Formatting ----------
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const pad = n => String(n).padStart(2, '0');
+
+  function tcToFrames(tc) {
+    if (!tc || !String(tc).trim()) return null;
+    const m = String(tc).trim().match(/^(\d{1,2}):(\d{2}):(\d{2})(?:[:;.](\d{2}))?$/);
+    if (!m) return NaN;
+    const nominal = Math.round(rate());
+    const h = +m[1], mi = +m[2], s = +m[3], f = m[4] ? +m[4] : 0;
+    if (mi > 59 || s > 59 || f >= nominal) return NaN;
+    return (h * 3600 + mi * 60 + s) * nominal + f;
+  }
+  function durationOf(e) {
+    const a = tcToFrames(e.tcIn), b = tcToFrames(e.tcOut);
+    if (a == null || b == null || Number.isNaN(a) || Number.isNaN(b) || b <= a) return null;
+    return (b - a) / rate();
+  }
+  function fmtDur(sec) {
+    if (sec == null) return '';
+    const t = Math.round(sec);
+    const h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), s = t % 60;
+    return h ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`;
+  }
+  function money(n) {
+    if (n == null) return '';
+    try {
+      return new Intl.NumberFormat(undefined, { style: 'currency', currency: doc.project.currency.toUpperCase() }).format(n);
+    } catch {
+      return `${n.toFixed(2)} ${doc.project.currency.toUpperCase()}`;
+    }
+  }
+  const groupOf = e => (statusById[e.status] || STATUSES[0]).group;
+  const statusLabel = e => (statusById[e.status] || STATUSES[0]).label;
+
+  // ---------- Filtering & sorting ----------
+  function filtered() {
+    const q = $('search').value.trim().toLowerCase();
+    const sf = $('statusFilter').value;
+    const tf = $('typeFilter').value;
+    return sorted(els()).filter(e => {
+      if (sf === 'open' && !['none', 'progress'].includes(groupOf(e))) return false;
+      if (sf.startsWith('group:') && groupOf(e) !== sf.slice(6)) return false;
+      if (sf.startsWith('status:') && e.status !== sf.slice(7)) return false;
+      if (tf !== 'all' && e.type !== tf) return false;
+      if (q) {
+        const hay = [e.description, e.type, e.source, e.rightsHolder, e.contact, e.use, e.rights, e.licenseRef, e.notes].join(' ').toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+  }
+  function sortValue(e, key) {
+    switch (key) {
+      case 'status': return statusIndex[e.status] ?? 0;
+      case 'cost': return e.cost ?? -1;
+      case 'duration': return durationOf(e) ?? -1;
+      case 'tcIn': { const f = tcToFrames(e.tcIn); return (f == null || Number.isNaN(f)) ? Infinity : f; }
+      default: return (e[key] || '').toLowerCase();
+    }
+  }
+  function sorted(list) {
+    if (!sort.key) return list.slice();
+    return list.slice().sort((a, b) => {
+      const va = sortValue(a, sort.key), vb = sortValue(b, sort.key);
+      if (va < vb) return -sort.dir;
+      if (va > vb) return sort.dir;
+      return 0;
+    });
+  }
+  function filterDescription() {
+    const parts = [];
+    const sf = $('statusFilter'), tf = $('typeFilter');
+    if (sf.value !== 'all') parts.push(sf.options[sf.selectedIndex].text);
+    if (tf.value !== 'all') parts.push(tf.value);
+    if ($('search').value.trim()) parts.push(`matching "${$('search').value.trim()}"`);
+    return parts.join(', ');
+  }
+
+  // ---------- Rendering ----------
+  function render() {
+    renderHeader();
+    renderOverview();
+    renderTable();
+  }
+
+  function renderHeader() {
+    const p = doc.project;
+    const title = $('filmTitle');
+    title.textContent = p.title || 'Untitled film';
+    title.classList.toggle('is-empty', !p.title);
+    const meta = [p.company, `${p.frameRate} fps`, p.currency.toUpperCase()].filter(Boolean);
+    $('filmMeta').textContent = meta.join(', ');
+    const name = fileName ? esc(fileName) : '';
+    $('fileState').innerHTML = dirty
+      ? `<span class="dirty">Unsaved changes</span>${name ? ` to ${name}` : '. Not saved to a file yet.'}`
+      : (name ? `Saved to ${name}` : 'Not saved to a file yet');
+    document.title = `${p.title ? p.title + ' · ' : ''}Clearance log`;
+  }
+
+  function renderOverview() {
+    const list = sorted(els());
+    const strip = $('strip');
+    if (!list.length) {
+      strip.innerHTML = '<p class="strip-empty">Each element you log appears here as a frame, colored by status.</p>';
+    } else {
+      strip.innerHTML = list.map(e =>
+        `<button type="button" class="frame g-${groupOf(e)}" data-id="${esc(e.id)}" title="${esc(e.description || 'Untitled element')}: ${esc(statusLabel(e))}" aria-label="${esc(e.description || 'Untitled element')}, ${esc(statusLabel(e))}"></button>`
+      ).join('');
+    }
+    const counts = { clear: 0, progress: 0, none: 0, cut: 0 };
+    for (const e of els()) counts[groupOf(e)]++;
+    const total = els().length;
+    $('headline').textContent = total ? `${counts.clear} of ${total} cleared` : 'No elements yet';
+    $('legend').innerHTML = GROUPS.map(g => `<li><span class="dot g-${g.id}"></span>${g.label} <b class="num">${counts[g.id]}</b></li>`).join('');
+    const cost = els().reduce((sum, e) => sum + (e.cost || 0), 0);
+    const dur = els().reduce((sum, e) => sum + (durationOf(e) || 0), 0);
+    $('costTotal').textContent = money(cost);
+    $('durTotal').textContent = fmtDur(dur) || '0:00';
+  }
+
+  function renderTable() {
+    const all = els();
+    $('empty').hidden = all.length > 0;
+    $('tableWrap').hidden = all.length === 0;
+    $('toolbar').hidden = all.length === 0;
+    document.querySelectorAll('thead th').forEach(th => {
+      th.setAttribute('aria-sort', th.dataset.key === sort.key ? (sort.dir === 1 ? 'ascending' : 'descending') : 'none');
+    });
+    const list = filtered();
+    const rows = $('rows');
+    if (!list.length) {
+      rows.innerHTML = `<tr><td colspan="7" class="no-match">No elements match these filters. <button type="button" class="link-btn" id="clearFilters">Clear filters</button></td></tr>`;
+      return;
+    }
+    rows.innerHTML = list.map(e => {
+      const fi = tcToFrames(e.tcIn), fo = tcToFrames(e.tcOut);
+      const tc = (e.tcIn || e.tcOut) ? `${esc(e.tcIn || '?')}&ndash;${esc(e.tcOut || '?')}` : '';
+      const bad = Number.isNaN(fi) || Number.isNaN(fo);
+      return `<tr data-id="${esc(e.id)}">
+        <td><button type="button" class="el-name">${esc(e.description || 'Untitled element')}</button>${e.source ? `<span class="sub">${esc(e.source)}</span>` : ''}</td>
+        <td>${esc(e.type)}</td>
+        <td>${esc(e.rightsHolder)}${e.contact ? `<span class="sub">${esc(e.contact)}</span>` : ''}</td>
+        <td class="tc num">${tc}${bad ? '<span class="sub">Check timecode</span>' : ''}</td>
+        <td class="right num">${fmtDur(durationOf(e))}</td>
+        <td><span class="pill g-${groupOf(e)}"><span class="dot g-${groupOf(e)}"></span>${esc(statusLabel(e))}</span></td>
+        <td class="right num">${money(e.cost)}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // ---------- Report (print) ----------
+  function renderReport() {
+    const p = doc.project;
+    const list = filtered();
+    const total = els().length;
+    const counts = Object.fromEntries(STATUSES.map(s => [s.id, 0]));
+    for (const e of list) counts[e.status]++;
+    const cost = list.reduce((s, e) => s + (e.cost || 0), 0);
+    const dur = list.reduce((s, e) => s + (durationOf(e) || 0), 0);
+    const filt = filterDescription();
+    const when = new Date().toLocaleString(undefined, { dateStyle: 'long', timeStyle: 'short' });
+    $('report').innerHTML = `
+      <h1>${esc(p.title || 'Untitled film')}</h1>
+      <div class="meta">
+        ${p.company ? `<p>${esc(p.company)}</p>` : ''}
+        <p>Clearance log, printed ${esc(when)}${fileName ? ` from ${esc(fileName)}` : ''}</p>
+        <p>${filt ? `Showing ${list.length} of ${total} elements: ${esc(filt)}` : `All ${total} elements`}</p>
+      </div>
+      <table class="summary">
+        <tr>${STATUSES.map(s => `<th>${esc(s.label)}</th>`).join('')}<th>Licensing cost</th><th>Timed footage</th></tr>
+        <tr>${STATUSES.map(s => `<td>${counts[s.id]}</td>`).join('')}<td>${esc(money(cost))}</td><td>${fmtDur(dur) || '0:00'}</td></tr>
+      </table>
+      <table>
+        <thead><tr>
+          <th>#</th><th>Element</th><th>Source and rights holder</th><th>Timecode</th>
+          <th>Use and rights needed</th><th>Status</th><th>Cost</th><th>License or memo</th><th>Notes</th>
+        </tr></thead>
+        <tbody>
+          ${list.map((e, i) => `<tr>
+            <td>${i + 1}</td>
+            <td><strong>${esc(e.description || 'Untitled element')}</strong><br><span class="small">${esc(e.type)}</span></td>
+            <td>${esc(e.source)}${e.source && e.rightsHolder ? '<br>' : ''}${esc(e.rightsHolder)}${e.contact ? `<br><span class="small">${esc(e.contact)}</span>` : ''}</td>
+            <td>${(e.tcIn || e.tcOut) ? `${esc(e.tcIn)}&ndash;${esc(e.tcOut)}` : ''}${durationOf(e) != null ? `<br><span class="small">${fmtDur(durationOf(e))}</span>` : ''}</td>
+            <td>${esc(e.use)}${e.use && e.rights ? '<br>' : ''}${e.rights ? `<span class="small">${esc(e.rights)}</span>` : ''}</td>
+            <td>${esc(statusLabel(e))}</td>
+            <td>${esc(money(e.cost))}</td>
+            <td>${esc(e.licenseRef)}</td>
+            <td>${esc(e.notes)}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+      <p class="disclaimer">Prepared with the Open Filmmaker Toolkit clearance log. Lengths are worked out from timecode at ${esc(p.frameRate)} fps. This log is a working record, not legal advice.</p>`;
+  }
+
+  // ---------- Editing ----------
+  function fillSelect(sel, options) {
+    sel.innerHTML = options.map(o => `<option value="${esc(o.value)}">${esc(o.label)}</option>`).join('');
+  }
+
+  function openEditor(id) {
+    const form = $('editorForm');
+    form.reset();
+    const e = id ? els().find(x => x.id === id) : null;
+    editingId = e ? e.id : null;
+    $('editorTitle').textContent = e ? 'Edit element' : 'Add element';
+    $('editorSubmit').textContent = e ? 'Update element' : 'Add to log';
+    $('duplicateBtn').hidden = !e;
+    $('deleteBtn').hidden = !e;
+    const src = e || { type: TYPES[0], status: 'not-started' };
+    for (const k of ['description', 'type', 'status', 'source', 'rightsHolder', 'contact', 'tcIn', 'tcOut', 'use', 'rights', 'licenseRef', 'notes']) {
+      form.elements[k].value = src[k] ?? '';
+    }
+    if (e && e.type && !TYPES.includes(e.type)) {
+      const opt = document.createElement('option');
+      opt.value = opt.textContent = e.type;
+      form.elements.type.appendChild(opt);
+      form.elements.type.value = e.type;
+    }
+    form.elements.cost.value = src.cost ?? '';
+    for (const k of ['tcIn', 'tcOut', 'description']) form.elements[k].setCustomValidity('');
+    $('editor').showModal();
+    form.elements.description.focus();
+  }
+
+  function validateEditor() {
+    const f = $('editorForm').elements;
+    let ok = true;
+    f.description.setCustomValidity(f.description.value.trim() ? '' : 'Describe the element so you can find it later.');
+    for (const k of ['tcIn', 'tcOut']) {
+      const v = tcToFrames(f[k].value);
+      f[k].setCustomValidity(Number.isNaN(v) ? `Use hours:minutes:seconds:frames, like 01:02:03:04 (frames below ${Math.round(rate())}).` : '');
+    }
+    const a = tcToFrames(f.tcIn.value), b = tcToFrames(f.tcOut.value);
+    if (a != null && b != null && !Number.isNaN(a) && !Number.isNaN(b) && b <= a) {
+      f.tcOut.setCustomValidity('Timecode out has to come after timecode in.');
+    }
+    for (const el of [f.description, f.tcIn, f.tcOut, f.cost]) {
+      if (!el.checkValidity()) {
+        if (ok) { el.reportValidity(); el.focus(); }
+        ok = false;
+      }
+    }
+    return ok;
+  }
+
+  function saveEditor() {
+    if (!validateEditor()) return false;
+    const f = $('editorForm').elements;
+    const now = new Date().toISOString();
+    const values = {};
+    for (const k of ['description', 'type', 'status', 'source', 'rightsHolder', 'contact', 'tcIn', 'tcOut', 'use', 'rights', 'licenseRef', 'notes']) {
+      values[k] = f[k].value.trim();
+    }
+    values.cost = f.cost.value === '' ? null : Number(f.cost.value);
+    let label;
+    if (editingId) {
+      const e = els().find(x => x.id === editingId);
+      Object.assign(e, values, { updatedAt: now });
+      label = 'Updated';
+    } else {
+      els().push({ id: newId(), ...values, createdAt: now, updatedAt: now });
+      label = 'Added';
+    }
+    $('editor').close();
+    changed();
+    toast(`${label} "${values.description}"`);
+    return true;
+  }
+
+  function deleteEditing() {
+    const e = els().find(x => x.id === editingId);
+    if (!e) return;
+    if (!confirm(`Delete "${e.description || 'Untitled element'}" from the log? This can't be undone.`)) return;
+    doc.thirdPartyElements = els().filter(x => x.id !== editingId);
+    $('editor').close();
+    changed();
+    toast(`Deleted "${e.description || 'Untitled element'}"`);
+  }
+
+  function duplicateEditing() {
+    const e = els().find(x => x.id === editingId);
+    if (!e) return;
+    const now = new Date().toISOString();
+    const copy = { ...e, id: newId(), description: `${e.description} (copy)`, createdAt: now, updatedAt: now };
+    const i = els().indexOf(e);
+    els().splice(i + 1, 0, copy);
+    $('editor').close();
+    changed();
+    openEditor(copy.id);
+    toast('Duplicated. Change the timecode for the new use.');
+  }
+
+  function openProjectDialog() {
+    const f = $('projectForm').elements;
+    f.title.value = doc.project.title;
+    f.company.value = doc.project.company;
+    f.frameRate.value = String(doc.project.frameRate);
+    if (f.frameRate.value !== String(doc.project.frameRate)) f.frameRate.value = '24';
+    f.currency.value = doc.project.currency.toUpperCase();
+    $('projectDialog').showModal();
+    f.title.focus();
+  }
+
+  function saveProjectDialog() {
+    const f = $('projectForm').elements;
+    const cur = f.currency.value.trim().toUpperCase() || 'USD';
+    if (!/^[A-Z]{3}$/.test(cur)) {
+      f.currency.setCustomValidity('Use a three-letter currency code, like USD.');
+      f.currency.reportValidity();
+      return false;
+    }
+    f.currency.setCustomValidity('');
+    Object.assign(doc.project, {
+      title: f.title.value.trim(),
+      company: f.company.value.trim(),
+      frameRate: Number(f.frameRate.value),
+      currency: cur,
+    });
+    $('projectDialog').close();
+    changed();
+    return true;
+  }
+
+  // ---------- Dirty state & recovery draft ----------
+  function changed() {
+    dirty = true;
+    saveDraft();
+    render();
+  }
+  function saveDraft() {
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({ doc, fileName, at: new Date().toISOString() }));
+    } catch { /* storage unavailable: the file on disk is the real copy */ }
+  }
+  function clearDraft() {
+    try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+    $('recovery').hidden = true;
+  }
+  function checkDraft() {
+    let draft = null;
+    try { draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); } catch { draft = null; }
+    if (!draft || !draft.doc || draft.doc.format !== FORMAT) return;
+    const n = Array.isArray(draft.doc.thirdPartyElements) ? draft.doc.thirdPartyElements.length : 0;
+    if (!n && !(draft.doc.project && draft.doc.project.title)) { clearDraft(); return; }
+    const when = draft.at ? new Date(draft.at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'earlier';
+    const title = draft.doc.project && draft.doc.project.title ? `"${draft.doc.project.title}"` : 'an untitled log';
+    $('recoveryText').textContent = `You have unsaved changes to ${title} from ${when} (${n} element${n === 1 ? '' : 's'}). Restore them, or discard them and start fresh.`;
+    $('recovery').hidden = false;
+    $('restoreBtn').onclick = () => {
+      doc = normalize(draft.doc);
+      fileName = draft.fileName || null;
+      fileHandle = null;
+      dirty = true;
+      $('recovery').hidden = true;
+      render();
+      toast(fileName ? `Restored. Save to write the changes back to ${fileName}.` : 'Restored. Save to keep it as a file.');
+    };
+    $('discardBtn').onclick = () => { clearDraft(); toast('Discarded the unsaved changes.'); };
+  }
+
+  // ---------- Files ----------
+  const pickerTypes = [{ description: 'Film project file', accept: { 'application/json': ['.json'] } }];
+
+  function suggestedName() {
+    const slug = (doc.project.title || 'untitled-film').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'untitled-film';
+    return `${slug}.oft.json`;
+  }
+  function serialize() {
+    doc.savedAt = new Date().toISOString();
+    doc.savedBy = TOOL;
+    return JSON.stringify(doc, null, 2) + '\n';
+  }
+  function download(text, name, type) {
+    const url = URL.createObjectURL(new Blob([text], { type }));
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  function afterSave(name, downloaded) {
+    fileName = name;
+    dirty = false;
+    clearDraft();
+    render();
+    toast(downloaded ? `Downloaded ${name}. Keep it with your project files and open it here next time.` : `Saved to ${name}`);
+  }
+
+  async function saveFile() {
+    const out = serialize();
+    if (fileHandle) {
+      try {
+        const w = await fileHandle.createWritable();
+        await w.write(out); await w.close();
+        afterSave(fileHandle.name);
+        return;
+      } catch (err) {
+        if (err.name === 'AbortError') return;
+        fileHandle = null; // fall through to Save As
+      }
+    }
+    if (window.showSaveFilePicker) {
+      try {
+        const h = await window.showSaveFilePicker({ suggestedName: fileName || suggestedName(), types: pickerTypes });
+        const w = await h.createWritable();
+        await w.write(out); await w.close();
+        fileHandle = h;
+        afterSave(h.name);
+      } catch (err) {
+        if (err.name !== 'AbortError') toast(`Couldn't save the file: ${err.message}`, true);
+      }
+      return;
+    }
+    const name = fileName || suggestedName();
+    download(out, name, 'application/json');
+    afterSave(name, true);
+  }
+
+  function loadText(text, name, handle) {
+    let data;
+    try { data = JSON.parse(text); } catch {
+      toast(`Couldn't open ${name}: it isn't a project file.`, true); return;
+    }
+    if (!data || data.format !== FORMAT) {
+      toast(`Couldn't open ${name}: it isn't an Open Filmmaker Toolkit project file.`, true); return;
+    }
+    if (Number(data.formatVersion) > FORMAT_VERSION) {
+      toast(`Couldn't open ${name}: it was saved by a newer version of the toolkit. Get the latest version of this tool.`, true); return;
+    }
+    doc = normalize(data);
+    fileHandle = handle;
+    fileName = name;
+    dirty = false;
+    clearDraft();
+    resetFilters();
+    render();
+    toast(`Opened ${name}`);
+  }
+
+  async function openFile() {
+    if (dirty && !confirm('You have unsaved changes. Open another file and lose them?')) return;
+    if (window.showOpenFilePicker) {
+      try {
+        const [h] = await window.showOpenFilePicker({ types: pickerTypes });
+        const f = await h.getFile();
+        loadText(await f.text(), f.name, h);
+      } catch (err) {
+        if (err.name !== 'AbortError') toast(`Couldn't open the file: ${err.message}`, true);
+      }
+      return;
+    }
+    $('fileInput').click();
+  }
+
+  function newLog() {
+    if (dirty && !confirm('You have unsaved changes. Start a new log and lose them?')) return;
+    doc = blankDoc();
+    fileHandle = null;
+    fileName = null;
+    dirty = false;
+    clearDraft();
+    resetFilters();
+    render();
+    openProjectDialog();
+  }
+
+  // ---------- CSV ----------
+  function csvCell(v) {
+    let s = v == null ? '' : String(v);
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; // keep spreadsheets from running it as a formula
+    return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }
+  function exportCsv() {
+    const head = ['Element', 'Type', 'Status', 'Source', 'Rights holder', 'Contact', 'Timecode in', 'Timecode out', 'Length (seconds)', "How it's used", 'Rights needed', 'Cost', 'Currency', 'License or memo', 'Notes'];
+    const rows = sorted(els()).map(e => {
+      const d = durationOf(e);
+      return [e.description, e.type, statusLabel(e), e.source, e.rightsHolder, e.contact, e.tcIn, e.tcOut,
+        d == null ? '' : d.toFixed(2), e.use, e.rights, e.cost == null ? '' : e.cost, doc.project.currency.toUpperCase(), e.licenseRef, e.notes];
+    });
+    const csv = '﻿' + [head, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
+    const name = suggestedName().replace(/\.oft\.json$/, '-clearance-log.csv');
+    download(csv, name, 'text/csv;charset=utf-8');
+    toast(`Exported ${els().length} element${els().length === 1 ? '' : 's'} to ${name}`);
+  }
+
+  // ---------- Toast ----------
+  let toastTimer = null;
+  function toast(msg, isError) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.classList.toggle('error', !!isError);
+    t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.hidden = true; }, isError ? 7000 : 3800);
+  }
+
+  function resetFilters() {
+    $('search').value = '';
+    $('statusFilter').value = 'all';
+    $('typeFilter').value = 'all';
+  }
+
+  // ---------- Wiring ----------
+  function init() {
+    fillSelect($('f-type'), TYPES.map(t => ({ value: t, label: t })));
+    fillSelect($('f-status'), STATUSES.map(s => ({ value: s.id, label: s.label })));
+    fillSelect($('p-frameRate'), RATES.map(r => ({ value: String(r), label: `${r} fps` })));
+    $('statusFilter').innerHTML =
+      `<option value="all">All statuses</option>
+       <option value="open">Not cleared yet</option>
+       <option value="group:clear">Cleared</option>
+       <option value="group:cut">Replace or cut</option>
+       <optgroup label="Exact status">${STATUSES.map(s => `<option value="status:${s.id}">${esc(s.label)}</option>`).join('')}</optgroup>`;
+    $('typeFilter').innerHTML = `<option value="all">All types</option>` + TYPES.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
+
+    $('addBtn').onclick = () => openEditor(null);
+    $('emptyAddBtn').onclick = () => openEditor(null);
+    $('emptyOpenBtn').onclick = openFile;
+    $('newBtn').onclick = newLog;
+    $('openBtn').onclick = openFile;
+    $('saveBtn').onclick = saveFile;
+    $('editProjectBtn').onclick = openProjectDialog;
+    $('filmTitle').onclick = openProjectDialog;
+    $('csvBtn').onclick = exportCsv;
+    $('printBtn').onclick = () => { renderReport(); window.print(); };
+    window.addEventListener('beforeprint', renderReport);
+
+    $('fileInput').addEventListener('change', async () => {
+      const f = $('fileInput').files[0];
+      if (f) loadText(await f.text(), f.name, null);
+      $('fileInput').value = '';
+    });
+
+    $('editorForm').addEventListener('submit', ev => { ev.preventDefault(); saveEditor(); });
+    $('editorCancel').onclick = () => $('editor').close();
+    $('deleteBtn').onclick = deleteEditing;
+    $('duplicateBtn').onclick = duplicateEditing;
+    for (const k of ['f-tcIn', 'f-tcOut', 'f-description']) $(k).addEventListener('input', e => e.target.setCustomValidity(''));
+
+    $('projectForm').addEventListener('submit', ev => { ev.preventDefault(); saveProjectDialog(); });
+    $('projectCancel').onclick = () => $('projectDialog').close();
+    $('p-currency').addEventListener('input', e => e.target.setCustomValidity(''));
+
+    for (const id of ['search', 'statusFilter', 'typeFilter']) $(id).addEventListener('input', renderTable);
+
+    document.querySelector('thead').addEventListener('click', ev => {
+      const th = ev.target.closest('th');
+      if (!th) return;
+      const key = th.dataset.key;
+      if (sort.key === key) {
+        if (sort.dir === 1) sort.dir = -1; else { sort.key = null; sort.dir = 1; }
+      } else { sort.key = key; sort.dir = 1; }
+      render();
+    });
+    $('rows').addEventListener('click', ev => {
+      if (ev.target.id === 'clearFilters') { resetFilters(); renderTable(); return; }
+      const tr = ev.target.closest('tr[data-id]');
+      if (tr) openEditor(tr.dataset.id);
+    });
+    $('strip').addEventListener('click', ev => {
+      const b = ev.target.closest('.frame');
+      if (b) openEditor(b.dataset.id);
+    });
+
+    document.addEventListener('keydown', ev => {
+      const mod = ev.metaKey || ev.ctrlKey;
+      if (mod && ev.key.toLowerCase() === 's') { ev.preventDefault(); saveFile(); }
+      else if (mod && ev.key.toLowerCase() === 'o') { ev.preventDefault(); openFile(); }
+    });
+    window.addEventListener('beforeunload', ev => {
+      if (dirty) { ev.preventDefault(); ev.returnValue = ''; }
+    });
+
+    render();
+    checkDraft();
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
