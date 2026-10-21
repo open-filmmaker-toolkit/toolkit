@@ -1,0 +1,1365 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Music cue sheet · Open Filmmaker Toolkit</title>
+<meta name="description" content="Build your film's music cue sheet from the music in your clearance log. Runs in your browser; your data stays on your computer.">
+<style>
+:root {
+  --paper: #f1f3f2;
+  --sheet: #ffffff;
+  --ink: #1a2130;
+  --ink-2: #4b556a;
+  --ink-3: #6d778a;
+  --rule: #d4dad8;
+  --rule-soft: #e6eae8;
+  --hover: #f6f8f7;
+  --focus: #2f6fdb;
+  --film: #2a2520;
+  --track: #3a342e;
+  --tick: #9a9187;
+  --s-ready: #2b7a57;
+  --s-info: #b97d0c;
+  --s-replace: #b3392d;
+  --s-ready-bg: #dff1e8;
+  --s-info-bg: #fbf0d9;
+  --s-replace-bg: #f8e1de;
+  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #141922;
+    --sheet: #1b212b;
+    --ink: #e6e9ee;
+    --ink-2: #a6afbd;
+    --ink-3: #8790a0;
+    --rule: #2f3744;
+    --rule-soft: #262d38;
+    --hover: #212834;
+    --focus: #7aa7ff;
+    --film: #0d0b09;
+    --track: #1f1b17;
+    --tick: #7c746b;
+    --s-ready: #4fb386;
+    --s-info: #e2a531;
+    --s-replace: #e26657;
+    --s-ready-bg: #1a3329;
+    --s-info-bg: #3a2f17;
+    --s-replace-bg: #3b2220;
+  }
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans); }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.num { font-variant-numeric: tabular-nums; }
+[hidden] { display: none !important; }
+/* Until the script starts, show why nothing works (it never starts in previews that don't run scripts). */
+.cant-run { display: none; max-width: 640px; margin: 64px auto; padding: 0 24px; }
+.cant-run h1 { margin: 0 0 8px; font: 600 26px/1.2 var(--serif); }
+.cant-run p { margin: 0 0 10px; color: var(--ink-2); }
+.no-js .cant-run { display: block; }
+.no-js .page { display: none; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.page { max-width: 1280px; margin: 0 auto; padding: 0 24px 48px; }
+
+/* Masthead */
+.masthead { display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: flex-end; justify-content: space-between; padding: 28px 0 20px; }
+.tool-name { margin: 0 0 2px; font-size: 14px; font-weight: 600; color: var(--ink-2); }
+.film-title { margin: 0; font: 600 32px/1.15 var(--serif); letter-spacing: -0.01em; overflow-wrap: anywhere; cursor: pointer; }
+.film-title.is-empty { color: var(--ink-3); font-style: italic; font-weight: 400; }
+.film-meta { margin: 4px 0 0; color: var(--ink-2); font-size: 14px; }
+.film-meta button { margin-left: 4px; }
+.cut-line { margin: 2px 0 0; font-size: 14px; color: var(--ink-2); }
+.cut-line.missing { color: var(--ink-3); font-style: italic; }
+.file { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.file-state { margin: 0; font-size: 13px; color: var(--ink-2); text-align: right; }
+.file-state .dirty { color: var(--s-info); font-weight: 600; }
+.file-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+
+/* Buttons */
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; }
+.btn:hover { border-color: var(--ink-3); }
+.btn.primary { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.btn.primary:hover { opacity: 0.88; }
+.btn.danger { color: var(--s-replace); }
+.btn.small { padding: 4px 10px; font-size: 13px; }
+.link-btn { padding: 0; border: 0; background: none; cursor: pointer; color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; font-size: 14px; }
+.link-btn:hover { color: var(--ink); }
+
+/* Recovery banner */
+.banner { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 0 0 16px; padding: 12px 16px; border-radius: 8px; background: var(--s-info-bg); border: 1px solid color-mix(in srgb, var(--s-info) 40%, transparent); }
+.banner p { margin: 0; flex: 1 1 280px; }
+.banner .actions { display: flex; gap: 8px; }
+
+/* Overview: the soundtrack timeline */
+.overview { margin: 0 0 24px; }
+.reel { background: var(--film); border-radius: 4px; padding: 10px 10px 6px; }
+.track { position: relative; background: var(--track); border-radius: 2px; }
+.cue-block { position: absolute; height: 12px; min-width: 4px; padding: 0; border: 0; border-radius: 2px; cursor: pointer; background: var(--s-ready); }
+.cue-block.s-info { background: var(--s-info); }
+.cue-block.s-replace { background: var(--s-replace); }
+.cue-block:hover { filter: brightness(1.2); }
+.cue-block:focus-visible { outline-color: #ffffff; }
+.ticks { position: relative; height: 18px; margin-top: 4px; }
+.tick { position: absolute; top: 0; font-size: 11px; color: var(--tick); transform: translateX(-50%); white-space: nowrap; }
+.tick::before { content: ""; position: absolute; left: 50%; top: -4px; width: 1px; height: 4px; background: var(--tick); }
+.tick.first { transform: none; }
+.tick.first::before { left: 0; }
+.tick.last { transform: translateX(-100%); }
+.tick.last::before { left: auto; right: 0; }
+.reel-empty { margin: 0; padding: 10px 4px; color: #c9c2b8; font-size: 14px; }
+
+.tally { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 28px; margin-top: 14px; }
+.headline { margin: 0; font: 600 22px/1.2 var(--serif); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0; padding: 0; list-style: none; font-size: 14px; color: var(--ink-2); }
+.legend li { display: inline-flex; align-items: center; gap: 6px; }
+.legend b { color: var(--ink); font-weight: 600; }
+.dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: none; background: var(--s-ready); }
+.dot.s-info { background: var(--s-info); }
+.dot.s-replace { background: var(--s-replace); }
+.totals { display: flex; gap: 24px; margin: 0 0 0 auto; font-size: 14px; }
+.totals div { display: flex; gap: 6px; }
+.totals dt { color: var(--ink-2); }
+.totals dd { margin: 0; font-weight: 600; }
+
+/* Toolbar */
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 12px; }
+.toolbar input[type="search"] { flex: 1 1 260px; min-width: 0; padding: 7px 11px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); }
+.toolbar select { padding: 7px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); }
+.toolbar .spacer { flex: 1 1 0; }
+
+/* Table */
+.table-wrap { overflow-x: auto; background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; }
+.table-wrap table { width: 100%; border-collapse: collapse; min-width: 1100px; }
+.table-wrap th, .table-wrap td { padding: 10px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--rule-soft); }
+.table-wrap thead th { position: sticky; top: 0; background: var(--sheet); border-bottom: 1px solid var(--rule); font-size: 13px; font-weight: 600; color: var(--ink-2); }
+.table-wrap .right { text-align: right; }
+.table-wrap tbody tr { cursor: pointer; }
+.table-wrap tbody tr:hover { background: var(--hover); }
+.table-wrap tbody tr:last-child td { border-bottom: 0; }
+td.seq { color: var(--ink-3); width: 1%; }
+td.title { min-width: 180px; }
+.el-name { padding: 0; border: 0; background: none; cursor: pointer; text-align: left; font-weight: 600; color: var(--ink); }
+.el-name:hover { text-decoration: underline; text-underline-offset: 2px; }
+.sub { display: block; color: var(--ink-3); font-size: 13px; margin-top: 2px; }
+.party { display: block; }
+.party + .party { margin-top: 6px; }
+.party .sub { margin-top: 0; }
+td.parties { min-width: 170px; }
+.none { color: var(--ink-3); font-style: italic; }
+td.tc { white-space: nowrap; }
+.pill { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; padding: 2px 9px 2px 7px; border-radius: 999px; font-size: 13px; font-weight: 500; background: var(--s-ready-bg); }
+.pill.s-info { background: var(--s-info-bg); }
+.pill.s-replace { background: var(--s-replace-bg); }
+td.state { min-width: 190px; }
+.no-match { padding: 28px 12px; text-align: center; color: var(--ink-2); }
+
+.empty { padding: 40px 24px; text-align: center; background: var(--sheet); border: 1px dashed var(--rule); border-radius: 8px; }
+.empty h2 { margin: 0 0 6px; font: 600 20px/1.3 var(--serif); }
+.empty p { margin: 0 auto 16px; max-width: 54ch; color: var(--ink-2); }
+.empty .actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+
+.foot { margin-top: 28px; font-size: 13px; color: var(--ink-3); }
+
+/* Dialogs */
+dialog { border: 0; padding: 0; color: var(--ink); background: var(--sheet); box-shadow: 0 10px 40px rgba(10, 14, 22, 0.25); }
+dialog::backdrop { background: rgba(16, 20, 28, 0.42); }
+dialog.drawer { margin: 0 0 0 auto; width: min(640px, 100vw); height: 100dvh; max-height: 100dvh; max-width: 100vw; border-left: 1px solid var(--rule); }
+dialog.drawer[open] { animation: slide-in 160ms ease-out; }
+@keyframes slide-in { from { transform: translateX(24px); opacity: 0.4; } to { transform: none; opacity: 1; } }
+dialog.modal { width: min(600px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); border-radius: 10px; }
+@media (prefers-reduced-motion: reduce) { dialog.drawer[open] { animation: none; } }
+dialog form { display: flex; flex-direction: column; height: 100%; max-height: inherit; }
+.dlg-head { padding: 20px 24px 12px; border-bottom: 1px solid var(--rule-soft); }
+.dlg-head h2 { margin: 0; font: 600 22px/1.25 var(--serif); }
+.dlg-body { flex: 1; overflow-y: auto; padding: 16px 24px 24px; display: grid; gap: 14px; align-content: start; }
+.dlg-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 14px 24px; border-top: 1px solid var(--rule-soft); }
+.dlg-foot .spacer { flex: 1; }
+.field { display: grid; gap: 4px; }
+.field > label, .side-head h3 { font-size: 14px; font-weight: 600; }
+.hint { margin: 0; font-size: 13px; color: var(--ink-3); }
+.field input, .field select, .field textarea, .party-row input, .party-row select { width: 100%; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); }
+.row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.req { color: var(--s-replace); font-weight: 400; }
+
+.issues { margin: 0; padding: 10px 14px 10px 32px; border-radius: 8px; background: var(--s-info-bg); font-size: 14px; }
+.issues.s-replace { background: var(--s-replace-bg); }
+.issues li + li { margin-top: 2px; }
+.shared-note { margin: 0; padding: 10px 14px; border-radius: 8px; background: var(--paper); font-size: 13px; color: var(--ink-2); }
+
+.side { display: grid; gap: 8px; padding-top: 6px; border-top: 1px solid var(--rule-soft); }
+.side-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.side-head h3 { margin: 0; }
+.side-head .spacer { flex: 1; }
+.side-total { margin: 0; font-size: 13px; font-weight: 600; color: var(--s-ready); }
+.side-total.off { color: var(--s-info); }
+.party-cols, .party-row { display: grid; grid-template-columns: minmax(0, 1fr) 140px 108px 92px 32px; gap: 6px; align-items: center; }
+.party-list { display: grid; gap: 6px; }
+.party-cols { font-size: 12px; color: var(--ink-3); font-weight: 600; }
+.share-wrap { position: relative; }
+.share-wrap input { padding-right: 24px; padding-left: 8px; }
+.share-wrap span { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); color: var(--ink-3); font-size: 13px; pointer-events: none; }
+.remove { width: 32px; height: 34px; padding: 0; border: 1px solid transparent; border-radius: 6px; background: none; color: var(--ink-3); cursor: pointer; font-size: 18px; line-height: 1; }
+.remove:hover { color: var(--s-replace); border-color: var(--rule); }
+.side-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.copy-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 14px; color: var(--ink-2); }
+.copy-row select { flex: 1 1 220px; padding: 6px 8px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); }
+
+/* Toast */
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); max-width: calc(100vw - 32px); padding: 10px 16px; border-radius: 8px; background: var(--ink); color: var(--paper); font-size: 14px; box-shadow: 0 6px 24px rgba(10, 14, 22, 0.25); z-index: 10; }
+.toast.error { background: var(--s-replace); color: #ffffff; }
+
+.report { display: none; }
+
+@media (max-width: 720px) {
+  .page { padding: 0 16px 40px; }
+  .masthead { padding-top: 20px; }
+  .film-title { font-size: 26px; }
+  .file { align-items: flex-start; }
+  .file-state { text-align: left; }
+  .totals { margin-left: 0; }
+  .row-2 { grid-template-columns: 1fr; }
+  .toolbar .spacer { display: none; }
+  .toolbar input[type="search"] { flex-basis: 100%; }
+  .toolbar select { flex: 1 1 140px; }
+  .toolbar #addBtn { order: -1; flex-basis: 100%; justify-content: center; }
+  .party-cols { display: none; }
+  .party-row { grid-template-columns: minmax(0, 1fr) 92px 32px; padding-bottom: 8px; border-bottom: 1px dashed var(--rule-soft); }
+  .party-row .p-name { grid-column: 1 / -1; }
+  .party-row .p-role { grid-column: 1 / 2; }
+  .party-row .p-society-wrap { grid-column: 2 / 4; }
+  .party-row .share-wrap { grid-column: 1 / 2; }
+}
+
+@media print {
+  @page { size: landscape; margin: 12mm; }
+  :root { color-scheme: light; }
+  body { background: #ffffff; color: #000000; font-size: 9pt; }
+  .page, dialog, .toast { display: none !important; }
+  .report { display: block; }
+  .report h1 { margin: 0 0 2pt; font: 600 18pt/1.2 var(--serif); }
+  .report .sheet-name { margin: 0 0 8pt; font-size: 11pt; }
+  .report .draft { margin: 0 0 8pt; padding: 4pt 6pt; border: 1pt solid #000000; font-weight: 600; }
+  .report .head { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2pt 18pt; margin: 0 0 10pt; }
+  .report .head div { display: flex; gap: 6pt; }
+  .report .head dt { color: #444444; white-space: nowrap; }
+  .report .head dd { margin: 0; font-weight: 600; }
+  .report table { width: 100%; border-collapse: collapse; }
+  .report th, .report td { padding: 3pt 4pt; border: 0.5pt solid #999999; vertical-align: top; text-align: left; }
+  .report thead th { background: #eeeeee; font-size: 8pt; }
+  .report thead { display: table-header-group; }
+  .report tr { page-break-inside: avoid; }
+  .report .pl { display: grid; grid-template-columns: 18pt minmax(0, 1fr) auto 26pt; gap: 4pt; }
+  .report .pl + .pl { margin-top: 1pt; }
+  .report .pl .pct { text-align: right; }
+  .report .small { font-size: 8pt; color: #333333; }
+  .report .legends { margin-top: 8pt; font-size: 8pt; color: #333333; }
+  .report .legends p { margin: 0 0 2pt; }
+}
+</style>
+</head>
+<body>
+<div class="cant-run" id="cantRun">
+  <h1 id="cantRunTitle">Open this file in a web browser</h1>
+  <p id="cantRunText">This tool runs in Chrome, Edge, Firefox or Safari. You're seeing a preview that doesn't run it, so none of the buttons would work.</p>
+  <p id="cantRunHow">In your browser, choose File, then Open File, and pick this file. Or right-click the file and open it with your browser.</p>
+</div>
+<div class="page">
+  <header class="masthead">
+    <div>
+      <p class="tool-name">Music cue sheet</p>
+      <h1 class="film-title" id="filmTitle">Untitled film</h1>
+      <p class="film-meta"><span id="filmMeta"></span> <button type="button" class="link-btn" id="editProjectBtn">Edit film details</button></p>
+      <p class="cut-line" id="cutLine"></p>
+    </div>
+    <div class="file">
+      <p class="file-state" id="fileState">Not saved to a file yet</p>
+      <div class="file-actions">
+        <button type="button" class="btn" id="newBtn">New project</button>
+        <button type="button" class="btn" id="openBtn">Open file</button>
+        <button type="button" class="btn primary" id="saveBtn">Save file</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="banner" id="recovery" role="region" aria-label="Unsaved work" hidden>
+    <p id="recoveryText"></p>
+    <div class="actions">
+      <button type="button" class="btn primary" id="restoreBtn">Restore it</button>
+      <button type="button" class="btn" id="discardBtn">Discard it</button>
+    </div>
+  </div>
+
+  <main>
+    <section class="overview" aria-labelledby="headline">
+      <div class="reel" id="reel"></div>
+      <div class="tally">
+        <p class="headline" id="headline"></p>
+        <ul class="legend" id="legend"></ul>
+        <dl class="totals">
+          <div><dt>Music</dt><dd class="num" id="musicTotal"></dd></div>
+          <div><dt>Running time</dt><dd class="num" id="runTotal"></dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <section aria-label="Cues">
+      <div class="toolbar" id="toolbar">
+        <input type="search" id="search" placeholder="Search titles, artists, composers, publishers" aria-label="Search cues">
+        <select id="stateFilter" aria-label="Filter cues">
+          <option value="all">All cues</option>
+          <option value="info">Needs information</option>
+          <option value="ready">Ready</option>
+          <option value="replace">Being replaced</option>
+        </select>
+        <span class="spacer"></span>
+        <button type="button" class="btn" id="csvBtn">Export CSV</button>
+        <button type="button" class="btn" id="printBtn" title="Always prints every cue, whatever the filters">Print cue sheet</button>
+        <button type="button" class="btn primary" id="addBtn">Add cue</button>
+      </div>
+
+      <div class="table-wrap" id="tableWrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col"><span class="sr-only">Sequence</span>#</th>
+              <th scope="col">Cue</th>
+              <th scope="col">Title</th>
+              <th scope="col">Composers and authors</th>
+              <th scope="col">Publishers</th>
+              <th scope="col">Usage</th>
+              <th scope="col">Timecode</th>
+              <th scope="col" class="right">Length</th>
+              <th scope="col">Cue sheet</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+
+      <div class="empty" id="empty" hidden>
+        <h2>No music in this project yet</h2>
+        <p>Add each piece of music in your cut, including your score. Music you've logged in the clearance log shows up here on its own.</p>
+        <div class="actions">
+          <button type="button" class="btn primary" id="emptyAddBtn">Add the first cue</button>
+          <button type="button" class="btn" id="emptyOpenBtn">Open a project file</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <p>Part of the Open Filmmaker Toolkit. This page makes no network requests: everything stays on this computer until you save or export it. Uses the same project file as the clearance log. Not legal advice.</p>
+  </footer>
+</div>
+
+<section class="report" id="report" aria-hidden="true"></section>
+
+<datalist id="societies"></datalist>
+
+<dialog class="drawer" id="editor" aria-labelledby="editorTitle">
+  <form id="editorForm" method="dialog" novalidate>
+    <div class="dlg-head"><h2 id="editorTitle">Add cue</h2></div>
+    <div class="dlg-body">
+      <ul class="issues" id="editorIssues" hidden></ul>
+      <div class="field">
+        <label for="f-title">Title <span class="req">(required)</span></label>
+        <input id="f-title" name="title" required placeholder="Title of the composition, as registered">
+      </div>
+      <div class="row-2">
+        <div class="field">
+          <label for="f-artist">Artist</label>
+          <input id="f-artist" name="artist" placeholder="For commercial recordings">
+        </div>
+        <div class="field">
+          <label for="f-cueId">Cue number</label>
+          <input id="f-cueId" name="cueId" placeholder="1M2" autocomplete="off">
+        </div>
+      </div>
+      <div class="field">
+        <label for="f-usage">How it's used</label>
+        <select id="f-usage" name="usage"></select>
+      </div>
+      <div class="row-2">
+        <div class="field">
+          <label for="f-tcIn">Timecode in</label>
+          <input id="f-tcIn" name="tcIn" class="num" placeholder="01:02:03:04" inputmode="numeric" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="f-tcOut">Timecode out</label>
+          <input id="f-tcOut" name="tcOut" class="num" placeholder="01:02:15:00" inputmode="numeric" autocomplete="off">
+        </div>
+      </div>
+      <p class="hint" id="tcHint"></p>
+
+      <div class="copy-row" id="copyRow">
+        <label for="copyFrom">Same music used before?</label>
+        <select id="copyFrom"></select>
+      </div>
+
+      <div class="side" id="writersSide">
+        <div class="side-head">
+          <h3>Composers and authors</h3>
+          <span class="spacer"></span>
+          <p class="side-total" id="writersTotal" aria-live="polite"></p>
+        </div>
+        <div class="party-cols" aria-hidden="true"><span>Name</span><span>Role</span><span>Society</span><span>Share</span><span></span></div>
+        <div class="party-list" id="writersList"></div>
+        <div class="side-actions">
+          <button type="button" class="btn small" data-add="writers">Add composer or author</button>
+          <button type="button" class="btn small" data-split="writers">Split evenly</button>
+        </div>
+      </div>
+
+      <div class="side" id="publishersSide">
+        <div class="side-head">
+          <h3>Publishers</h3>
+          <span class="spacer"></span>
+          <p class="side-total" id="publishersTotal" aria-live="polite"></p>
+        </div>
+        <div class="party-cols" aria-hidden="true"><span>Name</span><span>Role</span><span>Society</span><span>Share</span><span></span></div>
+        <div class="party-list" id="publishersList"></div>
+        <div class="side-actions">
+          <button type="button" class="btn small" data-add="publishers">Add publisher</button>
+          <button type="button" class="btn small" data-split="publishers">Split evenly</button>
+        </div>
+      </div>
+
+      <p class="shared-note" id="sharedNote"></p>
+    </div>
+    <div class="dlg-foot">
+      <button type="submit" class="btn primary" id="editorSubmit">Add cue</button>
+      <button type="button" class="btn" id="editorCancel">Cancel</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="duplicateBtn">Duplicate</button>
+      <button type="button" class="btn danger" id="deleteBtn">Delete</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="projectDialog" aria-labelledby="projectDialogTitle">
+  <form id="projectForm" method="dialog">
+    <div class="dlg-head"><h2 id="projectDialogTitle">Film details</h2></div>
+    <div class="dlg-body">
+      <div class="field">
+        <label for="p-title">Film title</label>
+        <input id="p-title" name="title" placeholder="Working title is fine">
+      </div>
+      <div class="row-2">
+        <div class="field"><label for="p-company">Production company</label><input id="p-company" name="company"></div>
+        <div class="field"><label for="p-producer">Producer</label><input id="p-producer" name="producer"></div>
+      </div>
+      <div class="row-2">
+        <div class="field"><label for="p-distributor">Distributor</label><input id="p-distributor" name="distributor"></div>
+        <div class="field"><label for="p-releaseDate">Release or air date</label><input id="p-releaseDate" name="releaseDate" placeholder="Leave blank if not set"></div>
+      </div>
+      <div class="row-2">
+        <div class="field">
+          <label for="p-runningTime">Running time</label>
+          <input id="p-runningTime" name="runningTime" class="num" placeholder="1:32:10" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="p-startTimecode">Picture starts at</label>
+          <input id="p-startTimecode" name="startTimecode" class="num" placeholder="01:00:00:00" autocomplete="off">
+        </div>
+      </div>
+      <p class="hint">Running time as hours:minutes:seconds. Picture start is the timecode of the first frame; leave it blank and it's worked out from your cues.</p>
+      <div class="field"><label for="p-musicSupervisor">Music supervisor</label><input id="p-musicSupervisor" name="musicSupervisor"></div>
+      <div class="row-2">
+        <div class="field"><label for="p-preparedBy">Prepared by</label><input id="p-preparedBy" name="preparedBy" placeholder="Name and role"></div>
+        <div class="field"><label for="p-preparedContact">Their contact</label><input id="p-preparedContact" name="preparedContact" placeholder="Email or phone"></div>
+      </div>
+      <div class="row-2">
+        <div class="field"><label for="p-cutVersion">Cut the timecodes refer to</label><input id="p-cutVersion" name="cutVersion" placeholder="Locked cut v12, Oct 18"></div>
+        <div class="field"><label for="p-frameRate">Frame rate</label><select id="p-frameRate" name="frameRate"></select></div>
+      </div>
+    </div>
+    <div class="dlg-foot">
+      <button type="submit" class="btn primary">Save details</button>
+      <button type="button" class="btn" id="projectCancel">Cancel</button>
+    </div>
+  </form>
+</dialog>
+
+<input type="file" id="fileInput" accept=".json,application/json" hidden>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+(() => {
+  'use strict';
+
+  const FORMAT = 'open-filmmaker-toolkit/project';
+  const FORMAT_VERSION = 1;
+  const TOOL = 'music-cue-sheet 0.1.0';
+  const DRAFT_KEY = 'oft.music-cue-sheet.draft';
+
+  const USAGES = [
+    { code: 'BI', label: 'Background instrumental' },
+    { code: 'BV', label: 'Background vocal' },
+    { code: 'VI', label: 'Visual instrumental' },
+    { code: 'VV', label: 'Visual vocal' },
+    { code: 'MT', label: 'Main title' },
+    { code: 'ET', label: 'End title' },
+  ];
+  const ROLES = {
+    writers: [
+      { code: 'C', label: 'Composer' },
+      { code: 'A', label: 'Author (lyrics)' },
+      { code: 'CA', label: 'Composer and author' },
+      { code: 'AR', label: 'Arranger' },
+    ],
+    publishers: [
+      { code: 'E', label: 'Publisher' },
+      { code: 'AM', label: 'Administrator' },
+      { code: 'SE', label: 'Sub-publisher' },
+    ],
+  };
+  const SIDES = {
+    writers: { one: 'composer or author', all: 'composers and authors', Total: 'Composer and author shares' },
+    publishers: { one: 'publisher', all: 'publishers', Total: 'Publisher shares' },
+  };
+  const SOCIETIES = ['ASCAP', 'BMI', 'SESAC', 'GMR', 'SOCAN', 'PRS', 'GEMA', 'SACEM', 'SIAE', 'SGAE', 'STIM', 'KODA', 'TONO', 'BUMA', 'SABAM', 'APRA AMCOS', 'JASRAC', 'IPRS', 'SAMRO', 'None', 'Public domain'];
+  const STATUS_LABELS = {
+    'not-started': 'Not started', requested: 'Requested', negotiating: 'Negotiating', licensed: 'Licensed',
+    'fair-use': 'Fair use', 'public-domain': 'Public domain', replace: 'Replace or cut',
+  };
+  const STATES = [
+    { id: 'ready', label: 'Ready' },
+    { id: 'info', label: 'Needs information' },
+    { id: 'replace', label: 'Being replaced' },
+  ];
+  const RATES = [23.976, 24, 25, 29.97, 30, 48, 50, 59.94, 60];
+  const PROJECT_TEXT = ['title', 'company', 'producer', 'distributor', 'releaseDate', 'runningTime', 'startTimecode', 'preparedBy', 'preparedContact', 'cutVersion'];
+  const ELEMENT_TEXT = ['description', 'type', 'source', 'rightsHolder', 'contact', 'tcIn', 'tcOut', 'use', 'rights', 'licenseRef', 'notes'];
+
+  const usageByCode = Object.fromEntries(USAGES.map(u => [u.code, u]));
+  const $ = id => document.getElementById(id);
+
+  // ---------- State ----------
+  let doc = blankDoc();
+  let fileHandle = null;
+  let fileName = null;
+  let dirty = false;
+  let editingId = null;
+
+  function blankDoc() {
+    return {
+      format: FORMAT,
+      formatVersion: FORMAT_VERSION,
+      project: { title: '', company: '', producer: '', preparedBy: '', preparedContact: '', cutVersion: '', frameRate: 24, currency: 'USD' },
+      thirdPartyElements: [],
+    };
+  }
+  const els = () => doc.thirdPartyElements;
+  const rate = () => Number(doc.project.frameRate) || 24;
+  const str = v => (v == null ? '' : String(v));
+
+  // Only fills in what this tool needs. Everything else in the file, including
+  // fields owned by other tools, is left exactly as it was.
+  function normalize(d) {
+    if (!d.project || typeof d.project !== 'object') d.project = {};
+    const p = d.project;
+    for (const k of PROJECT_TEXT) if (typeof p[k] !== 'string') p[k] = str(p[k]);
+    if (!Number(p.frameRate)) p.frameRate = 24;
+    if (typeof p.currency !== 'string' || !/^[A-Za-z]{3}$/.test(p.currency)) p.currency = 'USD';
+    if (!Array.isArray(d.thirdPartyElements)) d.thirdPartyElements = [];
+    d.thirdPartyElements = d.thirdPartyElements.filter(e => e && typeof e === 'object');
+    for (const e of d.thirdPartyElements) if (!e.id) e.id = newId();
+    if (!d.musicCueSheet || typeof d.musicCueSheet !== 'object') d.musicCueSheet = {};
+    if (typeof d.musicCueSheet.musicSupervisor !== 'string') d.musicCueSheet.musicSupervisor = str(d.musicCueSheet.musicSupervisor);
+    d.format = FORMAT;
+    d.formatVersion = FORMAT_VERSION;
+    return d;
+  }
+
+  function newId() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return 'el-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  }
+
+  // ---------- Music data on an element ----------
+  const isMusic = e => e && e.type === 'Music';
+  function partiesOf(list) {
+    if (!Array.isArray(list)) return [];
+    return list.filter(p => p && typeof p === 'object').map(p => ({
+      name: str(p.name).trim(),
+      role: str(p.role),
+      society: str(p.society).trim(),
+      share: p.share === '' || p.share == null || !isFinite(Number(p.share)) ? null : Number(p.share),
+    }));
+  }
+  function musicOf(e) {
+    const m = e.music && typeof e.music === 'object' ? e.music : {};
+    return {
+      title: str(m.title).trim(),
+      artist: str(m.artist).trim(),
+      cueId: str(m.cueId).trim(),
+      usage: str(m.usage),
+      writers: partiesOf(m.writers),
+      publishers: partiesOf(m.publishers),
+    };
+  }
+  const titleOf = e => musicOf(e).title || str(e.description).trim() || 'Untitled cue';
+
+  // ---------- Timecode ----------
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const pad = n => String(n).padStart(2, '0');
+
+  function tcToFrames(tc) {
+    if (!tc || !String(tc).trim()) return null;
+    const m = String(tc).trim().match(/^(\d{1,2}):(\d{2}):(\d{2})(?:[:;.](\d{2}))?$/);
+    if (!m) return NaN;
+    const nominal = Math.round(rate());
+    const h = +m[1], mi = +m[2], s = +m[3], f = m[4] ? +m[4] : 0;
+    if (mi > 59 || s > 59 || f >= nominal) return NaN;
+    return (h * 3600 + mi * 60 + s) * nominal + f;
+  }
+  const framesToSec = f => f / Math.round(rate());
+  function durationOf(e) {
+    const a = tcToFrames(e.tcIn), b = tcToFrames(e.tcOut);
+    if (a == null || b == null || Number.isNaN(a) || Number.isNaN(b) || b <= a) return null;
+    return (b - a) / rate();
+  }
+  // Cue sheets list whole seconds; anything that plays gets at least one.
+  const cueSeconds = sec => (sec == null ? null : Math.max(1, Math.round(sec)));
+  function fmtClock(sec, forceHours) {
+    if (sec == null) return '';
+    const t = Math.round(sec);
+    const h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), s = t % 60;
+    return (h || forceHours) ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`;
+  }
+  function parseRunningTime(v) {
+    const s = str(v).trim();
+    if (!s) return null;
+    if (/^\d+(\.\d+)?$/.test(s)) return Number(s) * 60; // plain number = minutes
+    const parts = s.split(':');
+    if (parts.length === 4) { const f = tcToFrames(s); return f == null || Number.isNaN(f) ? NaN : framesToSec(f); }
+    if (parts.length < 2 || parts.length > 3 || parts.some(x => !/^\d+$/.test(x))) return NaN;
+    const n = parts.map(Number);
+    if (n.slice(1).some(x => x > 59)) return NaN;
+    return n.length === 3 ? n[0] * 3600 + n[1] * 60 + n[2] : n[0] * 60 + n[1];
+  }
+
+  // ---------- Cues & readiness ----------
+  function cues() {
+    return els().map((e, i) => ({ e, i })).filter(x => isMusic(x.e)).sort((a, b) => {
+      const fa = tcToFrames(a.e.tcIn), fb = tcToFrames(b.e.tcIn);
+      const va = fa == null || Number.isNaN(fa) ? Infinity : fa;
+      const vb = fb == null || Number.isNaN(fb) ? Infinity : fb;
+      return va - vb || a.i - b.i;
+    }).map(x => x.e);
+  }
+  const fmtPct = n => `${Math.round(n * 100) / 100}%`;
+
+  function checkSide(list, side, out, required) {
+    const s = SIDES[side];
+    if (!list.length) { if (required) out.push(`Add a ${s.one}`); return; }
+    if (list.some(p => !p.name)) out.push(`Name every ${s.one}`);
+    const noSociety = list.filter(p => p.name && !p.society).map(p => p.name);
+    if (noSociety.length) out.push(`Add a society for ${noSociety.join(', ')} (or None)`);
+    if (list.some(p => p.share == null)) out.push(`Add a share for every ${s.one}`);
+    else {
+      const total = list.reduce((sum, p) => sum + p.share, 0);
+      if (Math.abs(total - 100) > 0.01) out.push(`${s.Total} add up to ${fmtPct(total)}, not 100%`);
+    }
+  }
+  function issuesOf(e) {
+    const m = musicOf(e), out = [];
+    if (e.status === 'replace') out.push('Marked replace or cut in the clearance log. Delete it once it’s out of the cut.');
+    if (!m.title && !str(e.description).trim()) out.push('Add a title');
+    if (!usageByCode[m.usage]) out.push('Choose how it’s used');
+    const a = tcToFrames(e.tcIn), b = tcToFrames(e.tcOut);
+    if (a == null || b == null) out.push('Add timecode in and out');
+    else if (Number.isNaN(a) || Number.isNaN(b)) out.push('Check the timecode');
+    else if (b <= a) out.push('Timecode out comes before timecode in');
+    checkSide(m.writers, 'writers', out, true);
+    if (!m.publishers.length) {
+      if (e.status !== 'public-domain') out.push('Add a publisher. Public domain music, marked so in the clearance log, doesn’t need one.');
+    } else checkSide(m.publishers, 'publishers', out, false);
+    return out;
+  }
+  function stateOf(e) {
+    if (e.status === 'replace') return 'replace';
+    return issuesOf(e).length ? 'info' : 'ready';
+  }
+  const stateLabel = id => STATES.find(s => s.id === id).label;
+
+  function filtered(list) {
+    const q = $('search').value.trim().toLowerCase();
+    const sf = $('stateFilter').value;
+    return list.filter(e => {
+      if (sf !== 'all' && stateOf(e) !== sf) return false;
+      if (q) {
+        const m = musicOf(e);
+        const hay = [titleOf(e), e.description, m.artist, m.cueId, ...m.writers.map(p => `${p.name} ${p.society}`), ...m.publishers.map(p => `${p.name} ${p.society}`)].join(' ').toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+  }
+
+  // ---------- Timeline geometry ----------
+  function programStart(list) {
+    const explicit = tcToFrames(doc.project.startTimecode);
+    if (explicit != null && !Number.isNaN(explicit)) return framesToSec(explicit);
+    const ins = list.map(e => tcToFrames(e.tcIn)).filter(f => f != null && !Number.isNaN(f));
+    if (!ins.length) return 0;
+    const first = Math.min(...ins);
+    const hour = 3600 * Math.round(rate());
+    return first >= hour ? Math.floor(first / hour) * 3600 : 0;
+  }
+  function timelineSpan(list) {
+    const start = programStart(list);
+    const run = parseRunningTime(doc.project.runningTime);
+    let end = run && !Number.isNaN(run) ? start + run : start;
+    for (const e of list) {
+      const f = tcToFrames(e.tcOut);
+      if (f != null && !Number.isNaN(f)) end = Math.max(end, framesToSec(f));
+    }
+    return { start, end };
+  }
+
+  // ---------- Rendering ----------
+  function render() {
+    renderHeader();
+    renderOverview();
+    renderTable();
+  }
+
+  function renderHeader() {
+    const p = doc.project;
+    const title = $('filmTitle');
+    title.textContent = p.title || 'Untitled film';
+    title.classList.toggle('is-empty', !p.title);
+    const meta = [p.company, p.producer && `produced by ${p.producer}`, `${p.frameRate} fps`].filter(Boolean);
+    $('filmMeta').textContent = meta.join(', ');
+    $('cutLine').textContent = p.cutVersion ? `Timecodes match ${p.cutVersion}` : 'Add which cut the timecodes match in film details';
+    $('cutLine').classList.toggle('missing', !p.cutVersion);
+    const name = fileName ? esc(fileName) : '';
+    $('fileState').innerHTML = dirty
+      ? `<span class="dirty">Unsaved changes</span>${name ? ` to ${name}` : '. Not saved to a file yet.'}`
+      : (name ? `Saved to ${name}` : 'Not saved to a file yet');
+    document.title = `${p.title ? p.title + ' · ' : ''}Music cue sheet`;
+  }
+
+  function renderOverview() {
+    const list = cues();
+    const reel = $('reel');
+    const { start, end } = timelineSpan(list);
+    const placed = list.map(e => {
+      const a = tcToFrames(e.tcIn), b = tcToFrames(e.tcOut);
+      if (a == null || b == null || Number.isNaN(a) || Number.isNaN(b) || b <= a) return null;
+      return { e, a: framesToSec(a), b: framesToSec(b) };
+    }).filter(Boolean);
+    if (!placed.length || end <= start) {
+      reel.innerHTML = `<p class="reel-empty">${list.length ? 'Add timecodes to your cues to see where the music sits in the film.' : 'Each cue appears here where it plays in the film, colored by whether its cue sheet entry is complete.'}</p>`;
+    } else {
+      const laneEnds = [];
+      for (const c of placed) {
+        let lane = laneEnds.findIndex(t => t <= c.a);
+        if (lane === -1) lane = laneEnds.length < 3 ? laneEnds.length : laneEnds.indexOf(Math.min(...laneEnds));
+        laneEnds[lane] = c.b;
+        c.lane = lane;
+      }
+      const lanes = Math.max(1, laneEnds.length);
+      const span = end - start;
+      const pct = t => ((t - start) / span) * 100;
+      const blocks = placed.map(c => {
+        const st = stateOf(c.e);
+        const label = `${titleOf(c.e)}, ${fmtClock(c.a - start)} to ${fmtClock(c.b - start)}, ${stateLabel(st)}`;
+        return `<button type="button" class="cue-block s-${st}" data-id="${esc(c.e.id)}" style="left:${pct(c.a)}%;width:${Math.max(0, pct(c.b) - pct(c.a))}%;top:${6 + c.lane * 16}px" title="${esc(label)}" aria-label="${esc(label)}"></button>`;
+      }).join('');
+      const minutes = span / 60;
+      const step = (minutes <= 15 ? 2 : minutes <= 40 ? 5 : minutes <= 130 ? 10 : 15) * 60;
+      // Regular ticks, then the end of the film, dropping any tick too close to the end to read.
+      const ticks = [];
+      for (let t = 0; t < span - step * 0.6; t += step) ticks.push(t);
+      ticks.push(span);
+      const tickHtml = ticks.map((t, i) => {
+        const cls = i === 0 ? 'first' : (t === span ? 'last' : '');
+        return `<span class="tick num ${cls}" style="left:${(t / span) * 100}%">${fmtClock(t)}</span>`;
+      }).join('');
+      reel.innerHTML = `<div class="track" style="height:${12 + lanes * 16 - 4}px">${blocks}</div><div class="ticks" aria-hidden="true">${tickHtml}</div>`;
+    }
+
+    const counts = { ready: 0, info: 0, replace: 0 };
+    for (const e of list) counts[stateOf(e)]++;
+    $('headline').textContent = list.length ? `${counts.ready} of ${list.length} cue${list.length === 1 ? '' : 's'} ready` : 'No music cues yet';
+    $('legend').innerHTML = STATES.map(s => `<li><span class="dot s-${s.id}"></span>${s.label} <b class="num">${counts[s.id]}</b></li>`).join('');
+    const total = list.reduce((sum, e) => sum + (cueSeconds(durationOf(e)) || 0), 0);
+    $('musicTotal').textContent = fmtClock(total) || '0:00';
+    const run = parseRunningTime(doc.project.runningTime);
+    $('runTotal').textContent = run && !Number.isNaN(run) ? fmtClock(run) : 'Not set';
+  }
+
+  function partyCell(list) {
+    if (!list.length) return '<span class="none">None listed</span>';
+    return list.map(p => {
+      const bits = [p.society, p.share == null ? '' : fmtPct(p.share)].filter(Boolean).join(', ');
+      return `<span class="party">${esc(p.name || 'Unnamed')}${bits ? `<span class="sub">${esc(bits)}</span>` : ''}</span>`;
+    }).join('');
+  }
+
+  function renderTable() {
+    const all = cues();
+    $('empty').hidden = all.length > 0;
+    $('tableWrap').hidden = all.length === 0;
+    $('toolbar').hidden = all.length === 0;
+    const seq = new Map(all.map((e, i) => [e.id, i + 1]));
+    const list = filtered(all);
+    if (!list.length) {
+      $('rows').innerHTML = `<tr><td colspan="9" class="no-match">No cues match these filters. <button type="button" class="link-btn" id="clearFilters">Clear filters</button></td></tr>`;
+      return;
+    }
+    $('rows').innerHTML = list.map(e => {
+      const m = musicOf(e);
+      const st = stateOf(e);
+      const issues = issuesOf(e);
+      const u = usageByCode[m.usage];
+      const tc = (e.tcIn || e.tcOut) ? `${esc(e.tcIn || '?')}&ndash;${esc(e.tcOut || '?')}` : '';
+      const more = issues.length > 1 ? ` (and ${issues.length - 1} more)` : '';
+      return `<tr data-id="${esc(e.id)}">
+        <td class="seq num">${seq.get(e.id)}</td>
+        <td class="num">${esc(m.cueId)}</td>
+        <td class="title"><button type="button" class="el-name">${esc(titleOf(e))}</button>${m.artist ? `<span class="sub">${esc(m.artist)}</span>` : ''}</td>
+        <td class="parties">${partyCell(m.writers)}</td>
+        <td class="parties">${partyCell(m.publishers)}</td>
+        <td>${u ? `${esc(u.code)}<span class="sub">${esc(u.label)}</span>` : '<span class="none">Not set</span>'}</td>
+        <td class="tc num">${tc}</td>
+        <td class="right num">${fmtClock(cueSeconds(durationOf(e)))}</td>
+        <td class="state"><span class="pill s-${st}"><span class="dot s-${st}"></span>${esc(stateLabel(st))}</span>${issues.length && st !== 'replace' ? `<span class="sub">${esc(issues[0])}${esc(more)}</span>` : ''}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // ---------- Report (print) ----------
+  function renderReport() {
+    const p = doc.project;
+    const list = cues();
+    const notReady = list.filter(e => stateOf(e) !== 'ready').length;
+    const total = list.reduce((sum, e) => sum + (cueSeconds(durationOf(e)) || 0), 0);
+    const run = parseRunningTime(p.runningTime);
+    const when = new Date().toLocaleDateString(undefined, { dateStyle: 'long' });
+    const head = [
+      ['Production company', p.company], ['Producer', p.producer], ['Distributor', p.distributor],
+      ['Release or air date', p.releaseDate], ['Running time', run && !Number.isNaN(run) ? fmtClock(run, true) : ''],
+      ['Music supervisor', doc.musicCueSheet.musicSupervisor], ['Prepared by', p.preparedBy], ['Contact', p.preparedContact],
+      ['Timecodes match', p.cutVersion], ['Date prepared', when],
+    ].filter(([, v]) => v);
+    const parties = (lst, side) => lst.length ? lst.map(x => `<div class="pl"><span>${esc(x.role || ROLES[side][0].code)}</span><span>${esc(x.name)}</span><span>${esc(x.society)}</span><span class="pct">${x.share == null ? '' : esc(fmtPct(x.share))}</span></div>`).join('') : '';
+    $('report').innerHTML = `
+      <h1>${esc(p.title || 'Untitled film')}</h1>
+      <p class="sheet-name">Music cue sheet</p>
+      ${notReady ? `<p class="draft">Draft: ${notReady} of ${list.length} cues still need information or are being replaced. Check them before sending this sheet.</p>` : ''}
+      <dl class="head">${head.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>
+      <table>
+        <thead><tr>
+          <th>Seq</th><th>Cue</th><th>Title</th><th>Composers and authors</th><th>Publishers</th>
+          <th>Usage</th><th>Time in</th><th>Time out</th><th>Duration</th>
+        </tr></thead>
+        <tbody>
+          ${list.map((e, i) => {
+            const m = musicOf(e);
+            return `<tr>
+              <td>${i + 1}</td>
+              <td>${esc(m.cueId)}</td>
+              <td><strong>${esc(titleOf(e))}</strong>${m.artist ? `<br><span class="small">${esc(m.artist)}</span>` : ''}</td>
+              <td>${parties(m.writers, 'writers')}</td>
+              <td>${parties(m.publishers, 'publishers') || (e.status === 'public-domain' ? '<span class="small">Public domain</span>' : '')}</td>
+              <td>${esc(m.usage)}</td>
+              <td>${esc(e.tcIn)}</td>
+              <td>${esc(e.tcOut)}</td>
+              <td>${fmtClock(cueSeconds(durationOf(e)))}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+      <div class="legends">
+        <p><strong>Total music:</strong> ${fmtClock(total, true)} across ${list.length} cue${list.length === 1 ? '' : 's'}.</p>
+        <p><strong>Usage:</strong> ${USAGES.map(u => `${u.code} ${esc(u.label)}`).join('; ')}.</p>
+        <p><strong>Roles:</strong> ${[...ROLES.writers, ...ROLES.publishers].map(r => `${r.code} ${esc(r.label)}`).join('; ')}.</p>
+        <p>Composer and author shares total 100% per cue; publisher shares total 100% per cue. Durations are rounded to the second from timecode at ${esc(p.frameRate)} fps.</p>
+        <p>Prepared with the Open Filmmaker Toolkit music cue sheet. Not legal advice.</p>
+      </div>`;
+  }
+
+  // ---------- Editor ----------
+  function fillSelect(sel, options) {
+    sel.innerHTML = options.map(o => `<option value="${esc(o.value)}">${esc(o.label)}</option>`).join('');
+  }
+  function partyRow(side, p, n) {
+    const noun = SIDES[side].one;
+    const roleOpts = ROLES[side].map(r => `<option value="${r.code}"${r.code === p.role ? ' selected' : ''}>${esc(r.label)}</option>`).join('');
+    const extraRole = p.role && !ROLES[side].some(r => r.code === p.role) ? `<option value="${esc(p.role)}" selected>${esc(p.role)}</option>` : '';
+    return `<div class="party-row">
+      <input class="p-name" aria-label="${esc(noun)} ${n} name" value="${esc(p.name)}" placeholder="Name">
+      <select class="p-role" aria-label="${esc(noun)} ${n} role">${roleOpts}${extraRole}</select>
+      <span class="p-society-wrap"><input class="p-society" list="societies" aria-label="${esc(noun)} ${n} society" value="${esc(p.society)}" placeholder="Society" autocomplete="off"></span>
+      <span class="share-wrap"><input class="p-share num" type="number" min="0" max="100" step="0.01" aria-label="${esc(noun)} ${n} share in percent" value="${p.share == null ? '' : esc(p.share)}"><span>%</span></span>
+      <button type="button" class="remove" aria-label="Remove ${esc(noun)} ${n}">&times;</button>
+    </div>`;
+  }
+  function readSide(side) {
+    return [...$(side + 'List').querySelectorAll('.party-row')].map(r => ({
+      name: r.querySelector('.p-name').value.trim(),
+      role: r.querySelector('.p-role').value,
+      society: r.querySelector('.p-society').value.trim(),
+      share: r.querySelector('.p-share').value === '' ? null : Number(r.querySelector('.p-share').value),
+    })).filter(p => p.name || p.society || p.share != null);
+  }
+  function renderSide(side, list) {
+    $(side + 'List').innerHTML = list.map((p, i) => partyRow(side, p, i + 1)).join('');
+    updateTotal(side);
+  }
+  function updateTotal(side) {
+    const rows = [...$(side + 'List').querySelectorAll('.p-share')];
+    const el = $(side + 'Total');
+    if (!rows.length) { el.textContent = ''; el.classList.remove('off'); return; }
+    const total = rows.reduce((s, r) => s + (r.value === '' ? 0 : Number(r.value)), 0);
+    const ok = Math.abs(total - 100) <= 0.01 && rows.every(r => r.value !== '');
+    el.textContent = ok ? 'Total 100%' : `Total ${fmtPct(total)} of 100%`;
+    el.classList.toggle('off', !ok);
+  }
+  function addParty(side) {
+    const list = readSide(side);
+    const rows = $(side + 'List').querySelectorAll('.party-row').length;
+    const all = [...$(side + 'List').querySelectorAll('.party-row')].map(r => ({
+      name: r.querySelector('.p-name').value, role: r.querySelector('.p-role').value,
+      society: r.querySelector('.p-society').value, share: r.querySelector('.p-share').value === '' ? null : Number(r.querySelector('.p-share').value),
+    }));
+    const remaining = Math.max(0, 100 - list.reduce((s, p) => s + (p.share || 0), 0));
+    all.push({ name: '', role: ROLES[side][0].code, society: '', share: rows === 0 ? 100 : (remaining || null) });
+    renderSide(side, all);
+    const inputs = $(side + 'List').querySelectorAll('.p-name');
+    inputs[inputs.length - 1].focus();
+  }
+  function splitEvenly(side) {
+    const rows = [...$(side + 'List').querySelectorAll('.p-share')];
+    if (!rows.length) return;
+    const each = Math.floor((100 / rows.length) * 100) / 100;
+    rows.forEach((r, i) => { r.value = i === rows.length - 1 ? Math.round((100 - each * (rows.length - 1)) * 100) / 100 : each; });
+    updateTotal(side);
+  }
+
+  function renderIssues(e) {
+    const box = $('editorIssues');
+    const issues = e ? issuesOf(e) : [];
+    box.hidden = !issues.length;
+    box.classList.toggle('s-replace', !!e && e.status === 'replace');
+    box.innerHTML = issues.map(i => `<li>${esc(i)}</li>`).join('');
+  }
+
+  function openEditor(id) {
+    const form = $('editorForm');
+    form.reset();
+    const e = id ? els().find(x => x.id === id) : null;
+    editingId = e ? e.id : null;
+    const m = e ? musicOf(e) : { title: '', artist: '', cueId: '', usage: '', writers: [], publishers: [] };
+    $('editorTitle').textContent = e ? 'Edit cue' : 'Add cue';
+    $('editorSubmit').textContent = e ? 'Update cue' : 'Add cue';
+    $('duplicateBtn').hidden = !e;
+    $('deleteBtn').hidden = !e;
+    form.elements.title.value = m.title || (e ? str(e.description) : '');
+    form.elements.artist.value = m.artist;
+    form.elements.cueId.value = m.cueId;
+    form.elements.usage.value = usageByCode[m.usage] ? m.usage : '';
+    form.elements.tcIn.value = e ? str(e.tcIn) : '';
+    form.elements.tcOut.value = e ? str(e.tcOut) : '';
+    for (const k of ['title', 'tcIn', 'tcOut']) form.elements[k].setCustomValidity('');
+    $('tcHint').textContent = doc.project.cutVersion
+      ? `Where it sits in the cut (${doc.project.cutVersion}), as hours:minutes:seconds:frames. Shared with the clearance log.`
+      : 'Where it sits in your current cut, as hours:minutes:seconds:frames. Shared with the clearance log.';
+    renderSide('writers', m.writers);
+    renderSide('publishers', m.publishers);
+    const others = cues().filter(x => x.id !== editingId && (musicOf(x).writers.length || musicOf(x).publishers.length));
+    $('copyRow').hidden = !others.length;
+    $('copyFrom').innerHTML = `<option value="">Copy credits from another cue</option>` +
+      others.map(x => `<option value="${esc(x.id)}">${esc(titleOf(x))}${x.tcIn ? `, ${esc(x.tcIn)}` : ''}</option>`).join('');
+    $('sharedNote').textContent = e
+      ? `Clearance status: ${STATUS_LABELS[e.status] || 'Not started'}. Change it in the clearance log.`
+      : 'New cues also appear in the clearance log as Music, with status Not started.';
+    renderIssues(e);
+    $('editor').showModal();
+    form.elements.title.focus();
+  }
+
+  function copyCredits() {
+    const src = els().find(x => x.id === $('copyFrom').value);
+    $('copyFrom').value = '';
+    if (!src) return;
+    const m = musicOf(src);
+    const hasRows = $('writersList').children.length || $('publishersList').children.length;
+    if (hasRows && !confirm(`Replace the composers and publishers here with the ones from "${titleOf(src)}"?`)) return;
+    renderSide('writers', m.writers);
+    renderSide('publishers', m.publishers);
+    const f = $('editorForm').elements;
+    if (!f.title.value.trim()) f.title.value = m.title || str(src.description);
+    if (!f.artist.value.trim()) f.artist.value = m.artist;
+    toast(`Copied credits from "${titleOf(src)}"`);
+  }
+
+  function validateEditor() {
+    const f = $('editorForm').elements;
+    f.title.setCustomValidity(f.title.value.trim() ? '' : 'Add the title of the music.');
+    for (const k of ['tcIn', 'tcOut']) {
+      const v = tcToFrames(f[k].value);
+      f[k].setCustomValidity(Number.isNaN(v) ? `Use hours:minutes:seconds:frames, like 01:02:03:04 (frames below ${Math.round(rate())}).` : '');
+    }
+    const a = tcToFrames(f.tcIn.value), b = tcToFrames(f.tcOut.value);
+    if (a != null && b != null && !Number.isNaN(a) && !Number.isNaN(b) && b <= a) f.tcOut.setCustomValidity('Timecode out has to come after timecode in.');
+    for (const el of [f.title, f.tcIn, f.tcOut]) {
+      if (!el.checkValidity()) { el.reportValidity(); el.focus(); return false; }
+    }
+    for (const r of $('editorForm').querySelectorAll('.p-share')) {
+      if (!r.checkValidity()) { r.reportValidity(); r.focus(); return false; }
+    }
+    return true;
+  }
+
+  function saveEditor() {
+    if (!validateEditor()) return;
+    const f = $('editorForm').elements;
+    const now = new Date().toISOString();
+    const music = {
+      title: f.title.value.trim(),
+      artist: f.artist.value.trim(),
+      cueId: f.cueId.value.trim(),
+      usage: f.usage.value,
+      writers: readSide('writers'),
+      publishers: readSide('publishers'),
+    };
+    let e;
+    if (editingId) {
+      e = els().find(x => x.id === editingId);
+      e.music = Object.assign({}, e.music && typeof e.music === 'object' ? e.music : {}, music);
+      e.tcIn = f.tcIn.value.trim();
+      e.tcOut = f.tcOut.value.trim();
+      if (!str(e.description).trim()) e.description = music.title;
+      e.updatedAt = now;
+    } else {
+      e = { id: newId() };
+      for (const k of ELEMENT_TEXT) e[k] = '';
+      Object.assign(e, { description: music.title, type: 'Music', status: 'not-started', tcIn: f.tcIn.value.trim(), tcOut: f.tcOut.value.trim(), cost: null, music, createdAt: now, updatedAt: now });
+      els().push(e);
+    }
+    $('editor').close();
+    changed();
+    const left = issuesOf(e).length;
+    toast(`${editingId ? 'Updated' : 'Added'} "${music.title}"${left && e.status !== 'replace' ? `. ${left} thing${left === 1 ? '' : 's'} still needed for the cue sheet.` : ''}`);
+  }
+
+  function deleteEditing() {
+    const e = els().find(x => x.id === editingId);
+    if (!e) return;
+    if (!confirm(`Delete "${titleOf(e)}"? It's also removed from the clearance log. This can't be undone.`)) return;
+    doc.thirdPartyElements = els().filter(x => x.id !== editingId);
+    $('editor').close();
+    changed();
+    toast(`Deleted "${titleOf(e)}"`);
+  }
+
+  function duplicateEditing() {
+    const e = els().find(x => x.id === editingId);
+    if (!e) return;
+    const now = new Date().toISOString();
+    const copy = structuredClone(e);
+    Object.assign(copy, { id: newId(), description: `${str(e.description) || titleOf(e)} (copy)`, tcIn: '', tcOut: '', createdAt: now, updatedAt: now });
+    if (copy.music && typeof copy.music === 'object') copy.music.cueId = '';
+    els().splice(els().indexOf(e) + 1, 0, copy);
+    $('editor').close();
+    changed();
+    openEditor(copy.id);
+    $('f-tcIn').focus();
+    toast('Duplicated with the same credits. Add the timecode for this use.');
+  }
+
+  // ---------- Film details ----------
+  function openProjectDialog() {
+    const f = $('projectForm').elements;
+    for (const k of PROJECT_TEXT) f[k].value = doc.project[k];
+    f.musicSupervisor.value = doc.musicCueSheet.musicSupervisor;
+    f.frameRate.value = String(doc.project.frameRate);
+    if (f.frameRate.value !== String(doc.project.frameRate)) f.frameRate.value = '24';
+    for (const k of ['runningTime', 'startTimecode']) f[k].setCustomValidity('');
+    $('projectDialog').showModal();
+    f.title.focus();
+  }
+  function saveProjectDialog() {
+    const f = $('projectForm').elements;
+    const prevRate = doc.project.frameRate;
+    doc.project.frameRate = Number(f.frameRate.value);
+    const run = parseRunningTime(f.runningTime.value);
+    f.runningTime.setCustomValidity(Number.isNaN(run) ? 'Use hours:minutes:seconds, like 1:32:10.' : '');
+    const st = tcToFrames(f.startTimecode.value);
+    f.startTimecode.setCustomValidity(Number.isNaN(st) ? 'Use hours:minutes:seconds:frames, like 01:00:00:00.' : '');
+    for (const el of [f.runningTime, f.startTimecode]) {
+      if (!el.checkValidity()) { doc.project.frameRate = prevRate; el.reportValidity(); el.focus(); return; }
+    }
+    for (const k of PROJECT_TEXT) doc.project[k] = f[k].value.trim();
+    doc.musicCueSheet.musicSupervisor = f.musicSupervisor.value.trim();
+    $('projectDialog').close();
+    changed();
+  }
+
+  // ---------- Dirty state & recovery draft ----------
+  function changed() { dirty = true; saveDraft(); render(); }
+  function saveDraft() {
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ doc, fileName, at: new Date().toISOString() })); } catch { /* the file on disk is the real copy */ }
+  }
+  function clearDraft() {
+    try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+    $('recovery').hidden = true;
+  }
+  function checkDraft() {
+    let draft = null;
+    try { draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); } catch { draft = null; }
+    if (!draft || !draft.doc || draft.doc.format !== FORMAT) return;
+    const list = Array.isArray(draft.doc.thirdPartyElements) ? draft.doc.thirdPartyElements : [];
+    const n = list.filter(isMusic).length;
+    if (!list.length && !(draft.doc.project && draft.doc.project.title)) { clearDraft(); return; }
+    const when = draft.at ? new Date(draft.at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'earlier';
+    const title = draft.doc.project && draft.doc.project.title ? `"${draft.doc.project.title}"` : 'an untitled project';
+    $('recoveryText').textContent = `You have unsaved changes to ${title} from ${when} (${n} music cue${n === 1 ? '' : 's'}). Restore them, or discard them and start fresh.`;
+    $('recovery').hidden = false;
+    $('restoreBtn').onclick = () => {
+      doc = normalize(draft.doc);
+      fileName = draft.fileName || null;
+      fileHandle = null;
+      dirty = true;
+      $('recovery').hidden = true;
+      render();
+      toast(fileName ? `Restored. Save to write the changes back to ${fileName}.` : 'Restored. Save to keep it as a file.');
+    };
+    $('discardBtn').onclick = () => { clearDraft(); toast('Discarded the unsaved changes.'); };
+  }
+
+  // ---------- Files ----------
+  const pickerTypes = [{ description: 'Film project file', accept: { 'application/json': ['.json'] } }];
+  function slug() {
+    return (doc.project.title || 'untitled-film').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'untitled-film';
+  }
+  const suggestedName = () => `${slug()}.oft.json`;
+  function serialize() {
+    doc.savedAt = new Date().toISOString();
+    doc.savedBy = TOOL;
+    return JSON.stringify(doc, null, 2) + '\n';
+  }
+  function download(text, name, type) {
+    const url = URL.createObjectURL(new Blob([text], { type }));
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  function afterSave(name, downloaded) {
+    fileName = name;
+    dirty = false;
+    clearDraft();
+    render();
+    toast(downloaded ? `Downloaded ${name}. Keep it with your project files and open it here next time.` : `Saved to ${name}`);
+  }
+  async function saveFile() {
+    const out = serialize();
+    if (fileHandle) {
+      try {
+        const w = await fileHandle.createWritable();
+        await w.write(out); await w.close();
+        afterSave(fileHandle.name);
+        return;
+      } catch (err) {
+        if (err.name === 'AbortError') return;
+        fileHandle = null;
+      }
+    }
+    if (window.showSaveFilePicker && window.self === window.top) {
+      try {
+        const h = await window.showSaveFilePicker({ suggestedName: fileName || suggestedName(), types: pickerTypes });
+        const w = await h.createWritable();
+        await w.write(out); await w.close();
+        fileHandle = h;
+        afterSave(h.name);
+      } catch (err) {
+        if (err.name !== 'AbortError') toast(`Couldn't save the file: ${err.message}`, true);
+      }
+      return;
+    }
+    const name = fileName || suggestedName();
+    download(out, name, 'application/json');
+    afterSave(name, true);
+  }
+  function loadText(text, name, handle) {
+    let data;
+    try { data = JSON.parse(text); } catch { toast(`Couldn't open ${name}: it isn't a project file.`, true); return; }
+    if (!data || data.format !== FORMAT) { toast(`Couldn't open ${name}: it isn't an Open Filmmaker Toolkit project file.`, true); return; }
+    if (Number(data.formatVersion) > FORMAT_VERSION) { toast(`Couldn't open ${name}: it was saved by a newer version of the toolkit. Get the latest version of this tool.`, true); return; }
+    doc = normalize(data);
+    fileHandle = handle;
+    fileName = name;
+    dirty = false;
+    clearDraft();
+    resetFilters();
+    render();
+    const n = cues().length;
+    toast(`Opened ${name}: ${n} music cue${n === 1 ? '' : 's'}`);
+  }
+  async function openFile() {
+    if (dirty && !confirm('You have unsaved changes. Open another file and lose them?')) return;
+    if (window.showOpenFilePicker && window.self === window.top) {
+      try {
+        const [h] = await window.showOpenFilePicker({ types: pickerTypes });
+        const f = await h.getFile();
+        loadText(await f.text(), f.name, h);
+      } catch (err) {
+        if (err.name !== 'AbortError') toast(`Couldn't open the file: ${err.message}`, true);
+      }
+      return;
+    }
+    $('fileInput').click();
+  }
+  function newProject() {
+    if (dirty && !confirm('You have unsaved changes. Start a new project and lose them?')) return;
+    doc = normalize(blankDoc());
+    fileHandle = null;
+    fileName = null;
+    dirty = false;
+    clearDraft();
+    resetFilters();
+    render();
+    openProjectDialog();
+  }
+
+  // ---------- CSV ----------
+  function csvCell(v) {
+    let s = v == null ? '' : String(v);
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+    return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }
+  const joinParties = list => list.map(p => [p.role, p.name, p.society && `(${p.society})`, p.share == null ? '' : fmtPct(p.share)].filter(Boolean).join(' ')).join('; ');
+  function exportCsv() {
+    const head = ['Seq', 'Cue', 'Title', 'Artist', 'Usage code', 'Usage', 'Time in', 'Time out', 'Duration', 'Duration (seconds)', 'Composers and authors', 'Publishers', 'Cue sheet', 'Still needed', 'Clearance status'];
+    const rows = cues().map((e, i) => {
+      const m = musicOf(e);
+      const d = cueSeconds(durationOf(e));
+      return [i + 1, m.cueId, titleOf(e), m.artist, m.usage, usageByCode[m.usage] ? usageByCode[m.usage].label : '', e.tcIn, e.tcOut,
+        fmtClock(d), d == null ? '' : d, joinParties(m.writers), joinParties(m.publishers), stateLabel(stateOf(e)), issuesOf(e).join(' | '), STATUS_LABELS[e.status] || ''];
+    });
+    const csv = '﻿' + [head, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
+    const name = `${slug()}-music-cue-sheet.csv`;
+    download(csv, name, 'text/csv;charset=utf-8');
+    toast(`Exported ${rows.length} cue${rows.length === 1 ? '' : 's'} to ${name}`);
+  }
+
+  // ---------- Toast ----------
+  let toastTimer = null;
+  function toast(msg, isError) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.classList.toggle('error', !!isError);
+    t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.hidden = true; }, isError ? 7000 : 4200);
+  }
+  function resetFilters() { $('search').value = ''; $('stateFilter').value = 'all'; }
+
+  // ---------- Wiring ----------
+  function init() {
+    doc = normalize(doc);
+    fillSelect($('f-usage'), [{ value: '', label: 'Choose usage' }, ...USAGES.map(u => ({ value: u.code, label: `${u.label} (${u.code})` }))]);
+    fillSelect($('p-frameRate'), RATES.map(r => ({ value: String(r), label: `${r} fps` })));
+    $('societies').innerHTML = SOCIETIES.map(s => `<option value="${esc(s)}"></option>`).join('');
+
+    $('addBtn').onclick = () => openEditor(null);
+    $('emptyAddBtn').onclick = () => openEditor(null);
+    $('emptyOpenBtn').onclick = openFile;
+    $('newBtn').onclick = newProject;
+    $('openBtn').onclick = openFile;
+    $('saveBtn').onclick = saveFile;
+    $('editProjectBtn').onclick = openProjectDialog;
+    $('filmTitle').onclick = openProjectDialog;
+    $('csvBtn').onclick = exportCsv;
+    $('printBtn').onclick = () => { renderReport(); window.print(); };
+    window.addEventListener('beforeprint', renderReport);
+
+    $('fileInput').addEventListener('change', async () => {
+      const f = $('fileInput').files[0];
+      if (f) loadText(await f.text(), f.name, null);
+      $('fileInput').value = '';
+    });
+
+    $('editorForm').addEventListener('submit', ev => { ev.preventDefault(); saveEditor(); });
+    $('editorCancel').onclick = () => $('editor').close();
+    $('deleteBtn').onclick = deleteEditing;
+    $('duplicateBtn').onclick = duplicateEditing;
+    $('copyFrom').addEventListener('change', copyCredits);
+    for (const k of ['f-tcIn', 'f-tcOut', 'f-title']) $(k).addEventListener('input', e => e.target.setCustomValidity(''));
+    $('editorForm').addEventListener('click', ev => {
+      const add = ev.target.closest('[data-add]');
+      if (add) { addParty(add.dataset.add); return; }
+      const split = ev.target.closest('[data-split]');
+      if (split) { splitEvenly(split.dataset.split); return; }
+      const rm = ev.target.closest('.remove');
+      if (rm) {
+        const list = rm.closest('.party-list');
+        const side = list.id === 'writersList' ? 'writers' : 'publishers';
+        rm.closest('.party-row').remove();
+        const rest = [...list.querySelectorAll('.party-row')].map(r => ({
+          name: r.querySelector('.p-name').value, role: r.querySelector('.p-role').value,
+          society: r.querySelector('.p-society').value, share: r.querySelector('.p-share').value === '' ? null : Number(r.querySelector('.p-share').value),
+        }));
+        renderSide(side, rest);
+      }
+    });
+    $('editorForm').addEventListener('input', ev => {
+      if (ev.target.classList.contains('p-share')) updateTotal(ev.target.closest('.party-list').id === 'writersList' ? 'writers' : 'publishers');
+    });
+
+    $('projectForm').addEventListener('submit', ev => { ev.preventDefault(); saveProjectDialog(); });
+    $('projectCancel').onclick = () => $('projectDialog').close();
+    for (const k of ['p-runningTime', 'p-startTimecode']) $(k).addEventListener('input', e => e.target.setCustomValidity(''));
+
+    for (const id of ['search', 'stateFilter']) $(id).addEventListener('input', renderTable);
+    $('rows').addEventListener('click', ev => {
+      if (ev.target.id === 'clearFilters') { resetFilters(); renderTable(); return; }
+      const tr = ev.target.closest('tr[data-id]');
+      if (tr) openEditor(tr.dataset.id);
+    });
+    $('reel').addEventListener('click', ev => {
+      const b = ev.target.closest('.cue-block');
+      if (b) openEditor(b.dataset.id);
+    });
+
+    document.addEventListener('keydown', ev => {
+      const mod = ev.metaKey || ev.ctrlKey;
+      if (mod && ev.key.toLowerCase() === 's') { ev.preventDefault(); saveFile(); }
+      else if (mod && ev.key.toLowerCase() === 'o') { ev.preventDefault(); openFile(); }
+    });
+    window.addEventListener('beforeunload', ev => { if (dirty) { ev.preventDefault(); ev.returnValue = ''; } });
+
+    render();
+    checkDraft();
+  }
+
+  // Explain instead of failing silently: an old browser can't open the dialogs this tool uses.
+  if (typeof HTMLDialogElement !== 'function' || typeof HTMLDialogElement.prototype.showModal !== 'function' || typeof structuredClone !== 'function') {
+    $('cantRunTitle').textContent = 'This browser is too old to run this tool';
+    $('cantRunText').textContent = 'Update to a current version of Chrome, Edge, Firefox or Safari, then open this file again.';
+    $('cantRunHow').hidden = true;
+    return;
+  }
+  document.documentElement.classList.remove('no-js');
+  // Anything that goes wrong shows up on screen rather than in a console nobody's looking at.
+  window.addEventListener('error', ev => toast(`Something went wrong: ${ev.message}. Save your work, then reload the page.`, true));
+  window.addEventListener('unhandledrejection', ev => toast(`Something went wrong: ${ev.reason && ev.reason.message ? ev.reason.message : ev.reason}. Save your work, then reload the page.`, true));
+  init();
+})();
+</script>
+</body>
+</html>
