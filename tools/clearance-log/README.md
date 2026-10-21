@@ -19,7 +19,9 @@ To try it with data, click **Open file** and choose `sample-project.oft.json` fr
 - **Print a report.** Prints the elements currently shown, with a status summary, for your E&O attorney or a production meeting.
 - **Export CSV.** Exports every element for a spreadsheet, whatever the filters.
 
-Lengths are worked out from timecode at the film's frame rate (set in **Edit film details**). Drop-frame timecode is treated as non-drop, so long 29.97 segments can be off by a frame or two.
+**Edit film details** holds the title, production company, producer, who prepared the log and how to reach them, and the cut the timecodes refer to. All of these print at the top of the report. Update the cut whenever you re-time the log against a new version of the edit.
+
+Lengths are worked out from timecode at the film's frame rate (also set in **Edit film details**). Drop-frame timecode is treated as non-drop, so long 29.97 segments can be off by a frame or two.
 
 ## Saving
 
@@ -38,7 +40,11 @@ The file is plain JSON:
 {
   "format": "open-filmmaker-toolkit/project",
   "formatVersion": 1,
-  "project": { "title": "", "company": "", "frameRate": 24, "currency": "USD" },
+  "project": {
+    "title": "", "company": "", "producer": "",
+    "preparedBy": "", "preparedContact": "", "cutVersion": "",
+    "frameRate": 24, "currency": "USD"
+  },
   "thirdPartyElements": [
     {
       "id": "…", "description": "…", "type": "Music", "status": "negotiating",

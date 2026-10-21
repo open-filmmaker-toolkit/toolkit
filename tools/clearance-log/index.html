@@ -83,6 +83,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .film-title.is-empty { color: var(--ink-3); font-style: italic; font-weight: 400; }
 .film-meta { margin: 4px 0 0; color: var(--ink-2); font-size: 14px; }
 .film-meta button { margin-left: 4px; }
+.cut-line { margin: 2px 0 0; font-size: 14px; color: var(--ink-2); }
+.cut-line.missing { color: var(--ink-3); font-style: italic; }
 .file { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
 .file-state { margin: 0; font-size: 13px; color: var(--ink-2); text-align: right; }
 .file-state .dirty { color: var(--g-progress); font-weight: 600; }
@@ -232,7 +234,7 @@ dialog.drawer {
 }
 dialog.drawer[open] { animation: slide-in 160ms ease-out; }
 @keyframes slide-in { from { transform: translateX(24px); opacity: 0.4; } to { transform: none; opacity: 1; } }
-dialog.modal { width: min(460px, calc(100vw - 32px)); border-radius: 10px; }
+dialog.modal { width: min(560px, calc(100vw - 32px)); border-radius: 10px; }
 @media (prefers-reduced-motion: reduce) {
   dialog.drawer[open] { animation: none; }
   .frame:hover { transform: none; }
@@ -311,6 +313,7 @@ dialog form { display: flex; flex-direction: column; height: 100%; }
       <p class="tool-name">Clearance log</p>
       <h1 class="film-title" id="filmTitle">Untitled film</h1>
       <p class="film-meta"><span id="filmMeta"></span> <button type="button" class="link-btn" id="editProjectBtn">Edit film details</button></p>
+      <p class="cut-line" id="cutLine"></p>
     </div>
     <div class="file">
       <p class="file-state" id="fileState">Not saved to a file yet</p>
@@ -431,7 +434,7 @@ dialog form { display: flex; flex-direction: column; height: 100%; }
           <input id="f-tcOut" name="tcOut" class="num" placeholder="01:02:15:00" inputmode="numeric" autocomplete="off">
         </div>
       </div>
-      <p class="hint tc-hint">Where it sits in your current cut, as hours:minutes:seconds:frames.</p>
+      <p class="hint tc-hint" id="tcHint">Where it sits in your current cut, as hours:minutes:seconds:frames.</p>
       <div class="field">
         <label for="f-use">How it's used</label>
         <input id="f-use" name="use" placeholder="Full screen, with narration over">
@@ -473,9 +476,30 @@ dialog form { display: flex; flex-direction: column; height: 100%; }
         <label for="p-title">Film title</label>
         <input id="p-title" name="title" placeholder="Working title is fine">
       </div>
+      <div class="row-2">
+        <div class="field">
+          <label for="p-company">Production company</label>
+          <input id="p-company" name="company">
+        </div>
+        <div class="field">
+          <label for="p-producer">Producer</label>
+          <input id="p-producer" name="producer">
+        </div>
+      </div>
+      <div class="row-2">
+        <div class="field">
+          <label for="p-preparedBy">Log prepared by</label>
+          <input id="p-preparedBy" name="preparedBy" placeholder="Name and role">
+        </div>
+        <div class="field">
+          <label for="p-preparedContact">Their contact</label>
+          <input id="p-preparedContact" name="preparedContact" placeholder="Email or phone">
+        </div>
+      </div>
       <div class="field">
-        <label for="p-company">Production company</label>
-        <input id="p-company" name="company">
+        <label for="p-cutVersion">Cut the timecodes refer to</label>
+        <input id="p-cutVersion" name="cutVersion" placeholder="Locked cut v12, Oct 18">
+        <p class="hint">Update this whenever you re-time the log against a new version of the edit.</p>
       </div>
       <div class="row-2">
         <div class="field">
@@ -542,7 +566,7 @@ dialog form { display: flex; flex-direction: column; height: 100%; }
     return {
       format: FORMAT,
       formatVersion: FORMAT_VERSION,
-      project: { title: '', company: '', frameRate: 24, currency: 'USD' },
+      project: { title: '', company: '', producer: '', preparedBy: '', preparedContact: '', cutVersion: '', frameRate: 24, currency: 'USD' },
       thirdPartyElements: [],
     };
   }
@@ -552,8 +576,9 @@ dialog form { display: flex; flex-direction: column; height: 100%; }
   function normalize(d) {
     if (!d.project || typeof d.project !== 'object') d.project = {};
     const p = d.project;
-    if (typeof p.title !== 'string') p.title = '';
-    if (typeof p.company !== 'string') p.company = '';
+    for (const k of ['title', 'company', 'producer', 'preparedBy', 'preparedContact', 'cutVersion']) {
+      if (typeof p[k] !== 'string') p[k] = '';
+    }
     if (!Number(p.frameRate)) p.frameRate = 24;
     if (typeof p.currency !== 'string' || !/^[A-Za-z]{3}$/.test(p.currency)) p.currency = 'USD';
     if (!Array.isArray(d.thirdPartyElements)) d.thirdPartyElements = [];
@@ -668,8 +693,10 @@ dialog form { display: flex; flex-direction: column; height: 100%; }
     const title = $('filmTitle');
     title.textContent = p.title || 'Untitled film';
     title.classList.toggle('is-empty', !p.title);
-    const meta = [p.company, `${p.frameRate} fps`, p.currency.toUpperCase()].filter(Boolean);
+    const meta = [p.company, p.producer && `produced by ${p.producer}`, `${p.frameRate} fps`, p.currency.toUpperCase()].filter(Boolean);
     $('filmMeta').textContent = meta.join(', ');
+    $('cutLine').textContent = p.cutVersion ? `Timecodes match ${p.cutVersion}` : 'Add which cut the timecodes match in film details';
+    $('cutLine').classList.toggle('missing', !p.cutVersion);
     const name = fileName ? esc(fileName) : '';
     $('fileState').innerHTML = dirty
       ? `<span class="dirty">Unsaved changes</span>${name ? ` to ${name}` : '. Not saved to a file yet.'}`
@@ -743,6 +770,9 @@ dialog form { display: flex; flex-direction: column; height: 100%; }
       <h1>${esc(p.title || 'Untitled film')}</h1>
       <div class="meta">
         ${p.company ? `<p>${esc(p.company)}</p>` : ''}
+        ${p.producer ? `<p>Producer: ${esc(p.producer)}</p>` : ''}
+        ${p.preparedBy || p.preparedContact ? `<p>Prepared by: ${esc([p.preparedBy, p.preparedContact].filter(Boolean).join(', '))}</p>` : ''}
+        <p>Timecodes match: ${p.cutVersion ? esc(p.cutVersion) : 'cut not specified'}</p>
         <p>Clearance log, printed ${esc(when)}${fileName ? ` from ${esc(fileName)}` : ''}</p>
         <p>${filt ? `Showing ${list.length} of ${total} elements: ${esc(filt)}` : `All ${total} elements`}</p>
       </div>
@@ -797,6 +827,9 @@ dialog form { display: flex; flex-direction: column; height: 100%; }
       form.elements.type.value = e.type;
     }
     form.elements.cost.value = src.cost ?? '';
+    $('tcHint').textContent = doc.project.cutVersion
+      ? `Where it sits in the cut (${doc.project.cutVersion}), as hours:minutes:seconds:frames.`
+      : 'Where it sits in your current cut, as hours:minutes:seconds:frames.';
     for (const k of ['tcIn', 'tcOut', 'description']) form.elements[k].setCustomValidity('');
     $('editor').showModal();
     form.elements.description.focus();
@@ -872,8 +905,7 @@ dialog form { display: flex; flex-direction: column; height: 100%; }
 
   function openProjectDialog() {
     const f = $('projectForm').elements;
-    f.title.value = doc.project.title;
-    f.company.value = doc.project.company;
+    for (const k of ['title', 'company', 'producer', 'preparedBy', 'preparedContact', 'cutVersion']) f[k].value = doc.project[k];
     f.frameRate.value = String(doc.project.frameRate);
     if (f.frameRate.value !== String(doc.project.frameRate)) f.frameRate.value = '24';
     f.currency.value = doc.project.currency.toUpperCase();
@@ -890,12 +922,9 @@ dialog form { display: flex; flex-direction: column; height: 100%; }
       return false;
     }
     f.currency.setCustomValidity('');
-    Object.assign(doc.project, {
-      title: f.title.value.trim(),
-      company: f.company.value.trim(),
-      frameRate: Number(f.frameRate.value),
-      currency: cur,
-    });
+    for (const k of ['title', 'company', 'producer', 'preparedBy', 'preparedContact', 'cutVersion']) doc.project[k] = f[k].value.trim();
+    doc.project.frameRate = Number(f.frameRate.value);
+    doc.project.currency = cur;
     $('projectDialog').close();
     changed();
     return true;
