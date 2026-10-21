@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="no-js">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -59,6 +59,12 @@ button, input, select, textarea { font: inherit; color: inherit; }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .num { font-variant-numeric: tabular-nums; }
 [hidden] { display: none !important; }
+/* Until the script starts, show why nothing works (it never starts in previews that don't run scripts). */
+.cant-run { display: none; max-width: 640px; margin: 64px auto; padding: 0 24px; }
+.cant-run h1 { margin: 0 0 8px; font: 600 26px/1.2 var(--serif); }
+.cant-run p { margin: 0 0 10px; color: var(--ink-2); }
+.no-js .cant-run { display: block; }
+.no-js .page { display: none; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 .page { max-width: 1280px; margin: 0 auto; padding: 0 24px 48px; }
@@ -260,6 +266,11 @@ dialog form { display: flex; flex-direction: column; height: 100%; max-height: i
 </style>
 </head>
 <body>
+<div class="cant-run" id="cantRun">
+  <h1 id="cantRunTitle">Open this file in a web browser</h1>
+  <p id="cantRunText">This tool runs in Chrome, Edge, Firefox or Safari. You're seeing a preview that doesn't run it, so none of the buttons would work.</p>
+  <p id="cantRunHow">In your browser, choose File, then Open File, and pick this file. Or right-click the file and open it with your browser.</p>
+</div>
 <div class="page">
   <header class="masthead">
     <div>
@@ -1168,7 +1179,7 @@ dialog form { display: flex; flex-direction: column; height: 100%; max-height: i
         fileHandle = null;
       }
     }
-    if (window.showSaveFilePicker) {
+    if (window.showSaveFilePicker && window.self === window.top) {
       try {
         const h = await window.showSaveFilePicker({ suggestedName: fileName || suggestedName(), types: pickerTypes });
         const w = await h.createWritable();
@@ -1201,7 +1212,7 @@ dialog form { display: flex; flex-direction: column; height: 100%; max-height: i
   }
   async function openFile() {
     if (dirty && !confirm('You have unsaved changes. Open another file and lose them?')) return;
-    if (window.showOpenFilePicker) {
+    if (window.showOpenFilePicker && window.self === window.top) {
       try {
         const [h] = await window.showOpenFilePicker({ types: pickerTypes });
         const f = await h.getFile();
@@ -1336,6 +1347,17 @@ dialog form { display: flex; flex-direction: column; height: 100%; max-height: i
     checkDraft();
   }
 
+  // Explain instead of failing silently: an old browser can't open the dialogs this tool uses.
+  if (typeof HTMLDialogElement !== 'function' || typeof HTMLDialogElement.prototype.showModal !== 'function' || typeof structuredClone !== 'function') {
+    $('cantRunTitle').textContent = 'This browser is too old to run this tool';
+    $('cantRunText').textContent = 'Update to a current version of Chrome, Edge, Firefox or Safari, then open this file again.';
+    $('cantRunHow').hidden = true;
+    return;
+  }
+  document.documentElement.classList.remove('no-js');
+  // Anything that goes wrong shows up on screen rather than in a console nobody's looking at.
+  window.addEventListener('error', ev => toast(`Something went wrong: ${ev.message}. Save your work, then reload the page.`, true));
+  window.addEventListener('unhandledrejection', ev => toast(`Something went wrong: ${ev.reason && ev.reason.message ? ev.reason.message : ev.reason}. Save your work, then reload the page.`, true));
   init();
 })();
 </script>
