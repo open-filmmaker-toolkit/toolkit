@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Report a code of conduct concern
+    url: https://github.com/open-filmmaker-toolkit/toolkit/blob/main/CODE_OF_CONDUCT.md#reporting-an-issue
+    about: Please don't report conduct issues in public. Here's how to reach the maintainers privately.
