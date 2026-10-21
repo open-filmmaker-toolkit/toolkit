@@ -1,0 +1,70 @@
+name: Submit a template
+description: Share a form, sheet or document you use, so other filmmakers can use it too.
+title: "Template: "
+labels: ["template submission"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Attach the file below. A maintainer will clean it up, add it to the toolkit and credit you if you'd like.
+
+        **Before you attach it, remove anything private:** real names, phone numbers, emails, addresses, rates, and anything about the people in your film.
+  - type: input
+    id: what
+    attributes:
+      label: What is it?
+      placeholder: Location release, festival budget sheet, interview log
+    validations:
+      required: true
+  - type: dropdown
+    id: phase
+    attributes:
+      label: Which part of making a film is it for?
+      options:
+        - Development
+        - Funding
+        - Pre-production
+        - Production
+        - Post-production
+        - Legal and clearances
+        - Marketing and festivals
+        - Release and distribution
+        - Impact and outreach
+        - Close-out and archive
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: file
+    attributes:
+      label: Attach the template
+      description: Drag the file into this box. Word, Excel, PDF, plain text and exports from Google Docs or Sheets all work.
+    validations:
+      required: true
+  - type: textarea
+    id: how
+    attributes:
+      label: How do you use it?
+      description: When in the production you fill it in, who fills it in, and anything that makes it work better than other versions.
+  - type: input
+    id: jurisdiction
+    attributes:
+      label: For legal forms, where was it written for?
+      description: The country, state or province. Releases and contracts differ from place to place.
+      placeholder: Minnesota, USA
+  - type: input
+    id: credit
+    attributes:
+      label: How should we credit you?
+      description: Your name or company as you'd like it to appear. Leave it blank to stay anonymous.
+  - type: checkboxes
+    id: rights
+    attributes:
+      label: Before you send
+      options:
+        - label: I made this template, or I have permission to share it.
+          required: true
+        - label: I removed real names, contact details, rates and anything else private from the file.
+          required: true
+        - label: I understand it will be published free for anyone to use, under the toolkit's open license.
+          required: true
