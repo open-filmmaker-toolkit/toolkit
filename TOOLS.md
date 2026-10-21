@@ -127,7 +127,7 @@ Linked tools are available now; the rest are planned. Order of work is in [ROADM
 - Structure board
 - Cut version tracker
 - Name supers list
-- Music cue sheet
+- [Music cue sheet](tools/music-cue-sheet/) (first version)
 - Credits builder
 - Budget-to-actuals
 

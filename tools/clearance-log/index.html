@@ -894,7 +894,8 @@ dialog form { display: flex; flex-direction: column; height: 100%; }
     const e = els().find(x => x.id === editingId);
     if (!e) return;
     const now = new Date().toISOString();
-    const copy = { ...e, id: newId(), description: `${e.description} (copy)`, createdAt: now, updatedAt: now };
+    // Deep copy, so data other tools keep on the element (like cue sheet credits) isn't shared between the two.
+    const copy = { ...structuredClone(e), id: newId(), description: `${e.description} (copy)`, createdAt: now, updatedAt: now };
     const i = els().indexOf(e);
     els().splice(i + 1, 0, copy);
     $('editor').close();

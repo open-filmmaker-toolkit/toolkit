@@ -1,0 +1,368 @@
+{
+  "format": "open-filmmaker-toolkit/project",
+  "formatVersion": 1,
+  "project": {
+    "title": "The River Keeps",
+    "company": "Lowwater Films",
+    "producer": "Ana Reyes",
+    "distributor": "",
+    "releaseDate": "",
+    "runningTime": "1:24:30",
+    "startTimecode": "",
+    "preparedBy": "Sam Okafor, post supervisor",
+    "preparedContact": "sam@example.com",
+    "cutVersion": "Locked cut v12, Oct 18",
+    "frameRate": 23.976,
+    "currency": "USD"
+  },
+  "thirdPartyElements": [
+    {
+      "id": "sample-01",
+      "description": "Flood of 1965, aerial over downtown",
+      "type": "Archival footage",
+      "status": "licensed",
+      "source": "Riverside County Historical Society, reel 14",
+      "rightsHolder": "Riverside County Historical Society",
+      "contact": "archives@example.org",
+      "tcIn": "00:02:10:00",
+      "tcOut": "00:02:24:12",
+      "use": "Full screen, cold open",
+      "rights": "Worldwide, all media, in perpetuity",
+      "cost": 1200,
+      "licenseRef": "RCHS-license-2026-03.pdf",
+      "notes": ""
+    },
+    {
+      "id": "sample-02",
+      "description": "Family photo, Marguerite on the levee",
+      "type": "Archival still",
+      "status": "licensed",
+      "source": "Okafor family collection",
+      "rightsHolder": "Daniel Okafor",
+      "contact": "",
+      "tcIn": "00:05:41:08",
+      "tcOut": "00:05:47:00",
+      "use": "Slow push in under interview audio",
+      "rights": "Worldwide, all media, in perpetuity",
+      "cost": 0,
+      "licenseRef": "Okafor-materials-release.pdf",
+      "notes": "Signed materials release covers all family photos."
+    },
+    {
+      "id": "sample-03",
+      "description": "\"Muddy Water Hymn\" master recording",
+      "type": "Music",
+      "status": "negotiating",
+      "source": "The Low Waters, 1971 LP",
+      "rightsHolder": "Bluff Records (master), Delta Song Publishing (sync)",
+      "contact": "licensing@example.com",
+      "tcIn": "00:11:02:00",
+      "tcOut": "00:12:30:00",
+      "use": "Featured, background vocal over montage",
+      "rights": "Festival only for now; worldwide all media quote requested",
+      "cost": 3500,
+      "licenseRef": "",
+      "notes": "Need both sync and master. Festival quote in hand; waiting on all-media step deal.",
+      "music": {
+        "title": "Muddy Water Hymn",
+        "artist": "The Low Waters",
+        "cueId": "1M5",
+        "usage": "BV",
+        "writers": [
+          {
+            "name": "Earl Whitaker",
+            "role": "C",
+            "society": "BMI",
+            "share": 60
+          },
+          {
+            "name": "June Whitaker",
+            "role": "A",
+            "society": "BMI",
+            "share": 40
+          }
+        ],
+        "publishers": [
+          {
+            "name": "Delta Song Publishing",
+            "role": "E",
+            "society": "BMI",
+            "share": 100
+          }
+        ]
+      }
+    },
+    {
+      "id": "sample-04",
+      "description": "Newspaper front page, flood headline",
+      "type": "Archival still",
+      "status": "fair-use",
+      "source": "County library microfilm",
+      "rightsHolder": "Riverside Courier (defunct)",
+      "contact": "",
+      "tcIn": "00:02:25:00",
+      "tcOut": "00:02:29:00",
+      "use": "Discussed directly by the interviewee",
+      "rights": "",
+      "cost": null,
+      "licenseRef": "fair-use-memo-draft.docx",
+      "notes": "Attorney to review the fair use memo before picture lock."
+    },
+    {
+      "id": "sample-05",
+      "description": "Mural on the grain elevator",
+      "type": "Artwork",
+      "status": "requested",
+      "source": "Shot on location",
+      "rightsHolder": "Artist unknown, researching",
+      "contact": "",
+      "tcIn": "00:18:12:00",
+      "tcOut": "00:18:20:16",
+      "use": "Featured establishing shot",
+      "rights": "Worldwide, all media, in perpetuity",
+      "cost": null,
+      "licenseRef": "",
+      "notes": "Town arts council may know the artist."
+    },
+    {
+      "id": "sample-06",
+      "description": "Beer sign in the bar scene",
+      "type": "Logo or trademark",
+      "status": "replace",
+      "source": "Shot on location",
+      "rightsHolder": "",
+      "contact": "",
+      "tcIn": "00:24:03:10",
+      "tcOut": "00:24:09:00",
+      "use": "Prominent behind the subject",
+      "rights": "",
+      "cost": null,
+      "licenseRef": "",
+      "notes": "Blur in online or recut around it."
+    },
+    {
+      "id": "sample-07",
+      "description": "WPA levee construction film, 1937",
+      "type": "Archival footage",
+      "status": "public-domain",
+      "source": "National archive, government film",
+      "rightsHolder": "Public domain (US government work)",
+      "contact": "",
+      "tcIn": "00:31:00:00",
+      "tcOut": "00:31:22:00",
+      "use": "Full screen",
+      "rights": "",
+      "cost": 85,
+      "licenseRef": "",
+      "notes": "Cost is the lab transfer fee."
+    },
+    {
+      "id": "sample-08",
+      "description": "Local TV news report on the 1993 flood",
+      "type": "Archival footage",
+      "status": "not-started",
+      "source": "Station archive, tape ID unknown",
+      "rightsHolder": "Channel 6 (current owner unclear)",
+      "contact": "",
+      "tcIn": "00:36:40:00",
+      "tcOut": "00:37:05:00",
+      "use": "Full screen with original audio",
+      "rights": "Worldwide, all media, in perpetuity",
+      "cost": null,
+      "licenseRef": "",
+      "notes": "Station was sold twice. Find who holds the archive."
+    },
+    {
+      "id": "sample-09",
+      "description": "Original score: main title",
+      "type": "Music",
+      "status": "licensed",
+      "source": "Original score",
+      "rightsHolder": "Lowwater Films Music (composer agreement)",
+      "contact": "",
+      "tcIn": "00:00:20:00",
+      "tcOut": "00:01:45:00",
+      "use": "Over opening titles",
+      "rights": "All rights under composer agreement",
+      "cost": null,
+      "licenseRef": "Castellanos-composer-agreement.pdf",
+      "notes": "",
+      "music": {
+        "title": "The River Keeps (Main Title)",
+        "artist": "",
+        "cueId": "1M1",
+        "usage": "MT",
+        "writers": [
+          {
+            "name": "Mira Castellanos",
+            "role": "C",
+            "society": "ASCAP",
+            "share": 100
+          }
+        ],
+        "publishers": [
+          {
+            "name": "Lowwater Films Music",
+            "role": "E",
+            "society": "ASCAP",
+            "share": 100
+          }
+        ]
+      }
+    },
+    {
+      "id": "sample-10",
+      "description": "Original score: levee at night",
+      "type": "Music",
+      "status": "licensed",
+      "source": "Original score",
+      "rightsHolder": "Lowwater Films Music (composer agreement)",
+      "contact": "",
+      "tcIn": "00:07:12:00",
+      "tcOut": "00:08:40:00",
+      "use": "Under night exteriors",
+      "rights": "All rights under composer agreement",
+      "cost": null,
+      "licenseRef": "Castellanos-composer-agreement.pdf",
+      "notes": "",
+      "music": {
+        "title": "Levee at Night",
+        "artist": "",
+        "cueId": "1M3",
+        "usage": "BI",
+        "writers": [
+          {
+            "name": "Mira Castellanos",
+            "role": "C",
+            "society": "ASCAP",
+            "share": 100
+          }
+        ],
+        "publishers": [
+          {
+            "name": "Lowwater Films Music",
+            "role": "E",
+            "society": "ASCAP",
+            "share": 100
+          }
+        ]
+      }
+    },
+    {
+      "id": "sample-11",
+      "description": "Congregation sings \"Shall We Gather at the River\"",
+      "type": "Music",
+      "status": "public-domain",
+      "source": "Recorded on location, First Baptist choir",
+      "rightsHolder": "Public domain (published 1864)",
+      "contact": "",
+      "tcIn": "00:15:02:00",
+      "tcOut": "00:16:10:00",
+      "use": "Sung on camera",
+      "rights": "",
+      "cost": null,
+      "licenseRef": "",
+      "notes": "Choir signed a group appearance release.",
+      "music": {
+        "title": "Shall We Gather at the River",
+        "artist": "",
+        "cueId": "",
+        "usage": "VV",
+        "writers": [
+          {
+            "name": "Robert Lowry",
+            "role": "CA",
+            "society": "Public domain",
+            "share": 100
+          }
+        ],
+        "publishers": []
+      }
+    },
+    {
+      "id": "sample-12",
+      "description": "Library cue: river ambience",
+      "type": "Music",
+      "status": "licensed",
+      "source": "Fieldtone Music library, track FT-112-04",
+      "rightsHolder": "Fieldtone Music",
+      "contact": "",
+      "tcIn": "00:26:30:00",
+      "tcOut": "00:27:45:00",
+      "use": "Under b-roll",
+      "rights": "Worldwide, all media, in perpetuity (library blanket license)",
+      "cost": 150,
+      "licenseRef": "Fieldtone-blanket-license.pdf",
+      "notes": "",
+      "music": {
+        "title": "Riverbed Ambience 04",
+        "artist": "",
+        "cueId": "2M2",
+        "usage": "BI",
+        "writers": [
+          {
+            "name": "T. Brandt",
+            "role": "C",
+            "society": "",
+            "share": 100
+          }
+        ],
+        "publishers": [
+          {
+            "name": "Fieldtone Music",
+            "role": "E",
+            "society": "SESAC",
+            "share": 100
+          }
+        ]
+      }
+    },
+    {
+      "id": "sample-13",
+      "description": "\"Muddy Water Hymn\" master recording, end credits",
+      "type": "Music",
+      "status": "negotiating",
+      "source": "The Low Waters, 1971 LP",
+      "rightsHolder": "Bluff Records (master), Delta Song Publishing (sync)",
+      "contact": "",
+      "tcIn": "01:22:40:00",
+      "tcOut": "01:24:30:00",
+      "use": "Full song over end credits",
+      "rights": "Same terms as the earlier use",
+      "cost": null,
+      "licenseRef": "",
+      "notes": "Second use of the same recording. Include in the same license.",
+      "music": {
+        "title": "Muddy Water Hymn",
+        "artist": "The Low Waters",
+        "cueId": "6M1",
+        "usage": "ET",
+        "writers": [
+          {
+            "name": "Earl Whitaker",
+            "role": "C",
+            "society": "BMI",
+            "share": 60
+          },
+          {
+            "name": "June Whitaker",
+            "role": "A",
+            "society": "BMI",
+            "share": 40
+          }
+        ],
+        "publishers": [
+          {
+            "name": "Delta Song Publishing",
+            "role": "E",
+            "society": "BMI",
+            "share": 100
+          }
+        ]
+      }
+    }
+  ],
+  "musicCueSheet": {
+    "musicSupervisor": "Dee Carter"
+  }
+}
