@@ -4,6 +4,10 @@
   "project": {
     "title": "The River Keeps",
     "company": "Lowwater Films",
+    "producer": "Ana Reyes",
+    "preparedBy": "Sam Okafor, post supervisor",
+    "preparedContact": "sam@example.com",
+    "cutVersion": "Locked cut v12, Oct 18",
     "frameRate": 23.976,
     "currency": "USD"
   },
