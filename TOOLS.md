@@ -83,7 +83,7 @@ None found yet.
 
 ## Part 2: Built here
 
-All planned. Order of work is in [ROADMAP.md](ROADMAP.md).
+Linked tools are available now; the rest are planned. Order of work is in [ROADMAP.md](ROADMAP.md).
 
 ### Development
 - Subject tracker
@@ -132,7 +132,7 @@ All planned. Order of work is in [ROADMAP.md](ROADMAP.md).
 - Budget-to-actuals
 
 ### Legal & Clearances
-- E&O / clearance log
+- [E&O / clearance log](tools/clearance-log/) (first version)
 - Fair use log and memo builder
 - Archival and music license trackers
 - Annotated-transcript clearance report
