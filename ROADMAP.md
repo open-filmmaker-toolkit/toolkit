@@ -38,8 +38,9 @@ Three tools on one data model. This is the documentary-specific gap.
 
 ## Milestone 4: Call sheet generator
 
-- [ ] Call sheet built from the project's people and locations (#21)
-- [ ] PDF export and a plain template version (#22)
+- [x] Call sheet built from the project's people and locations (#21), first version with optional online weather lookup
+- [ ] Plain template version (#22). Printing to PDF works from the browser's print dialog
+- [ ] Import an Analyze Video report (timestamps and frames) into a project's footage log or research notes. This lives in the [Analyze-Video-Skill repo](https://github.com/evillollive/Analyze-Video-Skill), not here: it writes a project file the toolkit tools already read
 
 ## Backlog
 

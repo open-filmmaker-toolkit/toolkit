@@ -411,5 +411,55 @@
   ],
   "musicCueSheet": {
     "musicSupervisor": "Dee Carter"
-  }
+  },
+  "callSheets": [
+    {
+      "id": "callsheet-day-1",
+      "date": "2026-05-12",
+      "dayLabel": "Day 1 of 2",
+      "generalCall": "07:00",
+      "wrapTime": "17:00",
+      "locationId": "location-riverside-levee",
+      "parking": "Gravel lot at the foot of the levee road. Carpool if you can.",
+      "weather": "Fictional sample: clear, high of 24 C",
+      "sunrise": "06:02",
+      "sunset": "19:48",
+      "hospital": {
+        "name": "Riverside Community Hospital (fictional)",
+        "address": "1 Sample Way, Riverside",
+        "phone": "555-0100"
+      },
+      "schedule": [
+        {
+          "time": "07:00",
+          "description": "Crew call, coffee"
+        },
+        {
+          "time": "08:00",
+          "description": "Interview with Daniel Okafor on the levee"
+        },
+        {
+          "time": "12:00",
+          "description": "Lunch"
+        },
+        {
+          "time": "13:00",
+          "description": "B-roll along the river"
+        }
+      ],
+      "crew": [
+        {
+          "personId": "person-ana-reyes",
+          "callTime": "07:00",
+          "role": "Producer"
+        },
+        {
+          "personId": "person-daniel-okafor",
+          "callTime": "08:00",
+          "role": "Interview subject"
+        }
+      ],
+      "notes": "Fictional sample call sheet."
+    }
+  ]
 }

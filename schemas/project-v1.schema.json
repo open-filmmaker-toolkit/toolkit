@@ -51,6 +51,12 @@
     },
     "musicCueSheet": {
       "$ref": "#/$defs/musicCueSheet"
+    },
+    "callSheets": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/callSheet"
+      }
     }
   },
   "additionalProperties": true,
@@ -176,6 +182,16 @@
         },
         "notes": {
           "type": "string"
+        },
+        "latitude": {
+          "type": "number",
+          "minimum": -90,
+          "maximum": 90
+        },
+        "longitude": {
+          "type": "number",
+          "minimum": -180,
+          "maximum": 180
         }
       },
       "additionalProperties": true
@@ -416,6 +432,110 @@
       "type": "object",
       "properties": {
         "musicSupervisor": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "callSheet": {
+      "type": "object",
+      "required": [
+        "id",
+        "date"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "date": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+          "description": "Shoot date, YYYY-MM-DD."
+        },
+        "dayLabel": {
+          "type": "string",
+          "description": "For example \"Day 2 of 5\"."
+        },
+        "generalCall": {
+          "type": "string",
+          "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+          "description": "24-hour HH:MM."
+        },
+        "wrapTime": {
+          "type": "string",
+          "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+        },
+        "locationId": {
+          "$ref": "#/$defs/id"
+        },
+        "parking": {
+          "type": "string"
+        },
+        "weather": {
+          "type": "string"
+        },
+        "sunrise": {
+          "type": "string"
+        },
+        "sunset": {
+          "type": "string"
+        },
+        "hospital": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "address": {
+              "type": "string"
+            },
+            "phone": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": true
+        },
+        "schedule": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "time": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "crew": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "personId"
+            ],
+            "properties": {
+              "personId": {
+                "$ref": "#/$defs/id"
+              },
+              "callTime": {
+                "type": "string",
+                "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+              },
+              "role": {
+                "type": "string"
+              },
+              "notes": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "notes": {
           "type": "string"
         }
       },
