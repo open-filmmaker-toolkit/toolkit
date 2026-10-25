@@ -1,8 +1,28 @@
+<p align="center">
+  <b>The music cue sheet your distributor needs, built from the music already in your clearance log.</b>
+</p>
+
+<p align="center">
+  <img alt="Runs offline" src="https://img.shields.io/badge/runs-offline-2ea44f" />
+  <img alt="No network requests" src="https://img.shields.io/badge/network%20requests-none-2ea44f" />
+  <img alt="No dependencies" src="https://img.shields.io/badge/dependencies-none-2ea44f" />
+  <img alt="Status: first version" src="https://img.shields.io/badge/status-first%20version-d29922" />
+</p>
+
 # Music cue sheet
 
 Build the music cue sheet your distributor or broadcaster needs at delivery, from the music already in your clearance log.
 
-Tracking issue: [#24](https://github.com/open-filmmaker-toolkit/toolkit/issues/24).
+Part of the [Open Filmmaker Toolkit](../../README.md). Tracking issue: [#24](https://github.com/open-filmmaker-toolkit/toolkit/issues/24).
+
+## Contents
+
+- [Use it](#use-it)
+- [How it works with the clearance log](#how-it-works-with-the-clearance-log)
+- [What it does](#what-it-does)
+- [What it adds to the project file](#what-it-adds-to-the-project-file)
+- [Not yet](#not-yet)
+- [License](#license)
 
 ## Use it
 
@@ -39,6 +59,8 @@ Usage codes: BI background instrumental, BV background vocal, VI visual instrume
 Roles: C composer, A author (lyrics), CA composer and author, AR arranger, E publisher, AM administrator, SE sub-publisher.
 
 ## What it adds to the project file
+
+The shared [version 1 schema](../../schemas/project-v1.schema.json) documents the complete project file format, including data owned by other tools.
 
 ```json
 {

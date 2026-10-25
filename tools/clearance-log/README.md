@@ -1,8 +1,28 @@
+<p align="center">
+  <b>Track every piece of third-party material in your film until it's cleared.</b>
+</p>
+
+<p align="center">
+  <img alt="Runs offline" src="https://img.shields.io/badge/runs-offline-2ea44f" />
+  <img alt="No network requests" src="https://img.shields.io/badge/network%20requests-none-2ea44f" />
+  <img alt="No dependencies" src="https://img.shields.io/badge/dependencies-none-2ea44f" />
+  <img alt="Status: first version" src="https://img.shields.io/badge/status-first%20version-d29922" />
+</p>
+
 # Clearance log
 
 Track every piece of third-party material in your film (archival footage, stills, music, artwork, logos, recognizable people) until it's cleared. Then print a report for your E&O attorney.
 
-This is the first tool in the Open Filmmaker Toolkit and the first slice of the shared project file ([#13](https://github.com/open-filmmaker-toolkit/toolkit/issues/13)). Tracking issue: [#18](https://github.com/open-filmmaker-toolkit/toolkit/issues/18).
+This is the first tool in the [Open Filmmaker Toolkit](../../README.md) and the first slice of the shared project file ([#13](https://github.com/open-filmmaker-toolkit/toolkit/issues/13)). Tracking issue: [#18](https://github.com/open-filmmaker-toolkit/toolkit/issues/18).
+
+## Contents
+
+- [Use it](#use-it)
+- [What it does](#what-it-does)
+- [Saving](#saving)
+- [Project file format](#project-file-format)
+- [Not yet](#not-yet)
+- [License](#license)
 
 ## Use it
 
@@ -34,7 +54,7 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## Project file format
 
-The file is plain JSON:
+The file is plain JSON. The shared [version 1 schema](../../schemas/project-v1.schema.json) documents the complete format, including data owned by other tools:
 
 ```json
 {
