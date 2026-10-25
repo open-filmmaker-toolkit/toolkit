@@ -65,5 +65,34 @@ with sync_playwright() as p:
         check(True, 'save a copy downloads: ' + d.value.suggested_filename)
         check(not errs, 'no page errors %s' % errs)
         ctx.close()
+    print('== call-sheet spreadsheet export and print')
+    ctx = b.new_context(accept_downloads=True)
+    pg = ctx.new_page(); errs = []
+    pg.on('pageerror', lambda e: errs.append(str(e)))
+    pg.add_init_script(INIT + 'window.print = () => { window.__printed = true; };')
+    pg.goto('file://%s/tools/call-sheet/index.html' % root); pg.wait_for_load_state('networkidle')
+    pg.click('#openBtn'); pg.wait_for_timeout(300)
+    with pg.expect_download() as d:
+        pg.click('#sheetCsvBtn')
+    txt = open(d.value.path(), encoding='utf-8-sig').read()
+    check(d.value.suggested_filename.endswith('.csv') and txt.startswith('CALL SHEET') and 'CREW AND CAST' in txt and 'General call,' in txt, 'all-days spreadsheet export: ' + d.value.suggested_filename)
+    template = (root/'templates/call-sheet-template.csv').read_text()
+    import csv, io
+    labels = lambda t: [r[0] for r in csv.reader(io.StringIO(t)) if r]
+    def skeleton(t):
+        rows = [r for r in csv.reader(io.StringIO(t)) if r and r[0]]
+        return [r[0] for r in rows if r[0] in ('CALL SHEET', 'SCHEDULE', 'CREW AND CAST', 'NOTES', 'Film', 'General call', 'Nearest hospital', 'Time', 'Name', 'Prepared by')]
+    check(skeleton(template) == skeleton(txt), 'export layout matches blank template')
+    pg.click('#printAllBtn'); pg.wait_for_timeout(200)
+    check(pg.evaluate('window.__printed === true') and pg.locator('.sheet-page').count() >= 1, 'print builds sheet pages')
+    pg.emulate_media(media='print')
+    check(pg.is_visible('.sheet-page') and not pg.is_visible('.page'), 'print view shows only the sheet')
+    pg.emulate_media(media='screen')
+    pg.locator('#list [data-id], [data-id]').first.click(); pg.wait_for_timeout(200)
+    with pg.expect_download() as d:
+        pg.click('#sheetCsvDayBtn')
+    check('-call-sheet-' in d.value.suggested_filename, 'single-day export: ' + d.value.suggested_filename)
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
     b.close()
 print('FAILS', fails); sys.exit(1 if fails else 0)
