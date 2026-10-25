@@ -1303,7 +1303,7 @@ dialog form { display: flex; flex-direction: column; height: 100%; }
     $('csvBtn').onclick = exportCsv;
     $('projectCsvBtn').onclick = () => $('projectCsvDialog').showModal();
     $('projectCsvCancel').onclick = () => $('projectCsvDialog').close();
-    $('projectCsvForm').addEventListener('submit', ev => { ev.preventDefault(); exportProjectCsv(); });
+    $('projectCsvForm').addEventListener('submit', ev => { ev.preventDefault(); exportProjectCsv(); $('projectCsvDialog').close(); });
     $('printBtn').onclick = () => { renderReport(); window.print(); };
     window.addEventListener('beforeprint', renderReport);
 
