@@ -38,6 +38,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **Find things.** Search, filter by status or type, and sort by any column.
 - **Print a report.** Prints the elements currently shown, with a status summary, for your E&O attorney or a production meeting.
 - **Export CSV.** Exports every element for a spreadsheet, whatever the filters.
+- **Export project data.** Save project details, people, locations, third-party elements, contracts, assets, music cue sheet details or call sheets as separate CSV files. Nested values stay as JSON inside their cell.
 
 **Edit film details** holds the title, production company, producer, who prepared the log and how to reach them, and the cut the timecodes refer to. All of these print at the top of the report. Update the cut whenever you re-time the log against a new version of the edit.
 
@@ -49,6 +50,7 @@ Your log lives in a project file on your computer (`your-film.oft.json`).
 
 - **Chrome and Edge** save straight back to the file you opened.
 - **Safari and Firefox** download a new copy each time you save. Keep the latest one with your project files.
+- If the file changed on disk since you opened it, Chrome or Edge warns before saving. You can reload the latest version, save your edits as a copy, or explicitly overwrite the changed file.
 
 If you close the tab without saving, the page keeps a recovery copy in this browser and offers to restore it next time. That copy is a safety net, not a substitute for saving the file: clearing browser data deletes it.
 

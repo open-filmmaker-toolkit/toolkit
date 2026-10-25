@@ -37,6 +37,11 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **Copies a day to the next one,** keeping crew, location and hospital, and clearing weather and daylight.
 - **Prints** one portrait page per day. Choose "Save as PDF" in the print dialog to make a PDF.
 - **Exports a crew list (CSV)** with one row per person per day.
+- **Exports project data.** Save project details, people, locations, third-party elements, contracts, assets, music cue sheet details or call sheets as separate CSV files. Nested values stay as JSON inside their cell.
+
+## Saving and file conflicts
+
+Chrome and Edge can save straight back to the file you opened. If it changed on disk since you opened it, the tool warns before saving. You can reload the latest version, save your edits as a separate copy, or explicitly overwrite the changed file. Safari and Firefox download a new copy instead of checking or overwriting the original file.
 
 ## Optional online lookup
 

@@ -8,9 +8,9 @@ Each milestone below is a [GitHub milestone](https://github.com/open-filmmaker-t
 - [x] Write README, ROADMAP, TOOLS and GOVERNANCE (#2)
 - [ ] Lawyer reviews the planned licenses for code, templates and legal forms (#3)
 - [ ] Add LICENSE files once approved (#4)
-- [ ] Write CONTRIBUTING.md with Developer Certificate of Origin (DCO) sign-off (#5)
-- [ ] Adopt a code of conduct (#6)
-- [ ] Add issue forms: "Request a tool," "Submit a template," "Report a problem" (#7)
+- [x] Write CONTRIBUTING.md with Developer Certificate of Origin (DCO) sign-off (#5)
+- [x] Adopt a code of conduct (#6)
+- [x] Add issue forms: "Request a tool," "Submit a template," "Report a problem" (#7)
 - [ ] Find a third maintainer (#8)
 
 ## Milestone 1: The directory (public launch)
@@ -22,10 +22,10 @@ Each milestone below is a [GitHub milestone](https://github.com/open-filmmaker-t
 
 ## Milestone 2: The shared project file
 
-- [ ] Define the data model: people, locations, third-party elements, contracts, assets (#13)
-- [ ] Publish it as a JSON Schema with a sample project (#14)
-- [ ] Build save and load to a file on disk, with export to CSV (#15)
-- [ ] Decide how tools handle a file edited by two people (merge, warn, or last save wins) (#16)
+- [x] Define the data model: people, locations, third-party elements, contracts, assets (#13)
+- [x] Publish it as a JSON Schema with a sample project (#14)
+- [x] Build save and load to a file on disk, with export to CSV (#15)
+- [x] Decide how tools handle a file edited by two people: warn on conflict, with reload, save a copy or explicit overwrite (#16)
 
 ## Milestone 3: The clearances core
 

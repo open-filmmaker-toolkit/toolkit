@@ -41,6 +41,8 @@ These rules are what make the toolkit free, private and easy to maintain. Pull r
 - Open the tool in Chrome or Edge, and in Firefox or Safari.
 - Load `samples/the-river-keeps.oft.json`, make a change, save, and reopen the saved file.
 - Open that saved file in every other tool that uses it and check nothing was lost.
+- Export each project collection to CSV and confirm the file contains all records, including fields the current tool does not edit.
+- Open the same project in two tool tabs, save a change in one, then save in the other. Confirm it warns and offers reload, save a copy or explicit overwrite.
 - If your tool prints, check the printed version.
 - Check phone width and dark mode.
 
