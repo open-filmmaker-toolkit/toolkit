@@ -40,7 +40,7 @@ Three tools on one data model. This is the documentary-specific gap.
 
 - [x] Call sheet built from the project's people and locations (#21), first version with optional online weather lookup
 - [x] Plain template version (#22): spreadsheet export and a blank [template](templates/call-sheet-template.csv). Printing to PDF works from the browser's print dialog
-- [ ] Import an Analyze Video report (timestamps and frames) into a project's footage log or research notes. This lives in the [Analyze-Video-Skill repo](https://github.com/evillollive/Analyze-Video-Skill), not here: it writes a project file the toolkit tools already read
+- [ ] Import an Analyze Video report (timestamps and frames) into a project's footage log or research notes. This lives in the [Analyze-Video-Skill repo](https://github.com/evillollive/Analyze-Video-Skill) ([tracked there](https://github.com/evillollive/Analyze-Video-Skill/issues/22)), not here: it writes a project file the toolkit tools already read
 
 ## Backlog
 
