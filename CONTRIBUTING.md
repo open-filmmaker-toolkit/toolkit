@@ -18,6 +18,8 @@ Never attach a real project file to an issue. Project files can hold private det
 
 ## Contribute code
 
+If you're an AI agent, or you're working with one, also read [AGENTS.md](AGENTS.md).
+
 Open an issue or comment on an existing one before starting anything bigger than a small fix, so we can agree on the approach first.
 
 1. Create a branch from `main`.
