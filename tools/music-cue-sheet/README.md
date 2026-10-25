@@ -43,7 +43,7 @@ Both tools open the same project file. Every element with type **Music** in the 
 
 Cues you add here appear in the clearance log as Music with status Not started. Deleting a cue here deletes it from the clearance log too.
 
-Open a project file in one tool at a time, and save before switching. If both tools have the same file open and both save, the last save wins ([#16](https://github.com/open-filmmaker-toolkit/toolkit/issues/16)).
+If the same project is open in multiple tools, save one tool before saving another. Chrome and Edge warn if the file changed since it was opened; you can reload the latest version, save your edits as a copy, or explicitly overwrite the changed file. Safari and Firefox download a new copy instead of checking or overwriting the original file.
 
 ## What it does
 
@@ -53,6 +53,7 @@ Open a project file in one tool at a time, and save before switching. If both to
 - **Shows the music across the film.** The timeline places each cue where it plays, colored by whether its entry is ready.
 - **Prints the cue sheet** in landscape with a header (production company, producer, distributor, release date, running time, music supervisor, who prepared it, which cut), every cue, and usage and role legends. If any cue isn't ready, the sheet prints marked as a draft.
 - **Exports CSV** with one row per cue.
+- **Exports project data.** Save project details, people, locations, third-party elements, contracts, assets, music cue sheet details or call sheets as separate CSV files. Nested values stay as JSON inside their cell.
 
 Usage codes: BI background instrumental, BV background vocal, VI visual instrumental, VV visual vocal, MT main title, ET end title.
 
