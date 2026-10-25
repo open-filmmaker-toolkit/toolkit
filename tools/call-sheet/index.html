@@ -1,0 +1,819 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Call sheet · Open Filmmaker Toolkit</title>
+<meta name="description" content="Build a shoot-day call sheet from the people and locations in your project file. Runs in your browser; your data stays on your computer.">
+<style>
+:root {
+  --paper: #f1f3f2; --sheet: #ffffff; --ink: #1a2130; --ink-2: #4b556a; --ink-3: #6d778a;
+  --rule: #d4dad8; --rule-soft: #e6eae8; --hover: #f6f8f7; --focus: #2f6fdb;
+  --warn: #8a5a00; --warn-bg: #fbf0d9; --bad: #b3392d; --good: #2b7a57;
+  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #141922; --sheet: #1b212b; --ink: #e6e9ee; --ink-2: #a6afbd; --ink-3: #8790a0;
+    --rule: #2f3744; --rule-soft: #262d38; --hover: #212834; --focus: #7aa7ff;
+    --warn: #e2a531; --warn-bg: #3a2f17; --bad: #e26657; --good: #4fb386;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans); }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+[hidden] { display: none !important; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.cant-run { display: none; max-width: 640px; margin: 64px auto; padding: 0 24px; }
+.cant-run h1 { margin: 0 0 8px; font: 600 26px/1.2 var(--serif); }
+.cant-run p { margin: 0 0 10px; color: var(--ink-2); }
+.no-js .cant-run { display: block; }
+.no-js .page { display: none; }
+.page { max-width: 1100px; margin: 0 auto; padding: 0 24px 48px; }
+
+.masthead { display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: flex-end; justify-content: space-between; padding: 28px 0 20px; }
+.tool-name { margin: 0 0 2px; font-size: 14px; font-weight: 600; color: var(--ink-2); }
+.film-title { margin: 0; font: 600 32px/1.15 var(--serif); letter-spacing: -0.01em; overflow-wrap: anywhere; cursor: pointer; }
+.film-title.is-empty { color: var(--ink-3); font-style: italic; font-weight: 400; }
+.film-meta { margin: 4px 0 0; color: var(--ink-2); font-size: 14px; }
+.file { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.file-state { margin: 0; font-size: 13px; color: var(--ink-2); text-align: right; }
+.file-state .dirty { color: var(--warn); font-weight: 600; }
+.file-actions, .row-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.file-actions { justify-content: flex-end; }
+
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; }
+.btn:hover { border-color: var(--ink-3); }
+.btn.primary { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.btn.primary:hover { opacity: 0.88; }
+.btn.danger { color: var(--bad); }
+.btn.small { padding: 4px 10px; font-size: 13px; }
+.btn:disabled { opacity: 0.55; cursor: progress; }
+.link-btn { padding: 0; border: 0; background: none; cursor: pointer; color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; font-size: 14px; }
+.link-btn:hover { color: var(--ink); }
+
+.banner { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 0 0 16px; padding: 12px 16px; border-radius: 8px; background: var(--warn-bg); border: 1px solid color-mix(in srgb, var(--warn) 40%, transparent); }
+.banner p { margin: 0; flex: 1 1 280px; }
+.banner .actions { display: flex; gap: 8px; }
+
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 12px; }
+.toolbar .spacer { flex: 1; }
+.headline { margin: 0; font: 600 22px/1.2 var(--serif); }
+
+.table-wrap { overflow-x: auto; background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 10px 12px; text-align: left; vertical-align: middle; border-bottom: 1px solid var(--rule-soft); }
+th { font-size: 13px; color: var(--ink-2); font-weight: 600; white-space: nowrap; }
+tbody tr[data-id] { cursor: pointer; }
+tbody tr[data-id]:hover { background: var(--hover); }
+tbody tr:last-child td { border-bottom: 0; }
+td .sub { display: block; font-size: 13px; color: var(--ink-3); }
+.empty { padding: 40px 24px; text-align: center; background: var(--sheet); border: 1px dashed var(--rule); border-radius: 8px; }
+.empty h2 { margin: 0 0 6px; font: 600 20px/1.3 var(--serif); }
+.empty p { margin: 0 auto 16px; max-width: 54ch; color: var(--ink-2); }
+.empty .actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.foot { margin-top: 28px; font-size: 13px; color: var(--ink-3); }
+
+dialog { border: 0; padding: 0; color: var(--ink); background: var(--sheet); box-shadow: 0 10px 40px rgba(10, 14, 22, 0.25); }
+dialog::backdrop { background: rgba(16, 20, 28, 0.42); }
+dialog.drawer { margin: 0 0 0 auto; width: min(680px, 100vw); height: 100dvh; max-height: 100dvh; max-width: 100vw; border-left: 1px solid var(--rule); }
+dialog.modal { width: min(560px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); border-radius: 10px; }
+dialog form { display: flex; flex-direction: column; height: 100%; max-height: inherit; }
+.dlg-head { padding: 20px 24px 12px; border-bottom: 1px solid var(--rule-soft); }
+.dlg-head h2 { margin: 0; font: 600 22px/1.25 var(--serif); }
+.dlg-body { flex: 1; overflow-y: auto; padding: 16px 24px 24px; display: grid; gap: 14px; align-content: start; }
+.dlg-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 14px 24px; border-top: 1px solid var(--rule-soft); }
+.dlg-foot .spacer { flex: 1; }
+.field { display: grid; gap: 4px; }
+.field > label, .group h3 { font-size: 14px; font-weight: 600; }
+.hint { margin: 0; font-size: 13px; color: var(--ink-3); }
+.field input, .field select, .field textarea, .line input { width: 100%; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); }
+.row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.req { color: var(--bad); font-weight: 400; }
+.group { display: grid; gap: 8px; padding-top: 10px; border-top: 1px solid var(--rule-soft); }
+.group-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.group h3 { margin: 0; }
+.group-head .spacer { flex: 1; }
+.line { display: grid; grid-template-columns: 120px minmax(0, 1fr) 32px; gap: 6px; align-items: center; margin-bottom: 6px; }
+.crew-line { display: grid; grid-template-columns: 22px minmax(0, 1.2fr) minmax(0, 1fr) 120px; gap: 8px; align-items: center; padding: 4px 0; border-bottom: 1px solid var(--rule-soft); }
+.crew-line .who { overflow-wrap: anywhere; }
+.crew-line input[type="checkbox"] { width: 18px; height: 18px; }
+.crew-line input[type="text"], .crew-line input[type="time"] { width: 100%; padding: 6px 8px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); }
+.remove { width: 32px; height: 34px; padding: 0; border: 1px solid transparent; border-radius: 6px; background: none; color: var(--ink-3); cursor: pointer; font-size: 18px; line-height: 1; }
+.remove:hover { color: var(--bad); border-color: var(--rule); }
+.online { margin: 0; padding: 10px 14px; border-radius: 8px; background: var(--paper); font-size: 13px; color: var(--ink-2); }
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); max-width: calc(100vw - 32px); padding: 10px 16px; border-radius: 8px; background: var(--ink); color: var(--paper); font-size: 14px; box-shadow: 0 6px 24px rgba(10, 14, 22, 0.25); z-index: 10; }
+.toast.error { background: var(--bad); color: #ffffff; }
+.report { display: none; }
+
+@media (max-width: 720px) {
+  .page { padding: 0 16px 40px; }
+  .film-title { font-size: 26px; }
+  .file { align-items: flex-start; }
+  .file-state { text-align: left; }
+  .row-2, .row-3 { grid-template-columns: 1fr; }
+  .crew-line { grid-template-columns: 22px minmax(0, 1fr) 110px; }
+  .crew-line .role { grid-column: 2 / 4; grid-row: 2; }
+}
+@media print {
+  @page { size: portrait; margin: 14mm; }
+  :root { color-scheme: light; }
+  body { background: #ffffff; color: #000000; font-size: 10pt; }
+  .page, dialog, .toast { display: none !important; }
+  .report { display: block; }
+  .sheet-page { page-break-after: always; }
+  .sheet-page:last-child { page-break-after: auto; }
+  .report h1 { margin: 0; font: 700 20pt/1.2 var(--serif); }
+  .report .sub { margin: 0 0 8pt; font-size: 11pt; }
+  .report .call { margin: 0 0 10pt; padding: 6pt 8pt; border: 1.5pt solid #000000; font-size: 16pt; font-weight: 700; }
+  .report .call span { font-size: 10pt; font-weight: 400; margin-left: 12pt; }
+  .report h2 { margin: 12pt 0 4pt; font-size: 11pt; text-transform: uppercase; letter-spacing: 0.04em; }
+  .report dl { display: grid; grid-template-columns: 90pt 1fr; gap: 2pt 10pt; margin: 0; }
+  .report dt { color: #444444; }
+  .report dd { margin: 0; }
+  .report table { width: 100%; border-collapse: collapse; }
+  .report th, .report td { padding: 3pt 4pt; border: 0.5pt solid #999999; text-align: left; vertical-align: top; }
+  .report thead th { background: #eeeeee; font-size: 9pt; }
+  .report tr { page-break-inside: avoid; }
+  .report .foot { margin-top: 12pt; font-size: 8pt; color: #333333; }
+}
+</style>
+</head>
+<body>
+<div class="cant-run" id="cantRun">
+  <h1 id="cantRunTitle">Open this file in a web browser</h1>
+  <p id="cantRunText">This tool runs in Chrome, Edge, Firefox or Safari. You're seeing a preview that doesn't run it, so none of the buttons would work.</p>
+  <p id="cantRunHow">In your browser, choose File, then Open File, and pick this file. Or right-click the file and open it with your browser.</p>
+</div>
+<div class="page">
+  <header class="masthead">
+    <div>
+      <p class="tool-name">Call sheet</p>
+      <h1 class="film-title" id="filmTitle">Untitled film</h1>
+      <p class="film-meta"><span id="filmMeta"></span> <button type="button" class="link-btn" id="editProjectBtn">Edit film details</button></p>
+    </div>
+    <div class="file">
+      <p class="file-state" id="fileState">Not saved to a file yet</p>
+      <div class="file-actions">
+        <button type="button" class="btn" id="newBtn">New project</button>
+        <button type="button" class="btn" id="openBtn">Open file</button>
+        <button type="button" class="btn primary" id="saveBtn">Save file</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="banner" id="recovery" role="region" aria-label="Unsaved work" hidden>
+    <p id="recoveryText"></p>
+    <div class="actions">
+      <button type="button" class="btn primary" id="restoreBtn">Restore it</button>
+      <button type="button" class="btn" id="discardBtn">Discard it</button>
+    </div>
+  </div>
+
+  <main>
+    <div id="empty" class="empty" hidden>
+      <h2>No shoot days yet</h2>
+      <p>Open your project file to use the crew and locations you already have, or add your first shoot day and add people as you go.</p>
+      <div class="actions">
+        <button type="button" class="btn primary" id="emptyAddBtn">Add a shoot day</button>
+        <button type="button" class="btn" id="emptyOpenBtn">Open a project file</button>
+      </div>
+    </div>
+    <div id="list" hidden>
+      <div class="toolbar">
+        <h2 class="headline" id="headline"></h2>
+        <span class="spacer"></span>
+        <button type="button" class="btn" id="csvBtn">Export crew list (CSV)</button>
+        <button type="button" class="btn" id="printAllBtn">Print all days</button>
+        <button type="button" class="btn primary" id="addBtn">Add a shoot day</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th scope="col">Date</th><th scope="col">General call</th><th scope="col">Location</th><th scope="col">Crew</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </div>
+    <p class="foot">Your project file stays on your computer. To make a PDF, choose "Save as PDF" in your browser's print dialog.</p>
+  </main>
+</div>
+
+<dialog class="drawer" id="editor" aria-labelledby="editorTitle">
+  <form id="editorForm" method="dialog" novalidate>
+    <div class="dlg-head"><h2 id="editorTitle">Shoot day</h2></div>
+    <div class="dlg-body">
+      <div class="row-3">
+        <div class="field"><label for="f-date">Date <span class="req">(required)</span></label><input id="f-date" type="date" required></div>
+        <div class="field"><label for="f-generalCall">General call</label><input id="f-generalCall" type="time"></div>
+        <div class="field"><label for="f-wrapTime">Estimated wrap</label><input id="f-wrapTime" type="time"></div>
+      </div>
+      <div class="field"><label for="f-dayLabel">Day label</label><input id="f-dayLabel" type="text" placeholder="Day 1 of 3"></div>
+
+      <div class="group">
+        <div class="group-head"><h3 id="locHead">Location</h3><span class="spacer"></span><button type="button" class="btn small" id="addLocationBtn">Add a location</button></div>
+        <div class="field"><select id="f-locationId" aria-labelledby="locHead"></select></div>
+        <p class="hint" id="locationHint"></p>
+        <div class="field"><label for="f-parking">Parking and arrival notes</label><textarea id="f-parking" rows="2"></textarea></div>
+      </div>
+
+      <div class="group">
+        <h3>Weather and daylight</h3>
+        <div class="row-3">
+          <div class="field"><label for="f-weather">Weather</label><input id="f-weather" type="text"></div>
+          <div class="field"><label for="f-sunrise">Sunrise</label><input id="f-sunrise" type="time"></div>
+          <div class="field"><label for="f-sunset">Sunset</label><input id="f-sunset" type="time"></div>
+        </div>
+        <div><button type="button" class="btn small" id="lookupBtn">Look up weather and daylight (online)</button></div>
+        <p class="online">Optional. Nothing is sent unless you click this button, and you'll be asked to confirm first. It sends the location's address to photon.komoot.io to find coordinates, then the coordinates and date to api.open-meteo.com. You can also type everything in by hand.</p>
+      </div>
+
+      <div class="group">
+        <h3>Nearest hospital</h3>
+        <div class="row-3">
+          <div class="field"><label for="f-hospName">Name</label><input id="f-hospName" type="text"></div>
+          <div class="field"><label for="f-hospAddress">Address</label><input id="f-hospAddress" type="text"></div>
+          <div class="field"><label for="f-hospPhone">Phone</label><input id="f-hospPhone" type="text"></div>
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="group-head"><h3>Schedule</h3><span class="spacer"></span><button type="button" class="btn small" id="addLineBtn">Add a line</button></div>
+        <div id="schedule"></div>
+      </div>
+
+      <div class="group">
+        <div class="group-head"><h3>Crew and cast</h3><span class="spacer"></span>
+          <button type="button" class="btn small" id="fillCallBtn">Use general call for everyone checked</button>
+          <button type="button" class="btn small" id="addPersonBtn">Add a person</button></div>
+        <p class="hint">Everyone in your project file is listed. Check the people working this day.</p>
+        <div id="crew"></div>
+      </div>
+
+      <div class="field"><label for="f-notes">Notes for everyone</label><textarea id="f-notes" rows="3"></textarea></div>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn danger" id="deleteBtn">Delete this day</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="printBtn">Print</button>
+      <button type="button" class="btn" id="editorCancel">Cancel</button>
+      <button type="submit" class="btn primary">Save day</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="projectDialog" aria-labelledby="projectDialogTitle">
+  <form id="projectForm" method="dialog">
+    <div class="dlg-head"><h2 id="projectDialogTitle">Film details</h2></div>
+    <div class="dlg-body">
+      <div class="field"><label for="p-title">Film title</label><input id="p-title" type="text"></div>
+      <div class="row-2">
+        <div class="field"><label for="p-company">Production company</label><input id="p-company" type="text"></div>
+        <div class="field"><label for="p-producer">Producer</label><input id="p-producer" type="text"></div>
+      </div>
+      <div class="row-2">
+        <div class="field"><label for="p-preparedBy">Call sheet prepared by</label><input id="p-preparedBy" type="text"></div>
+        <div class="field"><label for="p-preparedContact">Contact (phone or email)</label><input id="p-preparedContact" type="text"></div>
+      </div>
+    </div>
+    <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn" id="projectCancel">Cancel</button><button type="submit" class="btn primary">Save</button></div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="addDialog" aria-labelledby="addTitle">
+  <form id="addForm" method="dialog">
+    <div class="dlg-head"><h2 id="addTitle">Add</h2></div>
+    <div class="dlg-body" id="addBody"></div>
+    <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn" id="addCancel">Cancel</button><button type="submit" class="btn primary">Add</button></div>
+  </form>
+</dialog>
+
+<div class="report" id="report" aria-hidden="true"></div>
+<input type="file" id="fileInput" accept=".json,application/json" hidden>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+(() => {
+  'use strict';
+
+  const FORMAT = 'open-filmmaker-toolkit/project';
+  const FORMAT_VERSION = 1;
+  const TOOL = 'call-sheet 0.1.0';
+  const DRAFT_KEY = 'oft.call-sheet.draft';
+  const PROJECT_TEXT = ['title', 'company', 'producer', 'preparedBy', 'preparedContact'];
+  const PHOTON = 'https://photon.komoot.io/api/';
+  const OPEN_METEO = 'https://api.open-meteo.com/v1/forecast';
+  const WEATHER = {
+    0: 'Clear', 1: 'Mostly clear', 2: 'Partly cloudy', 3: 'Overcast', 45: 'Fog', 48: 'Fog', 51: 'Light drizzle', 53: 'Drizzle', 55: 'Heavy drizzle',
+    56: 'Freezing drizzle', 57: 'Freezing drizzle', 61: 'Light rain', 63: 'Rain', 65: 'Heavy rain', 66: 'Freezing rain', 67: 'Freezing rain',
+    71: 'Light snow', 73: 'Snow', 75: 'Heavy snow', 77: 'Snow grains', 80: 'Light showers', 81: 'Showers', 82: 'Heavy showers',
+    85: 'Snow showers', 86: 'Heavy snow showers', 95: 'Thunderstorms', 96: 'Thunderstorms with hail', 99: 'Thunderstorms with hail',
+  };
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const str = v => (v == null ? '' : String(v));
+
+  let doc = blankDoc();
+  let fileHandle = null;
+  let fileName = null;
+  let dirty = false;
+  let editing = null;   // working copy of the call sheet in the editor
+  let isNew = false;
+  let addKind = null;
+
+  function blankDoc() {
+    return { format: FORMAT, formatVersion: FORMAT_VERSION, project: { title: '', company: '', producer: '', preparedBy: '', preparedContact: '', frameRate: 24, currency: 'USD' }, people: [], locations: [], callSheets: [] };
+  }
+  function newId(prefix) {
+    if (window.crypto && crypto.randomUUID) return `${prefix}-${crypto.randomUUID()}`;
+    return `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+  }
+  // Fills in only what this tool needs; everything else in the file is left as it was.
+  function normalize(d) {
+    if (!d.project || typeof d.project !== 'object') d.project = {};
+    for (const k of PROJECT_TEXT) if (typeof d.project[k] !== 'string') d.project[k] = str(d.project[k]);
+    const prefixes = { people: 'person', locations: 'location', callSheets: 'callsheet' };
+    for (const k of Object.keys(prefixes)) {
+      if (!Array.isArray(d[k])) d[k] = [];
+      d[k] = d[k].filter(x => x && typeof x === 'object');
+      for (const x of d[k]) if (!x.id) x.id = newId(prefixes[k]);
+    }
+    for (const s of d.callSheets) {
+      if (!Array.isArray(s.crew)) s.crew = [];
+      if (!Array.isArray(s.schedule)) s.schedule = [];
+      if (!s.hospital || typeof s.hospital !== 'object') s.hospital = {};
+    }
+    d.format = FORMAT;
+    d.formatVersion = FORMAT_VERSION;
+    return d;
+  }
+
+  const person = id => doc.people.find(p => p.id === id);
+  const location = id => doc.locations.find(l => l.id === id);
+  const sheets = () => [...doc.callSheets].sort((a, b) => str(a.date).localeCompare(str(b.date)) || str(a.generalCall).localeCompare(str(b.generalCall)));
+  const roleOf = p => (Array.isArray(p.roles) ? p.roles.join(', ') : str(p.roles));
+  const placeOf = l => [l.address, l.city, l.region, l.postalCode, l.country].map(str).filter(Boolean).join(', ');
+  const DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
+  function fmtDate(d, long) {
+    const m = DATE.exec(str(d));
+    if (!m) return '';
+    return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).toLocaleDateString(undefined, { timeZone: 'UTC', weekday: long ? 'long' : 'short', year: 'numeric', month: long ? 'long' : 'short', day: 'numeric' });
+  }
+  function fmtTime(t) {
+    const m = /^(\d{2}):(\d{2})$/.exec(str(t));
+    return m ? new Date(2000, 0, 1, +m[1], +m[2]).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : str(t);
+  }
+  function addDay(d) {
+    const m = DATE.exec(str(d));
+    return m ? new Date(Date.UTC(+m[1], +m[2] - 1, +m[3] + 1)).toISOString().slice(0, 10) : '';
+  }
+
+  // ---------- Render ----------
+  function render() {
+    const p = doc.project;
+    const t = $('filmTitle');
+    t.textContent = p.title || 'Untitled film';
+    t.classList.toggle('is-empty', !p.title);
+    $('filmMeta').textContent = [p.company, p.producer && `Producer: ${p.producer}`].filter(Boolean).join(' · ');
+    $('fileState').innerHTML = (fileName ? esc(fileName) : 'Not saved to a file yet') + (dirty ? ' · <span class="dirty">unsaved changes</span>' : '');
+    const list = sheets();
+    $('empty').hidden = list.length > 0;
+    $('list').hidden = list.length === 0;
+    $('headline').textContent = `${list.length} shoot day${list.length === 1 ? '' : 's'}`;
+    $('rows').innerHTML = list.map(s => {
+      const loc = location(s.locationId);
+      const d = esc(fmtDate(s.date));
+      return `<tr data-id="${esc(s.id)}"><td><strong>${d}</strong>${s.dayLabel ? `<span class="sub">${esc(s.dayLabel)}</span>` : ''}</td>
+        <td>${esc(fmtTime(s.generalCall)) || '<span class="sub">Not set</span>'}</td>
+        <td>${loc ? esc(loc.name) : '<span class="sub">Not set</span>'}</td>
+        <td>${s.crew.length}</td>
+        <td><div class="row-actions"><button type="button" class="btn small" data-act="edit" aria-label="Edit ${d}">Edit</button>
+        <button type="button" class="btn small" data-act="print" aria-label="Print ${d}">Print</button>
+        <button type="button" class="btn small" data-act="next" aria-label="Copy ${d} to the next day">Copy to next day</button></div></td></tr>`;
+    }).join('');
+  }
+
+  // ---------- Editor ----------
+  function readForm() {
+    const s = structuredClone(editing);
+    const set = (k, v) => { if (v !== '' || k in s) s[k] = v; };
+    set('date', $('f-date').value);
+    set('dayLabel', $('f-dayLabel').value.trim());
+    set('generalCall', $('f-generalCall').value);
+    set('wrapTime', $('f-wrapTime').value);
+    set('locationId', $('f-locationId').value);
+    set('parking', $('f-parking').value.trim());
+    set('weather', $('f-weather').value.trim());
+    set('sunrise', $('f-sunrise').value);
+    set('sunset', $('f-sunset').value);
+    set('notes', $('f-notes').value.trim());
+    s.hospital = Object.assign(s.hospital || {}, { name: $('f-hospName').value.trim(), address: $('f-hospAddress').value.trim(), phone: $('f-hospPhone').value.trim() });
+    s.schedule = [...$('schedule').querySelectorAll('.line')].map(r => ({ time: r.querySelector('.s-time').value, description: r.querySelector('.s-desc').value.trim() })).filter(x => x.time || x.description);
+    const old = new Map(editing.crew.map(c => [c.personId, c]));
+    s.crew = [...$('crew').querySelectorAll('.crew-line')].filter(r => r.querySelector('input[type=checkbox]').checked).map(r => {
+      const id = r.dataset.person;
+      const c = Object.assign(old.has(id) ? structuredClone(old.get(id)) : {}, { personId: id, role: r.querySelector('.c-role').value.trim(), callTime: r.querySelector('.c-call').value });
+      if (!c.role) delete c.role;
+      if (!c.callTime) delete c.callTime;
+      return c;
+    });
+    return s;
+  }
+  function fillForm(s) {
+    editing = s;
+    $('f-date').value = str(s.date);
+    $('f-dayLabel').value = str(s.dayLabel);
+    $('f-generalCall').value = str(s.generalCall);
+    $('f-wrapTime').value = str(s.wrapTime);
+    $('f-parking').value = str(s.parking);
+    $('f-weather').value = str(s.weather);
+    $('f-sunrise').value = str(s.sunrise);
+    $('f-sunset').value = str(s.sunset);
+    $('f-hospName').value = str(s.hospital && s.hospital.name);
+    $('f-hospAddress').value = str(s.hospital && s.hospital.address);
+    $('f-hospPhone').value = str(s.hospital && s.hospital.phone);
+    $('f-notes').value = str(s.notes);
+    const sel = $('f-locationId');
+    sel.innerHTML = '<option value="">No location chosen</option>' + doc.locations.map(l => `<option value="${esc(l.id)}">${esc(l.name)}</option>`).join('');
+    sel.value = s.locationId && location(s.locationId) ? s.locationId : '';
+    showLocationHint();
+    $('schedule').innerHTML = '';
+    for (const line of s.schedule.length ? s.schedule : [{}]) addScheduleLine(line);
+    const byId = new Map(s.crew.map(c => [c.personId, c]));
+    $('crew').innerHTML = doc.people.length ? doc.people.map(p => {
+      const c = byId.get(p.id);
+      const id = esc(p.id);
+      return `<div class="crew-line" data-person="${id}">
+        <input type="checkbox" id="c-${id}" ${c ? 'checked' : ''} aria-label="Working this day: ${esc(p.name)}">
+        <label class="who" for="c-${id}"><strong>${esc(p.name)}</strong></label>
+        <input type="text" class="c-role role" value="${esc(c && c.role != null ? c.role : roleOf(p))}" aria-label="Role for ${esc(p.name)}" placeholder="Role">
+        <input type="time" class="c-call" value="${esc((c && c.callTime) || '')}" aria-label="Call time for ${esc(p.name)}"></div>`;
+    }).join('') : '<p class="hint">No people yet. Use "Add a person", or open a project file that already has them.</p>';
+  }
+  function showLocationHint() {
+    const l = location($('f-locationId').value);
+    $('locationHint').textContent = l ? (placeOf(l) || 'This location has no address yet.') : 'Choose a location from your project, or add a new one.';
+  }
+  function addScheduleLine(line) {
+    const div = document.createElement('div');
+    div.className = 'line';
+    div.innerHTML = `<input type="time" class="s-time" aria-label="Time" value="${esc(line.time || '')}"><input type="text" class="s-desc" aria-label="What happens" placeholder="What happens" value="${esc(line.description || '')}"><button type="button" class="remove" aria-label="Remove this line">×</button>`;
+    $('schedule').appendChild(div);
+  }
+  function openEditor(id) {
+    const existing = id && doc.callSheets.find(s => s.id === id);
+    isNew = !existing;
+    const last = sheets().slice(-1)[0];
+    const s = existing ? structuredClone(existing) : { id: newId('callsheet'), date: last ? addDay(last.date) : '', crew: [], schedule: [], hospital: last ? structuredClone(last.hospital || {}) : {}, locationId: last ? last.locationId : '' };
+    $('editorTitle').textContent = existing ? `Shoot day: ${fmtDate(existing.date)}` : 'New shoot day';
+    $('deleteBtn').hidden = isNew;
+    $('f-date').setCustomValidity('');
+    fillForm(s);
+    $('editor').showModal();
+  }
+  function saveEditor() {
+    const s = readForm();
+    if (!DATE.test(s.date)) { $('f-date').setCustomValidity('Choose the shoot date.'); $('f-date').reportValidity(); $('f-date').focus(); return; }
+    if (isNew) doc.callSheets.push(s);
+    else doc.callSheets[doc.callSheets.findIndex(x => x.id === s.id)] = s;
+    $('editor').close();
+    changed();
+  }
+  function deleteEditing() {
+    if (!confirm(`Delete the call sheet for ${fmtDate(editing.date) || 'this day'}? This can't be undone.`)) return;
+    doc.callSheets = doc.callSheets.filter(s => s.id !== editing.id);
+    $('editor').close();
+    changed();
+    toast('Deleted the shoot day.');
+  }
+
+  // ---------- Quick add (person or location) ----------
+  function openAdd(kind) {
+    addKind = kind;
+    const f = (id, label, ph) => `<div class="field"><label for="a-${id}">${label}</label><input id="a-${id}" type="text"${ph ? ` placeholder="${ph}"` : ''}></div>`;
+    $('addTitle').textContent = kind === 'person' ? 'Add a person' : 'Add a location';
+    $('addBody').innerHTML = kind === 'person'
+      ? f('name', 'Name <span class="req">(required)</span>') + f('role', 'Role', 'Director of photography') + `<div class="row-2">${f('phone', 'Phone')}${f('email', 'Email')}</div>`
+      : f('name', 'Name <span class="req">(required)</span>', 'Riverside levee') + f('address', 'Street address') + `<div class="row-2">${f('city', 'City')}${f('region', 'State or region')}</div><div class="row-2">${f('postalCode', 'Postal code')}${f('country', 'Country')}</div>`;
+    $('addDialog').showModal();
+    $('a-name').focus();
+  }
+  function saveAdd() {
+    const v = k => $(`a-${k}`).value.trim();
+    if (!v('name')) { $('a-name').setCustomValidity('Enter a name.'); $('a-name').reportValidity(); return; }
+    const draft = readForm();
+    if (addKind === 'person') {
+      const p = { id: newId('person'), name: v('name') };
+      if (v('role')) p.roles = [v('role')];
+      if (v('phone')) p.phone = v('phone');
+      if (v('email')) p.email = v('email');
+      doc.people.push(p);
+      const c = { personId: p.id };
+      if (v('role')) c.role = v('role');
+      draft.crew.push(c);
+    } else {
+      const l = { id: newId('location'), name: v('name') };
+      for (const k of ['address', 'city', 'region', 'postalCode', 'country']) if (v(k)) l[k] = v(k);
+      doc.locations.push(l);
+      draft.locationId = l.id;
+    }
+    $('addDialog').close();
+    dirty = true; saveDraft();
+    fillForm(draft);
+    render();
+  }
+
+  // ---------- Optional online lookup (runs only when the user clicks the button) ----------
+  async function getJson(url) {
+    const r = await fetch(url, { headers: { Accept: 'application/json' } });
+    let body = null;
+    try { body = await r.json(); } catch { body = null; }
+    if (!r.ok) throw new Error(body && body.reason ? body.reason : `The service answered with an error (${r.status}).`);
+    return body;
+  }
+  async function lookupWeather() {
+    const draft = readForm();
+    const loc = location(draft.locationId);
+    if (!loc) { toast('Choose a location first.', true); return; }
+    if (!DATE.test(draft.date)) { toast('Choose the shoot date first.', true); return; }
+    const hasCoords = Number.isFinite(loc.latitude) && Number.isFinite(loc.longitude);
+    const place = placeOf(loc) || loc.name;
+    const sends = hasCoords ? 'the saved coordinates and the date to api.open-meteo.com' : `"${place}" to photon.komoot.io, then the coordinates and the date to api.open-meteo.com`;
+    if (!confirm(`This will send ${sends}. Continue?`)) return;
+    const btn = $('lookupBtn');
+    btn.disabled = true;
+    try {
+      let lat = loc.latitude, lon = loc.longitude;
+      if (!hasCoords) {
+        const g = await getJson(`${PHOTON}?limit=1&q=${encodeURIComponent(place)}`);
+        const c = g && g.features && g.features[0] && g.features[0].geometry && g.features[0].geometry.coordinates;
+        if (!c) throw new Error("Couldn't find that address. Add more of the address to the location, or type the weather in by hand.");
+        [lon, lat] = c;
+      }
+      const q = new URLSearchParams({ latitude: lat, longitude: lon, start_date: draft.date, end_date: draft.date, timezone: 'auto', daily: 'weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset' });
+      const w = await getJson(`${OPEN_METEO}?${q}`);
+      const d = w && w.daily;
+      if (!d || !d.time || !d.time.length) throw new Error('No forecast came back for that date.');
+      const hi = d.temperature_2m_max[0], lo = d.temperature_2m_min[0], rain = d.precipitation_probability_max[0];
+      const f = c => Math.round(c * 9 / 5 + 32);
+      draft.weather = [WEATHER[d.weather_code[0]] || 'Forecast', hi != null && `high ${Math.round(hi)}°C / ${f(hi)}°F`, lo != null && `low ${Math.round(lo)}°C / ${f(lo)}°F`, rain != null && `${rain}% chance of precipitation`].filter(Boolean).join(', ');
+      if (d.sunrise[0]) draft.sunrise = d.sunrise[0].slice(11, 16);
+      if (d.sunset[0]) draft.sunset = d.sunset[0].slice(11, 16);
+      if (!hasCoords) { loc.latitude = Math.round(lat * 1e4) / 1e4; loc.longitude = Math.round(lon * 1e4) / 1e4; dirty = true; saveDraft(); render(); }
+      fillForm(draft);
+      toast('Filled in the weather and daylight. Check it before you print.');
+    } catch (err) {
+      const msg = /out of allowed range|start_date|end_date/i.test(err.message) ? 'Forecasts only cover the next two weeks or so. Type the weather in by hand for later dates.' : err.message;
+      toast(`Couldn't look that up: ${msg}`, true);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  // ---------- Print and CSV ----------
+  function sheetHtml(s) {
+    const loc = location(s.locationId);
+    const p = doc.project;
+    const crew = s.crew.map(c => ({ c, p: person(c.personId) })).filter(x => x.p);
+    const dl = rows => `<dl>${rows.filter(r => r[1]).map(r => `<dt>${esc(r[0])}</dt><dd>${esc(r[1])}</dd>`).join('')}</dl>`;
+    const h = s.hospital || {};
+    return `<section class="sheet-page">
+      <h1>${esc(p.title || 'Untitled film')}</h1>
+      <p class="sub">Call sheet · ${esc(fmtDate(s.date, true))}${s.dayLabel ? ` · ${esc(s.dayLabel)}` : ''}</p>
+      <p class="call">General call ${esc(fmtTime(s.generalCall) || 'to be confirmed')}${s.wrapTime ? `<span>Estimated wrap ${esc(fmtTime(s.wrapTime))}</span>` : ''}</p>
+      ${dl([['Location', loc ? [loc.name, placeOf(loc)].filter(Boolean).join(', ') : ''], ['Parking', s.parking], ['Weather', s.weather], ['Sunrise', s.sunrise && fmtTime(s.sunrise)], ['Sunset', s.sunset && fmtTime(s.sunset)], ['Nearest hospital', [h.name, h.address, h.phone].filter(Boolean).join(' · ')]])}
+      ${s.schedule.length ? `<h2>Schedule</h2><table><thead><tr><th scope="col">Time</th><th scope="col">What happens</th></tr></thead><tbody>${s.schedule.map(x => `<tr><td>${esc(fmtTime(x.time))}</td><td>${esc(x.description)}</td></tr>`).join('')}</tbody></table>` : ''}
+      ${crew.length ? `<h2>Crew and cast</h2><table><thead><tr><th scope="col">Name</th><th scope="col">Role</th><th scope="col">Call</th><th scope="col">Phone</th><th scope="col">Email</th></tr></thead><tbody>${crew.map(({ c, p: q }) => `<tr><td>${esc(q.name)}</td><td>${esc(c.role != null ? c.role : roleOf(q))}</td><td>${esc(fmtTime(c.callTime || s.generalCall))}</td><td>${esc(q.phone)}</td><td>${esc(q.email)}</td></tr>`).join('')}</tbody></table>` : ''}
+      ${s.notes ? `<h2>Notes</h2><p>${esc(s.notes).replace(/\n/g, '<br>')}</p>` : ''}
+      <p class="foot">${esc([p.company, p.preparedBy && `Prepared by ${p.preparedBy}`, p.preparedContact].filter(Boolean).join(' · '))}</p>
+    </section>`;
+  }
+  function printSheets(list) {
+    if (!list.length) { toast('There are no shoot days to print yet.', true); return; }
+    $('report').innerHTML = list.map(sheetHtml).join('');
+    window.print();
+  }
+  function csvCell(v) {
+    let s = v == null ? '' : String(v);
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+    return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }
+  function exportCsv() {
+    const head = ['Date', 'Day', 'General call', 'Location', 'Name', 'Role', 'Call', 'Phone', 'Email'];
+    const rows = [];
+    for (const s of sheets()) {
+      const loc = location(s.locationId);
+      for (const c of s.crew) {
+        const q = person(c.personId);
+        if (q) rows.push([s.date, s.dayLabel, s.generalCall, loc && loc.name, q.name, c.role != null ? c.role : roleOf(q), c.callTime || s.generalCall, q.phone, q.email]);
+      }
+    }
+    if (!rows.length) { toast('No one is on a call sheet yet.', true); return; }
+    const name = `${slug()}-crew-list.csv`;
+    download('﻿' + [head, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n', name, 'text/csv;charset=utf-8');
+    toast(`Exported ${rows.length} crew call${rows.length === 1 ? '' : 's'} to ${name}`);
+  }
+
+  // ---------- Film details ----------
+  function openProjectDialog() {
+    for (const k of PROJECT_TEXT) $(`p-${k}`).value = doc.project[k] || '';
+    $('projectDialog').showModal();
+  }
+  function saveProjectDialog() {
+    for (const k of PROJECT_TEXT) doc.project[k] = $(`p-${k}`).value.trim();
+    $('projectDialog').close();
+    changed();
+  }
+
+  // ---------- Dirty state & recovery draft ----------
+  function changed() { dirty = true; saveDraft(); render(); }
+  function saveDraft() {
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ doc, fileName, at: new Date().toISOString() })); } catch { /* the file on disk is the real copy */ }
+  }
+  function clearDraft() {
+    try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+    $('recovery').hidden = true;
+  }
+  function checkDraft() {
+    let draft = null;
+    try { draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); } catch { draft = null; }
+    if (!draft || !draft.doc || draft.doc.format !== FORMAT) return;
+    const n = Array.isArray(draft.doc.callSheets) ? draft.doc.callSheets.length : 0;
+    if (!n && !(draft.doc.project && draft.doc.project.title)) { clearDraft(); return; }
+    const when = draft.at ? new Date(draft.at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'earlier';
+    const title = draft.doc.project && draft.doc.project.title ? `"${draft.doc.project.title}"` : 'an untitled project';
+    $('recoveryText').textContent = `You have unsaved changes to ${title} from ${when} (${n} shoot day${n === 1 ? '' : 's'}). Restore them, or discard them and start fresh.`;
+    $('recovery').hidden = false;
+    $('restoreBtn').onclick = () => {
+      doc = normalize(draft.doc); fileName = draft.fileName || null; fileHandle = null; dirty = true;
+      $('recovery').hidden = true; render();
+      toast(fileName ? `Restored. Save to write the changes back to ${fileName}.` : 'Restored. Save to keep it as a file.');
+    };
+    $('discardBtn').onclick = () => { clearDraft(); toast('Discarded the unsaved changes.'); };
+  }
+
+  // ---------- Files ----------
+  const pickerTypes = [{ description: 'Film project file', accept: { 'application/json': ['.json'] } }];
+  function slug() {
+    return (doc.project.title || 'untitled-film').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'untitled-film';
+  }
+  const suggestedName = () => `${slug()}.oft.json`;
+  function serialize() {
+    doc.savedAt = new Date().toISOString();
+    doc.savedBy = TOOL;
+    return JSON.stringify(doc, null, 2) + '\n';
+  }
+  function download(text, name, type) {
+    const url = URL.createObjectURL(new Blob([text], { type }));
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  function afterSave(name, downloaded) {
+    fileName = name; dirty = false; clearDraft(); render();
+    toast(downloaded ? `Downloaded ${name}. Keep it with your project files and open it here next time.` : `Saved to ${name}`);
+  }
+  async function saveFile() {
+    const out = serialize();
+    if (fileHandle) {
+      try { const w = await fileHandle.createWritable(); await w.write(out); await w.close(); afterSave(fileHandle.name); return; }
+      catch (err) { if (err.name === 'AbortError') return; fileHandle = null; }
+    }
+    if (window.showSaveFilePicker && window.self === window.top) {
+      try {
+        const h = await window.showSaveFilePicker({ suggestedName: fileName || suggestedName(), types: pickerTypes });
+        const w = await h.createWritable(); await w.write(out); await w.close();
+        fileHandle = h; afterSave(h.name);
+      } catch (err) { if (err.name !== 'AbortError') toast(`Couldn't save the file: ${err.message}`, true); }
+      return;
+    }
+    const name = fileName || suggestedName();
+    download(out, name, 'application/json');
+    afterSave(name, true);
+  }
+  function loadText(text, name, handle) {
+    let data;
+    try { data = JSON.parse(text); } catch { toast(`Couldn't open ${name}: it isn't a project file.`, true); return; }
+    if (!data || data.format !== FORMAT) { toast(`Couldn't open ${name}: it isn't an Open Filmmaker Toolkit project file.`, true); return; }
+    if (Number(data.formatVersion) > FORMAT_VERSION) { toast(`Couldn't open ${name}: it was saved by a newer version of the toolkit. Get the latest version of this tool.`, true); return; }
+    doc = normalize(data); fileHandle = handle; fileName = name; dirty = false;
+    clearDraft(); render();
+    const n = (k, one, many) => `${doc[k].length} ${doc[k].length === 1 ? one : many}`;
+    toast(`Opened ${name}: ${n('people', 'person', 'people')}, ${n('locations', 'location', 'locations')}, ${n('callSheets', 'shoot day', 'shoot days')}`);
+  }
+  async function openFile() {
+    if (dirty && !confirm('You have unsaved changes. Open another file and lose them?')) return;
+    if (window.showOpenFilePicker && window.self === window.top) {
+      try { const [h] = await window.showOpenFilePicker({ types: pickerTypes }); const f = await h.getFile(); loadText(await f.text(), f.name, h); }
+      catch (err) { if (err.name !== 'AbortError') toast(`Couldn't open the file: ${err.message}`, true); }
+      return;
+    }
+    $('fileInput').click();
+  }
+  function newProject() {
+    if (dirty && !confirm('You have unsaved changes. Start a new project and lose them?')) return;
+    doc = normalize(blankDoc()); fileHandle = null; fileName = null; dirty = false;
+    clearDraft(); render(); openProjectDialog();
+  }
+
+  let toastTimer = null;
+  function toast(msg, isError) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.classList.toggle('error', !!isError);
+    t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.hidden = true; }, isError ? 7000 : 4200);
+  }
+
+  // ---------- Wiring ----------
+  function init() {
+    doc = normalize(doc);
+    $('addBtn').onclick = () => openEditor(null);
+    $('emptyAddBtn').onclick = () => openEditor(null);
+    $('emptyOpenBtn').onclick = openFile;
+    $('newBtn').onclick = newProject;
+    $('openBtn').onclick = openFile;
+    $('saveBtn').onclick = saveFile;
+    $('editProjectBtn').onclick = openProjectDialog;
+    $('filmTitle').onclick = openProjectDialog;
+    $('csvBtn').onclick = exportCsv;
+    $('printAllBtn').onclick = () => printSheets(sheets());
+    $('printBtn').onclick = () => printSheets([readForm()]);
+    $('fileInput').addEventListener('change', async () => {
+      const f = $('fileInput').files[0];
+      if (f) loadText(await f.text(), f.name, null);
+      $('fileInput').value = '';
+    });
+
+    $('rows').addEventListener('click', ev => {
+      const tr = ev.target.closest('tr[data-id]');
+      const s = tr && doc.callSheets.find(x => x.id === tr.dataset.id);
+      if (!s) return;
+      const act = ev.target.closest('[data-act]');
+      if (act && act.dataset.act === 'print') { printSheets([s]); return; }
+      if (act && act.dataset.act === 'next') {
+        const copy = structuredClone(s);
+        copy.id = newId('callsheet');
+        copy.date = addDay(s.date);
+        for (const k of ['dayLabel', 'weather', 'sunrise', 'sunset']) delete copy[k];
+        doc.callSheets.push(copy);
+        changed();
+        toast(`Copied to ${fmtDate(copy.date)}. Weather and daylight were cleared.`);
+        return;
+      }
+      openEditor(s.id);
+    });
+
+    $('editorForm').addEventListener('submit', ev => { ev.preventDefault(); saveEditor(); });
+    $('editorCancel').onclick = () => $('editor').close();
+    $('deleteBtn').onclick = deleteEditing;
+    $('f-date').addEventListener('input', e => e.target.setCustomValidity(''));
+    $('f-locationId').addEventListener('change', showLocationHint);
+    $('addLineBtn').onclick = () => addScheduleLine({});
+    $('addPersonBtn').onclick = () => openAdd('person');
+    $('addLocationBtn').onclick = () => openAdd('location');
+    $('lookupBtn').onclick = lookupWeather;
+    $('fillCallBtn').onclick = () => {
+      const call = $('f-generalCall').value;
+      if (!call) { toast('Set the general call first.', true); return; }
+      for (const r of $('crew').querySelectorAll('.crew-line')) if (r.querySelector('input[type=checkbox]').checked) r.querySelector('.c-call').value = call;
+    };
+    $('schedule').addEventListener('click', ev => { const rm = ev.target.closest('.remove'); if (rm) rm.closest('.line').remove(); });
+
+    $('addForm').addEventListener('submit', ev => { ev.preventDefault(); saveAdd(); });
+    $('addCancel').onclick = () => $('addDialog').close();
+    $('addBody').addEventListener('input', e => e.target.setCustomValidity(''));
+    $('projectForm').addEventListener('submit', ev => { ev.preventDefault(); saveProjectDialog(); });
+    $('projectCancel').onclick = () => $('projectDialog').close();
+
+    document.addEventListener('keydown', ev => {
+      const mod = ev.metaKey || ev.ctrlKey;
+      if (mod && ev.key.toLowerCase() === 's') { ev.preventDefault(); saveFile(); }
+      else if (mod && ev.key.toLowerCase() === 'o') { ev.preventDefault(); openFile(); }
+    });
+    window.addEventListener('beforeunload', ev => { if (dirty) { ev.preventDefault(); ev.returnValue = ''; } });
+    render();
+    checkDraft();
+  }
+
+  if (typeof HTMLDialogElement !== 'function' || typeof HTMLDialogElement.prototype.showModal !== 'function' || typeof structuredClone !== 'function') {
+    $('cantRunTitle').textContent = 'This browser is too old to run this tool';
+    $('cantRunText').textContent = 'Update to a current version of Chrome, Edge, Firefox or Safari, then open this file again.';
+    $('cantRunHow').hidden = true;
+    return;
+  }
+  document.documentElement.classList.remove('no-js');
+  window.addEventListener('error', ev => toast(`Something went wrong: ${ev.message}. Save your work, then reload the page.`, true));
+  window.addEventListener('unhandledrejection', ev => toast(`Something went wrong: ${ev.reason && ev.reason.message ? ev.reason.message : ev.reason}. Save your work, then reload the page.`, true));
+  init();
+})();
+</script>
+</body>
+</html>

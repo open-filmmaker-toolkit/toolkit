@@ -131,7 +131,8 @@ Linked tools are available now; the rest are planned. Order of work is in [ROADM
 - Security checklist
 
 ### Production
-- Call sheet generator
+- [Call sheet](tools/call-sheet/) (first version)
+- [Analyze Video](https://github.com/evillollive/Analyze-Video-Skill): an AGPL-3.0 agent skill that turns videos into timestamped written analyses with frames. A companion, not part of the toolkit: it's a command-line skill that needs yt-dlp, ffmpeg, Python and Node
 - Camera and sound reports
 - Interview log
 - Daily production report
