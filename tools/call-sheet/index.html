@@ -190,6 +190,7 @@ dialog form { display: flex; flex-direction: column; height: 100%; max-height: i
         <h2 class="headline" id="headline"></h2>
         <span class="spacer"></span>
         <button type="button" class="btn" id="csvBtn">Export crew list (CSV)</button>
+        <button type="button" class="btn" id="sheetCsvBtn">Export call sheets (spreadsheet)</button>
         <button type="button" class="btn" id="printAllBtn">Print all days</button>
         <button type="button" class="btn primary" id="addBtn">Add a shoot day</button>
       </div>
@@ -260,6 +261,7 @@ dialog form { display: flex; flex-direction: column; height: 100%; max-height: i
     <div class="dlg-foot">
       <button type="button" class="btn danger" id="deleteBtn">Delete this day</button>
       <span class="spacer"></span>
+      <button type="button" class="btn" id="sheetCsvDayBtn">Export spreadsheet</button>
       <button type="button" class="btn" id="printBtn">Print</button>
       <button type="button" class="btn" id="editorCancel">Cancel</button>
       <button type="submit" class="btn primary">Save day</button>
@@ -663,6 +665,50 @@ dialog form { display: flex; flex-direction: column; height: 100%; max-height: i
     toast(`Exported ${rows.length} crew call${rows.length === 1 ? '' : 's'} to ${name}`);
   }
 
+  // Same layout as templates/call-sheet-template.csv: label/value rows, then schedule and crew tables.
+  function sheetRows(s) {
+    const loc = location(s.locationId);
+    const p = doc.project;
+    const h = s.hospital || {};
+    const rows = [
+      ['CALL SHEET'],
+      ['Film', p.title],
+      ['Company', p.company],
+      ['Date', s.date],
+      ['Day', s.dayLabel],
+      ['General call', fmtTime(s.generalCall)],
+      ['Estimated wrap', fmtTime(s.wrapTime)],
+      ['Location', loc ? loc.name : ''],
+      ['Address', loc ? placeOf(loc) : ''],
+      ['Parking', s.parking],
+      ['Weather', s.weather],
+      ['Sunrise', s.sunrise && fmtTime(s.sunrise)],
+      ['Sunset', s.sunset && fmtTime(s.sunset)],
+      ['Nearest hospital', [h.name, h.address, h.phone].filter(Boolean).join(' · ')],
+      [],
+      ['SCHEDULE'],
+      ['Time', 'What happens'],
+      ...s.schedule.map(x => [fmtTime(x.time), x.description]),
+      [],
+      ['CREW AND CAST'],
+      ['Name', 'Role', 'Call', 'Phone', 'Email'],
+      ...s.crew.map(c => ({ c, q: person(c.personId) })).filter(x => x.q).map(({ c, q }) => [q.name, c.role != null ? c.role : roleOf(q), fmtTime(c.callTime || s.generalCall), q.phone, q.email]),
+      [],
+      ['NOTES'],
+      [s.notes],
+      [],
+      ['Prepared by', [p.preparedBy, p.preparedContact].filter(Boolean).join(' · ')]
+    ];
+    return rows;
+  }
+  function exportSheetCsv(list) {
+    if (!list.length) { toast('There are no shoot days to export yet.', true); return; }
+    const rows = list.flatMap((s, i) => i ? [[], [], ...sheetRows(s)] : sheetRows(s));
+    const name = list.length === 1 ? `${slug()}-call-sheet-${list[0].date || 'day'}.csv` : `${slug()}-call-sheets.csv`;
+    download('\ufeff' + rows.map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n', name, 'text/csv;charset=utf-8');
+    toast(`Exported ${list.length} call sheet${list.length === 1 ? '' : 's'} to ${name}`);
+  }
+
   const csvCollections = {
     project: 'project details',
     people: 'people',
@@ -914,6 +960,8 @@ dialog form { display: flex; flex-direction: column; height: 100%; max-height: i
     $('projectCsvBtn').onclick = () => $('projectCsvDialog').showModal();
     $('projectCsvCancel').onclick = () => $('projectCsvDialog').close();
     $('projectCsvForm').addEventListener('submit', ev => { ev.preventDefault(); exportProjectCsv(); $('projectCsvDialog').close(); });
+    $('sheetCsvBtn').onclick = () => exportSheetCsv(sheets());
+    $('sheetCsvDayBtn').onclick = () => exportSheetCsv([readForm()]);
     $('printAllBtn').onclick = () => printSheets(sheets());
     $('printBtn').onclick = () => printSheets([readForm()]);
     $('fileInput').addEventListener('change', async () => {

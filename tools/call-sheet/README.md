@@ -36,6 +36,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **Picks crew from your project.** Check who's working, set a role and call time for each, or **Use general call for everyone checked**. Add a person or location without leaving the day.
 - **Copies a day to the next one,** keeping crew, location and hospital, and clearing weather and daylight.
 - **Prints** one portrait page per day. Choose "Save as PDF" in the print dialog to make a PDF.
+- **Exports call sheets as a spreadsheet (CSV).** One day from the editor, or every day at once. The layout matches the blank [call sheet template](../../templates/call-sheet-template.csv), which opens in Excel, Numbers or Google Sheets, so people can fill it in by hand without this tool.  Save it as `.xlsx` from there if you need that format.
 - **Exports a crew list (CSV)** with one row per person per day.
 - **Exports project data.** Save project details, people, locations, third-party elements, contracts, assets, music cue sheet details or call sheets as separate CSV files. Nested values stay as JSON inside their cell.
 
@@ -58,5 +59,5 @@ A `callSheets` array. Each entry has an `id` and `date`, and optionally times, a
 
 ## Not yet
 
-- A plain DOCX or spreadsheet template ([#22](https://github.com/open-filmmaker-toolkit/toolkit/issues/22))
+- A DOCX export (the spreadsheet export and blank template cover plain-file use)
 - Scene and shot lists, and sending the sheet to the crew
