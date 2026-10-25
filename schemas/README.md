@@ -12,6 +12,7 @@ The file is a JSON object with a `project` record and collections for reusable e
 | `locations` | Places involved in production |
 | `thirdPartyElements` | Archival material, music, artwork, logos and other clearances |
 | `contracts` | Releases, licenses and other agreements; references the people, locations, elements and assets they cover |
+| `callSheets` | Shoot days: date, call and wrap times, a location, weather, schedule, and crew with call times; references `locations` and `people`. `locations` may also carry `latitude` and `longitude` |
 | `assets` | Project materials such as footage, scans and documents; `relativePath`, when present, is relative to the project file |
 
 Tools should add only fields they own and preserve unknown fields and collections when saving. New collections and their fields are optional in version 1, so existing tools can continue to open files that do not use them. A tool that consumes references should report missing targets rather than silently discarding them. JSON Schema checks field shapes; tools remain responsible for ensuring IDs are unique within collections and references point to existing records.

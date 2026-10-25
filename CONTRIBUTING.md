@@ -30,7 +30,7 @@ Open an issue or comment on an existing one before starting anything bigger than
 These rules are what make the toolkit free, private and easy to maintain. Pull requests that break them won't be merged.
 
 - **One file per tool.** Each tool is a single self-contained `tools/<tool-name>/index.html` with its own `README.md`. No build step, no package installs, no frameworks.
-- **No network requests.** No external scripts, stylesheets, fonts, analytics or APIs. A tool has to work offline, opened straight from a computer, and project data never leaves the person's machine.
+- **No network requests.** No external scripts, stylesheets, fonts, analytics or APIs. A tool has to work offline, opened straight from a computer, and project data never leaves the person's machine. The one exception: a tool may offer a clearly labelled button that looks something up online, only if nothing is sent until the user clicks it and confirms, and the hosts are on the allowlist in `.github/scripts/validate_repo.py` (today: the call sheet's weather lookup).
 - **Share the project file carefully.** Tools read and write the same `.oft.json` file. Follow the [version 1 schema](schemas/project-v1.schema.json) and [data model notes](schemas/README.md). Change only the parts your tool owns and keep everything else exactly as it was, including fields you don't recognize. Don't change `formatVersion` without an issue and a maintainer decision.
 - **Plain language.** Sentence case. Buttons say what they do ("Save file," not "Submit"). Errors say what went wrong and how to fix it.
 - **Usable by everyone.** Works with a keyboard, has visible focus and labels on every field, and works at phone width and in dark mode.

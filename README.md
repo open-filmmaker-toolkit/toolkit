@@ -66,7 +66,8 @@ The toolkit has two halves:
 | --- | --- | --- |
 | [Clearance log](tools/clearance-log/) | Tracking every piece of third-party material until it's cleared, then printing a report for your E&O attorney | First version |
 | [Music cue sheet](tools/music-cue-sheet/) | Building the music cue sheet your distributor or broadcaster needs, from the music already in your clearance log | First version |
-| Release tracker, credits builder, call sheet generator | Who signed what, credits, and shoot-day paperwork | Planned, see the [Roadmap](ROADMAP.md) |
+| [Call sheet](tools/call-sheet/) | Building shoot-day call sheets from the people and locations in your project; weather lookup is optional and off until you click it | First version |
+| Release tracker, credits builder | Who signed what, and credits | Planned, see the [Roadmap](ROADMAP.md) |
 
 Everything else we plan to build is listed by production phase in [TOOLS.md](TOOLS.md#part-2-built-here).
 
