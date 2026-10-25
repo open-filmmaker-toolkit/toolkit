@@ -40,6 +40,8 @@ Roles: C composer, A author (lyrics), CA composer and author, AR arranger, E pub
 
 ## What it adds to the project file
 
+The shared [version 1 schema](../../schemas/project-v1.schema.json) documents the complete project file format, including data owned by other tools.
+
 ```json
 {
   "project": {

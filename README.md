@@ -20,6 +20,10 @@ The toolkit has two halves:
 - **Your file, your copy.** Projects save as a file on disk that you back up and share however you already do (Drive, Dropbox, a hard drive).
 - **Plain templates too.** Every tool also ships as a DOCX, spreadsheet or PDF template for people who never open the app.
 
+## Shared project file
+
+Tools share a local `.oft.json` project file. Its version 1 format is described by the [JSON Schema](schemas/project-v1.schema.json), with the [data model notes](schemas/README.md) and a [sample project](samples/the-river-keeps.oft.json). Tools preserve fields they do not own when saving.
+
 ## Who it's for
 
 Documentary and independent narrative filmmakers, producers, coordinators and ADs working without a studio's back office.

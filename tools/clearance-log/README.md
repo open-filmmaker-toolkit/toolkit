@@ -34,7 +34,7 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## Project file format
 
-The file is plain JSON:
+The file is plain JSON. The shared [version 1 schema](../../schemas/project-v1.schema.json) documents the complete format, including data owned by other tools:
 
 ```json
 {
