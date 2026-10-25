@@ -32,7 +32,8 @@ Each milestone below is a [GitHub milestone](https://github.com/open-filmmaker-t
 Three tools on one data model. This is the documentary-specific gap.
 
 - [ ] Release tracker: who signed what, linked to footage, with scans stored locally (#17)
-- [ ] Clearance / E&O log: every third-party element, its source, license status and cost (#18)
+- [x] Clearance / E&O log: every third-party element, its source, license status and cost (#18)
+- [x] Music cue sheet: built from the music in the clearance log, with credits, share checks and a printable sheet (#24)
 - [ ] Credits builder: pulls names and roles from the project, flags contractually required credits (#19)
 - [ ] Plain template versions of all three (#20)
 
