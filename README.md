@@ -67,7 +67,8 @@ The toolkit has two halves:
 | [Clearance log](tools/clearance-log/) | Tracking every piece of third-party material until it's cleared, then printing a report for your E&O attorney | First version |
 | [Music cue sheet](tools/music-cue-sheet/) | Building the music cue sheet your distributor or broadcaster needs, from the music already in your clearance log | First version |
 | [Call sheet](tools/call-sheet/) | Building shoot-day call sheets from the people and locations in your project; weather lookup is optional and off until you click it | First version |
-| Release tracker, credits builder | Who signed what, and credits | Planned, see the [Roadmap](ROADMAP.md) |
+| [Release tracker](tools/release-tracker/) | Tracking who signed what: appearance, location and materials releases, with the signed copies, and flagging anyone on camera with no release on file | First version |
+| Credits builder | Building the credit list from the people in your project | Planned, see the [Roadmap](ROADMAP.md) |
 
 Everything else we plan to build is listed by production phase in [TOOLS.md](TOOLS.md#part-2-built-here).
 
@@ -94,9 +95,13 @@ Documentary and independent narrative filmmakers, producers, coordinators and AD
 toolkit/
 |-- tools/                # One folder per tool: index.html plus its own README
 |   |-- clearance-log/
-|   `-- music-cue-sheet/
+|   |-- music-cue-sheet/
+|   |-- call-sheet/
+|   `-- release-tracker/
 |-- schemas/              # JSON Schema and data model notes for the project file
 |-- samples/              # Fictional sample project to try the tools with
+|-- templates/            # Blank templates for people who don't use the tools
+|-- tests/                # Browser tests CI runs in Chromium, Firefox and WebKit
 |-- docs/assets/          # Logo and preview artwork
 |-- .github/
 |   |-- workflows/        # DCO and CI checks
@@ -117,7 +122,7 @@ python3 -m pip install jsonschema
 python3 .github/scripts/validate_repo.py
 ```
 
-CI doesn't test browser behavior, printing or cross-tool compatibility. Those checks are manual: see [Before you open a pull request](CONTRIBUTING.md#before-you-open-a-pull-request).
+CI also runs [browser tests](tests/browser_tools.py) in Chromium, Firefox and WebKit: opening and saving the sample, CSV exports, the save-conflict warning, phone width, dark mode and print layout. It can't judge look and feel or drive a real printer or phone. Those checks are manual: see [Before you open a pull request](CONTRIBUTING.md#before-you-open-a-pull-request).
 
 ## Licenses
 

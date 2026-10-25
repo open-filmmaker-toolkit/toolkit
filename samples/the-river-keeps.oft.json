@@ -19,15 +19,47 @@
     {
       "id": "person-ana-reyes",
       "name": "Ana Reyes",
-      "roles": ["Producer"],
+      "roles": [
+        "Producer"
+      ],
       "email": "ana@example.org",
       "notes": "Fictional sample contact."
     },
     {
       "id": "person-daniel-okafor",
       "name": "Daniel Okafor",
-      "roles": ["Family contributor"],
-      "notes": "Fictional sample contributor."
+      "roles": [
+        "Family contributor"
+      ],
+      "notes": "Fictional sample contributor.",
+      "onCamera": true
+    },
+    {
+      "id": "person-ruth-hammond",
+      "name": "Ruth Hammond",
+      "roles": [
+        "Interview subject"
+      ],
+      "onCamera": true,
+      "notes": "Fictional sample subject."
+    },
+    {
+      "id": "person-leon-pryor",
+      "name": "Leon Pryor",
+      "roles": [
+        "Interview subject"
+      ],
+      "onCamera": true,
+      "notes": "Fictional sample subject."
+    },
+    {
+      "id": "person-marcus-bell",
+      "name": "Marcus Bell",
+      "roles": [
+        "Levee crew foreman"
+      ],
+      "onCamera": true,
+      "notes": "Fictional sample subject. Seen in b-roll; no release yet."
     }
   ],
   "locations": [
@@ -37,6 +69,25 @@
       "city": "Riverside",
       "region": "California",
       "country": "United States",
+      "notes": "Fictional sample location."
+    },
+    {
+      "id": "location-grain-elevator",
+      "name": "Grain elevator",
+      "address": "1 Mill Road",
+      "city": "Riverside",
+      "region": "California",
+      "country": "United States",
+      "onCamera": true,
+      "notes": "Fictional sample location."
+    },
+    {
+      "id": "location-hammond-house",
+      "name": "Hammond house",
+      "city": "Riverside",
+      "region": "California",
+      "country": "United States",
+      "onCamera": true,
       "notes": "Fictional sample location."
     }
   ],
@@ -71,7 +122,10 @@
       "rights": "Worldwide, all media, in perpetuity",
       "cost": 0,
       "licenseRef": "Okafor-materials-release.pdf",
-      "notes": "Signed materials release covers all family photos."
+      "notes": "Signed materials release covers all family photos.",
+      "contractIds": [
+        "contract-okafor-materials-release"
+      ]
     },
     {
       "id": "sample-03",
@@ -393,10 +447,62 @@
       "title": "Okafor family materials release",
       "type": "materials release",
       "status": "signed",
-      "personIds": ["person-daniel-okafor"],
-      "thirdPartyElementIds": ["sample-02"],
-      "assetIds": ["asset-okafor-release"],
+      "personIds": [
+        "person-daniel-okafor"
+      ],
+      "thirdPartyElementIds": [
+        "sample-02"
+      ],
+      "assetIds": [
+        "asset-okafor-release"
+      ],
       "notes": "Fictional example. The referenced scan is not included."
+    },
+    {
+      "id": "contract-hammond-appearance",
+      "title": "Appearance release: Ruth Hammond",
+      "type": "appearance release",
+      "status": "signed",
+      "personIds": [
+        "person-ruth-hammond"
+      ],
+      "assetIds": [
+        "asset-hammond-release"
+      ],
+      "signedDate": "2026-05-12",
+      "notes": "Fictional example. Signed on the first shoot day."
+    },
+    {
+      "id": "contract-pryor-appearance",
+      "title": "Appearance release: Leon Pryor",
+      "type": "appearance release",
+      "status": "pending",
+      "personIds": [
+        "person-leon-pryor"
+      ],
+      "notes": "Fictional example. Sent by email after the interview."
+    },
+    {
+      "id": "contract-grain-elevator-location",
+      "title": "Location release: Grain elevator",
+      "type": "location release",
+      "status": "signed",
+      "locationIds": [
+        "location-grain-elevator"
+      ],
+      "signedDate": "2026-05-11",
+      "expirationDate": "2027-05-11",
+      "notes": "Fictional example. Signed by the property manager."
+    },
+    {
+      "id": "contract-hammond-house-location",
+      "title": "Location release: Hammond house",
+      "type": "location release",
+      "status": "pending",
+      "locationIds": [
+        "location-hammond-house"
+      ],
+      "notes": "Fictional example."
     }
   ],
   "assets": [
@@ -405,6 +511,14 @@
       "name": "Okafor family materials release scan",
       "type": "document",
       "relativePath": "documents/okafor-family-materials-release.pdf",
+      "mimeType": "application/pdf",
+      "notes": "Fictional reference only; the file is not included."
+    },
+    {
+      "id": "asset-hammond-release",
+      "name": "hammond-appearance-release.pdf",
+      "type": "release scan",
+      "relativePath": "releases/hammond-appearance-release.pdf",
       "mimeType": "application/pdf",
       "notes": "Fictional reference only; the file is not included."
     }

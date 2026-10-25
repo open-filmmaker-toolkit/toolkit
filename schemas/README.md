@@ -8,14 +8,24 @@ The file is a JSON object with a `project` record and collections for reusable e
 
 | Collection | Purpose |
 | --- | --- |
-| `people` | Cast, crew, subjects and other contributors |
-| `locations` | Places involved in production |
+| `people` | Cast, crew, subjects and other contributors. `onCamera` marks someone who needs a release |
+| `locations` | Places involved in production. `onCamera` marks a place that's filmed |
 | `thirdPartyElements` | Archival material, music, artwork, logos and other clearances |
-| `contracts` | Releases, licenses and other agreements; references the people, locations, elements and assets they cover |
+| `contracts` | Releases, licenses and other agreements; references the people, locations, elements and assets they cover. See [Releases](#releases) |
 | `callSheets` | Shoot days: date, call and wrap times, a location, weather, schedule, and crew with call times; references `locations` and `people`. `locations` may also carry `latitude` and `longitude` |
 | `assets` | Project materials such as footage, scans and documents; `relativePath`, when present, is relative to the project file |
 
 Tools should add only fields they own and preserve unknown fields and collections when saving. New collections and their fields are optional in version 1, so existing tools can continue to open files that do not use them. A tool that consumes references should report missing targets rather than silently discarding them. JSON Schema checks field shapes; tools remain responsible for ensuring IDs are unique within collections and references point to existing records.
+
+## Releases
+
+The release tracker treats a contract as a release when its `type` contains "release". It writes `appearance release`, `location release`, `materials release` and `other release`, with a `status` of `pending`, `signed` or `declined`, and dates as YYYY-MM-DD. A release is expired when it's signed and its `expirationDate` has passed.
+
+- A person needs a release when `onCamera` is true, or when it's unset and an appearance or other release names them.
+- A location needs a release when `onCamera` is true, or when it's unset and a call sheet or a location or other release names it.
+- `onCamera: false` takes someone or somewhere off the list even if a release or call sheet names them.
+- Materials releases cover clearance-log items through `thirdPartyElementIds`; each item records the release in `contractIds`. They don't cover a person's appearance.
+- Signed copies are `assets` with `type` "release scan" and a `relativePath` under `releases/`, relative to the project file.
 
 ## CSV exports
 
