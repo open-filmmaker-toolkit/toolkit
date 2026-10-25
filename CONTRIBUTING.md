@@ -31,7 +31,7 @@ These rules are what make the toolkit free, private and easy to maintain. Pull r
 
 - **One file per tool.** Each tool is a single self-contained `tools/<tool-name>/index.html` with its own `README.md`. No build step, no package installs, no frameworks.
 - **No network requests.** No external scripts, stylesheets, fonts, analytics or APIs. A tool has to work offline, opened straight from a computer, and project data never leaves the person's machine.
-- **Share the project file carefully.** Tools read and write the same `.oft.json` file. Change only the parts your tool owns and keep everything else exactly as it was, including fields you don't recognize. Don't change `formatVersion` without an issue and a maintainer decision.
+- **Share the project file carefully.** Tools read and write the same `.oft.json` file. Follow the [version 1 schema](schemas/project-v1.schema.json) and [data model notes](schemas/README.md). Change only the parts your tool owns and keep everything else exactly as it was, including fields you don't recognize. Don't change `formatVersion` without an issue and a maintainer decision.
 - **Plain language.** Sentence case. Buttons say what they do ("Save file," not "Submit"). Errors say what went wrong and how to fix it.
 - **Usable by everyone.** Works with a keyboard, has visible focus and labels on every field, and works at phone width and in dark mode.
 - **Fictional sample data only.** Files in `samples/` must never contain real people, productions or contracts.
@@ -43,6 +43,21 @@ These rules are what make the toolkit free, private and easy to maintain. Pull r
 - Open that saved file in every other tool that uses it and check nothing was lost.
 - If your tool prints, check the printed version.
 - Check phone width and dark mode.
+
+## CI and runners
+
+Two [GitHub Actions workflows](.github/workflows) run on pull requests, both on GitHub-hosted `ubuntu-latest` runners with read-only contents permission, a timeout, and actions pinned to commit SHAs (Dependabot keeps them current):
+
+- **DCO** checks that every commit is signed off.
+- **CI** validates the [project schema](schemas/project-v1.schema.json) against the sample files, checks that IDs and references in samples resolve, and checks each tool has a README and makes no network requests.
+
+Run the CI check locally first with `pip install jsonschema` and `python3 .github/scripts/validate_repo.py`. CI doesn't test browser behavior, cross-tool compatibility, printing, phone width or dark mode, and it doesn't qualify a release; use the checks above for those. While the repo is private on a free plan, branch protection isn't available, so reviewers should confirm both checks are green before merging.
+
+- Finish related changes as one candidate and run local checks before triggering CI. Where a CI check has a local equivalent, use the same check.
+- Avoid overlapping runs and extra pushes while a candidate is being qualified. A passing result applies only to the commit it checked; a later commit needs its own passing run.
+- If a run fails, inspect its logs and diagnose the cause before rerunning. Don't retry an unchanged failure. Rerun after a fix or a confirmed transient runner failure.
+- Keep release evidence together: if artifacts belong to a specific run attempt, produce a complete set from one successful run rather than combining outputs from different attempts.
+- Prefer fresh GitHub-hosted runners. Keep workflow permissions minimal, check out the exact commit being evaluated, and never put real project files or secrets in runner inputs or logs. If a check is intentionally non-blocking, label it clearly and don't present it as release qualification.
 
 ## Sign off your commits
 

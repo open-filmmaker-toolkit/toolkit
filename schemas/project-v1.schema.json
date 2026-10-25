@@ -1,0 +1,425 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Open Filmmaker Toolkit project file, version 1",
+  "description": "The shared, local-first project file used by Open Filmmaker Toolkit tools. Unknown properties are allowed so tools can preserve fields owned by other tools.",
+  "type": "object",
+  "required": [
+    "format",
+    "formatVersion",
+    "project",
+    "thirdPartyElements"
+  ],
+  "properties": {
+    "format": {
+      "const": "open-filmmaker-toolkit/project"
+    },
+    "formatVersion": {
+      "const": 1
+    },
+    "project": {
+      "$ref": "#/$defs/project"
+    },
+    "people": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/person"
+      }
+    },
+    "locations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/location"
+      }
+    },
+    "thirdPartyElements": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/thirdPartyElement"
+      }
+    },
+    "contracts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/contract"
+      }
+    },
+    "assets": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/asset"
+      }
+    },
+    "musicCueSheet": {
+      "$ref": "#/$defs/musicCueSheet"
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "project": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "company": {
+          "type": "string"
+        },
+        "producer": {
+          "type": "string"
+        },
+        "distributor": {
+          "type": "string"
+        },
+        "releaseDate": {
+          "type": "string"
+        },
+        "runningTime": {
+          "type": "string"
+        },
+        "startTimecode": {
+          "type": "string"
+        },
+        "preparedBy": {
+          "type": "string"
+        },
+        "preparedContact": {
+          "type": "string"
+        },
+        "cutVersion": {
+          "type": "string"
+        },
+        "frameRate": {
+          "type": "number",
+          "enum": [
+            23.976,
+            24,
+            25,
+            29.97,
+            30,
+            48,
+            50,
+            59.94,
+            60
+          ]
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Za-z]{3}$"
+        }
+      },
+      "additionalProperties": true
+    },
+    "person": {
+      "type": "object",
+      "required": [
+        "id",
+        "name"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "email": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "location": {
+      "type": "object",
+      "required": [
+        "id",
+        "name"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "address": {
+          "type": "string"
+        },
+        "city": {
+          "type": "string"
+        },
+        "region": {
+          "type": "string"
+        },
+        "postalCode": {
+          "type": "string"
+        },
+        "country": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "thirdPartyElement": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "description": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "not-started",
+            "requested",
+            "negotiating",
+            "licensed",
+            "fair-use",
+            "public-domain",
+            "replace"
+          ]
+        },
+        "source": {
+          "type": "string"
+        },
+        "rightsHolder": {
+          "type": "string"
+        },
+        "contact": {
+          "type": "string"
+        },
+        "tcIn": {
+          "type": "string"
+        },
+        "tcOut": {
+          "type": "string"
+        },
+        "use": {
+          "type": "string"
+        },
+        "rights": {
+          "type": "string"
+        },
+        "cost": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "licenseRef": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        },
+        "contractIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true
+        },
+        "music": {
+          "$ref": "#/$defs/music"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "music": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "artist": {
+          "type": "string"
+        },
+        "cueId": {
+          "type": "string"
+        },
+        "usage": {
+          "enum": [
+            "BI",
+            "BV",
+            "VI",
+            "VV",
+            "MT",
+            "ET",
+            ""
+          ]
+        },
+        "writers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/musicParty"
+          }
+        },
+        "publishers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/musicParty"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "musicParty": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "society": {
+          "type": "string"
+        },
+        "share": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 100
+        }
+      },
+      "additionalProperties": true
+    },
+    "contract": {
+      "type": "object",
+      "required": [
+        "id",
+        "title"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "personIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true
+        },
+        "locationIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true
+        },
+        "thirdPartyElementIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true
+        },
+        "assetIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true
+        },
+        "signedDate": {
+          "type": "string"
+        },
+        "effectiveDate": {
+          "type": "string"
+        },
+        "expirationDate": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "asset": {
+      "type": "object",
+      "required": [
+        "id",
+        "name"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "type": "string"
+        },
+        "relativePath": {
+          "type": "string"
+        },
+        "mimeType": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "musicCueSheet": {
+      "type": "object",
+      "properties": {
+        "musicSupervisor": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}

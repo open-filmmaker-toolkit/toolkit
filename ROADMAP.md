@@ -15,9 +15,9 @@ Each milestone below is a [GitHub milestone](https://github.com/open-filmmaker-t
 
 ## Milestone 1: The directory (public launch)
 
-- [ ] Verify every tool in [TOOLS.md](TOOLS.md): license, platforms, last release, still maintained (#9)
-- [ ] Add a one-line "use it for" note to each entry (#10)
-- [ ] Remove anything unmaintained or not actually open source (#11)
+- [x] Verify every tool in [TOOLS.md](TOOLS.md): license, platforms, last release, still maintained (#9)
+- [x] Add a one-line "use it for" note to each entry (#10)
+- [x] Remove anything unmaintained or not actually open source (#11)
 - [ ] Make the repo public (#12)
 
 ## Milestone 2: The shared project file

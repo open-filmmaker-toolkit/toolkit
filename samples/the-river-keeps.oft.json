@@ -15,6 +15,31 @@
     "frameRate": 23.976,
     "currency": "USD"
   },
+  "people": [
+    {
+      "id": "person-ana-reyes",
+      "name": "Ana Reyes",
+      "roles": ["Producer"],
+      "email": "ana@example.org",
+      "notes": "Fictional sample contact."
+    },
+    {
+      "id": "person-daniel-okafor",
+      "name": "Daniel Okafor",
+      "roles": ["Family contributor"],
+      "notes": "Fictional sample contributor."
+    }
+  ],
+  "locations": [
+    {
+      "id": "location-riverside-levee",
+      "name": "Riverside levee",
+      "city": "Riverside",
+      "region": "California",
+      "country": "United States",
+      "notes": "Fictional sample location."
+    }
+  ],
   "thirdPartyElements": [
     {
       "id": "sample-01",
@@ -360,6 +385,28 @@
           }
         ]
       }
+    }
+  ],
+  "contracts": [
+    {
+      "id": "contract-okafor-materials-release",
+      "title": "Okafor family materials release",
+      "type": "materials release",
+      "status": "signed",
+      "personIds": ["person-daniel-okafor"],
+      "thirdPartyElementIds": ["sample-02"],
+      "assetIds": ["asset-okafor-release"],
+      "notes": "Fictional example. The referenced scan is not included."
+    }
+  ],
+  "assets": [
+    {
+      "id": "asset-okafor-release",
+      "name": "Okafor family materials release scan",
+      "type": "document",
+      "relativePath": "documents/okafor-family-materials-release.pdf",
+      "mimeType": "application/pdf",
+      "notes": "Fictional reference only; the file is not included."
     }
   ],
   "musicCueSheet": {
