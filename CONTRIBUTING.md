@@ -38,13 +38,13 @@ These rules are what make the toolkit free, private and easy to maintain. Pull r
 
 ### Before you open a pull request
 
-- Open the tool in Chrome or Edge, and in Firefox or Safari.
+- Open the tool in Chrome or Edge, and in Firefox or Safari. CI already runs the automated checks in all three engines; do this to judge the look and feel.
 - Load `samples/the-river-keeps.oft.json`, make a change, save, and reopen the saved file.
 - Open that saved file in every other tool that uses it and check nothing was lost.
 - Export each project collection to CSV and confirm the file contains all records, including fields the current tool does not edit.
 - Open the same project in two tool tabs, save a change in one, then save in the other. Confirm it warns and offers reload, save a copy or explicit overwrite.
-- If your tool prints, check the printed version.
-- Check phone width and dark mode.
+- If your tool prints, check the printed version on paper or in a PDF viewer. CI checks the print layout and renders a PDF, not a real printer.
+- Check phone width and dark mode on a real phone, if you changed layout or colors. CI checks for overflow and contrast only.
 
 ## CI and runners
 
@@ -53,7 +53,14 @@ Two [GitHub Actions workflows](.github/workflows) run on pull requests, both on 
 - **DCO** checks that every commit is signed off.
 - **CI** validates the [project schema](schemas/project-v1.schema.json) against the sample files, checks that IDs and references in samples resolve, and checks each tool has a README and makes no network requests.
 
-Run the CI check locally first with `pip install jsonschema` and `python3 .github/scripts/validate_repo.py`. CI runs `tests/browser_tools.py` in headless Chromium (CSV export and save-conflict warnings; run it locally with `pip install playwright`, `playwright install chromium`, `python3 tests/browser_tools.py`). It doesn't test other browsers, cross-tool compatibility, printing, phone width or dark mode, and it doesn't qualify a release; use the checks above for those. While the repo is private on a free plan, branch protection isn't available, so reviewers should confirm all three checks are green before merging.
+Run the CI checks locally first:
+
+- `pip install jsonschema` then `python3 .github/scripts/validate_repo.py`
+- `pip install playwright pypdf`, `playwright install chromium firefox webkit`, then `python3 tests/browser_tools.py chromium` (or `firefox`, `webkit`)
+
+CI runs `tests/browser_tools.py` in headless Chromium, Firefox and WebKit (Safari's engine) on every pull request. It opens the sample, saves, exports every CSV, checks phone width (390px, no sideways scrolling) and light and dark mode contrast, and checks the print layout. Chromium also renders a real PDF and tests the save-conflict warning. A change to a tool that breaks any of these fails the matching "Browser tests" check.
+
+CI can't judge how a tool looks and feels, can't drive a real printer or phone, and doesn't qualify a release. Do the manual checks above for anything you changed visually, and for new behavior the tests don't cover; add a check to `tests/browser_tools.py` when you add a feature. While the repo is private on a free plan, branch protection isn't available, so reviewers should confirm all five checks (DCO, schema, and three browsers) are green before merging.
 
 - Finish related changes as one candidate and run local checks before triggering CI. Where a CI check has a local equivalent, use the same check.
 - Avoid overlapping runs and extra pushes while a candidate is being qualified. A passing result applies only to the commit it checked; a later commit needs its own passing run.
