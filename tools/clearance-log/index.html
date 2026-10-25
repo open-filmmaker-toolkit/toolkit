@@ -331,6 +331,7 @@ dialog form { display: flex; flex-direction: column; height: 100%; }
       <div class="file-actions">
         <button type="button" class="btn" id="newBtn">New log</button>
         <button type="button" class="btn" id="openBtn">Open file</button>
+        <button type="button" class="btn" id="projectCsvBtn">Export project data (CSV)</button>
         <button type="button" class="btn primary" id="saveBtn">Save file</button>
       </div>
     </div>
@@ -531,6 +532,48 @@ dialog form { display: flex; flex-direction: column; height: 100%; }
   </form>
 </dialog>
 
+<dialog class="modal" id="projectCsvDialog" aria-labelledby="projectCsvTitle">
+  <form id="projectCsvForm" method="dialog">
+    <div class="dlg-head"><h2 id="projectCsvTitle">Export project data</h2></div>
+    <div class="dlg-body">
+      <div class="field">
+        <label for="projectCsvCollection">Data to export</label>
+        <select id="projectCsvCollection">
+          <option value="project">Project details</option>
+          <option value="people">People</option>
+          <option value="locations">Locations</option>
+          <option value="thirdPartyElements">Third-party elements</option>
+          <option value="contracts">Contracts</option>
+          <option value="assets">Assets</option>
+          <option value="musicCueSheet">Music cue sheet details</option>
+          <option value="callSheets">Call sheets</option>
+        </select>
+      </div>
+      <p class="hint">Exports one CSV file for the selected collection. Nested values are kept as JSON in their cell.</p>
+    </div>
+    <div class="dlg-foot">
+      <button type="submit" class="btn primary">Export CSV</button>
+      <button type="button" class="btn" id="projectCsvCancel">Cancel</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="conflictDialog" aria-labelledby="conflictTitle">
+  <form method="dialog">
+    <div class="dlg-head"><h2 id="conflictTitle">Project file changed</h2></div>
+    <div class="dlg-body">
+      <p id="conflictText">This project file changed after you opened it. Saving will replace those changes.</p>
+      <p class="hint">Your edits are still here. Choose whether to overwrite the changed file, save a separate copy, or load its latest contents. Save in one tool at a time; simultaneous saves can still race.</p>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn" id="conflictReloadBtn">Reload latest</button>
+      <button type="button" class="btn" id="conflictCopyBtn">Save a copy</button>
+      <button type="button" class="btn danger" id="conflictOverwriteBtn">Overwrite file</button>
+      <button type="button" class="btn" id="conflictCancelBtn">Keep editing</button>
+    </div>
+  </form>
+</dialog>
+
 <input type="file" id="fileInput" accept=".json,application/json" hidden>
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
@@ -568,6 +611,7 @@ dialog form { display: flex; flex-direction: column; height: 100%; }
   // ---------- State ----------
   let doc = blankDoc();
   let fileHandle = null;
+  let baselineText = null;
   let fileName = null;
   let dirty = false;
   let sort = { key: null, dir: 1 };
@@ -950,7 +994,7 @@ dialog form { display: flex; flex-direction: column; height: 100%; }
   }
   function saveDraft() {
     try {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify({ doc, fileName, at: new Date().toISOString() }));
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({ doc, fileName, baselineText, at: new Date().toISOString() }));
     } catch { /* storage unavailable: the file on disk is the real copy */ }
   }
   function clearDraft() {
@@ -971,6 +1015,7 @@ dialog form { display: flex; flex-direction: column; height: 100%; }
       doc = normalize(draft.doc);
       fileName = draft.fileName || null;
       fileHandle = null;
+      baselineText = typeof draft.baselineText === 'string' ? draft.baselineText : null;
       dirty = true;
       $('recovery').hidden = true;
       render();
@@ -999,34 +1044,115 @@ dialog form { display: flex; flex-direction: column; height: 100%; }
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
-  function afterSave(name, downloaded) {
+  function afterSave(name, downloaded, content) {
     fileName = name;
+    if (downloaded) fileHandle = null;
+    baselineText = content;
     dirty = false;
     clearDraft();
     render();
     toast(downloaded ? `Downloaded ${name}. Keep it with your project files and open it here next time.` : `Saved to ${name}`);
   }
 
+  async function writeProjectFile(handle, content) {
+    try {
+      const writable = await handle.createWritable();
+      await writable.write(content);
+      await writable.close();
+    } catch (err) {
+      if (err.name !== 'AbortError') toast(`Couldn't save the file: ${err.message}`, true);
+      return;
+    }
+    fileHandle = handle;
+    afterSave(handle.name, false, content);
+  }
+
+  function saveCopy(content) {
+    const base = (fileName || suggestedName()).replace(/\.oft\.json$/i, '');
+    const name = `${base}-copy.oft.json`;
+    download(content, name, 'application/json');
+    afterSave(name, true, content);
+  }
+
+  async function reloadLatest(handle) {
+    try {
+      const file = await handle.getFile();
+      loadText(await file.text(), handle.name, handle);
+    } catch (err) {
+      toast(`Couldn't reload the file: ${err.message}`, true);
+    }
+  }
+
+  function showConflictDialog(content, observedText, unknownBaseline = false) {
+    const handle = fileHandle;
+    dirty = true;
+    saveDraft();
+    render();
+    $('conflictText').textContent = unknownBaseline
+      ? `The tool can't verify whether ${handle.name} changed since your recovery copy was made. Your edits are not saved.`
+      : `${handle.name} changed after you opened it. Your edits are not saved. Overwriting replaces the newer file.`;
+    $('conflictDialog').showModal();
+    $('conflictReloadBtn').onclick = () => {
+      $('conflictDialog').close();
+      reloadLatest(handle);
+    };
+    $('conflictCopyBtn').onclick = () => {
+      $('conflictDialog').close();
+      saveCopy(content);
+    };
+    $('conflictOverwriteBtn').onclick = async () => {
+      $('conflictDialog').close();
+      let latestText;
+      try {
+        latestText = await (await handle.getFile()).text();
+      } catch (err) {
+        toast(`Couldn't check the file before overwriting: ${err.message}`, true);
+        return;
+      }
+      if (latestText !== observedText) {
+        toast('The file changed again. Review the updated conflict warning before overwriting.', true);
+        showConflictDialog(content, latestText);
+        return;
+      }
+      await writeProjectFile(handle, content);
+    };
+    $('conflictCancelBtn').onclick = () => $('conflictDialog').close();
+  }
+
   async function saveFile() {
     const out = serialize();
     if (fileHandle) {
+      let currentText;
       try {
-        const w = await fileHandle.createWritable();
-        await w.write(out); await w.close();
-        afterSave(fileHandle.name);
-        return;
+        currentText = await (await fileHandle.getFile()).text();
       } catch (err) {
-        if (err.name === 'AbortError') return;
-        fileHandle = null; // fall through to Save As
+        toast(`Couldn't check the file before saving: ${err.message}`, true);
+        return;
       }
+      if (baselineText === null || currentText !== baselineText) {
+        showConflictDialog(out, currentText, baselineText === null);
+        return;
+      }
+      await writeProjectFile(fileHandle, out);
+      return;
     }
     if (window.showSaveFilePicker && window.self === window.top) {
       try {
         const h = await window.showSaveFilePicker({ suggestedName: fileName || suggestedName(), types: pickerTypes });
-        const w = await h.createWritable();
-        await w.write(out); await w.close();
-        fileHandle = h;
-        afterSave(h.name);
+        if (baselineText !== null && h.name === fileName) {
+          const currentText = await (await h.getFile()).text();
+          if (currentText !== baselineText) {
+            fileHandle = h;
+            showConflictDialog(out, currentText);
+            return;
+          }
+        } else if (baselineText === null && h.name === fileName) {
+          const currentText = await (await h.getFile()).text();
+          fileHandle = h;
+          showConflictDialog(out, currentText, true);
+          return;
+        }
+        await writeProjectFile(h, out);
       } catch (err) {
         if (err.name !== 'AbortError') toast(`Couldn't save the file: ${err.message}`, true);
       }
@@ -1034,7 +1160,7 @@ dialog form { display: flex; flex-direction: column; height: 100%; }
     }
     const name = fileName || suggestedName();
     download(out, name, 'application/json');
-    afterSave(name, true);
+    afterSave(name, true, out);
   }
 
   function loadText(text, name, handle) {
@@ -1050,6 +1176,7 @@ dialog form { display: flex; flex-direction: column; height: 100%; }
     }
     doc = normalize(data);
     fileHandle = handle;
+    baselineText = text;
     fileName = name;
     dirty = false;
     clearDraft();
@@ -1077,6 +1204,7 @@ dialog form { display: flex; flex-direction: column; height: 100%; }
     if (dirty && !confirm('You have unsaved changes. Start a new log and lose them?')) return;
     doc = blankDoc();
     fileHandle = null;
+    baselineText = null;
     fileName = null;
     dirty = false;
     clearDraft();
@@ -1102,6 +1230,36 @@ dialog form { display: flex; flex-direction: column; height: 100%; }
     const name = suggestedName().replace(/\.oft\.json$/, '-clearance-log.csv');
     download(csv, name, 'text/csv;charset=utf-8');
     toast(`Exported ${els().length} element${els().length === 1 ? '' : 's'} to ${name}`);
+  }
+
+  const csvCollections = {
+    project: 'project details',
+    people: 'people',
+    locations: 'locations',
+    thirdPartyElements: 'third-party elements',
+    contracts: 'contracts',
+    assets: 'assets',
+    musicCueSheet: 'music cue sheet details',
+    callSheets: 'call sheets'
+  };
+  function exportProjectCsv() {
+    const collection = $('projectCsvCollection').value;
+    const value = doc[collection];
+    const rows = Array.isArray(value) ? value : value && typeof value === 'object' ? [value] : [];
+    if (rows.some(row => !row || typeof row !== 'object' || Array.isArray(row))) {
+      toast(`Couldn't export ${csvCollections[collection]}: the project contains an invalid record.`, true);
+      return;
+    }
+    const headers = [...new Set(rows.flatMap(row => Object.keys(row)))];
+    if (!headers.length) headers.push('id');
+    const csvRows = rows.map(row => headers.map(key => {
+      const cell = row[key];
+      return cell && typeof cell === 'object' ? JSON.stringify(cell) : cell;
+    }));
+    const csv = '﻿' + [headers, ...csvRows].map(row => row.map(csvCell).join(',')).join('\r\n') + '\r\n';
+    const name = suggestedName().replace(/\.oft\.json$/i, `-${collection}.csv`);
+    download(csv, name, 'text/csv;charset=utf-8');
+    toast(`Exported ${rows.length} ${csvCollections[collection]} to ${name}`);
   }
 
   // ---------- Toast ----------
@@ -1143,6 +1301,9 @@ dialog form { display: flex; flex-direction: column; height: 100%; }
     $('editProjectBtn').onclick = openProjectDialog;
     $('filmTitle').onclick = openProjectDialog;
     $('csvBtn').onclick = exportCsv;
+    $('projectCsvBtn').onclick = () => $('projectCsvDialog').showModal();
+    $('projectCsvCancel').onclick = () => $('projectCsvDialog').close();
+    $('projectCsvForm').addEventListener('submit', ev => { ev.preventDefault(); exportProjectCsv(); });
     $('printBtn').onclick = () => { renderReport(); window.print(); };
     window.addEventListener('beforeprint', renderReport);
 
