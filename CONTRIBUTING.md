@@ -53,7 +53,7 @@ Two [GitHub Actions workflows](.github/workflows) run on pull requests, both on 
 - **DCO** checks that every commit is signed off.
 - **CI** validates the [project schema](schemas/project-v1.schema.json) against the sample files, checks that IDs and references in samples resolve, and checks each tool has a README and makes no network requests.
 
-Run the CI check locally first with `pip install jsonschema` and `python3 .github/scripts/validate_repo.py`. CI doesn't test browser behavior, cross-tool compatibility, printing, phone width or dark mode, and it doesn't qualify a release; use the checks above for those. While the repo is private on a free plan, branch protection isn't available, so reviewers should confirm both checks are green before merging.
+Run the CI check locally first with `pip install jsonschema` and `python3 .github/scripts/validate_repo.py`. CI runs `tests/browser_tools.py` in headless Chromium (CSV export and save-conflict warnings; run it locally with `pip install playwright`, `playwright install chromium`, `python3 tests/browser_tools.py`). It doesn't test other browsers, cross-tool compatibility, printing, phone width or dark mode, and it doesn't qualify a release; use the checks above for those. While the repo is private on a free plan, branch protection isn't available, so reviewers should confirm all three checks are green before merging.
 
 - Finish related changes as one candidate and run local checks before triggering CI. Where a CI check has a local equivalent, use the same check.
 - Avoid overlapping runs and extra pushes while a candidate is being qualified. A passing result applies only to the commit it checked; a later commit needs its own passing run.

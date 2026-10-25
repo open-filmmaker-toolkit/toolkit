@@ -913,7 +913,7 @@ dialog form { display: flex; flex-direction: column; height: 100%; max-height: i
     $('csvBtn').onclick = exportCsv;
     $('projectCsvBtn').onclick = () => $('projectCsvDialog').showModal();
     $('projectCsvCancel').onclick = () => $('projectCsvDialog').close();
-    $('projectCsvForm').addEventListener('submit', ev => { ev.preventDefault(); exportProjectCsv(); });
+    $('projectCsvForm').addEventListener('submit', ev => { ev.preventDefault(); exportProjectCsv(); $('projectCsvDialog').close(); });
     $('printAllBtn').onclick = () => printSheets(sheets());
     $('printBtn').onclick = () => printSheets([readForm()]);
     $('fileInput').addEventListener('change', async () => {
