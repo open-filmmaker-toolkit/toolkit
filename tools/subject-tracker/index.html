@@ -1,0 +1,909 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Subject tracker · Open Filmmaker Toolkit</title>
+<meta name="description" content="Keep track of the people you might film: who they are, how you found them, where access stands and when to follow up, then add them to your project file. Runs in your browser; your data stays on your computer.">
+<style>
+:root {
+  --paper: #f1f3f2; --sheet: #ffffff; --ink: #1a2130; --ink-2: #4b556a; --ink-3: #6d778a;
+  --rule: #d4dad8; --rule-soft: #e6eae8; --hover: #f6f8f7; --focus: #2f6fdb;
+  --good: #2b7a57; --good-bg: #dff1e8; --warn: #8a5a00; --warn-bg: #fbf0d9; --bad: #b3392d; --bad-bg: #f8e1de;
+  --screen: #050506; --screen-ink: #f4f1ea; --screen-dim: #a7a29a;
+  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #141922; --sheet: #1b212b; --ink: #e6e9ee; --ink-2: #a6afbd; --ink-3: #8790a0;
+    --rule: #2f3744; --rule-soft: #262d38; --hover: #212834; --focus: #7aa7ff;
+    --good: #4fb386; --good-bg: #1a3329; --warn: #e2a531; --warn-bg: #3a2f17; --bad: #e26657; --bad-bg: #3b2220;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans); }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+[hidden] { display: none !important; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.foot { margin-top: 28px; font-size: 13px; color: var(--ink-3); }
+.cant-run { display: none; max-width: 640px; margin: 64px auto; padding: 0 24px; }
+.cant-run h1 { margin: 0 0 8px; font: 600 26px/1.2 var(--serif); }
+.cant-run p { margin: 0 0 10px; color: var(--ink-2); }
+.no-js .cant-run { display: block; }
+.no-js .page { display: none; }
+.page { max-width: 1240px; margin: 0 auto; padding: 0 24px 48px; }
+
+.masthead { display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: flex-end; justify-content: space-between; padding: 28px 0 20px; }
+.tool-name { margin: 0 0 2px; font-size: 14px; font-weight: 600; color: var(--ink-2); }
+.film-title { margin: 0; font: 600 32px/1.15 var(--serif); letter-spacing: -0.01em; overflow-wrap: anywhere; cursor: pointer; }
+.film-title.is-empty { color: var(--ink-3); font-style: italic; font-weight: 400; }
+.film-meta { margin: 4px 0 0; color: var(--ink-2); font-size: 14px; }
+.file { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.file-state { margin: 0; font-size: 13px; color: var(--ink-2); text-align: right; }
+.file-state .dirty { color: var(--warn); font-weight: 600; }
+.file-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; }
+.btn:hover { border-color: var(--ink-3); }
+.btn.primary { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.btn.primary:hover { opacity: 0.88; }
+.btn.danger { color: var(--bad); }
+.btn.small { padding: 4px 10px; font-size: 13px; }
+.link-btn { padding: 0; border: 0; background: none; cursor: pointer; color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; font-size: 14px; }
+.link-btn:hover { color: var(--ink); }
+
+.banner { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 0 0 16px; padding: 12px 16px; border-radius: 8px; background: var(--warn-bg); border: 1px solid color-mix(in srgb, var(--warn) 40%, transparent); }
+.banner p { margin: 0; flex: 1 1 280px; }
+.banner .actions { display: flex; gap: 8px; }
+
+.workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr); gap: 24px; align-items: start; }
+.col { display: grid; gap: 18px; min-width: 0; }
+.card { background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 18px; min-width: 0; }
+.card-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; margin: 0 0 6px; }
+.card-head h2 { margin: 0; font: 600 18px/1.3 var(--serif); }
+.card-head .count { font-size: 13px; color: var(--ink-2); }
+.card-head .spacer { flex: 1; }
+.card p.lead { margin: 0 0 8px; font-size: 14px; color: var(--ink-2); }
+
+/* Side cards */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 2px; padding: 0; list-style: none; }
+.chip { display: inline-flex; border: 1px solid var(--rule); border-radius: 999px; overflow: hidden; background: var(--paper); }
+.chip button { padding: 4px 10px; border: 0; background: none; cursor: pointer; font-size: 13px; font-weight: 600; }
+.chip button:hover { background: var(--hover); }
+.chip .sub { font-weight: 400; color: var(--ink-3); margin-left: 4px; }
+.empty-line { margin: 4px 0; color: var(--ink-2); font-size: 14px; }
+.changes { margin: 0; padding-left: 18px; font-size: 14px; }
+.changes li + li { margin-top: 2px; }
+
+/* The supers list */
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 10px; }
+.toolbar h2 { margin: 0 8px 0 0; font: 600 20px/1.2 var(--serif); }
+.toolbar .count { font-size: 13px; color: var(--ink-2); }
+.toolbar .spacer { flex: 1; }
+.rows { list-style: none; margin: 0; padding: 0; background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; }
+.row { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 2px 14px; align-items: start; padding: 10px 14px; }
+.row + .row { border-top: 1px solid var(--rule-soft); }
+.row:hover { background: var(--hover); }
+.row.is-selected { background: var(--hover); box-shadow: inset 3px 0 0 var(--ink); }
+.row .tc { font-variant-numeric: tabular-nums; font-size: 14px; color: var(--ink-2); padding-top: 1px; }
+.row .what { min-width: 0; padding: 0; border: 0; background: none; text-align: left; cursor: pointer; overflow-wrap: anywhere; }
+.row .what:hover .nm { text-decoration: underline; text-underline-offset: 2px; }
+.row .nm { display: block; font-weight: 600; }
+.row .tt { display: block; font-size: 14px; color: var(--ink-2); }
+.flags { grid-column: 2; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.flag { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 999px; font-size: 12.5px; font-weight: 600; }
+.flag.new { background: var(--good-bg); color: var(--good); }
+.flag.changed { background: var(--warn-bg); color: var(--warn); }
+.flag.problem { background: var(--bad-bg); color: var(--bad); }
+.flag.linked { background: var(--paper); color: var(--ink-3); font-weight: 500; border: 1px solid var(--rule); }
+.flag button { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+
+.empty { padding: 36px 24px; text-align: center; background: var(--sheet); border: 1px dashed var(--rule); border-radius: 8px; }
+.empty h2 { margin: 0 0 6px; font: 600 20px/1.3 var(--serif); }
+.empty p { margin: 0 auto 16px; max-width: 52ch; color: var(--ink-2); }
+.empty .actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+
+
+.side { position: sticky; top: 16px; display: grid; gap: 18px; }
+.filters { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
+.filter { padding: 4px 11px; border: 1px solid var(--rule); border-radius: 999px; background: var(--sheet); font-size: 13px; cursor: pointer; }
+.filter[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.search { flex: 1 1 200px; min-width: 0; padding: 6px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); }
+.row { grid-template-columns: 128px minmax(0, 1fr); }
+.row .st { font-size: 13px; font-weight: 600; padding-top: 2px; }
+.st-researching { color: var(--ink-2); }
+.st-in-conversation { color: var(--warn); }
+.st-agreed { color: var(--good); }
+.st-declined { color: var(--ink-3); }
+.row.is-declined .nm { color: var(--ink-3); }
+.flag.due { background: var(--warn-bg); color: var(--warn); }
+.flag.overdue { background: var(--bad-bg); color: var(--bad); }
+.flag.later { background: var(--paper); color: var(--ink-2); font-weight: 500; border: 1px solid var(--rule); }
+.stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 6px 0 0; }
+.stat { padding: 8px 10px; border: 1px solid var(--rule-soft); border-radius: 6px; }
+.stat b { display: block; font: 600 22px/1.1 var(--serif); }
+.stat span { font-size: 13px; color: var(--ink-2); }
+.due-list { list-style: none; margin: 4px 0 0; padding: 0; }
+.due-list li { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; font-size: 14px; }
+.due-list li + li { border-top: 1px solid var(--rule-soft); }
+.due-list button { padding: 0; border: 0; background: none; cursor: pointer; text-align: left; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.due-list .when { color: var(--ink-2); white-space: nowrap; }
+.due-list .when.overdue { color: var(--bad); font-weight: 600; }
+.log { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.log li { display: grid; grid-template-columns: 96px minmax(0, 1fr) auto; gap: 8px; align-items: start; font-size: 14px; }
+.log .d { color: var(--ink-2); }
+.log-add { display: grid; grid-template-columns: 150px minmax(0, 1fr) auto; gap: 8px; }
+.log-add input { padding: 7px 9px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); min-width: 0; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.linked-note { margin: 0; padding: 8px 10px; border-radius: 6px; background: var(--good-bg); color: var(--good); font-size: 14px; }
+@media (max-width: 720px) { .two, .log-add { grid-template-columns: 1fr; } .log li { grid-template-columns: 1fr auto; } .log .d { grid-column: 1 / -1; } }
+
+dialog { border: 0; padding: 0; color: var(--ink); background: var(--sheet); box-shadow: 0 10px 40px rgba(10, 14, 22, 0.25); }
+dialog::backdrop { background: rgba(16, 20, 28, 0.42); }
+dialog.drawer { margin: 0 0 0 auto; width: min(600px, 100vw); height: 100dvh; max-height: 100dvh; max-width: 100vw; border-left: 1px solid var(--rule); }
+dialog.modal { width: min(560px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); border-radius: 10px; }
+dialog form { display: flex; flex-direction: column; height: 100%; max-height: inherit; }
+.dlg-head { padding: 20px 24px 12px; border-bottom: 1px solid var(--rule-soft); }
+.dlg-head h2 { margin: 0; font: 600 22px/1.25 var(--serif); }
+.dlg-body { flex: 1; overflow-y: auto; padding: 16px 24px 24px; display: grid; gap: 14px; align-content: start; }
+.dlg-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 14px 24px; border-top: 1px solid var(--rule-soft); }
+.dlg-foot .spacer { flex: 1; }
+.field { display: grid; gap: 4px; }
+.field > label, .field > .label, .group h3 { font-size: 14px; font-weight: 600; margin: 0; }
+.hint { margin: 0; font-size: 13px; color: var(--ink-3); }
+.field input, .field select, .field textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); }
+.group { display: grid; gap: 8px; padding-top: 10px; border-top: 1px solid var(--rule-soft); }
+.checks { display: grid; gap: 2px; max-height: 260px; overflow-y: auto; padding: 2px; }
+.check { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; align-items: start; padding: 5px 4px; border-radius: 6px; cursor: pointer; }
+.check:hover { background: var(--hover); }
+.check input { width: 18px; height: 18px; margin: 2px 0 0; }
+.check .who { overflow-wrap: anywhere; }
+.check .sub { margin-left: 4px; font-size: 13px; color: var(--ink-3); }
+.check .lines { display: block; font-size: 13px; color: var(--ink-3); white-space: pre-line; }
+#songList, #sourceList { max-height: none; }
+.radio-row { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.radio-row label { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; cursor: pointer; }
+pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); font-size: 13px; white-space: pre-wrap; }
+
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); max-width: calc(100vw - 32px); padding: 10px 16px; border-radius: 8px; background: var(--ink); color: var(--paper); font-size: 14px; box-shadow: 0 6px 24px rgba(10, 14, 22, 0.25); z-index: 10; }
+.toast.error { background: var(--bad); color: #ffffff; }
+.report { display: none; }
+
+@media (max-width: 900px) {
+  .workspace { grid-template-columns: 1fr; }
+  .side { position: static; }
+}
+@media (max-width: 720px) {
+  .page { padding: 0 16px 40px; }
+  .film-title { font-size: 26px; }
+  .file { align-items: flex-start; }
+  .file-state { text-align: left; }
+  .toolbar h2 { flex-basis: 100%; order: -2; }
+  .toolbar #addBtn { flex: 1 1 100%; justify-content: center; order: -1; }
+  .row { grid-template-columns: minmax(0, 1fr); }
+  .flags { grid-column: 1; }
+}
+@media print {
+  @page { size: portrait; margin: 16mm; }
+  :root { color-scheme: light; }
+  body { background: #ffffff; color: #000000; font-size: 10pt; }
+  .page, dialog, .toast { display: none !important; }
+  .report { display: block; }
+  .report h1 { margin: 0; font: 700 18pt/1.2 var(--serif); }
+  .report h2 { margin: 14pt 0 4pt; font: 700 12pt/1.2 var(--serif); break-after: avoid; page-break-after: avoid; }
+  .report .r-meta { margin: 2pt 0 10pt; }
+  .report table { width: 100%; border-collapse: collapse; }
+  .report th, .report td { padding: 4pt 5pt; border-bottom: 0.75pt solid #999999; text-align: left; vertical-align: top; }
+  .report th { font-size: 9pt; border-bottom: 1pt solid #000000; }
+  .report tr { break-inside: avoid; page-break-inside: avoid; }
+  .report .r-sub { display: block; font-size: 8.5pt; color: #333333; }
+  .report .r-note { margin-top: 14pt; font-size: 8pt; color: #333333; }
+
+}
+</style>
+</head>
+<body>
+<div class="cant-run" id="cantRun">
+  <h1 id="cantRunTitle">Open this file in a web browser</h1>
+  <p id="cantRunText">This tool runs in Chrome, Edge, Firefox or Safari. You're seeing a preview that doesn't run it, so none of the buttons would work.</p>
+  <p id="cantRunHow">In your browser, choose File, then Open File, and pick this file. Or right-click the file and open it with your browser.</p>
+</div>
+<div class="page">
+  <header class="masthead">
+    <div>
+      <p class="tool-name">Subject tracker</p>
+      <h1 class="film-title" id="filmTitle">Untitled film</h1>
+      <p class="film-meta"><span id="filmMeta"></span> <button type="button" class="link-btn" id="editProjectBtn">Edit film details</button></p>
+    </div>
+    <div class="file">
+      <p class="file-state" id="fileState">Not saved to a file yet</p>
+      <div class="file-actions">
+        <button type="button" class="btn" id="newBtn">New project</button>
+        <button type="button" class="btn" id="openBtn">Open file</button>
+        <button type="button" class="btn" id="projectCsvBtn">Export project data (CSV)</button>
+        <button type="button" class="btn primary" id="saveBtn">Save file</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="banner" id="recovery" role="region" aria-label="Unsaved work" hidden>
+    <p id="recoveryText"></p>
+    <div class="actions">
+      <button type="button" class="btn primary" id="restoreBtn">Restore it</button>
+      <button type="button" class="btn" id="discardBtn">Discard it</button>
+    </div>
+  </div>
+
+  <main class="workspace">
+    <section aria-labelledby="listHead">
+      <div class="toolbar">
+        <h2 id="listHead">Subjects</h2>
+        <span class="count" id="count"></span>
+        <span class="spacer"></span>
+        <button type="button" class="btn primary" id="addBtn">Add subject</button>
+        <button type="button" class="btn" id="csvBtn">Export CSV</button>
+        <button type="button" class="btn" id="printBtn">Print</button>
+      </div>
+      <div class="filters" id="filters" role="group" aria-label="Show subjects by status"></div>
+      <div class="toolbar"><input type="search" class="search" id="search" placeholder="Search names, notes and how you found them" aria-label="Search subjects"></div>
+      <ol class="rows" id="rows" aria-labelledby="listHead"></ol>
+      <p class="empty-line" id="noMatch" hidden>No subjects match. Clear the search or choose another status.</p>
+      <div class="empty" id="empty" hidden>
+        <h2>No subjects yet</h2>
+        <p>Add the people you might film: who they are, how you found them, and where the conversation stands. When someone agrees, add them to the project so the release tracker, call sheets and credits can use them.</p>
+        <div class="actions">
+          <button type="button" class="btn primary" id="emptyAddBtn">Add a subject</button>
+          <button type="button" class="btn" id="emptyOpenBtn">Open file</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="side">
+      <section class="card" aria-labelledby="dueHead">
+        <div class="card-head"><h2 id="dueHead">Follow-ups</h2><span class="count" id="dueCount"></span></div>
+        <ul class="due-list" id="dueList"></ul>
+      </section>
+      <section class="card" aria-labelledby="statsHead">
+        <div class="card-head"><h2 id="statsHead">Where things stand</h2></div>
+        <div class="stats" id="stats"></div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="foot">
+    <p>Part of the Open Filmmaker Toolkit. This page makes no network requests: everything stays on this computer until you save or export it. Uses the same project file as the other toolkit tools.</p>
+  </footer>
+</div>
+
+<dialog class="drawer" id="editor" aria-labelledby="editorTitle">
+  <form id="editorForm" method="dialog" novalidate>
+    <div class="dlg-head"><h2 id="editorTitle">Subject</h2></div>
+    <div class="dlg-body">
+      <p class="linked-note" id="linkedNote" hidden></p>
+      <div class="field"><label for="f-name">Name</label><input id="f-name" type="text" autocomplete="off" required></div>
+      <div class="field"><label for="f-about">Who they are</label><input id="f-about" type="text" placeholder="Retired schoolteacher who kept a flood diary" autocomplete="off"></div>
+      <div class="field"><label for="f-found">How you found them</label><input id="f-found" type="text" placeholder="Introduced by the county historical society" autocomplete="off"></div>
+      <div class="two">
+        <div class="field"><label for="f-phone">Phone</label><input id="f-phone" type="tel" autocomplete="off"></div>
+        <div class="field"><label for="f-email">Email</label><input id="f-email" type="email" autocomplete="off"></div>
+      </div>
+      <div class="two">
+        <div class="field"><label for="f-status">Access</label><select id="f-status"></select></div>
+        <div class="field"><label for="f-next">Next follow-up</label><input id="f-next" type="date"></div>
+      </div>
+      <div class="field"><label for="f-nextNote">What to follow up about</label><input id="f-nextNote" type="text" placeholder="Ask about filming at the house in spring" autocomplete="off"></div>
+      <div class="field"><label for="f-notes">Story notes</label><textarea id="f-notes" rows="4" placeholder="What they bring to the film, what they've said, what to be careful about"></textarea></div>
+      <div class="group">
+        <h3 id="logHead">Contact log</h3>
+        <ul class="log" id="log" aria-labelledby="logHead"></ul>
+        <div class="log-add">
+          <input id="logDate" type="date" aria-label="Date of contact">
+          <input id="logNote" type="text" placeholder="Called; she wants to meet first" aria-label="What happened" autocomplete="off">
+          <button type="button" class="btn" id="logAddBtn">Log it</button>
+        </div>
+        <p class="hint">Logging a contact sets the last contact date.</p>
+      </div>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn danger" id="deleteBtn">Remove subject</button>
+      <button type="button" class="btn" id="addPersonBtn">Add to the project</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="editorCancel">Cancel</button>
+      <button type="submit" class="btn primary" id="editorSubmit">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="projectDialog" aria-labelledby="projectDialogTitle">
+  <form id="projectForm" method="dialog">
+    <div class="dlg-head"><h2 id="projectDialogTitle">Film details</h2></div>
+    <div class="dlg-body">
+      <div class="field"><label for="p-title">Film title</label><input id="p-title" type="text" placeholder="Working title is fine"></div>
+      <div class="field"><label for="p-company">Production company</label><input id="p-company" type="text"></div>
+      <div class="field"><label for="p-producer">Producer</label><input id="p-producer" type="text"></div>
+    </div>
+    <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn" id="projectCancel">Cancel</button><button type="submit" class="btn primary">Save details</button></div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="projectCsvDialog" aria-labelledby="projectCsvTitle">
+  <form id="projectCsvForm" method="dialog">
+    <div class="dlg-head"><h2 id="projectCsvTitle">Export project data</h2></div>
+    <div class="dlg-body">
+      <div class="field">
+        <label for="projectCsvCollection">Data to export</label>
+        <select id="projectCsvCollection">
+          <option value="project">Project details</option>
+          <option value="people">People</option>
+          <option value="locations">Locations</option>
+          <option value="thirdPartyElements">Third-party elements</option>
+          <option value="contracts">Contracts</option>
+          <option value="assets">Assets</option>
+          <option value="musicCueSheet">Music cue sheet details</option>
+          <option value="callSheets">Call sheets</option>
+        </select>
+      </div>
+      <p class="hint">Exports one CSV file for the selected collection. Nested values are kept as JSON in their cell.</p>
+    </div>
+    <div class="dlg-foot">
+      <button type="submit" class="btn primary">Export CSV</button>
+      <button type="button" class="btn" id="projectCsvCancel">Cancel</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="conflictDialog" aria-labelledby="conflictTitle">
+  <form method="dialog">
+    <div class="dlg-head"><h2 id="conflictTitle">Project file changed</h2></div>
+    <div class="dlg-body">
+      <p id="conflictText">This project file changed after you opened it. Saving will replace those changes.</p>
+      <p class="hint">Your edits are still here. Choose whether to overwrite the changed file, save a separate copy, or load its latest contents. Save in one tool at a time; simultaneous saves can still race.</p>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn" id="conflictReloadBtn">Reload latest</button>
+      <button type="button" class="btn" id="conflictCopyBtn">Save a copy</button>
+      <button type="button" class="btn danger" id="conflictOverwriteBtn">Overwrite file</button>
+      <button type="button" class="btn" id="conflictCancelBtn">Keep editing</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="report" id="report" aria-hidden="true"></div>
+<input type="file" id="fileInput" accept=".json,application/json" hidden>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+(() => {
+  'use strict';
+
+  const FORMAT = 'open-filmmaker-toolkit/project';
+  const FORMAT_VERSION = 1;
+  const TOOL = 'subject-tracker 0.1.0';
+  const DRAFT_KEY = 'oft.subject-tracker.draft';
+  const PROJECT_TEXT = ['title', 'company', 'producer'];
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const str = v => (v == null ? '' : String(v));
+  const arr = v => (Array.isArray(v) ? v : []);
+  const norm = s => str(s).toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+
+  let doc = blankDoc();
+  let fileHandle = null;
+  let baselineText = null;
+  let fileName = null;
+  let dirty = false;
+
+  function blankDoc() {
+    return { format: FORMAT, formatVersion: FORMAT_VERSION, project: { title: '', company: '', producer: '', frameRate: 24, currency: 'USD' }, people: [], subjects: [] };
+  }
+  function newId(prefix) {
+    if (window.crypto && crypto.randomUUID) return `${prefix}-${crypto.randomUUID()}`;
+    return `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+  }
+  function today() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  function fmtDate(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str(iso));
+    if (!m) return str(iso);
+    return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+  function daysUntil(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str(iso));
+    if (!m) return null;
+    const t = new Date(); const a = Date.UTC(t.getFullYear(), t.getMonth(), t.getDate());
+    return Math.round((Date.UTC(+m[1], +m[2] - 1, +m[3]) - a) / 86400000);
+  }
+
+  const STATUSES = [
+    { id: 'researching', label: 'Researching' },
+    { id: 'in-conversation', label: 'In conversation' },
+    { id: 'agreed', label: 'Agreed' },
+    { id: 'declined', label: 'Declined' },
+  ];
+  const statusLabel = id => (STATUSES.find(s => s.id === id) || STATUSES[0]).label;
+  let filter = 'all';
+  let editing = null;
+  let isNew = false;
+
+  // Fills in only what this tool needs; everything else in the file is left as it was.
+  function normalize(d) {
+    if (!d.project || typeof d.project !== 'object') d.project = {};
+    for (const k of PROJECT_TEXT) if (typeof d.project[k] !== 'string') d.project[k] = str(d.project[k]);
+    if (!Array.isArray(d.people)) d.people = [];
+    d.people = d.people.filter(x => x && typeof x === 'object');
+    for (const p of d.people) if (!p.id) p.id = newId('person');
+    if (!Array.isArray(d.subjects)) d.subjects = [];
+    d.subjects = d.subjects.filter(x => x && typeof x === 'object');
+    for (const s of d.subjects) {
+      if (!s.id) s.id = newId('subject');
+      if (!STATUSES.some(x => x.id === s.status)) s.status = 'researching';
+    }
+    d.format = FORMAT;
+    d.formatVersion = FORMAT_VERSION;
+    return d;
+  }
+  const entries = () => doc.subjects;
+  const person = id => doc.people.find(p => p.id === id);
+
+  // Follow-ups due first, then everyone else by name; declined at the end.
+  function sorted(list) {
+    const key = s => (s.status === 'declined' ? 2 : s.nextFollowUp ? 0 : 1);
+    return [...list].sort((a, b) => key(a) - key(b) || str(a.nextFollowUp).localeCompare(str(b.nextFollowUp)) || str(a.name).localeCompare(str(b.name)));
+  }
+  function visible() {
+    const q = norm($('search').value);
+    return sorted(entries()).filter(s => (filter === 'all' || s.status === filter) &&
+      (!q || norm([s.name, s.about, s.foundVia, s.notes, s.nextFollowUpNote].join(' ')).includes(q)));
+  }
+  function dueText(s) {
+    if (!s.nextFollowUp || s.status === 'declined') return null;
+    const n = daysUntil(s.nextFollowUp);
+    if (n == null) return null;
+    if (n < 0) return { cls: 'overdue', text: `Follow up ${fmtDate(s.nextFollowUp)}, ${-n} day${n === -1 ? '' : 's'} overdue` };
+    if (n === 0) return { cls: 'due', text: 'Follow up today' };
+    if (n <= 7) return { cls: 'due', text: `Follow up in ${n} day${n === 1 ? '' : 's'}, ${fmtDate(s.nextFollowUp)}` };
+    return { cls: 'later', text: `Follow up ${fmtDate(s.nextFollowUp)}` };
+  }
+
+  // ---------- Render ----------
+  function render() {
+    $('filmTitle').textContent = doc.project.title || 'Untitled film';
+    $('filmTitle').classList.toggle('is-empty', !doc.project.title);
+    $('filmMeta').textContent = [doc.project.company, doc.project.producer && `Producer: ${doc.project.producer}`].filter(Boolean).join(' · ');
+    $('fileState').innerHTML = (fileName ? esc(fileName) : 'Not saved to a file yet') + (dirty ? ' · <span class="dirty">Unsaved changes</span>' : '');
+    document.title = `${doc.project.title ? doc.project.title + ' · ' : ''}Subject tracker · Open Filmmaker Toolkit`;
+
+    const all = entries();
+    $('filters').innerHTML = [{ id: 'all', label: 'All' }, ...STATUSES].map(s => {
+      const n = s.id === 'all' ? all.length : all.filter(x => x.status === s.id).length;
+      return `<button type="button" class="filter" data-filter="${s.id}" aria-pressed="${filter === s.id}">${esc(s.label)} ${n}</button>`;
+    }).join('');
+    const list = visible();
+    const overdue = all.filter(s => (dueText(s) || {}).cls === 'overdue').length;
+    $('count').textContent = all.length ? `${all.length} subject${all.length === 1 ? '' : 's'}${overdue ? ` · ${overdue} overdue` : ''}` : '';
+    $('empty').hidden = !!all.length;
+    $('rows').hidden = !list.length;
+    $('noMatch').hidden = !all.length || !!list.length;
+    $('filters').hidden = $('search').parentElement.hidden = !all.length;
+    for (const id of ['csvBtn', 'printBtn']) $(id).hidden = !all.length;
+    $('rows').innerHTML = list.map(s => {
+      const due = dueText(s);
+      const flags = [];
+      if (due) flags.push(`<span class="flag ${due.cls}">${esc(due.text)}${s.nextFollowUpNote ? `: ${esc(s.nextFollowUpNote)}` : ''}</span>`);
+      if (s.lastContact) flags.push(`<span class="flag linked">Last contact ${esc(fmtDate(s.lastContact))}</span>`);
+      if (s.personId && person(s.personId)) flags.push('<span class="flag new">In the project</span>');
+      else if (s.personId) flags.push('<span class="flag problem">Person no longer in the project</span>');
+      else if (s.status === 'agreed') flags.push(`<span class="flag changed">Agreed, not in the project yet <button type="button" data-person="${esc(s.id)}">Add to the project</button></span>`);
+      return `<li class="row${s.status === 'declined' ? ' is-declined' : ''}" data-id="${esc(s.id)}">
+        <span class="st st-${esc(s.status)}">${esc(statusLabel(s.status))}</span>
+        <button type="button" class="what" data-edit="${esc(s.id)}"><span class="nm">${esc(s.name || 'No name')}</span>${s.about ? `<span class="tt">${esc(s.about)}</span>` : ''}</button>
+        ${flags.length ? `<div class="flags">${flags.join('')}</div>` : ''}
+      </li>`;
+    }).join('');
+
+    const due = sorted(all).filter(s => { const d = dueText(s); return d && d.cls !== 'later'; });
+    $('dueCount').textContent = due.length ? String(due.length) : '';
+    $('dueList').innerHTML = due.length ? due.map(s => {
+      const n = daysUntil(s.nextFollowUp);
+      return `<li><button type="button" data-edit="${esc(s.id)}">${esc(s.name || 'No name')}</button><span class="when${n < 0 ? ' overdue' : ''}">${n < 0 ? `${-n} day${n === -1 ? '' : 's'} overdue` : n === 0 ? 'Today' : `In ${n} day${n === 1 ? '' : 's'}`}</span></li>`;
+    }).join('') : `<li class="empty-line">${all.length ? 'Nothing due in the next week.' : 'Follow-ups you set show here.'}</li>`;
+    $('stats').innerHTML = STATUSES.map(st => `<div class="stat"><b>${all.filter(s => s.status === st.id).length}</b><span>${esc(st.label)}</span></div>`).join('');
+  }
+
+  // ---------- Editor ----------
+  function openEditor(id) {
+    const existing = id && entries().find(s => s.id === id);
+    isNew = !existing;
+    editing = existing ? structuredClone(existing) : { id: newId('subject'), status: 'researching', log: [] };
+    $('f-status').innerHTML = STATUSES.map(s => `<option value="${s.id}">${esc(s.label)}</option>`).join('');
+    const vals = { 'f-name': editing.name, 'f-about': editing.about, 'f-found': editing.foundVia, 'f-phone': editing.phone, 'f-email': editing.email,
+      'f-status': editing.status, 'f-next': editing.nextFollowUp, 'f-nextNote': editing.nextFollowUpNote, 'f-notes': editing.notes };
+    for (const [k, v] of Object.entries(vals)) $(k).value = str(v);
+    $('logDate').value = today(); $('logNote').value = '';
+    $('editorTitle').textContent = isNew ? 'Add subject' : 'Edit subject';
+    $('deleteBtn').hidden = isNew;
+    renderEditorExtras();
+    $('editor').showModal();
+    $('f-name').focus();
+  }
+  function renderEditorExtras() {
+    const p = editing.personId && person(editing.personId);
+    $('linkedNote').hidden = !p;
+    $('linkedNote').textContent = p ? `In the project as ${p.name}${Array.isArray(p.roles) && p.roles.length ? ` (${p.roles.join(', ')})` : ''}. The release tracker, call sheets and credits can use them.` : '';
+    $('addPersonBtn').hidden = !!p;
+    const log = arr(editing.log);
+    $('log').innerHTML = log.length ? [...log].map((x, i) => ({ x, i })).sort((a, b) => str(b.x.date).localeCompare(str(a.x.date)))
+      .map(({ x, i }) => `<li><span class="d">${esc(fmtDate(x.date))}</span><span>${esc(x.note)}</span><button type="button" class="link-btn" data-unlog="${i}" aria-label="Remove this entry">Remove</button></li>`).join('')
+      : '<li class="empty-line">No contacts logged yet.</li>';
+  }
+  function readEditor() {
+    const e = editing;
+    const map = { name: 'f-name', about: 'f-about', foundVia: 'f-found', phone: 'f-phone', email: 'f-email', nextFollowUp: 'f-next', nextFollowUpNote: 'f-nextNote', notes: 'f-notes' };
+    for (const [k, id] of Object.entries(map)) { const v = $(id).value.trim(); if (v) e[k] = v; else delete e[k]; }
+    e.status = $('f-status').value;
+    if (!arr(e.log).length) delete e.log;
+    return e;
+  }
+  function saveEditor() {
+    if (!$('f-name').value.trim()) { $('f-name').setCustomValidity('Type their name, or a placeholder like "Flood diary owner".'); $('f-name').reportValidity(); return false; }
+    const e = readEditor();
+    if (isNew) entries().push(e); else entries()[entries().findIndex(x => x.id === e.id)] = e;
+    isNew = false;
+    $('editor').close();
+    changed();
+    return true;
+  }
+  function logContact() {
+    const date = $('logDate').value || today();
+    const note = $('logNote').value.trim();
+    if (!note) { $('logNote').setCustomValidity('Say what happened, like "Called; she wants to meet first".'); $('logNote').reportValidity(); return; }
+    editing.log = [...arr(editing.log), { date, note }];
+    if (!editing.lastContact || date > editing.lastContact) editing.lastContact = date;
+    $('logNote').value = '';
+    renderEditorExtras();
+  }
+  function unlog(i) {
+    editing.log = arr(editing.log).filter((_, j) => j !== i);
+    const dates = arr(editing.log).map(x => x.date).filter(Boolean).sort();
+    if (dates.length) editing.lastContact = dates[dates.length - 1]; else delete editing.lastContact;
+    renderEditorExtras();
+  }
+  function removeEditing() {
+    const name = editing.name || 'that subject';
+    doc.subjects = entries().filter(s => s.id !== editing.id);
+    $('editor').close();
+    changed();
+    toast(`Removed ${name}. ${editing.personId ? 'They stay in the project as a person.' : ''}`.trim());
+  }
+  // Turns a subject into a person in the project, or links them to a person with the same name.
+  function addToProject(s) {
+    const same = doc.people.find(p => norm(p.name) && norm(p.name) === norm(s.name));
+    let p = same;
+    if (!p) {
+      p = { id: newId('person'), name: str(s.name).trim(), roles: ['Interview subject'], onCamera: true };
+      if (s.phone) p.phone = s.phone;
+      if (s.email) p.email = s.email;
+      doc.people.push(p);
+    }
+    s.personId = p.id;
+    if (s.status !== 'agreed' && s.status !== 'declined') s.status = 'agreed';
+    return { p, linked: !!same };
+  }
+  function addPersonFromEditor() {
+    if (!$('f-name').value.trim()) { $('f-name').setCustomValidity('Type their name first.'); $('f-name').reportValidity(); return; }
+    readEditor();
+    const { p, linked } = addToProject(editing);
+    if (isNew) entries().push(editing); else entries()[entries().findIndex(x => x.id === editing.id)] = editing;
+    isNew = false;
+    $('editor').close();
+    changed();
+    toast(linked ? `Linked to ${p.name}, who was already in the project.` : `Added ${p.name} to the project as an interview subject on camera.`);
+  }
+  function addPersonFromRow(id) {
+    const s = entries().find(x => x.id === id);
+    if (!s) return;
+    const { p, linked } = addToProject(s);
+    changed();
+    toast(linked ? `Linked to ${p.name}, who was already in the project.` : `Added ${p.name} to the project as an interview subject on camera.`);
+  }
+
+  // ---------- CSV and print ----------
+  const CSV_HEAD = ['Name', 'Access', 'Who they are', 'How you found them', 'Phone', 'Email', 'Last contact', 'Next follow-up', 'Follow up about', 'Story notes', 'In the project'];
+  function exportCsv() {
+    const rows = sorted(entries()).map(s => [s.name, statusLabel(s.status), s.about, s.foundVia, s.phone, s.email, s.lastContact, s.nextFollowUp, s.nextFollowUpNote, s.notes,
+      s.personId && person(s.personId) ? person(s.personId).name : '']);
+    const csv = '﻿' + [CSV_HEAD, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
+    const name = `${slug()}-subjects.csv`;
+    download(csv, name, 'text/csv;charset=utf-8');
+    toast(`Exported ${rows.length} subject${rows.length === 1 ? '' : 's'} to ${name}`);
+  }
+  function renderReport() {
+    const groups = STATUSES.map(st => ({ st, list: sorted(entries()).filter(s => s.status === st.id) })).filter(g => g.list.length);
+    $('report').innerHTML = `<h1>${esc(doc.project.title || 'Untitled film')}: subjects</h1>
+      <p class="r-meta">${esc([doc.project.company, `Printed ${new Date().toLocaleDateString(undefined, { dateStyle: 'medium' })}`].filter(Boolean).join(' · '))}</p>
+      ${groups.map(({ st, list }) => `<h2>${esc(st.label)} (${list.length})</h2>
+        <table><thead><tr><th>Name</th><th>Contact</th><th>Last contact</th><th>Next follow-up</th><th>Notes</th></tr></thead><tbody>
+        ${list.map(s => `<tr><td>${esc(s.name)}${s.about ? `<span class="r-sub">${esc(s.about)}</span>` : ''}${s.personId && person(s.personId) ? '<span class="r-sub">In the project</span>' : ''}</td>
+          <td>${esc([s.phone, s.email].filter(Boolean).join(', '))}</td><td>${esc(fmtDate(s.lastContact))}</td>
+          <td>${esc(fmtDate(s.nextFollowUp))}${s.nextFollowUpNote ? `<span class="r-sub">${esc(s.nextFollowUpNote)}</span>` : ''}</td><td>${esc(s.notes)}</td></tr>`).join('')}
+        </tbody></table>`).join('')}
+      <p class="r-note">Contains contact details. Keep printed copies private.</p>`;
+  }
+
+  // ---------- Project CSV ----------
+  function csvCell(v) {
+    let s = v == null ? '' : String(v);
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+    return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }
+  const csvCollections = {
+    project: 'project details', people: 'people', locations: 'locations', thirdPartyElements: 'third-party elements',
+    contracts: 'contracts', assets: 'assets', musicCueSheet: 'music cue sheet details', callSheets: 'call sheets'
+  };
+  function exportProjectCsv() {
+    const collection = $('projectCsvCollection').value;
+    const value = doc[collection];
+    const rows = Array.isArray(value) ? value : value && typeof value === 'object' ? [value] : [];
+    if (rows.some(row => !row || typeof row !== 'object' || Array.isArray(row))) {
+      toast(`Couldn't export ${csvCollections[collection]}: the project contains an invalid record.`, true);
+      return;
+    }
+    const headers = [...new Set(rows.flatMap(row => Object.keys(row)))];
+    if (!headers.length) headers.push('id');
+    const csvRows = rows.map(row => headers.map(key => { const cell = row[key]; return cell && typeof cell === 'object' ? JSON.stringify(cell) : cell; }));
+    const csv = '﻿' + [headers, ...csvRows].map(row => row.map(csvCell).join(',')).join('\r\n') + '\r\n';
+    const name = suggestedName().replace(/\.oft\.json$/i, `-${collection}.csv`);
+    download(csv, name, 'text/csv;charset=utf-8');
+    toast(`Exported ${rows.length} ${csvCollections[collection]} to ${name}`);
+  }
+
+  // ---------- Film details ----------
+  function openProjectDialog() {
+    for (const k of PROJECT_TEXT) $(`p-${k}`).value = doc.project[k] || '';
+    $('projectDialog').showModal();
+    $('p-title').focus();
+  }
+  function saveProjectDialog() {
+    for (const k of PROJECT_TEXT) doc.project[k] = $(`p-${k}`).value.trim();
+    $('projectDialog').close();
+    changed();
+  }
+
+  // ---------- Dirty state & recovery draft ----------
+  function changed() { dirty = true; saveDraft(); render(); }
+  function saveDraft() {
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ doc, fileName, baselineText, at: new Date().toISOString() })); } catch { /* the file on disk is the real copy */ }
+  }
+  function clearDraft() {
+    try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+    $('recovery').hidden = true;
+  }
+  function checkDraft() {
+    let draft = null;
+    try { draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); } catch { draft = null; }
+    if (!draft || !draft.doc || draft.doc.format !== FORMAT) return;
+    const n = Array.isArray(draft.doc.subjects) ? draft.doc.subjects.length : 0;
+    if (!n && !(draft.doc.project && draft.doc.project.title)) { clearDraft(); return; }
+    const when = draft.at ? new Date(draft.at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'earlier';
+    const title = draft.doc.project && draft.doc.project.title ? `"${draft.doc.project.title}"` : 'an untitled project';
+    $('recoveryText').textContent = `You have unsaved changes to ${title} from ${when} (${n} subject${n === 1 ? '' : 's'}). Restore them, or discard them and start fresh.`;
+    $('recovery').hidden = false;
+    $('restoreBtn').onclick = () => {
+      doc = normalize(draft.doc); fileName = draft.fileName || null; fileHandle = null;
+      baselineText = typeof draft.baselineText === 'string' ? draft.baselineText : null; dirty = true;
+      $('recovery').hidden = true; render();
+      toast(fileName ? `Restored. Save to write the changes back to ${fileName}.` : 'Restored. Save to keep it as a file.');
+    };
+    $('discardBtn').onclick = () => { clearDraft(); toast('Discarded the unsaved changes.'); };
+  }
+
+  // ---------- Files ----------
+  const pickerTypes = [{ description: 'Film project file', accept: { 'application/json': ['.json'] } }];
+  function slug() {
+    return (doc.project.title || 'untitled-film').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'untitled-film';
+  }
+  const suggestedName = () => `${slug()}.oft.json`;
+  function serialize() {
+    doc.savedAt = new Date().toISOString();
+    doc.savedBy = TOOL;
+    return JSON.stringify(doc, null, 2) + '\n';
+  }
+  function download(text, name, type) {
+    const url = URL.createObjectURL(new Blob([text], { type }));
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  function afterSave(name, downloaded, content) {
+    fileName = name;
+    if (downloaded) fileHandle = null;
+    baselineText = content;
+    dirty = false; clearDraft(); render();
+    toast(downloaded ? `Downloaded ${name}. Keep it with your project files and open it here next time.` : `Saved to ${name}`);
+  }
+  async function writeProjectFile(handle, content) {
+    try {
+      const writable = await handle.createWritable();
+      await writable.write(content);
+      await writable.close();
+    } catch (err) {
+      if (err.name !== 'AbortError') toast(`Couldn't save the file: ${err.message}`, true);
+      return;
+    }
+    fileHandle = handle;
+    afterSave(handle.name, false, content);
+  }
+  function saveCopy(content) {
+    const base = (fileName || suggestedName()).replace(/\.oft\.json$/i, '');
+    const name = `${base}-copy.oft.json`;
+    download(content, name, 'application/json');
+    afterSave(name, true, content);
+  }
+  async function reloadLatest(handle) {
+    try {
+      const file = await handle.getFile();
+      loadText(await file.text(), handle.name, handle);
+    } catch (err) {
+      toast(`Couldn't reload the file: ${err.message}`, true);
+    }
+  }
+  function showConflictDialog(content, observedText, unknownBaseline = false) {
+    const handle = fileHandle;
+    dirty = true;
+    saveDraft();
+    render();
+    $('conflictText').textContent = unknownBaseline
+      ? `The tool can't verify whether ${handle.name} changed since your recovery copy was made. Your edits are not saved.`
+      : `${handle.name} changed after you opened it. Your edits are not saved. Overwriting replaces the newer file.`;
+    $('conflictDialog').showModal();
+    $('conflictReloadBtn').onclick = () => { $('conflictDialog').close(); reloadLatest(handle); };
+    $('conflictCopyBtn').onclick = () => { $('conflictDialog').close(); saveCopy(content); };
+    $('conflictOverwriteBtn').onclick = async () => {
+      $('conflictDialog').close();
+      let latestText;
+      try { latestText = await (await handle.getFile()).text(); }
+      catch (err) { toast(`Couldn't check the file before overwriting: ${err.message}`, true); return; }
+      if (latestText !== observedText) {
+        toast('The file changed again. Review the updated conflict warning before overwriting.', true);
+        showConflictDialog(content, latestText);
+        return;
+      }
+      await writeProjectFile(handle, content);
+    };
+    $('conflictCancelBtn').onclick = () => $('conflictDialog').close();
+  }
+  async function saveFile() {
+    const out = serialize();
+    if (fileHandle) {
+      let currentText;
+      try { currentText = await (await fileHandle.getFile()).text(); }
+      catch (err) { toast(`Couldn't check the file before saving: ${err.message}`, true); return; }
+      if (baselineText === null || currentText !== baselineText) { showConflictDialog(out, currentText, baselineText === null); return; }
+      await writeProjectFile(fileHandle, out);
+      return;
+    }
+    if (window.showSaveFilePicker && window.self === window.top) {
+      try {
+        const h = await window.showSaveFilePicker({ suggestedName: fileName || suggestedName(), types: pickerTypes });
+        if (h.name === fileName) {
+          const currentText = await (await h.getFile()).text();
+          if (baselineText === null || currentText !== baselineText) { fileHandle = h; showConflictDialog(out, currentText, baselineText === null); return; }
+        }
+        await writeProjectFile(h, out);
+      } catch (err) { if (err.name !== 'AbortError') toast(`Couldn't save the file: ${err.message}`, true); }
+      return;
+    }
+    const name = fileName || suggestedName();
+    download(out, name, 'application/json');
+    afterSave(name, true, out);
+  }
+  function loadText(text, name, handle) {
+    let data;
+    try { data = JSON.parse(text); } catch { toast(`Couldn't open ${name}: it isn't a project file.`, true); return; }
+    if (!data || data.format !== FORMAT) { toast(`Couldn't open ${name}: it isn't an Open Filmmaker Toolkit project file.`, true); return; }
+    if (Number(data.formatVersion) > FORMAT_VERSION) { toast(`Couldn't open ${name}: it was saved by a newer version of the toolkit. Get the latest version of this tool.`, true); return; }
+    doc = normalize(data); fileHandle = handle; baselineText = text; fileName = name; dirty = false;
+    clearDraft(); render();
+    const n = entries().length;
+    toast(`Opened ${name}: ${n ? `${n} subject${n === 1 ? '' : 's'}` : 'no subjects yet'}`);
+  }
+  async function openFile() {
+    if (dirty && !confirm('You have unsaved changes. Open another file and lose them?')) return;
+    if (window.showOpenFilePicker && window.self === window.top) {
+      try { const [h] = await window.showOpenFilePicker({ types: pickerTypes }); const f = await h.getFile(); loadText(await f.text(), f.name, h); }
+      catch (err) { if (err.name !== 'AbortError') toast(`Couldn't open the file: ${err.message}`, true); }
+      return;
+    }
+    $('fileInput').click();
+  }
+  function newProject() {
+    if (dirty && !confirm('You have unsaved changes. Start a new project and lose them?')) return;
+    doc = normalize(blankDoc()); fileHandle = null; baselineText = null; fileName = null; dirty = false;
+    clearDraft(); render(); openProjectDialog();
+  }
+
+  let toastTimer = null;
+  function toast(msg, isError) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.classList.toggle('error', !!isError);
+    t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.hidden = true; }, isError ? 7000 : 4200);
+  }
+
+  // ---------- Wiring ----------
+  function init() {
+    doc = normalize(doc);
+    $('newBtn').onclick = newProject;
+    $('openBtn').onclick = openFile;
+    $('saveBtn').onclick = saveFile;
+    $('editProjectBtn').onclick = openProjectDialog;
+    $('filmTitle').onclick = openProjectDialog;
+    $('printBtn').onclick = () => { renderReport(); window.print(); };
+    window.addEventListener('beforeprint', renderReport);
+    $('projectCsvBtn').onclick = () => $('projectCsvDialog').showModal();
+    $('projectCsvCancel').onclick = () => $('projectCsvDialog').close();
+    $('projectCsvForm').addEventListener('submit', ev => { ev.preventDefault(); exportProjectCsv(); $('projectCsvDialog').close(); });
+    $('fileInput').addEventListener('change', async () => {
+      const f = $('fileInput').files[0];
+      if (f) loadText(await f.text(), f.name, null);
+      $('fileInput').value = '';
+    });
+    $('projectForm').addEventListener('submit', ev => { ev.preventDefault(); saveProjectDialog(); });
+    $('projectCancel').onclick = () => $('projectDialog').close();
+    $('addBtn').onclick = () => openEditor(null);
+    $('emptyAddBtn').onclick = () => openEditor(null);
+    $('emptyOpenBtn').onclick = openFile;
+    $('csvBtn').onclick = exportCsv;
+    $('search').addEventListener('input', render);
+    $('filters').addEventListener('click', ev => { const b = ev.target.closest('[data-filter]'); if (b) { filter = b.dataset.filter; render(); } });
+    const rowClick = ev => {
+      const b = ev.target.closest('button');
+      if (!b) return;
+      if (b.dataset.edit) openEditor(b.dataset.edit);
+      else if (b.dataset.person) addPersonFromRow(b.dataset.person);
+    };
+    $('rows').addEventListener('click', rowClick);
+    $('dueList').addEventListener('click', rowClick);
+    $('editorForm').addEventListener('submit', ev => { ev.preventDefault(); saveEditor(); });
+    $('editorForm').addEventListener('input', ev => { if (ev.target.setCustomValidity) ev.target.setCustomValidity(''); });
+    $('editorCancel').onclick = () => $('editor').close();
+    $('deleteBtn').onclick = removeEditing;
+    $('addPersonBtn').onclick = addPersonFromEditor;
+    $('logAddBtn').onclick = logContact;
+    $('logNote').addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.preventDefault(); logContact(); } });
+    $('log').addEventListener('click', ev => { const b = ev.target.closest('[data-unlog]'); if (b) unlog(+b.dataset.unlog); });
+
+    document.addEventListener('keydown', ev => {
+      const mod = ev.metaKey || ev.ctrlKey;
+      if (mod && ev.key.toLowerCase() === 's') { ev.preventDefault(); saveFile(); }
+      else if (mod && ev.key.toLowerCase() === 'o') { ev.preventDefault(); openFile(); }
+    });
+    window.addEventListener('beforeunload', ev => { if (dirty) { ev.preventDefault(); ev.returnValue = ''; } });
+    render();
+    checkDraft();
+  }
+
+  if (typeof HTMLDialogElement !== 'function' || typeof HTMLDialogElement.prototype.showModal !== 'function' || typeof structuredClone !== 'function') {
+    $('cantRunTitle').textContent = 'This browser is too old to run this tool';
+    $('cantRunText').textContent = 'Update to a current version of Chrome, Edge, Firefox or Safari, then open this file again.';
+    $('cantRunHow').hidden = true;
+    return;
+  }
+  document.documentElement.classList.remove('no-js');
+  window.addEventListener('error', ev => toast(`Something went wrong: ${ev.message}. Save your work, then reload the page.`, true));
+  window.addEventListener('unhandledrejection', ev => toast(`Something went wrong: ${ev.reason && ev.reason.message ? ev.reason.message : ev.reason}. Save your work, then reload the page.`, true));
+  init();
+})();
+</script>
+</body>
+</html>

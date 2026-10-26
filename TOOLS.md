@@ -124,7 +124,7 @@ ArtCraft itself is an AI image and video studio. The app is open source, but gen
 Tools with a link to their folder are available now. The rest are planned, and each has an issue: comment there if you need it or want to help build it. Order of work is in [ROADMAP.md](ROADMAP.md). Blank spreadsheet and Word versions of the tools are in [templates](templates/).
 
 ### Development
-- Subject tracker ([#41](https://github.com/open-filmmaker-toolkit/toolkit/issues/41))
+- [Subject tracker](tools/subject-tracker/) (first version)
 - Research and archival source logs ([#42](https://github.com/open-filmmaker-toolkit/toolkit/issues/42))
 - Comps tracker ([#43](https://github.com/open-filmmaker-toolkit/toolkit/issues/43))
 - Treatment builder ([#44](https://github.com/open-filmmaker-toolkit/toolkit/issues/44))

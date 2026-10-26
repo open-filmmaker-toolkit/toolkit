@@ -46,6 +46,7 @@ Three tools on one data model. This is the documentary-specific gap.
 
 Everything else in the "Built here" section of [TOOLS.md](TOOLS.md), prioritized by what contributors ask for. Each planned tool has its own issue in the [Backlog milestone](https://github.com/open-filmmaker-toolkit/toolkit/milestone/6).
 
+- [x] Subject tracker: possible subjects, access status, follow-ups and a contact log, added to the project when they agree ([#41](https://github.com/open-filmmaker-toolkit/toolkit/issues/41))
 - [x] Name supers list: names from the project, near-miss spellings flagged, changes since the last export to graphics, CSV export ([#71](https://github.com/open-filmmaker-toolkit/toolkit/issues/71))
 
 Finding a third maintainer is on hold. Basil and Alex maintain the project for now ([#8](https://github.com/open-filmmaker-toolkit/toolkit/issues/8), closed).
