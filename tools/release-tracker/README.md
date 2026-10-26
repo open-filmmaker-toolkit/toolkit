@@ -78,7 +78,7 @@ Other contracts, such as music licenses, are kept as they are and don't appear i
 
 ## Not yet
 
-- Blank release forms to print and sign. They're legal forms, so they'll be added once a lawyer has reviewed them
+- Blank release forms to print and sign
 - Linking a release to specific footage or timecodes
 - Group releases and crowd notices for a whole crowd at once
 - Showing release status inside the clearance log and call sheet

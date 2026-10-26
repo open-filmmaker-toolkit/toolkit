@@ -25,10 +25,14 @@ Part of the [Open Filmmaker Toolkit](../README.md).
 - **Documents** (`.docx`) open in Word, Google Docs, Pages and LibreOffice. They're US Letter; switch to A4 in your page setup if you need to. To add a row to a table, put the cursor in the last cell and press Tab. To fill them in by hand, print them; the logs repeat their column headings on every page.
 - **Same columns as the tools.** The clearance log, release log and music cue sheet spreadsheets have the same columns, in the same order, as each tool's CSV export, and the call sheet matches the call sheet's spreadsheet export. Some exports add columns the tool works out for you, such as a cue's duration in seconds or what's still missing.
 
-The clearance log, release log and music cue sheet are working records, not legal advice. Check what your distributor, broadcaster and E&O insurer need. Blank release forms aren't here yet: they're legal forms, and we'll add them once a lawyer has reviewed them.
+These templates are working records, not legal advice, and you use them at your own risk: see [Not legal advice](../README.md#not-legal-advice). Check what your distributor, broadcaster and E&O insurer need. Blank release forms aren't here yet.
 
 ## Contributing
 
 Have a template that works better? Share it from the [new issue page](https://github.com/open-filmmaker-toolkit/toolkit/issues/new/choose) with **Submit a template**. Remove real names, contact details, rates and anything private first.
 
 If you change a tool's CSV export, update its template here too. CI checks that each template's columns appear in the tool's export, in the same order. Edit the `.docx` files in Word or LibreOffice. Don't add macros, linked images or other external links: the validator rejects them.
+
+## License
+
+CC BY-SA 4.0, like all the toolkit's templates and guides. See [Licenses](../README.md#licenses).

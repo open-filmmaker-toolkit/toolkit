@@ -25,6 +25,7 @@ Part of the [Open Filmmaker Toolkit](../../README.md). Tracking issue: [#19](htt
 - [Saving and file conflicts](#saving-and-file-conflicts)
 - [What it adds to the project file](#what-it-adds-to-the-project-file)
 - [Not yet](#not-yet)
+- [License](#license)
 
 ## Use it
 
@@ -91,3 +92,7 @@ Everything else in the file is preserved. See the [data model notes](../../schem
 - Opening titles and the order of credits within a heading by billing
 - Crawl formats for specific titling tools and crawl services
 - Checking where a required credit appears (opening titles or end credits) and its size, not just its wording
+
+## License
+
+GPL-3.0-or-later, like all the toolkit's code. See [Licenses](../../README.md#licenses). This tool is a working record, not legal advice: see [Not legal advice](../../README.md#not-legal-advice).
