@@ -51,11 +51,17 @@ jobs:
         with:
           python-version: "3.12"
 
+      # Runs the tests in the Google Chrome that GitHub's runners come with. Downloading
+      # Playwright's own browser and its system packages kept hanging on the runners.
       - name: Install Playwright
-        timeout-minutes: 6
+        timeout-minutes: 4
         run: |
           python -m pip install --disable-pip-version-check "playwright==1.64.1" "pypdf==5.9.0"
-          python -m playwright install --with-deps chromium
+          if ! command -v google-chrome >/dev/null; then python -m playwright install --with-deps chromium; fi
 
       - name: Run browser tests
-        run: python tests/browser_tools.py ${{ matrix.browser }}
+        env:
+          PLAYWRIGHT_CHANNEL: chrome
+        run: |
+          command -v google-chrome >/dev/null || unset PLAYWRIGHT_CHANNEL
+          python tests/browser_tools.py ${{ matrix.browser }}
