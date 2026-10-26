@@ -34,7 +34,7 @@ Three tools on one data model. This is the documentary-specific gap.
 - [x] Release tracker: who signed what, linked to the people and locations in the project, with scans stored locally and anyone on camera without a release flagged (#17). Linking to specific footage is listed under the tool's "Not yet"
 - [x] Clearance / E&O log: every third-party element, its source, license status and cost (#18)
 - [x] Music cue sheet: built from the music in the clearance log, with credits, share checks and a printable sheet (#24)
-- [ ] Credits builder: pulls names and roles from the project, flags contractually required credits (#19)
+- [x] Credits builder: pulls names and roles from the project, adds music and archival credits from the clearance log and cue sheet, flags contractually required credits, and exports the crawl as text (#19)
 - [ ] Plain template versions of all three (#20)
 
 ## Milestone 4: Call sheet generator

@@ -1,0 +1,1344 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Credits builder · Open Filmmaker Toolkit</title>
+<meta name="description" content="Build your end credits from the people, music and archival material in your project file, check the credits your contracts require, and export the crawl as text. Runs in your browser; your data stays on your computer.">
+<style>
+:root {
+  --paper: #f1f3f2; --sheet: #ffffff; --ink: #1a2130; --ink-2: #4b556a; --ink-3: #6d778a;
+  --rule: #d4dad8; --rule-soft: #e6eae8; --hover: #f6f8f7; --focus: #2f6fdb;
+  --good: #2b7a57; --good-bg: #dff1e8; --warn: #8a5a00; --warn-bg: #fbf0d9; --bad: #b3392d; --bad-bg: #f8e1de;
+  --screen: #050506; --screen-ink: #f4f1ea; --screen-dim: #a7a29a;
+  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #141922; --sheet: #1b212b; --ink: #e6e9ee; --ink-2: #a6afbd; --ink-3: #8790a0;
+    --rule: #2f3744; --rule-soft: #262d38; --hover: #212834; --focus: #7aa7ff;
+    --good: #4fb386; --good-bg: #1a3329; --warn: #e2a531; --warn-bg: #3a2f17; --bad: #e26657; --bad-bg: #3b2220;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans); }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+[hidden] { display: none !important; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.foot { margin-top: 28px; font-size: 13px; color: var(--ink-3); }
+.cant-run { display: none; max-width: 640px; margin: 64px auto; padding: 0 24px; }
+.cant-run h1 { margin: 0 0 8px; font: 600 26px/1.2 var(--serif); }
+.cant-run p { margin: 0 0 10px; color: var(--ink-2); }
+.no-js .cant-run { display: block; }
+.no-js .page { display: none; }
+.page { max-width: 1240px; margin: 0 auto; padding: 0 24px 48px; }
+
+.masthead { display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: flex-end; justify-content: space-between; padding: 28px 0 20px; }
+.tool-name { margin: 0 0 2px; font-size: 14px; font-weight: 600; color: var(--ink-2); }
+.film-title { margin: 0; font: 600 32px/1.15 var(--serif); letter-spacing: -0.01em; overflow-wrap: anywhere; cursor: pointer; }
+.film-title.is-empty { color: var(--ink-3); font-style: italic; font-weight: 400; }
+.film-meta { margin: 4px 0 0; color: var(--ink-2); font-size: 14px; }
+.file { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.file-state { margin: 0; font-size: 13px; color: var(--ink-2); text-align: right; }
+.file-state .dirty { color: var(--warn); font-weight: 600; }
+.file-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; }
+.btn:hover { border-color: var(--ink-3); }
+.btn.primary { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.btn.primary:hover { opacity: 0.88; }
+.btn.danger { color: var(--bad); }
+.btn.small { padding: 4px 10px; font-size: 13px; }
+.link-btn { padding: 0; border: 0; background: none; cursor: pointer; color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; font-size: 14px; }
+.link-btn:hover { color: var(--ink); }
+
+.banner { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 0 0 16px; padding: 12px 16px; border-radius: 8px; background: var(--warn-bg); border: 1px solid color-mix(in srgb, var(--warn) 40%, transparent); }
+.banner p { margin: 0; flex: 1 1 280px; }
+.banner .actions { display: flex; gap: 8px; }
+
+.workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr); gap: 24px; align-items: start; }
+.col { display: grid; gap: 18px; min-width: 0; }
+.card { background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 18px; min-width: 0; }
+.card-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; margin: 0 0 6px; }
+.card-head h2 { margin: 0; font: 600 18px/1.3 var(--serif); }
+.card-head .count { font-size: 13px; color: var(--ink-2); }
+.card-head .spacer { flex: 1; }
+.card p.lead { margin: 0 0 8px; font-size: 14px; color: var(--ink-2); }
+
+/* Required credits */
+.reqs { list-style: none; margin: 0; padding: 0; }
+.req { display: grid; grid-template-columns: 14px minmax(0, 1fr) auto; gap: 4px 10px; align-items: start; padding: 10px 0; }
+.req + .req { border-top: 1px solid var(--rule-soft); }
+.req .dot { margin-top: 6px; }
+.req q { font-family: var(--serif); font-size: 16px; quotes: "\201C" "\201D"; }
+.req .sub { display: block; font-size: 13px; color: var(--ink-3); }
+.req .state { display: block; font-size: 13px; font-weight: 600; }
+.req.is-met .state { color: var(--good); }
+.req.is-missing .state { color: var(--bad); }
+.req .acts { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: none; background: var(--ink-3); }
+.is-met .dot { background: var(--good); }
+.is-missing .dot { background: var(--bad); }
+.empty-line { margin: 4px 0; color: var(--ink-2); font-size: 14px; }
+
+/* People not yet credited */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 2px; padding: 0; list-style: none; }
+.chip { display: inline-flex; align-items: stretch; border: 1px solid var(--rule); border-radius: 999px; overflow: hidden; background: var(--paper); }
+.chip button { padding: 4px 10px; border: 0; background: none; cursor: pointer; font-size: 13px; }
+.chip button:hover { background: var(--hover); }
+.chip .add { font-weight: 600; }
+.chip .add .sub { font-weight: 400; color: var(--ink-3); margin-left: 4px; }
+.chip .skip { border-left: 1px solid var(--rule); color: var(--ink-3); }
+
+/* The credit list */
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 10px; }
+.toolbar h2 { margin: 0 8px 0 0; font: 600 20px/1.2 var(--serif); }
+.toolbar .spacer { flex: 1; }
+.entries { list-style: none; margin: 0; padding: 0; background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; }
+.entry { display: grid; grid-template-columns: 92px minmax(0, 1fr) auto; gap: 4px 12px; align-items: center; padding: 9px 12px; }
+.entry + .entry { border-top: 1px solid var(--rule-soft); }
+.entry:hover { background: var(--hover); }
+.entry .kind { font-size: 12px; font-weight: 600; color: var(--ink-3); }
+.entry.is-heading .kind, .entry.is-heading .what { color: var(--ink); }
+.entry.is-heading .what { font: 600 16px/1.3 var(--serif); }
+.entry .what { min-width: 0; padding: 0; border: 0; background: none; text-align: left; cursor: pointer; overflow-wrap: anywhere; }
+.entry .what:hover { text-decoration: underline; text-underline-offset: 2px; }
+.entry .what .sub { display: block; font-size: 13px; color: var(--ink-3); }
+.entry .warn { color: var(--bad); }
+.entry .move { display: flex; gap: 2px; }
+.icon-btn { width: 30px; height: 30px; padding: 0; border: 1px solid transparent; border-radius: 6px; background: none; color: var(--ink-2); cursor: pointer; font-size: 15px; line-height: 1; }
+.icon-btn:hover { border-color: var(--rule); color: var(--ink); }
+.icon-btn:disabled { opacity: 0.3; cursor: default; border-color: transparent; }
+
+.empty { padding: 36px 24px; text-align: center; background: var(--sheet); border: 1px dashed var(--rule); border-radius: 8px; }
+.empty h2 { margin: 0 0 6px; font: 600 20px/1.3 var(--serif); }
+.empty p { margin: 0 auto 16px; max-width: 52ch; color: var(--ink-2); }
+.empty .actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+
+/* The crawl: white on black, centered, the way it plays on screen */
+.screen-wrap { position: sticky; top: 16px; display: grid; gap: 10px; }
+.screen-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.screen-actions .spacer { flex: 1; }
+.screen-actions .note { font-size: 13px; color: var(--ink-2); }
+.screen { position: relative; height: min(72vh, 680px); overflow: auto; background: var(--screen); color: var(--screen-ink); border-radius: 6px; box-shadow: inset 0 0 0 1px #000000; }
+.screen.is-playing { overflow: hidden; }
+.crawl { padding: 48px 24px 72px; text-align: center; }
+.screen.is-playing .crawl { padding-top: min(72vh, 680px); padding-bottom: min(72vh, 680px); animation: roll var(--roll-time, 40s) linear forwards; }
+@keyframes roll { from { transform: translateY(0); } to { transform: translateY(var(--roll-distance, -100%)); } }
+.c-title { margin: 0 0 40px; font: 600 26px/1.2 var(--serif); letter-spacing: 0.01em; }
+.c-heading { margin: 36px 0 14px; font: 600 17px/1.3 var(--serif); letter-spacing: 0.04em; }
+.c-unit { margin: 0 0 22px; }
+.c-role { display: block; font-size: 12.5px; letter-spacing: 0.06em; color: var(--screen-dim); margin-bottom: 3px; }
+.c-name { display: block; font-size: 17px; line-height: 1.35; }
+.c-song .c-name:first-child { font-family: var(--serif); font-style: italic; }
+.c-song .c-line { display: block; font-size: 13.5px; color: var(--screen-dim); }
+.c-text .c-line { display: block; font-size: 14px; line-height: 1.5; }
+.c-unit.is-flagged { outline: 1px dashed #e26657; outline-offset: 6px; }
+.c-empty { margin: 120px 24px; color: var(--screen-dim); font-size: 14px; }
+@media (prefers-reduced-motion: reduce) { .screen.is-playing .crawl { animation: none; padding-top: 48px; padding-bottom: 72px; } .screen.is-playing { overflow: auto; } }
+
+dialog { border: 0; padding: 0; color: var(--ink); background: var(--sheet); box-shadow: 0 10px 40px rgba(10, 14, 22, 0.25); }
+dialog::backdrop { background: rgba(16, 20, 28, 0.42); }
+dialog.drawer { margin: 0 0 0 auto; width: min(600px, 100vw); height: 100dvh; max-height: 100dvh; max-width: 100vw; border-left: 1px solid var(--rule); }
+dialog.modal { width: min(560px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); border-radius: 10px; }
+dialog form { display: flex; flex-direction: column; height: 100%; max-height: inherit; }
+.dlg-head { padding: 20px 24px 12px; border-bottom: 1px solid var(--rule-soft); }
+.dlg-head h2 { margin: 0; font: 600 22px/1.25 var(--serif); }
+.dlg-body { flex: 1; overflow-y: auto; padding: 16px 24px 24px; display: grid; gap: 14px; align-content: start; }
+.dlg-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 14px 24px; border-top: 1px solid var(--rule-soft); }
+.dlg-foot .spacer { flex: 1; }
+.field { display: grid; gap: 4px; }
+.field > label, .field > .label, .group h3 { font-size: 14px; font-weight: 600; margin: 0; }
+.hint { margin: 0; font-size: 13px; color: var(--ink-3); }
+.field input, .field select, .field textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); }
+.group { display: grid; gap: 8px; padding-top: 10px; border-top: 1px solid var(--rule-soft); }
+.checks { display: grid; gap: 2px; max-height: 260px; overflow-y: auto; padding: 2px; }
+.check { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; align-items: start; padding: 5px 4px; border-radius: 6px; cursor: pointer; }
+.check:hover { background: var(--hover); }
+.check input { width: 18px; height: 18px; margin: 2px 0 0; }
+.check .who { overflow-wrap: anywhere; }
+.check .sub { margin-left: 4px; font-size: 13px; color: var(--ink-3); }
+.check .lines { display: block; font-size: 13px; color: var(--ink-3); white-space: pre-line; }
+#songList, #sourceList { max-height: none; }
+.radio-row { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.radio-row label { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; cursor: pointer; }
+pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); font-size: 13px; white-space: pre-wrap; }
+
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); max-width: calc(100vw - 32px); padding: 10px 16px; border-radius: 8px; background: var(--ink); color: var(--paper); font-size: 14px; box-shadow: 0 6px 24px rgba(10, 14, 22, 0.25); z-index: 10; }
+.toast.error { background: var(--bad); color: #ffffff; }
+.report { display: none; }
+
+@media (max-width: 900px) {
+  .workspace { grid-template-columns: 1fr; }
+  .screen-wrap { position: static; }
+  .screen { height: 60vh; }
+}
+@media (max-width: 720px) {
+  .page { padding: 0 16px 40px; }
+  .film-title { font-size: 26px; }
+  .file { align-items: flex-start; }
+  .file-state { text-align: left; }
+  .toolbar h2 { flex-basis: 100%; }
+  .toolbar #addBtn { flex: 1 1 100%; justify-content: center; order: -1; }
+  .toolbar h2 { order: -2; }
+  .entry { grid-template-columns: minmax(0, 1fr) auto; }
+  .entry .kind { grid-column: 1 / -1; }
+  .req { grid-template-columns: 14px minmax(0, 1fr); }
+  .req .acts { grid-column: 2; justify-content: flex-start; }
+}
+@media print {
+  @page { size: portrait; margin: 16mm; }
+  :root { color-scheme: light; }
+  body { background: #ffffff; color: #000000; font-size: 10pt; }
+  .page, dialog, .toast { display: none !important; }
+  .report { display: block; }
+  .report .r-head h1 { margin: 0; font: 700 18pt/1.2 var(--serif); }
+  .report .r-head p { margin: 2pt 0 0; }
+  .report .r-check { margin: 10pt 0 14pt; padding: 6pt 8pt; border: 1pt solid #000000; }
+  .report .r-check h2 { margin: 0 0 4pt; font-size: 10.5pt; }
+  .report .r-check ul { margin: 0; padding-left: 14pt; }
+  .report .r-crawl { text-align: center; }
+  .report .c-title { margin: 6pt 0 18pt; font-size: 16pt; }
+  .report .c-heading { margin: 16pt 0 6pt; font-size: 11pt; break-after: avoid; page-break-after: avoid; }
+  .report .c-unit { margin: 0 0 10pt; break-inside: avoid; page-break-inside: avoid; }
+  .report .c-role { font-size: 8.5pt; color: #444444; margin-bottom: 1pt; }
+  .report .c-name { font-size: 11pt; }
+  .report .c-song .c-line { font-size: 9pt; color: #333333; }
+  .report .c-text .c-line { font-size: 9.5pt; }
+  .report .c-unit.is-flagged { outline: none; }
+  .report .r-note { margin-top: 18pt; font-size: 8pt; color: #333333; text-align: left; }
+}
+</style>
+</head>
+<body>
+<div class="cant-run" id="cantRun">
+  <h1 id="cantRunTitle">Open this file in a web browser</h1>
+  <p id="cantRunText">This tool runs in Chrome, Edge, Firefox or Safari. You're seeing a preview that doesn't run it, so none of the buttons would work.</p>
+  <p id="cantRunHow">In your browser, choose File, then Open File, and pick this file. Or right-click the file and open it with your browser.</p>
+</div>
+<div class="page">
+  <header class="masthead">
+    <div>
+      <p class="tool-name">Credits builder</p>
+      <h1 class="film-title" id="filmTitle">Untitled film</h1>
+      <p class="film-meta"><span id="filmMeta"></span> <button type="button" class="link-btn" id="editProjectBtn">Edit film details</button></p>
+    </div>
+    <div class="file">
+      <p class="file-state" id="fileState">Not saved to a file yet</p>
+      <div class="file-actions">
+        <button type="button" class="btn" id="newBtn">New project</button>
+        <button type="button" class="btn" id="openBtn">Open file</button>
+        <button type="button" class="btn" id="projectCsvBtn">Export project data (CSV)</button>
+        <button type="button" class="btn primary" id="saveBtn">Save file</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="banner" id="recovery" role="region" aria-label="Unsaved work" hidden>
+    <p id="recoveryText"></p>
+    <div class="actions">
+      <button type="button" class="btn primary" id="restoreBtn">Restore it</button>
+      <button type="button" class="btn" id="discardBtn">Discard it</button>
+    </div>
+  </div>
+
+  <main class="workspace">
+    <div class="col">
+      <section class="card" aria-labelledby="reqHead">
+        <div class="card-head"><h2 id="reqHead">Required by contracts</h2><span class="count" id="reqCount"></span><span class="spacer"></span><button type="button" class="btn small" id="addReqBtn">Add a required credit</button></div>
+        <ul class="reqs" id="reqs"></ul>
+      </section>
+
+      <section class="card" aria-labelledby="uncreditedHead" id="uncreditedCard">
+        <div class="card-head"><h2 id="uncreditedHead">Not in the credits yet</h2><span class="count" id="uncreditedCount"></span></div>
+        <p class="lead" id="uncreditedLead">People in your project who aren't credited. Add them, or mark them as not credited.</p>
+        <ul class="chips" id="uncredited"></ul>
+      </section>
+
+      <section aria-labelledby="listHead">
+        <div class="toolbar">
+          <h2 id="listHead">Credits, in order</h2>
+          <span class="spacer"></span>
+          <button type="button" class="btn small" id="addHeadingBtn">Add heading</button>
+          <button type="button" class="btn small" id="addTextBtn">Add text</button>
+          <button type="button" class="btn small" id="addMusicBtn">Add music credits</button>
+          <button type="button" class="btn small" id="addArchivalBtn">Add archival credits</button>
+          <button type="button" class="btn primary" id="addBtn">Add credit</button>
+        </div>
+        <ol class="entries" id="entries"></ol>
+        <div class="empty" id="empty" hidden>
+          <h2>No credits yet</h2>
+          <p>Start from your project and the tool drafts the credits from your people and their roles, your music and your archival material. Then reorder and reword it.</p>
+          <div class="actions">
+            <button type="button" class="btn primary" id="fillBtn">Draft credits from the project</button>
+            <button type="button" class="btn" id="emptyOpenBtn">Open a project file</button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="col">
+      <section class="screen-wrap" aria-labelledby="screenHead">
+        <div class="screen-actions">
+          <h2 id="screenHead" class="sr-only">End crawl preview</h2>
+          <button type="button" class="btn" id="playBtn">Play crawl</button>
+          <span class="note" id="crawlStats"></span>
+          <span class="spacer"></span>
+          <button type="button" class="btn" id="exportBtn">Export text</button>
+          <button type="button" class="btn" id="printBtn">Print</button>
+        </div>
+        <div class="screen" id="screen" tabindex="0" aria-label="End crawl preview">
+          <div class="crawl" id="crawl"></div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="foot">
+    <p>Part of the Open Filmmaker Toolkit. This page makes no network requests: everything stays on this computer until you save or export it. Uses the same project file as the other toolkit tools. Not legal advice.</p>
+  </footer>
+</div>
+
+<dialog class="drawer" id="editor" aria-labelledby="editorTitle">
+  <form id="editorForm" method="dialog" novalidate>
+    <div class="dlg-head"><h2 id="editorTitle">Credit</h2></div>
+    <div class="dlg-body">
+      <div data-for="credit" class="field">
+        <label for="f-role">Credit</label>
+        <input id="f-role" type="text" list="roleList" placeholder="Directed by">
+        <p class="hint">The line above the names. Leave it blank for a list of names, like a "Special thanks" list under a heading.</p>
+      </div>
+      <div data-for="credit" class="group">
+        <h3 id="peopleHead">People from the project</h3>
+        <div class="checks" id="peopleList" role="group" aria-labelledby="peopleHead"></div>
+      </div>
+      <div data-for="credit" class="field">
+        <label for="f-names">Other names</label>
+        <textarea id="f-names" rows="3" placeholder="One name per line"></textarea>
+        <p class="hint">For people and organizations who aren't in the project file. Names show in this order, after the people above.</p>
+      </div>
+
+      <div data-for="heading" class="field">
+        <label for="f-heading">Heading</label>
+        <input id="f-heading" type="text" placeholder="Camera department">
+      </div>
+
+      <div data-for="text" class="field">
+        <label for="f-text">Text</label>
+        <textarea id="f-text" rows="5" placeholder="© 2026 Your company. All rights reserved."></textarea>
+        <p class="hint">Shown exactly as typed. Each line break is a new line in the crawl.</p>
+      </div>
+
+      <div data-for="music" class="field">
+        <label for="f-musicHeading">Heading</label>
+        <input id="f-musicHeading" type="text" placeholder="Music">
+      </div>
+      <div data-for="music" class="group">
+        <h3 id="songsHead">Songs and cues to credit</h3>
+        <p class="hint">From the music in your clearance log, with the credits from the music cue sheet. Uncheck original score cues and credit the composer instead.</p>
+        <div class="checks" id="songList" role="group" aria-labelledby="songsHead"></div>
+      </div>
+
+      <div data-for="archival" class="field">
+        <label for="f-archivalHeading">Line above the sources</label>
+        <input id="f-archivalHeading" type="text" placeholder="Archival material courtesy of">
+      </div>
+      <div data-for="archival" class="group">
+        <h3 id="sourcesHead">Sources to credit</h3>
+        <p class="hint">Rights holders of licensed, fair use and public domain archival material, artwork and quotes in your clearance log.</p>
+        <div class="checks" id="sourceList" role="group" aria-labelledby="sourcesHead"></div>
+      </div>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn danger" id="deleteBtn">Remove from credits</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="editorCancel">Cancel</button>
+      <button type="submit" class="btn primary" id="editorSubmit">Save</button>
+    </div>
+  </form>
+</dialog>
+<datalist id="roleList"></datalist>
+
+<dialog class="modal" id="reqDialog" aria-labelledby="reqTitle">
+  <form id="reqForm" method="dialog" novalidate>
+    <div class="dlg-head"><h2 id="reqTitle">Required credit</h2></div>
+    <div class="dlg-body">
+      <div class="field">
+        <label for="r-contract">Contract that requires it</label>
+        <select id="r-contract"></select>
+      </div>
+      <div class="field" id="r-newFields">
+        <label for="r-title">Name of the license or agreement</label>
+        <input id="r-title" type="text" placeholder="Archival footage license, Riverside County Historical Society">
+      </div>
+      <div class="field" id="r-elementField">
+        <label for="r-element">Clearance log item it covers</label>
+        <select id="r-element"></select>
+      </div>
+      <div class="field">
+        <label for="r-text">Credit wording, exactly as the contract says</label>
+        <textarea id="r-text" rows="3" placeholder="Footage courtesy of the Riverside County Historical Society"></textarea>
+        <p class="hint">The credits are checked for this wording, ignoring capitals and punctuation.</p>
+      </div>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn danger" id="reqRemoveBtn">Remove requirement</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="reqCancel">Cancel</button>
+      <button type="submit" class="btn primary">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="exportDialog" aria-labelledby="exportTitle">
+  <form id="exportForm" method="dialog">
+    <div class="dlg-head"><h2 id="exportTitle">Export the end crawl</h2></div>
+    <div class="dlg-body">
+      <div class="field">
+        <span class="label" id="layoutLabel">Layout</span>
+        <div class="radio-row" role="radiogroup" aria-labelledby="layoutLabel">
+          <label><input type="radio" name="layout" value="stacked" checked> Credit above names</label>
+          <label><input type="radio" name="layout" value="columns"> Two columns, separated by a tab</label>
+        </div>
+        <p class="hint">Plain text for your editor, a titling tool or a crawl service. Two columns pastes into a spreadsheet or a two-column title template.</p>
+      </div>
+      <pre class="export" id="exportPreview" aria-label="Text to export"></pre>
+    </div>
+    <div class="dlg-foot">
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="exportCancel">Close</button>
+      <button type="button" class="btn" id="copyBtn">Copy text</button>
+      <button type="submit" class="btn primary" id="downloadTxtBtn">Download text file</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="projectDialog" aria-labelledby="projectDialogTitle">
+  <form id="projectForm" method="dialog">
+    <div class="dlg-head"><h2 id="projectDialogTitle">Film details</h2></div>
+    <div class="dlg-body">
+      <div class="field"><label for="p-title">Film title</label><input id="p-title" type="text" placeholder="Working title is fine"></div>
+      <div class="field"><label for="p-company">Production company</label><input id="p-company" type="text"></div>
+      <div class="field"><label for="p-producer">Producer</label><input id="p-producer" type="text"></div>
+    </div>
+    <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn" id="projectCancel">Cancel</button><button type="submit" class="btn primary">Save details</button></div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="projectCsvDialog" aria-labelledby="projectCsvTitle">
+  <form id="projectCsvForm" method="dialog">
+    <div class="dlg-head"><h2 id="projectCsvTitle">Export project data</h2></div>
+    <div class="dlg-body">
+      <div class="field">
+        <label for="projectCsvCollection">Data to export</label>
+        <select id="projectCsvCollection">
+          <option value="project">Project details</option>
+          <option value="people">People</option>
+          <option value="locations">Locations</option>
+          <option value="thirdPartyElements">Third-party elements</option>
+          <option value="contracts">Contracts</option>
+          <option value="assets">Assets</option>
+          <option value="musicCueSheet">Music cue sheet details</option>
+          <option value="callSheets">Call sheets</option>
+        </select>
+      </div>
+      <p class="hint">Exports one CSV file for the selected collection. Nested values are kept as JSON in their cell.</p>
+    </div>
+    <div class="dlg-foot">
+      <button type="submit" class="btn primary">Export CSV</button>
+      <button type="button" class="btn" id="projectCsvCancel">Cancel</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="conflictDialog" aria-labelledby="conflictTitle">
+  <form method="dialog">
+    <div class="dlg-head"><h2 id="conflictTitle">Project file changed</h2></div>
+    <div class="dlg-body">
+      <p id="conflictText">This project file changed after you opened it. Saving will replace those changes.</p>
+      <p class="hint">Your edits are still here. Choose whether to overwrite the changed file, save a separate copy, or load its latest contents. Save in one tool at a time; simultaneous saves can still race.</p>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn" id="conflictReloadBtn">Reload latest</button>
+      <button type="button" class="btn" id="conflictCopyBtn">Save a copy</button>
+      <button type="button" class="btn danger" id="conflictOverwriteBtn">Overwrite file</button>
+      <button type="button" class="btn" id="conflictCancelBtn">Keep editing</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="report" id="report" aria-hidden="true"></div>
+<input type="file" id="fileInput" accept=".json,application/json" hidden>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+(() => {
+  'use strict';
+
+  const FORMAT = 'open-filmmaker-toolkit/project';
+  const FORMAT_VERSION = 1;
+  const TOOL = 'credits-builder 0.1.0';
+  const DRAFT_KEY = 'oft.credits-builder.draft';
+  const PROJECT_TEXT = ['title', 'company', 'producer'];
+  const KIND_LABEL = { credit: 'Credit', heading: 'Heading', text: 'Text', music: 'Music', archival: 'Archival' };
+  const ARCHIVAL_TYPES = ['Archival footage', 'Archival still', 'Artwork', 'Text or quote'];
+  const CREDITED_STATUSES = ['licensed', 'fair-use', 'public-domain'];
+  const COMMON_ROLES = ['Directed by', 'Produced by', 'Executive producers', 'Co-producer', 'Written by', 'Edited by', 'Director of photography',
+    'Original music by', 'Featuring', 'Additional camera', 'Sound recordist', 'Re-recording mixer', 'Colorist', 'Assistant editor',
+    'Archival producer', 'Music supervisor', 'Post-production supervisor', 'Production assistant', 'Legal counsel', 'Special thanks'];
+  // Rough order for a first draft: key creatives first, then everyone else alphabetically.
+  // Key creatives, in the order they usually open the end credits. Other roles follow, alphabetically.
+  const ROLE_ORDER = [/^(co-?)?direct(or|ed)\b(?! of photo)/i, /^(?!.*exec).*\bproduc(er|ed)\b/i, /exec.*produc/i, /^(co-?)?writ(er|ten)\b/i,
+    /^(?!.*(assist|associate)).*\bedit(or|ed)\b/i, /^(director of photography|cinematograph|photographed by)/i, /compos|original music|score/i];
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const str = v => (v == null ? '' : String(v));
+  const arr = v => (Array.isArray(v) ? v : []);
+
+  let doc = blankDoc();
+  let fileHandle = null;
+  let baselineText = null;
+  let fileName = null;
+  let dirty = false;
+  let editing = null;   // working copy of the entry in the editor
+  let isNew = false;
+  let insertAt = null;  // index to insert a new entry at, or null for the end
+  let reqContractId = null;
+
+  function blankDoc() {
+    return { format: FORMAT, formatVersion: FORMAT_VERSION, project: { title: '', company: '', producer: '', frameRate: 24, currency: 'USD' }, people: [], thirdPartyElements: [], contracts: [], credits: { entries: [] } };
+  }
+  function newId(prefix) {
+    if (window.crypto && crypto.randomUUID) return `${prefix}-${crypto.randomUUID()}`;
+    return `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+  }
+  // Fills in only what this tool needs; everything else in the file is left as it was.
+  function normalize(d) {
+    if (!d.project || typeof d.project !== 'object') d.project = {};
+    for (const k of PROJECT_TEXT) if (typeof d.project[k] !== 'string') d.project[k] = str(d.project[k]);
+    const prefixes = { people: 'person', thirdPartyElements: 'el', contracts: 'contract' };
+    for (const k of Object.keys(prefixes)) {
+      if (!Array.isArray(d[k])) d[k] = [];
+      d[k] = d[k].filter(x => x && typeof x === 'object');
+      for (const x of d[k]) if (!x.id) x.id = newId(prefixes[k]);
+    }
+    if (!d.credits || typeof d.credits !== 'object' || Array.isArray(d.credits)) d.credits = {};
+    if (!Array.isArray(d.credits.entries)) d.credits.entries = [];
+    d.credits.entries = d.credits.entries.filter(e => e && typeof e === 'object');
+    for (const e of d.credits.entries) {
+      if (!e.id) e.id = newId('credit');
+      if (!KIND_LABEL[e.kind]) e.kind = 'text';
+    }
+    d.format = FORMAT;
+    d.formatVersion = FORMAT_VERSION;
+    return d;
+  }
+  const entries = () => doc.credits.entries;
+
+  // ---------- Lookups ----------
+  const person = id => doc.people.find(p => p.id === id);
+  const element = id => doc.thirdPartyElements.find(e => e.id === id);
+  const roleOf = p => (Array.isArray(p.roles) ? p.roles.join(', ') : str(p.roles));
+  function joinNames(list) {
+    if (list.length <= 1) return list.join('');
+    return `${list.slice(0, -1).join(', ')} and ${list[list.length - 1]}`;
+  }
+  const norm = s => str(s).toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+  const titleKey = s => norm(s);
+
+  // ---------- Music and archival credits, built from the project ----------
+  function songs() {
+    const groups = new Map();
+    for (const e of doc.thirdPartyElements) {
+      if (e.type !== 'Music' || e.status === 'replace') continue;
+      const m = e.music && typeof e.music === 'object' ? e.music : {};
+      const title = str(m.title).trim() || str(e.description).trim();
+      if (!title) continue;
+      const key = titleKey(title);
+      if (!groups.has(key)) groups.set(key, { key, title, artist: '', writers: [], arrangers: [], publishers: [], pd: false });
+      const g = groups.get(key);
+      if (!g.artist && str(m.artist).trim()) g.artist = str(m.artist).trim();
+      if (e.status === 'public-domain') g.pd = true;
+      for (const w of arr(m.writers)) {
+        const name = str(w && w.name).trim();
+        if (!name) continue;
+        const list = str(w.role) === 'AR' ? g.arrangers : g.writers;
+        if (!list.includes(name)) list.push(name);
+      }
+      for (const p of arr(m.publishers)) {
+        const name = str(p && p.name).trim();
+        if (!name) continue;
+        const label = p.society && !/^(none|public domain)$/i.test(p.society) ? `${name} (${p.society})` : name;
+        if (!g.publishers.includes(label)) g.publishers.push(label);
+      }
+    }
+    return [...groups.values()].map(g => ({
+      key: g.key,
+      title: g.title,
+      lines: [
+        `“${g.title}”`,
+        g.writers.length && `Written by ${joinNames(g.writers)}`,
+        g.arrangers.length && `Arranged by ${joinNames(g.arrangers)}`,
+        g.artist && `Performed by ${g.artist}`,
+        g.publishers.length ? `Published by ${joinNames(g.publishers)}` : (g.pd && g.writers.length ? 'Public domain' : ''),
+      ].filter(Boolean),
+    }));
+  }
+  function sources() {
+    const seen = new Map();
+    for (const e of doc.thirdPartyElements) {
+      if (!ARCHIVAL_TYPES.includes(e.type) || !CREDITED_STATUSES.includes(e.status)) continue;
+      const holder = str(e.rightsHolder).trim();
+      const name = holder && !/^public domain/i.test(holder) ? holder : str(e.source).trim();
+      if (!name) continue;
+      const key = norm(name);
+      if (!seen.has(key)) seen.set(key, { key, name, items: [] });
+      seen.get(key).items.push(str(e.description) || e.id);
+    }
+    return [...seen.values()];
+  }
+
+  // ---------- The crawl: one list of units used by the preview, exports, print and checks ----------
+  function entryNames(e) {
+    const people = arr(e.personIds).map(id => { const p = person(id); return p ? p.name : null; });
+    return [...people.filter(Boolean), ...arr(e.names).map(n => str(n).trim()).filter(Boolean)];
+  }
+  function units() {
+    const out = [];
+    for (const e of entries()) {
+      if (e.kind === 'heading') { if (str(e.text).trim()) out.push({ type: 'heading', entryId: e.id, text: str(e.text).trim() }); }
+      else if (e.kind === 'text') { const lines = str(e.text).split('\n').map(l => l.trim()).filter(Boolean); if (lines.length) out.push({ type: 'text', entryId: e.id, lines }); }
+      else if (e.kind === 'credit') { const names = entryNames(e); if (names.length || str(e.role).trim()) out.push({ type: 'credit', entryId: e.id, role: str(e.role).trim(), names }); }
+      else if (e.kind === 'music') {
+        const skip = new Set(arr(e.excluded));
+        const list = songs().filter(s => !skip.has(s.key));
+        if (list.length) {
+          const h = str(e.heading).trim() || 'Music';
+          out.push({ type: 'heading', entryId: e.id, text: h });
+          for (const s of list) out.push({ type: 'song', entryId: e.id, lines: s.lines });
+        }
+      } else if (e.kind === 'archival') {
+        const skip = new Set(arr(e.excluded));
+        const names = sources().filter(s => !skip.has(s.key)).map(s => s.name);
+        if (names.length) out.push({ type: 'credit', entryId: e.id, role: str(e.heading).trim() || 'Archival material courtesy of', names });
+      }
+    }
+    return out;
+  }
+  const unitText = u => u.type === 'credit' ? [u.role, ...u.names].filter(Boolean).join(' ') : u.type === 'heading' ? u.text : u.lines.join(' ');
+
+  // ---------- Required credits ----------
+  const requirements = () => doc.contracts.filter(c => str(c.requiredCredit).trim());
+  function metBy(c, list) {
+    const want = norm(c.requiredCredit);
+    if (!want) return null;
+    const all = list || units();
+    const hit = all.find(u => norm(unitText(u)).includes(want));
+    if (hit) return hit;
+    // A heading directly above a credit reads as one line on screen ("Special thanks" / names).
+    for (let i = 0; i < all.length - 1; i++) {
+      if (all[i].type === 'heading' && norm(`${all[i].text} ${unitText(all[i + 1])}`).includes(want)) return all[i + 1];
+    }
+    return null;
+  }
+
+  // ---------- Render ----------
+  function render() {
+    const p = doc.project;
+    const t = $('filmTitle');
+    t.textContent = p.title || 'Untitled film';
+    t.classList.toggle('is-empty', !p.title);
+    $('filmMeta').textContent = [p.company, p.producer && `produced by ${p.producer}`].filter(Boolean).join(', ') || 'No film details yet';
+    const name = fileName ? esc(fileName) : '';
+    $('fileState').innerHTML = dirty
+      ? `<span class="dirty">Unsaved changes</span>${name ? ` to ${name}` : '. Not saved to a file yet.'}`
+      : (name ? `Saved to ${name}` : 'Not saved to a file yet');
+    document.title = `${p.title ? p.title + ' · ' : ''}Credits builder`;
+    const list = units();
+    renderRequirements(list);
+    renderUncredited();
+    renderEntries();
+    renderCrawl(list);
+  }
+
+  function renderRequirements(list) {
+    const reqs = requirements();
+    const met = reqs.filter(c => metBy(c, list)).length;
+    $('reqCount').textContent = reqs.length ? `${met} of ${reqs.length} in the credits` : '';
+    $('reqs').innerHTML = reqs.length ? reqs.map(c => {
+      const ok = !!metBy(c, list);
+      return `<li class="req ${ok ? 'is-met' : 'is-missing'}">
+        <span class="dot" aria-hidden="true"></span>
+        <div><q>${esc(str(c.requiredCredit).trim())}</q><span class="sub">${esc(c.title || 'Untitled contract')}</span>
+          <span class="state">${ok ? 'In the credits' : 'Not in the credits yet'}</span></div>
+        <div class="acts">${ok ? '' : `<button type="button" class="btn small" data-addreq="${esc(c.id)}">Add to credits</button>`}
+          <button type="button" class="btn small" data-editreq="${esc(c.id)}" aria-label="Edit the requirement from ${esc(c.title || 'this contract')}">Edit</button></div>
+      </li>`;
+    }).join('') : '<li class="empty-line">No contracts in this project require a credit yet. If a license or agreement spells out a credit, add it here and the tool checks the credits for it.</li>';
+  }
+
+  function creditedIds() {
+    const ids = new Set();
+    for (const e of entries()) for (const id of arr(e.personIds)) ids.add(id);
+    return ids;
+  }
+  function renderUncredited() {
+    const credited = creditedIds();
+    const skip = new Set(arr(doc.credits.notCredited));
+    const list = doc.people.filter(p => !credited.has(p.id) && !skip.has(p.id));
+    $('uncreditedCard').hidden = !doc.people.length;
+    $('uncreditedCount').textContent = list.length ? `${list.length} ${list.length === 1 ? 'person' : 'people'}` : 'Everyone in the project is credited';
+    $('uncreditedLead').hidden = !list.length;
+    $('uncredited').innerHTML = list.map(p => `<li class="chip">
+        <button type="button" class="add" data-credit="${esc(p.id)}" aria-label="Add ${esc(p.name)} to the credits">${esc(p.name)}${roleOf(p) ? `<span class="sub">${esc(roleOf(p))}</span>` : ''}</button>
+        <button type="button" class="skip" data-skip="${esc(p.id)}" aria-label="Don't credit ${esc(p.name)}">Don't credit</button></li>`).join('');
+  }
+
+  function summary(e) {
+    if (e.kind === 'heading') return { main: str(e.text) || 'Empty heading', sub: '' };
+    if (e.kind === 'text') return { main: str(e.text).split('\n')[0] || 'Empty text', sub: str(e.text).includes('\n') ? `${str(e.text).split('\n').length} lines` : '' };
+    if (e.kind === 'credit') {
+      const names = entryNames(e);
+      const unknown = arr(e.personIds).filter(id => !person(id)).length;
+      return { main: str(e.role) || (names.length ? 'Names' : 'Empty credit'), sub: names.join(', ') || 'No names yet', warn: unknown ? `Refers to ${unknown} ${unknown === 1 ? 'person' : 'people'} not in this project` : '' };
+    }
+    if (e.kind === 'music') {
+      const skip = new Set(arr(e.excluded));
+      const all = songs();
+      const n = all.filter(s => !skip.has(s.key)).length;
+      return { main: str(e.heading) || 'Music', sub: all.length ? `${n} of ${all.length} songs and cues, from the clearance log` : 'No music in the clearance log yet' };
+    }
+    const skip = new Set(arr(e.excluded));
+    const all = sources();
+    const n = all.filter(s => !skip.has(s.key)).length;
+    return { main: str(e.heading) || 'Archival material courtesy of', sub: all.length ? `${n} of ${all.length} sources, from the clearance log` : 'No cleared archival material yet' };
+  }
+  function renderEntries() {
+    const list = entries();
+    $('empty').hidden = list.length > 0;
+    $('entries').hidden = list.length === 0;
+    $('addMusicBtn').hidden = list.some(e => e.kind === 'music');
+    $('addArchivalBtn').hidden = list.some(e => e.kind === 'archival');
+    $('entries').innerHTML = list.map((e, i) => {
+      const s = summary(e);
+      return `<li class="entry is-${e.kind}" data-id="${esc(e.id)}">
+        <span class="kind">${KIND_LABEL[e.kind]}</span>
+        <button type="button" class="what" data-edit="${esc(e.id)}">${esc(s.main)}${s.sub ? `<span class="sub">${esc(s.sub)}</span>` : ''}${s.warn ? `<span class="sub warn">${esc(s.warn)}</span>` : ''}</button>
+        <span class="move">
+          <button type="button" class="icon-btn" data-up="${i}" aria-label="Move ${esc(s.main)} up"${i === 0 ? ' disabled' : ''}>↑</button>
+          <button type="button" class="icon-btn" data-down="${i}" aria-label="Move ${esc(s.main)} down"${i === list.length - 1 ? ' disabled' : ''}>↓</button>
+        </span>
+      </li>`;
+    }).join('');
+  }
+
+  function unitHtml(u, flagged) {
+    const cls = flagged ? ' is-flagged' : '';
+    if (u.type === 'heading') return `<h3 class="c-heading">${esc(u.text)}</h3>`;
+    if (u.type === 'credit') return `<div class="c-unit${cls}">${u.role ? `<span class="c-role">${esc(u.role)}</span>` : ''}${u.names.map(n => `<span class="c-name">${esc(n)}</span>`).join('')}</div>`;
+    if (u.type === 'song') return `<div class="c-unit c-song${cls}"><span class="c-name">${esc(u.lines[0])}</span>${u.lines.slice(1).map(l => `<span class="c-line">${esc(l)}</span>`).join('')}</div>`;
+    return `<div class="c-unit c-text${cls}">${u.lines.map(l => `<span class="c-line">${esc(l)}</span>`).join('')}</div>`;
+  }
+  function crawlHtml(list) {
+    const title = doc.project.title;
+    return (title ? `<p class="c-title">${esc(title)}</p>` : '') + list.map(u => unitHtml(u)).join('');
+  }
+  function renderCrawl(list) {
+    $('crawl').innerHTML = list.length ? crawlHtml(list) : '<p class="c-empty">Your end crawl appears here as you add credits.</p>';
+    const names = list.reduce((n, u) => n + (u.type === 'credit' ? u.names.length : 0), 0);
+    $('crawlStats').textContent = list.length ? `${names} name${names === 1 ? '' : 's'}, ${list.filter(u => u.type === 'song').length} songs` : '';
+  }
+
+  // ---------- Text export ----------
+  function crawlText(layout) {
+    const list = units();
+    const out = [];
+    const title = doc.project.title;
+    if (title) out.push(title, '');
+    for (const u of list) {
+      if (u.type === 'heading') { if (out.length && out[out.length - 1] !== '') out.push(''); out.push(u.text, ''); continue; }
+      if (u.type === 'credit') {
+        if (layout === 'columns') u.names.length ? u.names.forEach((n, i) => out.push(`${i === 0 ? u.role : ''}\t${n}`)) : out.push(u.role);
+        else { if (u.role) out.push(u.role); out.push(...u.names); }
+      } else out.push(...u.lines);
+      // Two columns pastes into a spreadsheet, so only songs and text blocks get a blank line after them.
+      if (layout !== 'columns' || u.type !== 'credit') out.push('');
+    }
+    while (out.length && out[out.length - 1] === '') out.pop();
+    return out.join('\n') + '\n';
+  }
+  const layout = () => (document.querySelector('input[name=layout]:checked') || {}).value || 'stacked';
+  function openExport() {
+    if (!units().length) { toast('There are no credits to export yet.', true); return; }
+    $('exportPreview').textContent = crawlText(layout());
+    $('exportDialog').showModal();
+  }
+  function downloadText() {
+    const name = `${slug()}-end-credits${layout() === 'columns' ? '-two-columns' : ''}.txt`;
+    download(crawlText(layout()), name, 'text/plain;charset=utf-8');
+    $('exportDialog').close();
+    toast(`Exported the end crawl to ${name}`);
+  }
+  async function copyText() {
+    const text = crawlText(layout());
+    try {
+      await navigator.clipboard.writeText(text);
+      toast('Copied the end crawl. Paste it into your titling tool.');
+    } catch {
+      const r = document.createRange(); r.selectNodeContents($('exportPreview'));
+      const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+      toast("Couldn't copy automatically. The text is selected: press Ctrl+C or Command+C.", true);
+    }
+  }
+
+  // ---------- Print ----------
+  function renderReport() {
+    const list = units();
+    const missing = requirements().filter(c => !metBy(c, list));
+    const p = doc.project;
+    $('report').innerHTML = `<div class="r-head"><h1>${esc(p.title || 'Untitled film')}</h1><p>End credits${p.company ? `, ${esc(p.company)}` : ''}. Printed ${esc(new Date().toLocaleDateString(undefined, { dateStyle: 'long' }))}.</p></div>
+      ${missing.length ? `<div class="r-check"><h2>Required credits not in these credits yet (${missing.length})</h2><ul>${missing.map(c => `<li>“${esc(c.requiredCredit)}”: ${esc(c.title || 'Untitled contract')}</li>`).join('')}</ul></div>` : ''}
+      <div class="r-crawl">${list.length ? crawlHtml(list) : '<p>No credits yet.</p>'}</div>
+      <p class="r-note">Prepared with the Open Filmmaker Toolkit credits builder${requirements().length && !missing.length ? '. Every credit required by a contract in the project file appears above' : ''}. Check spelling and required wording against your contracts before you lock picture. Not legal advice.</p>`;
+  }
+
+  // ---------- Play the crawl ----------
+  let playing = false;
+  function stopCrawl() {
+    playing = false;
+    $('screen').classList.remove('is-playing');
+    $('playBtn').textContent = 'Play crawl';
+  }
+  function playCrawl() {
+    if (playing) { stopCrawl(); return; }
+    if (!units().length) { toast('Add some credits first.', true); return; }
+    const screen = $('screen');
+    const crawl = $('crawl');
+    screen.scrollTop = 0;
+    screen.classList.add('is-playing');
+    const distance = crawl.scrollHeight - screen.clientHeight;
+    crawl.style.setProperty('--roll-distance', `-${Math.max(0, distance)}px`);
+    crawl.style.setProperty('--roll-time', `${Math.max(8, Math.round(distance / 60))}s`);
+    crawl.style.animation = 'none'; void crawl.offsetHeight; crawl.style.animation = '';
+    playing = true;
+    $('playBtn').textContent = 'Stop crawl';
+  }
+
+  // ---------- Editor ----------
+  function songChecks(e) {
+    const skip = new Set(arr(e.excluded));
+    const list = songs();
+    return list.length ? list.map(s => `<label class="check"><input type="checkbox" value="${esc(s.key)}"${skip.has(s.key) ? '' : ' checked'}><span class="who">${esc(s.title)}<span class="lines">${esc(s.lines.slice(1).join('\n') || 'No writer or publisher in the music cue sheet yet')}</span></span></label>`).join('')
+      : '<p class="hint">No music in the clearance log yet.</p>';
+  }
+  function sourceChecks(e) {
+    const skip = new Set(arr(e.excluded));
+    const list = sources();
+    return list.length ? list.map(s => `<label class="check"><input type="checkbox" value="${esc(s.key)}"${skip.has(s.key) ? '' : ' checked'}><span class="who">${esc(s.name)}<span class="lines">${esc(s.items.join('; '))}</span></span></label>`).join('')
+      : '<p class="hint">No licensed, fair use or public domain archival material in the clearance log yet.</p>';
+  }
+  function peopleChecks(e) {
+    const picked = arr(e.personIds);
+    const ordered = [...picked.map(person).filter(Boolean), ...doc.people.filter(p => !picked.includes(p.id))];
+    return ordered.length ? ordered.map(p => `<label class="check"><input type="checkbox" value="${esc(p.id)}"${picked.includes(p.id) ? ' checked' : ''}><span class="who">${esc(p.name)}${roleOf(p) ? `<span class="sub">${esc(roleOf(p))}</span>` : ''}</span></label>`).join('')
+      : '<p class="hint">No people in this project yet. Type names below.</p>';
+  }
+  function openEditor(id, preset, at) {
+    const existing = id && entries().find(e => e.id === id);
+    isNew = !existing;
+    insertAt = isNew && Number.isInteger(at) ? at : null;
+    editing = existing ? structuredClone(existing) : Object.assign({ id: newId('credit'), kind: 'credit' }, preset || {});
+    const k = editing.kind;
+    for (const el of $('editorForm').querySelectorAll('[data-for]')) el.hidden = el.dataset.for !== k;
+    $('editorTitle').textContent = `${isNew ? 'Add' : 'Edit'} ${k === 'music' ? 'music credits' : k === 'archival' ? 'archival credits' : KIND_LABEL[k].toLowerCase()}`;
+    $('deleteBtn').hidden = isNew;
+    $('f-role').value = str(editing.role);
+    $('f-names').value = arr(editing.names).join('\n');
+    $('peopleList').innerHTML = peopleChecks(editing);
+    $('f-heading').value = k === 'heading' ? str(editing.text) : '';
+    $('f-text').value = k === 'text' ? str(editing.text) : '';
+    $('f-musicHeading').value = k === 'music' ? str(editing.heading) : '';
+    $('f-archivalHeading').value = k === 'archival' ? str(editing.heading) : '';
+    $('songList').innerHTML = k === 'music' ? songChecks(editing) : '';
+    $('sourceList').innerHTML = k === 'archival' ? sourceChecks(editing) : '';
+    $('editor').showModal();
+    const first = { credit: 'f-role', heading: 'f-heading', text: 'f-text', music: 'f-musicHeading', archival: 'f-archivalHeading' }[k];
+    $(first).focus();
+  }
+  const unchecked = id => [...$(id).querySelectorAll('input[type=checkbox]:not(:checked)')].map(i => i.value);
+  function readEditor() {
+    const e = structuredClone(editing);
+    const set = (key, v, keepEmpty) => { if ((Array.isArray(v) ? v.length : v !== '') || key in e || keepEmpty) e[key] = v; };
+    if (e.kind === 'credit') {
+      set('role', $('f-role').value.trim(), true);
+      const picked = [...$('peopleList').querySelectorAll('input:checked')].map(i => i.value);
+      const before = arr(editing.personIds);
+      const unknown = before.filter(id => !person(id));
+      // Keep the order people were already in, add newly checked people at the end, and keep references we can't resolve.
+      const ordered = [...before.filter(id => picked.includes(id) || unknown.includes(id)), ...picked.filter(id => !before.includes(id))];
+      set('personIds', ordered);
+      set('names', $('f-names').value.split('\n').map(s => s.trim()).filter(Boolean));
+    } else if (e.kind === 'heading') e.text = $('f-heading').value.trim();
+    else if (e.kind === 'text') e.text = $('f-text').value.replace(/\s+$/, '');
+    else if (e.kind === 'music') { set('heading', $('f-musicHeading').value.trim()); e.excluded = unchecked('songList'); }
+    else if (e.kind === 'archival') { set('heading', $('f-archivalHeading').value.trim()); e.excluded = unchecked('sourceList'); }
+    return e;
+  }
+  function saveEditor() {
+    const e = readEditor();
+    if (e.kind === 'credit' && !str(e.role) && !arr(e.personIds).length && !arr(e.names).length) { $('f-role').setCustomValidity('Add a credit or at least one name.'); $('f-role').reportValidity(); return; }
+    if (e.kind === 'heading' && !e.text) { $('f-heading').setCustomValidity('Type the heading.'); $('f-heading').reportValidity(); return; }
+    if (e.kind === 'text' && !str(e.text).trim()) { $('f-text').setCustomValidity('Type the text.'); $('f-text').reportValidity(); return; }
+    if (isNew) {
+      if (insertAt == null) entries().push(e); else entries().splice(insertAt, 0, e);
+      if (e.kind === 'credit') doc.credits.notCredited = arr(doc.credits.notCredited).filter(id => !arr(e.personIds).includes(id));
+      if (!arr(doc.credits.notCredited).length) delete doc.credits.notCredited;
+    } else {
+      entries()[entries().findIndex(x => x.id === e.id)] = e;
+    }
+    $('editor').close();
+    changed();
+  }
+  function removeEditing() {
+    doc.credits.entries = entries().filter(e => e.id !== editing.id);
+    $('editor').close();
+    changed();
+    toast(`Removed ${summary(editing).main} from the credits.`);
+  }
+  function move(i, delta) {
+    const list = entries();
+    const j = i + delta;
+    if (j < 0 || j >= list.length) return;
+    [list[i], list[j]] = [list[j], list[i]];
+    changed();
+    // Keep focus on the item that moved, so keyboard users can keep moving it.
+    const same = document.querySelector(`[data-${delta < 0 ? 'up' : 'down'}="${j}"]`);
+    (same && !same.disabled ? same : document.querySelector(`[data-edit="${CSS.escape(list[j].id)}"]`)).focus();
+  }
+
+  // ---------- Credit someone not yet credited ----------
+  function creditPerson(id) {
+    const p = person(id);
+    if (!p) return;
+    const role = str(arr(p.roles)[0]).trim();
+    const same = role && entries().find(e => e.kind === 'credit' && norm(e.role) === norm(role));
+    if (same) {
+      same.personIds = [...arr(same.personIds), p.id];
+      changed();
+      toast(`Added ${p.name} to "${same.role}".`);
+      return;
+    }
+    openEditor(null, { kind: 'credit', role, personIds: [p.id] });
+  }
+  function skipPerson(id) {
+    doc.credits.notCredited = [...new Set([...arr(doc.credits.notCredited), id])];
+    changed();
+    const p = person(id);
+    toast(`${p ? p.name : 'They'} won't be listed as needing a credit. Add them from "Add credit" any time.`);
+  }
+
+  // ---------- Draft from the project ----------
+  function roleRank(role) {
+    const i = ROLE_ORDER.findIndex(re => re.test(role));
+    return i === -1 ? ROLE_ORDER.length : i;
+  }
+  const isFeatured = p => p.onCamera === true || /subject|interview|featur|contributor/i.test(roleOf(p));
+  function draftFromProject() {
+    const byRole = new Map();
+    const featured = [];
+    for (const p of doc.people) {
+      if (arr(doc.credits.notCredited).includes(p.id)) continue;
+      if (isFeatured(p)) { featured.push(p.id); continue; }
+      const role = str(arr(p.roles)[0]).trim() || 'Thanks';
+      if (!byRole.has(role)) byRole.set(role, []);
+      byRole.get(role).push(p.id);
+    }
+    const roles = [...byRole.keys()].sort((a, b) => roleRank(a) - roleRank(b) || a.localeCompare(b));
+    const keyCount = roles.filter(r => roleRank(r) < ROLE_ORDER.length).length;
+    const list = [];
+    roles.slice(0, keyCount).forEach(r => list.push({ id: newId('credit'), kind: 'credit', role: r, personIds: byRole.get(r) }));
+    if (featured.length) list.push({ id: newId('credit'), kind: 'credit', role: 'Featuring', personIds: featured });
+    roles.slice(keyCount).forEach(r => list.push({ id: newId('credit'), kind: 'credit', role: r, personIds: byRole.get(r) }));
+    if (songs().length) list.push({ id: newId('credit'), kind: 'music', heading: 'Music', excluded: [] });
+    if (sources().length) list.push({ id: newId('credit'), kind: 'archival', heading: 'Archival material courtesy of', excluded: [] });
+    doc.credits.entries = list;
+    // Required wording the draft doesn't already cover goes in as written, before the copyright line.
+    for (const c of requirements()) if (!metBy(c)) list.push({ id: newId('credit'), kind: 'text', text: str(c.requiredCredit).trim() });
+    const year = new Date().getFullYear();
+    if (doc.project.company) list.push({ id: newId('credit'), kind: 'text', text: `© ${year} ${doc.project.company}. All rights reserved.` });
+    changed();
+    toast(list.length ? `Drafted ${list.length} credit${list.length === 1 ? '' : 's'}. Reorder and reword them, then check the required credits.` : 'There was nothing in the project to draft from yet. Add credits by hand.');
+  }
+
+  // ---------- Required credits dialog ----------
+  function openRequirement(id) {
+    reqContractId = id || null;
+    const c = id && doc.contracts.find(x => x.id === id);
+    const opts = doc.contracts.map(x => `<option value="${esc(x.id)}">${esc(x.title || x.id)}${x.type ? ` (${esc(x.type)})` : ''}</option>`);
+    $('r-contract').innerHTML = `<option value="">A new license or agreement</option>${opts.join('')}`;
+    $('r-contract').value = c ? c.id : '';
+    $('r-text').value = c ? str(c.requiredCredit) : '';
+    $('r-title').value = '';
+    $('r-element').innerHTML = `<option value="">None</option>${doc.thirdPartyElements.map(e => `<option value="${esc(e.id)}">${esc(str(e.description) || (e.music && e.music.title) || e.id)}</option>`).join('')}`;
+    $('reqRemoveBtn').hidden = !c;
+    $('reqTitle').textContent = c ? 'Edit required credit' : 'Add a required credit';
+    toggleReqFields();
+    $('reqDialog').showModal();
+    $(c ? 'r-text' : 'r-contract').focus();
+  }
+  function toggleReqFields() {
+    const isNewContract = !$('r-contract').value;
+    $('r-newFields').hidden = !isNewContract;
+    $('r-elementField').hidden = !isNewContract;
+  }
+  function saveRequirement() {
+    const text = $('r-text').value.trim();
+    if (!text) { $('r-text').setCustomValidity('Type the credit wording the contract requires.'); $('r-text').reportValidity(); return; }
+    let c;
+    if ($('r-contract').value) {
+      c = doc.contracts.find(x => x.id === $('r-contract').value);
+    } else {
+      const title = $('r-title').value.trim();
+      if (!title) { $('r-title').setCustomValidity('Name the license or agreement.'); $('r-title').reportValidity(); return; }
+      c = { id: newId('contract'), title, type: 'license' };
+      const elId = $('r-element').value;
+      if (elId) {
+        c.thirdPartyElementIds = [elId];
+        const e = element(elId);
+        if (e) e.contractIds = [...new Set([...arr(e.contractIds), c.id])];
+      }
+      doc.contracts.push(c);
+    }
+    if (reqContractId && reqContractId !== c.id) {
+      const old = doc.contracts.find(x => x.id === reqContractId);
+      if (old) delete old.requiredCredit;
+    }
+    c.requiredCredit = text;
+    $('reqDialog').close();
+    changed();
+    toast(metBy(c) ? 'Saved. That credit is already in the credits.' : 'Saved. It’s flagged until the credits include that wording.');
+  }
+  function removeRequirement() {
+    const c = doc.contracts.find(x => x.id === reqContractId);
+    if (c) delete c.requiredCredit;
+    $('reqDialog').close();
+    changed();
+    toast('Removed the requirement. The contract itself is unchanged.');
+  }
+  function addRequirementToCredits(id) {
+    const c = doc.contracts.find(x => x.id === id);
+    if (!c) return;
+    entries().push({ id: newId('credit'), kind: 'text', text: str(c.requiredCredit).trim() });
+    changed();
+    toast('Added the required wording at the end of the credits. Move it where it belongs.');
+  }
+
+  // ---------- Project CSV ----------
+  function csvCell(v) {
+    let s = v == null ? '' : String(v);
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+    return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }
+  const csvCollections = {
+    project: 'project details', people: 'people', locations: 'locations', thirdPartyElements: 'third-party elements',
+    contracts: 'contracts', assets: 'assets', musicCueSheet: 'music cue sheet details', callSheets: 'call sheets'
+  };
+  function exportProjectCsv() {
+    const collection = $('projectCsvCollection').value;
+    const value = doc[collection];
+    const rows = Array.isArray(value) ? value : value && typeof value === 'object' ? [value] : [];
+    if (rows.some(row => !row || typeof row !== 'object' || Array.isArray(row))) {
+      toast(`Couldn't export ${csvCollections[collection]}: the project contains an invalid record.`, true);
+      return;
+    }
+    const headers = [...new Set(rows.flatMap(row => Object.keys(row)))];
+    if (!headers.length) headers.push('id');
+    const csvRows = rows.map(row => headers.map(key => { const cell = row[key]; return cell && typeof cell === 'object' ? JSON.stringify(cell) : cell; }));
+    const csv = '﻿' + [headers, ...csvRows].map(row => row.map(csvCell).join(',')).join('\r\n') + '\r\n';
+    const name = suggestedName().replace(/\.oft\.json$/i, `-${collection}.csv`);
+    download(csv, name, 'text/csv;charset=utf-8');
+    toast(`Exported ${rows.length} ${csvCollections[collection]} to ${name}`);
+  }
+
+  // ---------- Film details ----------
+  function openProjectDialog() {
+    for (const k of PROJECT_TEXT) $(`p-${k}`).value = doc.project[k] || '';
+    $('projectDialog').showModal();
+    $('p-title').focus();
+  }
+  function saveProjectDialog() {
+    for (const k of PROJECT_TEXT) doc.project[k] = $(`p-${k}`).value.trim();
+    $('projectDialog').close();
+    changed();
+  }
+
+  // ---------- Dirty state & recovery draft ----------
+  function changed() { dirty = true; saveDraft(); render(); }
+  function saveDraft() {
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ doc, fileName, baselineText, at: new Date().toISOString() })); } catch { /* the file on disk is the real copy */ }
+  }
+  function clearDraft() {
+    try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+    $('recovery').hidden = true;
+  }
+  function checkDraft() {
+    let draft = null;
+    try { draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); } catch { draft = null; }
+    if (!draft || !draft.doc || draft.doc.format !== FORMAT) return;
+    const n = draft.doc.credits && Array.isArray(draft.doc.credits.entries) ? draft.doc.credits.entries.length : 0;
+    if (!n && !(draft.doc.project && draft.doc.project.title)) { clearDraft(); return; }
+    const when = draft.at ? new Date(draft.at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'earlier';
+    const title = draft.doc.project && draft.doc.project.title ? `"${draft.doc.project.title}"` : 'an untitled project';
+    $('recoveryText').textContent = `You have unsaved changes to ${title} from ${when} (${n} credit${n === 1 ? '' : 's'}). Restore them, or discard them and start fresh.`;
+    $('recovery').hidden = false;
+    $('restoreBtn').onclick = () => {
+      doc = normalize(draft.doc); fileName = draft.fileName || null; fileHandle = null;
+      baselineText = typeof draft.baselineText === 'string' ? draft.baselineText : null; dirty = true;
+      $('recovery').hidden = true; render();
+      toast(fileName ? `Restored. Save to write the changes back to ${fileName}.` : 'Restored. Save to keep it as a file.');
+    };
+    $('discardBtn').onclick = () => { clearDraft(); toast('Discarded the unsaved changes.'); };
+  }
+
+  // ---------- Files ----------
+  const pickerTypes = [{ description: 'Film project file', accept: { 'application/json': ['.json'] } }];
+  function slug() {
+    return (doc.project.title || 'untitled-film').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'untitled-film';
+  }
+  const suggestedName = () => `${slug()}.oft.json`;
+  function serialize() {
+    doc.savedAt = new Date().toISOString();
+    doc.savedBy = TOOL;
+    return JSON.stringify(doc, null, 2) + '\n';
+  }
+  function download(text, name, type) {
+    const url = URL.createObjectURL(new Blob([text], { type }));
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  function afterSave(name, downloaded, content) {
+    fileName = name;
+    if (downloaded) fileHandle = null;
+    baselineText = content;
+    dirty = false; clearDraft(); render();
+    toast(downloaded ? `Downloaded ${name}. Keep it with your project files and open it here next time.` : `Saved to ${name}`);
+  }
+  async function writeProjectFile(handle, content) {
+    try {
+      const writable = await handle.createWritable();
+      await writable.write(content);
+      await writable.close();
+    } catch (err) {
+      if (err.name !== 'AbortError') toast(`Couldn't save the file: ${err.message}`, true);
+      return;
+    }
+    fileHandle = handle;
+    afterSave(handle.name, false, content);
+  }
+  function saveCopy(content) {
+    const base = (fileName || suggestedName()).replace(/\.oft\.json$/i, '');
+    const name = `${base}-copy.oft.json`;
+    download(content, name, 'application/json');
+    afterSave(name, true, content);
+  }
+  async function reloadLatest(handle) {
+    try {
+      const file = await handle.getFile();
+      loadText(await file.text(), handle.name, handle);
+    } catch (err) {
+      toast(`Couldn't reload the file: ${err.message}`, true);
+    }
+  }
+  function showConflictDialog(content, observedText, unknownBaseline = false) {
+    const handle = fileHandle;
+    dirty = true;
+    saveDraft();
+    render();
+    $('conflictText').textContent = unknownBaseline
+      ? `The tool can't verify whether ${handle.name} changed since your recovery copy was made. Your edits are not saved.`
+      : `${handle.name} changed after you opened it. Your edits are not saved. Overwriting replaces the newer file.`;
+    $('conflictDialog').showModal();
+    $('conflictReloadBtn').onclick = () => { $('conflictDialog').close(); reloadLatest(handle); };
+    $('conflictCopyBtn').onclick = () => { $('conflictDialog').close(); saveCopy(content); };
+    $('conflictOverwriteBtn').onclick = async () => {
+      $('conflictDialog').close();
+      let latestText;
+      try { latestText = await (await handle.getFile()).text(); }
+      catch (err) { toast(`Couldn't check the file before overwriting: ${err.message}`, true); return; }
+      if (latestText !== observedText) {
+        toast('The file changed again. Review the updated conflict warning before overwriting.', true);
+        showConflictDialog(content, latestText);
+        return;
+      }
+      await writeProjectFile(handle, content);
+    };
+    $('conflictCancelBtn').onclick = () => $('conflictDialog').close();
+  }
+  async function saveFile() {
+    const out = serialize();
+    if (fileHandle) {
+      let currentText;
+      try { currentText = await (await fileHandle.getFile()).text(); }
+      catch (err) { toast(`Couldn't check the file before saving: ${err.message}`, true); return; }
+      if (baselineText === null || currentText !== baselineText) { showConflictDialog(out, currentText, baselineText === null); return; }
+      await writeProjectFile(fileHandle, out);
+      return;
+    }
+    if (window.showSaveFilePicker && window.self === window.top) {
+      try {
+        const h = await window.showSaveFilePicker({ suggestedName: fileName || suggestedName(), types: pickerTypes });
+        if (h.name === fileName) {
+          const currentText = await (await h.getFile()).text();
+          if (baselineText === null || currentText !== baselineText) { fileHandle = h; showConflictDialog(out, currentText, baselineText === null); return; }
+        }
+        await writeProjectFile(h, out);
+      } catch (err) { if (err.name !== 'AbortError') toast(`Couldn't save the file: ${err.message}`, true); }
+      return;
+    }
+    const name = fileName || suggestedName();
+    download(out, name, 'application/json');
+    afterSave(name, true, out);
+  }
+  function loadText(text, name, handle) {
+    let data;
+    try { data = JSON.parse(text); } catch { toast(`Couldn't open ${name}: it isn't a project file.`, true); return; }
+    if (!data || data.format !== FORMAT) { toast(`Couldn't open ${name}: it isn't an Open Filmmaker Toolkit project file.`, true); return; }
+    if (Number(data.formatVersion) > FORMAT_VERSION) { toast(`Couldn't open ${name}: it was saved by a newer version of the toolkit. Get the latest version of this tool.`, true); return; }
+    stopCrawl();
+    doc = normalize(data); fileHandle = handle; baselineText = text; fileName = name; dirty = false;
+    clearDraft(); render();
+    const n = entries().length;
+    toast(`Opened ${name}: ${n ? `${n} credit${n === 1 ? '' : 's'}` : 'no credits yet'}`);
+  }
+  async function openFile() {
+    if (dirty && !confirm('You have unsaved changes. Open another file and lose them?')) return;
+    if (window.showOpenFilePicker && window.self === window.top) {
+      try { const [h] = await window.showOpenFilePicker({ types: pickerTypes }); const f = await h.getFile(); loadText(await f.text(), f.name, h); }
+      catch (err) { if (err.name !== 'AbortError') toast(`Couldn't open the file: ${err.message}`, true); }
+      return;
+    }
+    $('fileInput').click();
+  }
+  function newProject() {
+    if (dirty && !confirm('You have unsaved changes. Start a new project and lose them?')) return;
+    stopCrawl();
+    doc = normalize(blankDoc()); fileHandle = null; baselineText = null; fileName = null; dirty = false;
+    clearDraft(); render(); openProjectDialog();
+  }
+
+  let toastTimer = null;
+  function toast(msg, isError) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.classList.toggle('error', !!isError);
+    t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.hidden = true; }, isError ? 7000 : 4200);
+  }
+
+  // ---------- Wiring ----------
+  function init() {
+    doc = normalize(doc);
+    $('roleList').innerHTML = COMMON_ROLES.map(r => `<option value="${esc(r)}"></option>`).join('');
+    $('addBtn').onclick = () => openEditor(null, { kind: 'credit' });
+    $('addHeadingBtn').onclick = () => openEditor(null, { kind: 'heading', text: '' });
+    $('addTextBtn').onclick = () => openEditor(null, { kind: 'text', text: '' });
+    $('addMusicBtn').onclick = () => openEditor(null, { kind: 'music', heading: 'Music', excluded: [] });
+    $('addArchivalBtn').onclick = () => openEditor(null, { kind: 'archival', heading: 'Archival material courtesy of', excluded: [] });
+    $('fillBtn').onclick = draftFromProject;
+    $('emptyOpenBtn').onclick = openFile;
+    $('newBtn').onclick = newProject;
+    $('openBtn').onclick = openFile;
+    $('saveBtn').onclick = saveFile;
+    $('editProjectBtn').onclick = openProjectDialog;
+    $('filmTitle').onclick = openProjectDialog;
+    $('playBtn').onclick = playCrawl;
+    $('crawl').addEventListener('animationend', stopCrawl);
+    $('exportBtn').onclick = openExport;
+    $('printBtn').onclick = () => { stopCrawl(); renderReport(); window.print(); };
+    window.addEventListener('beforeprint', renderReport);
+    $('projectCsvBtn').onclick = () => $('projectCsvDialog').showModal();
+    $('projectCsvCancel').onclick = () => $('projectCsvDialog').close();
+    $('projectCsvForm').addEventListener('submit', ev => { ev.preventDefault(); exportProjectCsv(); $('projectCsvDialog').close(); });
+    $('fileInput').addEventListener('change', async () => {
+      const f = $('fileInput').files[0];
+      if (f) loadText(await f.text(), f.name, null);
+      $('fileInput').value = '';
+    });
+
+    $('entries').addEventListener('click', ev => {
+      const b = ev.target.closest('button');
+      if (!b) return;
+      if (b.dataset.edit) openEditor(b.dataset.edit);
+      else if (b.dataset.up) move(+b.dataset.up, -1);
+      else if (b.dataset.down) move(+b.dataset.down, 1);
+    });
+    $('uncredited').addEventListener('click', ev => {
+      const b = ev.target.closest('button');
+      if (!b) return;
+      if (b.dataset.credit) creditPerson(b.dataset.credit);
+      else if (b.dataset.skip) skipPerson(b.dataset.skip);
+    });
+    $('reqs').addEventListener('click', ev => {
+      const b = ev.target.closest('button');
+      if (!b) return;
+      if (b.dataset.addreq) addRequirementToCredits(b.dataset.addreq);
+      else if (b.dataset.editreq) openRequirement(b.dataset.editreq);
+    });
+
+    $('editorForm').addEventListener('submit', ev => { ev.preventDefault(); saveEditor(); });
+    $('editorForm').addEventListener('input', ev => { if (ev.target.setCustomValidity) ev.target.setCustomValidity(''); });
+    $('editorCancel').onclick = () => $('editor').close();
+    $('deleteBtn').onclick = removeEditing;
+
+    $('addReqBtn').onclick = () => openRequirement(null);
+    $('r-contract').addEventListener('change', () => {
+      toggleReqFields();
+      const c = doc.contracts.find(x => x.id === $('r-contract').value);
+      if (c && c.requiredCredit && !$('r-text').value.trim()) $('r-text').value = c.requiredCredit;
+    });
+    $('reqForm').addEventListener('submit', ev => { ev.preventDefault(); saveRequirement(); });
+    $('reqForm').addEventListener('input', ev => { if (ev.target.setCustomValidity) ev.target.setCustomValidity(''); });
+    $('reqCancel').onclick = () => $('reqDialog').close();
+    $('reqRemoveBtn').onclick = removeRequirement;
+
+    $('exportForm').addEventListener('submit', ev => { ev.preventDefault(); downloadText(); });
+    $('exportForm').addEventListener('change', () => { $('exportPreview').textContent = crawlText(layout()); });
+    $('exportCancel').onclick = () => $('exportDialog').close();
+    $('copyBtn').onclick = copyText;
+
+    $('projectForm').addEventListener('submit', ev => { ev.preventDefault(); saveProjectDialog(); });
+    $('projectCancel').onclick = () => $('projectDialog').close();
+
+    document.addEventListener('keydown', ev => {
+      const mod = ev.metaKey || ev.ctrlKey;
+      if (mod && ev.key.toLowerCase() === 's') { ev.preventDefault(); saveFile(); }
+      else if (mod && ev.key.toLowerCase() === 'o') { ev.preventDefault(); openFile(); }
+      else if (ev.key === 'Escape' && playing) stopCrawl();
+    });
+    window.addEventListener('beforeunload', ev => { if (dirty) { ev.preventDefault(); ev.returnValue = ''; } });
+    render();
+    checkDraft();
+  }
+
+  if (typeof HTMLDialogElement !== 'function' || typeof HTMLDialogElement.prototype.showModal !== 'function' || typeof structuredClone !== 'function') {
+    $('cantRunTitle').textContent = 'This browser is too old to run this tool';
+    $('cantRunText').textContent = 'Update to a current version of Chrome, Edge, Firefox or Safari, then open this file again.';
+    $('cantRunHow').hidden = true;
+    return;
+  }
+  document.documentElement.classList.remove('no-js');
+  window.addEventListener('error', ev => toast(`Something went wrong: ${ev.message}. Save your work, then reload the page.`, true));
+  window.addEventListener('unhandledrejection', ev => toast(`Something went wrong: ${ev.reason && ev.reason.message ? ev.reason.message : ev.reason}. Save your work, then reload the page.`, true));
+  init();
+})();
+</script>
+</body>
+</html>
