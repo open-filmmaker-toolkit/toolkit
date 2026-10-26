@@ -147,6 +147,10 @@
         },
         "notes": {
           "type": "string"
+        },
+        "onCamera": {
+          "type": "boolean",
+          "description": "True if this person appears or is heard on camera and needs a release. False excludes them even if a release names them."
         }
       },
       "additionalProperties": true
@@ -192,6 +196,10 @@
           "type": "number",
           "minimum": -180,
           "maximum": 180
+        },
+        "onCamera": {
+          "type": "boolean",
+          "description": "True if this place is filmed and needs a location release. False excludes it even if a call sheet uses it."
         }
       },
       "additionalProperties": true

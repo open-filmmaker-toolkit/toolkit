@@ -136,7 +136,7 @@ Linked tools are available now; the rest are planned. Order of work is in [ROADM
 - Camera and sound reports
 - Interview log
 - Daily production report
-- Release tracker
+- [Release tracker](tools/release-tracker/) (first version)
 - Expense log
 - Field journal
 

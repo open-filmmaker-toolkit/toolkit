@@ -4,7 +4,7 @@ Run: pip install playwright pypdf && playwright install chromium firefox webkit
      python tests/browser_tools.py [chromium|firefox|webkit]   (default: chromium)
 
 Checks, per tool: opening the sample, saving, all CSV exports, phone width, dark
-mode and print layout. Chromium also covers the save-conflict warning (it has the
+mode and print layout. The release tracker also gets its own end-to-end check. Chromium also covers the save-conflict warning (it has the
 file picker API; its handles are faked in memory) and renders a real PDF.
 Firefox and WebKit (Safari's engine) use the download/upload fallback instead.
 """
@@ -13,9 +13,9 @@ from playwright.sync_api import sync_playwright
 
 root = pathlib.Path(__file__).resolve().parents[1]
 sample = (root / 'samples/the-river-keeps.oft.json').read_text()
-TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet']
+TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker']
 COLLECTIONS = ['project', 'people', 'locations', 'thirdPartyElements', 'contracts', 'assets', 'musicCueSheet', 'callSheets']
-PRINT_BTN = {'clearance-log': '#printBtn', 'music-cue-sheet': '#printBtn', 'call-sheet': '#printAllBtn'}
+PRINT_BTN = {'clearance-log': '#printBtn', 'music-cue-sheet': '#printBtn', 'call-sheet': '#printAllBtn', 'release-tracker': '#printBtn'}
 PHONE = {'width': 390, 'height': 844}
 
 STUB_PRINT = 'window.print = () => { window.__printed = true; };'
@@ -59,12 +59,12 @@ COLORS_JS = """() => {
   return pairs;
 }"""
 
-def new_page(browser, name, fake, **ctx):
+def new_page(browser, name, fake, extra='', **ctx):
     context = browser.new_context(accept_downloads=True, **ctx)
     page = context.new_page()
     errs = []
     page.on('pageerror', lambda e: errs.append(str(e)))
-    page.add_init_script(STUB_PRINT + (FAKE_PICKERS if fake else ''))
+    page.add_init_script(STUB_PRINT + (FAKE_PICKERS if fake else '') + extra)
     page.goto('file://%s/tools/%s/index.html' % (root, name))
     page.wait_for_load_state('networkidle')
     return context, page, errs
@@ -191,6 +191,100 @@ def test_call_sheet_export(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
+# A project folder in memory, for the release tracker's "Connect project folder" (Chromium only).
+FAKE_DIR = """
+window.__dir = {'proj.oft.json': ''};
+const fsFile = path => ({name: path.split('/').pop(), isSameEntry: async () => true,
+  getFile: async () => new File([window.__dir[path]], path.split('/').pop()),
+  createWritable: async () => { const parts = []; return {write: async d => { parts.push(d); }, close: async () => { window.__dir[path] = await new Blob(parts).text(); }}; }});
+const fsDir = (prefix, name) => ({name,
+  getDirectoryHandle: async n => fsDir(prefix + n + '/', n),
+  getFileHandle: async (n, o) => { const path = prefix + n; if (!(path in window.__dir)) { if (o && o.create) window.__dir[path] = ''; else throw new DOMException('Not found', 'NotFoundError'); } return fsFile(path); }});
+window.showDirectoryPicker = async () => fsDir('', 'River Keeps');
+"""
+
+def test_release_tracker(browser, fake):
+    ctx, pg, errs = new_page(browser, 'release-tracker', fake, extra=FAKE_DIR if fake else '')
+    open_sample(pg, fake)
+    check(pg.inner_text('#covHeadline') == '2 of 7 covered', 'coverage counts the sample (%s)' % pg.inner_text('#covHeadline'))
+    missing = pg.locator('.cov-line.is-missing').all_inner_texts()
+    check(any('Marcus Bell' in t for t in missing) and any('Riverside levee' in t for t in missing), 'flags a person and a location with no release on file')
+    check('Riverside levee' in pg.inner_text('#placesCov'), 'a location on a call sheet counts as filmed')
+
+    # Start a release from a flagged person, sign it and attach a scan.
+    pg.click('#peopleCov .is-missing:has-text("Marcus Bell") .cov-sig')
+    check(pg.is_visible('#editor') and pg.input_value('#f-type') == 'appearance release', 'flagged person opens a new appearance release')
+    check(pg.eval_on_selector_all('#peopleList input:checked', 'els => els.map(e => e.value)') == ['person-marcus-bell'], 'the flagged person is already checked')
+    pg.select_option('#f-status', 'signed')
+    check(len(pg.input_value('#f-signedDate')) == 10, 'marking it signed fills in today')
+    if fake:
+        pg.click('#connectFolderBtn'); pg.wait_for_timeout(200)
+        check('River Keeps' in pg.inner_text('#folderNote'), 'project folder connects')
+    pg.set_input_files('#scanInput', files=[{'name': 'marcus-release.pdf', 'mimeType': 'application/pdf', 'buffer': b'%PDF-1.4 fake'}])
+    check('marcus-release.pdf' in pg.inner_text('#scanList'), 'attached scan is listed')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(300)
+    check(not pg.is_visible('#editor'), 'saving closes the editor')
+    check('is-covered' in pg.get_attribute('#peopleCov .cov-line:has-text("Marcus Bell")', 'class'), 'person is now covered')
+    if fake:
+        check(pg.evaluate("window.__dir['releases/marcus-release.pdf']") == '%PDF-1.4 fake', 'scan is copied into the releases folder')
+
+    # Decline a pending release.
+    pg.click('#peopleCov .cov-line:has-text("Leon Pryor") .cov-sig')
+    pg.select_option('#f-status', 'declined')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check('is-declined' in pg.get_attribute('#peopleCov .cov-line:has-text("Leon Pryor")', 'class'), 'declined release is flagged')
+
+    # Take someone off camera.
+    pg.click('#onCameraBtn')
+    pg.uncheck('#ocPeople input[value="person-daniel-okafor"]')
+    pg.click('#onCameraForm button[type=submit]'); pg.wait_for_timeout(200)
+    check('Daniel Okafor' not in pg.inner_text('#peopleCov'), 'unchecked person leaves the on-camera list')
+
+    # A materials release links to clearance log items, and deleting it unlinks them.
+    pg.click('#addBtn')
+    pg.select_option('#f-type', 'materials release')
+    pg.fill('#f-title', 'Temporary materials release')
+    pg.check('#elementsList input[value="sample-01"]')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    pg.select_option('#statusFilter', 'pending')
+    check(pg.locator('#rows tr[data-id]').count() >= 1, 'status filter shows matching releases')
+    pg.select_option('#statusFilter', 'all')
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    rel_csv = open(d.value.path(), encoding='utf-8-sig').read()
+    check('Marcus Bell' in rel_csv and 'Temporary materials release' in rel_csv, 'releases CSV lists the new releases')
+
+    def saved_project():
+        if fake:
+            pg.click('#saveBtn'); pg.wait_for_timeout(300)
+            return json.loads(pg.evaluate('window.__file.text'))
+        with pg.expect_download() as d:
+            pg.click('#saveBtn')
+        return json.loads(open(d.value.path(), encoding='utf-8').read())
+
+    data = saved_project()
+    temp = next(c for c in data['contracts'] if c['title'] == 'Temporary materials release')
+    el = next(e for e in data['thirdPartyElements'] if e['id'] == 'sample-01')
+    check(temp['id'] in el.get('contractIds', []), 'materials release is recorded on the clearance log item')
+    marcus = next(c for c in data['contracts'] if 'person-marcus-bell' in c.get('personIds', []))
+    scan = next(a for a in data['assets'] if a['id'] in marcus.get('assetIds', []))
+    check(marcus['status'] == 'signed' and scan['type'] == 'release scan' and scan['relativePath'] == 'releases/marcus-release.pdf', 'saved release has its scan as an asset')
+    people = {p['id']: p for p in data['people']}
+    check(people['person-daniel-okafor'].get('onCamera') is False and people['person-marcus-bell'].get('onCamera') is True, 'on-camera choices are saved')
+    original = json.loads(sample)
+    music = next(e for e in data['thirdPartyElements'] if e['id'] == 'sample-03')
+    check(music.get('music') == next(e for e in original['thirdPartyElements'] if e['id'] == 'sample-03')['music']
+          and data.get('callSheets') == original['callSheets'] and data.get('musicCueSheet') == original['musicCueSheet'], 'other tools\' data is unchanged')
+
+    pg.click('#rows tr:has-text("Temporary materials release") .el-name')
+    pg.once('dialog', lambda dlg: dlg.accept())
+    pg.click('#deleteBtn'); pg.wait_for_timeout(300)
+    data = saved_project()
+    el = next(e for e in data['thirdPartyElements'] if e['id'] == 'sample-01')
+    check(not any(c['title'] == 'Temporary materials release' for c in data['contracts']) and 'contractIds' not in el, 'deleting a release unlinks its clearance log items')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
 def main():
     engine = sys.argv[1] if len(sys.argv) > 1 else 'chromium'
     fake = engine == 'chromium'
@@ -204,6 +298,8 @@ def main():
                 fn()
         print('== call-sheet / spreadsheet export')
         test_call_sheet_export(browser, fake)
+        print('== release-tracker / releases, coverage and scans')
+        test_release_tracker(browser, fake)
         browser.close()
     print('FAILS', fails)
     sys.exit(1 if fails else 0)
