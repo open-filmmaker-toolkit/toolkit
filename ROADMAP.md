@@ -35,7 +35,7 @@ Three tools on one data model. This is the documentary-specific gap.
 - [x] Clearance / E&O log: every third-party element, its source, license status and cost (#18)
 - [x] Music cue sheet: built from the music in the clearance log, with credits, share checks and a printable sheet (#24)
 - [x] Credits builder: pulls names and roles from the project, adds music and archival credits from the clearance log and cue sheet, flags contractually required credits, and exports the crawl as text (#19)
-- [ ] Plain template versions of all three (#20)
+- [x] Plain template versions (#20): a spreadsheet and a Word document for the release tracker, clearance log and credits builder, plus the music cue sheet, in [templates](templates/)
 
 ## Milestone 4: Call sheet generator
 

@@ -3,9 +3,12 @@
 Run locally with: python3 .github/scripts/validate_repo.py
 Needs the jsonschema package (pip install jsonschema).
 """
+import csv
+import io
 import json
 import re
 import sys
+import zipfile
 from pathlib import Path
 
 from jsonschema import Draft202012Validator
@@ -111,7 +114,45 @@ for tool in sorted((ROOT / "tools").iterdir()):
                 if host.lower() not in allowed:
                     fail(f"{rel}/index.html:{number}: link to {host} is not an allowed host for this tool")
 
+# Plain templates: spreadsheets and Word documents only, each listed in templates/README.md.
+# Word files must not carry macros or links to anything outside the file.
+TEMPLATES = ROOT / "templates"
+template_readme = TEMPLATES / "README.md"
+listed = template_readme.read_text(encoding="utf-8") if template_readme.is_file() else ""
+if not listed:
+    fail("templates: missing README.md")
+for path in sorted(TEMPLATES.iterdir()) if TEMPLATES.is_dir() else []:
+    rel = path.relative_to(ROOT)
+    if path.name == "README.md":
+        continue
+    if path.suffix.lower() not in (".csv", ".docx"):
+        fail(f"{rel}: templates must be .csv or .docx files")
+        continue
+    if f"({path.name})" not in listed:
+        fail(f"{rel}: not listed in templates/README.md")
+    if path.suffix.lower() == ".csv":
+        try:
+            rows = list(csv.reader(io.StringIO(path.read_text(encoding="utf-8-sig"))))
+        except (UnicodeDecodeError, csv.Error) as exc:
+            fail(f"{rel}: can't be read as a UTF-8 CSV file ({exc})")
+            continue
+        if not rows or not any(cell.strip() for cell in rows[0]):
+            fail(f"{rel}: has no heading row")
+    else:
+        try:
+            with zipfile.ZipFile(path) as docx:
+                names = docx.namelist()
+                if "word/document.xml" not in names:
+                    fail(f"{rel}: isn't a Word document")
+                if any(re.search(r"vbaProject|activeX|\.bin$", n, re.I) for n in names):
+                    fail(f"{rel}: contains macros or embedded programs")
+                for part in (n for n in names if n.endswith(".rels")):
+                    if re.search(r'TargetMode\s*=\s*"External"', docx.read(part).decode("utf-8", "replace")):
+                        fail(f"{rel}: links to something outside the file ({part})")
+        except zipfile.BadZipFile:
+            fail(f"{rel}: isn't a valid Word document")
+
 if errors:
     print("\n".join(errors))
     sys.exit(1)
-print("Schema, sample files and tool rules all check out.")
+print("Schema, sample files, tool rules and templates all check out.")

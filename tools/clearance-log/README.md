@@ -37,7 +37,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **See where you stand.** The filmstrip shows one frame per element, colored by status. Below it are cleared counts, total licensing cost and total timed footage.
 - **Find things.** Search, filter by status or type, and sort by any column.
 - **Print a report.** Prints the elements currently shown, with a status summary, for your E&O attorney or a production meeting.
-- **Export CSV.** Exports every element for a spreadsheet, whatever the filters.
+- **Export CSV.** Exports every element for a spreadsheet, whatever the filters. The blank [spreadsheet template](../../templates/clearance-log-template.csv) has the same columns, and there's a [Word version](../../templates/clearance-log-template.docx) to fill in or print, for anyone who doesn't use the tool.
 - **Export project data.** Save project details, people, locations, third-party elements, contracts, assets, music cue sheet details or call sheets as separate CSV files. Nested values stay as JSON inside their cell.
 
 **Edit film details** holds the title, production company, producer, who prepared the log and how to reach them, and the cut the timecodes refer to. All of these print at the top of the report. Update the cut whenever you re-time the log against a new version of the edit.

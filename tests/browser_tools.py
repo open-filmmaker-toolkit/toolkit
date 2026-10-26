@@ -8,7 +8,7 @@ mode and print layout. Chromium also covers the save-conflict warning (it has th
 file picker API; its handles are faked in memory) and renders a real PDF.
 Firefox and WebKit (Safari's engine) use the download/upload fallback instead.
 The call sheet, release tracker and credits builder also get end-to-end checks
-of their own.
+of their own, and the spreadsheet templates are checked against the tools' exports.
 """
 import csv, io, json, pathlib, sys
 from playwright.sync_api import sync_playwright
@@ -376,6 +376,23 @@ def test_credits_builder(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
+# Each spreadsheet template's columns must appear in its tool's CSV export, in the same order.
+TEMPLATE_EXPORTS = [('clearance-log', 'clearance-log-template.csv'), ('release-tracker', 'release-log-template.csv'),
+                    ('music-cue-sheet', 'music-cue-sheet-template.csv')]
+
+def test_template_columns(browser, fake):
+    for name, template in TEMPLATE_EXPORTS:
+        ctx, pg, errs = new_page(browser, name, fake)
+        open_sample(pg, fake)
+        with pg.expect_download() as d:
+            pg.click('#csvBtn')
+        exported = next(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+        wanted = next(csv.reader(io.StringIO((root / 'templates' / template).read_text(encoding='utf-8-sig'))))
+        remaining = iter(exported)
+        check(all(col in remaining for col in wanted), '%s: template columns appear in the export, in order' % template)
+        check(not errs, 'no page errors %s' % errs)
+        ctx.close()
+
 def main():
     engine = sys.argv[1] if len(sys.argv) > 1 else 'chromium'
     fake = engine == 'chromium'
@@ -393,6 +410,8 @@ def main():
         test_release_tracker(browser, fake)
         print('== credits-builder / credits, requirements and export')
         test_credits_builder(browser, fake)
+        print('== templates / columns match the tools\' exports')
+        test_template_columns(browser, fake)
         browser.close()
     print('FAILS', fails)
     sys.exit(1 if fails else 0)
