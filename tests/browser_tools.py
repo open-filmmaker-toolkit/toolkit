@@ -14,7 +14,7 @@ chromium-fallback, Firefox and WebKit (Safari's engine) use the download/upload 
 The call sheet, release tracker, credits builder, name supers list and subject tracker also get end-to-end checks
 of their own, and the spreadsheet templates are checked against the tools' exports.
 """
-import csv, io, json, pathlib, sys
+import csv, io, json, os, pathlib, sys
 from playwright.sync_api import sync_playwright
 
 root = pathlib.Path(__file__).resolve().parents[1]
@@ -497,7 +497,9 @@ def main():
     engine = 'chromium' if FALLBACK else mode
     fake = mode == 'chromium'
     with sync_playwright() as p:
-        browser = getattr(p, engine).launch(headless=True)
+        # PLAYWRIGHT_CHANNEL=chrome uses an installed Google Chrome instead of Playwright's own Chromium (CI does this).
+        channel = os.environ.get('PLAYWRIGHT_CHANNEL') if engine == 'chromium' else None
+        browser = getattr(p, engine).launch(headless=True, **({'channel': channel} if channel else {}))
         print('#### %s %s' % (mode, browser.version))
         for name in TOOLS:
             for label, fn in [('core', lambda: test_core(browser, name, fake)), ('phone', lambda: test_phone(browser, name, fake)),
