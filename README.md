@@ -69,6 +69,7 @@ The toolkit has two halves:
 | [Music cue sheet](tools/music-cue-sheet/) | Building the music cue sheet your distributor or broadcaster needs, from the music already in your clearance log | First version |
 | [Call sheet](tools/call-sheet/) | Building shoot-day call sheets from the people and locations in your project; weather lookup is optional and off until you click it | First version |
 | [Release tracker](tools/release-tracker/) | Tracking who signed what: appearance, location and materials releases, with the signed copies, and flagging anyone on camera with no release on file | First version |
+| [Name supers list](tools/name-supers/) | Keeping on-screen names and titles spelled the way the rest of your project spells them, and showing graphics what changed since their last list | First version |
 | [Credits builder](tools/credits-builder/) | Building end credits from the people, music and archival material in your project, checking that every credit your contracts require is there, and exporting the crawl as text | First version |
 
 Everything else we plan to build is listed by production phase in [TOOLS.md](TOOLS.md#part-2-built-here).
@@ -99,7 +100,8 @@ toolkit/
 |   |-- music-cue-sheet/
 |   |-- call-sheet/
 |   |-- release-tracker/
-|   `-- credits-builder/
+|   |-- credits-builder/
+|   `-- name-supers/
 |-- schemas/              # JSON Schema and data model notes for the project file
 |-- samples/              # Fictional sample project to try the tools with
 |-- templates/            # Blank templates for people who don't use the tools
