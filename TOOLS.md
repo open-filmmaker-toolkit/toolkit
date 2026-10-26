@@ -88,6 +88,26 @@ None found yet.
 | --- | --- | --- | --- | --- |
 | [ASC MHL](https://github.com/ascmitc/mhl) | Checking that archived media hasn't changed since it was copied | MIT | Command line (Python) | 1.2, Jul 2025 |
 
+### Early releases worth watching
+
+Open source and under active development, but not stable yet. They meet every rule above except a stable release. Try them on copies of your files, not on a deadline.
+
+| Tool | Use it for | License | Runs on | Latest release |
+| --- | --- | --- | --- | --- |
+| [FilmCraft](https://getartcraft.com/apps/filmcraft) | Editing, in a layout like Premiere Pro's | MIT or Apache-2.0 | Mac, Windows, Linux | 0.13.0, Oct 2026 |
+| [EffectCraft](https://getartcraft.com/apps/effectcraft) | Motion graphics and effects, like After Effects | MIT or Apache-2.0 | Mac, Windows, Linux | 0.17.0, Oct 2026 |
+| [SoundCraft](https://github.com/storytold/soundcraft) | Recording, editing and mixing sound | MIT or Apache-2.0 | Mac, Windows, Linux | 0.13.1, Oct 2026 |
+| [PhotoCraft](https://getartcraft.com/apps/photocraft) | Editing stills and making key art, like Photoshop | MIT or Apache-2.0 | Mac, Windows, Linux | 0.16.0, Oct 2026 |
+| [LightCraft](https://getartcraft.com/apps/lightcraft) | Organizing and developing production stills, like Lightroom | MIT or Apache-2.0 | Mac, Windows, Linux | 0.14.0, Oct 2026 |
+| [VectorCraft](https://getartcraft.com/apps/vectorcraft) | Vector graphics: titles, logos, laurels, like Illustrator | MIT or Apache-2.0 | Mac, Windows, Linux | 0.17.0, Oct 2026 |
+| [DesignCraft](https://getartcraft.com/apps/designcraft) | Laying out press kits, one-sheets and posters, like InDesign | MIT or Apache-2.0 | Mac, Windows, Linux | 0.13.0, Oct 2026 |
+| [PdfCraft](https://getartcraft.com/apps/pdfcraft) | Reading, combining and editing PDFs, like Acrobat | MIT or Apache-2.0 | Mac, Windows, Linux | 0.14.0, Oct 2026 |
+| [ArtCraft](https://getartcraft.com) | Concept frames and previsualization: blocking scenes in 3D and generating images and video with AI models | MIT or Apache-2.0 | Mac, Windows; Linux from source | 0.41.0, Sep 2026 |
+
+FilmCraft and the other "Craft" apps are free apps from the team behind ArtCraft, written from scratch and modeled on Adobe's. They're new and change almost daily, and all of them are alpha or earlier. FilmCraft's own estimate is that it's about 56% ready for real production work. Download them from [getartcraft.com](https://getartcraft.com) or each app's GitHub releases. Most also have a browser version you can host yourself.
+
+ArtCraft itself is an AI image and video studio. The app is open source, but generating images and video uses cloud AI models, paid with ArtCraft credits or through your own accounts with providers such as Midjourney and Sora. If generated images or video end up in a documentary, log them in your clearance log and tell your E&O attorney.
+
 ### Checked and left out
 
 | Tool | Why it isn't listed |
@@ -101,87 +121,87 @@ None found yet.
 
 ## Part 2: Built here
 
-Linked tools are available now; the rest are planned. Order of work is in [ROADMAP.md](ROADMAP.md). Blank spreadsheet and Word versions of the tools are in [templates](templates/).
+Tools with a link to their folder are available now. The rest are planned, and each has an issue: comment there if you need it or want to help build it. Order of work is in [ROADMAP.md](ROADMAP.md). Blank spreadsheet and Word versions of the tools are in [templates](templates/).
 
 ### Development
-- Subject tracker
-- Research and archival source logs
-- Comps tracker
-- Treatment builder
-- Pitch deck and lookbook builder
+- Subject tracker ([#41](https://github.com/open-filmmaker-toolkit/toolkit/issues/41))
+- Research and archival source logs ([#42](https://github.com/open-filmmaker-toolkit/toolkit/issues/42))
+- Comps tracker ([#43](https://github.com/open-filmmaker-toolkit/toolkit/issues/43))
+- Treatment builder ([#44](https://github.com/open-filmmaker-toolkit/toolkit/issues/44))
+- Pitch deck and lookbook builder ([#45](https://github.com/open-filmmaker-toolkit/toolkit/issues/45))
 
 ### Funding
-- Grant calendar
-- Grant narrative library
-- Funder-format budget converter
-- Finance plan
-- Funder CRM
+- Grant calendar ([#46](https://github.com/open-filmmaker-toolkit/toolkit/issues/46))
+- Grant narrative library ([#47](https://github.com/open-filmmaker-toolkit/toolkit/issues/47))
+- Funder-format budget converter ([#48](https://github.com/open-filmmaker-toolkit/toolkit/issues/48))
+- Finance plan ([#49](https://github.com/open-filmmaker-toolkit/toolkit/issues/49))
+- Funder CRM ([#50](https://github.com/open-filmmaker-toolkit/toolkit/issues/50))
 
 ### Pre-Production
-- Budget (top sheet and detail)
-- Cash flow
-- Shooting calendar
-- Interview prep
-- Location scout sheet
-- Deal memos
-- Gear list
-- COI and permit tracker
-- Travel sheet
-- Risk and hostile-environment plans
-- Security checklist
+- Budget (top sheet and detail) ([#51](https://github.com/open-filmmaker-toolkit/toolkit/issues/51))
+- Cash flow ([#52](https://github.com/open-filmmaker-toolkit/toolkit/issues/52))
+- Shooting calendar ([#53](https://github.com/open-filmmaker-toolkit/toolkit/issues/53))
+- Interview prep ([#54](https://github.com/open-filmmaker-toolkit/toolkit/issues/54))
+- Location scout sheet ([#55](https://github.com/open-filmmaker-toolkit/toolkit/issues/55))
+- Deal memos ([#56](https://github.com/open-filmmaker-toolkit/toolkit/issues/56))
+- Gear list ([#57](https://github.com/open-filmmaker-toolkit/toolkit/issues/57))
+- COI and permit tracker ([#58](https://github.com/open-filmmaker-toolkit/toolkit/issues/58))
+- Travel sheet ([#59](https://github.com/open-filmmaker-toolkit/toolkit/issues/59))
+- Risk and hostile-environment plans ([#60](https://github.com/open-filmmaker-toolkit/toolkit/issues/60))
+- Security checklist ([#61](https://github.com/open-filmmaker-toolkit/toolkit/issues/61))
 
 ### Production
 - [Call sheet](tools/call-sheet/) (first version)
 - [Analyze Video](https://github.com/evillollive/Analyze-Video-Skill): an AGPL-3.0 agent skill that turns videos into timestamped written analyses with frames. A companion, not part of the toolkit: it's a command-line skill that needs yt-dlp, ffmpeg, Python and Node
-- Camera and sound reports
-- Interview log
-- Daily production report
+- Camera and sound reports ([#62](https://github.com/open-filmmaker-toolkit/toolkit/issues/62))
+- Interview log ([#63](https://github.com/open-filmmaker-toolkit/toolkit/issues/63))
+- Daily production report ([#64](https://github.com/open-filmmaker-toolkit/toolkit/issues/64))
 - [Release tracker](tools/release-tracker/) (first version)
-- Expense log
-- Field journal
+- Expense log ([#65](https://github.com/open-filmmaker-toolkit/toolkit/issues/65))
+- Field journal ([#66](https://github.com/open-filmmaker-toolkit/toolkit/issues/66))
 
 ### Post-Production
-- Footage log
-- Paper edit (transcripts in, edit list out to Premiere, Resolve or Avid)
-- Structure board
-- Cut version tracker
-- Name supers list
+- Footage log ([#67](https://github.com/open-filmmaker-toolkit/toolkit/issues/67))
+- Paper edit (transcripts in, edit list out to Premiere, Resolve or Avid) ([#68](https://github.com/open-filmmaker-toolkit/toolkit/issues/68))
+- Structure board ([#69](https://github.com/open-filmmaker-toolkit/toolkit/issues/69))
+- Cut version tracker ([#70](https://github.com/open-filmmaker-toolkit/toolkit/issues/70))
+- Name supers list ([#71](https://github.com/open-filmmaker-toolkit/toolkit/issues/71))
 - [Music cue sheet](tools/music-cue-sheet/) (first version)
 - [Credits builder](tools/credits-builder/) (first version)
-- Budget-to-actuals
+- Budget-to-actuals ([#72](https://github.com/open-filmmaker-toolkit/toolkit/issues/72))
 
 ### Legal & Clearances
 - [E&O / clearance log](tools/clearance-log/) (first version)
-- Fair use log and memo builder
-- Archival and music license trackers
-- Annotated-transcript clearance report
-- Chain-of-title binder
+- Fair use log and memo builder ([#73](https://github.com/open-filmmaker-toolkit/toolkit/issues/73))
+- Archival and music license trackers ([#74](https://github.com/open-filmmaker-toolkit/toolkit/issues/74))
+- Annotated-transcript clearance report ([#75](https://github.com/open-filmmaker-toolkit/toolkit/issues/75))
+- Chain-of-title binder ([#76](https://github.com/open-filmmaker-toolkit/toolkit/issues/76))
 
 ### Marketing & Festivals
-- Festival strategy map
-- Festival submission tracker
-- EPK and press notes builder
-- Stills library
-- Press list
-- Awards and social calendars
+- Festival strategy map ([#77](https://github.com/open-filmmaker-toolkit/toolkit/issues/77))
+- Festival submission tracker ([#78](https://github.com/open-filmmaker-toolkit/toolkit/issues/78))
+- EPK and press notes builder ([#79](https://github.com/open-filmmaker-toolkit/toolkit/issues/79))
+- Stills library ([#80](https://github.com/open-filmmaker-toolkit/toolkit/issues/80))
+- Press list ([#81](https://github.com/open-filmmaker-toolkit/toolkit/issues/81))
+- Awards and social calendars ([#82](https://github.com/open-filmmaker-toolkit/toolkit/issues/82))
 
 ### Release & Distribution
-- Rights availability matrix
-- Deliverables checklist
-- QC tracker
-- Recoupment waterfall model
-- Revenue tracker
-- Educational and theatrical booking trackers
+- Rights availability matrix ([#83](https://github.com/open-filmmaker-toolkit/toolkit/issues/83))
+- Deliverables checklist ([#84](https://github.com/open-filmmaker-toolkit/toolkit/issues/84))
+- QC tracker ([#85](https://github.com/open-filmmaker-toolkit/toolkit/issues/85))
+- Recoupment waterfall model ([#86](https://github.com/open-filmmaker-toolkit/toolkit/issues/86))
+- Revenue tracker ([#87](https://github.com/open-filmmaker-toolkit/toolkit/issues/87))
+- Educational and theatrical booking trackers ([#88](https://github.com/open-filmmaker-toolkit/toolkit/issues/88))
 
 ### Impact & Outreach
-- Theory of change builder
-- Partner CRM
-- Discussion guide builder
-- Screening kit builder
-- Impact report
+- Theory of change builder ([#89](https://github.com/open-filmmaker-toolkit/toolkit/issues/89))
+- Partner CRM ([#90](https://github.com/open-filmmaker-toolkit/toolkit/issues/90))
+- Discussion guide builder ([#91](https://github.com/open-filmmaker-toolkit/toolkit/issues/91))
+- Screening kit builder ([#92](https://github.com/open-filmmaker-toolkit/toolkit/issues/92))
+- Impact report ([#93](https://github.com/open-filmmaker-toolkit/toolkit/issues/93))
 
 ### Close-Out & Archive
-- Final cost report
-- Grant final reports
-- Archive log
-- Contract and release archive
+- Final cost report ([#94](https://github.com/open-filmmaker-toolkit/toolkit/issues/94))
+- Grant final reports ([#95](https://github.com/open-filmmaker-toolkit/toolkit/issues/95))
+- Archive log ([#96](https://github.com/open-filmmaker-toolkit/toolkit/issues/96))
+- Contract and release archive ([#97](https://github.com/open-filmmaker-toolkit/toolkit/issues/97))
