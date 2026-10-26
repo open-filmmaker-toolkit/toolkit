@@ -1,12 +1,16 @@
 """Real-browser checks for every tool.
 
-Run: pip install playwright pypdf && playwright install chromium firefox webkit
-     python tests/browser_tools.py [chromium|firefox|webkit]   (default: chromium)
+Run: pip install playwright pypdf && playwright install chromium
+     python tests/browser_tools.py [chromium|chromium-fallback|firefox|webkit]   (default: chromium)
+
+CI runs chromium and chromium-fallback. chromium-fallback is Chromium with the file
+picker API removed, so it takes the download/upload path Firefox and Safari use.
+Firefox and WebKit still work locally (playwright install firefox webkit).
 
 Checks, per tool: opening the sample, saving, all CSV exports, phone width, dark
 mode and print layout. Chromium also covers the save-conflict warning (it has the
 file picker API; its handles are faked in memory) and renders a real PDF.
-Firefox and WebKit (Safari's engine) use the download/upload fallback instead.
+chromium-fallback, Firefox and WebKit (Safari's engine) use the download/upload fallback instead.
 The call sheet, release tracker and credits builder also get end-to-end checks
 of their own, and the spreadsheet templates are checked against the tools' exports.
 """
@@ -22,6 +26,8 @@ PRINT_BTN = {'clearance-log': '#printBtn', 'music-cue-sheet': '#printBtn', 'call
 PHONE = {'width': 390, 'height': 844}
 
 STUB_PRINT = 'window.print = () => { window.__printed = true; };'
+NO_PICKERS = 'delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker;'
+FALLBACK = False
 FAKE_PICKERS = """
 window.__file = {name:'proj.oft.json', text: %s};
 window.__writes = 0;
@@ -67,7 +73,7 @@ def new_page(browser, name, fake, extra='', **ctx):
     page = context.new_page()
     errs = []
     page.on('pageerror', lambda e: errs.append(str(e)))
-    page.add_init_script(STUB_PRINT + (FAKE_PICKERS if fake else '') + extra)
+    page.add_init_script(STUB_PRINT + (NO_PICKERS if FALLBACK else '') + (FAKE_PICKERS if fake else '') + extra)
     page.goto('file://%s/tools/%s/index.html' % (root, name))
     page.wait_for_load_state('networkidle')
     return context, page, errs
@@ -394,11 +400,14 @@ def test_template_columns(browser, fake):
         ctx.close()
 
 def main():
-    engine = sys.argv[1] if len(sys.argv) > 1 else 'chromium'
-    fake = engine == 'chromium'
+    global FALLBACK
+    mode = sys.argv[1] if len(sys.argv) > 1 else 'chromium'
+    FALLBACK = mode == 'chromium-fallback'
+    engine = 'chromium' if FALLBACK else mode
+    fake = mode == 'chromium'
     with sync_playwright() as p:
         browser = getattr(p, engine).launch(headless=True)
-        print('#### %s %s' % (engine, browser.version))
+        print('#### %s %s' % (mode, browser.version))
         for name in TOOLS:
             for label, fn in [('core', lambda: test_core(browser, name, fake)), ('phone', lambda: test_phone(browser, name, fake)),
                               ('dark mode', lambda: test_dark(browser, name, fake)), ('print', lambda: test_print(browser, name, fake, fake))]:

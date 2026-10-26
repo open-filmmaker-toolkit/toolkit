@@ -103,7 +103,7 @@ toolkit/
 |-- schemas/              # JSON Schema and data model notes for the project file
 |-- samples/              # Fictional sample project to try the tools with
 |-- templates/            # Blank templates for people who don't use the tools
-|-- tests/                # Browser tests CI runs in Chromium, Firefox and WebKit
+|-- tests/                # Browser tests CI runs in Chromium
 |-- docs/assets/          # Logo and preview artwork
 |-- .github/
 |   |-- workflows/        # DCO and CI checks
@@ -124,7 +124,7 @@ python3 -m pip install jsonschema
 python3 .github/scripts/validate_repo.py
 ```
 
-CI also runs [browser tests](tests/browser_tools.py) in Chromium, Firefox and WebKit: opening and saving the sample, CSV exports, the save-conflict warning, phone width, dark mode and print layout. It can't judge look and feel or drive a real printer or phone. Those checks are manual: see [Before you open a pull request](CONTRIBUTING.md#before-you-open-a-pull-request).
+CI also runs [browser tests](tests/browser_tools.py) in Chromium: opening and saving the sample, CSV exports, the save-conflict warning, phone width, dark mode and print layout. A second run turns off Chromium's file access, to test the download-and-upload saving that Firefox and Safari use. CI doesn't run Firefox or Safari themselves, and it can't judge look and feel or drive a real printer or phone. Those checks are manual: see [Before you open a pull request](CONTRIBUTING.md#before-you-open-a-pull-request).
 
 ## Licenses
 

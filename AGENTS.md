@@ -13,11 +13,11 @@ Do this in the same pull request as the change, not later:
 
 ## Test in real browsers
 
-CI runs [tests/browser_tools.py](tests/browser_tools.py) in Chromium, Firefox and WebKit. Run it locally before you push (setup is in [CONTRIBUTING.md](CONTRIBUTING.md)), along with `python3 .github/scripts/validate_repo.py`.
+CI runs [tests/browser_tools.py](tests/browser_tools.py) in Chromium, twice: `chromium`, and `chromium-fallback`, which takes the download-and-upload path Firefox and Safari use. Firefox and WebKit were dropped from CI because their installs kept hanging. Run both modes locally before you push (setup is in [CONTRIBUTING.md](CONTRIBUTING.md)), along with `python3 .github/scripts/validate_repo.py`.
 
 - Static checks and Node harnesses are not enough. A browser test found a real bug that both missed: a dialog that stayed open after a successful export.
 - Add a check to `tests/browser_tools.py` for any new behavior, including new buttons, dialogs and exports.
-- Don't claim you tested phone width, dark mode, printing or another browser unless a test or a manual check actually did. In the pull request, tick only what you did and say what you didn't run.
+- Don't claim you tested phone width, dark mode, printing or another browser unless a test or a manual check actually did. CI doesn't run Firefox or Safari. In the pull request, tick only what you did and say what you didn't run.
 
 ## Pull requests
 
