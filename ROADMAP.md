@@ -11,7 +11,6 @@ Each milestone below is a [GitHub milestone](https://github.com/open-filmmaker-t
 - [x] Write CONTRIBUTING.md with Developer Certificate of Origin (DCO) sign-off (#5)
 - [x] Adopt a code of conduct (#6)
 - [x] Add issue forms: "Request a tool," "Submit a template," "Report a problem" (#7)
-- [ ] Find a third maintainer (#8)
 
 ## Milestone 1: The directory (public launch)
 
@@ -46,6 +45,8 @@ Three tools on one data model. This is the documentary-specific gap.
 ## Backlog
 
 Everything else in the "Built here" section of [TOOLS.md](TOOLS.md), prioritized by what contributors ask for.
+
+Finding a third maintainer is on hold. Basil and Alex maintain the project for now (#8, closed).
 
 ## Out of scope
 
