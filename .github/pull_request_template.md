@@ -4,7 +4,7 @@
 
 ## How you tested it
 
-CI runs the browser tests in Chromium, Firefox and WebKit, including phone width, dark mode and print. Tick these when you checked by hand, for example on a real device.
+CI runs the browser tests in Chromium, once as Chrome and once the way Firefox and Safari save files, including phone width, dark mode and print. It doesn't run Firefox or Safari themselves. Tick these when you checked by hand, for example on a real device.
 
 - [ ] Opened the tool in Chrome or Edge
 - [ ] Opened it in Firefox or Safari
