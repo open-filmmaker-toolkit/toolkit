@@ -5,7 +5,7 @@
 - Basil Shadid
 - Alex Perrault
 
-We're looking for a third maintainer so the project never depends on any one person.
+We aren't looking for a third maintainer right now.
 
 ## How decisions get made
 

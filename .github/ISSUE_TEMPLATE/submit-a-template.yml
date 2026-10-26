@@ -66,5 +66,5 @@ body:
           required: true
         - label: I removed real names, contact details, rates and anything else private from the file.
           required: true
-        - label: I understand it will be published free for anyone to use, under the toolkit's open license.
+        - label: I understand it will be published free for anyone to use, under CC BY-SA 4.0, or CC0 for legal forms such as releases.
           required: true

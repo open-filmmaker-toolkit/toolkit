@@ -24,6 +24,7 @@ Part of the [Open Filmmaker Toolkit](../../README.md). Tracking issue: [#17](htt
 - [Saving and file conflicts](#saving-and-file-conflicts)
 - [What it adds to the project file](#what-it-adds-to-the-project-file)
 - [Not yet](#not-yet)
+- [License](#license)
 
 ## Use it
 
@@ -82,3 +83,7 @@ Other contracts, such as music licenses, are kept as they are and don't appear i
 - Linking a release to specific footage or timecodes
 - Group releases and crowd notices for a whole crowd at once
 - Showing release status inside the clearance log and call sheet
+
+## License
+
+GPL-3.0-or-later, like all the toolkit's code. See [Licenses](../../README.md#licenses). This tool is a working record, not legal advice: see [Not legal advice](../../README.md#not-legal-advice).

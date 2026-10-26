@@ -22,6 +22,7 @@ Part of the [Open Filmmaker Toolkit](../../README.md). Tracking issue: [#21](htt
 - [Optional online lookup](#optional-online-lookup)
 - [What it adds to the project file](#what-it-adds-to-the-project-file)
 - [Not yet](#not-yet)
+- [License](#license)
 
 ## Use it
 
@@ -61,3 +62,7 @@ A `callSheets` array. Each entry has an `id` and `date`, and optionally times, a
 
 - A DOCX export (the spreadsheet export and blank template cover plain-file use)
 - Scene and shot lists, and sending the sheet to the crew
+
+## License
+
+GPL-3.0-or-later, like all the toolkit's code. See [Licenses](../../README.md#licenses). This tool is a working record, not legal advice: see [Not legal advice](../../README.md#not-legal-advice).
