@@ -40,7 +40,7 @@ These rules are what make the toolkit free, private and easy to maintain. Pull r
 
 ### Before you open a pull request
 
-- Open the tool in Chrome or Edge, and in Firefox or Safari. CI already runs the automated checks in all three engines; do this to judge the look and feel.
+- Open the tool in Chrome or Edge, and in Firefox or Safari. CI runs its automated checks only in Chromium, so this is the only check that a tool works in Firefox and Safari, as well as how it looks and feels.
 - Load `samples/the-river-keeps.oft.json`, make a change, save, and reopen the saved file.
 - Open that saved file in every other tool that uses it and check nothing was lost.
 - Export each project collection to CSV and confirm the file contains all records, including fields the current tool does not edit.
@@ -58,11 +58,11 @@ Two [GitHub Actions workflows](.github/workflows) run on pull requests, both on 
 Run the CI checks locally first:
 
 - `pip install jsonschema` then `python3 .github/scripts/validate_repo.py`
-- `pip install playwright pypdf`, `playwright install chromium firefox webkit`, then `python3 tests/browser_tools.py chromium` (or `firefox`, `webkit`)
+- `pip install playwright pypdf`, `playwright install chromium`, then `python3 tests/browser_tools.py chromium` and `python3 tests/browser_tools.py chromium-fallback`. To try the real engines, `playwright install firefox webkit` and run with `firefox` or `webkit`
 
-CI runs `tests/browser_tools.py` in headless Chromium, Firefox and WebKit (Safari's engine) on every pull request. It opens the sample, saves, exports every CSV, checks phone width (390px, no sideways scrolling) and light and dark mode contrast, and checks the print layout. Chromium also renders a real PDF and tests the save-conflict warning. A change to a tool that breaks any of these fails the matching "Browser tests" check.
+CI runs `tests/browser_tools.py` in headless Chromium on every pull request, twice: as Chrome, and as `chromium-fallback`, with the file access API turned off so it saves by download and opens by upload, the way Firefox and Safari do. Firefox and WebKit (Safari's engine) were dropped from CI because their installs kept hanging on GitHub's runners. It opens the sample, saves, exports every CSV, checks phone width (390px, no sideways scrolling) and light and dark mode contrast, and checks the print layout. The `chromium` run also renders a real PDF and tests the save-conflict warning. A change to a tool that breaks any of these fails the matching "Browser tests" check.
 
-CI can't judge how a tool looks and feels, can't drive a real printer or phone, and doesn't qualify a release. Do the manual checks above for anything you changed visually, and for new behavior the tests don't cover; add a check to `tests/browser_tools.py` when you add a feature. While the repo is private on a free plan, branch protection isn't available, so reviewers should confirm all five checks (DCO, schema, and three browsers) are green before merging.
+CI can't judge how a tool looks and feels, can't drive a real printer or phone, and doesn't qualify a release. Do the manual checks above for anything you changed visually, and for new behavior the tests don't cover; add a check to `tests/browser_tools.py` when you add a feature. While the repo is private on a free plan, branch protection isn't available, so reviewers should confirm all four checks (DCO, schema, and the two Chromium runs) are green before merging.
 
 - Finish related changes as one candidate and run local checks before triggering CI. Where a CI check has a local equivalent, use the same check.
 - Avoid overlapping runs and extra pushes while a candidate is being qualified. A passing result applies only to the commit it checked; a later commit needs its own passing run.
