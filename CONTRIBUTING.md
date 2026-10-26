@@ -53,7 +53,7 @@ These rules are what make the toolkit free, private and easy to maintain. Pull r
 Two [GitHub Actions workflows](.github/workflows) run on pull requests, both on GitHub-hosted `ubuntu-latest` runners with read-only contents permission, a timeout, and actions pinned to commit SHAs (Dependabot keeps them current):
 
 - **DCO** checks that every commit is signed off.
-- **CI** validates the [project schema](schemas/project-v1.schema.json) against the sample files, checks that IDs and references in samples resolve, and checks each tool has a README and makes no network requests.
+- **CI** validates the [project schema](schemas/project-v1.schema.json) against the sample files, checks that IDs and references in samples resolve, checks each tool has a README and makes no network requests, and checks templates are plain spreadsheets or Word files with no macros or external links.
 
 Run the CI checks locally first:
 

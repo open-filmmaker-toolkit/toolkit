@@ -52,7 +52,7 @@ If the same project is open in multiple tools, save one tool before saving anoth
 - **Checks each cue.** A cue is ready when it has a title, usage, valid timecode, at least one named composer or author, a society and share for everyone, composer and author shares totaling 100%, and publisher shares totaling 100%. Public domain music (marked so in the clearance log) doesn't need a publisher. Music marked Replace or cut is flagged as being replaced.
 - **Shows the music across the film.** The timeline places each cue where it plays, colored by whether its entry is ready.
 - **Prints the cue sheet** in landscape with a header (production company, producer, distributor, release date, running time, music supervisor, who prepared it, which cut), every cue, and usage and role legends. If any cue isn't ready, the sheet prints marked as a draft.
-- **Exports CSV** with one row per cue.
+- **Exports CSV** with one row per cue. The blank [spreadsheet template](../../templates/music-cue-sheet-template.csv) uses the same columns, without the ones the tool works out, and there's a [Word version](../../templates/music-cue-sheet-template.docx) to fill in or print, for anyone who doesn't use the tool.
 - **Exports project data.** Save project details, people, locations, third-party elements, contracts, assets, music cue sheet details or call sheets as separate CSV files. Nested values stay as JSON inside their cell.
 
 Usage codes: BI background instrumental, BV background vocal, VI visual instrumental, VV visual vocal, MT main title, ET end title.

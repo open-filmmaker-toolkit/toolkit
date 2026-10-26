@@ -25,6 +25,7 @@ Part of the [Open Filmmaker Toolkit](../../README.md). Tracking issue: [#19](htt
 - [Saving and file conflicts](#saving-and-file-conflicts)
 - [What it adds to the project file](#what-it-adds-to-the-project-file)
 - [Not yet](#not-yet)
+- [License](#license)
 
 ## Use it
 
@@ -62,6 +63,8 @@ The tool checks the credits for that wording, ignoring capitals and punctuation.
 - **Credit above names:** each credit line, its names below, and a blank line between credits.
 - **Two columns, separated by a tab:** the credit and the first name on one line, more names below with an empty first column. This pastes into a spreadsheet or a two-column title template.
 
+For anyone who doesn't use the tool, there's a blank [end credits template](../../templates/end-credits-template.docx) in Word, with a table of required credits to tick off, and a two-column [spreadsheet version](../../templates/end-credits-template.csv).
+
 ## Saving and file conflicts
 
 Chrome and Edge can save straight back to the file you opened. If it changed on disk since you opened it, the tool warns before saving. You can reload the latest version, save your edits as a separate copy, or explicitly overwrite the changed file. Safari and Firefox download a new copy instead.
@@ -89,4 +92,7 @@ Everything else in the file is preserved. See the [data model notes](../../schem
 - Opening titles and the order of credits within a heading by billing
 - Crawl formats for specific titling tools and crawl services
 - Checking where a required credit appears (opening titles or end credits) and its size, not just its wording
-- Plain template version ([#20](https://github.com/open-filmmaker-toolkit/toolkit/issues/20))
+
+## License
+
+GPL-3.0-or-later, like all the toolkit's code. See [Licenses](../../README.md#licenses). This tool is a working record, not legal advice: see [Not legal advice](../../README.md#not-legal-advice).

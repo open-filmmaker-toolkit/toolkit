@@ -39,7 +39,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **Attaches the signed copy** (see below).
 - **Finds things.** Search, and filter by status or by releases with no scan attached.
 - **Prints a release report** for your E&O attorney: what still needs a signed release, everyone and everywhere on camera with their release, and every release with its scan.
-- **Exports releases (CSV),** one row per release.
+- **Exports releases (CSV),** one row per release. The blank [release log spreadsheet](../../templates/release-log-template.csv) has the same columns, and the [Word version](../../templates/release-log-template.docx) adds an on-camera list to fill in on set, for anyone who doesn't use the tool.
 - **Exports project data.** Save project details, people, locations, third-party elements, contracts, assets, music cue sheet details or call sheets as separate CSV files. Nested values stay as JSON inside their cell.
 
 ## Who needs a release
@@ -78,7 +78,7 @@ Other contracts, such as music licenses, are kept as they are and don't appear i
 
 ## Not yet
 
-- Blank release forms to print and sign (planned as plain templates, [#20](https://github.com/open-filmmaker-toolkit/toolkit/issues/20))
+- Blank release forms to print and sign
 - Linking a release to specific footage or timecodes
 - Group releases and crowd notices for a whole crowd at once
 - Showing release status inside the clearance log and call sheet

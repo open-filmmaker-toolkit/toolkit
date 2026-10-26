@@ -79,7 +79,7 @@ Everything else we plan to build is listed by production phase in [TOOLS.md](TOO
 - **Works offline.** Tools can be installed from the browser and used on set with no signal.
 - **One shared project file.** All tools read and write the same project: people, locations, third-party elements, contracts. Enter a person once in the release tracker and they show up in your credits, clearance log and chain-of-title binder.
 - **Your file, your copy.** Projects save as a file on disk that you back up and share however you already do (Drive, Dropbox, a hard drive).
-- **Plain templates too.** Every tool also ships as a DOCX, spreadsheet or PDF template for people who never open the app.
+- **Plain templates too.** Every tool also has a blank spreadsheet or Word [template](templates/) for people who never open the app.
 
 ## Shared project file
 
@@ -116,7 +116,7 @@ toolkit/
 
 ## Validation
 
-CI checks the project schema against the sample files, that IDs and references in samples resolve, and that every tool has a README and makes no network requests. Run the same check locally:
+CI checks the project schema against the sample files, that IDs and references in samples resolve, that every tool has a README and makes no network requests, and that templates are plain spreadsheets or Word files with no macros or external links. Run the same check locally:
 
 ```bash
 python3 -m pip install jsonschema

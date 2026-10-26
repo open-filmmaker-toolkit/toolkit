@@ -101,7 +101,7 @@ None found yet.
 
 ## Part 2: Built here
 
-Linked tools are available now; the rest are planned. Order of work is in [ROADMAP.md](ROADMAP.md).
+Linked tools are available now; the rest are planned. Order of work is in [ROADMAP.md](ROADMAP.md). Blank spreadsheet and Word versions of the tools are in [templates](templates/).
 
 ### Development
 - Subject tracker
