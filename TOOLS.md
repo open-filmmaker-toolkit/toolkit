@@ -165,7 +165,7 @@ Tools with a link to their folder are available now. The rest are planned, and e
 - Paper edit (transcripts in, edit list out to Premiere, Resolve or Avid) ([#68](https://github.com/open-filmmaker-toolkit/toolkit/issues/68))
 - Structure board ([#69](https://github.com/open-filmmaker-toolkit/toolkit/issues/69))
 - Cut version tracker ([#70](https://github.com/open-filmmaker-toolkit/toolkit/issues/70))
-- Name supers list ([#71](https://github.com/open-filmmaker-toolkit/toolkit/issues/71))
+- [Name supers list](tools/name-supers/) (first version)
 - [Music cue sheet](tools/music-cue-sheet/) (first version)
 - [Credits builder](tools/credits-builder/) (first version)
 - Budget-to-actuals ([#72](https://github.com/open-filmmaker-toolkit/toolkit/issues/72))

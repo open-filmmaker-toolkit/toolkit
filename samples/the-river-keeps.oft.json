@@ -735,5 +735,58 @@
         "text": "© 2026 Lowwater Films. All rights reserved."
       }
     ]
+  },
+  "supers": {
+    "entries": [
+      {
+        "id": "super-ruth",
+        "personId": "person-ruth-hammond",
+        "title": "Retired schoolteacher, Riverside",
+        "firstAppears": "01:02:14:08"
+      },
+      {
+        "id": "super-daniel",
+        "personId": "person-daniel-okafor",
+        "title": "Marguerite's grandson",
+        "firstAppears": "01:06:40:00"
+      },
+      {
+        "id": "super-leon",
+        "personId": "person-leon-pryor",
+        "title": "Levee board member, 1988–2014",
+        "firstAppears": "01:11:02:12"
+      },
+      {
+        "id": "super-foreman",
+        "name": "Marcus Bel",
+        "title": "Levee crew foreman",
+        "firstAppears": "01:19:31:00",
+        "notes": "Typed from the field notes"
+      }
+    ],
+    "lastExport": {
+      "at": "2026-10-18T16:00:00Z",
+      "cutVersion": "Locked cut v11",
+      "entries": [
+        {
+          "id": "super-ruth",
+          "name": "Ruth Hammond",
+          "title": "Retired schoolteacher, Riverside",
+          "firstAppears": "01:02:14:08"
+        },
+        {
+          "id": "super-daniel",
+          "name": "Daniel Okafor",
+          "title": "Marguerite's grandson",
+          "firstAppears": "01:06:40:00"
+        },
+        {
+          "id": "super-leon",
+          "name": "Leon Pryor",
+          "title": "Levee board member",
+          "firstAppears": "01:11:02:12"
+        }
+      ]
+    }
   }
 }
