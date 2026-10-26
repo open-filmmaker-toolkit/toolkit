@@ -93,4 +93,4 @@ Running time, distributor and release date live in `project` because other tools
 
 ## License
 
-Pending legal review ([#3](https://github.com/open-filmmaker-toolkit/toolkit/issues/3)). Check cue sheet requirements with your distributor; this tool is a working record, not legal advice.
+GPL-3.0-or-later, like all the toolkit's code. See [Licenses](../../README.md#licenses). This tool is a working record, not legal advice: see [Not legal advice](../../README.md#not-legal-advice). Check cue sheet requirements with your distributor.

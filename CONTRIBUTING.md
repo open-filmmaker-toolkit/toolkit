@@ -2,7 +2,7 @@
 
 Thanks for helping build free tools for filmmakers. You don't need to write code to contribute: requests, templates and problem reports are just as useful.
 
-> **Pre-launch.** The repo is private while licenses go through legal review ([#3](https://github.com/open-filmmaker-toolkit/toolkit/issues/3)). Until it's public, contributions come from the maintainers and people we've invited.
+> **Pre-launch.** The repo is private until we launch. Until it's public, contributions come from the maintainers and people we've invited.
 
 By taking part, you agree to follow our [code of conduct](CODE_OF_CONDUCT.md).
 
@@ -137,6 +137,12 @@ By making a contribution to this project, I certify that:
 
 ## Licenses
 
-Your contribution is published under the license of the folder it goes into: code, templates and legal forms each have their own. The LICENSE files arrive after legal review ([#4](https://github.com/open-filmmaker-toolkit/toolkit/issues/4)). The planned licenses are listed in the [README](README.md#licenses).
+Your contribution is published under the license for the kind of work it is: GPL-3.0-or-later for code, CC BY-SA 4.0 for templates, guides and documentation, and CC0 for legal forms. The [README](README.md#licenses) lists which folders each one covers. You keep the copyright to your work.
 
 There's no contributor license agreement. Nobody, including the maintainers, gets the right to relicense your work.
+
+If you contribute a legal form, such as a release:
+
+- Say where it was written for: the country, and the state or province if it matters.
+- Put the [not legal advice](README.md#not-legal-advice) notice at the top of the form.
+- Know that CC0 gives up your rights to it, so anyone can adapt it without credit.
