@@ -15,6 +15,7 @@ The file is a JSON object with a `project` record and collections for reusable e
 | `callSheets` | Shoot days: date, call and wrap times, a location, weather, schedule, and crew with call times; references `locations` and `people`. `locations` may also carry `latitude` and `longitude` |
 | `assets` | Project materials such as footage, scans and documents; `relativePath`, when present, is relative to the project file |
 | `credits` | The end credits, in order. A record rather than a collection; see [Credits](#credits) |
+| `supers` | On-screen names and titles (supers and lower thirds), and the list as it was last exported for graphics. A record rather than a collection; entries refer to `people` by `personId`, whose `name` is the spelling used. See the [name supers list](../tools/name-supers/README.md#what-it-adds-to-the-project-file) |
 
 Tools should add only fields they own and preserve unknown fields and collections when saving. New collections and their fields are optional in version 1, so existing tools can continue to open files that do not use them. A tool that consumes references should report missing targets rather than silently discarding them. JSON Schema checks field shapes; tools remain responsible for ensuring IDs are unique within collections and references point to existing records.
 

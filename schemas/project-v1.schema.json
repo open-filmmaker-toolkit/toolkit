@@ -60,6 +60,9 @@
     },
     "credits": {
       "$ref": "#/$defs/credits"
+    },
+    "supers": {
+      "$ref": "#/$defs/supers"
     }
   },
   "additionalProperties": true,
@@ -629,6 +632,88 @@
             "type": "string"
           },
           "description": "For a music or archival block, the songs or sources left out, as lowercase keys of their title or name."
+        }
+      },
+      "additionalProperties": true
+    },
+    "supers": {
+      "type": "object",
+      "description": "On-screen names and titles (supers and lower thirds), as kept by the name supers list.",
+      "properties": {
+        "entries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/superEntry"
+          }
+        },
+        "lastExport": {
+          "type": "object",
+          "description": "What the list looked like when it was last exported for graphics, so changes since then can be flagged.",
+          "properties": {
+            "at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "cutVersion": {
+              "type": "string"
+            },
+            "entries": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "id"
+                ],
+                "properties": {
+                  "id": {
+                    "$ref": "#/$defs/id"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "firstAppears": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": true
+              }
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    },
+    "superEntry": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "personId": {
+          "$ref": "#/$defs/id",
+          "description": "A person in people. Their name is used, so the spelling matches the rest of the project."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name on screen, for someone who isn't in people."
+        },
+        "title": {
+          "type": "string",
+          "description": "The second line of the super."
+        },
+        "firstAppears": {
+          "type": "string",
+          "description": "Timecode in the cut where the super first appears, as HH:MM:SS:FF."
+        },
+        "notes": {
+          "type": "string"
         }
       },
       "additionalProperties": true

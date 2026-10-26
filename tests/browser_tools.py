@@ -11,7 +11,7 @@ Checks, per tool: opening the sample, saving, all CSV exports, phone width, dark
 mode and print layout. Chromium also covers the save-conflict warning (it has the
 file picker API; its handles are faked in memory) and renders a real PDF.
 chromium-fallback, Firefox and WebKit (Safari's engine) use the download/upload fallback instead.
-The call sheet, release tracker and credits builder also get end-to-end checks
+The call sheet, release tracker, credits builder and name supers list also get end-to-end checks
 of their own, and the spreadsheet templates are checked against the tools' exports.
 """
 import csv, io, json, pathlib, sys
@@ -19,10 +19,10 @@ from playwright.sync_api import sync_playwright
 
 root = pathlib.Path(__file__).resolve().parents[1]
 sample = (root / 'samples/the-river-keeps.oft.json').read_text()
-TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder']
+TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers']
 COLLECTIONS = ['project', 'people', 'locations', 'thirdPartyElements', 'contracts', 'assets', 'musicCueSheet', 'callSheets']
 PRINT_BTN = {'clearance-log': '#printBtn', 'music-cue-sheet': '#printBtn', 'call-sheet': '#printAllBtn', 'release-tracker': '#printBtn',
-             'credits-builder': '#printBtn'}
+             'credits-builder': '#printBtn', 'name-supers': '#printBtn'}
 PHONE = {'width': 390, 'height': 844}
 
 STUB_PRINT = 'window.print = () => { window.__printed = true; };'
@@ -384,7 +384,51 @@ def test_credits_builder(browser, fake):
 
 # Each spreadsheet template's columns must appear in its tool's CSV export, in the same order.
 TEMPLATE_EXPORTS = [('clearance-log', 'clearance-log-template.csv'), ('release-tracker', 'release-log-template.csv'),
-                    ('music-cue-sheet', 'music-cue-sheet-template.csv')]
+                    ('music-cue-sheet', 'music-cue-sheet-template.csv'), ('name-supers', 'name-supers-template.csv')]
+
+def test_name_supers(browser, fake):
+    ctx, pg, errs = new_page(browser, 'name-supers', fake)
+    open_sample(pg, fake)
+    rows = pg.inner_text('#rows')
+    check('Close to Marcus Bell in the project' in rows, 'flags a typed name close to someone in the project')
+    check('Changed: title was "Levee board member"' in rows and 'New since export' in rows, 'flags changes since the last export')
+    check('Marcus Bell' in pg.inner_text('#missing'), 'lists people on camera without a super')
+    pg.click('[data-link="super-foreman"]'); pg.wait_for_timeout(200)
+    check('Close to Marcus Bell' not in pg.inner_text('#rows') and 'Everyone on camera has a super' in pg.inner_text('#missing'), 'using the project spelling links the super')
+
+    pg.click('[data-edit="super-ruth"]')
+    pg.fill('#f-name', 'Ruth A. Hammond'); pg.fill('#f-tc', '1:02'); pg.click('#editorSubmit'); pg.wait_for_timeout(100)
+    check(pg.is_visible('#editor'), 'a badly formed timecode is refused')
+    pg.fill('#f-tc', '01:00:30:00'); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check(pg.locator('#rows .nm').first.inner_text() == 'Ruth A. Hammond', 'supers sort by timecode, with the fixed spelling')
+
+    pg.click('#addBtn'); pg.select_option('#f-person', ''); pg.fill('#f-name', 'Archival narrator'); pg.fill('#f-title', 'Voice, 1965 newsreel')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check('Archival narrator' in pg.inner_text('#rows'), 'adds a super for someone not in the project')
+
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    lines = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    check(lines[0] == ['First appears', 'Name', 'Title', 'Notes', 'Since last export'] and lines[1][:2] == ['01:00:30:00', 'Ruth A. Hammond'] and lines[1][4].startswith('Changed'),
+          'export lists supers in order with what changed')
+    check('No changes since then' in pg.inner_text('#since') and 'New since export' not in pg.inner_text('#rows'), 'export resets the change flags')
+
+    if fake:
+        pg.click('#saveBtn'); pg.wait_for_timeout(300)
+        data = json.loads(pg.evaluate('window.__file.text'))
+    else:
+        with pg.expect_download() as d:
+            pg.click('#saveBtn')
+        data = json.loads(open(d.value.path(), encoding='utf-8').read())
+    people = {p['id']: p for p in data['people']}
+    foreman = next(e for e in data['supers']['entries'] if e['id'] == 'super-foreman')
+    check(people['person-ruth-hammond']['name'] == 'Ruth A. Hammond' and foreman.get('personId') == 'person-marcus-bell' and 'name' not in foreman,
+          'spelling fixes and links are saved to the project')
+    check(len(data['supers']['lastExport']['entries']) == 5, 'the export snapshot is saved')
+    original = json.loads(sample)
+    check(data.get('credits') == original['credits'] and data.get('callSheets') == original['callSheets'] and data['contracts'] == original['contracts'], "other tools' data is unchanged")
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
 
 def test_template_columns(browser, fake):
     for name, template in TEMPLATE_EXPORTS:
@@ -419,6 +463,8 @@ def main():
         test_release_tracker(browser, fake)
         print('== credits-builder / credits, requirements and export')
         test_credits_builder(browser, fake)
+        print('== name-supers / flags, spelling and export')
+        test_name_supers(browser, fake)
         print('== templates / columns match the tools\' exports')
         test_template_columns(browser, fake)
         browser.close()
