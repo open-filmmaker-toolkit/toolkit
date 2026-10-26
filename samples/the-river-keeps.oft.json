@@ -60,6 +60,46 @@
       ],
       "onCamera": true,
       "notes": "Fictional sample subject. Seen in b-roll; no release yet."
+    },
+    {
+      "id": "person-lena-ward",
+      "name": "Lena Ward",
+      "roles": [
+        "Director"
+      ],
+      "notes": "Fictional sample crew."
+    },
+    {
+      "id": "person-priya-nair",
+      "name": "Priya Nair",
+      "roles": [
+        "Editor"
+      ],
+      "notes": "Fictional sample crew."
+    },
+    {
+      "id": "person-teo-ramirez",
+      "name": "Teo Ramirez",
+      "roles": [
+        "Director of photography"
+      ],
+      "notes": "Fictional sample crew."
+    },
+    {
+      "id": "person-mira-castellanos",
+      "name": "Mira Castellanos",
+      "roles": [
+        "Composer"
+      ],
+      "notes": "Fictional sample crew."
+    },
+    {
+      "id": "person-sam-okafor",
+      "name": "Sam Okafor",
+      "roles": [
+        "Post-production supervisor"
+      ],
+      "notes": "Fictional sample crew."
     }
   ],
   "locations": [
@@ -106,7 +146,10 @@
       "rights": "Worldwide, all media, in perpetuity",
       "cost": 1200,
       "licenseRef": "RCHS-license-2026-03.pdf",
-      "notes": ""
+      "notes": "",
+      "contractIds": [
+        "contract-rchs-license"
+      ]
     },
     {
       "id": "sample-02",
@@ -456,7 +499,8 @@
       "assetIds": [
         "asset-okafor-release"
       ],
-      "notes": "Fictional example. The referenced scan is not included."
+      "notes": "Fictional example. The referenced scan is not included.",
+      "requiredCredit": "Family photographs courtesy of Daniel Okafor"
     },
     {
       "id": "contract-hammond-appearance",
@@ -502,6 +546,18 @@
       "locationIds": [
         "location-hammond-house"
       ],
+      "notes": "Fictional example."
+    },
+    {
+      "id": "contract-rchs-license",
+      "title": "Archival footage license: Riverside County Historical Society",
+      "type": "license",
+      "status": "signed",
+      "thirdPartyElementIds": [
+        "sample-01"
+      ],
+      "signedDate": "2026-03-02",
+      "requiredCredit": "Footage courtesy of the Riverside County Historical Society",
       "notes": "Fictional example."
     }
   ],
@@ -575,5 +631,109 @@
       ],
       "notes": "Fictional sample call sheet."
     }
-  ]
+  ],
+  "credits": {
+    "entries": [
+      {
+        "id": "credit-director",
+        "kind": "credit",
+        "role": "Directed by",
+        "personIds": [
+          "person-lena-ward"
+        ]
+      },
+      {
+        "id": "credit-producer",
+        "kind": "credit",
+        "role": "Produced by",
+        "personIds": [
+          "person-ana-reyes"
+        ]
+      },
+      {
+        "id": "credit-editor",
+        "kind": "credit",
+        "role": "Edited by",
+        "personIds": [
+          "person-priya-nair"
+        ]
+      },
+      {
+        "id": "credit-dp",
+        "kind": "credit",
+        "role": "Director of photography",
+        "personIds": [
+          "person-teo-ramirez"
+        ]
+      },
+      {
+        "id": "credit-composer",
+        "kind": "credit",
+        "role": "Original music by",
+        "personIds": [
+          "person-mira-castellanos"
+        ]
+      },
+      {
+        "id": "credit-featuring",
+        "kind": "credit",
+        "role": "Featuring",
+        "personIds": [
+          "person-daniel-okafor",
+          "person-ruth-hammond",
+          "person-leon-pryor"
+        ]
+      },
+      {
+        "id": "credit-post-heading",
+        "kind": "heading",
+        "text": "Post-production"
+      },
+      {
+        "id": "credit-post-supervisor",
+        "kind": "credit",
+        "role": "Post-production supervisor",
+        "personIds": [
+          "person-sam-okafor"
+        ]
+      },
+      {
+        "id": "credit-music",
+        "kind": "music",
+        "heading": "Music",
+        "excluded": [
+          "the river keeps main title",
+          "levee at night"
+        ]
+      },
+      {
+        "id": "credit-archival",
+        "kind": "archival",
+        "heading": "Archival material courtesy of",
+        "excluded": [
+          "riverside courier defunct",
+          "daniel okafor"
+        ]
+      },
+      {
+        "id": "credit-okafor-photos",
+        "kind": "text",
+        "text": "Family photographs courtesy of Daniel Okafor"
+      },
+      {
+        "id": "credit-thanks",
+        "kind": "credit",
+        "role": "Special thanks",
+        "names": [
+          "Riverside Public Library",
+          "First Baptist Church choir"
+        ]
+      },
+      {
+        "id": "credit-copyright",
+        "kind": "text",
+        "text": "© 2026 Lowwater Films. All rights reserved."
+      }
+    ]
+  }
 }

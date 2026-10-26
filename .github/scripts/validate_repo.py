@@ -63,6 +63,17 @@ for sample in sorted((ROOT / "samples").glob("*.oft.json")):
         for member in sheet.get("crew", []):
             if member.get("personId") not in ids["people"]:
                 fail(f"{name}: call sheet {sheet.get('id')} crew points to missing person {member.get('personId')}")
+    credits = data.get("credits") if isinstance(data.get("credits"), dict) else {}
+    entry_ids = [entry.get("id") for entry in credits.get("entries", []) if isinstance(entry, dict)]
+    if len(entry_ids) != len(set(entry_ids)):
+        fail(f"{name}: duplicate IDs in credits entries")
+    for entry in credits.get("entries", []):
+        missing = set(entry.get("personIds", [])) - ids["people"]
+        if missing:
+            fail(f"{name}: credit {entry.get('id')} personIds points to missing {sorted(missing)}")
+    missing = set(credits.get("notCredited", [])) - ids["people"]
+    if missing:
+        fail(f"{name}: credits notCredited points to missing {sorted(missing)}")
     for element in data.get("thirdPartyElements", []):
         missing = set(element.get("contractIds", [])) - ids["contracts"]
         if missing:
