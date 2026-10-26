@@ -125,7 +125,7 @@ Tools with a link to their folder are available now. The rest are planned, and e
 
 ### Development
 - [Subject tracker](tools/subject-tracker/) (first version)
-- Research and archival source logs ([#42](https://github.com/open-filmmaker-toolkit/toolkit/issues/42))
+- [Research and archival log](tools/research-log/) (first version)
 - Comps tracker ([#43](https://github.com/open-filmmaker-toolkit/toolkit/issues/43))
 - Treatment builder ([#44](https://github.com/open-filmmaker-toolkit/toolkit/issues/44))
 - Pitch deck and lookbook builder ([#45](https://github.com/open-filmmaker-toolkit/toolkit/issues/45))
