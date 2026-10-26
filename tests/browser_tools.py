@@ -1,21 +1,24 @@
-"""Real-browser checks for all three tools.
+"""Real-browser checks for every tool.
 
 Run: pip install playwright pypdf && playwright install chromium firefox webkit
      python tests/browser_tools.py [chromium|firefox|webkit]   (default: chromium)
 
 Checks, per tool: opening the sample, saving, all CSV exports, phone width, dark
-mode and print layout. The release tracker also gets its own end-to-end check. Chromium also covers the save-conflict warning (it has the
+mode and print layout. Chromium also covers the save-conflict warning (it has the
 file picker API; its handles are faked in memory) and renders a real PDF.
 Firefox and WebKit (Safari's engine) use the download/upload fallback instead.
+The call sheet, release tracker and credits builder also get end-to-end checks
+of their own.
 """
 import csv, io, json, pathlib, sys
 from playwright.sync_api import sync_playwright
 
 root = pathlib.Path(__file__).resolve().parents[1]
 sample = (root / 'samples/the-river-keeps.oft.json').read_text()
-TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker']
+TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder']
 COLLECTIONS = ['project', 'people', 'locations', 'thirdPartyElements', 'contracts', 'assets', 'musicCueSheet', 'callSheets']
-PRINT_BTN = {'clearance-log': '#printBtn', 'music-cue-sheet': '#printBtn', 'call-sheet': '#printAllBtn', 'release-tracker': '#printBtn'}
+PRINT_BTN = {'clearance-log': '#printBtn', 'music-cue-sheet': '#printBtn', 'call-sheet': '#printAllBtn', 'release-tracker': '#printBtn',
+             'credits-builder': '#printBtn'}
 PHONE = {'width': 390, 'height': 844}
 
 STUB_PRINT = 'window.print = () => { window.__printed = true; };'
@@ -281,7 +284,95 @@ def test_release_tracker(browser, fake):
     pg.click('#deleteBtn'); pg.wait_for_timeout(300)
     data = saved_project()
     el = next(e for e in data['thirdPartyElements'] if e['id'] == 'sample-01')
-    check(not any(c['title'] == 'Temporary materials release' for c in data['contracts']) and 'contractIds' not in el, 'deleting a release unlinks its clearance log items')
+    before = next(e for e in original['thirdPartyElements'] if e['id'] == 'sample-01')
+    check(not any(c['title'] == 'Temporary materials release' for c in data['contracts']) and el.get('contractIds') == before.get('contractIds'),
+          'deleting a release unlinks its clearance log items and keeps their other contracts')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+def test_credits_builder(browser, fake):
+    ctx, pg, errs = new_page(browser, 'credits-builder', fake)
+    open_sample(pg, fake)
+    check(pg.inner_text('#reqCount') == '1 of 2 in the credits', 'flags the required credit that is missing (%s)' % pg.inner_text('#reqCount'))
+    crawl = pg.inner_text('#crawl')
+    check('Lena Ward' in crawl and 'Muddy Water Hymn' in crawl and 'levee at night' not in crawl.lower(), 'crawl shows people and songs, without excluded score cues')
+
+    pg.click('#reqs [data-addreq="contract-rchs-license"]'); pg.wait_for_timeout(200)
+    check(pg.inner_text('#reqCount') == '2 of 2 in the credits', 'adding the required wording meets it')
+
+    pg.click('#exportBtn')
+    text = pg.inner_text('#exportPreview')
+    check('Directed by\nLena Ward' in text and 'Written by Earl Whitaker and June Whitaker' in text and 'Published by Delta Song Publishing (BMI)' in text,
+          'text export has credits and music lines')
+    check('Riverside County Historical Society' in text and 'Riverside Courier' not in text, 'text export lists archival sources, without excluded ones')
+    pg.check('input[name=layout][value=columns]')
+    check('Directed by\tLena Ward' in pg.inner_text('#exportPreview'), 'two-column layout uses a tab')
+    with pg.expect_download() as d:
+        pg.click('#downloadTxtBtn')
+    check(d.value.suggested_filename.endswith('-end-credits-two-columns.txt') and 'Directed by\tLena Ward' in open(d.value.path(), encoding='utf-8').read(),
+          'text file downloads')
+    check(not pg.is_visible('#exportDialog'), 'export dialog closes after download')
+
+    pg.click('#addBtn'); pg.fill('#f-role', 'Gaffer'); pg.fill('#f-names', 'Jo Park')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check('Jo Park' in pg.inner_text('#crawl'), 'new credit shows in the crawl')
+    rows = pg.locator('#entries .entry')
+    last = rows.count() - 1
+    pg.click('[data-up="%d"]' % last); pg.wait_for_timeout(100)
+    check('Gaffer' in rows.nth(last - 1).inner_text(), 'moving a credit up reorders it')
+
+    pg.click('[data-edit="credit-post-supervisor"]')
+    pg.click('#deleteBtn'); pg.wait_for_timeout(200)
+    check('Sam Okafor' in pg.inner_text('#uncredited'), 'removing a credit lists the person as not credited')
+    pg.click('#uncredited [data-skip="person-sam-okafor"]'); pg.wait_for_timeout(200)
+    check('Sam Okafor' not in pg.inner_text('#uncredited'), 'marking someone not credited takes them off the list')
+
+    pg.click('#addReqBtn')
+    pg.select_option('#r-contract', '')
+    pg.fill('#r-title', 'Test archive license')
+    pg.select_option('#r-element', 'sample-07')
+    pg.fill('#r-text', 'Courtesy of the Test Archive')
+    pg.click('#reqForm button[type=submit]'); pg.wait_for_timeout(200)
+    check(pg.inner_text('#reqCount') == '2 of 3 in the credits', 'a new requirement is flagged until the credits include it')
+
+    pg.click('#playBtn')
+    check('is-playing' in pg.get_attribute('#screen', 'class'), 'play crawl starts the roll')
+    pg.click('#playBtn')
+    check('is-playing' not in pg.get_attribute('#screen', 'class'), 'stop crawl ends it')
+
+    if fake:
+        pg.click('#saveBtn'); pg.wait_for_timeout(300)
+        data = json.loads(pg.evaluate('window.__file.text'))
+    else:
+        with pg.expect_download() as d:
+            pg.click('#saveBtn')
+        data = json.loads(open(d.value.path(), encoding='utf-8').read())
+    entries = data['credits']['entries']
+    check(any(e.get('role') == 'Gaffer' and e.get('names') == ['Jo Park'] for e in entries) and data['credits'].get('notCredited') == ['person-sam-okafor'],
+          'credits and not-credited choices are saved')
+    lic = next((c for c in data['contracts'] if c.get('title') == 'Test archive license'), {})
+    el = next(e for e in data['thirdPartyElements'] if e['id'] == 'sample-07')
+    check(lic.get('requiredCredit') == 'Courtesy of the Test Archive' and lic.get('thirdPartyElementIds') == ['sample-07'] and lic.get('id') in el.get('contractIds', []),
+          'new license is saved and linked to its clearance log item')
+    original = json.loads(sample)
+    song = lambda d: next(e for e in d['thirdPartyElements'] if e['id'] == 'sample-03').get('music')
+    check(data['people'] == original['people'] and data.get('callSheets') == original['callSheets'] and data.get('musicCueSheet') == original['musicCueSheet']
+          and song(data) == song(original), "other tools' data is unchanged")
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+    # Drafting from the project, on the sample with its credits taken out.
+    ctx, pg, errs = new_page(browser, 'credits-builder', False)
+    bare = json.loads(sample); bare.pop('credits')
+    pg.set_input_files('#fileInput', files=[{'name': 'bare.oft.json', 'mimeType': 'application/json', 'buffer': json.dumps(bare).encode()}])
+    pg.wait_for_function("document.getElementById('filmMeta').textContent.trim() !== ''")
+    check(pg.is_visible('#fillBtn'), 'a project without credits offers a draft')
+    pg.click('#fillBtn'); pg.wait_for_timeout(200)
+    roles = [t.split('\n')[0] for t in pg.locator('#entries .entry .what').all_inner_texts()]
+    check(roles[:6] == ['Director', 'Producer', 'Editor', 'Director of photography', 'Composer', 'Featuring'], 'draft puts key creatives first, then featuring %s' % roles[:6])
+    crawl = pg.inner_text('#crawl')
+    check('Daniel Okafor' in crawl and 'Muddy Water Hymn' in crawl and 'All rights reserved' in crawl, 'draft has people, music and a copyright line')
+    check(pg.inner_text('#reqCount') == '2 of 2 in the credits', 'draft includes the required wording')
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
@@ -300,6 +391,8 @@ def main():
         test_call_sheet_export(browser, fake)
         print('== release-tracker / releases, coverage and scans')
         test_release_tracker(browser, fake)
+        print('== credits-builder / credits, requirements and export')
+        test_credits_builder(browser, fake)
         browser.close()
     print('FAILS', fails)
     sys.exit(1 if fails else 0)

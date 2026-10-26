@@ -57,6 +57,9 @@
       "items": {
         "$ref": "#/$defs/callSheet"
       }
+    },
+    "credits": {
+      "$ref": "#/$defs/credits"
     }
   },
   "additionalProperties": true,
@@ -403,6 +406,10 @@
         },
         "notes": {
           "type": "string"
+        },
+        "requiredCredit": {
+          "type": "string",
+          "description": "Exact wording of an on-screen credit this agreement requires."
         }
       },
       "additionalProperties": true
@@ -545,6 +552,83 @@
         },
         "notes": {
           "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "credits": {
+      "type": "object",
+      "description": "The film's credits, in order, as built by the credits builder.",
+      "properties": {
+        "entries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/creditEntry"
+          }
+        },
+        "notCredited": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true,
+          "description": "People who are deliberately left out of the credits."
+        }
+      },
+      "additionalProperties": true
+    },
+    "creditEntry": {
+      "type": "object",
+      "required": [
+        "id",
+        "kind"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": {
+          "enum": [
+            "credit",
+            "heading",
+            "text",
+            "music",
+            "archival"
+          ],
+          "description": "credit: a line with names under it. heading: a section heading. text: lines shown as typed. music and archival: blocks built from the third-party elements."
+        },
+        "role": {
+          "type": "string",
+          "description": "For a credit, the line above the names."
+        },
+        "personIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true
+        },
+        "names": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Names that aren't people in the project, shown after personIds."
+        },
+        "text": {
+          "type": "string",
+          "description": "For a heading or text entry."
+        },
+        "heading": {
+          "type": "string",
+          "description": "For a music or archival block."
+        },
+        "excluded": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "For a music or archival block, the songs or sources left out, as lowercase keys of their title or name."
         }
       },
       "additionalProperties": true
