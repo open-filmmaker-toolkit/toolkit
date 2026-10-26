@@ -6,8 +6,8 @@ Each milestone below is a [GitHub milestone](https://github.com/open-filmmaker-t
 
 - [x] Create the GitHub organization and private repo (#1)
 - [x] Write README, ROADMAP, TOOLS and GOVERNANCE (#2)
-- [ ] Lawyer reviews the planned licenses for code, templates and legal forms (#3)
-- [ ] Add LICENSE files once approved (#4)
+- [x] Decide the licenses: GPL-3.0-or-later for code, CC BY-SA 4.0 for templates and guides, CC0 for legal forms, with a not-legal-advice notice instead of a lawyer's review (#3)
+- [x] Add LICENSE files (#4)
 - [x] Write CONTRIBUTING.md with Developer Certificate of Origin (DCO) sign-off (#5)
 - [x] Adopt a code of conduct (#6)
 - [x] Add issue forms: "Request a tool," "Submit a template," "Report a problem" (#7)

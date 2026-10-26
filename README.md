@@ -13,7 +13,7 @@
   <a href="https://github.com/open-filmmaker-toolkit/toolkit/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/open-filmmaker-toolkit/toolkit/actions/workflows/ci.yml/badge.svg" /></a>
   <a href="https://github.com/open-filmmaker-toolkit/toolkit/actions/workflows/dco.yml"><img alt="DCO" src="https://github.com/open-filmmaker-toolkit/toolkit/actions/workflows/dco.yml/badge.svg" /></a>
   <img alt="Status: pre-launch" src="https://img.shields.io/badge/status-pre--launch-d29922" />
-  <img alt="License: pending legal review" src="https://img.shields.io/badge/license-pending%20review-8b949e" />
+  <a href="#licenses"><img alt="License: GPL-3.0 and CC BY-SA 4.0" src="https://img.shields.io/badge/license-GPL--3.0%20%7C%20CC%20BY--SA%204.0-blue" /></a>
   <img alt="Runs offline" src="https://img.shields.io/badge/runs-offline-2ea44f" />
   <img alt="No dependencies" src="https://img.shields.io/badge/dependencies-none-2ea44f" />
   <img alt="No tracking" src="https://img.shields.io/badge/privacy-no%20tracking-8A2BE2" />
@@ -25,7 +25,7 @@ Free, open-source tools and templates for documentary and independent narrative 
 
 ![One project file shared by the clearance log and the music cue sheet](docs/assets/demo-preview.svg)
 
-> **Status:** Pre-launch. This repository is private while licenses go through legal review. Curious where this is headed? See the [**Roadmap**](ROADMAP.md).
+> **Status:** Pre-launch. This repository is private until we launch. Curious where this is headed? See the [**Roadmap**](ROADMAP.md).
 
 ## Contents
 
@@ -38,6 +38,7 @@ Free, open-source tools and templates for documentary and independent narrative 
 - [Repository layout](#repository-layout)
 - [Validation](#validation)
 - [Licenses](#licenses)
+- [Not legal advice](#not-legal-advice)
 - [Maintainers](#maintainers)
 - [Contributing](#contributing)
 
@@ -127,15 +128,19 @@ CI also runs [browser tests](tests/browser_tools.py) in Chromium, Firefox and We
 
 ## Licenses
 
-Licensing is under legal review. Our intent:
+Copyright © 2026 the Open Filmmaker Toolkit contributors. Contributors keep the copyright to their work and share it under these licenses:
 
-| What | Planned license |
-| --- | --- |
-| Code | GPL-3.0 (AGPL-3.0 for anything hosted) |
-| Templates and guides | CC BY-SA 4.0 |
-| Legal forms (releases, deal memos) | CC0 or CC BY 4.0 |
+| What | Where | License |
+| --- | --- | --- |
+| Code | The tools, project schema, sample project, tests and CI scripts | [GPL-3.0-or-later](LICENSE) |
+| Templates, guides and documentation | `templates/` (except legal forms), `docs/`, and the README and other Markdown files | [CC BY-SA 4.0](LICENSES/CC-BY-SA-4.0.txt) |
+| Legal forms, such as releases and deal memos | `templates/legal-forms/`, once we add them | [CC0 1.0](LICENSES/CC0-1.0.txt): no rights reserved, so you can turn a form into your own contract without crediting us |
 
-Legal templates are starting points, not legal advice. Have a lawyer in your jurisdiction review anything you sign.
+If we ever run a tool as a hosted service, that code will be under AGPL-3.0.
+
+## Not legal advice
+
+The templates and forms in this toolkit are general starting points, and the tools are working records. None of it is legal advice. No lawyer has reviewed any of it for your film or where you work, and laws differ from place to place. Have a lawyer licensed where you work review any release, contract or other legal document before you use it. You use the toolkit at your own risk. It's provided "as is," without warranty of any kind, and the maintainers and contributors aren't liable for any loss or claim that comes from using it. The licenses say the same in their own terms.
 
 ## Maintainers
 
