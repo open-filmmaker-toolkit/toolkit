@@ -788,5 +788,64 @@
         }
       ]
     }
-  }
+  },
+  "subjects": [
+    {
+      "id": "subject-ruth",
+      "name": "Ruth Hammond",
+      "about": "Retired schoolteacher who kept a diary through the 1965 flood",
+      "foundVia": "Riverside Public Library oral history project",
+      "status": "agreed",
+      "lastContact": "2026-09-30",
+      "notes": "Has the diary and photos. Wants to read from the diary on camera.",
+      "personId": "person-ruth-hammond",
+      "log": [
+        {
+          "date": "2026-08-12",
+          "note": "First call; open to meeting"
+        },
+        {
+          "date": "2026-09-30",
+          "note": "Agreed to an interview at home"
+        }
+      ]
+    },
+    {
+      "id": "subject-leon",
+      "name": "Leon Pryor",
+      "about": "Levee board member, 1988–2014",
+      "foundVia": "Named in a Riverside Courier article",
+      "status": "agreed",
+      "personId": "person-leon-pryor",
+      "lastContact": "2026-09-02"
+    },
+    {
+      "id": "subject-clerk",
+      "name": "Doris Kemp",
+      "about": "County clerk's office, flood records",
+      "foundVia": "Records request",
+      "status": "in-conversation",
+      "lastContact": "2026-10-01",
+      "nextFollowUp": "2026-10-15",
+      "nextFollowUpNote": "Ask whether she'd talk on camera or only on background",
+      "phone": "555-0142"
+    },
+    {
+      "id": "subject-pilot",
+      "name": "Unknown aerial pilot",
+      "about": "Flew the 1965 flood aerials for the county",
+      "foundVia": "Credit on the historical society reel",
+      "status": "researching",
+      "nextFollowUp": "2027-01-15",
+      "nextFollowUpNote": "Check the county's 1965 contracts for a name"
+    },
+    {
+      "id": "subject-mayor",
+      "name": "Office of the mayor",
+      "about": "Current flood plan",
+      "status": "declined",
+      "lastContact": "2026-09-20",
+      "notes": "Declined an interview; sent a written statement."
+    }
+  ]
 }

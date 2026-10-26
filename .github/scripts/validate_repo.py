@@ -77,6 +77,12 @@ for sample in sorted((ROOT / "samples").glob("*.oft.json")):
     missing = set(credits.get("notCredited", [])) - ids["people"]
     if missing:
         fail(f"{name}: credits notCredited points to missing {sorted(missing)}")
+    subject_ids = [item.get("id") for item in data.get("subjects", []) if isinstance(item, dict)]
+    if len(subject_ids) != len(set(subject_ids)):
+        fail(f"{name}: duplicate IDs in subjects")
+    for subject in data.get("subjects", []):
+        if subject.get("personId") and subject["personId"] not in ids["people"]:
+            fail(f"{name}: subject {subject.get('id')} personId points to a missing person")
     supers = data.get("supers") if isinstance(data.get("supers"), dict) else {}
     super_ids = [entry.get("id") for entry in supers.get("entries", []) if isinstance(entry, dict)]
     if len(super_ids) != len(set(super_ids)):

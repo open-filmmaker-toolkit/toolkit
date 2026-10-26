@@ -6,6 +6,7 @@ Part of the [Open Filmmaker Toolkit](../README.md).
 
 | Template | Spreadsheet | Document | Matches the tool |
 | --- | --- | --- | --- |
+| Subject tracker | [subject-tracker-template.csv](subject-tracker-template.csv) | | [Subject tracker](../tools/subject-tracker/) |
 | Call sheet | [call-sheet-template.csv](call-sheet-template.csv) | | [Call sheet](../tools/call-sheet/) |
 | Clearance log | [clearance-log-template.csv](clearance-log-template.csv) | [clearance-log-template.docx](clearance-log-template.docx) | [Clearance log](../tools/clearance-log/) |
 | Release log | [release-log-template.csv](release-log-template.csv) | [release-log-template.docx](release-log-template.docx) | [Release tracker](../tools/release-tracker/) |
@@ -15,6 +16,7 @@ Part of the [Open Filmmaker Toolkit](../README.md).
 
 ## What's in each one
 
+- **Subject tracker.** One row for each possible subject: who they are, how you found them, contact details, access status and the next follow-up.
 - **Clearance log.** One row for each piece of third-party material: what it is, where it's used, who holds the rights, what you need, status and cost. The document adds a box for the film's details and a key to the types and statuses.
 - **Release log.** One row for each release: what kind, who or what it covers, when it was signed and where the signed copy is. The document adds a list of everyone on camera and every place you film, so you can see who still needs a release. It's a log, not a release form.
 - **Music cue sheet.** One row for each cue, in the order it plays, with timings, usage and the composers, authors and publishers with their society and share. The document adds the production details distributors ask for and a key to the usage and role codes.
@@ -25,7 +27,7 @@ Part of the [Open Filmmaker Toolkit](../README.md).
 
 - **Spreadsheets** (`.csv`) open in Excel, Numbers, Google Sheets (**File > Import**) and LibreOffice. Save a copy as `.xlsx` from there if you need that format.
 - **Documents** (`.docx`) open in Word, Google Docs, Pages and LibreOffice. They're US Letter; switch to A4 in your page setup if you need to. To add a row to a table, put the cursor in the last cell and press Tab. To fill them in by hand, print them; the logs repeat their column headings on every page.
-- **Same columns as the tools.** The clearance log, release log, music cue sheet and name supers spreadsheets have the same columns, in the same order, as each tool's CSV export, and the call sheet matches the call sheet's spreadsheet export. Some exports add columns the tool works out for you, such as a cue's duration in seconds or what's still missing.
+- **Same columns as the tools.** The subject tracker, clearance log, release log, music cue sheet and name supers spreadsheets have the same columns, in the same order, as each tool's CSV export, and the call sheet matches the call sheet's spreadsheet export. Some exports add columns the tool works out for you, such as a cue's duration in seconds or what's still missing.
 
 These templates are working records, not legal advice, and you use them at your own risk: see [Not legal advice](../README.md#not-legal-advice). Check what your distributor, broadcaster and E&O insurer need. Blank release forms aren't here yet.
 

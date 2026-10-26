@@ -8,6 +8,7 @@ The file is a JSON object with a `project` record and collections for reusable e
 
 | Collection | Purpose |
 | --- | --- |
+| `subjects` | People you might film, kept by the [subject tracker](../tools/subject-tracker/README.md#what-it-adds-to-the-project-file) until they're added to `people`; `personId` points to the person they became |
 | `people` | Cast, crew, subjects and other contributors. `onCamera` marks someone who needs a release |
 | `locations` | Places involved in production. `onCamera` marks a place that's filmed |
 | `thirdPartyElements` | Archival material, music, artwork, logos and other clearances |
