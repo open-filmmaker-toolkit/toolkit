@@ -65,6 +65,7 @@ The toolkit has two halves:
 
 | Tool | Use it for | Status |
 | --- | --- | --- |
+| [Subject tracker](tools/subject-tracker/) | Keeping track of the people you might film, where access stands and when to follow up, then adding them to your project | First version |
 | [Clearance log](tools/clearance-log/) | Tracking every piece of third-party material until it's cleared, then printing a report for your E&O attorney | First version |
 | [Music cue sheet](tools/music-cue-sheet/) | Building the music cue sheet your distributor or broadcaster needs, from the music already in your clearance log | First version |
 | [Call sheet](tools/call-sheet/) | Building shoot-day call sheets from the people and locations in your project; weather lookup is optional and off until you click it | First version |
@@ -96,6 +97,7 @@ Documentary and independent narrative filmmakers, producers, coordinators and AD
 ```text
 toolkit/
 |-- tools/                # One folder per tool: index.html plus its own README
+|   |-- subject-tracker/
 |   |-- clearance-log/
 |   |-- music-cue-sheet/
 |   |-- call-sheet/

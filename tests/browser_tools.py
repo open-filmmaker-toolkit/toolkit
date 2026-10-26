@@ -11,7 +11,7 @@ Checks, per tool: opening the sample, saving, all CSV exports, phone width, dark
 mode and print layout. Chromium also covers the save-conflict warning (it has the
 file picker API; its handles are faked in memory) and renders a real PDF.
 chromium-fallback, Firefox and WebKit (Safari's engine) use the download/upload fallback instead.
-The call sheet, release tracker, credits builder and name supers list also get end-to-end checks
+The call sheet, release tracker, credits builder, name supers list and subject tracker also get end-to-end checks
 of their own, and the spreadsheet templates are checked against the tools' exports.
 """
 import csv, io, json, pathlib, sys
@@ -19,10 +19,10 @@ from playwright.sync_api import sync_playwright
 
 root = pathlib.Path(__file__).resolve().parents[1]
 sample = (root / 'samples/the-river-keeps.oft.json').read_text()
-TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers']
+TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker']
 COLLECTIONS = ['project', 'people', 'locations', 'thirdPartyElements', 'contracts', 'assets', 'musicCueSheet', 'callSheets']
 PRINT_BTN = {'clearance-log': '#printBtn', 'music-cue-sheet': '#printBtn', 'call-sheet': '#printAllBtn', 'release-tracker': '#printBtn',
-             'credits-builder': '#printBtn', 'name-supers': '#printBtn'}
+             'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn'}
 PHONE = {'width': 390, 'height': 844}
 
 STUB_PRINT = 'window.print = () => { window.__printed = true; };'
@@ -384,7 +384,8 @@ def test_credits_builder(browser, fake):
 
 # Each spreadsheet template's columns must appear in its tool's CSV export, in the same order.
 TEMPLATE_EXPORTS = [('clearance-log', 'clearance-log-template.csv'), ('release-tracker', 'release-log-template.csv'),
-                    ('music-cue-sheet', 'music-cue-sheet-template.csv'), ('name-supers', 'name-supers-template.csv')]
+                    ('music-cue-sheet', 'music-cue-sheet-template.csv'), ('name-supers', 'name-supers-template.csv'),
+                    ('subject-tracker', 'subject-tracker-template.csv')]
 
 def test_name_supers(browser, fake):
     ctx, pg, errs = new_page(browser, 'name-supers', fake)
@@ -430,6 +431,52 @@ def test_name_supers(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
+def test_subject_tracker(browser, fake):
+    ctx, pg, errs = new_page(browser, 'subject-tracker', fake)
+    open_sample(pg, fake)
+    check(pg.locator('#rows .row').count() == 5 and 'Agreed 2' in pg.inner_text('#filters'), 'lists subjects with counts by access')
+    pg.click('[data-filter="declined"]')
+    check(pg.locator('#rows .row').count() == 1 and 'Office of the mayor' in pg.inner_text('#rows'), 'filters by access status')
+    pg.click('[data-filter="all"]'); pg.fill('#search', 'diary')
+    check(pg.locator('#rows .row').count() == 1, 'search finds subjects by notes')
+    pg.fill('#search', '')
+
+    pg.click('#addBtn'); pg.fill('#f-name', 'Ida Fenn'); pg.fill('#f-about', 'Ran the sandbag line in 1993')
+    pg.select_option('#f-status', 'in-conversation'); pg.fill('#f-next', '2020-01-02'); pg.fill('#f-nextNote', 'Send the release')
+    pg.fill('#logNote', 'Met at the library'); pg.click('#logAddBtn')
+    check('Met at the library' in pg.inner_text('#log'), 'logs a contact in the editor')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    first = pg.locator('#rows .row').first.inner_text()
+    check('Ida Fenn' in first and 'overdue' in first and 'Ida Fenn' in pg.inner_text('#dueList'), 'an overdue follow-up comes first and is listed as due')
+
+    pg.click('[data-edit="subject-clerk"]'); pg.select_option('#f-status', 'agreed'); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check('Agreed, not in the project yet' in pg.inner_text('#rows'), 'flags agreed subjects not in the project')
+    pg.click('[data-person="subject-clerk"]'); pg.wait_for_timeout(200)
+    check('Agreed, not in the project yet' not in pg.inner_text('#rows'), 'adds an agreed subject to the project')
+
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    lines = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    check(lines[1][0] == 'Ida Fenn' and len(lines) == 7, 'CSV lists subjects, follow-ups first')
+
+    if fake:
+        pg.click('#saveBtn'); pg.wait_for_timeout(300)
+        data = json.loads(pg.evaluate('window.__file.text'))
+    else:
+        with pg.expect_download() as d:
+            pg.click('#saveBtn')
+        data = json.loads(open(d.value.path(), encoding='utf-8').read())
+    doris = next(p for p in data['people'] if p['name'] == 'Doris Kemp')
+    clerk = next(s for s in data['subjects'] if s['id'] == 'subject-clerk')
+    ida = next(s for s in data['subjects'] if s['name'] == 'Ida Fenn')
+    check(clerk['personId'] == doris['id'] and doris.get('onCamera') is True and doris.get('phone') == '555-0142' and doris.get('roles') == ['Interview subject'],
+          'the new person is saved with their contact details, on camera')
+    check(ida.get('log') == [{'date': ida['lastContact'], 'note': 'Met at the library'}] and ida['nextFollowUp'] == '2020-01-02', 'the contact log and follow-up are saved')
+    original = json.loads(sample)
+    check(data.get('credits') == original['credits'] and data.get('supers') == original['supers'] and data['contracts'] == original['contracts'], "other tools' data is unchanged")
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
 def test_template_columns(browser, fake):
     for name, template in TEMPLATE_EXPORTS:
         ctx, pg, errs = new_page(browser, name, fake)
@@ -465,6 +512,8 @@ def main():
         test_credits_builder(browser, fake)
         print('== name-supers / flags, spelling and export')
         test_name_supers(browser, fake)
+        print('== subject-tracker / filters, follow-ups and adding people')
+        test_subject_tracker(browser, fake)
         print('== templates / columns match the tools\' exports')
         test_template_columns(browser, fake)
         browser.close()
