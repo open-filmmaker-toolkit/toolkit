@@ -847,5 +847,70 @@
       "lastContact": "2026-09-20",
       "notes": "Declined an interview; sent a written statement."
     }
+  ],
+  "sources": [
+    {
+      "id": "source-rchs-aerial",
+      "kind": "archival",
+      "title": "Flood of 1965, aerial over downtown",
+      "status": "ready-to-license",
+      "type": "Archival footage",
+      "archive": "Riverside County Historical Society",
+      "itemId": "Reel 14, 00:12:30",
+      "rightsHolder": "Riverside County Historical Society",
+      "cost": 450,
+      "elementId": "sample-01"
+    },
+    {
+      "id": "source-channel6",
+      "kind": "archival",
+      "title": "Channel 6 report on the 1993 flood",
+      "status": "screener-requested",
+      "type": "Archival footage",
+      "archive": "Channel 6 news archive",
+      "contact": "Archive desk, by email",
+      "cost": 1200,
+      "rightsNotes": "Current owner unclear after the 2019 station sale",
+      "elementId": "sample-08"
+    },
+    {
+      "id": "source-sandbag",
+      "kind": "archival",
+      "title": "Sandbag line on Front Street, 1993",
+      "status": "screener-received",
+      "type": "Archival still",
+      "archive": "Riverside Courier photo morgue",
+      "itemId": "Box 31, folder 7",
+      "rightsHolder": "Riverside Public Library",
+      "cost": 75,
+      "notes": "Three frames; the wide shot shows the levee breach"
+    },
+    {
+      "id": "source-home-movie",
+      "kind": "archival",
+      "title": "Home movie of the 1965 cleanup",
+      "status": "found",
+      "type": "Archival footage",
+      "archive": "Hammond family",
+      "notes": "Ruth mentioned it on the first call; ask to see it"
+    },
+    {
+      "id": "source-army-report",
+      "kind": "research",
+      "title": "Corps of Engineers post-flood report, 1966",
+      "status": "checked",
+      "archive": "US Army Corps of Engineers",
+      "link": "Call number TC423 .R5 1966",
+      "notes": "Gives the breach timeline used in act one"
+    },
+    {
+      "id": "source-courier-series",
+      "kind": "research",
+      "title": "\"The River Keeps Its Own\" newspaper series",
+      "status": "using",
+      "archive": "Riverside Courier",
+      "itemId": "June 3–7, 1985",
+      "notes": "Possible title quote; check the rights to quote it on screen"
+    }
   ]
 }
