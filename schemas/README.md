@@ -11,6 +11,7 @@ The file is a JSON object with a `project` record and collections for reusable e
 | `subjects` | People you might film, kept by the [subject tracker](../tools/subject-tracker/README.md#what-it-adds-to-the-project-file) until they're added to `people`; `personId` points to the person they became |
 | `people` | Cast, crew, subjects and other contributors. `onCamera` marks someone who needs a release |
 | `locations` | Places involved in production. `onCamera` marks a place that's filmed |
+| `sources` | Archival leads and research sources, kept by the [research and archival log](../tools/research-log/README.md#what-it-adds-to-the-project-file); `elementId` points to the third-party element a lead became |
 | `thirdPartyElements` | Archival material, music, artwork, logos and other clearances |
 | `contracts` | Releases, licenses and other agreements; references the people, locations, elements and assets they cover. See [Releases](#releases) |
 | `callSheets` | Shoot days: date, call and wrap times, a location, weather, schedule, and crew with call times; references `locations` and `people`. `locations` may also carry `latitude` and `longitude` |

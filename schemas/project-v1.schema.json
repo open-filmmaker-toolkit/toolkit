@@ -70,6 +70,13 @@
         "$ref": "#/$defs/subject"
       },
       "description": "People you might film, kept by the subject tracker until they're added to people."
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/source"
+      },
+      "description": "Research sources and archival leads, kept by the research and archival log."
     }
   },
   "additionalProperties": true,
@@ -793,6 +800,81 @@
         "personId": {
           "$ref": "#/$defs/id",
           "description": "The person in people this subject became."
+        }
+      },
+      "additionalProperties": true
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": {
+          "enum": [
+            "archival",
+            "research"
+          ]
+        },
+        "title": {
+          "type": "string",
+          "description": "What it is."
+        },
+        "status": {
+          "enum": [
+            "found",
+            "screener-requested",
+            "screener-received",
+            "ready-to-license",
+            "to-check",
+            "checked",
+            "using",
+            "not-using"
+          ],
+          "description": "Archival leads: found, screener-requested, screener-received, ready-to-license or not-using. Research sources: to-check, checked, using or not-using."
+        },
+        "type": {
+          "type": "string",
+          "description": "A clearance log type, such as Archival footage."
+        },
+        "archive": {
+          "type": "string",
+          "description": "Archive or collection; for research sources, the author or publisher."
+        },
+        "itemId": {
+          "type": "string"
+        },
+        "link": {
+          "type": "string",
+          "description": "A catalog link or call number, kept as text."
+        },
+        "rightsHolder": {
+          "type": "string"
+        },
+        "contact": {
+          "type": "string"
+        },
+        "cost": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Estimated cost."
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "rightsNotes": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        },
+        "elementId": {
+          "$ref": "#/$defs/id",
+          "description": "The third-party element this source became in the clearance log."
         }
       },
       "additionalProperties": true

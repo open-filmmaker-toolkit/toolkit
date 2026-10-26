@@ -11,7 +11,7 @@ Checks, per tool: opening the sample, saving, all CSV exports, phone width, dark
 mode and print layout. Chromium also covers the save-conflict warning (it has the
 file picker API; its handles are faked in memory) and renders a real PDF.
 chromium-fallback, Firefox and WebKit (Safari's engine) use the download/upload fallback instead.
-The call sheet, release tracker, credits builder, name supers list and subject tracker also get end-to-end checks
+The call sheet, release tracker, credits builder, name supers list, subject tracker and research and archival log also get end-to-end checks
 of their own, and the spreadsheet templates are checked against the tools' exports.
 """
 import csv, io, json, os, pathlib, sys
@@ -19,10 +19,10 @@ from playwright.sync_api import sync_playwright
 
 root = pathlib.Path(__file__).resolve().parents[1]
 sample = (root / 'samples/the-river-keeps.oft.json').read_text()
-TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker']
+TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log']
 COLLECTIONS = ['project', 'people', 'locations', 'thirdPartyElements', 'contracts', 'assets', 'musicCueSheet', 'callSheets']
 PRINT_BTN = {'clearance-log': '#printBtn', 'music-cue-sheet': '#printBtn', 'call-sheet': '#printAllBtn', 'release-tracker': '#printBtn',
-             'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn'}
+             'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn'}
 PHONE = {'width': 390, 'height': 844}
 
 STUB_PRINT = 'window.print = () => { window.__printed = true; };'
@@ -385,7 +385,7 @@ def test_credits_builder(browser, fake):
 # Each spreadsheet template's columns must appear in its tool's CSV export, in the same order.
 TEMPLATE_EXPORTS = [('clearance-log', 'clearance-log-template.csv'), ('release-tracker', 'release-log-template.csv'),
                     ('music-cue-sheet', 'music-cue-sheet-template.csv'), ('name-supers', 'name-supers-template.csv'),
-                    ('subject-tracker', 'subject-tracker-template.csv')]
+                    ('subject-tracker', 'subject-tracker-template.csv'), ('research-log', 'research-log-template.csv')]
 
 def test_name_supers(browser, fake):
     ctx, pg, errs = new_page(browser, 'name-supers', fake)
@@ -477,6 +477,52 @@ def test_subject_tracker(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
+def test_research_log(browser, fake):
+    ctx, pg, errs = new_page(browser, 'research-log', fake)
+    open_sample(pg, fake)
+    check(pg.locator('#rows .row').count() == 4 and 'Research sources 2' in pg.inner_text('#tab-research'), 'shows archival leads, with research sources on their own tab')
+    check('In the clearance log: Licensed' in pg.inner_text('#rows'), "shows a linked lead's clearance status")
+    pg.click('#tab-research')
+    check('Corps of Engineers' in pg.inner_text('#rows') and 'Flood of 1965' not in pg.inner_text('#rows'), 'switches to research sources')
+    pg.click('#tab-archival')
+    pg.select_option('#statusFilter', 'screener-received')
+    check(pg.locator('#rows .row').count() == 1, 'filters by status')
+    pg.select_option('#statusFilter', '')
+
+    pg.click('[data-edit="source-sandbag"]'); pg.select_option('#f-status', 'ready-to-license'); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check('Ready, not in the clearance log yet' in pg.inner_text('#rows'), 'flags a ready lead not in the clearance log')
+    pg.click('[data-send="source-sandbag"]'); pg.wait_for_timeout(200)
+    check('Ready, not in the clearance log yet' not in pg.inner_text('#rows') and pg.inner_text('#rows').count('In the clearance log') == 3, 'sends a lead to the clearance log')
+
+    pg.click('#addBtn'); pg.fill('#f-title', 'Levee construction stills'); pg.fill('#f-cost', '-5'); pg.click('#editorSubmit'); pg.wait_for_timeout(100)
+    check(pg.is_visible('#editor'), 'a negative cost is refused')
+    pg.fill('#f-cost', '200'); pg.select_option('#f-type', 'Archival still'); pg.fill('#f-archive', 'State archives'); pg.click('#sendBtn'); pg.wait_for_timeout(200)
+    check('Levee construction stills' in pg.inner_text('#rows') and '4 sent to the clearance log' in pg.inner_text('#totals'), 'a new source can be sent straight from the editor')
+
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    lines = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    check(len(lines) == 8 and lines[0][0] == 'Log' and any(r[1] == 'Levee construction stills' and r[13] == 'Not started' for r in lines), 'CSV lists every source with its clearance status')
+
+    if fake:
+        pg.click('#saveBtn'); pg.wait_for_timeout(300)
+        data = json.loads(pg.evaluate('window.__file.text'))
+    else:
+        with pg.expect_download() as d:
+            pg.click('#saveBtn')
+        data = json.loads(open(d.value.path(), encoding='utf-8').read())
+    sandbag = next(s for s in data['sources'] if s['id'] == 'source-sandbag')
+    el = next(e for e in data['thirdPartyElements'] if e['id'] == sandbag.get('elementId'))
+    check(el['description'] == 'Sandbag line on Front Street, 1993' and el['type'] == 'Archival still' and el['status'] == 'not-started'
+          and el['rightsHolder'] == 'Riverside Public Library' and el['cost'] == 75 and 'Box 31, folder 7' in el['source'], 'the sent element carries the lead\'s details')
+    new = next(s for s in data['sources'] if s.get('title') == 'Levee construction stills')
+    check(new.get('cost') == 200 and new.get('status') == 'ready-to-license' and new.get('elementId'), 'the new source is saved, linked and ready')
+    original = json.loads(sample)
+    check(data['people'] == original['people'] and data.get('credits') == original['credits'] and data['contracts'] == original['contracts']
+          and [e for e in data['thirdPartyElements'] if e['id'].startswith('sample-')] == original['thirdPartyElements'], "other tools' data is unchanged")
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
 def test_template_columns(browser, fake):
     for name, template in TEMPLATE_EXPORTS:
         ctx, pg, errs = new_page(browser, name, fake)
@@ -516,6 +562,8 @@ def main():
         test_name_supers(browser, fake)
         print('== subject-tracker / filters, follow-ups and adding people')
         test_subject_tracker(browser, fake)
+        print('== research-log / tabs, statuses and sending to the clearance log')
+        test_research_log(browser, fake)
         print('== templates / columns match the tools\' exports')
         test_template_columns(browser, fake)
         browser.close()
