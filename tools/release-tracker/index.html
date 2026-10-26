@@ -1,0 +1,1317 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Release tracker · Open Filmmaker Toolkit</title>
+<meta name="description" content="Track who signed what: appearance, location and materials releases, linked to the people and places in your project file. Runs in your browser; your data stays on your computer.">
+<style>
+:root {
+  --paper: #f1f3f2; --sheet: #ffffff; --ink: #1a2130; --ink-2: #4b556a; --ink-3: #6d778a;
+  --rule: #d4dad8; --rule-soft: #e6eae8; --hover: #f6f8f7; --focus: #2f6fdb;
+  --good: #2b7a57; --good-bg: #dff1e8; --warn: #8a5a00; --warn-bg: #fbf0d9; --bad: #b3392d; --bad-bg: #f8e1de; --none-bg: #eceef2;
+  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #141922; --sheet: #1b212b; --ink: #e6e9ee; --ink-2: #a6afbd; --ink-3: #8790a0;
+    --rule: #2f3744; --rule-soft: #262d38; --hover: #212834; --focus: #7aa7ff;
+    --good: #4fb386; --good-bg: #1a3329; --warn: #e2a531; --warn-bg: #3a2f17; --bad: #e26657; --bad-bg: #3b2220; --none-bg: #2a303b;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans); }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+[hidden] { display: none !important; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.cant-run { display: none; max-width: 640px; margin: 64px auto; padding: 0 24px; }
+.cant-run h1 { margin: 0 0 8px; font: 600 26px/1.2 var(--serif); }
+.cant-run p { margin: 0 0 10px; color: var(--ink-2); }
+.no-js .cant-run { display: block; }
+.no-js .page { display: none; }
+.page { max-width: 1180px; margin: 0 auto; padding: 0 24px 48px; }
+
+.masthead { display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: flex-end; justify-content: space-between; padding: 28px 0 20px; }
+.tool-name { margin: 0 0 2px; font-size: 14px; font-weight: 600; color: var(--ink-2); }
+.film-title { margin: 0; font: 600 32px/1.15 var(--serif); letter-spacing: -0.01em; overflow-wrap: anywhere; cursor: pointer; }
+.film-title.is-empty { color: var(--ink-3); font-style: italic; font-weight: 400; }
+.film-meta { margin: 4px 0 0; color: var(--ink-2); font-size: 14px; }
+.file { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.file-state { margin: 0; font-size: 13px; color: var(--ink-2); text-align: right; }
+.file-state .dirty { color: var(--warn); font-weight: 600; }
+.file-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; }
+.btn:hover { border-color: var(--ink-3); }
+.btn.primary { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.btn.primary:hover { opacity: 0.88; }
+.btn.danger { color: var(--bad); }
+.btn.small { padding: 4px 10px; font-size: 13px; }
+.btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.link-btn { padding: 0; border: 0; background: none; cursor: pointer; color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; font-size: 14px; }
+.link-btn:hover { color: var(--ink); }
+
+.banner { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 0 0 16px; padding: 12px 16px; border-radius: 8px; background: var(--warn-bg); border: 1px solid color-mix(in srgb, var(--warn) 40%, transparent); }
+.banner p { margin: 0; flex: 1 1 280px; }
+.banner .actions { display: flex; gap: 8px; }
+
+/* Coverage: a sign-in sheet for everyone and everywhere on camera */
+.overview { margin: 0 0 28px; }
+.tally { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px; margin: 0 0 12px; }
+.headline { margin: 0; font: 600 22px/1.2 var(--serif); }
+.tally-sub { margin: 0; color: var(--ink-2); font-size: 14px; }
+.tally .spacer { flex: 1; }
+.coverage { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.cov-card { background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 18px 8px; min-width: 0; }
+.cov-head { display: flex; align-items: baseline; gap: 10px; margin: 0 0 2px; }
+.cov-head h2 { margin: 0; font: 600 18px/1.3 var(--serif); }
+.cov-count { font-size: 13px; color: var(--ink-2); }
+.cov-list { list-style: none; margin: 0; padding: 0; }
+.cov-line { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 2px 16px; align-items: end; padding: 12px 0 8px; }
+.cov-line + .cov-line { border-top: 1px solid var(--rule-soft); }
+.cov-who { min-width: 0; overflow-wrap: anywhere; }
+.cov-who strong { display: block; font-weight: 600; }
+.cov-who .sub { display: block; font-size: 13px; color: var(--ink-3); }
+.cov-sig { display: flex; align-items: center; gap: 8px; width: 100%; min-width: 0; padding: 2px 2px 4px; border: 0; border-bottom: 1px solid var(--ink-3); border-radius: 0; background: none; cursor: pointer; text-align: left; font-size: 14px; color: var(--ink-2); }
+.cov-sig:hover { background: var(--hover); }
+.cov-sig .text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.is-covered .cov-sig { color: var(--good); border-bottom-color: var(--good); }
+.is-covered .cov-sig .text { font: italic 16px/1.3 var(--serif); }
+.is-pending .cov-sig, .is-expired .cov-sig { color: var(--warn); border-bottom-color: var(--warn); }
+.is-missing .cov-sig, .is-declined .cov-sig { color: var(--bad); border-bottom: 2px dashed var(--bad); font-weight: 600; }
+.is-declined .cov-sig { border-bottom-style: solid; }
+.dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: none; background: var(--ink-3); }
+.is-covered .dot, .dot.s-signed { background: var(--good); }
+.is-pending .dot, .is-expired .dot, .dot.s-pending, .dot.s-expired { background: var(--warn); }
+.is-missing .dot, .is-declined .dot, .dot.s-declined { background: var(--bad); }
+.cov-empty { margin: 8px 0 10px; color: var(--ink-2); font-size: 14px; }
+
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 12px; }
+.toolbar h2 { margin: 0 8px 0 0; font: 600 20px/1.2 var(--serif); }
+.toolbar input[type="search"] { flex: 1 1 220px; min-width: 0; padding: 7px 11px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); }
+.toolbar select { padding: 7px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); }
+.toolbar .spacer { flex: 1 1 0; }
+
+.table-wrap { overflow-x: auto; background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; }
+.table-wrap table { width: 100%; border-collapse: collapse; min-width: 820px; }
+.table-wrap th, .table-wrap td { padding: 10px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--rule-soft); }
+.table-wrap thead th { font-size: 13px; color: var(--ink-2); font-weight: 600; white-space: nowrap; border-bottom-color: var(--rule); }
+.table-wrap tbody tr[data-id] { cursor: pointer; }
+.table-wrap tbody tr[data-id]:hover { background: var(--hover); }
+.table-wrap tbody tr:last-child td { border-bottom: 0; }
+.el-name { padding: 0; border: 0; background: none; cursor: pointer; text-align: left; font-weight: 600; color: var(--ink); }
+.el-name:hover { text-decoration: underline; text-underline-offset: 2px; }
+.sub { display: block; color: var(--ink-3); font-size: 13px; }
+.warn-text { color: var(--bad); }
+.pill { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; padding: 2px 9px 2px 7px; border-radius: 999px; font-size: 13px; font-weight: 500; background: var(--none-bg); }
+.pill.s-signed { background: var(--good-bg); }
+.pill.s-pending, .pill.s-expired { background: var(--warn-bg); }
+.pill.s-declined { background: var(--bad-bg); }
+.no-match, .no-releases { padding: 28px 12px; text-align: center; color: var(--ink-2); }
+
+.empty { padding: 40px 24px; text-align: center; background: var(--sheet); border: 1px dashed var(--rule); border-radius: 8px; }
+.empty h2 { margin: 0 0 6px; font: 600 20px/1.3 var(--serif); }
+.empty p { margin: 0 auto 16px; max-width: 56ch; color: var(--ink-2); }
+.empty .actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.foot { margin-top: 28px; font-size: 13px; color: var(--ink-3); }
+
+dialog { border: 0; padding: 0; color: var(--ink); background: var(--sheet); box-shadow: 0 10px 40px rgba(10, 14, 22, 0.25); }
+dialog::backdrop { background: rgba(16, 20, 28, 0.42); }
+dialog.drawer { margin: 0 0 0 auto; width: min(640px, 100vw); height: 100dvh; max-height: 100dvh; max-width: 100vw; border-left: 1px solid var(--rule); }
+dialog.modal { width: min(560px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); border-radius: 10px; }
+dialog form { display: flex; flex-direction: column; height: 100%; max-height: inherit; }
+.dlg-head { padding: 20px 24px 12px; border-bottom: 1px solid var(--rule-soft); }
+.dlg-head h2 { margin: 0; font: 600 22px/1.25 var(--serif); }
+.dlg-body { flex: 1; overflow-y: auto; padding: 16px 24px 24px; display: grid; gap: 14px; align-content: start; }
+.dlg-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 14px 24px; border-top: 1px solid var(--rule-soft); }
+.dlg-foot .spacer { flex: 1; }
+.field { display: grid; gap: 4px; }
+.field > label, .group h3 { font-size: 14px; font-weight: 600; }
+.hint { margin: 0; font-size: 13px; color: var(--ink-3); }
+.field input, .field select, .field textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); }
+.row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.req { color: var(--bad); font-weight: 400; }
+.group { display: grid; gap: 8px; padding-top: 10px; border-top: 1px solid var(--rule-soft); }
+.group-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.group h3 { margin: 0; }
+.group-head .spacer { flex: 1; }
+.checks { display: grid; gap: 2px; max-height: 220px; overflow-y: auto; padding: 2px; }
+.check { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; align-items: start; padding: 5px 4px; border-radius: 6px; cursor: pointer; }
+.check:hover { background: var(--hover); }
+.check input { width: 18px; height: 18px; margin: 2px 0 0; }
+.check .who { overflow-wrap: anywhere; }
+.check .sub { display: inline; margin-left: 4px; }
+.checks-sep { margin: 6px 4px 2px; font-size: 12px; font-weight: 600; color: var(--ink-3); }
+details.group > summary { cursor: pointer; font-size: 14px; font-weight: 600; }
+.scans { display: grid; gap: 6px; }
+.scan { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 8px 10px; border: 1px solid var(--rule-soft); border-radius: 6px; }
+.scan .name { flex: 1 1 200px; min-width: 0; overflow-wrap: anywhere; }
+.folder-note { margin: 0; padding: 10px 14px; border-radius: 8px; background: var(--paper); font-size: 13px; color: var(--ink-2); }
+
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); max-width: calc(100vw - 32px); padding: 10px 16px; border-radius: 8px; background: var(--ink); color: var(--paper); font-size: 14px; box-shadow: 0 6px 24px rgba(10, 14, 22, 0.25); z-index: 10; }
+.toast.error { background: var(--bad); color: #ffffff; }
+.report { display: none; }
+
+@media (max-width: 760px) {
+  .page { padding: 0 16px 40px; }
+  .film-title { font-size: 26px; }
+  .file { align-items: flex-start; }
+  .file-state { text-align: left; }
+  .coverage { grid-template-columns: 1fr; }
+  .row-2, .row-3 { grid-template-columns: 1fr; }
+  .toolbar .spacer { display: none; }
+  .toolbar input[type="search"] { flex-basis: 100%; }
+  .toolbar h2 { order: -2; flex-basis: 100%; }
+  .toolbar #addBtn { order: -1; flex-basis: 100%; justify-content: center; }
+}
+@media (max-width: 420px) {
+  .cov-line { grid-template-columns: 1fr; }
+}
+@media print {
+  @page { size: portrait; margin: 14mm; }
+  :root { color-scheme: light; }
+  body { background: #ffffff; color: #000000; font-size: 9.5pt; }
+  .page, dialog, .toast { display: none !important; }
+  .report { display: block; }
+  .report h1 { margin: 0; font: 700 20pt/1.2 var(--serif); }
+  .report .sub { display: block; margin: 0 0 8pt; font-size: 11pt; color: #000000; }
+  .report h2 { margin: 14pt 0 4pt; font-size: 11pt; break-after: avoid; page-break-after: avoid; }
+  .report dl { display: grid; grid-template-columns: 110pt 1fr; gap: 2pt 10pt; margin: 0 0 6pt; }
+  .report dt { color: #444444; }
+  .report dd { margin: 0; }
+  .report table { width: 100%; border-collapse: collapse; }
+  .report th, .report td { padding: 3pt 4pt; border: 0.5pt solid #999999; text-align: left; vertical-align: top; }
+  .report thead th { background: #eeeeee; font-size: 8.5pt; }
+  .report thead { display: table-header-group; }
+  .report tr { page-break-inside: avoid; }
+  .report .flag { font-weight: 700; }
+  .report .small { font-size: 8pt; color: #333333; }
+  .report .note { margin-top: 12pt; font-size: 8pt; color: #333333; }
+}
+</style>
+</head>
+<body>
+<div class="cant-run" id="cantRun">
+  <h1 id="cantRunTitle">Open this file in a web browser</h1>
+  <p id="cantRunText">This tool runs in Chrome, Edge, Firefox or Safari. You're seeing a preview that doesn't run it, so none of the buttons would work.</p>
+  <p id="cantRunHow">In your browser, choose File, then Open File, and pick this file. Or right-click the file and open it with your browser.</p>
+</div>
+<div class="page">
+  <header class="masthead">
+    <div>
+      <p class="tool-name">Release tracker</p>
+      <h1 class="film-title" id="filmTitle">Untitled film</h1>
+      <p class="film-meta"><span id="filmMeta"></span> <button type="button" class="link-btn" id="editProjectBtn">Edit film details</button></p>
+    </div>
+    <div class="file">
+      <p class="file-state" id="fileState">Not saved to a file yet</p>
+      <div class="file-actions">
+        <button type="button" class="btn" id="newBtn">New project</button>
+        <button type="button" class="btn" id="openBtn">Open file</button>
+        <button type="button" class="btn" id="projectCsvBtn">Export project data (CSV)</button>
+        <button type="button" class="btn primary" id="saveBtn">Save file</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="banner" id="recovery" role="region" aria-label="Unsaved work" hidden>
+    <p id="recoveryText"></p>
+    <div class="actions">
+      <button type="button" class="btn primary" id="restoreBtn">Restore it</button>
+      <button type="button" class="btn" id="discardBtn">Discard it</button>
+    </div>
+  </div>
+
+  <main>
+    <section class="overview" id="overview" aria-labelledby="covHeadline">
+      <div class="tally">
+        <p class="headline" id="covHeadline"></p>
+        <p class="tally-sub" id="covSub"></p>
+        <span class="spacer"></span>
+        <button type="button" class="link-btn" id="onCameraBtn">Choose who and where is on camera</button>
+      </div>
+      <div class="coverage">
+        <section class="cov-card" aria-labelledby="peopleHead">
+          <div class="cov-head"><h2 id="peopleHead">People on camera</h2><span class="cov-count" id="peopleCount"></span></div>
+          <ul class="cov-list" id="peopleCov"></ul>
+        </section>
+        <section class="cov-card" aria-labelledby="placesHead">
+          <div class="cov-head"><h2 id="placesHead">Locations filmed</h2><span class="cov-count" id="placesCount"></span></div>
+          <ul class="cov-list" id="placesCov"></ul>
+        </section>
+      </div>
+    </section>
+
+    <section aria-labelledby="releasesHead">
+      <div class="toolbar" id="toolbar">
+        <h2 id="releasesHead">Releases</h2>
+        <input type="search" id="search" placeholder="Search releases, people, locations, notes" aria-label="Search releases">
+        <select id="statusFilter" aria-label="Filter releases">
+          <option value="all">All releases</option>
+          <option value="signed">Signed</option>
+          <option value="pending">Waiting for signature</option>
+          <option value="declined">Declined</option>
+          <option value="expired">Expired</option>
+          <option value="noscan">No scan attached</option>
+        </select>
+        <span class="spacer"></span>
+        <button type="button" class="btn" id="csvBtn">Export releases (CSV)</button>
+        <button type="button" class="btn" id="printBtn">Print report</button>
+        <button type="button" class="btn primary" id="addBtn">Add release</button>
+      </div>
+      <div class="table-wrap" id="tableWrap">
+        <table>
+          <thead><tr>
+            <th scope="col">Release</th><th scope="col">Covers</th><th scope="col">Status</th>
+            <th scope="col">Signed</th><th scope="col">Expires</th><th scope="col">Scan</th>
+          </tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="empty" hidden>
+        <h2>No releases yet</h2>
+        <p>Log each appearance, location and materials release as it comes in. Open your project file to use the people and locations you already have.</p>
+        <div class="actions">
+          <button type="button" class="btn primary" id="emptyAddBtn">Add the first release</button>
+          <button type="button" class="btn" id="emptyOpenBtn">Open a project file</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <p>Part of the Open Filmmaker Toolkit. This page makes no network requests: everything stays on this computer until you save or export it. Uses the same project file as the clearance log, music cue sheet and call sheet. Not legal advice.</p>
+  </footer>
+</div>
+
+<dialog class="drawer" id="editor" aria-labelledby="editorTitle">
+  <form id="editorForm" method="dialog" novalidate>
+    <div class="dlg-head"><h2 id="editorTitle">Add release</h2></div>
+    <div class="dlg-body">
+      <div class="row-2">
+        <div class="field">
+          <label for="f-type">Kind of release</label>
+          <select id="f-type"></select>
+        </div>
+        <div class="field">
+          <label for="f-status">Status</label>
+          <select id="f-status"></select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="f-title">Name of this release</label>
+        <input id="f-title" type="text" placeholder="Leave blank to name it after who or what it covers">
+      </div>
+      <div class="row-2">
+        <div class="field"><label for="f-signedDate">Date signed</label><input id="f-signedDate" type="date"></div>
+        <div class="field"><label for="f-expirationDate">Expires</label><input id="f-expirationDate" type="date"></div>
+      </div>
+      <p class="hint" id="statusHint"></p>
+
+      <div class="group">
+        <div class="group-head"><h3 id="peopleListHead">People it covers</h3><span class="spacer"></span><button type="button" class="btn small" id="addPersonBtn">Add a person</button></div>
+        <div class="checks" id="peopleList" role="group" aria-labelledby="peopleListHead"></div>
+      </div>
+
+      <div class="group">
+        <div class="group-head"><h3 id="locationsListHead">Locations it covers</h3><span class="spacer"></span><button type="button" class="btn small" id="addLocationBtn">Add a location</button></div>
+        <div class="checks" id="locationsList" role="group" aria-labelledby="locationsListHead"></div>
+      </div>
+
+      <details class="group" id="elementsGroup">
+        <summary id="elementsListHead">Material it covers, from the clearance log</summary>
+        <p class="hint">For materials releases: the photos, home movies or documents someone has let you use.</p>
+        <div class="checks" id="elementsList" role="group" aria-labelledby="elementsListHead"></div>
+      </details>
+
+      <p class="hint warn-text" id="missingRefs" hidden></p>
+
+      <div class="group">
+        <div class="group-head"><h3>Signed copy</h3><span class="spacer"></span><button type="button" class="btn small" id="attachBtn">Attach a scan</button></div>
+        <div class="scans" id="scanList"></div>
+        <p class="folder-note" id="folderNote"></p>
+        <div><button type="button" class="btn small" id="connectFolderBtn" hidden>Connect project folder</button></div>
+      </div>
+
+      <div class="field"><label for="f-notes">Notes</label><textarea id="f-notes" rows="3"></textarea></div>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn danger" id="deleteBtn">Delete release</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="editorCancel">Cancel</button>
+      <button type="submit" class="btn primary" id="editorSubmit">Save release</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="onCameraDialog" aria-labelledby="onCameraTitle">
+  <form id="onCameraForm" method="dialog">
+    <div class="dlg-head"><h2 id="onCameraTitle">Who and where is on camera</h2></div>
+    <div class="dlg-body">
+      <p class="hint">Everyone and everywhere checked here needs a release. Locations on a call sheet count as filmed unless you uncheck them.</p>
+      <div class="group">
+        <div class="group-head"><h3 id="ocPeopleHead">People on camera</h3><span class="spacer"></span><button type="button" class="btn small" id="ocAddPersonBtn">Add a person</button></div>
+        <div class="checks" id="ocPeople" role="group" aria-labelledby="ocPeopleHead"></div>
+      </div>
+      <div class="group">
+        <div class="group-head"><h3 id="ocPlacesHead">Locations filmed</h3><span class="spacer"></span><button type="button" class="btn small" id="ocAddLocationBtn">Add a location</button></div>
+        <div class="checks" id="ocPlaces" role="group" aria-labelledby="ocPlacesHead"></div>
+      </div>
+    </div>
+    <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn" id="onCameraCancel">Cancel</button><button type="submit" class="btn primary">Save</button></div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="addDialog" aria-labelledby="addTitle">
+  <form id="addForm" method="dialog">
+    <div class="dlg-head"><h2 id="addTitle">Add</h2></div>
+    <div class="dlg-body" id="addBody"></div>
+    <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn" id="addCancel">Cancel</button><button type="submit" class="btn primary">Add</button></div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="projectDialog" aria-labelledby="projectDialogTitle">
+  <form id="projectForm" method="dialog">
+    <div class="dlg-head"><h2 id="projectDialogTitle">Film details</h2></div>
+    <div class="dlg-body">
+      <div class="field"><label for="p-title">Film title</label><input id="p-title" type="text" placeholder="Working title is fine"></div>
+      <div class="row-2">
+        <div class="field"><label for="p-company">Production company</label><input id="p-company" type="text"></div>
+        <div class="field"><label for="p-producer">Producer</label><input id="p-producer" type="text"></div>
+      </div>
+      <div class="row-2">
+        <div class="field"><label for="p-preparedBy">Report prepared by</label><input id="p-preparedBy" type="text" placeholder="Name and role"></div>
+        <div class="field"><label for="p-preparedContact">Their contact</label><input id="p-preparedContact" type="text" placeholder="Email or phone"></div>
+      </div>
+    </div>
+    <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn" id="projectCancel">Cancel</button><button type="submit" class="btn primary">Save details</button></div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="projectCsvDialog" aria-labelledby="projectCsvTitle">
+  <form id="projectCsvForm" method="dialog">
+    <div class="dlg-head"><h2 id="projectCsvTitle">Export project data</h2></div>
+    <div class="dlg-body">
+      <div class="field">
+        <label for="projectCsvCollection">Data to export</label>
+        <select id="projectCsvCollection">
+          <option value="project">Project details</option>
+          <option value="people">People</option>
+          <option value="locations">Locations</option>
+          <option value="thirdPartyElements">Third-party elements</option>
+          <option value="contracts">Contracts</option>
+          <option value="assets">Assets</option>
+          <option value="musicCueSheet">Music cue sheet details</option>
+          <option value="callSheets">Call sheets</option>
+        </select>
+      </div>
+      <p class="hint">Exports one CSV file for the selected collection. Nested values are kept as JSON in their cell.</p>
+    </div>
+    <div class="dlg-foot">
+      <button type="submit" class="btn primary">Export CSV</button>
+      <button type="button" class="btn" id="projectCsvCancel">Cancel</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="conflictDialog" aria-labelledby="conflictTitle">
+  <form method="dialog">
+    <div class="dlg-head"><h2 id="conflictTitle">Project file changed</h2></div>
+    <div class="dlg-body">
+      <p id="conflictText">This project file changed after you opened it. Saving will replace those changes.</p>
+      <p class="hint">Your edits are still here. Choose whether to overwrite the changed file, save a separate copy, or load its latest contents. Save in one tool at a time; simultaneous saves can still race.</p>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn" id="conflictReloadBtn">Reload latest</button>
+      <button type="button" class="btn" id="conflictCopyBtn">Save a copy</button>
+      <button type="button" class="btn danger" id="conflictOverwriteBtn">Overwrite file</button>
+      <button type="button" class="btn" id="conflictCancelBtn">Keep editing</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="report" id="report" aria-hidden="true"></div>
+<input type="file" id="fileInput" accept=".json,application/json" hidden>
+<input type="file" id="scanInput" accept="application/pdf,image/*" multiple hidden>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+(() => {
+  'use strict';
+
+  const FORMAT = 'open-filmmaker-toolkit/project';
+  const FORMAT_VERSION = 1;
+  const TOOL = 'release-tracker 0.1.0';
+  const DRAFT_KEY = 'oft.release-tracker.draft';
+  const PROJECT_TEXT = ['title', 'company', 'producer', 'preparedBy', 'preparedContact'];
+  const SCAN_FOLDER = 'releases';
+  const TYPES = [
+    { value: 'appearance release', label: 'Appearance release' },
+    { value: 'location release', label: 'Location release' },
+    { value: 'materials release', label: 'Materials release' },
+    { value: 'other release', label: 'Other release' },
+  ];
+  const STATUSES = [
+    { value: 'pending', label: 'Waiting for signature' },
+    { value: 'signed', label: 'Signed' },
+    { value: 'declined', label: 'Declined' },
+  ];
+  const STATE_LABEL = { signed: 'Signed', pending: 'Waiting for signature', declined: 'Declined', expired: 'Expired' };
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const str = v => (v == null ? '' : String(v));
+  const arr = v => (Array.isArray(v) ? v : []);
+
+  let doc = blankDoc();
+  let fileHandle = null;
+  let baselineText = null;
+  let fileName = null;
+  let dirty = false;
+  let projectDir = null;      // folder holding the project file, when connected (Chrome and Edge)
+  let editing = null;         // working copy of the release in the editor
+  let isNew = false;
+  let pendingScans = [];      // { asset, file } attached in the editor, filed on save
+  let removedScanIds = [];
+  let addKind = null;
+  let addContext = null;      // 'editor' or 'onCamera'
+  let ocDraft = null;         // working copy of on-camera choices
+
+  function blankDoc() {
+    return { format: FORMAT, formatVersion: FORMAT_VERSION, project: { title: '', company: '', producer: '', preparedBy: '', preparedContact: '', frameRate: 24, currency: 'USD' }, people: [], locations: [], thirdPartyElements: [], contracts: [], assets: [] };
+  }
+  function newId(prefix) {
+    if (window.crypto && crypto.randomUUID) return `${prefix}-${crypto.randomUUID()}`;
+    return `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+  }
+  // Fills in only what this tool needs; everything else in the file is left as it was.
+  function normalize(d) {
+    if (!d.project || typeof d.project !== 'object') d.project = {};
+    for (const k of PROJECT_TEXT) if (typeof d.project[k] !== 'string') d.project[k] = str(d.project[k]);
+    const prefixes = { people: 'person', locations: 'location', contracts: 'contract', assets: 'asset', thirdPartyElements: 'el' };
+    for (const k of Object.keys(prefixes)) {
+      if (!Array.isArray(d[k])) d[k] = [];
+      d[k] = d[k].filter(x => x && typeof x === 'object');
+      for (const x of d[k]) if (!x.id) x.id = newId(prefixes[k]);
+    }
+    d.format = FORMAT;
+    d.formatVersion = FORMAT_VERSION;
+    return d;
+  }
+
+  // ---------- Lookups and rules ----------
+  const person = id => doc.people.find(p => p.id === id);
+  const place = id => doc.locations.find(l => l.id === id);
+  const element = id => doc.thirdPartyElements.find(e => e.id === id);
+  const asset = id => doc.assets.find(a => a.id === id);
+  const roleOf = p => (Array.isArray(p.roles) ? p.roles.join(', ') : str(p.roles));
+  const addressOf = l => [l.address, l.city, l.region, l.country].map(str).filter(Boolean).join(', ');
+  const isRelease = c => /release/i.test(str(c.type));
+  const releases = () => doc.contracts.filter(isRelease);
+  // Materials releases let you use someone's photos or documents; they don't cover appearing on camera or a place.
+  const coversAppearance = c => isRelease(c) && !/material/i.test(str(c.type));
+  const DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
+  function today() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  function fmtDate(d) {
+    const m = DATE.exec(str(d));
+    if (!m) return str(d);
+    return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).toLocaleDateString(undefined, { timeZone: 'UTC', year: 'numeric', month: 'short', day: 'numeric' });
+  }
+  function stateOf(c) {
+    if (c.status === 'signed') return c.expirationDate && DATE.test(c.expirationDate) && c.expirationDate < today() ? 'expired' : 'signed';
+    if (c.status === 'pending' || c.status === 'declined') return c.status;
+    return c.status ? 'other' : 'pending';
+  }
+  const stateLabel = c => STATE_LABEL[stateOf(c)] || str(c.status);
+  const typeLabel = c => { const t = TYPES.find(x => x.value === str(c.type).toLowerCase()); return t ? t.label : str(c.type); };
+
+  const callSheetPlaces = () => new Set(arr(doc.callSheets).map(s => s && s.locationId).filter(Boolean));
+  function releasesFor(kind, id) {
+    const field = kind === 'person' ? 'personIds' : 'locationIds';
+    return doc.contracts.filter(c => coversAppearance(c) && arr(c[field]).includes(id));
+  }
+  // Best standing release for someone or somewhere: signed beats waiting, beats expired, beats declined.
+  const RANK = { signed: 0, pending: 1, expired: 2, declined: 3, other: 4 };
+  function coverage(kind, id) {
+    const list = releasesFor(kind, id).sort((a, b) => RANK[stateOf(a)] - RANK[stateOf(b)] || str(b.signedDate).localeCompare(str(a.signedDate)));
+    if (!list.length) return { state: 'missing', release: null };
+    const s = stateOf(list[0]);
+    return { state: s === 'signed' ? 'covered' : s === 'other' ? 'pending' : s, release: list[0] };
+  }
+  function onCameraPeople() {
+    return doc.people.filter(p => p.onCamera === true || (p.onCamera !== false && releasesFor('person', p.id).length));
+  }
+  function filmedPlaces() {
+    const onSheets = callSheetPlaces();
+    return doc.locations.filter(l => l.onCamera === true || (l.onCamera !== false && (onSheets.has(l.id) || releasesFor('location', l.id).length)));
+  }
+  const ORDER = { missing: 0, declined: 1, expired: 2, pending: 3, covered: 4 };
+
+  // ---------- Render ----------
+  function render() {
+    const p = doc.project;
+    const t = $('filmTitle');
+    t.textContent = p.title || 'Untitled film';
+    t.classList.toggle('is-empty', !p.title);
+    $('filmMeta').textContent = [p.company, p.producer && `produced by ${p.producer}`].filter(Boolean).join(', ') || 'No film details yet';
+    const name = fileName ? esc(fileName) : '';
+    $('fileState').innerHTML = dirty
+      ? `<span class="dirty">Unsaved changes</span>${name ? ` to ${name}` : '. Not saved to a file yet.'}`
+      : (name ? `Saved to ${name}` : 'Not saved to a file yet');
+    document.title = `${p.title ? p.title + ' · ' : ''}Release tracker`;
+    renderCoverage();
+    renderTable();
+  }
+
+  function sigText(cov) {
+    const r = cov.release;
+    switch (cov.state) {
+      case 'covered': return r.signedDate ? `Signed ${fmtDate(r.signedDate)}` : 'Signed';
+      case 'pending': return 'Waiting for signature';
+      case 'expired': return `Expired ${fmtDate(r.expirationDate)}`;
+      case 'declined': return "Declined. Don't use";
+      default: return 'No release on file';
+    }
+  }
+  function coverageLines(kind, list) {
+    const onSheets = callSheetPlaces();
+    return list.map(x => ({ x, cov: coverage(kind, x.id) }))
+      .sort((a, b) => ORDER[a.cov.state] - ORDER[b.cov.state] || str(a.x.name).localeCompare(str(b.x.name)))
+      .map(({ x, cov }) => {
+        const detail = kind === 'person' ? roleOf(x) : (addressOf(x) || (x.onCamera !== true && onSheets.has(x.id) ? 'On a call sheet' : ''));
+        const text = sigText(cov);
+        const action = cov.release ? 'Open the release' : 'Add a release';
+        return `<li class="cov-line is-${cov.state}">
+          <div class="cov-who"><strong>${esc(x.name)}</strong>${detail ? `<span class="sub">${esc(detail)}</span>` : ''}</div>
+          <button type="button" class="cov-sig" data-kind="${kind}" data-id="${esc(x.id)}"${cov.release ? ` data-release="${esc(cov.release.id)}"` : ''} aria-label="${esc(x.name)}: ${esc(text)}. ${action}">
+            <span class="dot" aria-hidden="true"></span><span class="text">${esc(text)}</span></button>
+        </li>`;
+      }).join('');
+  }
+  function renderCoverage() {
+    const people = onCameraPeople();
+    const places = filmedPlaces();
+    const all = [...people.map(x => coverage('person', x.id)), ...places.map(x => coverage('location', x.id))];
+    const covered = all.filter(c => c.state === 'covered').length;
+    const need = all.length - covered;
+    $('overview').hidden = !all.length && !releases().length;
+    $('covHeadline').textContent = all.length ? `${covered} of ${all.length} covered` : 'No one marked as on camera';
+    $('covSub').textContent = all.length
+      ? (need ? `${need} still need${need === 1 ? 's' : ''} a signed release` : 'Every person and location on camera has a signed release')
+      : '';
+    const count = (list, kind) => `${list.filter(x => coverage(kind, x.id).state === 'covered').length} of ${list.length} covered`;
+    $('peopleCount').textContent = people.length ? count(people, 'person') : '';
+    $('placesCount').textContent = places.length ? count(places, 'location') : '';
+    $('peopleCov').innerHTML = people.length ? coverageLines('person', people) : `<li class="cov-empty">No one is marked as on camera. Choose who's on camera, or add an appearance release.</li>`;
+    $('placesCov').innerHTML = places.length ? coverageLines('location', places) : `<li class="cov-empty">No locations are marked as filmed. Choose where you film, or add a location release.</li>`;
+  }
+
+  function coversText(c) {
+    const missing = [];
+    const names = (ids, look, label) => arr(ids).map(id => { const x = look(id); if (!x) missing.push(label); return x ? (x.name || x.description || id) : null; }).filter(Boolean);
+    const people = names(c.personIds, person, 'person');
+    const places = names(c.locationIds, place, 'location');
+    const els = arr(c.thirdPartyElementIds).map(id => { const e = element(id); if (!e) missing.push('item'); return e ? (e.description || (e.music && e.music.title) || id) : null; }).filter(Boolean);
+    return { people, places, els, missing };
+  }
+  function scansOf(c) { return arr(c.assetIds).map(asset).filter(Boolean); }
+  function filteredReleases() {
+    const q = $('search').value.trim().toLowerCase();
+    const f = $('statusFilter').value;
+    return releases()
+      .filter(c => {
+        if (f === 'noscan') { if (scansOf(c).length) return false; }
+        else if (f !== 'all' && stateOf(c) !== f) return false;
+        if (q) {
+          const cv = coversText(c);
+          const hay = [c.title, c.type, c.status, c.notes, ...cv.people, ...cv.places, ...cv.els, ...scansOf(c).map(a => a.name)].map(str).join(' ').toLowerCase();
+          if (!hay.includes(q)) return false;
+        }
+        return true;
+      })
+      .sort((a, b) => RANK[stateOf(b)] - RANK[stateOf(a)] || str(a.title).localeCompare(str(b.title)));
+  }
+  function renderTable() {
+    const all = releases();
+    $('empty').hidden = all.length > 0;
+    $('tableWrap').hidden = all.length === 0;
+    for (const id of ['search', 'statusFilter', 'csvBtn']) $(id).hidden = all.length === 0;
+    const list = filteredReleases();
+    if (!list.length) {
+      $('rows').innerHTML = `<tr><td colspan="6" class="no-match">No releases match these filters. <button type="button" class="link-btn" id="clearFilters">Clear filters</button></td></tr>`;
+      return;
+    }
+    $('rows').innerHTML = list.map(c => {
+      const st = stateOf(c);
+      const cv = coversText(c);
+      const parts = [cv.people.join(', '), cv.places.join(', '), cv.els.length ? `${cv.els.length} item${cv.els.length === 1 ? '' : 's'} from the clearance log` : ''].filter(Boolean);
+      const scans = scansOf(c);
+      return `<tr data-id="${esc(c.id)}">
+        <td><button type="button" class="el-name">${esc(c.title || 'Untitled release')}</button><span class="sub">${esc(typeLabel(c))}</span></td>
+        <td>${parts.length ? parts.map(x => `<span>${esc(x)}</span>`).join('<br>') : '<span class="sub">Nobody or nothing yet</span>'}${cv.missing.length ? `<span class="sub warn-text">Refers to ${cv.missing.length} record${cv.missing.length === 1 ? '' : 's'} not in this project</span>` : ''}</td>
+        <td><span class="pill s-${st}"><span class="dot s-${st}"></span>${esc(stateLabel(c))}</span></td>
+        <td>${esc(fmtDate(c.signedDate))}</td>
+        <td>${esc(fmtDate(c.expirationDate))}</td>
+        <td>${scans.length ? scans.map(a => esc(a.name)).join('<br>') : '<span class="sub">No scan</span>'}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // ---------- Editor ----------
+  function fillSelect(sel, options, value) {
+    const opts = options.map(o => `<option value="${esc(o.value)}">${esc(o.label)}</option>`);
+    if (value && !options.some(o => o.value === value)) opts.push(`<option value="${esc(value)}">${esc(value)}</option>`);
+    sel.innerHTML = opts.join('');
+    sel.value = value || options[0].value;
+  }
+  function checkList(items, selected, kind) {
+    const pri = kind === 'person' ? new Set(onCameraPeople().map(x => x.id)) : kind === 'location' ? new Set(filmedPlaces().map(x => x.id)) : null;
+    const line = x => {
+      const label = kind === 'element' ? (x.description || (x.music && x.music.title) || 'Untitled item') : x.name;
+      const sub = kind === 'person' ? roleOf(x) : kind === 'location' ? addressOf(x) : x.type;
+      return `<label class="check"><input type="checkbox" value="${esc(x.id)}"${selected.has(x.id) ? ' checked' : ''}><span class="who">${esc(label)}${sub ? `<span class="sub">${esc(sub)}</span>` : ''}</span></label>`;
+    };
+    if (!items.length) return `<p class="hint">${kind === 'person' ? 'No people in this project yet. Use "Add a person."' : kind === 'location' ? 'No locations in this project yet. Use "Add a location."' : 'Nothing logged in the clearance log yet.'}</p>`;
+    if (!pri) return items.map(line).join('');
+    const first = items.filter(x => pri.has(x.id) || selected.has(x.id));
+    const rest = items.filter(x => !(pri.has(x.id) || selected.has(x.id)));
+    const label = kind === 'person' ? 'Everyone else in the project' : 'Other locations in the project';
+    return first.map(line).join('') + (first.length && rest.length ? `<p class="checks-sep">${label}</p>` : '') + rest.map(line).join('');
+  }
+  const checked = id => new Set([...$(id).querySelectorAll('input[type=checkbox]:checked')].map(i => i.value));
+
+  function readForm() {
+    const c = structuredClone(editing);
+    const set = (k, v) => { if (v !== '' || k in c) c[k] = v; };
+    set('type', $('f-type').value);
+    set('status', $('f-status').value);
+    set('title', $('f-title').value.trim());
+    set('signedDate', $('f-signedDate').value);
+    set('expirationDate', $('f-expirationDate').value);
+    set('notes', $('f-notes').value.trim());
+    // Keep references to records this project doesn't have, so nothing is silently dropped.
+    const keep = (field, lookup, id) => {
+      const picked = [...checked(id)];
+      const unknown = arr(editing[field]).filter(x => !lookup(x));
+      const all = [...new Set([...picked, ...unknown])];
+      if (all.length || field in c) c[field] = all;
+    };
+    keep('personIds', person, 'peopleList');
+    keep('locationIds', place, 'locationsList');
+    keep('thirdPartyElementIds', element, 'elementsList');
+    return c;
+  }
+  function renderScans() {
+    const linked = arr(editing.assetIds).filter(id => !removedScanIds.includes(id)).map(id => ({ a: asset(id), id })).filter(x => x.a);
+    const rows = linked.map(({ a }) => `<div class="scan"><span class="name">${esc(a.name)}<span class="sub">${esc(a.relativePath || 'No file location recorded')}</span></span>
+        <button type="button" class="btn small" data-open="${esc(a.id)}"${projectDir && a.relativePath ? '' : ' disabled title="Connect the project folder to open scans here"'}>Open</button>
+        <button type="button" class="btn small" data-unlink="${esc(a.id)}" aria-label="Remove ${esc(a.name)}">Remove</button></div>`);
+    for (const [i, s] of pendingScans.entries()) {
+      rows.push(`<div class="scan"><span class="name">${esc(s.asset.name)}<span class="sub">${projectDir ? `Copied to ${esc(s.asset.relativePath)} when you save` : `Linked as ${esc(s.asset.relativePath)} when you save`}</span></span>
+        <button type="button" class="btn small" data-preview="${i}">Open</button>
+        <button type="button" class="btn small" data-drop="${i}" aria-label="Remove ${esc(s.asset.name)}">Remove</button></div>`);
+    }
+    $('scanList').innerHTML = rows.join('') || '<p class="hint">No signed copy attached yet.</p>';
+    const canFolder = !!(window.showDirectoryPicker && window.self === window.top);
+    $('connectFolderBtn').hidden = !canFolder || !!projectDir;
+    $('folderNote').textContent = projectDir
+      ? `Scans are copied into the ${SCAN_FOLDER} folder inside ${projectDir.name}, next to your project file.`
+      : canFolder
+        ? `Connect the folder your project file is in, and attached scans are copied into a ${SCAN_FOLDER} folder there. Otherwise the tool records the file name, and you keep the scan in a ${SCAN_FOLDER} folder next to your project file.`
+        : `This browser can't copy files into folders. The tool records each scan's name; keep the scan in a ${SCAN_FOLDER} folder next to your project file.`;
+  }
+  function updateStatusHint() {
+    const st = $('f-status').value;
+    const exp = $('f-expirationDate').value;
+    $('statusHint').textContent = st === 'declined'
+      ? "Declined: don't use footage of the people or places this covers. They're flagged in red."
+      : st === 'signed' && exp && exp < today() ? 'This release has expired. It no longer counts as covering anyone.' : '';
+  }
+  function fillForm(c) {
+    editing = c;
+    fillSelect($('f-type'), TYPES, str(c.type).toLowerCase() || TYPES[0].value);
+    fillSelect($('f-status'), STATUSES, str(c.status) || 'pending');
+    $('f-title').value = str(c.title);
+    $('f-signedDate').value = DATE.test(str(c.signedDate)) ? c.signedDate : '';
+    $('f-expirationDate').value = DATE.test(str(c.expirationDate)) ? c.expirationDate : '';
+    $('f-notes').value = str(c.notes);
+    $('peopleList').innerHTML = checkList(doc.people, new Set(arr(c.personIds)), 'person');
+    $('locationsList').innerHTML = checkList(doc.locations, new Set(arr(c.locationIds)), 'location');
+    $('elementsList').innerHTML = checkList(doc.thirdPartyElements, new Set(arr(c.thirdPartyElementIds)), 'element');
+    $('elementsGroup').open = /material/i.test(str(c.type)) || arr(c.thirdPartyElementIds).length > 0;
+    const unknown = [['personIds', person], ['locationIds', place], ['thirdPartyElementIds', element]].reduce((n, [f, look]) => n + arr(c[f]).filter(x => !look(x)).length, 0);
+    $('missingRefs').hidden = !unknown;
+    $('missingRefs').textContent = unknown ? `This release also refers to ${unknown} record${unknown === 1 ? '' : 's'} that ${unknown === 1 ? "isn't" : "aren't"} in this project file. They're kept as they are.` : '';
+    updateStatusHint();
+    renderScans();
+  }
+  function openEditor(id, preset) {
+    const existing = id && doc.contracts.find(c => c.id === id);
+    isNew = !existing;
+    pendingScans = [];
+    removedScanIds = [];
+    const c = existing ? structuredClone(existing) : Object.assign({ id: newId('contract'), title: '', type: 'appearance release', status: 'pending' }, preset || {});
+    $('editorTitle').textContent = existing ? 'Edit release' : 'Add release';
+    $('deleteBtn').hidden = isNew;
+    fillForm(c);
+    $('editor').showModal();
+    $(existing ? 'f-status' : 'f-type').focus();
+  }
+  function autoTitle(c) {
+    const cv = coversText(c);
+    const who = [...cv.people, ...cv.places].join(', ') || (cv.els.length ? `${cv.els.length} item${cv.els.length === 1 ? '' : 's'}` : '');
+    return who ? `${typeLabel(c)}: ${who}` : typeLabel(c);
+  }
+  function syncElementLinks(c, wasLinked) {
+    const now = new Set(arr(c.thirdPartyElementIds));
+    for (const e of doc.thirdPartyElements) {
+      const ids = arr(e.contractIds);
+      if (now.has(e.id) && !ids.includes(c.id)) e.contractIds = [...ids, c.id];
+      else if (!now.has(e.id) && wasLinked.has(e.id) && ids.includes(c.id)) {
+        e.contractIds = ids.filter(x => x !== c.id);
+        if (!e.contractIds.length) delete e.contractIds;
+      }
+    }
+  }
+  function forgetScan(id, exceptContractId) {
+    const a = asset(id);
+    const stillUsed = doc.contracts.some(c => c.id !== exceptContractId && arr(c.assetIds).includes(id));
+    // Only remove scan records this tool made; the file itself stays on disk.
+    if (a && !stillUsed && a.type === 'release scan') doc.assets = doc.assets.filter(x => x.id !== id);
+  }
+  async function saveEditor() {
+    const c = readForm();
+    if (!c.title) c.title = autoTitle(c);
+    if (c.status === 'signed' && !c.signedDate) {
+      if (!confirm('This release is marked signed but has no date. Save it without a date?')) { $('f-signedDate').focus(); return; }
+    }
+    const filed = [];
+    for (const s of pendingScans) {
+      if (projectDir) {
+        try { s.asset.relativePath = await copyIntoFolder(s.file); }
+        catch (err) { toast(`Couldn't copy ${s.file.name} into the project folder: ${err.message}. It's linked by name instead.`, true); }
+      }
+      filed.push(s.asset);
+    }
+    c.assetIds = [...arr(c.assetIds).filter(id => !removedScanIds.includes(id)), ...filed.map(a => a.id)];
+    if (!c.assetIds.length && !(editing && 'assetIds' in (doc.contracts.find(x => x.id === c.id) || {}))) delete c.assetIds;
+    doc.assets.push(...filed);
+    const before = doc.contracts.find(x => x.id === c.id);
+    const wasLinked = new Set(arr(before && before.thirdPartyElementIds));
+    if (isNew) doc.contracts.push(c);
+    else doc.contracts[doc.contracts.findIndex(x => x.id === c.id)] = c;
+    for (const id of removedScanIds) forgetScan(id, c.id);
+    syncElementLinks(c, wasLinked);
+    // Someone signing an appearance release is on camera; a place with a location release is filmed.
+    if (coversAppearance(c)) {
+      for (const id of arr(c.personIds)) { const p = person(id); if (p && p.onCamera === undefined && !/location/i.test(str(c.type))) p.onCamera = true; }
+      for (const id of arr(c.locationIds)) { const l = place(id); if (l && l.onCamera === undefined && !/appearance/i.test(str(c.type))) l.onCamera = true; }
+    }
+    pendingScans = []; removedScanIds = [];
+    $('editor').close();
+    changed();
+    toast(`${isNew ? 'Added' : 'Updated'} "${c.title}"${filed.length ? ` with ${filed.length} scan${filed.length === 1 ? '' : 's'}` : ''}`);
+  }
+  function deleteEditing() {
+    const c = doc.contracts.find(x => x.id === editing.id);
+    if (!c) return;
+    if (!confirm(`Delete "${c.title || 'this release'}"? Any scans stay in your project folder. This can't be undone.`)) return;
+    doc.contracts = doc.contracts.filter(x => x.id !== c.id);
+    for (const id of arr(c.assetIds)) forgetScan(id, c.id);
+    syncElementLinks({ id: c.id, thirdPartyElementIds: [] }, new Set(arr(c.thirdPartyElementIds)));
+    pendingScans = []; removedScanIds = [];
+    $('editor').close();
+    changed();
+    toast(`Deleted "${c.title || 'the release'}"`);
+  }
+
+  // ---------- Scans and the project folder ----------
+  const safeName = n => str(n).replace(/[\\/:*?"<>|\u0000-\u001f]+/g, '-').replace(/^\.+/, '').trim() || 'scan';
+  function attachFiles(files) {
+    for (const file of files) {
+      const a = { id: newId('asset'), name: file.name, type: 'release scan', relativePath: `${SCAN_FOLDER}/${safeName(file.name)}` };
+      if (file.type) a.mimeType = file.type;
+      pendingScans.push({ asset: a, file });
+    }
+    renderScans();
+  }
+  async function copyIntoFolder(file) {
+    const dir = await projectDir.getDirectoryHandle(SCAN_FOLDER, { create: true });
+    const name = safeName(file.name);
+    const dot = name.lastIndexOf('.');
+    const base = dot > 0 ? name.slice(0, dot) : name;
+    const ext = dot > 0 ? name.slice(dot) : '';
+    let finalName = name;
+    for (let i = 2; i < 1000; i++) {
+      try { await dir.getFileHandle(finalName); finalName = `${base}-${i}${ext}`; } catch { break; }
+    }
+    const fh = await dir.getFileHandle(finalName, { create: true });
+    const w = await fh.createWritable();
+    await w.write(file);
+    await w.close();
+    return `${SCAN_FOLDER}/${finalName}`;
+  }
+  async function connectFolder() {
+    if (!fileName) { toast("Save your project file first, then connect the folder it's in.", true); return; }
+    let dir;
+    try { dir = await window.showDirectoryPicker({ id: 'oft-project', mode: 'readwrite' }); }
+    catch (err) { if (err.name !== 'AbortError') toast(`Couldn't connect the folder: ${err.message}`, true); return; }
+    let found = false;
+    try {
+      const fh = await dir.getFileHandle(fileName);
+      found = fileHandle && fh.isSameEntry ? await fh.isSameEntry(fileHandle) : true;
+    } catch { found = false; }
+    if (!found) { toast(`That folder doesn't hold ${fileName}. Choose the folder your project file is in.`, true); return; }
+    projectDir = dir;
+    renderScans();
+    toast(`Connected ${dir.name}. Scans you attach are copied into its ${SCAN_FOLDER} folder.`);
+  }
+  async function openScan(a) {
+    try {
+      let dir = projectDir;
+      const parts = str(a.relativePath).split('/').filter(Boolean);
+      for (const p of parts.slice(0, -1)) dir = await dir.getDirectoryHandle(p);
+      const file = await (await dir.getFileHandle(parts[parts.length - 1])).getFile();
+      showFile(file);
+    } catch {
+      toast(`Couldn't find ${a.relativePath} in ${projectDir.name}. Check the file is there.`, true);
+    }
+  }
+  function showFile(file) {
+    const url = URL.createObjectURL(file);
+    window.open(url, '_blank', 'noopener');
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  }
+
+  // ---------- Who and where is on camera ----------
+  function renderOnCamera() {
+    const onSheets = callSheetPlaces();
+    const line = (x, kind) => {
+      const on = ocDraft[kind].get(x.id);
+      const sub = kind === 'people' ? roleOf(x) : [addressOf(x), x.onCamera === undefined && onSheets.has(x.id) ? 'on a call sheet' : ''].filter(Boolean).join(', ');
+      return `<label class="check"><input type="checkbox" data-kind="${kind}" value="${esc(x.id)}"${on ? ' checked' : ''}><span class="who">${esc(x.name)}${sub ? `<span class="sub">${esc(sub)}</span>` : ''}</span></label>`;
+    };
+    $('ocPeople').innerHTML = doc.people.length ? doc.people.map(x => line(x, 'people')).join('') : '<p class="hint">No people in this project yet.</p>';
+    $('ocPlaces').innerHTML = doc.locations.length ? doc.locations.map(x => line(x, 'locations')).join('') : '<p class="hint">No locations in this project yet.</p>';
+  }
+  function openOnCamera() {
+    const people = new Set(onCameraPeople().map(x => x.id));
+    const places = new Set(filmedPlaces().map(x => x.id));
+    ocDraft = { people: new Map(doc.people.map(x => [x.id, people.has(x.id)])), locations: new Map(doc.locations.map(x => [x.id, places.has(x.id)])) };
+    renderOnCamera();
+    $('onCameraDialog').showModal();
+  }
+  function saveOnCamera() {
+    const people = new Set(onCameraPeople().map(x => x.id));
+    const places = new Set(filmedPlaces().map(x => x.id));
+    let n = 0;
+    for (const [kind, list, current] of [['people', doc.people, people], ['locations', doc.locations, places]]) {
+      for (const x of list) {
+        const want = ocDraft[kind].get(x.id);
+        if (want === undefined || want === current.has(x.id)) continue;
+        x.onCamera = !!want;
+        n++;
+      }
+    }
+    $('onCameraDialog').close();
+    if (n) changed();
+  }
+
+  // ---------- Quick add (person or location) ----------
+  function openAdd(kind, context) {
+    addKind = kind;
+    addContext = context;
+    const f = (id, label, ph) => `<div class="field"><label for="a-${id}">${label}</label><input id="a-${id}" type="text"${ph ? ` placeholder="${ph}"` : ''}></div>`;
+    $('addTitle').textContent = kind === 'person' ? 'Add a person' : 'Add a location';
+    $('addBody').innerHTML = kind === 'person'
+      ? f('name', 'Name <span class="req">(required)</span>') + f('role', 'Role', 'Interview subject') + `<div class="row-2">${f('phone', 'Phone')}${f('email', 'Email')}</div>`
+      : f('name', 'Name <span class="req">(required)</span>', 'Grain elevator') + f('address', 'Street address') + `<div class="row-2">${f('city', 'City')}${f('region', 'State or region')}</div>${f('country', 'Country')}`;
+    $('addDialog').showModal();
+    $('a-name').focus();
+  }
+  function saveAdd() {
+    const v = k => ($(`a-${k}`) ? $(`a-${k}`).value.trim() : '');
+    if (!v('name')) { $('a-name').setCustomValidity('Enter a name.'); $('a-name').reportValidity(); return; }
+    const draft = addContext === 'editor' ? readForm() : null;
+    let x;
+    if (addKind === 'person') {
+      x = { id: newId('person'), name: v('name'), onCamera: true };
+      if (v('role')) x.roles = [v('role')];
+      if (v('phone')) x.phone = v('phone');
+      if (v('email')) x.email = v('email');
+      doc.people.push(x);
+      if (draft) draft.personIds = [...arr(draft.personIds), x.id];
+    } else {
+      x = { id: newId('location'), name: v('name'), onCamera: true };
+      for (const k of ['address', 'city', 'region', 'country']) if (v(k)) x[k] = v(k);
+      doc.locations.push(x);
+      if (draft) draft.locationIds = [...arr(draft.locationIds), x.id];
+    }
+    $('addDialog').close();
+    dirty = true; saveDraft();
+    if (draft) fillForm(draft);
+    if (addContext === 'onCamera') { ocDraft[addKind === 'person' ? 'people' : 'locations'].set(x.id, true); renderOnCamera(); }
+    render();
+  }
+
+  // ---------- Print, CSV ----------
+  function reportHtml() {
+    const p = doc.project;
+    const people = onCameraPeople();
+    const places = filmedPlaces();
+    const need = [
+      ...people.map(x => ({ x, kind: 'Person', cov: coverage('person', x.id) })),
+      ...places.map(x => ({ x, kind: 'Location', cov: coverage('location', x.id) })),
+    ].filter(r => r.cov.state !== 'covered').sort((a, b) => ORDER[a.cov.state] - ORDER[b.cov.state]);
+    const scanCell = c => (c ? scansOf(c).map(a => esc(a.relativePath || a.name)).join('<br>') : '');
+    const covTable = (list, kind) => `<table><thead><tr><th>${kind === 'person' ? 'Name' : 'Location'}</th><th>${kind === 'person' ? 'Role' : 'Address'}</th><th>Release</th><th>Status</th><th>Signed</th><th>Scan</th></tr></thead><tbody>
+      ${list.map(x => { const cov = coverage(kind, x.id); const r = cov.release; return `<tr>
+        <td>${esc(x.name)}</td><td>${esc(kind === 'person' ? roleOf(x) : addressOf(x))}</td><td>${r ? esc(r.title) : ''}</td>
+        <td${cov.state === 'covered' ? '' : ' class="flag"'}>${esc(sigText(cov))}</td><td>${r ? esc(fmtDate(r.signedDate)) : ''}</td><td>${scanCell(r)}</td></tr>`; }).join('')}
+      </tbody></table>`;
+    const all = releases().sort((a, b) => str(a.title).localeCompare(str(b.title)));
+    const when = new Date().toLocaleDateString(undefined, { dateStyle: 'long' });
+    const head = [['Production company', p.company], ['Producer', p.producer], ['Prepared by', [p.preparedBy, p.preparedContact].filter(Boolean).join(', ')], ['Date prepared', when]].filter(r => r[1]);
+    return `<h1>${esc(p.title || 'Untitled film')}</h1>
+      <span class="sub">Release report</span>
+      <dl>${head.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
+      <h2>Still needs a signed release (${need.length})</h2>
+      ${need.length ? `<table><thead><tr><th>Name</th><th>Kind</th><th>Status</th></tr></thead><tbody>${need.map(r => `<tr><td>${esc(r.x.name)}</td><td>${r.kind}</td><td class="flag">${esc(sigText(r.cov))}</td></tr>`).join('')}</tbody></table>` : '<p>Every person and location on camera has a signed release.</p>'}
+      <h2>People on camera (${people.length})</h2>
+      ${people.length ? covTable(people, 'person') : '<p>No one is marked as on camera.</p>'}
+      <h2>Locations filmed (${places.length})</h2>
+      ${places.length ? covTable(places, 'location') : '<p>No locations are marked as filmed.</p>'}
+      <h2>All releases (${all.length})</h2>
+      ${all.length ? `<table><thead><tr><th>Release</th><th>Covers</th><th>Status</th><th>Signed</th><th>Expires</th><th>Scan</th></tr></thead><tbody>${all.map(c => { const cv = coversText(c); return `<tr>
+        <td>${esc(c.title)}<br><span class="small">${esc(typeLabel(c))}</span></td>
+        <td>${esc([...cv.people, ...cv.places].join(', '))}${cv.els.length ? `<br><span class="small">${esc(cv.els.join('; '))}</span>` : ''}</td>
+        <td>${esc(stateLabel(c))}</td><td>${esc(fmtDate(c.signedDate))}</td><td>${esc(fmtDate(c.expirationDate))}</td><td>${scanCell(c)}</td></tr>`; }).join('')}</tbody></table>` : '<p>No releases logged.</p>'}
+      <p class="note">Prepared with the Open Filmmaker Toolkit release tracker. Scan locations are relative to the project file. This report is a working record, not legal advice.</p>`;
+  }
+  function renderReport() { $('report').innerHTML = reportHtml(); }
+
+  function csvCell(v) {
+    let s = v == null ? '' : String(v);
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+    return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }
+  function exportCsv() {
+    const head = ['Release', 'Kind', 'Status', 'Signed', 'Expires', 'People', 'Locations', 'Material from the clearance log', 'Scans', 'Notes'];
+    const rows = releases().map(c => {
+      const cv = coversText(c);
+      return [c.title, typeLabel(c), stateLabel(c), c.signedDate, c.expirationDate, cv.people.join('; '), cv.places.join('; '), cv.els.join('; '), scansOf(c).map(a => a.relativePath || a.name).join('; '), c.notes];
+    });
+    const name = `${slug()}-releases.csv`;
+    download('﻿' + [head, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n', name, 'text/csv;charset=utf-8');
+    toast(`Exported ${rows.length} release${rows.length === 1 ? '' : 's'} to ${name}`);
+  }
+  const csvCollections = {
+    project: 'project details', people: 'people', locations: 'locations', thirdPartyElements: 'third-party elements',
+    contracts: 'contracts', assets: 'assets', musicCueSheet: 'music cue sheet details', callSheets: 'call sheets'
+  };
+  function exportProjectCsv() {
+    const collection = $('projectCsvCollection').value;
+    const value = doc[collection];
+    const rows = Array.isArray(value) ? value : value && typeof value === 'object' ? [value] : [];
+    if (rows.some(row => !row || typeof row !== 'object' || Array.isArray(row))) {
+      toast(`Couldn't export ${csvCollections[collection]}: the project contains an invalid record.`, true);
+      return;
+    }
+    const headers = [...new Set(rows.flatMap(row => Object.keys(row)))];
+    if (!headers.length) headers.push('id');
+    const csvRows = rows.map(row => headers.map(key => { const cell = row[key]; return cell && typeof cell === 'object' ? JSON.stringify(cell) : cell; }));
+    const csv = '﻿' + [headers, ...csvRows].map(row => row.map(csvCell).join(',')).join('\r\n') + '\r\n';
+    const name = suggestedName().replace(/\.oft\.json$/i, `-${collection}.csv`);
+    download(csv, name, 'text/csv;charset=utf-8');
+    toast(`Exported ${rows.length} ${csvCollections[collection]} to ${name}`);
+  }
+
+  // ---------- Film details ----------
+  function openProjectDialog() {
+    for (const k of PROJECT_TEXT) $(`p-${k}`).value = doc.project[k] || '';
+    $('projectDialog').showModal();
+    $('p-title').focus();
+  }
+  function saveProjectDialog() {
+    for (const k of PROJECT_TEXT) doc.project[k] = $(`p-${k}`).value.trim();
+    $('projectDialog').close();
+    changed();
+  }
+
+  // ---------- Dirty state & recovery draft ----------
+  function changed() { dirty = true; saveDraft(); render(); }
+  function saveDraft() {
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ doc, fileName, baselineText, at: new Date().toISOString() })); } catch { /* the file on disk is the real copy */ }
+  }
+  function clearDraft() {
+    try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+    $('recovery').hidden = true;
+  }
+  function checkDraft() {
+    let draft = null;
+    try { draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); } catch { draft = null; }
+    if (!draft || !draft.doc || draft.doc.format !== FORMAT) return;
+    const n = arr(draft.doc.contracts).filter(c => c && isRelease(c)).length;
+    if (!n && !(draft.doc.project && draft.doc.project.title)) { clearDraft(); return; }
+    const when = draft.at ? new Date(draft.at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'earlier';
+    const title = draft.doc.project && draft.doc.project.title ? `"${draft.doc.project.title}"` : 'an untitled project';
+    $('recoveryText').textContent = `You have unsaved changes to ${title} from ${when} (${n} release${n === 1 ? '' : 's'}). Restore them, or discard them and start fresh.`;
+    $('recovery').hidden = false;
+    $('restoreBtn').onclick = () => {
+      doc = normalize(draft.doc); fileName = draft.fileName || null; fileHandle = null; projectDir = null;
+      baselineText = typeof draft.baselineText === 'string' ? draft.baselineText : null; dirty = true;
+      $('recovery').hidden = true; render();
+      toast(fileName ? `Restored. Save to write the changes back to ${fileName}.` : 'Restored. Save to keep it as a file.');
+    };
+    $('discardBtn').onclick = () => { clearDraft(); toast('Discarded the unsaved changes.'); };
+  }
+
+  // ---------- Files ----------
+  const pickerTypes = [{ description: 'Film project file', accept: { 'application/json': ['.json'] } }];
+  function slug() {
+    return (doc.project.title || 'untitled-film').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'untitled-film';
+  }
+  const suggestedName = () => `${slug()}.oft.json`;
+  function serialize() {
+    doc.savedAt = new Date().toISOString();
+    doc.savedBy = TOOL;
+    return JSON.stringify(doc, null, 2) + '\n';
+  }
+  function download(text, name, type) {
+    const url = URL.createObjectURL(new Blob([text], { type }));
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  function afterSave(name, downloaded, content) {
+    fileName = name;
+    if (downloaded) { fileHandle = null; projectDir = null; }
+    baselineText = content;
+    dirty = false; clearDraft(); render();
+    toast(downloaded ? `Downloaded ${name}. Keep it with your project files and open it here next time.` : `Saved to ${name}`);
+  }
+  async function writeProjectFile(handle, content) {
+    try {
+      const writable = await handle.createWritable();
+      await writable.write(content);
+      await writable.close();
+    } catch (err) {
+      if (err.name !== 'AbortError') toast(`Couldn't save the file: ${err.message}`, true);
+      return;
+    }
+    fileHandle = handle;
+    afterSave(handle.name, false, content);
+  }
+  function saveCopy(content) {
+    const base = (fileName || suggestedName()).replace(/\.oft\.json$/i, '');
+    const name = `${base}-copy.oft.json`;
+    download(content, name, 'application/json');
+    afterSave(name, true, content);
+  }
+  async function reloadLatest(handle) {
+    try {
+      const file = await handle.getFile();
+      loadText(await file.text(), handle.name, handle);
+    } catch (err) {
+      toast(`Couldn't reload the file: ${err.message}`, true);
+    }
+  }
+  function showConflictDialog(content, observedText, unknownBaseline = false) {
+    const handle = fileHandle;
+    dirty = true;
+    saveDraft();
+    render();
+    $('conflictText').textContent = unknownBaseline
+      ? `The tool can't verify whether ${handle.name} changed since your recovery copy was made. Your edits are not saved.`
+      : `${handle.name} changed after you opened it. Your edits are not saved. Overwriting replaces the newer file.`;
+    $('conflictDialog').showModal();
+    $('conflictReloadBtn').onclick = () => { $('conflictDialog').close(); reloadLatest(handle); };
+    $('conflictCopyBtn').onclick = () => { $('conflictDialog').close(); saveCopy(content); };
+    $('conflictOverwriteBtn').onclick = async () => {
+      $('conflictDialog').close();
+      let latestText;
+      try { latestText = await (await handle.getFile()).text(); }
+      catch (err) { toast(`Couldn't check the file before overwriting: ${err.message}`, true); return; }
+      if (latestText !== observedText) {
+        toast('The file changed again. Review the updated conflict warning before overwriting.', true);
+        showConflictDialog(content, latestText);
+        return;
+      }
+      await writeProjectFile(handle, content);
+    };
+    $('conflictCancelBtn').onclick = () => $('conflictDialog').close();
+  }
+  async function saveFile() {
+    const out = serialize();
+    if (fileHandle) {
+      let currentText;
+      try { currentText = await (await fileHandle.getFile()).text(); }
+      catch (err) { toast(`Couldn't check the file before saving: ${err.message}`, true); return; }
+      if (baselineText === null || currentText !== baselineText) { showConflictDialog(out, currentText, baselineText === null); return; }
+      await writeProjectFile(fileHandle, out);
+      return;
+    }
+    if (window.showSaveFilePicker && window.self === window.top) {
+      try {
+        const h = await window.showSaveFilePicker({ suggestedName: fileName || suggestedName(), types: pickerTypes });
+        if (h.name === fileName) {
+          const currentText = await (await h.getFile()).text();
+          if (baselineText === null || currentText !== baselineText) { fileHandle = h; showConflictDialog(out, currentText, baselineText === null); return; }
+        }
+        await writeProjectFile(h, out);
+      } catch (err) { if (err.name !== 'AbortError') toast(`Couldn't save the file: ${err.message}`, true); }
+      return;
+    }
+    const name = fileName || suggestedName();
+    download(out, name, 'application/json');
+    afterSave(name, true, out);
+  }
+  function loadText(text, name, handle) {
+    let data;
+    try { data = JSON.parse(text); } catch { toast(`Couldn't open ${name}: it isn't a project file.`, true); return; }
+    if (!data || data.format !== FORMAT) { toast(`Couldn't open ${name}: it isn't an Open Filmmaker Toolkit project file.`, true); return; }
+    if (Number(data.formatVersion) > FORMAT_VERSION) { toast(`Couldn't open ${name}: it was saved by a newer version of the toolkit. Get the latest version of this tool.`, true); return; }
+    if (name !== fileName) projectDir = null;
+    doc = normalize(data); fileHandle = handle; baselineText = text; fileName = name; dirty = false;
+    $('search').value = ''; $('statusFilter').value = 'all';
+    clearDraft(); render();
+    const n = releases().length;
+    toast(`Opened ${name}: ${n} release${n === 1 ? '' : 's'}`);
+  }
+  async function openFile() {
+    if (dirty && !confirm('You have unsaved changes. Open another file and lose them?')) return;
+    if (window.showOpenFilePicker && window.self === window.top) {
+      try { const [h] = await window.showOpenFilePicker({ types: pickerTypes }); const f = await h.getFile(); loadText(await f.text(), f.name, h); }
+      catch (err) { if (err.name !== 'AbortError') toast(`Couldn't open the file: ${err.message}`, true); }
+      return;
+    }
+    $('fileInput').click();
+  }
+  function newProject() {
+    if (dirty && !confirm('You have unsaved changes. Start a new project and lose them?')) return;
+    doc = normalize(blankDoc()); fileHandle = null; baselineText = null; fileName = null; projectDir = null; dirty = false;
+    clearDraft(); render(); openProjectDialog();
+  }
+
+  let toastTimer = null;
+  function toast(msg, isError) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.classList.toggle('error', !!isError);
+    t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.hidden = true; }, isError ? 7000 : 4200);
+  }
+
+  // ---------- Wiring ----------
+  function init() {
+    doc = normalize(doc);
+    $('addBtn').onclick = () => openEditor(null);
+    $('emptyAddBtn').onclick = () => openEditor(null);
+    $('emptyOpenBtn').onclick = openFile;
+    $('newBtn').onclick = newProject;
+    $('openBtn').onclick = openFile;
+    $('saveBtn').onclick = saveFile;
+    $('editProjectBtn').onclick = openProjectDialog;
+    $('filmTitle').onclick = openProjectDialog;
+    $('csvBtn').onclick = exportCsv;
+    $('printBtn').onclick = () => { renderReport(); window.print(); };
+    window.addEventListener('beforeprint', renderReport);
+    $('projectCsvBtn').onclick = () => $('projectCsvDialog').showModal();
+    $('projectCsvCancel').onclick = () => $('projectCsvDialog').close();
+    $('projectCsvForm').addEventListener('submit', ev => { ev.preventDefault(); exportProjectCsv(); $('projectCsvDialog').close(); });
+    $('fileInput').addEventListener('change', async () => {
+      const f = $('fileInput').files[0];
+      if (f) loadText(await f.text(), f.name, null);
+      $('fileInput').value = '';
+    });
+
+    for (const id of ['search', 'statusFilter']) $(id).addEventListener('input', renderTable);
+    $('rows').addEventListener('click', ev => {
+      if (ev.target.id === 'clearFilters') { $('search').value = ''; $('statusFilter').value = 'all'; renderTable(); return; }
+      const tr = ev.target.closest('tr[data-id]');
+      if (tr) openEditor(tr.dataset.id);
+    });
+    for (const id of ['peopleCov', 'placesCov']) {
+      $(id).addEventListener('click', ev => {
+        const b = ev.target.closest('.cov-sig');
+        if (!b) return;
+        if (b.dataset.release) { openEditor(b.dataset.release); return; }
+        openEditor(null, b.dataset.kind === 'person'
+          ? { type: 'appearance release', personIds: [b.dataset.id] }
+          : { type: 'location release', locationIds: [b.dataset.id] });
+      });
+    }
+
+    $('editorForm').addEventListener('submit', ev => { ev.preventDefault(); saveEditor(); });
+    $('editorCancel').onclick = () => { pendingScans = []; removedScanIds = []; $('editor').close(); };
+    $('deleteBtn').onclick = deleteEditing;
+    $('f-status').addEventListener('change', () => {
+      if ($('f-status').value === 'signed' && !$('f-signedDate').value) $('f-signedDate').value = today();
+      updateStatusHint();
+    });
+    $('f-expirationDate').addEventListener('input', updateStatusHint);
+    $('f-type').addEventListener('change', () => { if (/material/i.test($('f-type').value)) $('elementsGroup').open = true; });
+    $('addPersonBtn').onclick = () => openAdd('person', 'editor');
+    $('addLocationBtn').onclick = () => openAdd('location', 'editor');
+    $('attachBtn').onclick = () => $('scanInput').click();
+    $('scanInput').addEventListener('change', () => { attachFiles([...$('scanInput').files]); $('scanInput').value = ''; });
+    $('connectFolderBtn').onclick = connectFolder;
+    $('scanList').addEventListener('click', ev => {
+      const b = ev.target.closest('button');
+      if (!b) return;
+      if (b.dataset.open) { const a = asset(b.dataset.open); if (a && projectDir) openScan(a); }
+      else if (b.dataset.unlink) { removedScanIds.push(b.dataset.unlink); renderScans(); }
+      else if (b.dataset.preview) { const s = pendingScans[+b.dataset.preview]; if (s) showFile(s.file); }
+      else if (b.dataset.drop) { pendingScans.splice(+b.dataset.drop, 1); renderScans(); }
+    });
+
+    $('onCameraBtn').onclick = openOnCamera;
+    $('onCameraForm').addEventListener('submit', ev => { ev.preventDefault(); saveOnCamera(); });
+    $('onCameraCancel').onclick = () => $('onCameraDialog').close();
+    $('onCameraForm').addEventListener('change', ev => {
+      const i = ev.target;
+      if (i.dataset && i.dataset.kind) ocDraft[i.dataset.kind].set(i.value, i.checked);
+    });
+    $('ocAddPersonBtn').onclick = () => openAdd('person', 'onCamera');
+    $('ocAddLocationBtn').onclick = () => openAdd('location', 'onCamera');
+
+    $('addForm').addEventListener('submit', ev => { ev.preventDefault(); saveAdd(); });
+    $('addCancel').onclick = () => $('addDialog').close();
+    $('addBody').addEventListener('input', e => e.target.setCustomValidity(''));
+    $('projectForm').addEventListener('submit', ev => { ev.preventDefault(); saveProjectDialog(); });
+    $('projectCancel').onclick = () => $('projectDialog').close();
+
+    document.addEventListener('keydown', ev => {
+      const mod = ev.metaKey || ev.ctrlKey;
+      if (mod && ev.key.toLowerCase() === 's') { ev.preventDefault(); saveFile(); }
+      else if (mod && ev.key.toLowerCase() === 'o') { ev.preventDefault(); openFile(); }
+    });
+    window.addEventListener('beforeunload', ev => { if (dirty) { ev.preventDefault(); ev.returnValue = ''; } });
+    render();
+    checkDraft();
+  }
+
+  if (typeof HTMLDialogElement !== 'function' || typeof HTMLDialogElement.prototype.showModal !== 'function' || typeof structuredClone !== 'function') {
+    $('cantRunTitle').textContent = 'This browser is too old to run this tool';
+    $('cantRunText').textContent = 'Update to a current version of Chrome, Edge, Firefox or Safari, then open this file again.';
+    $('cantRunHow').hidden = true;
+    return;
+  }
+  document.documentElement.classList.remove('no-js');
+  window.addEventListener('error', ev => toast(`Something went wrong: ${ev.message}. Save your work, then reload the page.`, true));
+  window.addEventListener('unhandledrejection', ev => toast(`Something went wrong: ${ev.reason && ev.reason.message ? ev.reason.message : ev.reason}. Save your work, then reload the page.`, true));
+  init();
+})();
+</script>
+</body>
+</html>
