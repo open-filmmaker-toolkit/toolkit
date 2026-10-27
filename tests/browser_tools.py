@@ -19,10 +19,10 @@ from playwright.sync_api import sync_playwright
 
 root = pathlib.Path(__file__).resolve().parents[1]
 sample = (root / 'samples/the-river-keeps.oft.json').read_text()
-TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan', 'funder-crm', 'cash-flow']
+TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan', 'funder-crm', 'cash-flow', 'shooting-calendar', 'interview-prep']
 COLLECTIONS = ['project', 'people', 'locations', 'thirdPartyElements', 'contracts', 'assets', 'musicCueSheet', 'callSheets']
 PRINT_BTN = {'clearance-log': '#printBtn', 'music-cue-sheet': '#printBtn', 'call-sheet': '#printAllBtn', 'release-tracker': '#printBtn',
-             'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn', 'treatment-builder': '#printBtn', 'pitch-deck': '#printBtn', 'grant-calendar': '#printBtn', 'narrative-library': '#printBtn', 'budget': '#printBtn', 'budget-converter': '#printBtn', 'finance-plan': '#printBtn', 'funder-crm': '#printBtn', 'cash-flow': '#printBtn'}
+             'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn', 'treatment-builder': '#printBtn', 'pitch-deck': '#printBtn', 'grant-calendar': '#printBtn', 'narrative-library': '#printBtn', 'budget': '#printBtn', 'budget-converter': '#printBtn', 'finance-plan': '#printBtn', 'funder-crm': '#printBtn', 'cash-flow': '#printBtn', 'shooting-calendar': '#printBtn', 'interview-prep': '#printBtn'}
 PHONE = {'width': 390, 'height': 844}
 # The button that opens each tool's main dialog, for the phone-width check. Most tools use #addBtn.
 DIALOG_BTN = {'treatment-builder': '[data-compare]', 'cash-flow': '#settingsBtn'}
@@ -385,7 +385,7 @@ def test_credits_builder(browser, fake):
     ctx.close()
 
 # Each spreadsheet template's columns must appear in its tool's CSV export, in the same order.
-TEMPLATE_EXPORTS = [('funder-crm', 'funder-crm-template.csv'), ('cash-flow', 'cash-flow-template.csv'), ('budget', 'budget-template.csv'), ('finance-plan', 'finance-plan-template.csv'), ('grant-calendar', 'grant-calendar-template.csv'), ('clearance-log', 'clearance-log-template.csv'), ('release-tracker', 'release-log-template.csv'),
+TEMPLATE_EXPORTS = [('shooting-calendar', 'shooting-calendar-template.csv'), ('interview-prep', 'interview-questions-template.csv'), ('funder-crm', 'funder-crm-template.csv'), ('cash-flow', 'cash-flow-template.csv'), ('budget', 'budget-template.csv'), ('finance-plan', 'finance-plan-template.csv'), ('grant-calendar', 'grant-calendar-template.csv'), ('clearance-log', 'clearance-log-template.csv'), ('release-tracker', 'release-log-template.csv'),
                     ('music-cue-sheet', 'music-cue-sheet-template.csv'), ('name-supers', 'name-supers-template.csv'),
                     ('subject-tracker', 'subject-tracker-template.csv'), ('research-log', 'research-log-template.csv'),
                     ('comps-tracker', 'comps-tracker-template.csv')]
@@ -1057,6 +1057,101 @@ def test_cash_flow(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
+def test_shooting_calendar(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'shooting-calendar', fake)
+    open_sample(pg, fake)
+    check(pg.inner_text('#count') == '4 shoot days · 2 travel · 1 hold', 'counts shoot days, travel days and holds')
+    pg.click('#thisMonth')
+    now = datetime.date.today()
+    steps = (2026 * 12 + 4) - (now.year * 12 + now.month - 1)
+    for _ in range(abs(steps)):
+        pg.click('#nextMonth' if steps > 0 else '#prevMonth')
+    check('May 2026' in pg.inner_text('#calTitle') and pg.locator('#calGrid .ev').count() == 4 and pg.locator('#calGrid .ev.cs').count() == 1, 'the month view shows the days, marking the one with a call sheet')
+    pg.click('#listViewBtn'); pg.check('#showPast')
+    check(pg.locator('#list .row').count() == 7 and pg.locator('#list .block-head').count() == 3 and 'Day 2 of 2' in pg.inner_text('[data-id="shootday-may-2"]'), 'the list groups days by trip and numbers the shoot days')
+
+    pg.click('#addBtn')
+    pg.fill('#f-date', '2027-03-17'); pg.fill('#f-through', '2027-03-19')
+    pg.fill('#f-title', 'Grain elevator b-roll'); pg.fill('#f-block', 'Spring melt')
+    pg.select_option('#f-location', 'location-grain-elevator'); pg.check('#people input[value="person-teo-ramirez"]')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check(pg.inner_text('#count') == '7 shoot days · 2 travel · 1 hold' and 'Day 4 of 4' in pg.inner_text('#list'), 'adds several days at once')
+
+    pg.click('#list [data-edit="shootday-mar-1"]')
+    pg.click('#callSheetBtn'); pg.wait_for_timeout(200)
+    check(pg.is_visible('#csNote') and 'Call sheet started, Day 1 of 4' in pg.inner_text('#csNote') and not pg.is_visible('#callSheetBtn'), 'starts a call sheet from a shoot day')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    pg.click('#list [data-edit="shootday-may-travel-back"]'); pg.click('#deleteBtn'); pg.wait_for_timeout(200)
+
+    with pg.expect_download() as d:
+        pg.click('#icsBtn')
+    raw = open(d.value.path(), 'rb').read()
+    lines = raw.decode('utf-8').split('\r\n')
+    check(raw.count(b'BEGIN:VEVENT') == 9 and raw.count(b'STATUS:TENTATIVE') == 1 and b'LOCATION:Riverside levee' in raw and all(len(l.encode()) <= 75 for l in lines), 'calendar file has every day, holds tentative')
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    check(rows[0][:3] == ['Date', 'Kind', 'Trip or block'] and len(rows) == 10, 'CSV lists every day')
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    check('May 2026' in pg.inner_text('#report') and 'March 2027' in pg.inner_text('#report') and pg.locator('#report .r-month').count() == 3, 'prints a page for each month with days')
+    data = saved_project(pg, fake)
+    sheet = data['callSheets'][-1]
+    day = next(x for x in data['shootDays'] if x['id'] == 'shootday-mar-1')
+    check(len(data['shootDays']) == 9 and day['callSheetId'] == sheet['id'] and sheet['date'] == '2027-03-16' and sheet['dayLabel'] == 'Day 1 of 4' and sheet['locationId'] == 'location-grain-elevator'
+          and {'personId': 'person-leon-pryor', 'role': 'Interview subject'} in sheet['crew'], 'the days and the new call sheet are saved')
+    check(data['callSheets'][0] == original['callSheets'][0] and data['people'] == original['people'] and data['locations'] == original['locations'], "other tools' data is unchanged")
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+def test_interview_prep(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'interview-prep', fake)
+    open_sample(pg, fake)
+    check(pg.locator('#rows .row').count() == 2 and '1 of 2 beats with no questions' in pg.inner_text('[data-id="interview-leon"]'), 'lists planned interviews and flags a beat with no questions')
+    pg.click('[data-filter="done"]')
+    check(pg.locator('#rows .row').count() == 1, 'filters done interviews')
+    pg.click('[data-filter="planned"]')
+
+    pg.click('[data-edit="interview-leon"]')
+    check(pg.is_visible('#fromSubject'), 'offers notes from the subject tracker')
+    pg.click('#fromSubjectBtn')
+    pg.fill('#newQ', 'Who did the town blame?'); pg.press('#newQ', 'Enter')
+    last = pg.locator('#qs .q').last
+    last.locator('[data-beat]').select_option('beat-leon-blame')
+    pg.locator('#qs .q').last.locator('[data-must]').check()
+    pg.locator('#qs .q').last.locator('[data-move="-1"]').click()
+    order = [pg.locator('#qs .q textarea').nth(i).input_value() for i in range(4)]
+    check(order[2] == 'Who did the town blame?' and pg.locator('#qs .q').nth(2).get_attribute('class') == 'q must', 'adds a question, marks it must-ask and moves it up')
+    check('1 question' in pg.locator('#beats .beat-row').nth(1).inner_text(), 'the beat now has a question')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    leon = pg.inner_text('[data-id="interview-leon"]')
+    check('4 questions, 2 must-ask' in leon and '2 beats covered' in leon, 'saves the questions and beats')
+
+    pg.click('#addBtn')
+    pg.fill('#f-name', 'Doris Kemp'); pg.fill('#f-date', '2027-01-05')
+    pg.fill('#newQ', 'What do the county records show?'); pg.click('#addQBtn')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check('Doris Kemp' in pg.inner_text('#rows') and 'Not in the project yet' in pg.inner_text('#rows'), 'adds an interview with someone not in the project')
+
+    pg.select_option('#printSel', 'interview-ruth')
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    r = pg.inner_text('#report')
+    check('Interview: Ruth Hammond' in r and 'Hammond house' in r and 'Nov 10, 2026' in r and r.count('★') >= 4 and 'The night the levee broke' in r, 'prints a one-page guide for the interview picked')
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    check(rows[0] == ['Interviewee', 'Date', 'Order', 'Question', 'Must ask', 'Story beat', 'Asked'] and len(rows) == 16, 'CSV lists every question in order')
+    data = saved_project(pg, fake)
+    lv = next(i for i in data['interviews'] if i['id'] == 'interview-leon')
+    subj = next(s for s in original['subjects'] if s['id'] == 'subject-leon')
+    check([q['text'] for q in lv['questions']][2] == 'Who did the town blame?' and lv['questions'][2]['must'] is True and lv['questions'][2]['beatId'] == 'beat-leon-blame'
+          and subj['about'] in lv['research'], 'the interview is saved in order, with the subject notes')
+    check(any(i.get('name') == 'Doris Kemp' and 'personId' not in i for i in data['interviews']), 'someone not in the project is saved by name')
+    check(data['people'] == original['people'] and data['subjects'] == original['subjects'] and data['shootDays'] == original['shootDays'], "other tools' data is unchanged")
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
 def test_template_columns(browser, fake):
     for name, template in TEMPLATE_EXPORTS:
         ctx, pg, errs = new_page(browser, name, fake)
@@ -1118,6 +1213,10 @@ def main():
         test_funder_crm(browser, fake)
         print('== cash-flow / schedule, income, balance and shortfalls')
         test_cash_flow(browser, fake)
+        print('== shooting-calendar / days, trips, call sheets and exports')
+        test_shooting_calendar(browser, fake)
+        print('== interview-prep / beats, questions and the guide')
+        test_interview_prep(browser, fake)
         print('== templates / columns match the tools\' exports')
         test_template_columns(browser, fake)
         browser.close()

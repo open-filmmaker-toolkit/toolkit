@@ -1,0 +1,945 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Interview prep · Open Filmmaker Toolkit</title>
+<meta name="description" content="Prepare for interviews: research notes, the story beats to cover, questions in order with must-asks marked, and a one-page guide to print. Runs in your browser; your data stays on your computer.">
+<style>
+:root {
+  --paper: #f1f3f2; --sheet: #ffffff; --ink: #1a2130; --ink-2: #4b556a; --ink-3: #6d778a;
+  --rule: #d4dad8; --rule-soft: #e6eae8; --hover: #f6f8f7; --focus: #2f6fdb;
+  --good: #2b7a57; --good-bg: #dff1e8; --warn: #8a5a00; --warn-bg: #fbf0d9; --bad: #b3392d; --bad-bg: #f8e1de;
+  --screen: #050506; --screen-ink: #f4f1ea; --screen-dim: #a7a29a;
+  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #141922; --sheet: #1b212b; --ink: #e6e9ee; --ink-2: #a6afbd; --ink-3: #8790a0;
+    --rule: #2f3744; --rule-soft: #262d38; --hover: #212834; --focus: #7aa7ff;
+    --good: #4fb386; --good-bg: #1a3329; --warn: #e2a531; --warn-bg: #3a2f17; --bad: #e26657; --bad-bg: #3b2220;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans); }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+[hidden] { display: none !important; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.foot { margin-top: 28px; font-size: 13px; color: var(--ink-3); }
+.cant-run { display: none; max-width: 640px; margin: 64px auto; padding: 0 24px; }
+.cant-run h1 { margin: 0 0 8px; font: 600 26px/1.2 var(--serif); }
+.cant-run p { margin: 0 0 10px; color: var(--ink-2); }
+.no-js .cant-run { display: block; }
+.no-js .page { display: none; }
+.page { max-width: 1240px; margin: 0 auto; padding: 0 24px 48px; }
+
+.masthead { display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: flex-end; justify-content: space-between; padding: 28px 0 20px; }
+.tool-name { margin: 0 0 2px; font-size: 14px; font-weight: 600; color: var(--ink-2); }
+.film-title { margin: 0; font: 600 32px/1.15 var(--serif); letter-spacing: -0.01em; overflow-wrap: anywhere; cursor: pointer; }
+.film-title.is-empty { color: var(--ink-3); font-style: italic; font-weight: 400; }
+.film-meta { margin: 4px 0 0; color: var(--ink-2); font-size: 14px; }
+.file { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.file-state { margin: 0; font-size: 13px; color: var(--ink-2); text-align: right; }
+.file-state .dirty { color: var(--warn); font-weight: 600; }
+.file-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; }
+.btn:hover { border-color: var(--ink-3); }
+.btn.primary { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.btn.primary:hover { opacity: 0.88; }
+.btn.danger { color: var(--bad); }
+.btn.small { padding: 4px 10px; font-size: 13px; }
+.link-btn { padding: 0; border: 0; background: none; cursor: pointer; color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; font-size: 14px; }
+.link-btn:hover { color: var(--ink); }
+
+.banner { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 0 0 16px; padding: 12px 16px; border-radius: 8px; background: var(--warn-bg); border: 1px solid color-mix(in srgb, var(--warn) 40%, transparent); }
+.banner p { margin: 0; flex: 1 1 280px; }
+.banner .actions { display: flex; gap: 8px; }
+
+.workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr); gap: 24px; align-items: start; }
+.col { display: grid; gap: 18px; min-width: 0; }
+.card { background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 18px; min-width: 0; }
+.card-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; margin: 0 0 6px; }
+.card-head h2 { margin: 0; font: 600 18px/1.3 var(--serif); }
+.card-head .count { font-size: 13px; color: var(--ink-2); }
+.card-head .spacer { flex: 1; }
+.card p.lead { margin: 0 0 8px; font-size: 14px; color: var(--ink-2); }
+
+/* Side cards */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 2px; padding: 0; list-style: none; }
+.chip { display: inline-flex; border: 1px solid var(--rule); border-radius: 999px; overflow: hidden; background: var(--paper); }
+.chip button { padding: 4px 10px; border: 0; background: none; cursor: pointer; font-size: 13px; font-weight: 600; }
+.chip button:hover { background: var(--hover); }
+.chip .sub { font-weight: 400; color: var(--ink-3); margin-left: 4px; }
+.empty-line { margin: 4px 0; color: var(--ink-2); font-size: 14px; }
+.changes { margin: 0; padding-left: 18px; font-size: 14px; }
+.changes li + li { margin-top: 2px; }
+
+/* The supers list */
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 10px; }
+.toolbar h2 { margin: 0 8px 0 0; font: 600 20px/1.2 var(--serif); }
+.toolbar .count { font-size: 13px; color: var(--ink-2); }
+.toolbar .spacer { flex: 1; }
+.rows { list-style: none; margin: 0; padding: 0; background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; }
+.row { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 2px 14px; align-items: start; padding: 10px 14px; }
+.row + .row { border-top: 1px solid var(--rule-soft); }
+.row:hover { background: var(--hover); }
+.row.is-selected { background: var(--hover); box-shadow: inset 3px 0 0 var(--ink); }
+.row .tc { font-variant-numeric: tabular-nums; font-size: 14px; color: var(--ink-2); padding-top: 1px; }
+.row .what { min-width: 0; padding: 0; border: 0; background: none; text-align: left; cursor: pointer; overflow-wrap: anywhere; }
+.row .what:hover .nm { text-decoration: underline; text-underline-offset: 2px; }
+.row .nm { display: block; font-weight: 600; }
+.row .tt { display: block; font-size: 14px; color: var(--ink-2); }
+.flags { grid-column: 2; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.flag { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 999px; font-size: 12.5px; font-weight: 600; }
+.flag.new { background: var(--good-bg); color: var(--good); }
+.flag.changed { background: var(--warn-bg); color: var(--warn); }
+.flag.problem { background: var(--bad-bg); color: var(--bad); }
+.flag.linked { background: var(--paper); color: var(--ink-3); font-weight: 500; border: 1px solid var(--rule); }
+.flag button { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+
+.empty { padding: 36px 24px; text-align: center; background: var(--sheet); border: 1px dashed var(--rule); border-radius: 8px; }
+.empty h2 { margin: 0 0 6px; font: 600 20px/1.3 var(--serif); }
+.empty p { margin: 0 auto 16px; max-width: 52ch; color: var(--ink-2); }
+.empty .actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+
+
+.workspace > * { min-width: 0; }
+.side { position: sticky; top: 16px; display: grid; gap: 18px; }
+.filters { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
+.filter { padding: 4px 11px; border: 1px solid var(--rule); border-radius: 999px; background: var(--sheet); font-size: 13px; cursor: pointer; }
+.filter[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.row { grid-template-columns: 112px minmax(0, 1fr) auto; }
+.row .st { font-size: 13px; font-weight: 600; padding-top: 2px; white-space: nowrap; }
+.st-planned { color: var(--warn); }
+.st-done { color: var(--good); }
+.row.is-done .nm { color: var(--ink-2); }
+.flags { grid-column: 2 / -1; }
+.due-list { list-style: none; margin: 4px 0 0; padding: 0; }
+.due-list li { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; font-size: 14px; }
+.due-list li + li { border-top: 1px solid var(--rule-soft); }
+.due-list button { padding: 0; border: 0; background: none; cursor: pointer; text-align: left; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.due-list .when { color: var(--ink-2); white-space: nowrap; }
+.add-q { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+.add-q input, .beat-row input, .q select { min-width: 0; padding: 7px 9px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); }
+.beats { display: grid; gap: 6px; }
+.beat-row { display: grid; grid-template-columns: minmax(0, 1fr) auto 30px; gap: 8px; align-items: center; }
+.beat-row .cnt { font-size: 12.5px; color: var(--ink-3); white-space: nowrap; }
+.beat-row .cnt.none { color: var(--warn); font-weight: 600; }
+.qs { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; counter-reset: q; }
+.q { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; gap: 4px 8px; align-items: start; padding: 8px; border: 1px solid var(--rule-soft); border-radius: 6px; background: var(--paper); }
+.q.must { border-color: var(--ink-2); box-shadow: inset 3px 0 0 var(--ink); }
+.q .num { font-weight: 700; color: var(--ink-2); font-variant-numeric: tabular-nums; padding-top: 6px; text-align: right; }
+.q textarea { width: 100%; min-height: 38px; padding: 6px 8px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); font: inherit; resize: vertical; }
+.q .moves { display: flex; gap: 2px; }
+.q .opts { grid-column: 2 / -1; display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; font-size: 13px; }
+.q .opts label { display: inline-flex; gap: 6px; align-items: center; }
+.q .opts input { width: 16px; height: 16px; margin: 0; }
+.q .opts select { padding: 3px 6px; font-size: 13px; max-width: 100%; }
+.icon-btn { width: 30px; height: 30px; padding: 0; border: 1px solid transparent; border-radius: 6px; background: none; color: var(--ink-2); cursor: pointer; font-size: 15px; line-height: 1; }
+.icon-btn:hover { border-color: var(--rule); color: var(--ink); }
+.icon-btn:disabled { opacity: 0.3; cursor: default; }
+.from-subject { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 13px; color: var(--ink-2); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.three { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+@media (max-width: 720px) {
+  .two, .three { grid-template-columns: 1fr; }
+  .row { grid-template-columns: minmax(0, 1fr) auto; }
+  .row .tc { grid-column: 1 / -1; }
+  .flags { grid-column: 1 / -1; }
+  .q { grid-template-columns: 22px minmax(0, 1fr); }
+  .q .moves { grid-column: 2; }
+}
+
+dialog { border: 0; padding: 0; color: var(--ink); background: var(--sheet); box-shadow: 0 10px 40px rgba(10, 14, 22, 0.25); }
+dialog::backdrop { background: rgba(16, 20, 28, 0.42); }
+dialog.drawer { margin: 0 0 0 auto; width: min(600px, 100vw); height: 100dvh; max-height: 100dvh; max-width: 100vw; border-left: 1px solid var(--rule); }
+dialog.modal { width: min(560px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); border-radius: 10px; }
+dialog form { display: flex; flex-direction: column; height: 100%; max-height: inherit; }
+.dlg-head { padding: 20px 24px 12px; border-bottom: 1px solid var(--rule-soft); }
+.dlg-head h2 { margin: 0; font: 600 22px/1.25 var(--serif); }
+.dlg-body { flex: 1; overflow-y: auto; padding: 16px 24px 24px; display: grid; gap: 14px; align-content: start; }
+.dlg-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 14px 24px; border-top: 1px solid var(--rule-soft); }
+.dlg-foot .spacer { flex: 1; }
+.field { display: grid; gap: 4px; }
+.field > label, .field > .label, .group h3 { font-size: 14px; font-weight: 600; margin: 0; }
+.hint { margin: 0; font-size: 13px; color: var(--ink-3); }
+.field input, .field select, .field textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); }
+.group { display: grid; gap: 8px; padding-top: 10px; border-top: 1px solid var(--rule-soft); }
+.checks { display: grid; gap: 2px; max-height: 260px; overflow-y: auto; padding: 2px; }
+.check { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; align-items: start; padding: 5px 4px; border-radius: 6px; cursor: pointer; }
+.check:hover { background: var(--hover); }
+.check input { width: 18px; height: 18px; margin: 2px 0 0; }
+.check .who { overflow-wrap: anywhere; }
+.check .sub { margin-left: 4px; font-size: 13px; color: var(--ink-3); }
+.check .lines { display: block; font-size: 13px; color: var(--ink-3); white-space: pre-line; }
+#songList, #sourceList { max-height: none; }
+.radio-row { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.radio-row label { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; cursor: pointer; }
+pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); font-size: 13px; white-space: pre-wrap; }
+
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); max-width: calc(100vw - 32px); padding: 10px 16px; border-radius: 8px; background: var(--ink); color: var(--paper); font-size: 14px; box-shadow: 0 6px 24px rgba(10, 14, 22, 0.25); z-index: 10; }
+.toast.error { background: var(--bad); color: #ffffff; }
+.report { display: none; }
+
+@media (max-width: 900px) {
+  .workspace { grid-template-columns: 1fr; }
+  .side { position: static; }
+}
+@media (max-width: 720px) {
+  .page { padding: 0 16px 40px; }
+  .film-title { font-size: 26px; }
+  .file { align-items: flex-start; }
+  .file-state { text-align: left; }
+  .toolbar h2 { flex-basis: 100%; order: -2; }
+  .toolbar #addBtn { flex: 1 1 100%; justify-content: center; order: -1; }
+  .row { grid-template-columns: minmax(0, 1fr); }
+  .flags { grid-column: 1; }
+}
+@media print {
+  @page { size: portrait; margin: 16mm; }
+  :root { color-scheme: light; }
+  body { background: #ffffff; color: #000000; font-size: 10pt; }
+  .page, dialog, .toast { display: none !important; }
+  .report { display: block; }
+  .report h1 { margin: 0; font: 700 18pt/1.2 var(--serif); }
+  .report h2 { margin: 14pt 0 4pt; font: 700 12pt/1.2 var(--serif); break-after: avoid; page-break-after: avoid; }
+  .report .r-meta { margin: 2pt 0 10pt; }
+  .report table { width: 100%; border-collapse: collapse; }
+  .report th, .report td { padding: 4pt 5pt; border-bottom: 0.75pt solid #999999; text-align: left; vertical-align: top; }
+  .report th { font-size: 9pt; border-bottom: 1pt solid #000000; }
+  .report tr { break-inside: avoid; page-break-inside: avoid; }
+  .report .r-sub { display: block; font-size: 8.5pt; color: #333333; }
+  .report .r-note { margin-top: 14pt; font-size: 8pt; color: #333333; }
+  body { font-size: 9.5pt; }
+  .report h1 { font-size: 15pt; }
+  .report h2 { margin: 9pt 0 3pt; font-size: 10.5pt; }
+  .report .r-goal { margin: 0 0 4pt; }
+  .report .r-key { font-weight: 400; font-size: 8.5pt; }
+  .report .r-beats { margin: 0; padding: 0; list-style: none; columns: 2; column-gap: 14pt; }
+  .report .r-beats li { margin: 0 0 2pt; break-inside: avoid; }
+  .report .r-qs { margin: 0; padding-left: 16pt; }
+  .report .r-qs li { margin: 0 0 3pt; break-inside: avoid; page-break-inside: avoid; }
+  .report .r-qs .r-must { font-weight: 700; }
+  .report .r-box { font-weight: 400; }
+  .report .r-notes { margin: 0; white-space: pre-wrap; font-size: 8.5pt; color: #333333; }
+}
+</style>
+</head>
+<body>
+<div class="cant-run" id="cantRun">
+  <h1 id="cantRunTitle">Open this file in a web browser</h1>
+  <p id="cantRunText">This tool runs in Chrome, Edge, Firefox or Safari. You're seeing a preview that doesn't run it, so none of the buttons would work.</p>
+  <p id="cantRunHow">In your browser, choose File, then Open File, and pick this file. Or right-click the file and open it with your browser.</p>
+</div>
+<div class="page">
+  <header class="masthead">
+    <div>
+      <p class="tool-name">Interview prep</p>
+      <h1 class="film-title" id="filmTitle">Untitled film</h1>
+      <p class="film-meta"><span id="filmMeta"></span> <button type="button" class="link-btn" id="editProjectBtn">Edit film details</button></p>
+    </div>
+    <div class="file">
+      <p class="file-state" id="fileState">Not saved to a file yet</p>
+      <div class="file-actions">
+        <button type="button" class="btn" id="newBtn">New project</button>
+        <button type="button" class="btn" id="openBtn">Open file</button>
+        <button type="button" class="btn" id="projectCsvBtn">Export project data (CSV)</button>
+        <button type="button" class="btn primary" id="saveBtn">Save file</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="banner" id="recovery" role="region" aria-label="Unsaved work" hidden>
+    <p id="recoveryText"></p>
+    <div class="actions">
+      <button type="button" class="btn primary" id="restoreBtn">Restore it</button>
+      <button type="button" class="btn" id="discardBtn">Discard it</button>
+    </div>
+  </div>
+
+  <main class="workspace">
+    <section aria-labelledby="listHead">
+      <div class="toolbar">
+        <h2 id="listHead">Interviews</h2>
+        <span class="count" id="count"></span>
+        <span class="spacer"></span>
+        <button type="button" class="btn primary" id="addBtn">Add an interview</button>
+        <button type="button" class="btn" id="csvBtn">Export CSV</button>
+      </div>
+      <div class="filters" id="filters" role="group" aria-label="Show interviews"></div>
+      <ol class="rows" id="rows" aria-labelledby="listHead"></ol>
+      <p class="empty-line" id="noMatch" hidden>No interviews here.</p>
+      <div class="empty" id="empty" hidden>
+        <h2>No interviews yet</h2>
+        <p>Prepare each interview: your research, the story beats it has to cover, and the questions in the order you'll ask them, with the must-asks marked. Then print a one-page guide to take with you.</p>
+        <div class="actions">
+          <button type="button" class="btn primary" id="emptyAddBtn">Add an interview</button>
+          <button type="button" class="btn" id="emptyOpenBtn">Open file</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="side">
+      <section class="card" aria-labelledby="nextHead">
+        <div class="card-head"><h2 id="nextHead">Coming up</h2></div>
+        <ul class="due-list" id="nextList"></ul>
+      </section>
+      <section class="card" aria-labelledby="printHead">
+        <div class="card-head"><h2 id="printHead">Interview guide</h2></div>
+        <p class="lead">A one-page guide for the interview you pick: the beats to cover and the questions in order, with boxes to tick as you go.</p>
+        <div class="field"><label for="printSel">Interview</label><select id="printSel"></select></div>
+        <div><button type="button" class="btn" id="printBtn">Print the guide</button></div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="foot">
+    <p>Part of the Open Filmmaker Toolkit. This page makes no network requests: everything stays on this computer until you save or export it. Uses the same project file as the other toolkit tools.</p>
+  </footer>
+</div>
+
+<dialog class="drawer" id="editor" aria-labelledby="editorTitle">
+  <form id="editorForm" method="dialog" novalidate>
+    <div class="dlg-head"><h2 id="editorTitle">Interview</h2></div>
+    <div class="dlg-body">
+      <div class="two">
+        <div class="field"><label for="f-person">Who</label><select id="f-person"></select></div>
+        <div class="field" id="nameField"><label for="f-name">Name</label><input id="f-name" type="text" placeholder="If they're not in the project yet" autocomplete="off"></div>
+      </div>
+      <div class="three">
+        <div class="field"><label for="f-date">Date</label><input id="f-date" type="date"></div>
+        <div class="field"><label for="f-minutes">Length (minutes)</label><input id="f-minutes" type="number" min="1" step="1" inputmode="numeric"></div>
+        <div class="field"><label for="f-status">Status</label><select id="f-status"><option value="planned">Planned</option><option value="done">Done</option></select></div>
+      </div>
+      <div class="field" id="dayField"><label for="f-day">Shoot day</label><select id="f-day"></select></div>
+      <div class="field"><label for="f-goal">What this interview is for</label><input id="f-goal" type="text" placeholder="Her account of the night the levee broke, in her own words" autocomplete="off"></div>
+      <div class="field">
+        <label for="f-research">Research notes</label>
+        <textarea id="f-research" rows="5" placeholder="Background, dates and names to get right, what they've said before, what to be careful about"></textarea>
+        <div class="from-subject" id="fromSubject" hidden><span id="fromSubjectText"></span><button type="button" class="btn small" id="fromSubjectBtn">Add their notes</button></div>
+      </div>
+      <div class="group">
+        <h3 id="beatHead">Story beats to cover</h3>
+        <div class="beats" id="beats" role="group" aria-labelledby="beatHead"></div>
+        <div><button type="button" class="btn small" id="addBeatBtn">Add a beat</button></div>
+      </div>
+      <div class="group">
+        <h3 id="qHead">Questions, in order</h3>
+        <p class="hint">Mark the questions you can't leave without asking. Move them up or down to change the order.</p>
+        <ol class="qs" id="qs" aria-labelledby="qHead"></ol>
+        <div class="add-q"><input id="newQ" type="text" placeholder="Type a question and press Enter" aria-label="New question" autocomplete="off"><button type="button" class="btn" id="addQBtn">Add</button></div>
+      </div>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn danger" id="deleteBtn">Remove interview</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="editorCancel">Cancel</button>
+      <button type="submit" class="btn primary" id="editorSubmit">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="projectDialog" aria-labelledby="projectDialogTitle">
+  <form id="projectForm" method="dialog">
+    <div class="dlg-head"><h2 id="projectDialogTitle">Film details</h2></div>
+    <div class="dlg-body">
+      <div class="field"><label for="p-title">Film title</label><input id="p-title" type="text" placeholder="Working title is fine"></div>
+      <div class="field"><label for="p-company">Production company</label><input id="p-company" type="text"></div>
+      <div class="field"><label for="p-producer">Producer</label><input id="p-producer" type="text"></div>
+    </div>
+    <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn" id="projectCancel">Cancel</button><button type="submit" class="btn primary">Save details</button></div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="projectCsvDialog" aria-labelledby="projectCsvTitle">
+  <form id="projectCsvForm" method="dialog">
+    <div class="dlg-head"><h2 id="projectCsvTitle">Export project data</h2></div>
+    <div class="dlg-body">
+      <div class="field">
+        <label for="projectCsvCollection">Data to export</label>
+        <select id="projectCsvCollection">
+          <option value="project">Project details</option>
+          <option value="people">People</option>
+          <option value="locations">Locations</option>
+          <option value="thirdPartyElements">Third-party elements</option>
+          <option value="contracts">Contracts</option>
+          <option value="assets">Assets</option>
+          <option value="musicCueSheet">Music cue sheet details</option>
+          <option value="callSheets">Call sheets</option>
+        </select>
+      </div>
+      <p class="hint">Exports one CSV file for the selected collection. Nested values are kept as JSON in their cell.</p>
+    </div>
+    <div class="dlg-foot">
+      <button type="submit" class="btn primary">Export CSV</button>
+      <button type="button" class="btn" id="projectCsvCancel">Cancel</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="conflictDialog" aria-labelledby="conflictTitle">
+  <form method="dialog">
+    <div class="dlg-head"><h2 id="conflictTitle">Project file changed</h2></div>
+    <div class="dlg-body">
+      <p id="conflictText">This project file changed after you opened it. Saving will replace those changes.</p>
+      <p class="hint">Your edits are still here. Choose whether to overwrite the changed file, save a separate copy, or load its latest contents. Save in one tool at a time; simultaneous saves can still race.</p>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn" id="conflictReloadBtn">Reload latest</button>
+      <button type="button" class="btn" id="conflictCopyBtn">Save a copy</button>
+      <button type="button" class="btn danger" id="conflictOverwriteBtn">Overwrite file</button>
+      <button type="button" class="btn" id="conflictCancelBtn">Keep editing</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="report" id="report" aria-hidden="true"></div>
+<input type="file" id="fileInput" accept=".json,application/json" hidden>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+(() => {
+  'use strict';
+
+  const FORMAT = 'open-filmmaker-toolkit/project';
+  const FORMAT_VERSION = 1;
+  const TOOL = 'interview-prep 0.1.0';
+  const DRAFT_KEY = 'oft.interview-prep.draft';
+  const PROJECT_TEXT = ['title', 'company', 'producer'];
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const str = v => (v == null ? '' : String(v));
+  const arr = v => (Array.isArray(v) ? v : []);
+  const norm = s => str(s).toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+
+  let doc = blankDoc();
+  let fileHandle = null;
+  let baselineText = null;
+  let fileName = null;
+  let dirty = false;
+
+  function blankDoc() {
+    return { format: FORMAT, formatVersion: FORMAT_VERSION, project: { title: '', company: '', producer: '', frameRate: 24, currency: 'USD' }, people: [], interviews: [] };
+  }
+  function newId(prefix) {
+    if (window.crypto && crypto.randomUUID) return `${prefix}-${crypto.randomUUID()}`;
+    return `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+  }
+  function today() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  function fmtDate(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str(iso));
+    if (!m) return str(iso);
+    return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+  function daysUntil(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str(iso));
+    if (!m) return null;
+    const t = new Date(); const a = Date.UTC(t.getFullYear(), t.getMonth(), t.getDate());
+    return Math.round((Date.UTC(+m[1], +m[2] - 1, +m[3]) - a) / 86400000);
+  }
+
+  let filter = 'planned';
+  let editing = null;
+  let isNew = false;
+  let printId = null;
+
+  // Fills in only what this tool needs; everything else in the file is left as it was.
+  function normalize(d) {
+    if (!d.project || typeof d.project !== 'object') d.project = {};
+    for (const k of PROJECT_TEXT) if (typeof d.project[k] !== 'string') d.project[k] = str(d.project[k]);
+    if (!Array.isArray(d.people)) d.people = [];
+    if (!Array.isArray(d.interviews)) d.interviews = [];
+    d.interviews = d.interviews.filter(x => x && typeof x === 'object');
+    for (const i of d.interviews) {
+      if (!i.id) i.id = newId('interview');
+      if (i.status !== 'done') i.status = 'planned';
+      for (const k of ['beats', 'questions']) {
+        if (i[k] === undefined) continue;
+        if (!Array.isArray(i[k])) { delete i[k]; continue; }
+        i[k] = i[k].filter(x => x && typeof x === 'object');
+        for (const x of i[k]) if (!x.id) x.id = newId(k === 'beats' ? 'beat' : 'question');
+      }
+    }
+    d.format = FORMAT;
+    d.formatVersion = FORMAT_VERSION;
+    return d;
+  }
+  const entries = () => doc.interviews;
+  const isDate = s => /^\d{4}-\d{2}-\d{2}$/.test(str(s));
+  const person = id => doc.people.find(p => p && p.id === id);
+  const who = i => (i.personId && person(i.personId) ? person(i.personId).name : i.name) || 'Unnamed';
+  const beats = i => arr(i.beats).filter(b => b && typeof b === 'object');
+  const questions = i => arr(i.questions).filter(q => q && typeof q === 'object');
+  const days = () => arr(doc.shootDays).filter(s => s && s.id && isDate(s.date));
+  const dayOf = i => (i.shootDayId ? days().find(s => s.id === i.shootDayId) : null);
+  // An interview's date: its own, or its shoot day's.
+  const dateOf = i => i.date || (dayOf(i) ? dayOf(i).date : '');
+  const subjectFor = id => arr(doc.subjects).find(s => s && s.personId === id);
+  const uncovered = i => beats(i).filter(b => !questions(i).some(q => q.beatId === b.id));
+  // People likely to be interviewed come first: those on camera, then the rest.
+  const peopleOrder = () => doc.people.filter(p => p && p.id).sort((a, b) => (b.onCamera === true) - (a.onCamera === true) || str(a.name).localeCompare(str(b.name)));
+  const sorted = list => [...list].sort((a, b) => (a.status === 'done') - (b.status === 'done') || str(dateOf(a) || '9999').localeCompare(str(dateOf(b) || '9999')) || who(a).localeCompare(who(b)));
+
+  // ---------- Render ----------
+  function render() {
+    $('filmTitle').textContent = doc.project.title || 'Untitled film';
+    $('filmTitle').classList.toggle('is-empty', !doc.project.title);
+    $('filmMeta').textContent = [doc.project.company, doc.project.producer && `Producer: ${doc.project.producer}`].filter(Boolean).join(' · ');
+    $('fileState').innerHTML = (fileName ? esc(fileName) : 'Not saved to a file yet') + (dirty ? ' · <span class="dirty">Unsaved changes</span>' : '');
+    document.title = `${doc.project.title ? doc.project.title + ' · ' : ''}Interview prep · Open Filmmaker Toolkit`;
+
+    const all = entries();
+    $('filters').innerHTML = [['planned', 'Planned'], ['done', 'Done'], ['all', 'All']].map(([id, l]) => {
+      const n = id === 'all' ? all.length : all.filter(x => x.status === id).length;
+      return `<button type="button" class="filter" data-filter="${id}" aria-pressed="${filter === id}">${l} ${n}</button>`;
+    }).join('');
+    const list = sorted(all).filter(i => filter === 'all' || i.status === filter);
+    const planned = all.filter(i => i.status === 'planned').length;
+    $('count').textContent = all.length ? `${all.length} interview${all.length === 1 ? '' : 's'}${planned ? ` · ${planned} planned` : ''}` : '';
+    $('empty').hidden = !!all.length;
+    $('rows').hidden = !list.length;
+    $('noMatch').hidden = !all.length || !!list.length;
+    $('filters').hidden = !all.length;
+    $('csvBtn').hidden = !all.length;
+    $('rows').innerHTML = list.map(i => {
+      const qs = questions(i), must = qs.filter(q => q.must).length, un = uncovered(i);
+      const flags = [];
+      flags.push(`<span class="flag linked">${qs.length} question${qs.length === 1 ? '' : 's'}${must ? `, ${must} must-ask` : ''}</span>`);
+      if (beats(i).length) flags.push(`<span class="flag ${un.length ? 'changed' : 'linked'}">${un.length ? `${un.length} of ${beats(i).length} beats with no questions` : `${beats(i).length} beat${beats(i).length === 1 ? '' : 's'} covered`}</span>`);
+      if (i.personId && !person(i.personId)) flags.push('<span class="flag problem">Their person is no longer in the project</span>');
+      else if (!i.personId) flags.push('<span class="flag changed">Not in the project yet</span>');
+      const d = dayOf(i);
+      if (d) flags.push(`<span class="flag linked">Shoot day: ${esc(d.title || fmtDate(d.date))}</span>`);
+      if (i.minutes) flags.push(`<span class="flag linked">${esc(i.minutes)} min</span>`);
+      return `<li class="row${i.status === 'done' ? ' is-done' : ''}" data-id="${esc(i.id)}">
+        <span class="tc">${esc(dateOf(i) ? fmtDate(dateOf(i)) : 'No date')}</span>
+        <button type="button" class="what" data-edit="${esc(i.id)}"><span class="nm">${esc(who(i))}</span>${i.goal ? `<span class="tt">${esc(i.goal)}</span>` : ''}</button>
+        <span class="st st-${esc(i.status)}">${i.status === 'done' ? 'Done' : 'Planned'}</span>
+        <div class="flags">${flags.join('')}</div>
+      </li>`;
+    }).join('');
+    const next = sorted(all.filter(i => i.status === 'planned')).slice(0, 5);
+    $('nextList').innerHTML = next.length ? next.map(i => `<li><button type="button" data-edit="${esc(i.id)}">${esc(who(i))}</button><span class="when">${esc(dateOf(i) ? fmtDate(dateOf(i)) : 'No date')}</span></li>`).join('') : '<li class="empty-line">No interviews planned.</li>';
+    if (!all.some(i => i.id === printId)) printId = (sorted(all)[0] || {}).id || null;
+    $('printSel').innerHTML = sorted(all).map(i => `<option value="${esc(i.id)}"${i.id === printId ? ' selected' : ''}>${esc(who(i))}${dateOf(i) ? `, ${esc(fmtDate(dateOf(i)))}` : ''}</option>`).join('');
+    $('printSel').disabled = $('printBtn').disabled = !all.length;
+  }
+
+  // ---------- Editor ----------
+  function beatRow(b) {
+    const n = questions(editing).filter(q => q.beatId === b.id).length;
+    return `<div class="beat-row" data-id="${esc(b.id)}"><input type="text" value="${esc(b.text)}" placeholder="The night of the flood" aria-label="Story beat" autocomplete="off">
+      <span class="cnt${n ? '' : ' none'}">${n ? `${n} question${n === 1 ? '' : 's'}` : 'No questions yet'}</span>
+      <button type="button" class="icon-btn" data-delbeat aria-label="Remove this beat">×</button></div>`;
+  }
+  function qRow(q, idx, total) {
+    return `<li class="q${q.must ? ' must' : ''}" data-id="${esc(q.id)}"><span class="num">${idx + 1}</span>
+      <textarea aria-label="Question ${idx + 1}" rows="1">${esc(q.text)}</textarea>
+      <span class="moves"><button type="button" class="icon-btn" data-move="-1" aria-label="Move up"${idx === 0 ? ' disabled' : ''}>↑</button><button type="button" class="icon-btn" data-move="1" aria-label="Move down"${idx === total - 1 ? ' disabled' : ''}>↓</button><button type="button" class="icon-btn" data-delq aria-label="Remove this question">×</button></span>
+      <span class="opts"><label><input type="checkbox" data-must${q.must ? ' checked' : ''}> Must ask</label>
+        <label>Beat <select data-beat aria-label="Story beat for question ${idx + 1}"><option value="">None</option>${beats(editing).map(b => `<option value="${esc(b.id)}"${q.beatId === b.id ? ' selected' : ''}>${esc(b.text || 'Untitled beat')}</option>`).join('')}</select></label>
+        ${editing.status === 'done' ? `<label><input type="checkbox" data-asked${q.asked ? ' checked' : ''}> Asked</label>` : ''}</span></li>`;
+  }
+  // Reads the beats and questions on screen back into the interview being edited.
+  function readLists() {
+    editing.beats = [...$('beats').querySelectorAll('.beat-row')].map(r => ({ id: r.dataset.id, text: r.querySelector('input').value.trim() }));
+    const old = new Map(questions(editing).map(q => [q.id, q]));
+    editing.questions = [...$('qs').querySelectorAll('.q')].map(r => {
+      const q = Object.assign({}, old.get(r.dataset.id), { id: r.dataset.id, text: r.querySelector('textarea').value.trim() });
+      if (r.querySelector('[data-must]').checked) q.must = true; else delete q.must;
+      const b = r.querySelector('[data-beat]').value;
+      if (b) q.beatId = b; else delete q.beatId;
+      const a = r.querySelector('[data-asked]');
+      if (a) { if (a.checked) q.asked = true; else delete q.asked; }
+      return q;
+    });
+  }
+  function drawLists() {
+    const qs = questions(editing);
+    $('beats').innerHTML = beats(editing).map(beatRow).join('');
+    $('qs').innerHTML = qs.length ? qs.map((q, i) => qRow(q, i, qs.length)).join('') : '<li class="empty-line">No questions yet.</li>';
+  }
+  function showSubject() {
+    const id = $('f-person').value;
+    const s = id && subjectFor(id);
+    const text = s ? [s.about, s.notes].filter(Boolean).join('\n\n') : '';
+    $('fromSubject').hidden = !text || $('f-research').value.includes(str(s.about || s.notes).slice(0, 40));
+    $('fromSubjectText').textContent = text ? 'The subject tracker has notes on them.' : '';
+  }
+  function openEditor(id) {
+    const existing = id && entries().find(i => i.id === id);
+    isNew = !existing;
+    editing = existing ? structuredClone(existing) : { id: newId('interview'), status: 'planned' };
+    $('f-person').innerHTML = '<option value="">Someone not in the project</option>' + peopleOrder().map(p => `<option value="${esc(p.id)}">${esc(p.name || 'Unnamed')}${arr(p.roles).length ? `, ${esc(arr(p.roles)[0])}` : ''}</option>`).join('');
+    const ds = days();
+    $('dayField').hidden = !ds.length;
+    $('f-day').innerHTML = '<option value="">None</option>' + [...ds].sort((a, b) => a.date.localeCompare(b.date)).map(s => `<option value="${esc(s.id)}">${esc(fmtDate(s.date))}${s.title ? `: ${esc(s.title)}` : ''}</option>`).join('');
+    const vals = { 'f-person': editing.personId && person(editing.personId) ? editing.personId : '', 'f-name': editing.name, 'f-date': editing.date, 'f-minutes': editing.minutes, 'f-status': editing.status,
+      'f-day': editing.shootDayId, 'f-goal': editing.goal, 'f-research': editing.research };
+    for (const [k, v] of Object.entries(vals)) $(k).value = v == null ? '' : String(v);
+    $('nameField').hidden = !!$('f-person').value;
+    $('newQ').value = '';
+    drawLists();
+    showSubject();
+    $('editorTitle').textContent = isNew ? 'Add an interview' : `Interview: ${who(editing)}`;
+    $('deleteBtn').hidden = isNew;
+    $('editor').showModal();
+    $('f-person').focus();
+  }
+  function addQuestion() {
+    const text = $('newQ').value.trim();
+    if (!text) { $('newQ').focus(); return; }
+    readLists();
+    editing.questions.push({ id: newId('question'), text });
+    $('newQ').value = '';
+    drawLists();
+    $('newQ').focus();
+  }
+  function saveEditor() {
+    const pid = $('f-person').value;
+    if (!pid && !$('f-name').value.trim()) { $('f-name').setCustomValidity('Pick who you’re interviewing, or type their name.'); $('f-name').reportValidity(); return; }
+    if ($('newQ').value.trim()) addQuestion();
+    readLists();
+    const e = editing;
+    if (pid) { e.personId = pid; delete e.name; } else { delete e.personId; e.name = $('f-name').value.trim(); }
+    for (const [k, id] of [['date', 'f-date'], ['goal', 'f-goal'], ['research', 'f-research'], ['shootDayId', 'f-day']]) { const v = $(id).value.trim(); if (v) e[k] = v; else delete e[k]; }
+    if ($('f-minutes').value) e.minutes = Number($('f-minutes').value); else delete e.minutes;
+    e.status = $('f-status').value;
+    e.beats = beats(e).filter(b => b.text);
+    for (const q of e.questions) if (q.beatId && !e.beats.some(b => b.id === q.beatId)) delete q.beatId;
+    e.questions = questions(e).filter(q => q.text);
+    if (!e.beats.length) delete e.beats;
+    if (!e.questions.length) delete e.questions;
+    if (isNew) entries().push(e); else entries()[entries().findIndex(x => x.id === e.id)] = e;
+    printId = e.id;
+    $('editor').close();
+    changed();
+  }
+  function removeEditing() {
+    doc.interviews = entries().filter(i => i.id !== editing.id);
+    $('editor').close();
+    changed();
+    toast(`Removed the interview with ${who(editing)}.`);
+  }
+
+  // ---------- CSV and print ----------
+  const CSV_HEAD = ['Interviewee', 'Date', 'Order', 'Question', 'Must ask', 'Story beat', 'Asked'];
+  function exportCsv() {
+    const rows = sorted(entries()).flatMap(i => questions(i).map((q, n) => [who(i), dateOf(i), n + 1, q.text, q.must ? 'Yes' : '', (beats(i).find(b => b.id === q.beatId) || {}).text, q.asked ? 'Yes' : '']));
+    const csv = '﻿' + [CSV_HEAD, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
+    const name = `${slug()}-interview-questions.csv`;
+    download(csv, name, 'text/csv;charset=utf-8');
+    toast(`Exported ${rows.length} question${rows.length === 1 ? '' : 's'} to ${name}`);
+  }
+  // One page: who, when, what it's for, the beats, and the questions in order with must-asks marked.
+  function renderReport() {
+    const i = entries().find(x => x.id === printId) || sorted(entries())[0];
+    if (!i) { $('report').innerHTML = ''; return; }
+    const p = i.personId && person(i.personId);
+    const d = dayOf(i);
+    const place = d && d.locationId && arr(doc.locations).find(l => l && l.id === d.locationId);
+    const qs = questions(i);
+    $('report').innerHTML = `<h1>Interview: ${esc(who(i))}</h1>
+      <p class="r-meta">${esc([p && arr(p.roles).join(', '), dateOf(i) && fmtDate(dateOf(i)), place && place.name, i.minutes && `${i.minutes} minutes`, doc.project.title].filter(Boolean).join(' · '))}</p>
+      ${i.goal ? `<p class="r-goal"><b>For:</b> ${esc(i.goal)}</p>` : ''}
+      ${beats(i).length ? `<h2>Cover</h2><ul class="r-beats">${beats(i).map(b => `<li>☐ ${esc(b.text)}</li>`).join('')}</ul>` : ''}
+      <h2>Questions${qs.some(q => q.must) ? ' <span class="r-key">★ must ask</span>' : ''}</h2>
+      <ol class="r-qs">${qs.map(q => `<li class="${q.must ? 'r-must' : ''}"><span class="r-box">☐</span> ${q.must ? '★ ' : ''}${esc(q.text)}</li>`).join('')}</ol>
+      ${i.research ? `<h2>Notes</h2><p class="r-notes">${esc(i.research)}</p>` : ''}
+      <p class="r-note">Before you roll: check the release, room tone, and that you've asked if there's anything they want to add.</p>`;
+  }
+
+  // ---------- Project CSV ----------
+  function csvCell(v) {
+    let s = v == null ? '' : String(v);
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+    return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }
+  const csvCollections = {
+    project: 'project details', people: 'people', locations: 'locations', thirdPartyElements: 'third-party elements',
+    contracts: 'contracts', assets: 'assets', musicCueSheet: 'music cue sheet details', callSheets: 'call sheets'
+  };
+  function exportProjectCsv() {
+    const collection = $('projectCsvCollection').value;
+    const value = doc[collection];
+    const rows = Array.isArray(value) ? value : value && typeof value === 'object' ? [value] : [];
+    if (rows.some(row => !row || typeof row !== 'object' || Array.isArray(row))) {
+      toast(`Couldn't export ${csvCollections[collection]}: the project contains an invalid record.`, true);
+      return;
+    }
+    const headers = [...new Set(rows.flatMap(row => Object.keys(row)))];
+    if (!headers.length) headers.push('id');
+    const csvRows = rows.map(row => headers.map(key => { const cell = row[key]; return cell && typeof cell === 'object' ? JSON.stringify(cell) : cell; }));
+    const csv = '﻿' + [headers, ...csvRows].map(row => row.map(csvCell).join(',')).join('\r\n') + '\r\n';
+    const name = suggestedName().replace(/\.oft\.json$/i, `-${collection}.csv`);
+    download(csv, name, 'text/csv;charset=utf-8');
+    toast(`Exported ${rows.length} ${csvCollections[collection]} to ${name}`);
+  }
+
+  // ---------- Film details ----------
+  function openProjectDialog() {
+    for (const k of PROJECT_TEXT) $(`p-${k}`).value = doc.project[k] || '';
+    $('projectDialog').showModal();
+    $('p-title').focus();
+  }
+  function saveProjectDialog() {
+    for (const k of PROJECT_TEXT) doc.project[k] = $(`p-${k}`).value.trim();
+    $('projectDialog').close();
+    changed();
+  }
+
+  // ---------- Dirty state & recovery draft ----------
+  function changed() { dirty = true; saveDraft(); render(); }
+  function saveDraft() {
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ doc, fileName, baselineText, at: new Date().toISOString() })); } catch { /* the file on disk is the real copy */ }
+  }
+  function clearDraft() {
+    try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+    $('recovery').hidden = true;
+  }
+  function checkDraft() {
+    let draft = null;
+    try { draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); } catch { draft = null; }
+    if (!draft || !draft.doc || draft.doc.format !== FORMAT) return;
+    const n = Array.isArray(draft.doc.interviews) ? draft.doc.interviews.length : 0;
+    if (!n && !(draft.doc.project && draft.doc.project.title)) { clearDraft(); return; }
+    const when = draft.at ? new Date(draft.at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'earlier';
+    const title = draft.doc.project && draft.doc.project.title ? `"${draft.doc.project.title}"` : 'an untitled project';
+    $('recoveryText').textContent = `You have unsaved changes to ${title} from ${when} (${n} interview${n === 1 ? '' : 's'}). Restore them, or discard them and start fresh.`;
+    $('recovery').hidden = false;
+    $('restoreBtn').onclick = () => {
+      doc = normalize(draft.doc); fileName = draft.fileName || null; fileHandle = null;
+      baselineText = typeof draft.baselineText === 'string' ? draft.baselineText : null; dirty = true;
+      $('recovery').hidden = true; render();
+      toast(fileName ? `Restored. Save to write the changes back to ${fileName}.` : 'Restored. Save to keep it as a file.');
+    };
+    $('discardBtn').onclick = () => { clearDraft(); toast('Discarded the unsaved changes.'); };
+  }
+
+  // ---------- Files ----------
+  const pickerTypes = [{ description: 'Film project file', accept: { 'application/json': ['.json'] } }];
+  function slug() {
+    return (doc.project.title || 'untitled-film').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'untitled-film';
+  }
+  const suggestedName = () => `${slug()}.oft.json`;
+  function serialize() {
+    doc.savedAt = new Date().toISOString();
+    doc.savedBy = TOOL;
+    return JSON.stringify(doc, null, 2) + '\n';
+  }
+  function download(text, name, type) {
+    const url = URL.createObjectURL(new Blob([text], { type }));
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  function afterSave(name, downloaded, content) {
+    fileName = name;
+    if (downloaded) fileHandle = null;
+    baselineText = content;
+    dirty = false; clearDraft(); render();
+    toast(downloaded ? `Downloaded ${name}. Keep it with your project files and open it here next time.` : `Saved to ${name}`);
+  }
+  async function writeProjectFile(handle, content) {
+    try {
+      const writable = await handle.createWritable();
+      await writable.write(content);
+      await writable.close();
+    } catch (err) {
+      if (err.name !== 'AbortError') toast(`Couldn't save the file: ${err.message}`, true);
+      return;
+    }
+    fileHandle = handle;
+    afterSave(handle.name, false, content);
+  }
+  function saveCopy(content) {
+    const base = (fileName || suggestedName()).replace(/\.oft\.json$/i, '');
+    const name = `${base}-copy.oft.json`;
+    download(content, name, 'application/json');
+    afterSave(name, true, content);
+  }
+  async function reloadLatest(handle) {
+    try {
+      const file = await handle.getFile();
+      loadText(await file.text(), handle.name, handle);
+    } catch (err) {
+      toast(`Couldn't reload the file: ${err.message}`, true);
+    }
+  }
+  function showConflictDialog(content, observedText, unknownBaseline = false) {
+    const handle = fileHandle;
+    dirty = true;
+    saveDraft();
+    render();
+    $('conflictText').textContent = unknownBaseline
+      ? `The tool can't verify whether ${handle.name} changed since your recovery copy was made. Your edits are not saved.`
+      : `${handle.name} changed after you opened it. Your edits are not saved. Overwriting replaces the newer file.`;
+    $('conflictDialog').showModal();
+    $('conflictReloadBtn').onclick = () => { $('conflictDialog').close(); reloadLatest(handle); };
+    $('conflictCopyBtn').onclick = () => { $('conflictDialog').close(); saveCopy(content); };
+    $('conflictOverwriteBtn').onclick = async () => {
+      $('conflictDialog').close();
+      let latestText;
+      try { latestText = await (await handle.getFile()).text(); }
+      catch (err) { toast(`Couldn't check the file before overwriting: ${err.message}`, true); return; }
+      if (latestText !== observedText) {
+        toast('The file changed again. Review the updated conflict warning before overwriting.', true);
+        showConflictDialog(content, latestText);
+        return;
+      }
+      await writeProjectFile(handle, content);
+    };
+    $('conflictCancelBtn').onclick = () => $('conflictDialog').close();
+  }
+  async function saveFile() {
+    const out = serialize();
+    if (fileHandle) {
+      let currentText;
+      try { currentText = await (await fileHandle.getFile()).text(); }
+      catch (err) { toast(`Couldn't check the file before saving: ${err.message}`, true); return; }
+      if (baselineText === null || currentText !== baselineText) { showConflictDialog(out, currentText, baselineText === null); return; }
+      await writeProjectFile(fileHandle, out);
+      return;
+    }
+    if (window.showSaveFilePicker && window.self === window.top) {
+      try {
+        const h = await window.showSaveFilePicker({ suggestedName: fileName || suggestedName(), types: pickerTypes });
+        if (h.name === fileName) {
+          const currentText = await (await h.getFile()).text();
+          if (baselineText === null || currentText !== baselineText) { fileHandle = h; showConflictDialog(out, currentText, baselineText === null); return; }
+        }
+        await writeProjectFile(h, out);
+      } catch (err) { if (err.name !== 'AbortError') toast(`Couldn't save the file: ${err.message}`, true); }
+      return;
+    }
+    const name = fileName || suggestedName();
+    download(out, name, 'application/json');
+    afterSave(name, true, out);
+  }
+  function loadText(text, name, handle) {
+    let data;
+    try { data = JSON.parse(text); } catch { toast(`Couldn't open ${name}: it isn't a project file.`, true); return; }
+    if (!data || data.format !== FORMAT) { toast(`Couldn't open ${name}: it isn't an Open Filmmaker Toolkit project file.`, true); return; }
+    if (Number(data.formatVersion) > FORMAT_VERSION) { toast(`Couldn't open ${name}: it was saved by a newer version of the toolkit. Get the latest version of this tool.`, true); return; }
+    doc = normalize(data); fileHandle = handle; baselineText = text; fileName = name; dirty = false;
+    clearDraft(); render();
+    const n = entries().length;
+    toast(`Opened ${name}: ${n ? `${n} interview${n === 1 ? '' : 's'}` : 'no interviews yet'}`);
+  }
+  async function openFile() {
+    if (dirty && !confirm('You have unsaved changes. Open another file and lose them?')) return;
+    if (window.showOpenFilePicker && window.self === window.top) {
+      try { const [h] = await window.showOpenFilePicker({ types: pickerTypes }); const f = await h.getFile(); loadText(await f.text(), f.name, h); }
+      catch (err) { if (err.name !== 'AbortError') toast(`Couldn't open the file: ${err.message}`, true); }
+      return;
+    }
+    $('fileInput').click();
+  }
+  function newProject() {
+    if (dirty && !confirm('You have unsaved changes. Start a new project and lose them?')) return;
+    doc = normalize(blankDoc()); fileHandle = null; baselineText = null; fileName = null; dirty = false;
+    clearDraft(); render(); openProjectDialog();
+  }
+
+  let toastTimer = null;
+  function toast(msg, isError) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.classList.toggle('error', !!isError);
+    t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.hidden = true; }, isError ? 7000 : 4200);
+  }
+
+  // ---------- Wiring ----------
+  function init() {
+    doc = normalize(doc);
+    $('newBtn').onclick = newProject;
+    $('openBtn').onclick = openFile;
+    $('saveBtn').onclick = saveFile;
+    $('editProjectBtn').onclick = openProjectDialog;
+    $('filmTitle').onclick = openProjectDialog;
+    $('printBtn').onclick = () => { renderReport(); window.print(); };
+    window.addEventListener('beforeprint', renderReport);
+    $('projectCsvBtn').onclick = () => $('projectCsvDialog').showModal();
+    $('projectCsvCancel').onclick = () => $('projectCsvDialog').close();
+    $('projectCsvForm').addEventListener('submit', ev => { ev.preventDefault(); exportProjectCsv(); $('projectCsvDialog').close(); });
+    $('fileInput').addEventListener('change', async () => {
+      const f = $('fileInput').files[0];
+      if (f) loadText(await f.text(), f.name, null);
+      $('fileInput').value = '';
+    });
+    $('projectForm').addEventListener('submit', ev => { ev.preventDefault(); saveProjectDialog(); });
+    $('projectCancel').onclick = () => $('projectDialog').close();
+    $('addBtn').onclick = () => openEditor(null);
+    $('emptyAddBtn').onclick = () => openEditor(null);
+    $('emptyOpenBtn').onclick = openFile;
+    $('csvBtn').onclick = exportCsv;
+    $('filters').addEventListener('click', ev => { const b = ev.target.closest('[data-filter]'); if (b) { filter = b.dataset.filter; render(); } });
+    for (const id of ['rows', 'nextList']) $(id).addEventListener('click', ev => { const b = ev.target.closest('[data-edit]'); if (b) openEditor(b.dataset.edit); });
+    $('printSel').addEventListener('change', () => { printId = $('printSel').value; });
+    $('f-person').addEventListener('change', () => { $('nameField').hidden = !!$('f-person').value; showSubject(); });
+    $('fromSubjectBtn').onclick = () => {
+      const s = subjectFor($('f-person').value);
+      if (!s) return;
+      const add = [s.about, s.notes].filter(Boolean).join('\n\n');
+      $('f-research').value = ($('f-research').value.trim() ? $('f-research').value.replace(/\s+$/, '') + '\n\n' : '') + add;
+      $('fromSubject').hidden = true;
+    };
+    $('f-status').addEventListener('change', () => { readLists(); editing.status = $('f-status').value; drawLists(); });
+    $('addBeatBtn').onclick = () => { readLists(); editing.beats.push({ id: newId('beat'), text: '' }); drawLists(); $('beats').lastElementChild.querySelector('input').focus(); };
+    $('beats').addEventListener('click', ev => { const b = ev.target.closest('[data-delbeat]'); if (b) { readLists(); editing.beats = editing.beats.filter(x => x.id !== b.closest('.beat-row').dataset.id); drawLists(); } });
+    $('beats').addEventListener('change', () => { readLists(); drawLists(); });
+    $('qs').addEventListener('click', ev => {
+      const row = ev.target.closest('.q'); if (!row) return;
+      const mv = ev.target.closest('[data-move]'), del = ev.target.closest('[data-delq]');
+      if (!mv && !del) return;
+      readLists();
+      const i = editing.questions.findIndex(q => q.id === row.dataset.id);
+      if (del) editing.questions.splice(i, 1);
+      else { const j = i + Number(mv.dataset.move); if (j < 0 || j >= editing.questions.length) return; [editing.questions[i], editing.questions[j]] = [editing.questions[j], editing.questions[i]]; }
+      drawLists();
+      if (mv) { const b = $('qs').querySelector(`[data-id="${CSS.escape(row.dataset.id)}"] [data-move="${mv.dataset.move}"]`); if (b && !b.disabled) b.focus(); }
+    });
+    $('qs').addEventListener('change', ev => { if (ev.target.matches('[data-must], [data-beat]')) { readLists(); drawLists(); } });
+    $('newQ').addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.preventDefault(); addQuestion(); } });
+    $('addQBtn').onclick = addQuestion;
+    $('editorForm').addEventListener('submit', ev => { ev.preventDefault(); saveEditor(); });
+    $('editorForm').addEventListener('input', ev => { if (ev.target.setCustomValidity) ev.target.setCustomValidity(''); });
+    $('editorCancel').onclick = () => $('editor').close();
+    $('deleteBtn').onclick = removeEditing;
+
+    document.addEventListener('keydown', ev => {
+      const mod = ev.metaKey || ev.ctrlKey;
+      if (mod && ev.key.toLowerCase() === 's') { ev.preventDefault(); saveFile(); }
+      else if (mod && ev.key.toLowerCase() === 'o') { ev.preventDefault(); openFile(); }
+    });
+    window.addEventListener('beforeunload', ev => { if (dirty) { ev.preventDefault(); ev.returnValue = ''; } });
+    render();
+    checkDraft();
+  }
+
+  if (typeof HTMLDialogElement !== 'function' || typeof HTMLDialogElement.prototype.showModal !== 'function' || typeof structuredClone !== 'function') {
+    $('cantRunTitle').textContent = 'This browser is too old to run this tool';
+    $('cantRunText').textContent = 'Update to a current version of Chrome, Edge, Firefox or Safari, then open this file again.';
+    $('cantRunHow').hidden = true;
+    return;
+  }
+  document.documentElement.classList.remove('no-js');
+  window.addEventListener('error', ev => toast(`Something went wrong: ${ev.message}. Save your work, then reload the page.`, true));
+  window.addEventListener('unhandledrejection', ev => toast(`Something went wrong: ${ev.reason && ev.reason.message ? ev.reason.message : ev.reason}. Save your work, then reload the page.`, true));
+  init();
+})();
+</script>
+</body>
+</html>

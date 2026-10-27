@@ -147,6 +147,29 @@ for sample in sorted((ROOT / "samples").glob("*.oft.json")):
         missing = set((cash.get(key) or {}).keys()) - known
         if missing:
             fail(f"{name}: cashFlow {key} points to missing budget {part} {sorted(missing)}")
+    day_ids = [x.get("id") for x in data.get("shootDays", []) if isinstance(x, dict)]
+    if len(day_ids) != len(set(day_ids)):
+        fail(f"{name}: duplicate IDs in shootDays")
+    sheet_ids = {x.get("id") for x in data.get("callSheets", []) if isinstance(x, dict)}
+    for day in data.get("shootDays", []):
+        if day.get("locationId") and day["locationId"] not in ids["locations"]:
+            fail(f"{name}: shoot day {day.get('id')} locationId points to a missing location")
+        if set(day.get("personIds", [])) - ids["people"]:
+            fail(f"{name}: shoot day {day.get('id')} personIds points to missing people")
+        if day.get("callSheetId") and day["callSheetId"] not in sheet_ids:
+            fail(f"{name}: shoot day {day.get('id')} callSheetId points to a missing call sheet")
+    interview_ids = [x.get("id") for x in data.get("interviews", []) if isinstance(x, dict)]
+    if len(interview_ids) != len(set(interview_ids)):
+        fail(f"{name}: duplicate IDs in interviews")
+    for item in data.get("interviews", []):
+        if item.get("personId") and item["personId"] not in ids["people"]:
+            fail(f"{name}: interview {item.get('id')} personId points to a missing person")
+        if item.get("shootDayId") and item["shootDayId"] not in set(day_ids):
+            fail(f"{name}: interview {item.get('id')} shootDayId points to a missing shoot day")
+        beat_ids = {b.get("id") for b in item.get("beats", []) if isinstance(b, dict)}
+        for q in item.get("questions", []):
+            if isinstance(q, dict) and q.get("beatId") and q["beatId"] not in beat_ids:
+                fail(f"{name}: interview {item.get('id')} question {q.get('id')} beatId points to a missing beat")
     treatment = data.get("treatment") if isinstance(data.get("treatment"), dict) else {}
     version_ids = [v.get("id") for v in treatment.get("versions", []) if isinstance(v, dict)]
     if len(version_ids) != len(set(version_ids)):
