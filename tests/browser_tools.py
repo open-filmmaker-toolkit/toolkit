@@ -11,7 +11,7 @@ Checks, per tool: opening the sample, saving, all CSV exports, phone width, dark
 mode and print layout. Chromium also covers the save-conflict warning (it has the
 file picker API; its handles are faked in memory) and renders a real PDF.
 chromium-fallback, Firefox and WebKit (Safari's engine) use the download/upload fallback instead.
-The call sheet, release tracker, credits builder, name supers list, subject tracker, research and archival log, comps tracker and treatment builder also get end-to-end checks
+The call sheet, release tracker, credits builder, name supers list, subject tracker, research and archival log, comps tracker, treatment builder and pitch deck builder also get end-to-end checks
 of their own, and the spreadsheet templates are checked against the tools' exports.
 """
 import csv, io, json, os, pathlib, sys
@@ -19,10 +19,10 @@ from playwright.sync_api import sync_playwright
 
 root = pathlib.Path(__file__).resolve().parents[1]
 sample = (root / 'samples/the-river-keeps.oft.json').read_text()
-TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder']
+TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck']
 COLLECTIONS = ['project', 'people', 'locations', 'thirdPartyElements', 'contracts', 'assets', 'musicCueSheet', 'callSheets']
 PRINT_BTN = {'clearance-log': '#printBtn', 'music-cue-sheet': '#printBtn', 'call-sheet': '#printAllBtn', 'release-tracker': '#printBtn',
-             'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn', 'treatment-builder': '#printBtn'}
+             'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn', 'treatment-builder': '#printBtn', 'pitch-deck': '#printBtn'}
 PHONE = {'width': 390, 'height': 844}
 # The button that opens each tool's main dialog, for the phone-width check. Most tools use #addBtn.
 DIALOG_BTN = {'treatment-builder': '[data-compare]'}
@@ -619,6 +619,58 @@ def test_treatment_builder(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
+def test_pitch_deck(browser, fake):
+    import base64
+    ctx, pg, errs = new_page(browser, 'pitch-deck', fake)
+    open_sample(pg, fake)
+    check(pg.locator('#deck .slide-wrap').count() == 8 and '7 slides, 1 left out' in pg.inner_text('#count'), 'opens the deck, with one slide left out')
+    deck = pg.inner_text('#deck')
+    check('Lena Ward' in deck and 'Backwater Hymnal' in deck and 'Fictional trade report' in deck, 'team and comps slides come from the project')
+
+    png = base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGP8z8DAwMDAxMDAwMDAAAANHQEDK+mmyAAAAABJRU5ErkJggg==')
+    pg.set_input_files('#imgInput', files=[{'name': 'still.png', 'mimeType': 'image/png', 'buffer': png}])
+    pg.wait_for_function("document.querySelectorAll('#imgs figure').length === 4")
+    check(pg.locator('#imgs figure').count() == 4, 'adds an image from the computer')
+
+    pg.click('#addBtn'); pg.select_option('#f-kind', 'image'); pg.fill('#f-body', 'The levee at dawn')
+    pg.locator('#pickImgs input').nth(0).check(); pg.locator('#pickImgs input').nth(1).check()
+    pg.click('#editorSubmit'); pg.wait_for_timeout(100)
+    check(pg.is_visible('#editor') and 'one image' in pg.inner_text('#pickHint'), 'a full-page image slide takes one image')
+    pg.locator('#pickImgs input').nth(0).uncheck(); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check(pg.locator('#deck .slide-wrap').count() == 9 and 'The levee at dawn' in pg.inner_text('#deck'), 'adds a full-page image slide')
+    pg.click('[data-up="8"]'); pg.wait_for_timeout(100)
+    check('Full-page image' in pg.locator('#deck .slide-wrap').nth(7).inner_text(), 'moves a slide')
+
+    pg.check('input[name=size][value=letter]'); pg.click('#printBtn'); pg.wait_for_timeout(200)
+    check(pg.locator('#report .slide').count() == 8 and '11in 8.5in' in pg.inner_text('#pageSize'), 'prints the slides that aren\'t left out, at letter size')
+
+    if fake:
+        pg.click('#saveBtn'); pg.wait_for_timeout(300)
+        data = json.loads(pg.evaluate('window.__file.text'))
+    else:
+        with pg.expect_download() as d:
+            pg.click('#saveBtn')
+        data = json.loads(open(d.value.path(), encoding='utf-8').read())
+    d = data['pitchDeck']
+    new = d['images'][-1]
+    check(d['size'] == 'letter' and new['name'] == 'still.png' and new['data'].startswith('data:image/jpeg;base64,') and d['slides'][7]['kind'] == 'image' and d['slides'][7]['imageIds'] == [d['images'][1]['id']],
+          'size, images and slides are saved')
+    original = json.loads(sample)
+    check(data['people'] == original['people'] and data.get('comps') == original['comps'] and data.get('treatment') == original['treatment'], "other tools' data is unchanged")
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+    # Starting from the project, on the sample without a deck.
+    ctx, pg, errs = new_page(browser, 'pitch-deck', False)
+    bare = json.loads(sample); bare.pop('pitchDeck')
+    pg.set_input_files('#fileInput', files=[{'name': 'bare.oft.json', 'mimeType': 'application/json', 'buffer': json.dumps(bare).encode()}])
+    pg.wait_for_function("document.getElementById('filmMeta').textContent.trim() !== ''")
+    pg.click('#draftBtn'); pg.wait_for_timeout(200)
+    deck = pg.inner_text('#deck')
+    check(pg.locator('#deck .slide-wrap').count() == 8 and 'flood diary' in deck and 'Riverside has flooded' in deck and '[What you' in deck, 'drafts slides from the treatment and project')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
 def test_template_columns(browser, fake):
     for name, template in TEMPLATE_EXPORTS:
         ctx, pg, errs = new_page(browser, name, fake)
@@ -664,6 +716,8 @@ def main():
         test_comps_tracker(browser, fake)
         print('== treatment-builder / counts, project lines and versions')
         test_treatment_builder(browser, fake)
+        print('== pitch-deck / slides, images and print sizes')
+        test_pitch_deck(browser, fake)
         print('== templates / columns match the tools\' exports')
         test_template_columns(browser, fake)
         browser.close()

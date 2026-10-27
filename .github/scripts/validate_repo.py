@@ -96,6 +96,15 @@ for sample in sorted((ROOT / "samples").glob("*.oft.json")):
     version_ids = [v.get("id") for v in treatment.get("versions", []) if isinstance(v, dict)]
     if len(version_ids) != len(set(version_ids)):
         fail(f"{name}: duplicate IDs in treatment versions")
+    deck = data.get("pitchDeck") if isinstance(data.get("pitchDeck"), dict) else {}
+    image_ids = {i.get("id") for i in deck.get("images", []) if isinstance(i, dict)}
+    slide_ids = [sl.get("id") for sl in deck.get("slides", []) if isinstance(sl, dict)]
+    if len(slide_ids) != len(set(slide_ids)) or len(image_ids) != len([i for i in deck.get("images", []) if isinstance(i, dict)]):
+        fail(f"{name}: duplicate IDs in pitchDeck slides or images")
+    for sl in deck.get("slides", []):
+        missing = set(sl.get("imageIds", [])) - image_ids
+        if missing:
+            fail(f"{name}: slide {sl.get('id')} imageIds points to missing {sorted(missing)}")
     supers = data.get("supers") if isinstance(data.get("supers"), dict) else {}
     super_ids = [entry.get("id") for entry in supers.get("entries", []) if isinstance(entry, dict)]
     if len(super_ids) != len(set(super_ids)):

@@ -18,6 +18,7 @@ The file is a JSON object with a `project` record and collections for reusable e
 | `callSheets` | Shoot days: date, call and wrap times, a location, weather, schedule, and crew with call times; references `locations` and `people`. `locations` may also carry `latitude` and `longitude` |
 | `assets` | Project materials such as footage, scans and documents; `relativePath`, when present, is relative to the project file |
 | `treatment` | The film's treatment: text by section, word targets and saved versions. A record rather than a collection; see the [treatment builder](../tools/treatment-builder/README.md#what-it-adds-to-the-project-file) |
+| `pitchDeck` | A pitch deck or lookbook: page size, slides in order, and the images, resized and stored as data URLs. A record rather than a collection; see the [pitch deck builder](../tools/pitch-deck/README.md#what-it-adds-to-the-project-file) |
 | `credits` | The end credits, in order. A record rather than a collection; see [Credits](#credits) |
 | `supers` | On-screen names and titles (supers and lower thirds), and the list as it was last exported for graphics. A record rather than a collection; entries refer to `people` by `personId`, whose `name` is the spelling used. See the [name supers list](../tools/name-supers/README.md#what-it-adds-to-the-project-file) |
 

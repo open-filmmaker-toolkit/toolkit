@@ -128,7 +128,7 @@ Tools with a link to their folder are available now. The rest are planned, and e
 - [Research and archival log](tools/research-log/) (first version)
 - [Comps tracker](tools/comps-tracker/) (first version)
 - [Treatment builder](tools/treatment-builder/) (first version)
-- Pitch deck and lookbook builder ([#45](https://github.com/open-filmmaker-toolkit/toolkit/issues/45))
+- [Pitch deck and lookbook builder](tools/pitch-deck/) (first version)
 
 ### Funding
 - Grant calendar ([#46](https://github.com/open-filmmaker-toolkit/toolkit/issues/46))
