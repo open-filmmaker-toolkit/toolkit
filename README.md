@@ -77,6 +77,8 @@ The toolkit has two halves:
 | [Funder CRM](tools/funder-crm/) | Keeping track of funders, investors and broadcasters: the people you know there, every meeting, call and email, and the next step with each | First version |
 | [Budget](tools/budget/) | Building a documentary or indie budget with detail lines, fringes and contingency that roll up to a top sheet, with versions to compare | First version |
 | [Cash flow](tools/cash-flow/) | Planning when money goes out and comes in, month by month or week by week, from the budget and the finance plan, and seeing where the balance runs short | First version |
+| [Shooting calendar](tools/shooting-calendar/) | Planning shoot days, travel days and holds across weeks or months, with who's needed and where, and starting each day's call sheet | First version |
+| [Interview prep](tools/interview-prep/) | Preparing each interview: research, the story beats to cover, questions in order with must-asks marked, and a one-page guide to print | First version |
 | [Clearance log](tools/clearance-log/) | Tracking every piece of third-party material until it's cleared, then printing a report for your E&O attorney | First version |
 | [Music cue sheet](tools/music-cue-sheet/) | Building the music cue sheet your distributor or broadcaster needs, from the music already in your clearance log | First version |
 | [Call sheet](tools/call-sheet/) | Building shoot-day call sheets from the people and locations in your project; weather lookup is optional and off until you click it | First version |
@@ -118,6 +120,8 @@ toolkit/
 |   |-- finance-plan/
 |   |-- funder-crm/
 |   |-- cash-flow/
+|   |-- shooting-calendar/
+|   |-- interview-prep/
 |   |-- comps-tracker/
 |   |-- treatment-builder/
 |   |-- clearance-log/

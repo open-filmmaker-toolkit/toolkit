@@ -192,6 +192,20 @@
       },
       "additionalProperties": true,
       "description": "When the budget's costs are paid, kept by the cash flow tool. A record rather than a collection."
+    },
+    "shootDays": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/shootDay"
+      },
+      "description": "Shoot days, travel days and holds, kept by the shooting calendar."
+    },
+    "interviews": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/interview"
+      },
+      "description": "Interview plans with research, story beats and questions, kept by interview prep."
     }
   },
   "additionalProperties": true,
@@ -1913,6 +1927,145 @@
           "additionalProperties": true
         }
       ]
+    },
+    "shootDay": {
+      "type": "object",
+      "required": [
+        "id",
+        "date"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "date": {
+          "type": "string",
+          "format": "date"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "shoot",
+            "travel",
+            "hold"
+          ]
+        },
+        "title": {
+          "type": "string",
+          "description": "What you're filming."
+        },
+        "block": {
+          "type": "string",
+          "description": "The trip or block the day belongs to."
+        },
+        "locationId": {
+          "$ref": "#/$defs/id"
+        },
+        "personIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true
+        },
+        "callSheetId": {
+          "$ref": "#/$defs/id",
+          "description": "The call sheet started from this day, in callSheets."
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "interview": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "personId": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string",
+          "description": "For someone not in people yet."
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "planned",
+            "done"
+          ]
+        },
+        "date": {
+          "type": "string",
+          "format": "date"
+        },
+        "shootDayId": {
+          "$ref": "#/$defs/id"
+        },
+        "minutes": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "goal": {
+          "type": "string"
+        },
+        "research": {
+          "type": "string"
+        },
+        "beats": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "text": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "questions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "text": {
+                "type": "string"
+              },
+              "must": {
+                "type": "boolean"
+              },
+              "beatId": {
+                "$ref": "#/$defs/id"
+              },
+              "asked": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": true
+          },
+          "description": "In the order they're asked."
+        }
+      },
+      "additionalProperties": true
     }
   }
 }
