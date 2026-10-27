@@ -17,7 +17,7 @@ CI runs [tests/browser_tools.py](tests/browser_tools.py) in Chromium, twice: `ch
 
 - Static checks and Node harnesses are not enough. A browser test found a real bug that both missed: a dialog that stayed open after a successful export.
 - Add a check to `tests/browser_tools.py` for any new behavior, including new buttons, dialogs and exports.
-- Don't claim you tested phone width, dark mode, printing or another browser unless a test or a manual check actually did. CI doesn't run Firefox or Safari. In the pull request, tick only what you did and say what you didn't run.
+- Don't claim you tested phone width, dark mode, printing or another browser unless a test or a manual check actually did. CI doesn't run Firefox or Safari on pull requests; the weekly Real browsers workflow checks the basics in both. In the pull request, tick only what you did and say what you didn't run.
 
 ## Pull requests
 
