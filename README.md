@@ -74,7 +74,9 @@ The toolkit has two halves:
 | [Grant narrative library](tools/narrative-library/) | Keeping your application answers in every length funders ask for, with live counts, and noting which funder got which version | First version |
 | [Budget converter](tools/budget-converter/) | Turning your budget into the categories each funder asks for, flagging what doesn't map, and saving the mapping for next time | First version |
 | [Finance plan](tools/finance-plan/) | Showing how the film gets paid for, against the budget: the gap still to raise and when the money arrives | First version |
+| [Funder CRM](tools/funder-crm/) | Keeping track of funders, investors and broadcasters: the people you know there, every meeting, call and email, and the next step with each | First version |
 | [Budget](tools/budget/) | Building a documentary or indie budget with detail lines, fringes and contingency that roll up to a top sheet, with versions to compare | First version |
+| [Cash flow](tools/cash-flow/) | Planning when money goes out and comes in, month by month or week by week, from the budget and the finance plan, and seeing where the balance runs short | First version |
 | [Clearance log](tools/clearance-log/) | Tracking every piece of third-party material until it's cleared, then printing a report for your E&O attorney | First version |
 | [Music cue sheet](tools/music-cue-sheet/) | Building the music cue sheet your distributor or broadcaster needs, from the music already in your clearance log | First version |
 | [Call sheet](tools/call-sheet/) | Building shoot-day call sheets from the people and locations in your project; weather lookup is optional and off until you click it | First version |
@@ -114,6 +116,8 @@ toolkit/
 |   |-- budget/
 |   |-- budget-converter/
 |   |-- finance-plan/
+|   |-- funder-crm/
+|   |-- cash-flow/
 |   |-- comps-tracker/
 |   |-- treatment-builder/
 |   |-- clearance-log/
