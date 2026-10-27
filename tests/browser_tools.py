@@ -19,10 +19,10 @@ from playwright.sync_api import sync_playwright
 
 root = pathlib.Path(__file__).resolve().parents[1]
 sample = (root / 'samples/the-river-keeps.oft.json').read_text()
-TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library']
+TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan']
 COLLECTIONS = ['project', 'people', 'locations', 'thirdPartyElements', 'contracts', 'assets', 'musicCueSheet', 'callSheets']
 PRINT_BTN = {'clearance-log': '#printBtn', 'music-cue-sheet': '#printBtn', 'call-sheet': '#printAllBtn', 'release-tracker': '#printBtn',
-             'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn', 'treatment-builder': '#printBtn', 'pitch-deck': '#printBtn', 'grant-calendar': '#printBtn', 'narrative-library': '#printBtn'}
+             'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn', 'treatment-builder': '#printBtn', 'pitch-deck': '#printBtn', 'grant-calendar': '#printBtn', 'narrative-library': '#printBtn', 'budget': '#printBtn', 'budget-converter': '#printBtn', 'finance-plan': '#printBtn'}
 PHONE = {'width': 390, 'height': 844}
 # The button that opens each tool's main dialog, for the phone-width check. Most tools use #addBtn.
 DIALOG_BTN = {'treatment-builder': '[data-compare]'}
@@ -385,7 +385,7 @@ def test_credits_builder(browser, fake):
     ctx.close()
 
 # Each spreadsheet template's columns must appear in its tool's CSV export, in the same order.
-TEMPLATE_EXPORTS = [('grant-calendar', 'grant-calendar-template.csv'), ('clearance-log', 'clearance-log-template.csv'), ('release-tracker', 'release-log-template.csv'),
+TEMPLATE_EXPORTS = [('budget', 'budget-template.csv'), ('finance-plan', 'finance-plan-template.csv'), ('grant-calendar', 'grant-calendar-template.csv'), ('clearance-log', 'clearance-log-template.csv'), ('release-tracker', 'release-log-template.csv'),
                     ('music-cue-sheet', 'music-cue-sheet-template.csv'), ('name-supers', 'name-supers-template.csv'),
                     ('subject-tracker', 'subject-tracker-template.csv'), ('research-log', 'research-log-template.csv'),
                     ('comps-tracker', 'comps-tracker-template.csv')]
@@ -810,6 +810,156 @@ def test_narrative_library(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
+def budget_grand(b):
+    fr = {f['id']: f['percent'] for f in b['fringes']}
+    sub = lambda l: round(l.get('quantity', 0) * l.get('multiplier', 1) * l.get('rate', 0), 2)
+    direct = sum(sub(l) for l in b['lines'])
+    fringe = sum(round(sub(l) * fr[l['fringeId']] / 100, 2) for l in b['lines'] if l.get('fringeId'))
+    subtotal = direct + fringe
+    return round(subtotal + sum(round(subtotal * m['percent'] / 100, 2) for m in b['markups']), 2)
+
+def test_budget(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'budget', fake)
+    open_sample(pg, fake)
+    grand = budget_grand(original['budget'])
+    check('${:,.0f}'.format(grand) in pg.inner_text('#topSheet') and 'Payroll taxes 12%' in pg.inner_text('#topSheet'), 'the top sheet adds up lines, fringes and percentages')
+    qty = pg.locator('[data-line="line-3000-16"] [data-k="quantity"]')
+    qty.fill('32')
+    check('$78,848.00' in pg.inner_text('[data-line="line-3000-16"] [data-tot]') and pg.evaluate("document.activeElement.dataset.k") == 'quantity', 'a line total updates as you type, keeping your place')
+    pg.click('[data-addline="account-2300"]')
+    check(pg.evaluate("document.activeElement.dataset.k") == 'description', 'adding a line puts the cursor in it')
+    row = pg.locator('[data-acct="account-2300"] .ln').last
+    row.locator('[data-k="description"]').fill('Permit fees'); row.locator('[data-k="rate"]').fill('450')
+    row.locator('[data-k="fringeId"]').select_option('fringe-payroll')
+    check('$504.00' in row.locator('[data-tot]').inner_text(), 'a new line picks up its fringe')
+    pg.click('#addBtn')
+    pg.fill('#f-code', '4300'); pg.fill('#f-name', 'Impact campaign'); pg.select_option('#f-section', 'other')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check('4300 Impact campaign' in pg.inner_text('#topSheet'), 'adds an account')
+    pg.click('#ratesBtn')
+    pg.locator('#markRows .r-pct').first.fill('5')
+    pg.click('#ratesSubmit'); pg.wait_for_timeout(200)
+    check('Contingency 5%' in pg.inner_text('#topSheet'), 'changes a percentage')
+    pg.click('#versionBtn'); pg.fill('#f-vlabel', 'Test version'); pg.press('#f-vlabel', 'Enter'); pg.wait_for_timeout(200)
+    check(pg.locator('#verList li').count() == 2, 'saves a version')
+    pg.click('#compareBtn')
+    pg.select_option('#cmpSel', 'budget-version-september')
+    cmp = pg.inner_text('#cmpTable')
+    check('3000 Editorial' in cmp and '+' in cmp and '−' in cmp, 'compares accounts with a saved version')
+    pg.click('#compareDialog button[type=submit]')
+    pg.click('[data-line="line-2100-9"] [data-delline]'); pg.wait_for_timeout(200)
+    check(pg.locator('[data-line="line-2100-9"]').count() == 0, 'removes a line')
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    editor = next(r for r in rows if r[3] == 'Editor')
+    check(rows[0][0] == 'Account number' and editor[4] == '32' and editor[11] == '78848.00' and rows[-1][1] == 'Total', 'CSV lists every line with its fringe, then the total')
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    check('Top sheet' in pg.inner_text('#report') and 'Permit fees' in pg.inner_text('#report'), 'prints the top sheet and detail')
+    data = saved_project(pg, fake)
+    b = data['budget']
+    check(len(b['versions']) == 2 and any(a['name'] == 'Impact campaign' for a in b['accounts']) and b['markups'][0]['percent'] == 5 and
+          next(l for l in b['lines'] if l['id'] == 'line-3000-16')['quantity'] == 32 and not any(l['id'] == 'line-2100-9' for l in b['lines']), 'the budget is saved')
+    check(data['grants'] == original['grants'] and data['financePlan'] == original['financePlan'] and data['budgetFormats'] == original['budgetFormats'], "other tools' data is unchanged")
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+    ctx, pg, errs = new_page(browser, 'budget', fake)
+    pg.click('#templateBtn'); pg.wait_for_timeout(200)
+    check(pg.locator('.acct').count() == 19 and 'Festivals and outreach' in pg.inner_text('#sections'), 'starts from the documentary accounts')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+def test_budget_converter(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'budget-converter', fake, extra=';window.__downloads=[];')
+    open_sample(pg, fake)
+    check('Not mapped yet' in pg.inner_text('#conv') and '2300 Locations: Location fees' in pg.inner_text('#checks'), 'flags a line that does not map')
+    pg.select_option('[data-account="account-2300"]', 'category-rb-other'); pg.wait_for_timeout(100)
+    check('Not mapped yet' not in pg.inner_text('#conv') and 'left out on purpose' in pg.inner_text('#checks'), 'mapping the account clears the flag; the left-out contingency still shows')
+    pg.select_option('[data-markup="markup-contingency"]', 'category-rb-other'); pg.wait_for_timeout(100)
+    grand = budget_grand(original['budget'])
+    check('Everything is mapped' in pg.inner_text('#checks') and pg.inner_text('#conv').count('${:,.0f}'.format(grand)) == 2, 'the converted total matches the budget once everything is mapped')
+    pg.click('[data-account="account-1000"] ~ details summary')
+    pg.select_option('[data-line="line-1000-0"]', 'category-rb-personnel'); pg.wait_for_timeout(100)
+    check('1 sent elsewhere' in pg.inner_text('#mapping'), 'sends one line to another category')
+
+    pg.click('#addBtn')
+    pg.select_option('#f-preset', 'sf424a')
+    check(pg.locator('#catRows .cat-row').count() == 8 and pg.input_value('#f-name') == 'US federal object classes (SF-424A)', 'a common format fills in its categories')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    travel = pg.locator('[data-account="account-2200"] option:checked').inner_text()
+    fringe = pg.locator('#fringeTo option:checked').inner_text()
+    check(travel == 'Travel' and fringe == 'Fringe benefits' and 'not mapped' in pg.inner_text('#count'), 'it maps what it can and leaves the rest to check')
+    with pg.expect_download() as d:
+        pg.click('#exportFormatBtn')
+    fmt_text = open(d.value.path(), encoding='utf-8').read()
+    fmt = json.loads(fmt_text)
+    check(fmt['format'] == 'open-filmmaker-toolkit/budget-format' and fmt['accounts'].get('2200 Travel and lodging') == 'Travel' and fmt['fringes'] == 'Fringe benefits', 'saves a format file that maps by account')
+    pg.set_input_files('#formatInput', files=[{'name': 'f.budget-format.json', 'mimeType': 'application/json', 'buffer': fmt_text.encode()}]); pg.wait_for_timeout(200)
+    check(pg.locator('#formatSel option').count() == 3 and pg.locator('[data-account="account-2200"] option:checked').inner_text() == 'Travel', 'opens a format file and maps the accounts it names')
+
+    pg.select_option('#formatSel', 'budget-format-riverbend'); pg.wait_for_timeout(100)
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    check(rows[0] == ['Category', 'Item', 'Amount'] and ['Equipment and travel', '3000 Editorial: Edit system rental', '4200.00'] in rows, 'CSV lists each category with its lines')
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    check('Riverbend Documentary Fund' in pg.inner_text('#report') and 'Music and archival' in pg.inner_text('#report'), 'prints the converted budget for the application')
+    data = saved_project(pg, fake)
+    rb = next(f for f in data['budgetFormats'] if f['id'] == 'budget-format-riverbend')
+    check(len(data['budgetFormats']) == 3 and rb['accountMap']['account-2300'] == 'category-rb-other' and rb['markupMap']['markup-contingency'] == 'category-rb-other' and rb['lineMap']['line-1000-0'] == 'category-rb-personnel', 'mappings are saved')
+    check(data['budget'] == original['budget'] and data['grants'] == original['grants'], "other tools' data is unchanged")
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+def test_finance_plan(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'finance-plan', fake)
+    open_sample(pg, fake)
+    sums = pg.inner_text('#sums')
+    check('$101,700' in sums and '$65,000' in sums and '$47,000' in sums and '$34,200' in sums, 'totals confirmed, pending and prospective money, and what is not cash')
+    check('${:,.0f}'.format(budget_grand(original['budget'])) in pg.inner_text('#budgetLine'), 'reads the budget total from the budget')
+    pg.click('[data-filter="pending"]')
+    check(pg.locator('#rows .row').count() == 2, 'filters by status')
+    pg.click('[data-filter="all"]')
+    check('Jun 2026' in pg.inner_text('#months') and '$132,500 so far' in pg.inner_text('#months'), 'shows when money arrives, with the running total')
+    pg.click('#fromGrantsBtn')
+    check(pg.locator('#grantsList input').count() == 1, 'offers grants not in the plan yet')
+    pg.click('#grantsForm button[type=submit]'); pg.wait_for_timeout(200)
+    check('Prairie State Arts Board' in pg.inner_text('#rows'), 'adds a grant from the grant calendar')
+    pg.click('[data-edit="source-northlight"]')
+    check(pg.is_disabled('#f-amount') and pg.is_visible('#linkedNote'), 'a linked grant follows the grant calendar')
+    pg.click('#unlinkBtn')
+    pg.select_option('#f-status', 'confirmed')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check('$126,700' in pg.inner_text('#sums'), 'unlinking lets you set the status yourself')
+    pg.click('#addBtn')
+    pg.fill('#f-name', 'Bridge loan'); pg.select_option('#f-kind', 'loan'); pg.fill('#f-amount', '10000'); pg.select_option('#f-status', 'pending')
+    pg.click('#addPayBtn'); pg.locator('#payRows .p-date').last.fill('2027-01-15'); pg.locator('#payRows .p-amount').last.fill('10000')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check('Jan 2027' in pg.inner_text('#months') and '$50,000' in pg.inner_text('#sums'), 'adds a source with a payment date')
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    check(rows[0][:4] == ['Source', 'Kind', 'Status', 'Amount'] and ['Bridge loan', 'Loan', 'Pending', '10000.00'] == rows[[r[0] for r in rows].index('Bridge loan')][:4], 'CSV lists every source')
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    check('Still to raise' in pg.inner_text('#report') and 'Bridge loan' in pg.inner_text('#report'), 'prints the finance plan')
+    data = saved_project(pg, fake)
+    src = {s['id']: s for s in data['financePlan']['sources']}
+    check(len(src) == 10 and 'grantId' not in src['source-northlight'] and src['source-northlight']['status'] == 'confirmed' and src['source-northlight']['amount'] == 25000, 'sources are saved')
+    check(data['grants'] == original['grants'] and data['budget'] == original['budget'], "other tools' data is unchanged")
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+    nobudget = dict(original); del nobudget['budget']
+    ctx, pg, errs = new_page(browser, 'finance-plan', fake)
+    pg.set_input_files('#fileInput', files=[{'name': 'n.oft.json', 'mimeType': 'application/json', 'buffer': json.dumps(nobudget).encode()}])
+    pg.wait_for_function("document.getElementById('filmMeta').textContent.trim() !== ''")
+    pg.fill('#budgetIn', '300000'); pg.press('#budgetIn', 'Tab'); pg.wait_for_timeout(200)
+    check('$86,300' in pg.inner_text('#sums'), 'without a budget, uses a total you type in')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
 def test_template_columns(browser, fake):
     for name, template in TEMPLATE_EXPORTS:
         ctx, pg, errs = new_page(browser, name, fake)
@@ -861,6 +1011,12 @@ def main():
         test_grant_calendar(browser, fake)
         print('== narrative-library / counts, versions, sets and who got what')
         test_narrative_library(browser, fake)
+        print('== budget / lines, fringes, versions and the top sheet')
+        test_budget(browser, fake)
+        print('== budget-converter / mapping, formats and totals')
+        test_budget_converter(browser, fake)
+        print('== finance-plan / sources, grants, gap and timing')
+        test_finance_plan(browser, fake)
         print('== templates / columns match the tools\' exports')
         test_template_columns(browser, fake)
         browser.close()
