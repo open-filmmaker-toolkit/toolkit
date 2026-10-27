@@ -103,6 +103,33 @@ for sample in sorted((ROOT / "samples").glob("*.oft.json")):
         for use in version.get("uses", []):
             if isinstance(use, dict) and use.get("grantId") and use["grantId"] not in set(grant_ids):
                 fail(f"{name}: narrative version {version.get('id')} uses points to missing grant {use['grantId']}")
+    budget = data.get("budget") if isinstance(data.get("budget"), dict) else {}
+    for part, b in [("budget", budget)] + [(f"budget version {v.get('id')}", v) for v in budget.get("versions", []) if isinstance(v, dict)]:
+        acc_ids = [a.get("id") for a in b.get("accounts", []) if isinstance(a, dict)]
+        line_ids = [l.get("id") for l in b.get("lines", []) if isinstance(l, dict)]
+        fringe_ids = [f.get("id") for f in b.get("fringes", []) if isinstance(f, dict)]
+        if any(len(x) != len(set(x)) for x in (acc_ids, line_ids, fringe_ids, [m.get("id") for m in b.get("markups", []) if isinstance(m, dict)])):
+            fail(f"{name}: duplicate IDs in {part}")
+        for line in b.get("lines", []):
+            if line.get("accountId") not in acc_ids:
+                fail(f"{name}: {part} line {line.get('id')} accountId points to a missing account")
+            if line.get("fringeId") and line["fringeId"] not in fringe_ids:
+                fail(f"{name}: {part} line {line.get('id')} fringeId points to a missing fringe")
+    for fmt in data.get("budgetFormats", []):
+        cat_ids = {c.get("id") for c in fmt.get("categories", []) if isinstance(c, dict)} | {""}
+        for key in ("accountMap", "lineMap", "markupMap"):
+            bad = {v for v in (fmt.get(key) or {}).values() if v not in cat_ids}
+            if bad:
+                fail(f"{name}: budget format {fmt.get('id')} {key} points to missing categories {sorted(bad)}")
+        if fmt.get("grantId") and fmt["grantId"] not in set(grant_ids):
+            fail(f"{name}: budget format {fmt.get('id')} grantId points to a missing grant")
+    plan = data.get("financePlan") if isinstance(data.get("financePlan"), dict) else {}
+    source_ids = [x.get("id") for x in plan.get("sources", []) if isinstance(x, dict)]
+    if len(source_ids) != len(set(source_ids)):
+        fail(f"{name}: duplicate IDs in financePlan sources")
+    for src in plan.get("sources", []):
+        if src.get("grantId") and src["grantId"] not in set(grant_ids):
+            fail(f"{name}: finance source {src.get('id')} grantId points to a missing grant")
     treatment = data.get("treatment") if isinstance(data.get("treatment"), dict) else {}
     version_ids = [v.get("id") for v in treatment.get("versions", []) if isinstance(v, dict)]
     if len(version_ids) != len(set(version_ids)):

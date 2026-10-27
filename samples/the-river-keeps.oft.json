@@ -1309,5 +1309,999 @@
         }
       ]
     }
-  ]
+  ],
+  "budget": {
+    "accounts": [
+      {
+        "id": "account-1000",
+        "code": "1000",
+        "name": "Development and research",
+        "section": "atl"
+      },
+      {
+        "id": "account-1100",
+        "code": "1100",
+        "name": "Story and rights",
+        "section": "atl"
+      },
+      {
+        "id": "account-1200",
+        "code": "1200",
+        "name": "Producers",
+        "section": "atl"
+      },
+      {
+        "id": "account-1300",
+        "code": "1300",
+        "name": "Director",
+        "section": "atl"
+      },
+      {
+        "id": "account-2000",
+        "code": "2000",
+        "name": "Production crew",
+        "section": "production"
+      },
+      {
+        "id": "account-2100",
+        "code": "2100",
+        "name": "Camera and sound equipment",
+        "section": "production"
+      },
+      {
+        "id": "account-2200",
+        "code": "2200",
+        "name": "Travel and lodging",
+        "section": "production"
+      },
+      {
+        "id": "account-2300",
+        "code": "2300",
+        "name": "Locations",
+        "section": "production"
+      },
+      {
+        "id": "account-2400",
+        "code": "2400",
+        "name": "Production expenses",
+        "section": "production"
+      },
+      {
+        "id": "account-3000",
+        "code": "3000",
+        "name": "Editorial",
+        "section": "post"
+      },
+      {
+        "id": "account-3100",
+        "code": "3100",
+        "name": "Archival licensing",
+        "section": "post"
+      },
+      {
+        "id": "account-3200",
+        "code": "3200",
+        "name": "Music",
+        "section": "post"
+      },
+      {
+        "id": "account-3300",
+        "code": "3300",
+        "name": "Sound edit and mix",
+        "section": "post"
+      },
+      {
+        "id": "account-3400",
+        "code": "3400",
+        "name": "Color and finishing",
+        "section": "post"
+      },
+      {
+        "id": "account-3500",
+        "code": "3500",
+        "name": "Graphics and titles",
+        "section": "post"
+      },
+      {
+        "id": "account-3600",
+        "code": "3600",
+        "name": "Deliverables",
+        "section": "post"
+      },
+      {
+        "id": "account-4000",
+        "code": "4000",
+        "name": "Legal and accounting",
+        "section": "other"
+      },
+      {
+        "id": "account-4100",
+        "code": "4100",
+        "name": "Office and administration",
+        "section": "other"
+      },
+      {
+        "id": "account-4200",
+        "code": "4200",
+        "name": "Festivals and outreach",
+        "section": "other"
+      }
+    ],
+    "lines": [
+      {
+        "id": "line-1000-0",
+        "accountId": "account-1000",
+        "description": "Archive research",
+        "quantity": 10,
+        "unit": "Days",
+        "rate": 350
+      },
+      {
+        "id": "line-1000-1",
+        "accountId": "account-1000",
+        "description": "Research trips",
+        "quantity": 1,
+        "unit": "Flat",
+        "rate": 2400
+      },
+      {
+        "id": "line-1100-2",
+        "accountId": "account-1100",
+        "description": "Diary access and story rights",
+        "quantity": 1,
+        "unit": "Flat",
+        "rate": 5000
+      },
+      {
+        "id": "line-1200-3",
+        "accountId": "account-1200",
+        "description": "Producer",
+        "quantity": 40,
+        "unit": "Weeks",
+        "rate": 1500,
+        "fringeId": "fringe-payroll"
+      },
+      {
+        "id": "line-1300-4",
+        "accountId": "account-1300",
+        "description": "Director",
+        "quantity": 40,
+        "unit": "Weeks",
+        "rate": 1500,
+        "fringeId": "fringe-payroll"
+      },
+      {
+        "id": "line-2000-5",
+        "accountId": "account-2000",
+        "description": "Cinematographer",
+        "quantity": 30,
+        "unit": "Days",
+        "rate": 750,
+        "fringeId": "fringe-payroll"
+      },
+      {
+        "id": "line-2000-6",
+        "accountId": "account-2000",
+        "description": "Sound recordist",
+        "quantity": 30,
+        "unit": "Days",
+        "rate": 550,
+        "fringeId": "fringe-payroll"
+      },
+      {
+        "id": "line-2100-7",
+        "accountId": "account-2100",
+        "description": "Camera package",
+        "quantity": 30,
+        "unit": "Days",
+        "rate": 400
+      },
+      {
+        "id": "line-2100-8",
+        "accountId": "account-2100",
+        "description": "Sound package",
+        "quantity": 30,
+        "unit": "Days",
+        "rate": 150
+      },
+      {
+        "id": "line-2100-9",
+        "accountId": "account-2100",
+        "description": "Drone with operator",
+        "quantity": 2,
+        "unit": "Days",
+        "rate": 1200
+      },
+      {
+        "id": "line-2200-10",
+        "accountId": "account-2200",
+        "description": "Lodging",
+        "quantity": 40,
+        "unit": "Days",
+        "rate": 120,
+        "multiplier": 2
+      },
+      {
+        "id": "line-2200-11",
+        "accountId": "account-2200",
+        "description": "Per diem",
+        "quantity": 40,
+        "unit": "Days",
+        "rate": 55,
+        "multiplier": 2
+      },
+      {
+        "id": "line-2200-12",
+        "accountId": "account-2200",
+        "description": "Mileage",
+        "quantity": 1,
+        "unit": "Flat",
+        "rate": 3000
+      },
+      {
+        "id": "line-2300-13",
+        "accountId": "account-2300",
+        "description": "Location fees",
+        "quantity": 1,
+        "unit": "Allow",
+        "rate": 2000
+      },
+      {
+        "id": "line-2400-14",
+        "accountId": "account-2400",
+        "description": "Meals and supplies",
+        "quantity": 1,
+        "unit": "Allow",
+        "rate": 2500
+      },
+      {
+        "id": "line-2400-15",
+        "accountId": "account-2400",
+        "description": "Hard drives",
+        "quantity": 8,
+        "unit": "Each",
+        "rate": 250
+      },
+      {
+        "id": "line-3000-16",
+        "accountId": "account-3000",
+        "description": "Editor",
+        "quantity": 30,
+        "unit": "Weeks",
+        "rate": 2200,
+        "fringeId": "fringe-payroll"
+      },
+      {
+        "id": "line-3000-17",
+        "accountId": "account-3000",
+        "description": "Edit system rental",
+        "quantity": 7,
+        "unit": "Months",
+        "rate": 600
+      },
+      {
+        "id": "line-3100-18",
+        "accountId": "account-3100",
+        "description": "County historical society aerials, 1965",
+        "quantity": 1,
+        "unit": "Flat",
+        "rate": 1500
+      },
+      {
+        "id": "line-3100-19",
+        "accountId": "account-3100",
+        "description": "Newsreel footage",
+        "quantity": 4,
+        "unit": "Minutes",
+        "rate": 2000
+      },
+      {
+        "id": "line-3200-20",
+        "accountId": "account-3200",
+        "description": "Composer",
+        "quantity": 1,
+        "unit": "Flat",
+        "rate": 15000
+      },
+      {
+        "id": "line-3200-21",
+        "accountId": "account-3200",
+        "description": "Licensed songs",
+        "quantity": 2,
+        "unit": "Each",
+        "rate": 3500
+      },
+      {
+        "id": "line-3300-22",
+        "accountId": "account-3300",
+        "description": "Sound edit and mix",
+        "quantity": 1,
+        "unit": "Flat",
+        "rate": 18000
+      },
+      {
+        "id": "line-3400-23",
+        "accountId": "account-3400",
+        "description": "Color grade",
+        "quantity": 5,
+        "unit": "Days",
+        "rate": 1200
+      },
+      {
+        "id": "line-3400-24",
+        "accountId": "account-3400",
+        "description": "Online and conform",
+        "quantity": 3,
+        "unit": "Days",
+        "rate": 900
+      },
+      {
+        "id": "line-3500-25",
+        "accountId": "account-3500",
+        "description": "Titles and maps",
+        "quantity": 1,
+        "unit": "Flat",
+        "rate": 4000
+      },
+      {
+        "id": "line-3600-26",
+        "accountId": "account-3600",
+        "description": "DCP and masters",
+        "quantity": 1,
+        "unit": "Flat",
+        "rate": 3500
+      },
+      {
+        "id": "line-3600-27",
+        "accountId": "account-3600",
+        "description": "Closed captions",
+        "quantity": 85,
+        "unit": "Minutes",
+        "rate": 8
+      },
+      {
+        "id": "line-4000-28",
+        "accountId": "account-4000",
+        "description": "Production counsel",
+        "quantity": 1,
+        "unit": "Flat",
+        "rate": 8000
+      },
+      {
+        "id": "line-4000-29",
+        "accountId": "account-4000",
+        "description": "E&O clearance review",
+        "quantity": 1,
+        "unit": "Flat",
+        "rate": 3000
+      },
+      {
+        "id": "line-4000-30",
+        "accountId": "account-4000",
+        "description": "Accounting",
+        "quantity": 18,
+        "unit": "Months",
+        "rate": 250
+      },
+      {
+        "id": "line-4100-31",
+        "accountId": "account-4100",
+        "description": "Office and phones",
+        "quantity": 18,
+        "unit": "Months",
+        "rate": 150
+      },
+      {
+        "id": "line-4200-32",
+        "accountId": "account-4200",
+        "description": "Festival entry fees",
+        "quantity": 15,
+        "unit": "Each",
+        "rate": 90
+      },
+      {
+        "id": "line-4200-33",
+        "accountId": "account-4200",
+        "description": "Community screenings",
+        "quantity": 6,
+        "unit": "Each",
+        "rate": 800
+      }
+    ],
+    "fringes": [
+      {
+        "id": "fringe-payroll",
+        "name": "Payroll taxes",
+        "percent": 12
+      }
+    ],
+    "markups": [
+      {
+        "id": "markup-contingency",
+        "name": "Contingency",
+        "percent": 10
+      },
+      {
+        "id": "markup-insurance",
+        "name": "Insurance",
+        "percent": 3
+      }
+    ],
+    "versions": [
+      {
+        "id": "budget-version-september",
+        "label": "Sent with the Northern Light application",
+        "at": "2026-09-27T16:00:00Z",
+        "accounts": [
+          {
+            "id": "account-1000",
+            "code": "1000",
+            "name": "Development and research",
+            "section": "atl"
+          },
+          {
+            "id": "account-1100",
+            "code": "1100",
+            "name": "Story and rights",
+            "section": "atl"
+          },
+          {
+            "id": "account-1200",
+            "code": "1200",
+            "name": "Producers",
+            "section": "atl"
+          },
+          {
+            "id": "account-1300",
+            "code": "1300",
+            "name": "Director",
+            "section": "atl"
+          },
+          {
+            "id": "account-2000",
+            "code": "2000",
+            "name": "Production crew",
+            "section": "production"
+          },
+          {
+            "id": "account-2100",
+            "code": "2100",
+            "name": "Camera and sound equipment",
+            "section": "production"
+          },
+          {
+            "id": "account-2200",
+            "code": "2200",
+            "name": "Travel and lodging",
+            "section": "production"
+          },
+          {
+            "id": "account-2300",
+            "code": "2300",
+            "name": "Locations",
+            "section": "production"
+          },
+          {
+            "id": "account-2400",
+            "code": "2400",
+            "name": "Production expenses",
+            "section": "production"
+          },
+          {
+            "id": "account-3000",
+            "code": "3000",
+            "name": "Editorial",
+            "section": "post"
+          },
+          {
+            "id": "account-3100",
+            "code": "3100",
+            "name": "Archival licensing",
+            "section": "post"
+          },
+          {
+            "id": "account-3200",
+            "code": "3200",
+            "name": "Music",
+            "section": "post"
+          },
+          {
+            "id": "account-3300",
+            "code": "3300",
+            "name": "Sound edit and mix",
+            "section": "post"
+          },
+          {
+            "id": "account-3400",
+            "code": "3400",
+            "name": "Color and finishing",
+            "section": "post"
+          },
+          {
+            "id": "account-3500",
+            "code": "3500",
+            "name": "Graphics and titles",
+            "section": "post"
+          },
+          {
+            "id": "account-3600",
+            "code": "3600",
+            "name": "Deliverables",
+            "section": "post"
+          },
+          {
+            "id": "account-4000",
+            "code": "4000",
+            "name": "Legal and accounting",
+            "section": "other"
+          },
+          {
+            "id": "account-4100",
+            "code": "4100",
+            "name": "Office and administration",
+            "section": "other"
+          },
+          {
+            "id": "account-4200",
+            "code": "4200",
+            "name": "Festivals and outreach",
+            "section": "other"
+          }
+        ],
+        "lines": [
+          {
+            "id": "line-1000-0",
+            "accountId": "account-1000",
+            "description": "Archive research",
+            "quantity": 10,
+            "unit": "Days",
+            "rate": 350
+          },
+          {
+            "id": "line-1000-1",
+            "accountId": "account-1000",
+            "description": "Research trips",
+            "quantity": 1,
+            "unit": "Flat",
+            "rate": 2400
+          },
+          {
+            "id": "line-1100-2",
+            "accountId": "account-1100",
+            "description": "Diary access and story rights",
+            "quantity": 1,
+            "unit": "Flat",
+            "rate": 5000
+          },
+          {
+            "id": "line-1200-3",
+            "accountId": "account-1200",
+            "description": "Producer",
+            "quantity": 40,
+            "unit": "Weeks",
+            "rate": 1500,
+            "fringeId": "fringe-payroll"
+          },
+          {
+            "id": "line-1300-4",
+            "accountId": "account-1300",
+            "description": "Director",
+            "quantity": 40,
+            "unit": "Weeks",
+            "rate": 1500,
+            "fringeId": "fringe-payroll"
+          },
+          {
+            "id": "line-2000-5",
+            "accountId": "account-2000",
+            "description": "Cinematographer",
+            "quantity": 30,
+            "unit": "Days",
+            "rate": 750,
+            "fringeId": "fringe-payroll"
+          },
+          {
+            "id": "line-2000-6",
+            "accountId": "account-2000",
+            "description": "Sound recordist",
+            "quantity": 30,
+            "unit": "Days",
+            "rate": 550,
+            "fringeId": "fringe-payroll"
+          },
+          {
+            "id": "line-2100-7",
+            "accountId": "account-2100",
+            "description": "Camera package",
+            "quantity": 30,
+            "unit": "Days",
+            "rate": 400
+          },
+          {
+            "id": "line-2100-8",
+            "accountId": "account-2100",
+            "description": "Sound package",
+            "quantity": 30,
+            "unit": "Days",
+            "rate": 150
+          },
+          {
+            "id": "line-2200-10",
+            "accountId": "account-2200",
+            "description": "Lodging",
+            "quantity": 40,
+            "unit": "Days",
+            "rate": 120,
+            "multiplier": 2
+          },
+          {
+            "id": "line-2200-11",
+            "accountId": "account-2200",
+            "description": "Per diem",
+            "quantity": 40,
+            "unit": "Days",
+            "rate": 55,
+            "multiplier": 2
+          },
+          {
+            "id": "line-2200-12",
+            "accountId": "account-2200",
+            "description": "Mileage",
+            "quantity": 1,
+            "unit": "Flat",
+            "rate": 3000
+          },
+          {
+            "id": "line-2300-13",
+            "accountId": "account-2300",
+            "description": "Location fees",
+            "quantity": 1,
+            "unit": "Allow",
+            "rate": 2000
+          },
+          {
+            "id": "line-2400-14",
+            "accountId": "account-2400",
+            "description": "Meals and supplies",
+            "quantity": 1,
+            "unit": "Allow",
+            "rate": 2500
+          },
+          {
+            "id": "line-2400-15",
+            "accountId": "account-2400",
+            "description": "Hard drives",
+            "quantity": 8,
+            "unit": "Each",
+            "rate": 250
+          },
+          {
+            "id": "line-3000-16",
+            "accountId": "account-3000",
+            "description": "Editor",
+            "quantity": 26,
+            "unit": "Weeks",
+            "rate": 2200,
+            "fringeId": "fringe-payroll"
+          },
+          {
+            "id": "line-3000-17",
+            "accountId": "account-3000",
+            "description": "Edit system rental",
+            "quantity": 7,
+            "unit": "Months",
+            "rate": 600
+          },
+          {
+            "id": "line-3100-18",
+            "accountId": "account-3100",
+            "description": "County historical society aerials, 1965",
+            "quantity": 1,
+            "unit": "Flat",
+            "rate": 1500
+          },
+          {
+            "id": "line-3100-19",
+            "accountId": "account-3100",
+            "description": "Newsreel footage",
+            "quantity": 4,
+            "unit": "Minutes",
+            "rate": 2000
+          },
+          {
+            "id": "line-3200-20",
+            "accountId": "account-3200",
+            "description": "Composer",
+            "quantity": 1,
+            "unit": "Flat",
+            "rate": 12000
+          },
+          {
+            "id": "line-3200-21",
+            "accountId": "account-3200",
+            "description": "Licensed songs",
+            "quantity": 2,
+            "unit": "Each",
+            "rate": 3500
+          },
+          {
+            "id": "line-3300-22",
+            "accountId": "account-3300",
+            "description": "Sound edit and mix",
+            "quantity": 1,
+            "unit": "Flat",
+            "rate": 18000
+          },
+          {
+            "id": "line-3400-23",
+            "accountId": "account-3400",
+            "description": "Color grade",
+            "quantity": 5,
+            "unit": "Days",
+            "rate": 1200
+          },
+          {
+            "id": "line-3400-24",
+            "accountId": "account-3400",
+            "description": "Online and conform",
+            "quantity": 3,
+            "unit": "Days",
+            "rate": 900
+          },
+          {
+            "id": "line-3500-25",
+            "accountId": "account-3500",
+            "description": "Titles and maps",
+            "quantity": 1,
+            "unit": "Flat",
+            "rate": 4000
+          },
+          {
+            "id": "line-3600-26",
+            "accountId": "account-3600",
+            "description": "DCP and masters",
+            "quantity": 1,
+            "unit": "Flat",
+            "rate": 3500
+          },
+          {
+            "id": "line-3600-27",
+            "accountId": "account-3600",
+            "description": "Closed captions",
+            "quantity": 85,
+            "unit": "Minutes",
+            "rate": 8
+          },
+          {
+            "id": "line-4000-28",
+            "accountId": "account-4000",
+            "description": "Production counsel",
+            "quantity": 1,
+            "unit": "Flat",
+            "rate": 8000
+          },
+          {
+            "id": "line-4000-29",
+            "accountId": "account-4000",
+            "description": "E&O clearance review",
+            "quantity": 1,
+            "unit": "Flat",
+            "rate": 3000
+          },
+          {
+            "id": "line-4000-30",
+            "accountId": "account-4000",
+            "description": "Accounting",
+            "quantity": 18,
+            "unit": "Months",
+            "rate": 250
+          },
+          {
+            "id": "line-4100-31",
+            "accountId": "account-4100",
+            "description": "Office and phones",
+            "quantity": 18,
+            "unit": "Months",
+            "rate": 150
+          },
+          {
+            "id": "line-4200-32",
+            "accountId": "account-4200",
+            "description": "Festival entry fees",
+            "quantity": 15,
+            "unit": "Each",
+            "rate": 90
+          },
+          {
+            "id": "line-4200-33",
+            "accountId": "account-4200",
+            "description": "Community screenings",
+            "quantity": 6,
+            "unit": "Each",
+            "rate": 800
+          }
+        ],
+        "fringes": [
+          {
+            "id": "fringe-payroll",
+            "name": "Payroll taxes",
+            "percent": 12
+          }
+        ],
+        "markups": [
+          {
+            "id": "markup-contingency",
+            "name": "Contingency",
+            "percent": 10
+          },
+          {
+            "id": "markup-insurance",
+            "name": "Insurance",
+            "percent": 3
+          }
+        ]
+      }
+    ]
+  },
+  "budgetFormats": [
+    {
+      "id": "budget-format-riverbend",
+      "name": "Riverbend fund budget form",
+      "grantId": "grant-riverbend",
+      "categories": [
+        {
+          "id": "category-rb-personnel",
+          "name": "Personnel"
+        },
+        {
+          "id": "category-rb-equipment",
+          "name": "Equipment and travel"
+        },
+        {
+          "id": "category-rb-post-production",
+          "name": "Post-production"
+        },
+        {
+          "id": "category-rb-music",
+          "name": "Music and archival"
+        },
+        {
+          "id": "category-rb-other",
+          "name": "Other costs"
+        }
+      ],
+      "accountMap": {
+        "account-1000": "category-rb-other",
+        "account-1100": "category-rb-other",
+        "account-1200": "category-rb-personnel",
+        "account-1300": "category-rb-personnel",
+        "account-2000": "category-rb-personnel",
+        "account-2100": "category-rb-equipment",
+        "account-2200": "category-rb-equipment",
+        "account-2400": "category-rb-other",
+        "account-3000": "category-rb-post-production",
+        "account-3100": "category-rb-music",
+        "account-3200": "category-rb-music",
+        "account-3300": "category-rb-post-production",
+        "account-3400": "category-rb-post-production",
+        "account-3500": "category-rb-post-production",
+        "account-3600": "category-rb-post-production",
+        "account-4000": "category-rb-other",
+        "account-4100": "category-rb-other",
+        "account-4200": "category-rb-other"
+      },
+      "lineMap": {
+        "line-3000-17": "category-rb-equipment"
+      },
+      "markupMap": {
+        "markup-contingency": "",
+        "markup-insurance": "category-rb-other"
+      },
+      "notes": "The fund doesn’t allow contingency. Edit system rental counts as equipment."
+    }
+  ],
+  "financePlan": {
+    "sources": [
+      {
+        "id": "source-heritage",
+        "kind": "grant",
+        "grantId": "grant-county-heritage",
+        "status": "confirmed",
+        "payments": [
+          {
+            "date": "2026-04-01",
+            "amount": 7500
+          }
+        ]
+      },
+      {
+        "id": "source-northlight",
+        "kind": "grant",
+        "grantId": "grant-northlight",
+        "status": "pending",
+        "payments": [
+          {
+            "date": "2027-02-01",
+            "amount": 25000
+          }
+        ],
+        "notes": "Decision expected Jan 15, 2027"
+      },
+      {
+        "id": "source-riverbend",
+        "kind": "grant",
+        "grantId": "grant-riverbend",
+        "status": "prospective",
+        "payments": [
+          {
+            "date": "2027-06-01",
+            "amount": 17500
+          },
+          {
+            "date": "2027-10-01",
+            "amount": 17500
+          }
+        ]
+      },
+      {
+        "id": "source-investors",
+        "name": "Private investors through Lowwater Films",
+        "kind": "equity",
+        "amount": 60000,
+        "status": "confirmed",
+        "terms": "Investors recoup first, plus 20%, then share net revenue 50/50 with the producers.",
+        "payments": [
+          {
+            "date": "2026-06-01",
+            "amount": 30000
+          },
+          {
+            "date": "2026-11-01",
+            "amount": 30000
+          }
+        ]
+      },
+      {
+        "id": "source-public-tv",
+        "name": "Regional public television license",
+        "kind": "presale",
+        "amount": 40000,
+        "status": "pending",
+        "terms": "Broadcast rights in the region for four years, from delivery.",
+        "payments": [
+          {
+            "date": "2027-03-01",
+            "amount": 20000
+          },
+          {
+            "date": "2027-09-01",
+            "amount": 20000
+          }
+        ]
+      },
+      {
+        "id": "source-edit-suite",
+        "name": "Edit suite from the university media center",
+        "kind": "in-kind",
+        "amount": 4200,
+        "status": "confirmed",
+        "terms": "Credit in the end titles."
+      },
+      {
+        "id": "source-deferred-fees",
+        "name": "Producer and director fees deferred",
+        "kind": "deferral",
+        "amount": 30000,
+        "status": "confirmed",
+        "terms": "Paid from revenue after investors recoup."
+      },
+      {
+        "id": "source-donations",
+        "name": "Donations through the fiscal sponsor",
+        "kind": "donation",
+        "amount": 12000,
+        "status": "prospective"
+      }
+    ]
+  }
 }

@@ -1,0 +1,1115 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Budget · Open Filmmaker Toolkit</title>
+<meta name="description" content="Build a documentary or indie budget with detail lines that roll up to a top sheet, with fringes, contingency and versions to compare. Runs in your browser; your data stays on your computer.">
+<style>
+:root {
+  --paper: #f1f3f2; --sheet: #ffffff; --ink: #1a2130; --ink-2: #4b556a; --ink-3: #6d778a;
+  --rule: #d4dad8; --rule-soft: #e6eae8; --hover: #f6f8f7; --focus: #2f6fdb;
+  --good: #2b7a57; --good-bg: #dff1e8; --warn: #8a5a00; --warn-bg: #fbf0d9; --bad: #b3392d; --bad-bg: #f8e1de;
+  --screen: #050506; --screen-ink: #f4f1ea; --screen-dim: #a7a29a;
+  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #141922; --sheet: #1b212b; --ink: #e6e9ee; --ink-2: #a6afbd; --ink-3: #8790a0;
+    --rule: #2f3744; --rule-soft: #262d38; --hover: #212834; --focus: #7aa7ff;
+    --good: #4fb386; --good-bg: #1a3329; --warn: #e2a531; --warn-bg: #3a2f17; --bad: #e26657; --bad-bg: #3b2220;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans); }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+[hidden] { display: none !important; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.foot { margin-top: 28px; font-size: 13px; color: var(--ink-3); }
+.cant-run { display: none; max-width: 640px; margin: 64px auto; padding: 0 24px; }
+.cant-run h1 { margin: 0 0 8px; font: 600 26px/1.2 var(--serif); }
+.cant-run p { margin: 0 0 10px; color: var(--ink-2); }
+.no-js .cant-run { display: block; }
+.no-js .page { display: none; }
+.page { max-width: 1240px; margin: 0 auto; padding: 0 24px 48px; }
+
+.masthead { display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: flex-end; justify-content: space-between; padding: 28px 0 20px; }
+.tool-name { margin: 0 0 2px; font-size: 14px; font-weight: 600; color: var(--ink-2); }
+.film-title { margin: 0; font: 600 32px/1.15 var(--serif); letter-spacing: -0.01em; overflow-wrap: anywhere; cursor: pointer; }
+.film-title.is-empty { color: var(--ink-3); font-style: italic; font-weight: 400; }
+.film-meta { margin: 4px 0 0; color: var(--ink-2); font-size: 14px; }
+.file { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.file-state { margin: 0; font-size: 13px; color: var(--ink-2); text-align: right; }
+.file-state .dirty { color: var(--warn); font-weight: 600; }
+.file-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; }
+.btn:hover { border-color: var(--ink-3); }
+.btn.primary { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.btn.primary:hover { opacity: 0.88; }
+.btn.danger { color: var(--bad); }
+.btn.small { padding: 4px 10px; font-size: 13px; }
+.link-btn { padding: 0; border: 0; background: none; cursor: pointer; color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; font-size: 14px; }
+.link-btn:hover { color: var(--ink); }
+
+.banner { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 0 0 16px; padding: 12px 16px; border-radius: 8px; background: var(--warn-bg); border: 1px solid color-mix(in srgb, var(--warn) 40%, transparent); }
+.banner p { margin: 0; flex: 1 1 280px; }
+.banner .actions { display: flex; gap: 8px; }
+
+.workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr); gap: 24px; align-items: start; }
+.col { display: grid; gap: 18px; min-width: 0; }
+.card { background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 18px; min-width: 0; }
+.card-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; margin: 0 0 6px; }
+.card-head h2 { margin: 0; font: 600 18px/1.3 var(--serif); }
+.card-head .count { font-size: 13px; color: var(--ink-2); }
+.card-head .spacer { flex: 1; }
+.card p.lead { margin: 0 0 8px; font-size: 14px; color: var(--ink-2); }
+
+/* Side cards */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 2px; padding: 0; list-style: none; }
+.chip { display: inline-flex; border: 1px solid var(--rule); border-radius: 999px; overflow: hidden; background: var(--paper); }
+.chip button { padding: 4px 10px; border: 0; background: none; cursor: pointer; font-size: 13px; font-weight: 600; }
+.chip button:hover { background: var(--hover); }
+.chip .sub { font-weight: 400; color: var(--ink-3); margin-left: 4px; }
+.empty-line { margin: 4px 0; color: var(--ink-2); font-size: 14px; }
+.changes { margin: 0; padding-left: 18px; font-size: 14px; }
+.changes li + li { margin-top: 2px; }
+
+/* The supers list */
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 10px; }
+.toolbar h2 { margin: 0 8px 0 0; font: 600 20px/1.2 var(--serif); }
+.toolbar .count { font-size: 13px; color: var(--ink-2); }
+.toolbar .spacer { flex: 1; }
+.rows { list-style: none; margin: 0; padding: 0; background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; }
+.row { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 2px 14px; align-items: start; padding: 10px 14px; }
+.row + .row { border-top: 1px solid var(--rule-soft); }
+.row:hover { background: var(--hover); }
+.row.is-selected { background: var(--hover); box-shadow: inset 3px 0 0 var(--ink); }
+.row .tc { font-variant-numeric: tabular-nums; font-size: 14px; color: var(--ink-2); padding-top: 1px; }
+.row .what { min-width: 0; padding: 0; border: 0; background: none; text-align: left; cursor: pointer; overflow-wrap: anywhere; }
+.row .what:hover .nm { text-decoration: underline; text-underline-offset: 2px; }
+.row .nm { display: block; font-weight: 600; }
+.row .tt { display: block; font-size: 14px; color: var(--ink-2); }
+.flags { grid-column: 2; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.flag { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 999px; font-size: 12.5px; font-weight: 600; }
+.flag.new { background: var(--good-bg); color: var(--good); }
+.flag.changed { background: var(--warn-bg); color: var(--warn); }
+.flag.problem { background: var(--bad-bg); color: var(--bad); }
+.flag.linked { background: var(--paper); color: var(--ink-3); font-weight: 500; border: 1px solid var(--rule); }
+.flag button { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+
+.empty { padding: 36px 24px; text-align: center; background: var(--sheet); border: 1px dashed var(--rule); border-radius: 8px; }
+.empty h2 { margin: 0 0 6px; font: 600 20px/1.3 var(--serif); }
+.empty p { margin: 0 auto 16px; max-width: 52ch; color: var(--ink-2); }
+.empty .actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+
+
+.workspace { grid-template-columns: minmax(0, 1fr) 300px; }
+.side { position: sticky; top: 16px; display: grid; gap: 18px; }
+.sec { margin: 0 0 22px; }
+.sec-head { display: flex; align-items: baseline; gap: 10px; margin: 0 0 8px; padding: 0 2px; }
+.sec-head h3 { margin: 0; flex: 1; font: 600 18px/1.2 var(--serif); }
+.sec-head .amt { font-weight: 600; font-variant-numeric: tabular-nums; }
+.acct { margin: 0 0 10px; background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; }
+.acct-head { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--rule-soft); }
+.acct-head .what { flex: 1; min-width: 0; padding: 0; border: 0; background: none; text-align: left; cursor: pointer; font-weight: 600; overflow-wrap: anywhere; }
+.acct-head .what:hover { text-decoration: underline; text-underline-offset: 2px; }
+.acct-head .code { color: var(--ink-3); font-variant-numeric: tabular-nums; margin-right: 6px; font-weight: 500; }
+.acct-head .amt { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.lines { list-style: none; margin: 0; padding: 0; }
+.lh, .ln { display: grid; grid-template-columns: minmax(0, 1fr) 58px 78px 46px 84px 118px 96px 30px; gap: 6px; align-items: center; padding: 5px 12px; }
+.lh { font-size: 12px; color: var(--ink-3); padding-top: 6px; padding-bottom: 0; }
+.lh .r, .ln .tot { text-align: right; }
+.ln + .ln { border-top: 1px solid var(--rule-soft); }
+.ln input, .ln select { width: 100%; min-width: 0; padding: 5px 7px; border: 1px solid var(--rule-soft); border-radius: 5px; background: var(--paper); font-size: 14px; }
+.ln input[type="number"] { text-align: right; font-variant-numeric: tabular-nums; }
+.ln input:focus, .ln select:focus { border-color: var(--ink-2); outline: none; }
+.ln .tot { font-variant-numeric: tabular-nums; font-size: 14px; }
+.ln .tot .fr { display: block; font-size: 11.5px; color: var(--ink-3); }
+.acct-foot { padding: 6px 12px 10px; }
+.icon-btn { width: 30px; height: 30px; padding: 0; border: 1px solid transparent; border-radius: 6px; background: none; color: var(--ink-2); cursor: pointer; font-size: 16px; line-height: 1; }
+.icon-btn:hover { border-color: var(--rule); color: var(--ink); }
+.loose { margin: 0 0 12px; padding: 8px 12px; border-radius: 6px; background: var(--bad-bg); color: var(--bad); font-size: 14px; }
+.top { width: 100%; border-collapse: collapse; font-size: 14px; }
+.top td { padding: 4px 0; vertical-align: top; }
+.top td.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; padding-left: 10px; }
+.top tr.s td { padding-top: 10px; font-weight: 600; }
+.top tr.a td:first-child { padding-left: 10px; color: var(--ink-2); }
+.top tr.t td { border-top: 1px solid var(--rule); font-weight: 600; }
+.top tr.g td { border-top: 2px solid var(--ink); font: 700 17px/1.3 var(--serif); padding-top: 8px; }
+.vlist { list-style: none; margin: 4px 0 0; padding: 0; font-size: 14px; }
+.vlist li { display: flex; justify-content: space-between; gap: 10px; padding: 5px 0; }
+.vlist li + li { border-top: 1px solid var(--rule-soft); }
+.vlist .d { color: var(--ink-2); font-size: 13px; display: block; }
+.rate-rows { display: grid; gap: 6px; }
+.rate-row { display: grid; grid-template-columns: minmax(0, 1fr) 110px 30px; gap: 8px; align-items: center; }
+.rate-row input { min-width: 0; padding: 7px 9px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.cmp { width: 100%; border-collapse: collapse; font-size: 14px; }
+.cmp th, .cmp td { padding: 5px 6px; border-bottom: 1px solid var(--rule-soft); text-align: right; font-variant-numeric: tabular-nums; }
+.cmp th:first-child, .cmp td:first-child { text-align: left; }
+.cmp th { font-size: 12.5px; color: var(--ink-2); font-weight: 600; }
+.cmp .up { color: var(--bad); }
+.cmp .down { color: var(--good); }
+.cmp tr.g td { font-weight: 700; border-top: 2px solid var(--ink); }
+@media (max-width: 900px) {
+  .lh { display: none; }
+  .ln { grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 8px 12px; }
+  .ln .desc { grid-column: 1 / -1; }
+  .ln .fringe { grid-column: 1 / 3; }
+  .ln .tot { grid-column: 3; }
+  .ln input::placeholder { color: var(--ink-3); }
+}
+@media (max-width: 720px) { .two { grid-template-columns: 1fr; } }
+
+dialog { border: 0; padding: 0; color: var(--ink); background: var(--sheet); box-shadow: 0 10px 40px rgba(10, 14, 22, 0.25); }
+dialog::backdrop { background: rgba(16, 20, 28, 0.42); }
+dialog.drawer { margin: 0 0 0 auto; width: min(600px, 100vw); height: 100dvh; max-height: 100dvh; max-width: 100vw; border-left: 1px solid var(--rule); }
+dialog.modal { width: min(560px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); border-radius: 10px; }
+dialog form { display: flex; flex-direction: column; height: 100%; max-height: inherit; }
+.dlg-head { padding: 20px 24px 12px; border-bottom: 1px solid var(--rule-soft); }
+.dlg-head h2 { margin: 0; font: 600 22px/1.25 var(--serif); }
+.dlg-body { flex: 1; overflow-y: auto; padding: 16px 24px 24px; display: grid; gap: 14px; align-content: start; }
+.dlg-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 14px 24px; border-top: 1px solid var(--rule-soft); }
+.dlg-foot .spacer { flex: 1; }
+.field { display: grid; gap: 4px; }
+.field > label, .field > .label, .group h3 { font-size: 14px; font-weight: 600; margin: 0; }
+.hint { margin: 0; font-size: 13px; color: var(--ink-3); }
+.field input, .field select, .field textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); }
+.group { display: grid; gap: 8px; padding-top: 10px; border-top: 1px solid var(--rule-soft); }
+.checks { display: grid; gap: 2px; max-height: 260px; overflow-y: auto; padding: 2px; }
+.check { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; align-items: start; padding: 5px 4px; border-radius: 6px; cursor: pointer; }
+.check:hover { background: var(--hover); }
+.check input { width: 18px; height: 18px; margin: 2px 0 0; }
+.check .who { overflow-wrap: anywhere; }
+.check .sub { margin-left: 4px; font-size: 13px; color: var(--ink-3); }
+.check .lines { display: block; font-size: 13px; color: var(--ink-3); white-space: pre-line; }
+#songList, #sourceList { max-height: none; }
+.radio-row { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.radio-row label { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; cursor: pointer; }
+pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); font-size: 13px; white-space: pre-wrap; }
+
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); max-width: calc(100vw - 32px); padding: 10px 16px; border-radius: 8px; background: var(--ink); color: var(--paper); font-size: 14px; box-shadow: 0 6px 24px rgba(10, 14, 22, 0.25); z-index: 10; }
+.toast.error { background: var(--bad); color: #ffffff; }
+.report { display: none; }
+
+@media (max-width: 900px) {
+  .workspace { grid-template-columns: 1fr; }
+  .side { position: static; }
+}
+@media (max-width: 720px) {
+  .page { padding: 0 16px 40px; }
+  .film-title { font-size: 26px; }
+  .file { align-items: flex-start; }
+  .file-state { text-align: left; }
+  .toolbar h2 { flex-basis: 100%; order: -2; }
+  .toolbar #addBtn { flex: 1 1 100%; justify-content: center; order: -1; }
+  .row { grid-template-columns: minmax(0, 1fr); }
+  .flags { grid-column: 1; }
+}
+@media print {
+  @page { size: portrait; margin: 16mm; }
+  :root { color-scheme: light; }
+  body { background: #ffffff; color: #000000; font-size: 10pt; }
+  .page, dialog, .toast { display: none !important; }
+  .report { display: block; }
+  .report h1 { margin: 0; font: 700 18pt/1.2 var(--serif); }
+  .report h2 { margin: 14pt 0 4pt; font: 700 12pt/1.2 var(--serif); break-after: avoid; page-break-after: avoid; }
+  .report .r-meta { margin: 2pt 0 10pt; }
+  .report table { width: 100%; border-collapse: collapse; }
+  .report th, .report td { padding: 4pt 5pt; border-bottom: 0.75pt solid #999999; text-align: left; vertical-align: top; }
+  .report th { font-size: 9pt; border-bottom: 1pt solid #000000; }
+  .report tr { break-inside: avoid; page-break-inside: avoid; }
+  .report .r-sub { display: block; font-size: 8.5pt; color: #333333; }
+  .report .r-note { margin-top: 14pt; font-size: 8pt; color: #333333; }
+  .report .n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .report .r-top td:first-child { width: 14%; }
+  .report .r-sec td { font-weight: 700; padding-top: 8pt; }
+  .report .r-tot td { font-weight: 700; border-top: 1pt solid #000000; }
+  .report .r-grand td { font-weight: 700; font-size: 12pt; border-top: 2pt solid #000000; }
+  .report .r-detail { break-before: page; page-break-before: always; }
+}
+</style>
+</head>
+<body>
+<div class="cant-run" id="cantRun">
+  <h1 id="cantRunTitle">Open this file in a web browser</h1>
+  <p id="cantRunText">This tool runs in Chrome, Edge, Firefox or Safari. You're seeing a preview that doesn't run it, so none of the buttons would work.</p>
+  <p id="cantRunHow">In your browser, choose File, then Open File, and pick this file. Or right-click the file and open it with your browser.</p>
+</div>
+<div class="page">
+  <header class="masthead">
+    <div>
+      <p class="tool-name">Budget</p>
+      <h1 class="film-title" id="filmTitle">Untitled film</h1>
+      <p class="film-meta"><span id="filmMeta"></span> <button type="button" class="link-btn" id="editProjectBtn">Edit film details</button></p>
+    </div>
+    <div class="file">
+      <p class="file-state" id="fileState">Not saved to a file yet</p>
+      <div class="file-actions">
+        <button type="button" class="btn" id="newBtn">New project</button>
+        <button type="button" class="btn" id="openBtn">Open file</button>
+        <button type="button" class="btn" id="projectCsvBtn">Export project data (CSV)</button>
+        <button type="button" class="btn primary" id="saveBtn">Save file</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="banner" id="recovery" role="region" aria-label="Unsaved work" hidden>
+    <p id="recoveryText"></p>
+    <div class="actions">
+      <button type="button" class="btn primary" id="restoreBtn">Restore it</button>
+      <button type="button" class="btn" id="discardBtn">Discard it</button>
+    </div>
+  </div>
+
+  <main class="workspace">
+    <section aria-labelledby="listHead">
+      <div class="toolbar">
+        <h2 id="listHead">Budget</h2>
+        <span class="count" id="count"></span>
+        <span class="spacer"></span>
+        <button type="button" class="btn primary" id="addBtn">Add account</button>
+        <button type="button" class="btn" id="ratesBtn">Fringes and percentages</button>
+        <button type="button" class="btn" id="versionBtn">Save version</button>
+        <button type="button" class="btn" id="compareBtn">Compare</button>
+        <button type="button" class="btn" id="csvBtn">Export CSV</button>
+        <button type="button" class="btn" id="printBtn">Print</button>
+      </div>
+      <p class="loose" id="loose" hidden></p>
+      <div id="sections"></div>
+      <div class="empty" id="empty" hidden>
+        <h2>No budget yet</h2>
+        <p>Build the budget account by account: each line is a quantity, a unit and a rate, with fringes on payroll lines. Contingency, insurance and fees are percentages on top. Totals roll up to the top sheet as you type.</p>
+        <div class="actions">
+          <button type="button" class="btn primary" id="templateBtn">Start from the documentary accounts</button>
+          <button type="button" class="btn" id="emptyAddBtn">Add an account</button>
+          <button type="button" class="btn" id="emptyOpenBtn">Open file</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="side">
+      <section class="card" aria-labelledby="topHead">
+        <div class="card-head"><h2 id="topHead">Top sheet</h2></div>
+        <table class="top" id="topSheet"></table>
+      </section>
+      <section class="card" aria-labelledby="verHead">
+        <div class="card-head"><h2 id="verHead">Versions</h2><span class="count" id="verCount"></span></div>
+        <ul class="vlist" id="verList"></ul>
+      </section>
+    </div>
+  </main>
+
+  <footer class="foot">
+    <p>Part of the Open Filmmaker Toolkit. This page makes no network requests: everything stays on this computer until you save or export it. Uses the same project file as the other toolkit tools.</p>
+  </footer>
+</div>
+
+<dialog class="modal" id="editor" aria-labelledby="editorTitle">
+  <form id="editorForm" method="dialog" novalidate>
+    <div class="dlg-head"><h2 id="editorTitle">Account</h2></div>
+    <div class="dlg-body">
+      <div class="two">
+        <div class="field"><label for="f-code">Account number</label><input id="f-code" type="text" placeholder="2100" autocomplete="off"></div>
+        <div class="field"><label for="f-section">Section</label><select id="f-section"></select></div>
+      </div>
+      <div class="field"><label for="f-name">Account name</label><input id="f-name" type="text" placeholder="Camera and sound equipment" autocomplete="off" required></div>
+      <div class="field"><label for="f-notes">Notes</label><textarea id="f-notes" rows="2"></textarea></div>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn danger" id="deleteBtn">Remove account</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="editorCancel">Cancel</button>
+      <button type="submit" class="btn primary" id="editorSubmit">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="ratesDialog" aria-labelledby="ratesTitle">
+  <form id="ratesForm" method="dialog" novalidate>
+    <div class="dlg-head"><h2 id="ratesTitle">Fringes and percentages</h2></div>
+    <div class="dlg-body">
+      <div class="group">
+        <h3 id="fringeHead">Fringes</h3>
+        <p class="hint">Payroll taxes, benefits or union contributions, as a percentage of the lines you apply them to. Pick a fringe on each payroll line.</p>
+        <div class="rate-rows" id="fringeRows" role="group" aria-labelledby="fringeHead"></div>
+        <div><button type="button" class="btn small" id="addFringeBtn">Add a fringe</button></div>
+      </div>
+      <div class="group">
+        <h3 id="markHead">Percentages on the whole budget</h3>
+        <p class="hint">Contingency, insurance, fees and overhead, as a percentage of all lines plus fringes. Check the rates your funders and insurer allow.</p>
+        <div class="rate-rows" id="markRows" role="group" aria-labelledby="markHead"></div>
+        <div><button type="button" class="btn small" id="addMarkBtn">Add a percentage</button></div>
+      </div>
+      <div class="field"><label for="f-currency">Currency</label><input id="f-currency" type="text" maxlength="3" placeholder="USD" autocomplete="off" style="max-width: 8em; text-transform: uppercase"></div>
+    </div>
+    <div class="dlg-foot">
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="ratesCancel">Cancel</button>
+      <button type="submit" class="btn primary" id="ratesSubmit">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="versionDialog" aria-labelledby="versionTitle">
+  <form id="versionForm" method="dialog" novalidate>
+    <div class="dlg-head"><h2 id="versionTitle">Save a version</h2></div>
+    <div class="dlg-body">
+      <p class="hint">Keeps a copy of the budget as it is now, so you can compare later, such as the version you sent to a funder.</p>
+      <div class="field"><label for="f-vlabel">Name</label><input id="f-vlabel" type="text" placeholder="Sent to the Riverbend fund" autocomplete="off" required></div>
+    </div>
+    <div class="dlg-foot">
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="versionCancel">Cancel</button>
+      <button type="submit" class="btn primary">Save version</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="compareDialog" aria-labelledby="compareTitle">
+  <form method="dialog">
+    <div class="dlg-head"><h2 id="compareTitle">Compare with a version</h2></div>
+    <div class="dlg-body">
+      <div class="field"><label for="cmpSel">Version</label><select id="cmpSel"></select></div>
+      <div style="overflow-x:auto"><table class="cmp" id="cmpTable"></table></div>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn danger" id="cmpDelete">Remove this version</button>
+      <span class="spacer"></span>
+      <button type="submit" class="btn primary">Done</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="projectDialog" aria-labelledby="projectDialogTitle">
+  <form id="projectForm" method="dialog">
+    <div class="dlg-head"><h2 id="projectDialogTitle">Film details</h2></div>
+    <div class="dlg-body">
+      <div class="field"><label for="p-title">Film title</label><input id="p-title" type="text" placeholder="Working title is fine"></div>
+      <div class="field"><label for="p-company">Production company</label><input id="p-company" type="text"></div>
+      <div class="field"><label for="p-producer">Producer</label><input id="p-producer" type="text"></div>
+    </div>
+    <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn" id="projectCancel">Cancel</button><button type="submit" class="btn primary">Save details</button></div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="projectCsvDialog" aria-labelledby="projectCsvTitle">
+  <form id="projectCsvForm" method="dialog">
+    <div class="dlg-head"><h2 id="projectCsvTitle">Export project data</h2></div>
+    <div class="dlg-body">
+      <div class="field">
+        <label for="projectCsvCollection">Data to export</label>
+        <select id="projectCsvCollection">
+          <option value="project">Project details</option>
+          <option value="people">People</option>
+          <option value="locations">Locations</option>
+          <option value="thirdPartyElements">Third-party elements</option>
+          <option value="contracts">Contracts</option>
+          <option value="assets">Assets</option>
+          <option value="musicCueSheet">Music cue sheet details</option>
+          <option value="callSheets">Call sheets</option>
+        </select>
+      </div>
+      <p class="hint">Exports one CSV file for the selected collection. Nested values are kept as JSON in their cell.</p>
+    </div>
+    <div class="dlg-foot">
+      <button type="submit" class="btn primary">Export CSV</button>
+      <button type="button" class="btn" id="projectCsvCancel">Cancel</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="conflictDialog" aria-labelledby="conflictTitle">
+  <form method="dialog">
+    <div class="dlg-head"><h2 id="conflictTitle">Project file changed</h2></div>
+    <div class="dlg-body">
+      <p id="conflictText">This project file changed after you opened it. Saving will replace those changes.</p>
+      <p class="hint">Your edits are still here. Choose whether to overwrite the changed file, save a separate copy, or load its latest contents. Save in one tool at a time; simultaneous saves can still race.</p>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn" id="conflictReloadBtn">Reload latest</button>
+      <button type="button" class="btn" id="conflictCopyBtn">Save a copy</button>
+      <button type="button" class="btn danger" id="conflictOverwriteBtn">Overwrite file</button>
+      <button type="button" class="btn" id="conflictCancelBtn">Keep editing</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="report" id="report" aria-hidden="true"></div>
+<input type="file" id="fileInput" accept=".json,application/json" hidden>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+(() => {
+  'use strict';
+
+  const FORMAT = 'open-filmmaker-toolkit/project';
+  const FORMAT_VERSION = 1;
+  const TOOL = 'budget 0.1.0';
+  const DRAFT_KEY = 'oft.budget.draft';
+  const PROJECT_TEXT = ['title', 'company', 'producer'];
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const str = v => (v == null ? '' : String(v));
+  const arr = v => (Array.isArray(v) ? v : []);
+  const norm = s => str(s).toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+
+  let doc = blankDoc();
+  let fileHandle = null;
+  let baselineText = null;
+  let fileName = null;
+  let dirty = false;
+
+  function blankDoc() {
+    return { format: FORMAT, formatVersion: FORMAT_VERSION, project: { title: '', company: '', producer: '', frameRate: 24, currency: 'USD' }, people: [], budget: { accounts: [], lines: [], fringes: [], markups: [], versions: [] } };
+  }
+  function newId(prefix) {
+    if (window.crypto && crypto.randomUUID) return `${prefix}-${crypto.randomUUID()}`;
+    return `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+  }
+  function today() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  function fmtDate(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str(iso));
+    if (!m) return str(iso);
+    return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+  function daysUntil(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str(iso));
+    if (!m) return null;
+    const t = new Date(); const a = Date.UTC(t.getFullYear(), t.getMonth(), t.getDate());
+    return Math.round((Date.UTC(+m[1], +m[2] - 1, +m[3]) - a) / 86400000);
+  }
+
+  // ---------- Budget arithmetic (the same in the budget, budget converter and finance plan) ----------
+  const SECTIONS = [
+    { id: 'atl', label: 'Above the line' },
+    { id: 'production', label: 'Production' },
+    { id: 'post', label: 'Post-production' },
+    { id: 'other', label: 'Other costs' },
+  ];
+  const sectionLabel = id => (SECTIONS.find(s => s.id === id) || SECTIONS[3]).label;
+  const num = v => (v === '' || v == null || !isFinite(Number(v)) ? 0 : Number(v));
+  const cents = n => Math.round(n * 100) / 100;
+  const objs = v => arr(v).filter(x => x && typeof x === 'object');
+  // A line costs quantity × multiplier × rate. The multiplier defaults to 1 (use it for people, units or episodes).
+  function lineSubtotal(l) {
+    const x = l.multiplier === '' || l.multiplier == null ? 1 : num(l.multiplier);
+    return cents(num(l.quantity) * x * num(l.rate));
+  }
+  const accountOrder = (a, b) => SECTIONS.findIndex(s => s.id === a.section) - SECTIONS.findIndex(s => s.id === b.section) ||
+    str(a.code).localeCompare(str(b.code), undefined, { numeric: true }) || str(a.name).localeCompare(str(b.name));
+  // Totals for a budget record: each line with its fringe, each account, each section, then fringes and percentages on the subtotal.
+  function budgetTotals(b) {
+    b = b && typeof b === 'object' ? b : {};
+    const fringes = objs(b.fringes);
+    const markups = objs(b.markups);
+    const accounts = objs(b.accounts).slice().sort(accountOrder);
+    const lines = objs(b.lines).map(l => {
+      const sub = lineSubtotal(l);
+      const f = l.fringeId ? fringes.find(x => x.id === l.fringeId) : null;
+      const fringe = f ? cents(sub * num(f.percent) / 100) : 0;
+      return { line: l, sub, fringe, total: cents(sub + fringe) };
+    });
+    const byAccount = accounts.map(a => {
+      const ls = lines.filter(x => x.line.accountId === a.id);
+      return { account: a, lines: ls, sub: cents(ls.reduce((t, x) => t + x.sub, 0)), fringe: cents(ls.reduce((t, x) => t + x.fringe, 0)), total: cents(ls.reduce((t, x) => t + x.total, 0)) };
+    });
+    const loose = lines.filter(x => !accounts.some(a => a.id === x.line.accountId));
+    const sections = SECTIONS.map(s => {
+      const as = byAccount.filter(x => (SECTIONS.some(y => y.id === x.account.section) ? x.account.section : 'other') === s.id);
+      return { section: s, accounts: as, total: cents(as.reduce((t, x) => t + x.total, 0)) };
+    });
+    const direct = cents(lines.reduce((t, x) => t + x.sub, 0));
+    const fringeTotal = cents(lines.reduce((t, x) => t + x.fringe, 0));
+    const subtotal = cents(direct + fringeTotal);
+    const marks = markups.map(m => ({ markup: m, amount: cents(subtotal * num(m.percent) / 100) }));
+    const grand = cents(subtotal + marks.reduce((t, x) => t + x.amount, 0));
+    const fringeTotals = fringes.map(f => ({ fringe: f, amount: cents(lines.filter(x => x.line.fringeId === f.id).reduce((t, x) => t + x.fringe, 0)) }));
+    return { lines, accounts: byAccount, loose, sections, direct, fringeTotal, fringeTotals, subtotal, markups: marks, grand };
+  }
+  function money(n, withCents) {
+    if (n == null || n === '' || !isFinite(Number(n))) return '';
+    const opts = { style: 'currency', currency: (doc.project && doc.project.currency) || 'USD', minimumFractionDigits: withCents ? 2 : 0, maximumFractionDigits: withCents ? 2 : 0 };
+    try { return new Intl.NumberFormat(undefined, opts).format(Number(n)); }
+    catch (e) { return Number(n).toLocaleString(undefined, { minimumFractionDigits: opts.minimumFractionDigits, maximumFractionDigits: opts.maximumFractionDigits }); }
+  }
+  const hasBudget = () => !!(doc.budget && typeof doc.budget === 'object' && objs(doc.budget.lines).length);
+
+  const UNITS = ['Days', 'Weeks', 'Months', 'Hours', 'Flat', 'Allow', 'Each', 'Episodes', 'Minutes'];
+  const TEMPLATE = [
+    ['atl', '1000', 'Development and research'], ['atl', '1100', 'Story and rights'], ['atl', '1200', 'Producers'], ['atl', '1300', 'Director'],
+    ['production', '2000', 'Production crew'], ['production', '2100', 'Camera and sound equipment'], ['production', '2200', 'Travel and lodging'],
+    ['production', '2300', 'Locations'], ['production', '2400', 'Production expenses'],
+    ['post', '3000', 'Editorial'], ['post', '3100', 'Archival licensing'], ['post', '3200', 'Music'], ['post', '3300', 'Sound edit and mix'],
+    ['post', '3400', 'Color and finishing'], ['post', '3500', 'Graphics and titles'], ['post', '3600', 'Deliverables'],
+    ['other', '4000', 'Legal and accounting'], ['other', '4100', 'Office and administration'], ['other', '4200', 'Festivals and outreach'],
+  ];
+  let editing = null;
+  let isNew = false;
+
+  // Fills in only what this tool needs; everything else in the file is left as it was.
+  function normalize(d) {
+    if (!d.project || typeof d.project !== 'object') d.project = {};
+    for (const k of PROJECT_TEXT) if (typeof d.project[k] !== 'string') d.project[k] = str(d.project[k]);
+    if (!Array.isArray(d.people)) d.people = [];
+    if (!d.budget || typeof d.budget !== 'object' || Array.isArray(d.budget)) d.budget = {};
+    const b = d.budget;
+    for (const k of ['accounts', 'lines', 'fringes', 'markups', 'versions']) b[k] = objs(b[k]);
+    for (const a of b.accounts) { if (!a.id) a.id = newId('account'); if (!SECTIONS.some(s => s.id === a.section)) a.section = 'other'; }
+    for (const l of b.lines) if (!l.id) l.id = newId('line');
+    for (const f of b.fringes) if (!f.id) f.id = newId('fringe');
+    for (const m of b.markups) if (!m.id) m.id = newId('markup');
+    for (const v of b.versions) if (!v.id) v.id = newId('budget-version');
+    d.format = FORMAT;
+    d.formatVersion = FORMAT_VERSION;
+    return d;
+  }
+  const B = () => doc.budget;
+  const entries = () => B().lines;
+  const account = id => B().accounts.find(a => a.id === id);
+
+  // ---------- Render ----------
+  function renderHead() {
+    $('filmTitle').textContent = doc.project.title || 'Untitled film';
+    $('filmTitle').classList.toggle('is-empty', !doc.project.title);
+    $('filmMeta').textContent = [doc.project.company, doc.project.producer && `Producer: ${doc.project.producer}`].filter(Boolean).join(' · ');
+    $('fileState').innerHTML = (fileName ? esc(fileName) : 'Not saved to a file yet') + (dirty ? ' · <span class="dirty">Unsaved changes</span>' : '');
+    document.title = `${doc.project.title ? doc.project.title + ' · ' : ''}Budget · Open Filmmaker Toolkit`;
+  }
+  function lineHtml(l) {
+    const fr = B().fringes;
+    return `<li class="ln" data-line="${esc(l.id)}">
+      <input class="desc" data-k="description" type="text" value="${esc(l.description)}" placeholder="Description" aria-label="Description" autocomplete="off">
+      <input data-k="quantity" type="number" step="any" min="0" value="${esc(l.quantity ?? '')}" placeholder="Qty" aria-label="Quantity">
+      <input data-k="unit" type="text" list="units" value="${esc(l.unit)}" placeholder="Unit" aria-label="Unit" autocomplete="off">
+      <input data-k="multiplier" type="number" step="any" min="0" value="${esc(l.multiplier ?? '')}" placeholder="×1" aria-label="Multiplier, such as number of people">
+      <input data-k="rate" type="number" step="any" min="0" value="${esc(l.rate ?? '')}" placeholder="Rate" aria-label="Rate">
+      <select class="fringe" data-k="fringeId" aria-label="Fringe"><option value="">None</option>${fr.map(f => `<option value="${esc(f.id)}"${l.fringeId === f.id ? ' selected' : ''}>${esc(f.name || 'Fringe')} ${esc(num(f.percent))}%</option>`).join('')}</select>
+      <span class="tot" data-tot></span>
+      <button type="button" class="icon-btn" data-delline aria-label="Remove this line">×</button>
+    </li>`;
+  }
+  function render() {
+    renderHead();
+    const t = budgetTotals(B());
+    const any = B().accounts.length || B().lines.length;
+    $('empty').hidden = !!any;
+    for (const id of ['csvBtn', 'printBtn', 'ratesBtn', 'versionBtn']) $(id).hidden = !any;
+    $('compareBtn').hidden = !B().versions.length;
+    $('sections').innerHTML = t.sections.filter(s => s.accounts.length).map(s => `<section class="sec" aria-label="${esc(s.section.label)}">
+      <div class="sec-head"><h3>${esc(s.section.label)}</h3><span class="amt" data-sec="${s.section.id}"></span></div>
+      ${s.accounts.map(x => `<div class="acct" data-acct="${esc(x.account.id)}">
+        <div class="acct-head"><button type="button" class="what" data-edit="${esc(x.account.id)}">${x.account.code ? `<span class="code">${esc(x.account.code)}</span>` : ''}${esc(x.account.name || 'Unnamed account')}</button><span class="amt" data-acct-tot></span></div>
+        ${x.lines.length ? `<div class="lh" aria-hidden="true"><span>Description</span><span class="r">Qty</span><span>Unit</span><span class="r">×</span><span class="r">Rate</span><span>Fringe</span><span class="r">Total</span><span></span></div>` : ''}
+        <ul class="lines">${x.lines.map(y => lineHtml(y.line)).join('')}</ul>
+        <div class="acct-foot"><button type="button" class="btn small" data-addline="${esc(x.account.id)}">Add a line</button></div>
+      </div>`).join('')}
+    </section>`).join('') + `<datalist id="units">${UNITS.map(u => `<option value="${u}">`).join('')}</datalist>`;
+    renderTotals();
+    renderVersions();
+  }
+  // Updates every total in place, so typing in a line doesn't lose your place.
+  function renderTotals() {
+    const t = budgetTotals(B());
+    $('count').textContent = t.lines.length ? `${t.lines.length} line${t.lines.length === 1 ? '' : 's'} · ${money(t.grand)}` : '';
+    for (const x of t.lines) {
+      const el = document.querySelector(`[data-line="${CSS.escape(x.line.id)}"] [data-tot]`);
+      if (el) el.innerHTML = `${esc(money(x.total, true))}${x.fringe ? `<span class="fr">incl. ${esc(money(x.fringe, true))} fringe</span>` : ''}`;
+    }
+    for (const a of t.accounts) { const el = document.querySelector(`[data-acct="${CSS.escape(a.account.id)}"] [data-acct-tot]`); if (el) el.textContent = money(a.total); }
+    for (const s of t.sections) { const el = document.querySelector(`[data-sec="${s.section.id}"]`); if (el) el.textContent = money(s.total); }
+    $('loose').hidden = !t.loose.length;
+    $('loose').textContent = t.loose.length ? `${t.loose.length} line${t.loose.length === 1 ? ' belongs' : 's belong'} to an account that's no longer in the budget. They count in the total; add an account or open the file in another tool to fix them.` : '';
+    const rows = [];
+    for (const s of t.sections) {
+      if (!s.accounts.length) continue;
+      rows.push(`<tr class="s"><td>${esc(s.section.label)}</td><td class="n">${esc(money(s.total))}</td></tr>`);
+      for (const a of s.accounts) rows.push(`<tr class="a"><td>${a.account.code ? `${esc(a.account.code)} ` : ''}${esc(a.account.name || 'Unnamed account')}</td><td class="n">${esc(money(a.total))}</td></tr>`);
+    }
+    if (t.loose.length) rows.push(`<tr class="s"><td>Lines with no account</td><td class="n">${esc(money(t.loose.reduce((n, x) => n + x.total, 0)))}</td></tr>`);
+    rows.push(`<tr class="t"><td>Subtotal${t.fringeTotal ? ', including fringes' : ''}</td><td class="n">${esc(money(t.subtotal))}</td></tr>`);
+    for (const f of t.fringeTotals) if (f.amount) rows.push(`<tr class="a"><td>of which ${esc(f.fringe.name || 'fringe')} ${esc(num(f.fringe.percent))}%</td><td class="n">${esc(money(f.amount))}</td></tr>`);
+    for (const m of t.markups) rows.push(`<tr><td>${esc(m.markup.name || 'Percentage')} ${esc(num(m.markup.percent))}%</td><td class="n">${esc(money(m.amount))}</td></tr>`);
+    rows.push(`<tr class="g"><td>Total</td><td class="n">${esc(money(t.grand))}</td></tr>`);
+    $('topSheet').innerHTML = t.lines.length || B().accounts.length ? rows.join('') : '<tr><td class="empty-line">Add lines to see the top sheet.</td></tr>';
+  }
+  function renderVersions() {
+    const vs = B().versions;
+    $('verCount').textContent = vs.length ? String(vs.length) : '';
+    $('verList').innerHTML = vs.length ? [...vs].reverse().map(v => `<li><span>${esc(v.label || 'Unnamed version')}<span class="d">${esc(v.at ? fmtDate(v.at.slice(0, 10)) : '')}</span></span><span>${esc(money(budgetTotals(v).grand))}</span></li>`).join('')
+      : '<li class="empty-line">Save a version before you send the budget anywhere, so you can see what changed since.</li>';
+  }
+  function touched() {
+    dirty = true;
+    saveDraft();
+    renderHead();
+    renderTotals();
+  }
+
+  // ---------- Lines ----------
+  function editLine(input) {
+    const row = input.closest('[data-line]');
+    const l = B().lines.find(x => x.id === row.dataset.line);
+    if (!l) return;
+    const k = input.dataset.k;
+    const v = input.value;
+    if (['quantity', 'multiplier', 'rate'].includes(k)) { if (v === '' || !isFinite(Number(v))) delete l[k]; else l[k] = Number(v); }
+    else if (v.trim()) l[k] = k === 'fringeId' ? v : v; else delete l[k];
+    touched();
+  }
+  function addLine(accountId) {
+    const a = account(accountId);
+    const l = { id: newId('line'), accountId, quantity: 1, unit: 'Flat' };
+    B().lines.push(l);
+    changed();
+    const row = document.querySelector(`[data-line="${CSS.escape(l.id)}"]`);
+    if (row) row.querySelector('.desc').focus();
+    return a;
+  }
+  function removeLine(id) {
+    const l = B().lines.find(x => x.id === id);
+    B().lines = B().lines.filter(x => x.id !== id);
+    changed();
+    toast(`Removed ${l && l.description ? l.description : 'the line'}.`);
+  }
+  function startFromTemplate() {
+    B().accounts = TEMPLATE.map(([section, code, name]) => ({ id: newId('account'), code, name, section }));
+    if (!B().fringes.length) B().fringes = [{ id: newId('fringe'), name: 'Payroll taxes', percent: 0 }];
+    if (!B().markups.length) B().markups = [{ id: newId('markup'), name: 'Contingency', percent: 10 }, { id: newId('markup'), name: 'Insurance', percent: 0 }];
+    changed();
+    toast('Added the usual documentary accounts. Set your fringe and insurance rates under Fringes and percentages.');
+  }
+
+  // ---------- Accounts ----------
+  function openEditor(id) {
+    const existing = id && account(id);
+    isNew = !existing;
+    editing = existing ? structuredClone(existing) : { id: newId('account'), section: 'production' };
+    $('f-section').innerHTML = SECTIONS.map(s => `<option value="${s.id}">${esc(s.label)}</option>`).join('');
+    $('f-code').value = str(editing.code); $('f-name').value = str(editing.name); $('f-notes').value = str(editing.notes); $('f-section').value = editing.section;
+    $('editorTitle').textContent = isNew ? 'Add an account' : 'Edit account';
+    $('deleteBtn').hidden = isNew;
+    $('editor').showModal();
+    $('f-name').focus();
+  }
+  function saveEditor() {
+    if (!$('f-name').value.trim()) { $('f-name').setCustomValidity('Name the account.'); $('f-name').reportValidity(); return; }
+    const e = editing;
+    for (const [k, id] of [['code', 'f-code'], ['name', 'f-name'], ['notes', 'f-notes']]) { const v = $(id).value.trim(); if (v) e[k] = v; else delete e[k]; }
+    e.section = $('f-section').value;
+    if (isNew) B().accounts.push(e); else B().accounts[B().accounts.findIndex(x => x.id === e.id)] = e;
+    $('editor').close();
+    changed();
+  }
+  function removeEditing() {
+    const n = B().lines.filter(l => l.accountId === editing.id).length;
+    B().accounts = B().accounts.filter(a => a.id !== editing.id);
+    B().lines = B().lines.filter(l => l.accountId !== editing.id);
+    $('editor').close();
+    changed();
+    toast(`Removed ${editing.name || 'the account'}${n ? ` and its ${n} line${n === 1 ? '' : 's'}` : ''}.`);
+  }
+
+  // ---------- Fringes and percentages ----------
+  function rateRow(r, kind) {
+    return `<div class="rate-row" data-id="${esc(r.id)}"><input type="text" class="r-name" value="${esc(r.name)}" placeholder="${kind === 'fringe' ? 'Payroll taxes' : 'Contingency'}" aria-label="Name" autocomplete="off">
+      <input type="number" class="r-pct" step="any" min="0" max="100" value="${esc(r.percent ?? '')}" placeholder="%" aria-label="Percent">
+      <button type="button" class="icon-btn" data-delrate aria-label="Remove">×</button></div>`;
+  }
+  function openRates() {
+    $('fringeRows').innerHTML = B().fringes.map(f => rateRow(f, 'fringe')).join('');
+    $('markRows').innerHTML = B().markups.map(m => rateRow(m, 'markup')).join('');
+    $('f-currency').value = str(doc.project.currency || 'USD');
+    $('ratesDialog').showModal();
+  }
+  function readRates(box, prefix) {
+    return [...box.querySelectorAll('.rate-row')].map(r => ({ id: r.dataset.id || newId(prefix), name: r.querySelector('.r-name').value.trim(), percent: num(r.querySelector('.r-pct').value) }))
+      .filter(r => r.name || r.percent).map(r => (r.name ? r : { id: r.id, name: prefix === 'fringe' ? 'Fringe' : 'Percentage', percent: r.percent }));
+  }
+  function saveRates() {
+    const cur = $('f-currency').value.trim().toUpperCase();
+    if (cur && !/^[A-Z]{3}$/.test(cur)) { $('f-currency').setCustomValidity('Use a three-letter currency code, such as USD, CAD or EUR.'); $('f-currency').reportValidity(); return; }
+    const fr = readRates($('fringeRows'), 'fringe');
+    B().fringes = fr;
+    for (const l of B().lines) if (l.fringeId && !fr.some(f => f.id === l.fringeId)) delete l.fringeId;
+    B().markups = readRates($('markRows'), 'markup');
+    if (cur) doc.project.currency = cur;
+    $('ratesDialog').close();
+    changed();
+  }
+
+  // ---------- Versions ----------
+  function snapshot() {
+    const b = B();
+    return structuredClone({ accounts: b.accounts, lines: b.lines, fringes: b.fringes, markups: b.markups });
+  }
+  function saveVersion() {
+    const label = $('f-vlabel').value.trim();
+    if (!label) { $('f-vlabel').setCustomValidity('Name this version.'); $('f-vlabel').reportValidity(); return; }
+    B().versions.push(Object.assign({ id: newId('budget-version'), label, at: new Date().toISOString() }, snapshot()));
+    $('versionDialog').close();
+    changed();
+    toast(`Saved “${label}”.`);
+  }
+  function openCompare() {
+    const vs = [...B().versions].reverse();
+    if (!vs.length) return;
+    $('cmpSel').innerHTML = vs.map(v => `<option value="${esc(v.id)}">${esc(v.label || 'Unnamed version')}${v.at ? `, ${esc(fmtDate(v.at.slice(0, 10)))}` : ''}</option>`).join('');
+    renderCompare();
+    $('compareDialog').showModal();
+  }
+  // Account by account, matched by id; accounts only in one side show as added or removed.
+  function renderCompare() {
+    const v = B().versions.find(x => x.id === $('cmpSel').value);
+    if (!v) { $('cmpTable').innerHTML = ''; return; }
+    const then = budgetTotals(v), now = budgetTotals(B());
+    const ids = [...new Set([...now.accounts.map(a => a.account.id), ...then.accounts.map(a => a.account.id)])];
+    const diff = (a, b) => { const d = cents(b - a); return `<td class="${d > 0 ? 'up' : d < 0 ? 'down' : ''}">${d ? (d > 0 ? '+' : '−') + esc(money(Math.abs(d))) : ''}</td>`; };
+    const rows = ids.map(id => {
+      const a = then.accounts.find(x => x.account.id === id), b = now.accounts.find(x => x.account.id === id);
+      const acc = (b || a).account;
+      return `<tr><td>${acc.code ? `${esc(acc.code)} ` : ''}${esc(acc.name || 'Unnamed account')}${!a ? ' <em>(new)</em>' : !b ? ' <em>(removed)</em>' : ''}</td><td>${esc(money(a ? a.total : 0))}</td><td>${esc(money(b ? b.total : 0))}</td>${diff(a ? a.total : 0, b ? b.total : 0)}</tr>`;
+    });
+    const mk = [...new Set([...now.markups, ...then.markups].map(m => m.markup.name || 'Percentage'))].map(name => {
+      const a = then.markups.filter(m => (m.markup.name || 'Percentage') === name).reduce((t, m) => t + m.amount, 0);
+      const b = now.markups.filter(m => (m.markup.name || 'Percentage') === name).reduce((t, m) => t + m.amount, 0);
+      return `<tr><td>${esc(name)}</td><td>${esc(money(a))}</td><td>${esc(money(b))}</td>${diff(a, b)}</tr>`;
+    });
+    $('cmpTable').innerHTML = `<thead><tr><th>Account</th><th>${esc(v.label || 'Version')}</th><th>Now</th><th>Change</th></tr></thead><tbody>${rows.join('')}${mk.join('')}
+      <tr class="g"><td>Total</td><td>${esc(money(then.grand))}</td><td>${esc(money(now.grand))}</td>${diff(then.grand, now.grand)}</tr></tbody>`;
+  }
+  function deleteVersion() {
+    const v = B().versions.find(x => x.id === $('cmpSel').value);
+    B().versions = B().versions.filter(x => x !== v);
+    $('compareDialog').close();
+    changed();
+    toast(`Removed the version “${v ? v.label : ''}”.`);
+  }
+
+  // ---------- CSV and print ----------
+  const CSV_HEAD = ['Account number', 'Account', 'Section', 'Description', 'Quantity', 'Unit', 'Multiplier', 'Rate', 'Subtotal', 'Fringe', 'Fringe amount', 'Total'];
+  function exportCsv() {
+    const t = budgetTotals(B());
+    const fr = id => B().fringes.find(f => f.id === id);
+    const rows = [];
+    for (const a of t.accounts) for (const x of a.lines) {
+      const f = fr(x.line.fringeId);
+      rows.push([a.account.code, a.account.name, sectionLabel(a.account.section), x.line.description, x.line.quantity, x.line.unit, x.line.multiplier, x.line.rate, x.sub.toFixed(2),
+        f ? `${f.name} ${num(f.percent)}%` : '', x.fringe ? x.fringe.toFixed(2) : '', x.total.toFixed(2)]);
+    }
+    for (const m of t.markups) rows.push(['', m.markup.name, 'Percentage of the subtotal', `${num(m.markup.percent)}% of ${t.subtotal.toFixed(2)}`, '', '', '', '', m.amount.toFixed(2), '', '', m.amount.toFixed(2)]);
+    rows.push(['', 'Total', '', '', '', '', '', '', '', '', '', t.grand.toFixed(2)]);
+    const csv = '﻿' + [CSV_HEAD, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
+    const name = `${slug()}-budget.csv`;
+    download(csv, name, 'text/csv;charset=utf-8');
+    toast(`Exported ${t.lines.length} line${t.lines.length === 1 ? '' : 's'} to ${name}`);
+  }
+  function renderReport() {
+    const t = budgetTotals(B());
+    const fr = id => B().fringes.find(f => f.id === id);
+    const top = [];
+    for (const s of t.sections) {
+      if (!s.accounts.length) continue;
+      top.push(`<tr class="r-sec"><td colspan="2">${esc(s.section.label)}</td><td class="n">${esc(money(s.total))}</td></tr>`);
+      for (const a of s.accounts) top.push(`<tr><td>${esc(a.account.code || '')}</td><td>${esc(a.account.name || '')}</td><td class="n">${esc(money(a.total))}</td></tr>`);
+    }
+    top.push(`<tr class="r-tot"><td></td><td>Subtotal</td><td class="n">${esc(money(t.subtotal))}</td></tr>`);
+    for (const m of t.markups) top.push(`<tr><td></td><td>${esc(m.markup.name)} ${esc(num(m.markup.percent))}%</td><td class="n">${esc(money(m.amount))}</td></tr>`);
+    top.push(`<tr class="r-grand"><td></td><td>Total</td><td class="n">${esc(money(t.grand))}</td></tr>`);
+    const detail = t.accounts.filter(a => a.lines.length).map(a => `<h2>${esc(a.account.code ? a.account.code + ' ' : '')}${esc(a.account.name || '')}</h2>
+      <table><thead><tr><th>Description</th><th class="n">Qty</th><th>Unit</th><th class="n">×</th><th class="n">Rate</th><th class="n">Fringe</th><th class="n">Total</th></tr></thead><tbody>
+      ${a.lines.map(x => `<tr><td>${esc(x.line.description || '')}</td><td class="n">${esc(x.line.quantity ?? '')}</td><td>${esc(x.line.unit || '')}</td><td class="n">${esc(x.line.multiplier ?? '')}</td><td class="n">${esc(money(x.line.rate, true))}</td>
+        <td class="n">${x.fringe ? `${esc(money(x.fringe, true))}<span class="r-sub">${esc((fr(x.line.fringeId) || {}).name || '')}</span>` : ''}</td><td class="n">${esc(money(x.total, true))}</td></tr>`).join('')}
+      <tr class="r-tot"><td colspan="6">Total for ${esc(a.account.name || 'the account')}</td><td class="n">${esc(money(a.total, true))}</td></tr></tbody></table>`).join('');
+    $('report').innerHTML = `<h1>Budget</h1><p class="r-meta">${esc([doc.project.title, doc.project.company, `Printed ${fmtDate(today())}`].filter(Boolean).join(' · '))}</p>
+      <h2>Top sheet</h2><table class="r-top"><tbody>${top.join('')}</tbody></table>
+      <div class="r-detail">${detail}</div>`;
+  }
+
+  // ---------- Project CSV ----------
+  function csvCell(v) {
+    let s = v == null ? '' : String(v);
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+    return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }
+  const csvCollections = {
+    project: 'project details', people: 'people', locations: 'locations', thirdPartyElements: 'third-party elements',
+    contracts: 'contracts', assets: 'assets', musicCueSheet: 'music cue sheet details', callSheets: 'call sheets'
+  };
+  function exportProjectCsv() {
+    const collection = $('projectCsvCollection').value;
+    const value = doc[collection];
+    const rows = Array.isArray(value) ? value : value && typeof value === 'object' ? [value] : [];
+    if (rows.some(row => !row || typeof row !== 'object' || Array.isArray(row))) {
+      toast(`Couldn't export ${csvCollections[collection]}: the project contains an invalid record.`, true);
+      return;
+    }
+    const headers = [...new Set(rows.flatMap(row => Object.keys(row)))];
+    if (!headers.length) headers.push('id');
+    const csvRows = rows.map(row => headers.map(key => { const cell = row[key]; return cell && typeof cell === 'object' ? JSON.stringify(cell) : cell; }));
+    const csv = '﻿' + [headers, ...csvRows].map(row => row.map(csvCell).join(',')).join('\r\n') + '\r\n';
+    const name = suggestedName().replace(/\.oft\.json$/i, `-${collection}.csv`);
+    download(csv, name, 'text/csv;charset=utf-8');
+    toast(`Exported ${rows.length} ${csvCollections[collection]} to ${name}`);
+  }
+
+  // ---------- Film details ----------
+  function openProjectDialog() {
+    for (const k of PROJECT_TEXT) $(`p-${k}`).value = doc.project[k] || '';
+    $('projectDialog').showModal();
+    $('p-title').focus();
+  }
+  function saveProjectDialog() {
+    for (const k of PROJECT_TEXT) doc.project[k] = $(`p-${k}`).value.trim();
+    $('projectDialog').close();
+    changed();
+  }
+
+  // ---------- Dirty state & recovery draft ----------
+  function changed() { dirty = true; saveDraft(); render(); }
+  function saveDraft() {
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ doc, fileName, baselineText, at: new Date().toISOString() })); } catch { /* the file on disk is the real copy */ }
+  }
+  function clearDraft() {
+    try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+    $('recovery').hidden = true;
+  }
+  function checkDraft() {
+    let draft = null;
+    try { draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); } catch { draft = null; }
+    if (!draft || !draft.doc || draft.doc.format !== FORMAT) return;
+    const n = draft.doc.budget && Array.isArray(draft.doc.budget.lines) ? draft.doc.budget.lines.length : 0;
+    if (!n && !(draft.doc.project && draft.doc.project.title)) { clearDraft(); return; }
+    const when = draft.at ? new Date(draft.at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'earlier';
+    const title = draft.doc.project && draft.doc.project.title ? `"${draft.doc.project.title}"` : 'an untitled project';
+    $('recoveryText').textContent = `You have unsaved changes to ${title} from ${when} (${n} line${n === 1 ? '' : 's'}). Restore them, or discard them and start fresh.`;
+    $('recovery').hidden = false;
+    $('restoreBtn').onclick = () => {
+      doc = normalize(draft.doc); fileName = draft.fileName || null; fileHandle = null;
+      baselineText = typeof draft.baselineText === 'string' ? draft.baselineText : null; dirty = true;
+      $('recovery').hidden = true; render();
+      toast(fileName ? `Restored. Save to write the changes back to ${fileName}.` : 'Restored. Save to keep it as a file.');
+    };
+    $('discardBtn').onclick = () => { clearDraft(); toast('Discarded the unsaved changes.'); };
+  }
+
+  // ---------- Files ----------
+  const pickerTypes = [{ description: 'Film project file', accept: { 'application/json': ['.json'] } }];
+  function slug() {
+    return (doc.project.title || 'untitled-film').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'untitled-film';
+  }
+  const suggestedName = () => `${slug()}.oft.json`;
+  function serialize() {
+    doc.savedAt = new Date().toISOString();
+    doc.savedBy = TOOL;
+    return JSON.stringify(doc, null, 2) + '\n';
+  }
+  function download(text, name, type) {
+    const url = URL.createObjectURL(new Blob([text], { type }));
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  function afterSave(name, downloaded, content) {
+    fileName = name;
+    if (downloaded) fileHandle = null;
+    baselineText = content;
+    dirty = false; clearDraft(); render();
+    toast(downloaded ? `Downloaded ${name}. Keep it with your project files and open it here next time.` : `Saved to ${name}`);
+  }
+  async function writeProjectFile(handle, content) {
+    try {
+      const writable = await handle.createWritable();
+      await writable.write(content);
+      await writable.close();
+    } catch (err) {
+      if (err.name !== 'AbortError') toast(`Couldn't save the file: ${err.message}`, true);
+      return;
+    }
+    fileHandle = handle;
+    afterSave(handle.name, false, content);
+  }
+  function saveCopy(content) {
+    const base = (fileName || suggestedName()).replace(/\.oft\.json$/i, '');
+    const name = `${base}-copy.oft.json`;
+    download(content, name, 'application/json');
+    afterSave(name, true, content);
+  }
+  async function reloadLatest(handle) {
+    try {
+      const file = await handle.getFile();
+      loadText(await file.text(), handle.name, handle);
+    } catch (err) {
+      toast(`Couldn't reload the file: ${err.message}`, true);
+    }
+  }
+  function showConflictDialog(content, observedText, unknownBaseline = false) {
+    const handle = fileHandle;
+    dirty = true;
+    saveDraft();
+    render();
+    $('conflictText').textContent = unknownBaseline
+      ? `The tool can't verify whether ${handle.name} changed since your recovery copy was made. Your edits are not saved.`
+      : `${handle.name} changed after you opened it. Your edits are not saved. Overwriting replaces the newer file.`;
+    $('conflictDialog').showModal();
+    $('conflictReloadBtn').onclick = () => { $('conflictDialog').close(); reloadLatest(handle); };
+    $('conflictCopyBtn').onclick = () => { $('conflictDialog').close(); saveCopy(content); };
+    $('conflictOverwriteBtn').onclick = async () => {
+      $('conflictDialog').close();
+      let latestText;
+      try { latestText = await (await handle.getFile()).text(); }
+      catch (err) { toast(`Couldn't check the file before overwriting: ${err.message}`, true); return; }
+      if (latestText !== observedText) {
+        toast('The file changed again. Review the updated conflict warning before overwriting.', true);
+        showConflictDialog(content, latestText);
+        return;
+      }
+      await writeProjectFile(handle, content);
+    };
+    $('conflictCancelBtn').onclick = () => $('conflictDialog').close();
+  }
+  async function saveFile() {
+    const out = serialize();
+    if (fileHandle) {
+      let currentText;
+      try { currentText = await (await fileHandle.getFile()).text(); }
+      catch (err) { toast(`Couldn't check the file before saving: ${err.message}`, true); return; }
+      if (baselineText === null || currentText !== baselineText) { showConflictDialog(out, currentText, baselineText === null); return; }
+      await writeProjectFile(fileHandle, out);
+      return;
+    }
+    if (window.showSaveFilePicker && window.self === window.top) {
+      try {
+        const h = await window.showSaveFilePicker({ suggestedName: fileName || suggestedName(), types: pickerTypes });
+        if (h.name === fileName) {
+          const currentText = await (await h.getFile()).text();
+          if (baselineText === null || currentText !== baselineText) { fileHandle = h; showConflictDialog(out, currentText, baselineText === null); return; }
+        }
+        await writeProjectFile(h, out);
+      } catch (err) { if (err.name !== 'AbortError') toast(`Couldn't save the file: ${err.message}`, true); }
+      return;
+    }
+    const name = fileName || suggestedName();
+    download(out, name, 'application/json');
+    afterSave(name, true, out);
+  }
+  function loadText(text, name, handle) {
+    let data;
+    try { data = JSON.parse(text); } catch { toast(`Couldn't open ${name}: it isn't a project file.`, true); return; }
+    if (!data || data.format !== FORMAT) { toast(`Couldn't open ${name}: it isn't an Open Filmmaker Toolkit project file.`, true); return; }
+    if (Number(data.formatVersion) > FORMAT_VERSION) { toast(`Couldn't open ${name}: it was saved by a newer version of the toolkit. Get the latest version of this tool.`, true); return; }
+    doc = normalize(data); fileHandle = handle; baselineText = text; fileName = name; dirty = false;
+    clearDraft(); render();
+    const n = entries().length;
+    toast(`Opened ${name}: ${n ? `${n} line${n === 1 ? '' : 's'}` : 'no lines yet'}`);
+  }
+  async function openFile() {
+    if (dirty && !confirm('You have unsaved changes. Open another file and lose them?')) return;
+    if (window.showOpenFilePicker && window.self === window.top) {
+      try { const [h] = await window.showOpenFilePicker({ types: pickerTypes }); const f = await h.getFile(); loadText(await f.text(), f.name, h); }
+      catch (err) { if (err.name !== 'AbortError') toast(`Couldn't open the file: ${err.message}`, true); }
+      return;
+    }
+    $('fileInput').click();
+  }
+  function newProject() {
+    if (dirty && !confirm('You have unsaved changes. Start a new project and lose them?')) return;
+    doc = normalize(blankDoc()); fileHandle = null; baselineText = null; fileName = null; dirty = false;
+    clearDraft(); render(); openProjectDialog();
+  }
+
+  let toastTimer = null;
+  function toast(msg, isError) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.classList.toggle('error', !!isError);
+    t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.hidden = true; }, isError ? 7000 : 4200);
+  }
+
+  // ---------- Wiring ----------
+  function init() {
+    doc = normalize(doc);
+    $('newBtn').onclick = newProject;
+    $('openBtn').onclick = openFile;
+    $('saveBtn').onclick = saveFile;
+    $('editProjectBtn').onclick = openProjectDialog;
+    $('filmTitle').onclick = openProjectDialog;
+    $('printBtn').onclick = () => { renderReport(); window.print(); };
+    window.addEventListener('beforeprint', renderReport);
+    $('projectCsvBtn').onclick = () => $('projectCsvDialog').showModal();
+    $('projectCsvCancel').onclick = () => $('projectCsvDialog').close();
+    $('projectCsvForm').addEventListener('submit', ev => { ev.preventDefault(); exportProjectCsv(); $('projectCsvDialog').close(); });
+    $('fileInput').addEventListener('change', async () => {
+      const f = $('fileInput').files[0];
+      if (f) loadText(await f.text(), f.name, null);
+      $('fileInput').value = '';
+    });
+    $('projectForm').addEventListener('submit', ev => { ev.preventDefault(); saveProjectDialog(); });
+    $('projectCancel').onclick = () => $('projectDialog').close();
+    $('addBtn').onclick = () => openEditor(null);
+    $('emptyAddBtn').onclick = () => openEditor(null);
+    $('emptyOpenBtn').onclick = openFile;
+    $('templateBtn').onclick = startFromTemplate;
+    $('csvBtn').onclick = exportCsv;
+    $('sections').addEventListener('click', ev => {
+      const e = ev.target.closest('[data-edit]'); if (e) { openEditor(e.dataset.edit); return; }
+      const a = ev.target.closest('[data-addline]'); if (a) { addLine(a.dataset.addline); return; }
+      const d = ev.target.closest('[data-delline]'); if (d) removeLine(d.closest('[data-line]').dataset.line);
+    });
+    $('sections').addEventListener('input', ev => { if (ev.target.dataset.k) editLine(ev.target); });
+    $('sections').addEventListener('change', ev => { if (ev.target.dataset.k === 'fringeId') editLine(ev.target); });
+    $('editorForm').addEventListener('submit', ev => { ev.preventDefault(); saveEditor(); });
+    $('editorForm').addEventListener('input', ev => { if (ev.target.setCustomValidity) ev.target.setCustomValidity(''); });
+    $('editorCancel').onclick = () => $('editor').close();
+    $('deleteBtn').onclick = removeEditing;
+    $('ratesBtn').onclick = openRates;
+    $('addFringeBtn').onclick = () => { $('fringeRows').insertAdjacentHTML('beforeend', rateRow({}, 'fringe')); $('fringeRows').lastElementChild.querySelector('input').focus(); };
+    $('addMarkBtn').onclick = () => { $('markRows').insertAdjacentHTML('beforeend', rateRow({}, 'markup')); $('markRows').lastElementChild.querySelector('input').focus(); };
+    $('ratesForm').addEventListener('click', ev => { const b = ev.target.closest('[data-delrate]'); if (b) b.closest('.rate-row').remove(); });
+    $('ratesForm').addEventListener('input', ev => { if (ev.target.setCustomValidity) ev.target.setCustomValidity(''); });
+    $('ratesForm').addEventListener('submit', ev => { ev.preventDefault(); saveRates(); });
+    $('ratesCancel').onclick = () => $('ratesDialog').close();
+    $('versionBtn').onclick = () => { $('f-vlabel').value = ''; $('versionDialog').showModal(); $('f-vlabel').focus(); };
+    $('versionForm').addEventListener('submit', ev => { ev.preventDefault(); saveVersion(); });
+    $('f-vlabel').addEventListener('input', () => $('f-vlabel').setCustomValidity(''));
+    $('versionCancel').onclick = () => $('versionDialog').close();
+    $('compareBtn').onclick = openCompare;
+    $('cmpSel').addEventListener('change', renderCompare);
+    $('cmpDelete').onclick = deleteVersion;
+
+    document.addEventListener('keydown', ev => {
+      const mod = ev.metaKey || ev.ctrlKey;
+      if (mod && ev.key.toLowerCase() === 's') { ev.preventDefault(); saveFile(); }
+      else if (mod && ev.key.toLowerCase() === 'o') { ev.preventDefault(); openFile(); }
+    });
+    window.addEventListener('beforeunload', ev => { if (dirty) { ev.preventDefault(); ev.returnValue = ''; } });
+    render();
+    checkDraft();
+  }
+
+  if (typeof HTMLDialogElement !== 'function' || typeof HTMLDialogElement.prototype.showModal !== 'function' || typeof structuredClone !== 'function') {
+    $('cantRunTitle').textContent = 'This browser is too old to run this tool';
+    $('cantRunText').textContent = 'Update to a current version of Chrome, Edge, Firefox or Safari, then open this file again.';
+    $('cantRunHow').hidden = true;
+    return;
+  }
+  document.documentElement.classList.remove('no-js');
+  window.addEventListener('error', ev => toast(`Something went wrong: ${ev.message}. Save your work, then reload the page.`, true));
+  window.addEventListener('unhandledrejection', ev => toast(`Something went wrong: ${ev.reason && ev.reason.message ? ev.reason.message : ev.reason}. Save your work, then reload the page.`, true));
+  init();
+})();
+</script>
+</body>
+</html>
