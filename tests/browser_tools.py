@@ -1152,6 +1152,32 @@ def test_interview_prep(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
+def test_hub(browser, fake):
+    for scheme, vp in [('light', {'width': 1280, 'height': 900}), ('dark', PHONE)]:
+        ctx = browser.new_context(viewport=vp, color_scheme=scheme)
+        pg = ctx.new_page(); errs = []
+        pg.on('pageerror', lambda e: errs.append(str(e)))
+        pg.goto('file://%s/index.html' % root)
+        check(pg.locator('.tool').count() == len(TOOLS) and horizontal_overflow(pg) <= 1, 'home (%s): lists every tool and does not scroll sideways' % scheme)
+        for k, (fg, bg) in pg.evaluate(COLORS_JS).items():
+            check(contrast(fg, bg) >= 4.5, 'home (%s): %s text contrast %.1f:1' % (scheme, k, contrast(fg, bg)))
+        check(not errs, 'no page errors %s' % errs)
+        ctx.close()
+    ctx = browser.new_context(); pg = ctx.new_page(); errs = []
+    pg.on('pageerror', lambda e: errs.append(str(e)))
+    pg.goto('file://%s/index.html' % root)
+    pg.fill('#q', 'release')
+    visible = pg.locator('.tool:not([hidden]) h4').all_inner_texts()
+    check('Release tracker' in visible and 'Budget' not in visible and pg.is_visible('#prep') and not pg.is_visible('#develop'), 'search shows only the tools that match, and hides stages with none')
+    pg.fill('#q', 'zzzz nothing')
+    check(pg.is_visible('#noMatch') and pg.locator('.tool:not([hidden])').count() == 0, 'search with no match offers to request a tool')
+    pg.fill('#q', '')
+    check(pg.locator('.tool:not([hidden])').count() == len(TOOLS), 'clearing the search shows every tool again')
+    pg.click('.tool h4 a >> nth=0'); pg.wait_for_load_state('load')
+    check('/tools/subject-tracker/' in pg.url and pg.title().startswith('Subject tracker'), 'a tool opens from the home page')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
 def test_template_columns(browser, fake):
     for name, template in TEMPLATE_EXPORTS:
         ctx, pg, errs = new_page(browser, name, fake)
@@ -1217,6 +1243,8 @@ def main():
         test_shooting_calendar(browser, fake)
         print('== interview-prep / beats, questions and the guide')
         test_interview_prep(browser, fake)
+        print('== home page / tools, search and links')
+        test_hub(browser, fake)
         print('== templates / columns match the tools\' exports')
         test_template_columns(browser, fake)
         browser.close()

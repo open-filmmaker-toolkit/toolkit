@@ -4,6 +4,7 @@ Run locally with: python3 .github/scripts/validate_repo.py
 Needs the jsonschema package (pip install jsonschema).
 """
 import csv
+import html
 import io
 import json
 import re
@@ -265,7 +266,29 @@ for path in sorted(TEMPLATES.iterdir()) if TEMPLATES.is_dir() else []:
         except zipfile.BadZipFile:
             fail(f"{rel}: isn't a valid Word document")
 
+# The home page (index.html) lists every tool, in step with TOOLS.md, and follows the same offline rules.
+hub_path = ROOT / "index.html"
+if not hub_path.is_file():
+    fail("index.html: the home page is missing")
+else:
+    hub = hub_path.read_text(encoding="utf-8")
+    if EXTERNAL.search(hub):
+        fail("index.html: loads something from the network; the home page must work offline like the tools")
+    tools_md = (ROOT / "TOOLS.md").read_text(encoding="utf-8")
+    for slug in sorted(p.name for p in (ROOT / "tools").iterdir() if p.is_dir()):
+        if f'href="tools/{slug}/index.html"' not in hub:
+            fail(f"index.html: doesn't link to tools/{slug}/index.html")
+    for name, use in re.findall(r"^\| \[([^\]]+)\]\(tools/[^)]+\) \| (.+?) \| First version \|$", tools_md, re.M):
+        if html.escape(name) not in hub or html.escape(use) not in hub:
+            fail(f"index.html: the {name} card doesn't match its line in TOOLS.md")
+    for issue in re.findall(r"Planned, \[#(\d+)\]", tools_md):
+        if f"/issues/{issue}\"" not in hub:
+            fail(f"index.html: planned tool #{issue} from TOOLS.md is missing")
+    for href in re.findall(r'href="((?:tools|templates|samples|docs)/[^"#]*)"', hub):
+        if not (ROOT / href).exists():
+            fail(f"index.html: links to {href}, which doesn't exist")
+
 if errors:
     print("\n".join(errors))
     sys.exit(1)
-print("Schema, sample files, tool rules and templates all check out.")
+print("Schema, sample files, tool rules, templates and the home page all check out.")

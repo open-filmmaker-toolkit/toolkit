@@ -2,7 +2,7 @@
 
 Free, open-source software that filmmakers can use today, by production phase. These are other people's projects, not part of the toolkit. The tools we build are in [TOOLS.md](../TOOLS.md).
 
-This list will move to the toolkit's website when there is one. Until then, it lives here.
+It's linked from the toolkit's [home page](https://open-filmmaker-toolkit.github.io/toolkit/).
 
 Checked in October 2026. Every tool listed here:
 

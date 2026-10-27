@@ -35,6 +35,7 @@ These rules are what make the toolkit free, private and easy to maintain. Pull r
 - **Plain language.** Sentence case. Buttons say what they do ("Save file," not "Submit"). Errors say what went wrong and how to fix it.
 - **Usable by everyone.** Works with a keyboard, has visible focus and labels on every field, and works at phone width and in dark mode.
 - **Fictional sample data only.** Files in `samples/` must never contain real people, productions or contracts.
+- **List it on the home page.** A new tool gets a card in [`index.html`](index.html), with the same name and "Use it for" line as in [TOOLS.md](TOOLS.md), and a place in a workflow if it hands work to another tool. CI checks the two match.
 
 ### Before you open a pull request
 

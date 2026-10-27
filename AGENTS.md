@@ -8,6 +8,7 @@ Do this in the same pull request as the change, not later:
 
 - **Roadmap.** Check off the item in [ROADMAP.md](ROADMAP.md) when the work is done, and add a line for anything you built that isn't listed. Read the roadmap before starting so you don't build something that is already done.
 - **Issues.** Check the acceptance list of the issue you are working on against what is on `main`. Close an issue, with a comment saying what completes it, only when every item is met. Put `Closes #N` in the pull request description, once for each issue. `Closes #15 and #16` closes only the first.
+- **Home page.** A new or renamed tool needs its card in `index.html` to match its line in TOOLS.md; the validator checks this.
 - **READMEs.** Update the tool's `README.md`, including its "Not yet" list, and [schemas/README.md](schemas/README.md) if the project file changed.
 - **Stale items.** If you notice an open issue or an unchecked roadmap item that is already done, say so in your pull request or fix it. Don't assume the tracker is right.
 
