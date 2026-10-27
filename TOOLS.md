@@ -1,6 +1,6 @@
 # Tools
 
-The tools we build, by production phase. Each one is a single page that runs in your browser on the shared project file, with nothing to install and nothing sent anywhere. 16 are ready to use and 46 are planned.
+The tools we build, by production phase. Each one is a single page that runs in your browser on the shared project file, with nothing to install and nothing sent anywhere. 18 are ready to use and 44 are planned.
 
 - **Ready to use:** linked tools. Each has a README with what it does.
 - **Planned:** each has an issue. Comment there if you need the tool or want to help build it. Order of work is in [ROADMAP.md](ROADMAP.md).
@@ -26,14 +26,14 @@ Looking for other free, open-source software for filmmaking, such as editing, so
 | [Grant narrative library](tools/narrative-library/) | Keeping your application answers in every length funders ask for, with live counts, and noting which funder got which version | First version |
 | [Funder-format budget converter](tools/budget-converter/) | Turning your budget into the categories each funder asks for, flagging what doesn't map, and saving the mapping for next time | First version |
 | [Finance plan](tools/finance-plan/) | Showing how the film gets paid for, against the budget: the gap still to raise and when the money arrives | First version |
-| Funder CRM | Keep track of relationships with foundations, funders, investors and broadcasters: who you've talked to, what you asked for, and what's next. | Planned, [#50](https://github.com/open-filmmaker-toolkit/toolkit/issues/50) |
+| [Funder CRM](tools/funder-crm/) | Keeping track of funders, investors and broadcasters: the people you know there, every meeting, call and email, and the next step with each | First version |
 
 ## Pre-Production
 
 | Tool | Use it for | Status |
 | --- | --- | --- |
 | [Budget (top sheet and detail)](tools/budget/) | Building a documentary or indie budget with detail lines, fringes and contingency that roll up to a top sheet, with versions to compare | First version |
-| Cash flow | Plan when money goes out and comes in, week by week or month by month. | Planned, [#52](https://github.com/open-filmmaker-toolkit/toolkit/issues/52) |
+| [Cash flow](tools/cash-flow/) | Planning when money goes out and comes in, month by month or week by week, from the budget and the finance plan, and seeing where the balance runs short | First version |
 | Shooting calendar | Plan shoot days across weeks or months, for a production that shoots in bursts: who's needed, where, and what you're filming. | Planned, [#53](https://github.com/open-filmmaker-toolkit/toolkit/issues/53) |
 | Interview prep | Prepare for interviews: research notes, questions in order, and what each interview has to cover. | Planned, [#54](https://github.com/open-filmmaker-toolkit/toolkit/issues/54) |
 | Location scout sheet | Record what you learn on a scout: access, power, sound, light, parking, permits and photos. | Planned, [#55](https://github.com/open-filmmaker-toolkit/toolkit/issues/55) |

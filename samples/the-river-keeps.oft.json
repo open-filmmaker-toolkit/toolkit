@@ -2303,5 +2303,267 @@
         "status": "prospective"
       }
     ]
+  },
+  "funders": [
+    {
+      "id": "funder-riverbend",
+      "name": "Riverbend Documentary Fund",
+      "type": "foundation",
+      "stage": "talking",
+      "website": "https://example.org/riverbend-fund",
+      "notes": "Funds stories about rivers, water and climate. Met them at a regional documentary forum.",
+      "contacts": [
+        {
+          "id": "contact-riverbend-officer",
+          "name": "Dana Whitfield",
+          "title": "Program officer",
+          "email": "dana@example.org"
+        }
+      ],
+      "interactions": [
+        {
+          "id": "interaction-riverbend-1",
+          "date": "2026-08-14",
+          "kind": "call",
+          "contactId": "contact-riverbend-officer",
+          "note": "Intro call. They like the access to the diary and asked us to apply in the 2027 round."
+        },
+        {
+          "id": "interaction-riverbend-2",
+          "date": "2026-10-02",
+          "kind": "email",
+          "contactId": "contact-riverbend-officer",
+          "note": "Sent the trailer link and asked about the work sample length."
+        }
+      ],
+      "nextSteps": [
+        {
+          "id": "step-riverbend-1",
+          "due": "2026-11-15",
+          "text": "Ask whether a work-in-progress cut counts as the work sample"
+        }
+      ],
+      "grantIds": [
+        "grant-riverbend"
+      ]
+    },
+    {
+      "id": "funder-northlight",
+      "name": "Northern Light Media Foundation",
+      "type": "foundation",
+      "stage": "talking",
+      "contacts": [
+        {
+          "id": "contact-northlight-associate",
+          "name": "Marco Ellison",
+          "title": "Program associate, completion fund",
+          "email": "marco@example.org"
+        }
+      ],
+      "interactions": [
+        {
+          "id": "interaction-northlight-1",
+          "date": "2026-09-28",
+          "kind": "email",
+          "contactId": "contact-northlight-associate",
+          "note": "Submitted the completion fund application. He confirmed it arrived."
+        }
+      ],
+      "nextSteps": [
+        {
+          "id": "step-northlight-1",
+          "due": "2027-01-20",
+          "text": "Follow up if there’s no decision by the 15th"
+        }
+      ],
+      "grantIds": [
+        "grant-northlight"
+      ]
+    },
+    {
+      "id": "funder-heritage",
+      "name": "Riverside County Heritage Trust",
+      "type": "government",
+      "stage": "funding",
+      "interactions": [
+        {
+          "id": "interaction-heritage-1",
+          "date": "2026-04-02",
+          "kind": "email",
+          "note": "Award letter and first payment received."
+        }
+      ],
+      "nextSteps": [
+        {
+          "id": "step-heritage-1",
+          "due": "2026-04-15",
+          "text": "Send the signed grant agreement",
+          "done": true
+        },
+        {
+          "id": "step-heritage-2",
+          "due": "2027-03-01",
+          "text": "Send the interim report"
+        }
+      ],
+      "grantIds": [
+        "grant-county-heritage"
+      ]
+    },
+    {
+      "id": "funder-public-tv",
+      "name": "Regional public television",
+      "type": "broadcaster",
+      "stage": "talking",
+      "contacts": [
+        {
+          "id": "contact-public-tv-editor",
+          "name": "Priyanka Osei",
+          "title": "Commissioning editor"
+        }
+      ],
+      "interactions": [
+        {
+          "id": "interaction-public-tv-1",
+          "date": "2026-06-18",
+          "kind": "meeting",
+          "contactId": "contact-public-tv-editor",
+          "note": "Pitch session. Interested in a 56-minute version for broadcast."
+        }
+      ],
+      "nextSteps": [
+        {
+          "id": "step-public-tv-1",
+          "due": "2027-02-01",
+          "text": "Send the plan for the 56-minute cut"
+        }
+      ]
+    },
+    {
+      "id": "funder-eastgate",
+      "name": "Eastgate Film Initiative",
+      "type": "foundation",
+      "stage": "passed",
+      "notes": "Declined the development lab. Said to apply again with a cut.",
+      "grantIds": [
+        "grant-eastgate"
+      ]
+    }
+  ],
+  "cashFlow": {
+    "period": "month",
+    "openingBalance": 5000,
+    "accounts": {
+      "account-1000": {
+        "mode": "spread",
+        "from": "2026-01-01",
+        "to": "2026-04-30"
+      },
+      "account-1100": {
+        "mode": "spread",
+        "from": "2026-03-01",
+        "to": "2026-03-31"
+      },
+      "account-1200": {
+        "mode": "spread",
+        "from": "2026-06-01",
+        "to": "2027-09-30"
+      },
+      "account-1300": {
+        "mode": "spread",
+        "from": "2026-06-01",
+        "to": "2027-09-30"
+      },
+      "account-2000": {
+        "mode": "spread",
+        "from": "2026-06-01",
+        "to": "2026-12-31"
+      },
+      "account-2100": {
+        "mode": "spread",
+        "from": "2026-06-01",
+        "to": "2026-12-31"
+      },
+      "account-2200": {
+        "mode": "spread",
+        "from": "2026-06-01",
+        "to": "2026-12-31"
+      },
+      "account-2300": {
+        "mode": "spread",
+        "from": "2026-06-01",
+        "to": "2026-12-31"
+      },
+      "account-2400": {
+        "mode": "spread",
+        "from": "2026-06-01",
+        "to": "2026-12-31"
+      },
+      "account-3000": {
+        "mode": "spread",
+        "from": "2027-01-01",
+        "to": "2027-07-31"
+      },
+      "account-3100": {
+        "mode": "spread",
+        "from": "2027-05-01",
+        "to": "2027-09-30"
+      },
+      "account-3200": {
+        "mode": "spread",
+        "from": "2027-05-01",
+        "to": "2027-09-30"
+      },
+      "account-3300": {
+        "mode": "spread",
+        "from": "2027-05-01",
+        "to": "2027-09-30"
+      },
+      "account-3400": {
+        "mode": "spread",
+        "from": "2027-05-01",
+        "to": "2027-09-30"
+      },
+      "account-3500": {
+        "mode": "spread",
+        "from": "2027-05-01",
+        "to": "2027-09-30"
+      },
+      "account-3600": {
+        "mode": "spread",
+        "from": "2027-05-01",
+        "to": "2027-09-30"
+      },
+      "account-4000": {
+        "mode": "spread",
+        "from": "2026-06-01",
+        "to": "2027-12-31"
+      },
+      "account-4100": {
+        "mode": "spread",
+        "from": "2026-06-01",
+        "to": "2027-12-31"
+      },
+      "account-4200": {
+        "mode": "spread",
+        "from": "2027-10-01",
+        "to": "2027-12-31"
+      }
+    },
+    "lines": {
+      "line-3000-17": {
+        "mode": "in-kind"
+      },
+      "line-1300-4": {
+        "mode": "deferred"
+      }
+    },
+    "markups": {
+      "markup-insurance": {
+        "mode": "spread",
+        "from": "2026-06-01",
+        "to": "2026-06-30"
+      }
+    }
   }
 }

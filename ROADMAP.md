@@ -58,6 +58,8 @@ Everything else in [TOOLS.md](TOOLS.md), prioritized by what contributors ask fo
 - [x] Budget: detail lines by account with units, rates and fringes, contingency, insurance and fees as percentages, a top sheet that updates as you type, versions to compare, and print and CSV ([#51](https://github.com/open-filmmaker-toolkit/toolkit/issues/51))
 - [x] Funder-format budget converter: accounts and lines mapped to a funder's categories and saved for next time, unmapped lines and total differences flagged, common formats to start from, format files to reuse, and print and CSV ([#48](https://github.com/open-filmmaker-toolkit/toolkit/issues/48))
 - [x] Finance plan: sources with amount, status and terms, grants linked from the grant calendar, totals and the gap against the budget, payments by month, and a printed plan ([#49](https://github.com/open-filmmaker-toolkit/toolkit/issues/49))
+- [x] Funder CRM: organizations and the people there, a log of meetings, calls and emails, next steps with the overdue ones first, links to the grant calendar, and CSV ([#50](https://github.com/open-filmmaker-toolkit/toolkit/issues/50))
+- [x] Cash flow: budget accounts and lines spread across months or weeks, deferred and in-kind costs left out, income from the finance plan, the running balance with shortfalls flagged, and CSV ([#52](https://github.com/open-filmmaker-toolkit/toolkit/issues/52))
 - [x] Name supers list: names from the project, near-miss spellings flagged, changes since the last export to graphics, CSV export ([#71](https://github.com/open-filmmaker-toolkit/toolkit/issues/71))
 
 Finding a third maintainer is on hold. Basil and Alex maintain the project for now ([#8](https://github.com/open-filmmaker-toolkit/toolkit/issues/8), closed).

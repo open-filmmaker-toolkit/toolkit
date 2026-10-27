@@ -19,13 +19,13 @@ from playwright.sync_api import sync_playwright
 
 root = pathlib.Path(__file__).resolve().parents[1]
 sample = (root / 'samples/the-river-keeps.oft.json').read_text()
-TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan']
+TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan', 'funder-crm', 'cash-flow']
 COLLECTIONS = ['project', 'people', 'locations', 'thirdPartyElements', 'contracts', 'assets', 'musicCueSheet', 'callSheets']
 PRINT_BTN = {'clearance-log': '#printBtn', 'music-cue-sheet': '#printBtn', 'call-sheet': '#printAllBtn', 'release-tracker': '#printBtn',
-             'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn', 'treatment-builder': '#printBtn', 'pitch-deck': '#printBtn', 'grant-calendar': '#printBtn', 'narrative-library': '#printBtn', 'budget': '#printBtn', 'budget-converter': '#printBtn', 'finance-plan': '#printBtn'}
+             'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn', 'treatment-builder': '#printBtn', 'pitch-deck': '#printBtn', 'grant-calendar': '#printBtn', 'narrative-library': '#printBtn', 'budget': '#printBtn', 'budget-converter': '#printBtn', 'finance-plan': '#printBtn', 'funder-crm': '#printBtn', 'cash-flow': '#printBtn'}
 PHONE = {'width': 390, 'height': 844}
 # The button that opens each tool's main dialog, for the phone-width check. Most tools use #addBtn.
-DIALOG_BTN = {'treatment-builder': '[data-compare]'}
+DIALOG_BTN = {'treatment-builder': '[data-compare]', 'cash-flow': '#settingsBtn'}
 
 STUB_PRINT = 'window.print = () => { window.__printed = true; };'
 NO_PICKERS = 'delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker;'
@@ -385,7 +385,7 @@ def test_credits_builder(browser, fake):
     ctx.close()
 
 # Each spreadsheet template's columns must appear in its tool's CSV export, in the same order.
-TEMPLATE_EXPORTS = [('budget', 'budget-template.csv'), ('finance-plan', 'finance-plan-template.csv'), ('grant-calendar', 'grant-calendar-template.csv'), ('clearance-log', 'clearance-log-template.csv'), ('release-tracker', 'release-log-template.csv'),
+TEMPLATE_EXPORTS = [('funder-crm', 'funder-crm-template.csv'), ('cash-flow', 'cash-flow-template.csv'), ('budget', 'budget-template.csv'), ('finance-plan', 'finance-plan-template.csv'), ('grant-calendar', 'grant-calendar-template.csv'), ('clearance-log', 'clearance-log-template.csv'), ('release-tracker', 'release-log-template.csv'),
                     ('music-cue-sheet', 'music-cue-sheet-template.csv'), ('name-supers', 'name-supers-template.csv'),
                     ('subject-tracker', 'subject-tracker-template.csv'), ('research-log', 'research-log-template.csv'),
                     ('comps-tracker', 'comps-tracker-template.csv')]
@@ -960,6 +960,103 @@ def test_finance_plan(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
+def test_funder_crm(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'funder-crm', fake)
+    open_sample(pg, fake)
+    names = [t.split('\n')[0] for t in pg.locator('#rows .row .nm').all_inner_texts()]
+    check(names == ['Riverbend Documentary Fund', 'Northern Light Media Foundation', 'Regional public television', 'Riverside County Heritage Trust', 'Eastgate Film Initiative'],
+          'organizations with the soonest next step come first, passed ones last %s' % names)
+    check('Local history grant: awarded' in pg.inner_text('[data-id="funder-heritage"]') and 'Last contact Oct 2, 2026' in pg.inner_text('[data-id="funder-riverbend"]'), 'rows show linked applications and the last contact')
+    pg.click('[data-filter="talking"]')
+    check(pg.locator('#rows .row').count() == 3, 'filters by stage')
+    pg.click('[data-filter="all"]')
+    pg.fill('#search', 'whitfield')
+    check(pg.locator('#rows .row').count() == 1, 'searches the people at each organization')
+    pg.fill('#search', '')
+    pg.click('[data-done="funder-riverbend|step-riverbend-1"]'); pg.wait_for_timeout(200)
+    names = [t.split('\n')[0] for t in pg.locator('#rows .row .nm').all_inner_texts()]
+    check(pg.locator('#steps input').count() == 3 and names[3] == 'Riverbend Documentary Fund', 'ticking a next step marks it done')
+
+    pg.click('[data-edit="funder-riverbend"]')
+    pg.click('#addContactBtn'); row = pg.locator('#cRows .c-row').last
+    row.locator('.c-name').fill('Lee Moreno'); row.locator('.c-title').fill('Director of programs'); row.locator('.c-name').dispatch_event('change')
+    pg.click('#addStepBtn'); step = pg.locator('#nRows .n-row').last
+    step.locator('.n-due').fill('2026-12-01'); step.locator('.n-text').fill('Send the work sample')
+    pg.fill('#logDate', '2026-10-27'); pg.select_option('#logKind', 'call')
+    pg.select_option('#logWho', label='Lee Moreno')
+    pg.fill('#logNote', 'Lee asked for a 10-minute work sample.')
+    pg.click('#logAddBtn')
+    check('Lee asked for a 10-minute work sample.' in pg.inner_text('#log') and 'With Lee Moreno' in pg.inner_text('#log'), 'logs a call with one of the people')
+    pg.check('#apps input[value="grant-prairie-arts"]')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    rb = pg.inner_text('[data-id="funder-riverbend"]')
+    check('Next: Send the work sample, due Dec 1, 2026' in rb and 'Last contact Oct 27, 2026' in rb and 'Media artist grant: researching' in rb, 'saves people, next steps, the log and linked applications')
+
+    check(not pg.is_visible('#fromGrantsBtn'), 'a funder whose application is already linked is not offered from the grant calendar')
+
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    rbrow = next(r for r in rows if r[0] == 'Riverbend Documentary Fund')
+    check(rows[0][0] == 'Organization' and 'Dana Whitfield, Program officer, dana@example.org' in rbrow[3] and rbrow[5] == 'Send the work sample', 'CSV lists organizations with people and the next step')
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    check('Riverbend Documentary Fund' in pg.inner_text('#report') and 'Lee Moreno' in pg.inner_text('#report'), 'prints the list')
+    data = saved_project(pg, fake)
+    f = next(x for x in data['funders'] if x['id'] == 'funder-riverbend')
+    lee = next(c for c in f['contacts'] if c['name'] == 'Lee Moreno')
+    check(len(f['interactions']) == 3 and f['interactions'][-1]['contactId'] == lee['id'] and f['nextSteps'][0]['done'] is True and f['grantIds'] == ['grant-riverbend', 'grant-prairie-arts'], 'the organization is saved')
+    check(data['grants'] == original['grants'] and data['financePlan'] == original['financePlan'], "other tools' data is unchanged")
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+    ctx, pg, errs = new_page(browser, 'funder-crm', fake)
+    open_sample(pg, fake)
+    pg.click('#fromGrantsBtn')
+    pg.click('#grantsForm button[type=submit]'); pg.wait_for_timeout(200)
+    check('Prairie State Arts Board' in pg.inner_text('#rows') and 'Media artist grant: researching' in pg.inner_text('#rows'), 'adds a funder from the grant calendar, linked to its application')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+def test_cash_flow(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'cash-flow', fake)
+    open_sample(pg, fake)
+    sums = pg.inner_text('#sums')
+    check(pg.inner_text('#count') == '24 months · 19 short' and 'First short: Mar 2026' in sums and '$132,500' in sums, 'spreads costs and income across the months and flags shortfalls')
+    check(pg.locator('#flow tr.short').count() == 19 and '1 cost not scheduled' in pg.inner_text('#unsched') and '$67,200' in pg.inner_text('#unsched'), 'lists what is not scheduled, deferred or in-kind')
+    pg.click('#settingsBtn'); pg.uncheck('#s-pending'); pg.click('#settingsSubmit'); pg.wait_for_timeout(200)
+    check('$67,500' in pg.inner_text('#sums') and 'Counting confirmed money' in pg.inner_text('#sums'), 'pending money can be left out')
+    pg.click('#settingsBtn'); pg.check('#s-pending'); pg.check('#s-prospective'); pg.fill('#s-opening', '20000'); pg.click('#settingsSubmit'); pg.wait_for_timeout(200)
+    sums = pg.inner_text('#sums')
+    check('$167,500' in sums and '$20,000' in sums and 'Donations through the fiscal sponsor, no payment date' in pg.inner_text('#unsched'), 'prospective money can be counted; money with no date is listed')
+
+    pg.click('#goSched')
+    check(pg.is_visible('#schedView'), 'goes to the schedule from the list of unscheduled costs')
+    pg.select_option('.mode[data-kind="markups"][data-id="markup-contingency"]', 'spread'); pg.wait_for_timeout(100)
+    pg.fill('input[data-kind="markups"][data-id="markup-contingency"][data-k="from"]', '2027-01-01'); pg.locator('input[data-kind="markups"][data-id="markup-contingency"][data-k="from"]').dispatch_event('change'); pg.wait_for_timeout(100)
+    pg.fill('input[data-kind="markups"][data-id="markup-contingency"][data-k="to"]', '2027-12-31'); pg.locator('input[data-kind="markups"][data-id="markup-contingency"][data-k="to"]').dispatch_event('change'); pg.wait_for_timeout(100)
+    check('cost not scheduled' not in pg.inner_text('#unsched'), 'schedules a percentage')
+    pg.select_option('.mode[data-kind="lines"][data-id="line-1300-4"]', 'same'); pg.wait_for_timeout(100)
+    check('Deferred' not in pg.inner_text('#unsched'), 'a line can go back to its account schedule')
+    pg.click('#settingsBtn'); pg.select_option('#s-period', 'week'); pg.click('#settingsSubmit'); pg.wait_for_timeout(200)
+    check('weeks' in pg.inner_text('#count'), 'shows weeks')
+    pg.click('#flowViewBtn')
+    check('Week of' in pg.inner_text('#flow'), 'the table shows weeks')
+
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    check(rows[0] == ['Period', 'Starts', 'Out', 'In', 'Net', 'Balance', 'Short'] and rows[1][5] == '20000.00' and len(rows) > 90, 'CSV has a row for each week with the balance')
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    check('Cash flow' in pg.inner_text('#report') and 'Week of' in pg.inner_text('#report'), 'prints the table')
+    data = saved_project(pg, fake)
+    cf = data['cashFlow']
+    check(cf['period'] == 'week' and cf['openingBalance'] == 20000 and cf['includeProspective'] is True and 'includePending' not in cf and
+          cf['markups']['markup-contingency'] == {'mode': 'spread', 'from': '2027-01-01', 'to': '2027-12-31'} and 'line-1300-4' not in cf['lines'], 'the schedule is saved')
+    check(data['budget'] == original['budget'] and data['financePlan'] == original['financePlan'], "the budget and finance plan are unchanged")
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
 def test_template_columns(browser, fake):
     for name, template in TEMPLATE_EXPORTS:
         ctx, pg, errs = new_page(browser, name, fake)
@@ -1017,6 +1114,10 @@ def main():
         test_budget_converter(browser, fake)
         print('== finance-plan / sources, grants, gap and timing')
         test_finance_plan(browser, fake)
+        print('== funder-crm / steps, log, people and links')
+        test_funder_crm(browser, fake)
+        print('== cash-flow / schedule, income, balance and shortfalls')
+        test_cash_flow(browser, fake)
         print('== templates / columns match the tools\' exports')
         test_template_columns(browser, fake)
         browser.close()

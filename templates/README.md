@@ -13,6 +13,8 @@ Part of the [Open Filmmaker Toolkit](../README.md).
 | Grant calendar | [grant-calendar-template.csv](grant-calendar-template.csv) | | [Grant calendar](../tools/grant-calendar/) |
 | Budget | [budget-template.csv](budget-template.csv) | | [Budget](../tools/budget/) |
 | Finance plan | [finance-plan-template.csv](finance-plan-template.csv) | | [Finance plan](../tools/finance-plan/) |
+| Funder CRM | [funder-crm-template.csv](funder-crm-template.csv) | | [Funder CRM](../tools/funder-crm/) |
+| Cash flow | [cash-flow-template.csv](cash-flow-template.csv) | | [Cash flow](../tools/cash-flow/) |
 | Grant narrative library | | [grant-narrative-library-template.docx](grant-narrative-library-template.docx) | [Grant narrative library](../tools/narrative-library/) |
 | Pitch deck | | [pitch-deck-template.docx](pitch-deck-template.docx) | [Pitch deck builder](../tools/pitch-deck/) |
 | Call sheet | [call-sheet-template.csv](call-sheet-template.csv) | | [Call sheet](../tools/call-sheet/) |
@@ -31,6 +33,8 @@ Part of the [Open Filmmaker Toolkit](../README.md).
 - **Grant calendar.** One row for each grant or fund: funder, program, deadline, status, amounts, eligibility, what the application needs, and the dates you submitted and expect a decision.
 - **Budget.** One row for each budget line: account, section, description, quantity, unit, multiplier, rate, fringe and total.
 - **Finance plan.** One row for each source of money: kind, status, amount, terms and when the payments arrive.
+- **Funder CRM.** One row for each funder, investor or broadcaster: kind, stage, the people there, the last contact, the next step and when it's due, and applications.
+- **Cash flow.** One row for each month or week: money out, money in, the net and the running balance, and whether it's short.
 - **Grant narrative library.** The answers applications usually ask for, from logline to bios, each in typical lengths with a place to note the count, and a table of which funder got which version.
 - **Pitch deck.** An outline with one heading per slide, from title and logline to contact, each with a note on what goes on it and a line for its images.
 - **Clearance log.** One row for each piece of third-party material: what it is, where it's used, who holds the rights, what you need, status and cost. The document adds a box for the film's details and a key to the types and statuses.
@@ -43,7 +47,7 @@ Part of the [Open Filmmaker Toolkit](../README.md).
 
 - **Spreadsheets** (`.csv`) open in Excel, Numbers, Google Sheets (**File > Import**) and LibreOffice. Save a copy as `.xlsx` from there if you need that format.
 - **Documents** (`.docx`) open in Word, Google Docs, Pages and LibreOffice. They're US Letter; switch to A4 in your page setup if you need to. To add a row to a table, put the cursor in the last cell and press Tab. To fill them in by hand, print them; the logs repeat their column headings on every page.
-- **Same columns as the tools.** The subject tracker, research and archival log, comps tracker, grant calendar, budget, finance plan, clearance log, release log, music cue sheet and name supers spreadsheets have the same columns, in the same order, as each tool's CSV export, and the call sheet matches the call sheet's spreadsheet export. Some exports add columns the tool works out for you, such as a cue's duration in seconds or what's still missing.
+- **Same columns as the tools.** The subject tracker, research and archival log, comps tracker, grant calendar, budget, finance plan, funder CRM, cash flow, clearance log, release log, music cue sheet and name supers spreadsheets have the same columns, in the same order, as each tool's CSV export, and the call sheet matches the call sheet's spreadsheet export. Some exports add columns the tool works out for you, such as a cue's duration in seconds or what's still missing.
 
 These templates are working records, not legal advice, and you use them at your own risk: see [Not legal advice](../README.md#not-legal-advice). Check what your distributor, broadcaster and E&O insurer need. Blank release forms aren't here yet.
 
