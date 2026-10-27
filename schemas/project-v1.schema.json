@@ -77,6 +77,13 @@
         "$ref": "#/$defs/source"
       },
       "description": "Research sources and archival leads, kept by the research and archival log."
+    },
+    "comps": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/comp"
+      },
+      "description": "Comparable films for pitches and sales, kept by the comps tracker."
     }
   },
   "additionalProperties": true,
@@ -875,6 +882,94 @@
         "elementId": {
           "$ref": "#/$defs/id",
           "description": "The third-party element this source became in the clearance log."
+        }
+      },
+      "additionalProperties": true
+    },
+    "comp": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "title": {
+          "type": "string"
+        },
+        "year": {
+          "type": "integer",
+          "minimum": 1890
+        },
+        "runtime": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Running time in minutes."
+        },
+        "director": {
+          "type": "string"
+        },
+        "premiere": {
+          "type": "string"
+        },
+        "distributor": {
+          "type": "string"
+        },
+        "platforms": {
+          "type": "string",
+          "description": "Where it played."
+        },
+        "figures": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "amount": {
+                "type": "string"
+              },
+              "source": {
+                "type": "string",
+                "description": "Where the figure was reported."
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "subjectTags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "styleTags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "audienceTags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "why": {
+          "type": "string",
+          "description": "Why it's comparable, for the pitch."
+        },
+        "notes": {
+          "type": "string"
+        },
+        "inPitch": {
+          "type": "boolean",
+          "description": "On the printed comps page."
         }
       },
       "additionalProperties": true
