@@ -14,9 +14,11 @@ Each milestone below is a [GitHub milestone](https://github.com/open-filmmaker-t
 
 ## Milestone 1: The directory (public launch)
 
-- [x] Verify every tool in [TOOLS.md](TOOLS.md): license, platforms, last release, still maintained ([#9](https://github.com/open-filmmaker-toolkit/toolkit/issues/9))
+- [x] Verify every tool in the [directory](docs/other-tools.md): license, platforms, last release, still maintained ([#9](https://github.com/open-filmmaker-toolkit/toolkit/issues/9))
 - [x] Add a one-line "use it for" note to each entry ([#10](https://github.com/open-filmmaker-toolkit/toolkit/issues/10))
 - [x] Remove anything unmaintained or not actually open source ([#11](https://github.com/open-filmmaker-toolkit/toolkit/issues/11))
+- [x] Move the directory of other people's tools to [its own page](docs/other-tools.md), so [TOOLS.md](TOOLS.md) lists only the tools we build
+- [ ] A website (GitHub Pages) that shows our tools and the directory of other tools
 - [ ] Make the repo public ([#12](https://github.com/open-filmmaker-toolkit/toolkit/issues/12))
 
 ## Milestone 2: The shared project file
@@ -44,7 +46,7 @@ Three tools on one data model. This is the documentary-specific gap.
 
 ## Backlog
 
-Everything else in the "Built here" section of [TOOLS.md](TOOLS.md), prioritized by what contributors ask for. Each planned tool has its own issue in the [Backlog milestone](https://github.com/open-filmmaker-toolkit/toolkit/milestone/6).
+Everything else in [TOOLS.md](TOOLS.md), prioritized by what contributors ask for. Each planned tool has its own issue in the [Backlog milestone](https://github.com/open-filmmaker-toolkit/toolkit/milestone/6).
 
 - [x] Subject tracker: possible subjects, access status, follow-ups and a contact log, added to the project when they agree ([#41](https://github.com/open-filmmaker-toolkit/toolkit/issues/41))
 - [x] Research and archival log: archival leads tracked to ready to license and sent to the clearance log, plus research sources ([#42](https://github.com/open-filmmaker-toolkit/toolkit/issues/42))
