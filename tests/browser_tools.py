@@ -11,7 +11,7 @@ Checks, per tool: opening the sample, saving, all CSV exports, phone width, dark
 mode and print layout. Chromium also covers the save-conflict warning (it has the
 file picker API; its handles are faked in memory) and renders a real PDF.
 chromium-fallback, Firefox and WebKit (Safari's engine) use the download/upload fallback instead.
-The call sheet, release tracker, credits builder, name supers list, subject tracker, research and archival log and comps tracker also get end-to-end checks
+The call sheet, release tracker, credits builder, name supers list, subject tracker, research and archival log, comps tracker and treatment builder also get end-to-end checks
 of their own, and the spreadsheet templates are checked against the tools' exports.
 """
 import csv, io, json, os, pathlib, sys
@@ -19,11 +19,13 @@ from playwright.sync_api import sync_playwright
 
 root = pathlib.Path(__file__).resolve().parents[1]
 sample = (root / 'samples/the-river-keeps.oft.json').read_text()
-TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker']
+TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder']
 COLLECTIONS = ['project', 'people', 'locations', 'thirdPartyElements', 'contracts', 'assets', 'musicCueSheet', 'callSheets']
 PRINT_BTN = {'clearance-log': '#printBtn', 'music-cue-sheet': '#printBtn', 'call-sheet': '#printAllBtn', 'release-tracker': '#printBtn',
-             'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn'}
+             'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn', 'treatment-builder': '#printBtn'}
 PHONE = {'width': 390, 'height': 844}
+# The button that opens each tool's main dialog, for the phone-width check. Most tools use #addBtn.
+DIALOG_BTN = {'treatment-builder': '[data-compare]'}
 
 STUB_PRINT = 'window.print = () => { window.__printed = true; };'
 NO_PICKERS = 'delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker;'
@@ -140,7 +142,7 @@ def test_phone(browser, name, fake):
     for sel in ['#saveBtn', '#openBtn']:
         box = pg.locator(sel).bounding_box()
         check(box is not None and box['x'] >= 0 and box['x'] + box['width'] <= PHONE['width'] + 1, 'phone: %s fits on screen' % sel)
-    pg.click('#addBtn'); pg.wait_for_timeout(300)
+    pg.locator(DIALOG_BTN.get(name, '#addBtn')).first.click(); pg.wait_for_timeout(300)
     box = pg.locator('dialog[open]').first.bounding_box()
     check(box is not None and box['x'] >= 0 and box['x'] + box['width'] <= PHONE['width'] + 1, 'phone: editor fits on screen')
     check(horizontal_overflow(pg) <= 1, 'phone: editor does not scroll the page sideways')
@@ -567,6 +569,56 @@ def test_comps_tracker(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
+def test_treatment_builder(browser, fake):
+    ctx, pg, errs = new_page(browser, 'treatment-builder', fake)
+    open_sample(pg, fake)
+    check(pg.input_value('#t-logline').startswith('When the river') and '25 / 50' in pg.inner_text('#outline'), 'opens the treatment with word counts')
+    pg.fill('#t-logline', ' '.join(['word'] * 55)); pg.wait_for_timeout(100)
+    check('5 over' in pg.inner_text('#wc-logline') and 'over' in pg.get_attribute('#wc-logline', 'class'), 'flags a section over its target')
+    pg.fill('[data-target="logline"]', '60'); pg.wait_for_timeout(100)
+    check('55 of 60 words' in pg.inner_text('#wc-logline'), 'targets can be changed')
+
+    pg.click('[data-insert="team"]'); pg.wait_for_timeout(100)
+    team = pg.input_value('#t-team')
+    check('Director: Lena Ward' in team and 'Ruth Hammond' not in team, 'adds the crew, not the subjects, to the team section')
+    pg.click('[data-insert="subjects"]'); pg.wait_for_timeout(100)
+    subj = pg.input_value('#t-subjects')
+    check('Daniel Okafor' in subj and 'Marcus Bell' in subj and 'Doris Kemp' in subj and subj.count('Ruth Hammond') == 1, 'adds missing subjects from the project and subject tracker, without repeats')
+
+    pg.click('[data-compare="version-grant-draft"]'); pg.wait_for_timeout(200)
+    body = pg.inner_html('#compareBody')
+    check('<del>' in body and '<ins>' in body and 'Empty in both.' in pg.inner_text('#compareBody'), 'compares the current text with a saved version')
+    pg.click('#compareClose')
+    pg.fill('#versionLabel', 'Before the edit'); pg.click('#saveVersionBtn'); pg.wait_for_timeout(100)
+    pg.fill('#t-access', 'Changed access text.'); pg.wait_for_timeout(100)
+    pg.click('[data-compare]')
+    check('Changes since "Before the edit"' in pg.inner_text('#compareTitle') and '1 section changed' in pg.inner_text('#compareLead'), 'a new version compares against later edits')
+    pg.once('dialog', lambda d: d.accept())
+    pg.click('#restoreVersionBtn'); pg.wait_for_timeout(200)
+    check(pg.input_value('#t-access').startswith('Ruth has agreed'), 'goes back to a saved version')
+
+    with pg.expect_download() as d:
+        pg.click('#mdBtn')
+    md = open(d.value.path(), encoding='utf-8').read()
+    check(md.startswith('# The River Keeps') and '## Team' in md and '## Long synopsis' not in md, 'Markdown export has filled sections only')
+    with pg.expect_download() as d:
+        pg.click('#txtBtn')
+    check('ACCESS\n\nRuth has agreed' in open(d.value.path(), encoding='utf-8').read(), 'plain text export')
+
+    if fake:
+        pg.click('#saveBtn'); pg.wait_for_timeout(300)
+        data = json.loads(pg.evaluate('window.__file.text'))
+    else:
+        with pg.expect_download() as d:
+            pg.click('#saveBtn')
+        data = json.loads(open(d.value.path(), encoding='utf-8').read())
+    t = data['treatment']
+    check(t['targets'] == {'shortSynopsis': 100, 'logline': 60} and len(t['versions']) == 2 and 'Lena Ward' in t['sections']['team'], 'sections, targets and versions are saved')
+    original = json.loads(sample)
+    check(data['people'] == original['people'] and data.get('subjects') == original['subjects'] and data.get('credits') == original['credits'], "other tools' data is unchanged")
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
 def test_template_columns(browser, fake):
     for name, template in TEMPLATE_EXPORTS:
         ctx, pg, errs = new_page(browser, name, fake)
@@ -610,6 +662,8 @@ def main():
         test_research_log(browser, fake)
         print('== comps-tracker / sources, tags and the comps page')
         test_comps_tracker(browser, fake)
+        print('== treatment-builder / counts, project lines and versions')
+        test_treatment_builder(browser, fake)
         print('== templates / columns match the tools\' exports')
         test_template_columns(browser, fake)
         browser.close()

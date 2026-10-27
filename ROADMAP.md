@@ -49,6 +49,7 @@ Everything else in the "Built here" section of [TOOLS.md](TOOLS.md), prioritized
 - [x] Subject tracker: possible subjects, access status, follow-ups and a contact log, added to the project when they agree ([#41](https://github.com/open-filmmaker-toolkit/toolkit/issues/41))
 - [x] Research and archival log: archival leads tracked to ready to license and sent to the clearance log, plus research sources ([#42](https://github.com/open-filmmaker-toolkit/toolkit/issues/42))
 - [x] Comps tracker: comparable films with a source for every figure, tags, and a printed comps page ([#43](https://github.com/open-filmmaker-toolkit/toolkit/issues/43))
+- [x] Treatment builder: sections with word targets, subjects and team from the project, saved versions to compare, and print, Markdown and text export ([#44](https://github.com/open-filmmaker-toolkit/toolkit/issues/44))
 - [x] Name supers list: names from the project, near-miss spellings flagged, changes since the last export to graphics, CSV export ([#71](https://github.com/open-filmmaker-toolkit/toolkit/issues/71))
 
 Finding a third maintainer is on hold. Basil and Alex maintain the project for now ([#8](https://github.com/open-filmmaker-toolkit/toolkit/issues/8), closed).

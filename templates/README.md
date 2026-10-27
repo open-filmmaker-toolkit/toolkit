@@ -9,6 +9,7 @@ Part of the [Open Filmmaker Toolkit](../README.md).
 | Subject tracker | [subject-tracker-template.csv](subject-tracker-template.csv) | | [Subject tracker](../tools/subject-tracker/) |
 | Research and archival log | [research-log-template.csv](research-log-template.csv) | | [Research and archival log](../tools/research-log/) |
 | Comps tracker | [comps-tracker-template.csv](comps-tracker-template.csv) | | [Comps tracker](../tools/comps-tracker/) |
+| Treatment | | [treatment-template.docx](treatment-template.docx) | [Treatment builder](../tools/treatment-builder/) |
 | Call sheet | [call-sheet-template.csv](call-sheet-template.csv) | | [Call sheet](../tools/call-sheet/) |
 | Clearance log | [clearance-log-template.csv](clearance-log-template.csv) | [clearance-log-template.docx](clearance-log-template.docx) | [Clearance log](../tools/clearance-log/) |
 | Release log | [release-log-template.csv](release-log-template.csv) | [release-log-template.docx](release-log-template.docx) | [Release tracker](../tools/release-tracker/) |
@@ -21,6 +22,7 @@ Part of the [Open Filmmaker Toolkit](../README.md).
 - **Subject tracker.** One row for each possible subject: who they are, how you found them, contact details, access status and the next follow-up.
 - **Research and archival log.** One row for each archival lead or research source: what it is, where it's from, rights holder, contact, estimated cost, status and notes.
 - **Comps tracker.** One row for each comparable film: year, running time, premiere, distributor, where it played, figures with their sources, tags and why it's comparable.
+- **Treatment.** The sections of a treatment, from logline to team, each with a note on what goes in it and a typical word target.
 - **Clearance log.** One row for each piece of third-party material: what it is, where it's used, who holds the rights, what you need, status and cost. The document adds a box for the film's details and a key to the types and statuses.
 - **Release log.** One row for each release: what kind, who or what it covers, when it was signed and where the signed copy is. The document adds a list of everyone on camera and every place you film, so you can see who still needs a release. It's a log, not a release form.
 - **Music cue sheet.** One row for each cue, in the order it plays, with timings, usage and the composers, authors and publishers with their society and share. The document adds the production details distributors ask for and a key to the usage and role codes.

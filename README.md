@@ -68,6 +68,7 @@ The toolkit has two halves:
 | [Subject tracker](tools/subject-tracker/) | Keeping track of the people you might film, where access stands and when to follow up, then adding them to your project | First version |
 | [Research and archival log](tools/research-log/) | Logging archival leads and research sources as you find them, and sending leads to the clearance log when they're ready | First version |
 | [Comps tracker](tools/comps-tracker/) | Tracking comparable films for pitches and sales, with a source for every figure, and printing a comps page | First version |
+| [Treatment builder](tools/treatment-builder/) | Writing a treatment section by section, with word counts against your targets and versions you can compare | First version |
 | [Clearance log](tools/clearance-log/) | Tracking every piece of third-party material until it's cleared, then printing a report for your E&O attorney | First version |
 | [Music cue sheet](tools/music-cue-sheet/) | Building the music cue sheet your distributor or broadcaster needs, from the music already in your clearance log | First version |
 | [Call sheet](tools/call-sheet/) | Building shoot-day call sheets from the people and locations in your project; weather lookup is optional and off until you click it | First version |
@@ -102,6 +103,7 @@ toolkit/
 |   |-- subject-tracker/
 |   |-- research-log/
 |   |-- comps-tracker/
+|   |-- treatment-builder/
 |   |-- clearance-log/
 |   |-- music-cue-sheet/
 |   |-- call-sheet/
