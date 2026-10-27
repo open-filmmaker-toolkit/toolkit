@@ -84,6 +84,9 @@
         "$ref": "#/$defs/comp"
       },
       "description": "Comparable films for pitches and sales, kept by the comps tracker."
+    },
+    "treatment": {
+      "$ref": "#/$defs/treatment"
     }
   },
   "additionalProperties": true,
@@ -970,6 +973,114 @@
         "inPitch": {
           "type": "boolean",
           "description": "On the printed comps page."
+        }
+      },
+      "additionalProperties": true
+    },
+    "treatment": {
+      "type": "object",
+      "description": "The film's treatment, written in the treatment builder.",
+      "properties": {
+        "sections": {
+          "type": "object",
+          "properties": {
+            "logline": {
+              "type": "string"
+            },
+            "shortSynopsis": {
+              "type": "string"
+            },
+            "longSynopsis": {
+              "type": "string"
+            },
+            "subjects": {
+              "type": "string"
+            },
+            "structure": {
+              "type": "string"
+            },
+            "approach": {
+              "type": "string"
+            },
+            "access": {
+              "type": "string"
+            },
+            "whyNow": {
+              "type": "string"
+            },
+            "team": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Text for each part of the treatment: logline, shortSynopsis, longSynopsis, subjects, structure, approach, access, whyNow, team."
+        },
+        "targets": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "description": "Word targets that differ from the tool's defaults, by section."
+        },
+        "versions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "label": {
+                "type": "string"
+              },
+              "sections": {
+                "type": "object",
+                "properties": {
+                  "logline": {
+                    "type": "string"
+                  },
+                  "shortSynopsis": {
+                    "type": "string"
+                  },
+                  "longSynopsis": {
+                    "type": "string"
+                  },
+                  "subjects": {
+                    "type": "string"
+                  },
+                  "structure": {
+                    "type": "string"
+                  },
+                  "approach": {
+                    "type": "string"
+                  },
+                  "access": {
+                    "type": "string"
+                  },
+                  "whyNow": {
+                    "type": "string"
+                  },
+                  "team": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            },
+            "additionalProperties": true
+          }
         }
       },
       "additionalProperties": true

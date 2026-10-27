@@ -995,5 +995,27 @@
       ],
       "notes": "Strong educational sales; ask the filmmaker about numbers."
     }
-  ]
+  ],
+  "treatment": {
+    "sections": {
+      "logline": "When the river that drowned her town in 1965 rises again, a retired schoolteacher opens the flood diary she has kept secret for sixty years.",
+      "shortSynopsis": "Riverside has flooded three times in living memory. Ruth Hammond kept a diary through the first, Leon Pryor fought the second from the levee board, and Daniel Okafor is still finding his grandmother's photographs of the third. As engineers argue over whether the new levee will hold, The River Keeps follows the people who remember what the water took, and asks what a town owes the ones who stayed.",
+      "subjects": "Ruth Hammond: Retired schoolteacher who kept a diary through the 1965 flood\nLeon Pryor: Levee board member, 1988–2014",
+      "access": "Ruth has agreed to read from her diary on camera. The Riverside County Historical Society has licensed its 1965 aerial footage, and the Okafor family has released their photographs."
+    },
+    "targets": {
+      "shortSynopsis": 100
+    },
+    "versions": [
+      {
+        "id": "version-grant-draft",
+        "at": "2026-09-15T15:00:00Z",
+        "label": "Draft for the regional arts grant",
+        "sections": {
+          "logline": "A retired schoolteacher opens the flood diary she has kept for sixty years as the river rises again.",
+          "access": "Ruth has agreed to read from her diary on camera."
+        }
+      }
+    ]
+  }
 }
