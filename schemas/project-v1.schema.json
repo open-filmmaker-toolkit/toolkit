@@ -87,6 +87,9 @@
     },
     "treatment": {
       "$ref": "#/$defs/treatment"
+    },
+    "pitchDeck": {
+      "$ref": "#/$defs/pitchDeck"
     }
   },
   "additionalProperties": true,
@@ -1077,6 +1080,97 @@
                 "additionalProperties": {
                   "type": "string"
                 }
+              }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "pitchDeck": {
+      "type": "object",
+      "description": "A pitch deck or lookbook, built in the pitch deck builder.",
+      "properties": {
+        "size": {
+          "enum": [
+            "widescreen",
+            "letter"
+          ]
+        },
+        "slides": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "kind"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "kind": {
+                "enum": [
+                  "title",
+                  "text",
+                  "look",
+                  "image",
+                  "team",
+                  "comps"
+                ],
+                "description": "team and comps slides are built from people and comps each time."
+              },
+              "heading": {
+                "type": "string"
+              },
+              "body": {
+                "type": "string"
+              },
+              "layout": {
+                "enum": [
+                  "left",
+                  "right"
+                ]
+              },
+              "imageIds": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/id"
+                }
+              },
+              "hidden": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "images": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "data"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "name": {
+                "type": "string"
+              },
+              "width": {
+                "type": "integer"
+              },
+              "height": {
+                "type": "integer"
+              },
+              "data": {
+                "type": "string",
+                "pattern": "^data:image/",
+                "description": "The image, resized, as a data URL, so it opens in any browser without leaving the project file."
               }
             },
             "additionalProperties": true

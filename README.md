@@ -69,6 +69,7 @@ The toolkit has two halves:
 | [Research and archival log](tools/research-log/) | Logging archival leads and research sources as you find them, and sending leads to the clearance log when they're ready | First version |
 | [Comps tracker](tools/comps-tracker/) | Tracking comparable films for pitches and sales, with a source for every figure, and printing a comps page | First version |
 | [Treatment builder](tools/treatment-builder/) | Writing a treatment section by section, with word counts against your targets and versions you can compare | First version |
+| [Pitch deck builder](tools/pitch-deck/) | Putting together a pitch deck or lookbook from your project and your own stills, for screen or print | First version |
 | [Clearance log](tools/clearance-log/) | Tracking every piece of third-party material until it's cleared, then printing a report for your E&O attorney | First version |
 | [Music cue sheet](tools/music-cue-sheet/) | Building the music cue sheet your distributor or broadcaster needs, from the music already in your clearance log | First version |
 | [Call sheet](tools/call-sheet/) | Building shoot-day call sheets from the people and locations in your project; weather lookup is optional and off until you click it | First version |
@@ -102,6 +103,7 @@ toolkit/
 |-- tools/                # One folder per tool: index.html plus its own README
 |   |-- subject-tracker/
 |   |-- research-log/
+|   |-- pitch-deck/
 |   |-- comps-tracker/
 |   |-- treatment-builder/
 |   |-- clearance-log/

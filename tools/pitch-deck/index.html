@@ -1,0 +1,941 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pitch deck builder · Open Filmmaker Toolkit</title>
+<meta name="description" content="Put together a pitch deck or lookbook from your project: logline, story, characters, look, team, comps and the ask, with your own stills, laid out for screen or print. Runs in your browser; your data and images stay on your computer.">
+<style>
+:root {
+  --paper: #f1f3f2; --sheet: #ffffff; --ink: #1a2130; --ink-2: #4b556a; --ink-3: #6d778a;
+  --rule: #d4dad8; --rule-soft: #e6eae8; --hover: #f6f8f7; --focus: #2f6fdb;
+  --good: #2b7a57; --good-bg: #dff1e8; --warn: #8a5a00; --warn-bg: #fbf0d9; --bad: #b3392d; --bad-bg: #f8e1de;
+  --screen: #050506; --screen-ink: #f4f1ea; --screen-dim: #a7a29a;
+  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #141922; --sheet: #1b212b; --ink: #e6e9ee; --ink-2: #a6afbd; --ink-3: #8790a0;
+    --rule: #2f3744; --rule-soft: #262d38; --hover: #212834; --focus: #7aa7ff;
+    --good: #4fb386; --good-bg: #1a3329; --warn: #e2a531; --warn-bg: #3a2f17; --bad: #e26657; --bad-bg: #3b2220;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans); }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+[hidden] { display: none !important; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.foot { margin-top: 28px; font-size: 13px; color: var(--ink-3); }
+.cant-run { display: none; max-width: 640px; margin: 64px auto; padding: 0 24px; }
+.cant-run h1 { margin: 0 0 8px; font: 600 26px/1.2 var(--serif); }
+.cant-run p { margin: 0 0 10px; color: var(--ink-2); }
+.no-js .cant-run { display: block; }
+.no-js .page { display: none; }
+.page { max-width: 1240px; margin: 0 auto; padding: 0 24px 48px; }
+
+.masthead { display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: flex-end; justify-content: space-between; padding: 28px 0 20px; }
+.tool-name { margin: 0 0 2px; font-size: 14px; font-weight: 600; color: var(--ink-2); }
+.film-title { margin: 0; font: 600 32px/1.15 var(--serif); letter-spacing: -0.01em; overflow-wrap: anywhere; cursor: pointer; }
+.film-title.is-empty { color: var(--ink-3); font-style: italic; font-weight: 400; }
+.film-meta { margin: 4px 0 0; color: var(--ink-2); font-size: 14px; }
+.file { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.file-state { margin: 0; font-size: 13px; color: var(--ink-2); text-align: right; }
+.file-state .dirty { color: var(--warn); font-weight: 600; }
+.file-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; }
+.btn:hover { border-color: var(--ink-3); }
+.btn.primary { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.btn.primary:hover { opacity: 0.88; }
+.btn.danger { color: var(--bad); }
+.btn.small { padding: 4px 10px; font-size: 13px; }
+.link-btn { padding: 0; border: 0; background: none; cursor: pointer; color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; font-size: 14px; }
+.link-btn:hover { color: var(--ink); }
+
+.banner { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 0 0 16px; padding: 12px 16px; border-radius: 8px; background: var(--warn-bg); border: 1px solid color-mix(in srgb, var(--warn) 40%, transparent); }
+.banner p { margin: 0; flex: 1 1 280px; }
+.banner .actions { display: flex; gap: 8px; }
+
+.workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr); gap: 24px; align-items: start; }
+.col { display: grid; gap: 18px; min-width: 0; }
+.card { background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 18px; min-width: 0; }
+.card-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; margin: 0 0 6px; }
+.card-head h2 { margin: 0; font: 600 18px/1.3 var(--serif); }
+.card-head .count { font-size: 13px; color: var(--ink-2); }
+.card-head .spacer { flex: 1; }
+.card p.lead { margin: 0 0 8px; font-size: 14px; color: var(--ink-2); }
+
+/* Side cards */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 2px; padding: 0; list-style: none; }
+.chip { display: inline-flex; border: 1px solid var(--rule); border-radius: 999px; overflow: hidden; background: var(--paper); }
+.chip button { padding: 4px 10px; border: 0; background: none; cursor: pointer; font-size: 13px; font-weight: 600; }
+.chip button:hover { background: var(--hover); }
+.chip .sub { font-weight: 400; color: var(--ink-3); margin-left: 4px; }
+.empty-line { margin: 4px 0; color: var(--ink-2); font-size: 14px; }
+.changes { margin: 0; padding-left: 18px; font-size: 14px; }
+.changes li + li { margin-top: 2px; }
+
+/* The supers list */
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 10px; }
+.toolbar h2 { margin: 0 8px 0 0; font: 600 20px/1.2 var(--serif); }
+.toolbar .count { font-size: 13px; color: var(--ink-2); }
+.toolbar .spacer { flex: 1; }
+.rows { list-style: none; margin: 0; padding: 0; background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; }
+.row { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 2px 14px; align-items: start; padding: 10px 14px; }
+.row + .row { border-top: 1px solid var(--rule-soft); }
+.row:hover { background: var(--hover); }
+.row.is-selected { background: var(--hover); box-shadow: inset 3px 0 0 var(--ink); }
+.row .tc { font-variant-numeric: tabular-nums; font-size: 14px; color: var(--ink-2); padding-top: 1px; }
+.row .what { min-width: 0; padding: 0; border: 0; background: none; text-align: left; cursor: pointer; overflow-wrap: anywhere; }
+.row .what:hover .nm { text-decoration: underline; text-underline-offset: 2px; }
+.row .nm { display: block; font-weight: 600; }
+.row .tt { display: block; font-size: 14px; color: var(--ink-2); }
+.flags { grid-column: 2; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.flag { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 999px; font-size: 12.5px; font-weight: 600; }
+.flag.new { background: var(--good-bg); color: var(--good); }
+.flag.changed { background: var(--warn-bg); color: var(--warn); }
+.flag.problem { background: var(--bad-bg); color: var(--bad); }
+.flag.linked { background: var(--paper); color: var(--ink-3); font-weight: 500; border: 1px solid var(--rule); }
+.flag button { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+
+.empty { padding: 36px 24px; text-align: center; background: var(--sheet); border: 1px dashed var(--rule); border-radius: 8px; }
+.empty h2 { margin: 0 0 6px; font: 600 20px/1.3 var(--serif); }
+.empty p { margin: 0 auto 16px; max-width: 52ch; color: var(--ink-2); }
+.empty .actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+
+
+.workspace { grid-template-columns: minmax(0, 1fr) minmax(0, 0.42fr); }
+.side { position: sticky; top: 16px; display: grid; gap: 18px; }
+.radio-row { display: inline-flex; flex-wrap: wrap; gap: 4px 14px; font-size: 14px; }
+.radio-row label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+.radio-row input { width: auto; margin: 0; }
+.deck { display: grid; gap: 18px; }
+.slide-wrap { display: grid; gap: 6px; }
+.slide-bar { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-2); }
+.slide-bar .num { font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+.slide-bar .spacer { flex: 1; }
+.slide-wrap.is-hidden .slide { opacity: 0.35; }
+.icon-btn { width: 30px; height: 30px; padding: 0; border: 1px solid transparent; border-radius: 6px; background: none; color: var(--ink-2); cursor: pointer; font-size: 15px; line-height: 1; }
+.icon-btn:hover { border-color: var(--rule); color: var(--ink); }
+.icon-btn:disabled { opacity: 0.3; cursor: default; border-color: transparent; }
+.slide-btn { display: block; width: 100%; padding: 0; border: 0; background: none; cursor: pointer; text-align: left; border-radius: 6px; }
+.slide-btn:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+
+/* A slide. Sizes use container units, so the same slide scales to the preview and the printed page. */
+.slide { position: relative; aspect-ratio: 16 / 9; container-type: inline-size; overflow: hidden; background: #f4f1ea; color: #1b1e25; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 0 0 1px rgba(0,0,0,.08); font-family: var(--sans); }
+.deck.letter .slide, .report.letter .slide { aspect-ratio: 11 / 8.5; }
+.s-pad { position: absolute; inset: 0; padding: 6cqw 7cqw; display: flex; flex-direction: column; gap: 2.2cqw; }
+.s-kicker { font-size: 1.5cqw; letter-spacing: 0.14em; text-transform: uppercase; color: #8a6d3b; font-weight: 700; }
+.s-h { font: 600 4.4cqw/1.1 var(--serif); margin: 0; }
+.s-body { font: 2cqw/1.5 var(--serif); white-space: pre-line; overflow: hidden; }
+.s-body.small { font-size: 1.7cqw; }
+.s-split { display: grid; grid-template-columns: 1fr 1fr; gap: 4cqw; min-height: 0; flex: 1; }
+.s-split.left { grid-template-columns: 1fr 1fr; }
+.s-split.left .s-img { order: -1; }
+.s-img { min-height: 0; background: #d9d4ca; border-radius: 0.6cqw; overflow: hidden; }
+.s-img img, .s-full img, .s-grid img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.s-full { position: absolute; inset: 0; background: #1b1e25; }
+.s-caption { position: absolute; left: 0; right: 0; bottom: 0; padding: 3cqw 7cqw; background: linear-gradient(transparent, rgba(0,0,0,.65)); color: #f4f1ea; font: 2cqw/1.4 var(--serif); }
+.s-title { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: 7cqw; background: #1b1e25; color: #f4f1ea; }
+.s-title .s-bg { position: absolute; inset: 0; opacity: 0.55; }
+.s-title .s-bg img { width: 100%; height: 100%; object-fit: cover; }
+.s-title > :not(.s-bg) { position: relative; }
+.s-title .s-name { font: 600 7.5cqw/1.02 var(--serif); margin: 0 0 2cqw; }
+.s-title .s-tag { font: 2.3cqw/1.45 var(--serif); max-width: 70cqw; margin: 0; }
+.s-title .s-foot { margin-top: 3cqw; font-size: 1.5cqw; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.8; }
+.s-grid { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(var(--cols, 3), 1fr); grid-auto-rows: 1fr; gap: 1.4cqw; }
+.s-grid > div { min-height: 0; overflow: hidden; border-radius: 0.5cqw; background: #d9d4ca; }
+.s-people { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.4cqw 4cqw; align-content: start; }
+.s-person .r { display: block; font-size: 1.45cqw; letter-spacing: 0.1em; text-transform: uppercase; color: #8a6d3b; font-weight: 700; }
+.s-person .n { display: block; font: 600 2.3cqw/1.25 var(--serif); }
+.s-comps { display: grid; grid-template-columns: repeat(var(--cols, 3), 1fr); gap: 3cqw; align-content: start; }
+.s-comp .t { font: 600 2.4cqw/1.2 var(--serif); }
+.s-comp .m { font-size: 1.45cqw; color: #4b5060; margin: 0.6cqw 0; }
+.s-comp .f { font-size: 1.6cqw; font-weight: 700; }
+.s-comp .w { font: 1.65cqw/1.4 var(--serif); margin-top: 0.8cqw; }
+.s-note { margin-top: auto; font-size: 1.15cqw; color: #6b7080; }
+.s-empty { color: #8a8f9c; font-style: italic; }
+
+.imgs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 6px 0 8px; }
+.imgs figure { margin: 0; position: relative; aspect-ratio: 4 / 3; border-radius: 5px; overflow: hidden; background: var(--rule-soft); }
+.imgs img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.imgs button { position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 50%; background: rgba(0,0,0,.6); color: #fff; cursor: pointer; line-height: 1; }
+.pick-imgs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.pick-imgs label { position: relative; aspect-ratio: 4 / 3; border-radius: 5px; overflow: hidden; cursor: pointer; border: 2px solid transparent; }
+.pick-imgs label:has(input:checked) { border-color: var(--ink); }
+.pick-imgs input { position: absolute; top: 6px; left: 6px; width: 18px; height: 18px; margin: 0; }
+.pick-imgs img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.from { list-style: none; margin: 4px 0 0; padding: 0; font-size: 14px; display: grid; gap: 4px; }
+@media (max-width: 900px) { .workspace { grid-template-columns: 1fr; } }
+
+dialog { border: 0; padding: 0; color: var(--ink); background: var(--sheet); box-shadow: 0 10px 40px rgba(10, 14, 22, 0.25); }
+dialog::backdrop { background: rgba(16, 20, 28, 0.42); }
+dialog.drawer { margin: 0 0 0 auto; width: min(600px, 100vw); height: 100dvh; max-height: 100dvh; max-width: 100vw; border-left: 1px solid var(--rule); }
+dialog.modal { width: min(560px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); border-radius: 10px; }
+dialog form { display: flex; flex-direction: column; height: 100%; max-height: inherit; }
+.dlg-head { padding: 20px 24px 12px; border-bottom: 1px solid var(--rule-soft); }
+.dlg-head h2 { margin: 0; font: 600 22px/1.25 var(--serif); }
+.dlg-body { flex: 1; overflow-y: auto; padding: 16px 24px 24px; display: grid; gap: 14px; align-content: start; }
+.dlg-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 14px 24px; border-top: 1px solid var(--rule-soft); }
+.dlg-foot .spacer { flex: 1; }
+.field { display: grid; gap: 4px; }
+.field > label, .field > .label, .group h3 { font-size: 14px; font-weight: 600; margin: 0; }
+.hint { margin: 0; font-size: 13px; color: var(--ink-3); }
+.field input, .field select, .field textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); }
+.group { display: grid; gap: 8px; padding-top: 10px; border-top: 1px solid var(--rule-soft); }
+.checks { display: grid; gap: 2px; max-height: 260px; overflow-y: auto; padding: 2px; }
+.check { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; align-items: start; padding: 5px 4px; border-radius: 6px; cursor: pointer; }
+.check:hover { background: var(--hover); }
+.check input { width: 18px; height: 18px; margin: 2px 0 0; }
+.check .who { overflow-wrap: anywhere; }
+.check .sub { margin-left: 4px; font-size: 13px; color: var(--ink-3); }
+.check .lines { display: block; font-size: 13px; color: var(--ink-3); white-space: pre-line; }
+#songList, #sourceList { max-height: none; }
+.radio-row { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.radio-row label { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; cursor: pointer; }
+pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); font-size: 13px; white-space: pre-wrap; }
+
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); max-width: calc(100vw - 32px); padding: 10px 16px; border-radius: 8px; background: var(--ink); color: var(--paper); font-size: 14px; box-shadow: 0 6px 24px rgba(10, 14, 22, 0.25); z-index: 10; }
+.toast.error { background: var(--bad); color: #ffffff; }
+.report { display: none; }
+
+@media (max-width: 900px) {
+  .workspace { grid-template-columns: 1fr; }
+  .side { position: static; }
+}
+@media (max-width: 720px) {
+  .page { padding: 0 16px 40px; }
+  .film-title { font-size: 26px; }
+  .file { align-items: flex-start; }
+  .file-state { text-align: left; }
+  .toolbar h2 { flex-basis: 100%; order: -2; }
+  .toolbar #addBtn { flex: 1 1 100%; justify-content: center; order: -1; }
+  .row { grid-template-columns: minmax(0, 1fr); }
+  .flags { grid-column: 1; }
+}
+@media print {
+  @page { size: portrait; margin: 16mm; }
+  :root { color-scheme: light; }
+  body { background: #ffffff; color: #000000; font-size: 10pt; }
+  .page, dialog, .toast { display: none !important; }
+  .report { display: block; }
+  .report h1 { margin: 0; font: 700 18pt/1.2 var(--serif); }
+  .report h2 { margin: 14pt 0 4pt; font: 700 12pt/1.2 var(--serif); break-after: avoid; page-break-after: avoid; }
+  .report .r-meta { margin: 2pt 0 10pt; }
+  .report table { width: 100%; border-collapse: collapse; }
+  .report th, .report td { padding: 4pt 5pt; border-bottom: 0.75pt solid #999999; text-align: left; vertical-align: top; }
+  .report th { font-size: 9pt; border-bottom: 1pt solid #000000; }
+  .report tr { break-inside: avoid; page-break-inside: avoid; }
+  .report .r-sub { display: block; font-size: 8.5pt; color: #333333; }
+  .report .r-note { margin-top: 14pt; font-size: 8pt; color: #333333; }
+  body { margin: 0; }
+  .report .slide { width: 100vw; height: 100vh; aspect-ratio: auto; border-radius: 0; box-shadow: none; break-after: page; page-break-after: always; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  .report .slide:last-child { break-after: auto; page-break-after: auto; }
+}
+</style>
+</head>
+<body>
+<div class="cant-run" id="cantRun">
+  <h1 id="cantRunTitle">Open this file in a web browser</h1>
+  <p id="cantRunText">This tool runs in Chrome, Edge, Firefox or Safari. You're seeing a preview that doesn't run it, so none of the buttons would work.</p>
+  <p id="cantRunHow">In your browser, choose File, then Open File, and pick this file. Or right-click the file and open it with your browser.</p>
+</div>
+<div class="page">
+  <header class="masthead">
+    <div>
+      <p class="tool-name">Pitch deck builder</p>
+      <h1 class="film-title" id="filmTitle">Untitled film</h1>
+      <p class="film-meta"><span id="filmMeta"></span> <button type="button" class="link-btn" id="editProjectBtn">Edit film details</button></p>
+    </div>
+    <div class="file">
+      <p class="file-state" id="fileState">Not saved to a file yet</p>
+      <div class="file-actions">
+        <button type="button" class="btn" id="newBtn">New project</button>
+        <button type="button" class="btn" id="openBtn">Open file</button>
+        <button type="button" class="btn" id="projectCsvBtn">Export project data (CSV)</button>
+        <button type="button" class="btn primary" id="saveBtn">Save file</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="banner" id="recovery" role="region" aria-label="Unsaved work" hidden>
+    <p id="recoveryText"></p>
+    <div class="actions">
+      <button type="button" class="btn primary" id="restoreBtn">Restore it</button>
+      <button type="button" class="btn" id="discardBtn">Discard it</button>
+    </div>
+  </div>
+
+  <main class="workspace">
+    <section aria-labelledby="deckHead">
+      <div class="toolbar">
+        <h2 id="deckHead">Deck</h2>
+        <span class="count" id="count"></span>
+        <span class="spacer"></span>
+        <button type="button" class="btn primary" id="addBtn">Add slide</button>
+        <button type="button" class="btn" id="printBtn">Print or save as PDF</button>
+      </div>
+      <div class="toolbar">
+        <span class="radio-row" role="radiogroup" aria-label="Page size">
+          <label><input type="radio" name="size" value="widescreen" checked> Widescreen, for screens</label>
+          <label><input type="radio" name="size" value="letter"> Letter, for a printed lookbook</label>
+        </span>
+      </div>
+      <div class="deck" id="deck"></div>
+      <div class="empty" id="empty" hidden>
+        <h2>No slides yet</h2>
+        <p>Start from your project: the title and logline, story, characters and look come from the treatment builder, the team from your project's people, and comps from the comps tracker. Then add stills and reference images, and rework every slide in your own words.</p>
+        <div class="actions">
+          <button type="button" class="btn primary" id="draftBtn">Start from the project</button>
+          <button type="button" class="btn" id="emptyOpenBtn">Open file</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="side">
+      <section class="card" aria-labelledby="imgHead">
+        <div class="card-head"><h2 id="imgHead">Images</h2><span class="count" id="imgCount"></span></div>
+        <p class="lead">Stills and reference images. They're resized and kept inside the project file, so they stay on your computer and open in any browser.</p>
+        <div class="imgs" id="imgs"></div>
+        <button type="button" class="btn" id="addImgBtn">Add images</button>
+        <input type="file" id="imgInput" accept="image/*" multiple hidden>
+      </section>
+      <section class="card" aria-labelledby="fromHead">
+        <div class="card-head"><h2 id="fromHead">From the project</h2></div>
+        <ul class="from" id="from"></ul>
+      </section>
+    </div>
+  </main>
+
+  <footer class="foot">
+    <p>Part of the Open Filmmaker Toolkit. This page makes no network requests: everything stays on this computer until you save or export it. Uses the same project file as the other toolkit tools.</p>
+  </footer>
+</div>
+
+<dialog class="drawer" id="editor" aria-labelledby="editorTitle">
+  <form id="editorForm" method="dialog" novalidate>
+    <div class="dlg-head"><h2 id="editorTitle">Slide</h2></div>
+    <div class="dlg-body">
+      <div class="field"><label for="f-kind">Kind of slide</label><select id="f-kind"></select><p class="hint" id="kindHint"></p></div>
+      <div class="field" data-show="heading"><label for="f-heading" id="headingLabel">Heading</label><input id="f-heading" type="text" autocomplete="off"></div>
+      <div class="field" data-show="body"><label for="f-body" id="bodyLabel">Text</label><textarea id="f-body" rows="7"></textarea><p class="hint" id="bodyHint"></p></div>
+      <div class="field" data-show="layout"><span class="label" id="layoutLabel">Image</span>
+        <span class="radio-row" role="radiogroup" aria-labelledby="layoutLabel">
+          <label><input type="radio" name="layout" value="right" checked> Right of the text</label>
+          <label><input type="radio" name="layout" value="left"> Left of the text</label>
+        </span></div>
+      <div class="group" data-show="images"><h3 id="pickHead">Images</h3><p class="hint" id="pickHint"></p><div class="pick-imgs" id="pickImgs" role="group" aria-labelledby="pickHead"></div></div>
+      <label class="check"><input type="checkbox" id="f-hidden"><span class="who">Leave this slide out of the deck</span></label>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn danger" id="deleteBtn">Remove slide</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="editorCancel">Cancel</button>
+      <button type="submit" class="btn primary" id="editorSubmit">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="projectDialog" aria-labelledby="projectDialogTitle">
+  <form id="projectForm" method="dialog">
+    <div class="dlg-head"><h2 id="projectDialogTitle">Film details</h2></div>
+    <div class="dlg-body">
+      <div class="field"><label for="p-title">Film title</label><input id="p-title" type="text" placeholder="Working title is fine"></div>
+      <div class="field"><label for="p-company">Production company</label><input id="p-company" type="text"></div>
+      <div class="field"><label for="p-producer">Producer</label><input id="p-producer" type="text"></div>
+    </div>
+    <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn" id="projectCancel">Cancel</button><button type="submit" class="btn primary">Save details</button></div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="projectCsvDialog" aria-labelledby="projectCsvTitle">
+  <form id="projectCsvForm" method="dialog">
+    <div class="dlg-head"><h2 id="projectCsvTitle">Export project data</h2></div>
+    <div class="dlg-body">
+      <div class="field">
+        <label for="projectCsvCollection">Data to export</label>
+        <select id="projectCsvCollection">
+          <option value="project">Project details</option>
+          <option value="people">People</option>
+          <option value="locations">Locations</option>
+          <option value="thirdPartyElements">Third-party elements</option>
+          <option value="contracts">Contracts</option>
+          <option value="assets">Assets</option>
+          <option value="musicCueSheet">Music cue sheet details</option>
+          <option value="callSheets">Call sheets</option>
+        </select>
+      </div>
+      <p class="hint">Exports one CSV file for the selected collection. Nested values are kept as JSON in their cell.</p>
+    </div>
+    <div class="dlg-foot">
+      <button type="submit" class="btn primary">Export CSV</button>
+      <button type="button" class="btn" id="projectCsvCancel">Cancel</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="conflictDialog" aria-labelledby="conflictTitle">
+  <form method="dialog">
+    <div class="dlg-head"><h2 id="conflictTitle">Project file changed</h2></div>
+    <div class="dlg-body">
+      <p id="conflictText">This project file changed after you opened it. Saving will replace those changes.</p>
+      <p class="hint">Your edits are still here. Choose whether to overwrite the changed file, save a separate copy, or load its latest contents. Save in one tool at a time; simultaneous saves can still race.</p>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn" id="conflictReloadBtn">Reload latest</button>
+      <button type="button" class="btn" id="conflictCopyBtn">Save a copy</button>
+      <button type="button" class="btn danger" id="conflictOverwriteBtn">Overwrite file</button>
+      <button type="button" class="btn" id="conflictCancelBtn">Keep editing</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="report" id="report" aria-hidden="true"></div>
+<input type="file" id="fileInput" accept=".json,application/json" hidden>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+(() => {
+  'use strict';
+
+  const FORMAT = 'open-filmmaker-toolkit/project';
+  const FORMAT_VERSION = 1;
+  const TOOL = 'pitch-deck 0.1.0';
+  const DRAFT_KEY = 'oft.pitch-deck.draft';
+  const PROJECT_TEXT = ['title', 'company', 'producer'];
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const str = v => (v == null ? '' : String(v));
+  const arr = v => (Array.isArray(v) ? v : []);
+  const norm = s => str(s).toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+
+  let doc = blankDoc();
+  let fileHandle = null;
+  let baselineText = null;
+  let fileName = null;
+  let dirty = false;
+
+  function blankDoc() {
+    return { format: FORMAT, formatVersion: FORMAT_VERSION, project: { title: '', company: '', producer: '', frameRate: 24, currency: 'USD' }, people: [], pitchDeck: { size: 'widescreen', slides: [], images: [] } };
+  }
+  function newId(prefix) {
+    if (window.crypto && crypto.randomUUID) return `${prefix}-${crypto.randomUUID()}`;
+    return `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+  }
+  function today() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  function fmtDate(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str(iso));
+    if (!m) return str(iso);
+    return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+  function daysUntil(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str(iso));
+    if (!m) return null;
+    const t = new Date(); const a = Date.UTC(t.getFullYear(), t.getMonth(), t.getDate());
+    return Math.round((Date.UTC(+m[1], +m[2] - 1, +m[3]) - a) / 86400000);
+  }
+
+  const KINDS = {
+    title: { label: 'Title and logline', show: ['heading', 'body', 'images'], heading: 'Film title', body: 'Logline', images: 'A background image, if you want one.', max: 1 },
+    text: { label: 'Text, with an image if you like', show: ['heading', 'body', 'layout', 'images'], heading: 'Heading', body: 'Text', images: 'One image beside the text, if you want one.', max: 1 },
+    look: { label: 'The look: a grid of images', show: ['heading', 'body', 'images'], heading: 'Heading', body: 'A line or two under the images', images: 'Up to six images.', max: 6 },
+    image: { label: 'Full-page image', show: ['body', 'images'], body: 'Caption', images: 'The image.', max: 1 },
+    team: { label: 'Team, from the project', show: ['heading', 'body'], heading: 'Heading', body: 'A line under the team, such as past films', hint: 'Lists the crew in your project, with their roles. Add or fix people in the project, and the slide follows.' },
+    comps: { label: 'Comps, from the comps tracker', show: ['heading', 'body'], heading: 'Heading', body: 'A line under the comps', hint: 'Shows the comps ticked "In the pitch" in the comps tracker, with one sourced figure each.' },
+  };
+  const SIZES = { widescreen: { label: 'widescreen', page: '13.333in 7.5in' }, letter: { label: 'letter', page: '11in 8.5in' } };
+  const MAX_SIDE = 1600;
+  let editing = null;
+  let isNew = false;
+
+  // Fills in only what this tool needs; everything else in the file is left as it was.
+  function normalize(d) {
+    if (!d.project || typeof d.project !== 'object') d.project = {};
+    for (const k of PROJECT_TEXT) if (typeof d.project[k] !== 'string') d.project[k] = str(d.project[k]);
+    if (!Array.isArray(d.people)) d.people = [];
+    if (!d.pitchDeck || typeof d.pitchDeck !== 'object' || Array.isArray(d.pitchDeck)) d.pitchDeck = {};
+    const p = d.pitchDeck;
+    if (!SIZES[p.size]) p.size = 'widescreen';
+    for (const k of ['slides', 'images']) { if (!Array.isArray(p[k])) p[k] = []; p[k] = p[k].filter(x => x && typeof x === 'object'); }
+    for (const s of p.slides) { if (!s.id) s.id = newId('slide'); if (!KINDS[s.kind]) s.kind = 'text'; }
+    for (const i of p.images) if (!i.id) i.id = newId('image');
+    d.format = FORMAT;
+    d.formatVersion = FORMAT_VERSION;
+    return d;
+  }
+  const P = () => doc.pitchDeck;
+  const entries = () => P().slides;
+  const image = id => P().images.find(i => i.id === id);
+  const imagesOf = s => arr(s.imageIds).map(image).filter(Boolean);
+  const roleText = p => (Array.isArray(p.roles) ? p.roles.join(', ') : str(p.roles));
+  const featured = p => p.onCamera === true || /subject|interview|featur|contributor/i.test(roleText(p));
+  const team = () => doc.people.filter(p => !featured(p) && roleText(p) && str(p.name).trim());
+  const pitchComps = () => arr(doc.comps).filter(c => c && c.inPitch).sort((a, b) => (Number(b.year) || 0) - (Number(a.year) || 0));
+  const treatment = k => str(doc.treatment && doc.treatment.sections && doc.treatment.sections[k]).trim();
+  const img = i => i ? `<img src="${esc(i.data)}" alt="${esc(i.name || '')}">` : '';
+
+  // ---------- A slide as HTML ----------
+  function slideHtml(s) {
+    const imgs = imagesOf(s);
+    const h = esc(s.heading || '');
+    const body = esc(s.body || '');
+    if (s.kind === 'title') return `<div class="s-title">${imgs[0] ? `<div class="s-bg">${img(imgs[0])}</div>` : ''}
+      <p class="s-name">${h || esc(doc.project.title || 'Untitled film')}</p>${body ? `<p class="s-tag">${body}</p>` : ''}
+      ${doc.project.company ? `<p class="s-foot">${esc(doc.project.company)}</p>` : ''}</div>`;
+    if (s.kind === 'image') return `<div class="s-full">${img(imgs[0])}${body ? `<div class="s-caption">${body}</div>` : ''}</div>`;
+    if (s.kind === 'look') {
+      const n = Math.min(imgs.length, 6);
+      return `<div class="s-pad">${h ? `<p class="s-h">${h}</p>` : ''}
+        <div class="s-grid" style="--cols:${n <= 2 ? Math.max(n, 1) : 3}">${n ? imgs.slice(0, 6).map(i => `<div>${img(i)}</div>`).join('') : '<div class="s-empty" style="background:none">Add images to this slide</div>'}</div>
+        ${body ? `<p class="s-body small">${body}</p>` : ''}</div>`;
+    }
+    if (s.kind === 'team') {
+      const list = team();
+      return `<div class="s-pad">${h ? `<p class="s-h">${h}</p>` : ''}
+        ${list.length ? `<div class="s-people">${list.slice(0, 12).map(p => `<div class="s-person"><span class="r">${esc(roleText(p))}</span><span class="n">${esc(p.name)}</span></div>`).join('')}</div>` : '<p class="s-body s-empty">Add the crew to your project, with their roles.</p>'}
+        ${body ? `<p class="s-body small">${body}</p>` : ''}</div>`;
+    }
+    if (s.kind === 'comps') {
+      const list = pitchComps().slice(0, 4);
+      const notes = [];
+      const cards = list.map(c => {
+        const f = arr(c.figures).find(x => x && str(x.amount).trim() && str(x.source).trim());
+        if (f) notes.push(f.source);
+        return `<div class="s-comp"><div class="t">${esc(c.title || 'Untitled')}${c.year ? ` (${esc(c.year)})` : ''}</div>
+          <div class="m">${esc([c.premiere, c.distributor].filter(Boolean).join(' · '))}</div>
+          ${f ? `<div class="f">${esc(f.label || 'Figure')}: ${esc(f.amount)}<sup>${notes.length}</sup></div>` : ''}${c.why ? `<div class="w">${esc(c.why)}</div>` : ''}</div>`;
+      }).join('');
+      return `<div class="s-pad">${h ? `<p class="s-h">${h}</p>` : ''}
+        ${list.length ? `<div class="s-comps" style="--cols:${Math.min(Math.max(list.length, 2), 4)}">${cards}</div>` : '<p class="s-body s-empty">Tick comps "In the pitch" in the comps tracker.</p>'}
+        ${body ? `<p class="s-body small">${body}</p>` : ''}
+        ${notes.length ? `<p class="s-note">${notes.map((n, i) => `${i + 1}. ${esc(n)}`).join('  ·  ')}</p>` : ''}</div>`;
+    }
+    // text
+    const text = `<div>${h ? `<p class="s-h">${h}</p>` : ''}${body ? `<p class="s-body" style="margin-top:2.2cqw">${body}</p>` : ''}</div>`;
+    return `<div class="s-pad">${imgs[0] ? `<div class="s-split${s.layout === 'left' ? ' left' : ''}">${text}<div class="s-img">${img(imgs[0])}</div></div>` : text}</div>`;
+  }
+
+  // ---------- Render ----------
+  function render() {
+    $('filmTitle').textContent = doc.project.title || 'Untitled film';
+    $('filmTitle').classList.toggle('is-empty', !doc.project.title);
+    $('filmMeta').textContent = [doc.project.company, doc.project.producer && `Producer: ${doc.project.producer}`].filter(Boolean).join(' · ');
+    $('fileState').innerHTML = (fileName ? esc(fileName) : 'Not saved to a file yet') + (dirty ? ' · <span class="dirty">Unsaved changes</span>' : '');
+    document.title = `${doc.project.title ? doc.project.title + ' · ' : ''}Pitch deck builder · Open Filmmaker Toolkit`;
+    const slides = entries();
+    document.querySelector(`input[name=size][value="${P().size}"]`).checked = true;
+    $('deck').className = `deck ${P().size}`;
+    const shown = slides.filter(s => !s.hidden).length;
+    $('count').textContent = slides.length ? `${shown} slide${shown === 1 ? '' : 's'}${shown < slides.length ? `, ${slides.length - shown} left out` : ''}` : '';
+    $('empty').hidden = !!slides.length;
+    $('printBtn').hidden = !shown;
+    let n = 0;
+    $('deck').innerHTML = slides.map((s, i) => `<div class="slide-wrap${s.hidden ? ' is-hidden' : ''}" data-id="${esc(s.id)}">
+      <div class="slide-bar"><span class="num">${s.hidden ? '–' : ++n}</span><span>${esc(KINDS[s.kind].label)}${s.hidden ? ', left out' : ''}</span><span class="spacer"></span>
+        <button type="button" class="icon-btn" data-up="${i}" aria-label="Move slide up"${i === 0 ? ' disabled' : ''}>↑</button>
+        <button type="button" class="icon-btn" data-down="${i}" aria-label="Move slide down"${i === slides.length - 1 ? ' disabled' : ''}>↓</button>
+        <button type="button" class="btn small" data-edit="${esc(s.id)}">Edit</button></div>
+      <button type="button" class="slide-btn" data-edit="${esc(s.id)}" aria-label="Edit slide ${i + 1}: ${esc(s.heading || KINDS[s.kind].label)}"><div class="slide">${slideHtml(s)}</div></button>
+    </div>`).join('');
+
+    const ims = P().images;
+    const bytes = ims.reduce((t, i) => t + str(i.data).length * 0.75, 0);
+    $('imgCount').textContent = ims.length ? `${ims.length} · ${bytes < 1048576 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / 1048576).toFixed(1)} MB`}` : '';
+    $('imgs').innerHTML = ims.map(i => `<figure>${img(i)}<button type="button" data-delimg="${esc(i.id)}" aria-label="Remove ${esc(i.name || 'image')}">×</button></figure>`).join('');
+    const t = team().length, c = pitchComps().length;
+    $('from').innerHTML = [`${t} crew member${t === 1 ? '' : 's'} for the team slide`, `${c} comp${c === 1 ? '' : 's'} ticked "In the pitch" in the comps tracker`,
+      treatment('logline') ? 'A logline and synopsis from the treatment builder' : 'No treatment yet: write one in the treatment builder, or type here'].map(x => `<li>${esc(x)}</li>`).join('');
+  }
+
+  // ---------- Start from the project ----------
+  function draftFromProject() {
+    const ids = P().images.map(i => i.id);
+    const featuredLines = doc.people.filter(p => featured(p) && str(p.name).trim()).map(p => `${p.name}: ${roleText(p)}`).join('\n');
+    const s = (kind, heading, body, extra) => Object.assign({ id: newId('slide'), kind, heading, body }, extra || {});
+    P().slides = [
+      s('title', doc.project.title || '', treatment('logline'), ids[0] ? { imageIds: [ids[0]] } : {}),
+      s('text', 'The story', treatment('shortSynopsis') || '[What happens, to whom, and why it matters]', ids[1] ? { imageIds: [ids[1]], layout: 'right' } : {}),
+      s('text', 'Characters', treatment('subjects') || featuredLines || '[Who we follow, and what they want]', ids[2] ? { imageIds: [ids[2]], layout: 'left' } : {}),
+      s('look', 'The look', treatment('approach') ? treatment('approach').split(/\n\s*\n/)[0] : '', { imageIds: ids.slice(0, 6) }),
+      s('team', 'Team', ''),
+      s('comps', 'Comparable films', ''),
+      s('text', 'The ask', '[What you’re asking for, how much, and what it pays for]'),
+      s('text', 'Contact', [doc.project.producer && `${doc.project.producer}, producer`, doc.project.company, doc.project.preparedContact].filter(Boolean).join('\n') || '[Name, email, phone]'),
+    ];
+    changed();
+    toast('Drafted 8 slides from the project. Rework each one in your own words, and fill in the bracketed parts.');
+  }
+
+  // ---------- Editor ----------
+  function openEditor(id, preset) {
+    const existing = id && entries().find(s => s.id === id);
+    isNew = !existing;
+    editing = existing ? structuredClone(existing) : Object.assign({ id: newId('slide'), kind: 'text' }, preset || {});
+    $('f-kind').innerHTML = Object.entries(KINDS).map(([k, v]) => `<option value="${k}">${esc(v.label)}</option>`).join('');
+    $('f-kind').value = editing.kind;
+    $('f-heading').value = str(editing.heading);
+    $('f-body').value = str(editing.body);
+    document.querySelector(`input[name=layout][value="${editing.layout === 'left' ? 'left' : 'right'}"]`).checked = true;
+    $('f-hidden').checked = !!editing.hidden;
+    syncKind();
+    $('editorTitle').textContent = isNew ? 'Add slide' : 'Edit slide';
+    $('deleteBtn').hidden = isNew;
+    $('editor').showModal();
+    $(isNew ? 'f-kind' : (KINDS[editing.kind].show.includes('heading') ? 'f-heading' : 'f-body')).focus();
+  }
+  function syncKind() {
+    const k = KINDS[$('f-kind').value];
+    for (const el of $('editorForm').querySelectorAll('[data-show]')) el.hidden = !k.show.includes(el.dataset.show);
+    $('kindHint').textContent = k.hint || '';
+    $('headingLabel').textContent = k.heading || 'Heading';
+    $('bodyLabel').textContent = k.body || 'Text';
+    $('pickHint').textContent = P().images.length ? (k.images || '') : 'Add images in the Images panel first.';
+    const picked = new Set(arr(editing.imageIds));
+    $('pickImgs').innerHTML = P().images.map(i => `<label><input type="checkbox" value="${esc(i.id)}"${picked.has(i.id) ? ' checked' : ''} aria-label="${esc(i.name || 'Image')}">${img(i)}</label>`).join('');
+  }
+  function saveEditor() {
+    const e = editing;
+    e.kind = $('f-kind').value;
+    const k = KINDS[e.kind];
+    const set = (key, v) => { if (v) e[key] = v; else delete e[key]; };
+    set('heading', k.show.includes('heading') ? $('f-heading').value.trim() : '');
+    set('body', k.show.includes('body') ? $('f-body').value.replace(/\s+$/, '') : '');
+    set('layout', k.show.includes('layout') && document.querySelector('input[name=layout]:checked').value === 'left' ? 'left' : '');
+    const picked = k.show.includes('images') ? [...$('pickImgs').querySelectorAll('input:checked')].map(i => i.value) : [];
+    if (picked.length > (k.max || 0)) { $('pickHint').textContent = `This kind of slide takes ${k.max === 1 ? 'one image' : `up to ${k.max} images`}. Untick ${picked.length - k.max}.`; return; }
+    set('imageIds', picked.length ? picked : null);
+    set('hidden', $('f-hidden').checked);
+    if (isNew) entries().push(e); else entries()[entries().findIndex(x => x.id === e.id)] = e;
+    $('editor').close();
+    changed();
+  }
+  function removeEditing() {
+    P().slides = entries().filter(s => s.id !== editing.id);
+    $('editor').close();
+    changed();
+    toast('Removed the slide.');
+  }
+  function move(i, delta) {
+    const list = entries(); const j = i + delta;
+    if (j < 0 || j >= list.length) return;
+    [list[i], list[j]] = [list[j], list[i]];
+    changed();
+    const same = document.querySelector(`[data-${delta < 0 ? 'up' : 'down'}="${j}"]`);
+    if (same && !same.disabled) same.focus();
+  }
+
+  // ---------- Images ----------
+  function readImage(file) {
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file);
+      const im = new Image();
+      im.onload = () => {
+        const scale = Math.min(1, MAX_SIDE / Math.max(im.naturalWidth, im.naturalHeight));
+        const w = Math.max(1, Math.round(im.naturalWidth * scale)), h = Math.max(1, Math.round(im.naturalHeight * scale));
+        const c = document.createElement('canvas'); c.width = w; c.height = h;
+        const g = c.getContext('2d'); g.fillStyle = '#ffffff'; g.fillRect(0, 0, w, h); g.drawImage(im, 0, 0, w, h);
+        URL.revokeObjectURL(url);
+        resolve({ id: newId('image'), name: file.name, width: w, height: h, data: c.toDataURL('image/jpeg', 0.85) });
+      };
+      im.onerror = () => { URL.revokeObjectURL(url); reject(new Error(`${file.name} isn't an image this browser can open`)); };
+      im.src = url;
+    });
+  }
+  async function addImages(files) {
+    const added = [], failed = [];
+    for (const f of files) { try { added.push(await readImage(f)); } catch (err) { failed.push(err.message); } }
+    if (added.length) { P().images.push(...added); changed(); }
+    if (failed.length) toast(`Couldn't add ${failed.length} file${failed.length === 1 ? '' : 's'}: ${failed.join('; ')}.`, true);
+    else if (added.length) toast(`Added ${added.length} image${added.length === 1 ? '' : 's'}. Pick them from a slide's editor.`);
+  }
+  function removeImage(id) {
+    const used = entries().filter(s => arr(s.imageIds).includes(id)).length;
+    if (used && !confirm(`This image is on ${used} slide${used === 1 ? '' : 's'}. Remove it from the deck?`)) return;
+    P().images = P().images.filter(i => i.id !== id);
+    for (const s of entries()) { if (s.imageIds) { s.imageIds = s.imageIds.filter(x => x !== id); if (!s.imageIds.length) delete s.imageIds; } }
+    changed();
+  }
+
+  // ---------- Print ----------
+  function renderReport() {
+    $('report').className = `report ${P().size}`;
+    $('report').innerHTML = entries().filter(s => !s.hidden).map(s => `<div class="slide">${slideHtml(s)}</div>`).join('');
+    let style = document.getElementById('pageSize');
+    if (!style) { style = document.createElement('style'); style.id = 'pageSize'; document.head.appendChild(style); }
+    style.textContent = `@media print { @page { size: ${SIZES[P().size].page}; margin: 0; } }`;
+  }
+
+  // ---------- Project CSV ----------
+  function csvCell(v) {
+    let s = v == null ? '' : String(v);
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+    return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }
+  const csvCollections = {
+    project: 'project details', people: 'people', locations: 'locations', thirdPartyElements: 'third-party elements',
+    contracts: 'contracts', assets: 'assets', musicCueSheet: 'music cue sheet details', callSheets: 'call sheets'
+  };
+  function exportProjectCsv() {
+    const collection = $('projectCsvCollection').value;
+    const value = doc[collection];
+    const rows = Array.isArray(value) ? value : value && typeof value === 'object' ? [value] : [];
+    if (rows.some(row => !row || typeof row !== 'object' || Array.isArray(row))) {
+      toast(`Couldn't export ${csvCollections[collection]}: the project contains an invalid record.`, true);
+      return;
+    }
+    const headers = [...new Set(rows.flatMap(row => Object.keys(row)))];
+    if (!headers.length) headers.push('id');
+    const csvRows = rows.map(row => headers.map(key => { const cell = row[key]; return cell && typeof cell === 'object' ? JSON.stringify(cell) : cell; }));
+    const csv = '﻿' + [headers, ...csvRows].map(row => row.map(csvCell).join(',')).join('\r\n') + '\r\n';
+    const name = suggestedName().replace(/\.oft\.json$/i, `-${collection}.csv`);
+    download(csv, name, 'text/csv;charset=utf-8');
+    toast(`Exported ${rows.length} ${csvCollections[collection]} to ${name}`);
+  }
+
+  // ---------- Film details ----------
+  function openProjectDialog() {
+    for (const k of PROJECT_TEXT) $(`p-${k}`).value = doc.project[k] || '';
+    $('projectDialog').showModal();
+    $('p-title').focus();
+  }
+  function saveProjectDialog() {
+    for (const k of PROJECT_TEXT) doc.project[k] = $(`p-${k}`).value.trim();
+    $('projectDialog').close();
+    changed();
+  }
+
+  // ---------- Dirty state & recovery draft ----------
+  function changed() { dirty = true; saveDraft(); render(); }
+  function saveDraft() {
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ doc, fileName, baselineText, at: new Date().toISOString() })); } catch { /* the file on disk is the real copy */ }
+  }
+  function clearDraft() {
+    try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+    $('recovery').hidden = true;
+  }
+  function checkDraft() {
+    let draft = null;
+    try { draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); } catch { draft = null; }
+    if (!draft || !draft.doc || draft.doc.format !== FORMAT) return;
+    const n = draft.doc.pitchDeck && Array.isArray(draft.doc.pitchDeck.slides) ? draft.doc.pitchDeck.slides.length : 0;
+    if (!n && !(draft.doc.project && draft.doc.project.title)) { clearDraft(); return; }
+    const when = draft.at ? new Date(draft.at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'earlier';
+    const title = draft.doc.project && draft.doc.project.title ? `"${draft.doc.project.title}"` : 'an untitled project';
+    $('recoveryText').textContent = `You have unsaved changes to ${title} from ${when} (${n} slide${n === 1 ? '' : 's'}). Restore them, or discard them and start fresh.`;
+    $('recovery').hidden = false;
+    $('restoreBtn').onclick = () => {
+      doc = normalize(draft.doc); fileName = draft.fileName || null; fileHandle = null;
+      baselineText = typeof draft.baselineText === 'string' ? draft.baselineText : null; dirty = true;
+      $('recovery').hidden = true; render();
+      toast(fileName ? `Restored. Save to write the changes back to ${fileName}.` : 'Restored. Save to keep it as a file.');
+    };
+    $('discardBtn').onclick = () => { clearDraft(); toast('Discarded the unsaved changes.'); };
+  }
+
+  // ---------- Files ----------
+  const pickerTypes = [{ description: 'Film project file', accept: { 'application/json': ['.json'] } }];
+  function slug() {
+    return (doc.project.title || 'untitled-film').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'untitled-film';
+  }
+  const suggestedName = () => `${slug()}.oft.json`;
+  function serialize() {
+    doc.savedAt = new Date().toISOString();
+    doc.savedBy = TOOL;
+    return JSON.stringify(doc, null, 2) + '\n';
+  }
+  function download(text, name, type) {
+    const url = URL.createObjectURL(new Blob([text], { type }));
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  function afterSave(name, downloaded, content) {
+    fileName = name;
+    if (downloaded) fileHandle = null;
+    baselineText = content;
+    dirty = false; clearDraft(); render();
+    toast(downloaded ? `Downloaded ${name}. Keep it with your project files and open it here next time.` : `Saved to ${name}`);
+  }
+  async function writeProjectFile(handle, content) {
+    try {
+      const writable = await handle.createWritable();
+      await writable.write(content);
+      await writable.close();
+    } catch (err) {
+      if (err.name !== 'AbortError') toast(`Couldn't save the file: ${err.message}`, true);
+      return;
+    }
+    fileHandle = handle;
+    afterSave(handle.name, false, content);
+  }
+  function saveCopy(content) {
+    const base = (fileName || suggestedName()).replace(/\.oft\.json$/i, '');
+    const name = `${base}-copy.oft.json`;
+    download(content, name, 'application/json');
+    afterSave(name, true, content);
+  }
+  async function reloadLatest(handle) {
+    try {
+      const file = await handle.getFile();
+      loadText(await file.text(), handle.name, handle);
+    } catch (err) {
+      toast(`Couldn't reload the file: ${err.message}`, true);
+    }
+  }
+  function showConflictDialog(content, observedText, unknownBaseline = false) {
+    const handle = fileHandle;
+    dirty = true;
+    saveDraft();
+    render();
+    $('conflictText').textContent = unknownBaseline
+      ? `The tool can't verify whether ${handle.name} changed since your recovery copy was made. Your edits are not saved.`
+      : `${handle.name} changed after you opened it. Your edits are not saved. Overwriting replaces the newer file.`;
+    $('conflictDialog').showModal();
+    $('conflictReloadBtn').onclick = () => { $('conflictDialog').close(); reloadLatest(handle); };
+    $('conflictCopyBtn').onclick = () => { $('conflictDialog').close(); saveCopy(content); };
+    $('conflictOverwriteBtn').onclick = async () => {
+      $('conflictDialog').close();
+      let latestText;
+      try { latestText = await (await handle.getFile()).text(); }
+      catch (err) { toast(`Couldn't check the file before overwriting: ${err.message}`, true); return; }
+      if (latestText !== observedText) {
+        toast('The file changed again. Review the updated conflict warning before overwriting.', true);
+        showConflictDialog(content, latestText);
+        return;
+      }
+      await writeProjectFile(handle, content);
+    };
+    $('conflictCancelBtn').onclick = () => $('conflictDialog').close();
+  }
+  async function saveFile() {
+    const out = serialize();
+    if (fileHandle) {
+      let currentText;
+      try { currentText = await (await fileHandle.getFile()).text(); }
+      catch (err) { toast(`Couldn't check the file before saving: ${err.message}`, true); return; }
+      if (baselineText === null || currentText !== baselineText) { showConflictDialog(out, currentText, baselineText === null); return; }
+      await writeProjectFile(fileHandle, out);
+      return;
+    }
+    if (window.showSaveFilePicker && window.self === window.top) {
+      try {
+        const h = await window.showSaveFilePicker({ suggestedName: fileName || suggestedName(), types: pickerTypes });
+        if (h.name === fileName) {
+          const currentText = await (await h.getFile()).text();
+          if (baselineText === null || currentText !== baselineText) { fileHandle = h; showConflictDialog(out, currentText, baselineText === null); return; }
+        }
+        await writeProjectFile(h, out);
+      } catch (err) { if (err.name !== 'AbortError') toast(`Couldn't save the file: ${err.message}`, true); }
+      return;
+    }
+    const name = fileName || suggestedName();
+    download(out, name, 'application/json');
+    afterSave(name, true, out);
+  }
+  function loadText(text, name, handle) {
+    let data;
+    try { data = JSON.parse(text); } catch { toast(`Couldn't open ${name}: it isn't a project file.`, true); return; }
+    if (!data || data.format !== FORMAT) { toast(`Couldn't open ${name}: it isn't an Open Filmmaker Toolkit project file.`, true); return; }
+    if (Number(data.formatVersion) > FORMAT_VERSION) { toast(`Couldn't open ${name}: it was saved by a newer version of the toolkit. Get the latest version of this tool.`, true); return; }
+    doc = normalize(data); fileHandle = handle; baselineText = text; fileName = name; dirty = false;
+    clearDraft(); render();
+    const n = entries().length;
+    toast(`Opened ${name}: ${n ? `${n} slide${n === 1 ? '' : 's'}` : 'no slides yet'}`);
+  }
+  async function openFile() {
+    if (dirty && !confirm('You have unsaved changes. Open another file and lose them?')) return;
+    if (window.showOpenFilePicker && window.self === window.top) {
+      try { const [h] = await window.showOpenFilePicker({ types: pickerTypes }); const f = await h.getFile(); loadText(await f.text(), f.name, h); }
+      catch (err) { if (err.name !== 'AbortError') toast(`Couldn't open the file: ${err.message}`, true); }
+      return;
+    }
+    $('fileInput').click();
+  }
+  function newProject() {
+    if (dirty && !confirm('You have unsaved changes. Start a new project and lose them?')) return;
+    doc = normalize(blankDoc()); fileHandle = null; baselineText = null; fileName = null; dirty = false;
+    clearDraft(); render(); openProjectDialog();
+  }
+
+  let toastTimer = null;
+  function toast(msg, isError) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.classList.toggle('error', !!isError);
+    t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.hidden = true; }, isError ? 7000 : 4200);
+  }
+
+  // ---------- Wiring ----------
+  function init() {
+    doc = normalize(doc);
+    $('newBtn').onclick = newProject;
+    $('openBtn').onclick = openFile;
+    $('saveBtn').onclick = saveFile;
+    $('editProjectBtn').onclick = openProjectDialog;
+    $('filmTitle').onclick = openProjectDialog;
+    $('printBtn').onclick = () => { renderReport(); window.print(); };
+    window.addEventListener('beforeprint', renderReport);
+    $('projectCsvBtn').onclick = () => $('projectCsvDialog').showModal();
+    $('projectCsvCancel').onclick = () => $('projectCsvDialog').close();
+    $('projectCsvForm').addEventListener('submit', ev => { ev.preventDefault(); exportProjectCsv(); $('projectCsvDialog').close(); });
+    $('fileInput').addEventListener('change', async () => {
+      const f = $('fileInput').files[0];
+      if (f) loadText(await f.text(), f.name, null);
+      $('fileInput').value = '';
+    });
+    $('projectForm').addEventListener('submit', ev => { ev.preventDefault(); saveProjectDialog(); });
+    $('projectCancel').onclick = () => $('projectDialog').close();
+    $('addBtn').onclick = () => openEditor(null);
+    $('draftBtn').onclick = draftFromProject;
+    $('emptyOpenBtn').onclick = openFile;
+    document.querySelectorAll('input[name=size]').forEach(r => r.addEventListener('change', () => { P().size = r.value; changed(); }));
+    $('deck').addEventListener('click', ev => {
+      const b = ev.target.closest('button');
+      if (!b) return;
+      if (b.dataset.edit) openEditor(b.dataset.edit);
+      else if (b.dataset.up) move(+b.dataset.up, -1);
+      else if (b.dataset.down) move(+b.dataset.down, 1);
+    });
+    $('addImgBtn').onclick = () => $('imgInput').click();
+    $('imgInput').addEventListener('change', async () => { const files = [...$('imgInput').files]; $('imgInput').value = ''; if (files.length) await addImages(files); });
+    $('imgs').addEventListener('click', ev => { const b = ev.target.closest('[data-delimg]'); if (b) removeImage(b.dataset.delimg); });
+    $('f-kind').addEventListener('change', syncKind);
+    $('editorForm').addEventListener('submit', ev => { ev.preventDefault(); saveEditor(); });
+    $('editorCancel').onclick = () => $('editor').close();
+    $('deleteBtn').onclick = removeEditing;
+
+    document.addEventListener('keydown', ev => {
+      const mod = ev.metaKey || ev.ctrlKey;
+      if (mod && ev.key.toLowerCase() === 's') { ev.preventDefault(); saveFile(); }
+      else if (mod && ev.key.toLowerCase() === 'o') { ev.preventDefault(); openFile(); }
+    });
+    window.addEventListener('beforeunload', ev => { if (dirty) { ev.preventDefault(); ev.returnValue = ''; } });
+    render();
+    checkDraft();
+  }
+
+  if (typeof HTMLDialogElement !== 'function' || typeof HTMLDialogElement.prototype.showModal !== 'function' || typeof structuredClone !== 'function') {
+    $('cantRunTitle').textContent = 'This browser is too old to run this tool';
+    $('cantRunText').textContent = 'Update to a current version of Chrome, Edge, Firefox or Safari, then open this file again.';
+    $('cantRunHow').hidden = true;
+    return;
+  }
+  document.documentElement.classList.remove('no-js');
+  window.addEventListener('error', ev => toast(`Something went wrong: ${ev.message}. Save your work, then reload the page.`, true));
+  window.addEventListener('unhandledrejection', ev => toast(`Something went wrong: ${ev.reason && ev.reason.message ? ev.reason.message : ev.reason}. Save your work, then reload the page.`, true));
+  init();
+})();
+</script>
+</body>
+</html>
