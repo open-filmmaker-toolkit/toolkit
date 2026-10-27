@@ -14,15 +14,15 @@ chromium-fallback, Firefox and WebKit (Safari's engine) use the download/upload 
 The call sheet, release tracker, credits builder, name supers list, subject tracker, research and archival log, comps tracker, treatment builder and pitch deck builder also get end-to-end checks
 of their own, and the spreadsheet templates are checked against the tools' exports.
 """
-import csv, io, json, os, pathlib, sys
+import datetime, csv, io, json, os, pathlib, sys
 from playwright.sync_api import sync_playwright
 
 root = pathlib.Path(__file__).resolve().parents[1]
 sample = (root / 'samples/the-river-keeps.oft.json').read_text()
-TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck']
+TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library']
 COLLECTIONS = ['project', 'people', 'locations', 'thirdPartyElements', 'contracts', 'assets', 'musicCueSheet', 'callSheets']
 PRINT_BTN = {'clearance-log': '#printBtn', 'music-cue-sheet': '#printBtn', 'call-sheet': '#printAllBtn', 'release-tracker': '#printBtn',
-             'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn', 'treatment-builder': '#printBtn', 'pitch-deck': '#printBtn'}
+             'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn', 'treatment-builder': '#printBtn', 'pitch-deck': '#printBtn', 'grant-calendar': '#printBtn', 'narrative-library': '#printBtn'}
 PHONE = {'width': 390, 'height': 844}
 # The button that opens each tool's main dialog, for the phone-width check. Most tools use #addBtn.
 DIALOG_BTN = {'treatment-builder': '[data-compare]'}
@@ -385,7 +385,7 @@ def test_credits_builder(browser, fake):
     ctx.close()
 
 # Each spreadsheet template's columns must appear in its tool's CSV export, in the same order.
-TEMPLATE_EXPORTS = [('clearance-log', 'clearance-log-template.csv'), ('release-tracker', 'release-log-template.csv'),
+TEMPLATE_EXPORTS = [('grant-calendar', 'grant-calendar-template.csv'), ('clearance-log', 'clearance-log-template.csv'), ('release-tracker', 'release-log-template.csv'),
                     ('music-cue-sheet', 'music-cue-sheet-template.csv'), ('name-supers', 'name-supers-template.csv'),
                     ('subject-tracker', 'subject-tracker-template.csv'), ('research-log', 'research-log-template.csv'),
                     ('comps-tracker', 'comps-tracker-template.csv')]
@@ -671,6 +671,145 @@ def test_pitch_deck(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
+def saved_project(pg, fake):
+    if fake:
+        pg.click('#saveBtn'); pg.wait_for_timeout(300)
+        return json.loads(pg.evaluate('window.__file.text'))
+    with pg.expect_download() as d:
+        pg.click('#saveBtn')
+    return json.loads(open(d.value.path(), encoding='utf-8').read())
+
+def test_grant_calendar(browser, fake):
+    ctx, pg, errs = new_page(browser, 'grant-calendar', fake)
+    open_sample(pg, fake)
+    names = [t.split('\n')[0] for t in pg.locator('#rows .row .nm').all_inner_texts()]
+    check(names == ['Riverbend Documentary Fund', 'Prairie State Arts Board', 'Northern Light Media Foundation', 'Eastgate Film Initiative', 'Riverside County Heritage Trust'],
+          'open applications first by deadline, then waiting, then decided %s' % names)
+    north = pg.inner_text('[data-id="grant-northlight"]')
+    check('3 of 5 materials ready' in pg.inner_text('[data-id="grant-riverbend"]') and '3 answers from the library' in north and 'Decision expected' in north, 'rows show materials, linked answers and the decision date')
+    pg.click('[data-filter="submitted"]')
+    check(pg.locator('#rows .row').count() == 1, 'filters by status')
+    pg.click('[data-filter="all"]')
+    check('$25,000' in pg.inner_text('#stats') and '$7,500' in pg.inner_text('#stats'), 'adds up what is waiting and what was awarded')
+
+    pg.click('#calViewBtn')
+    pg.click('#thisMonth')
+    now = datetime.date.today()
+    steps = (2027 * 12 + 1) - (now.year * 12 + now.month - 1)
+    for _ in range(abs(steps)):
+        pg.click('#nextMonth' if steps > 0 else '#prevMonth')
+    check('2027' in pg.inner_text('#calTitle') and pg.locator('#calGrid [data-edit="grant-riverbend"]').count() == 1, 'the calendar shows a deadline on its day')
+    pg.click('#calGrid [data-edit="grant-riverbend"]')
+    check(pg.is_visible('#editor'), 'clicking a deadline in the calendar opens the grant')
+    pg.locator('#matRows .mat-done').nth(2).check()
+    pg.click('#addMatBtn'); pg.locator('#matRows .mat-name').last.fill('Fiscal sponsor letter')
+    pg.check('#answers [data-version="version-synopsis-350c"]')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    pg.click('#listViewBtn')
+    check('4 of 6 materials ready' in pg.inner_text('[data-id="grant-riverbend"]') and '1 answer from the library' in pg.inner_text('[data-id="grant-riverbend"]'), 'ticks materials, adds one and links an answer')
+
+    pg.click('#addBtn')
+    pg.fill('#f-funder', 'Test Fund'); pg.fill('#f-deadline', '2027-03-03')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    names = [t.split('\n')[0] for t in pg.locator('#rows .row .nm').all_inner_texts()]
+    check(names[:3] == ['Riverbend Documentary Fund', 'Test Fund', 'Prairie State Arts Board'] and '0 of 4 materials ready' in pg.inner_text('#rows'), 'a new grant starts with the usual materials and sorts by deadline')
+
+    with pg.expect_download() as d:
+        pg.click('#icsBtn')
+    raw = open(d.value.path(), 'rb').read()
+    lines = raw.decode('utf-8').split('\r\n')
+    check(raw.count(b'BEGIN:VEVENT') == 5 and b'Eastgate' not in raw and b'DTSTART;VALUE=DATE:20270212' in raw and raw.count(b'TRIGGER:-P7D') == 3,
+          'calendar file has every deadline but the declined one, with reminders for open applications')
+    check(lines[0] == 'BEGIN:VCALENDAR' and all(len(l.encode()) <= 75 for l in lines) and b'\n' not in raw.replace(b'\r\n', b''), 'calendar file lines are folded and end in CRLF')
+
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    check(rows[0][0] == 'Funder' and rows[1][0] == 'Riverbend Documentary Fund' and rows[1][15] == 'Short synopsis (350 characters)', 'CSV lists grants with the answers used')
+
+    pg.click('[data-edit="grant-eastgate"]'); pg.click('#deleteBtn'); pg.wait_for_timeout(200)
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    check('Test Fund' in pg.inner_text('#report') and 'Eastgate' not in pg.inner_text('#report'), 'prints the list')
+    data = saved_project(pg, fake)
+    rb = next(g for g in data['grants'] if g['id'] == 'grant-riverbend')
+    check(len(data['grants']) == 5 and rb['materials'][2] == {'name': 'Work sample, 10 minutes', 'done': True} and rb['materials'][-1] == {'name': 'Fiscal sponsor letter'}, 'grants are saved')
+    versions = {v['id']: v for a in data['narratives'] for v in a['versions']}
+    check({'grantId': 'grant-riverbend'}.items() <= versions['version-synopsis-350c']['uses'][0].items(), 'the linked answer is recorded on the library version')
+    check(versions['version-logline-150c']['uses'][0] == {'funder': 'Eastgate Film Initiative: Development lab', 'date': '2026-05-29'}, 'removing a grant keeps the record of what was sent, by funder name')
+    original = json.loads(sample)
+    check(data['people'] == original['people'] and data['treatment'] == original['treatment'] and data['comps'] == original['comps'], "other tools' data is unchanged")
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+def test_narrative_library(browser, fake):
+    ctx, pg, errs = new_page(browser, 'narrative-library', fake)
+    open_sample(pg, fake)
+    check(pg.locator('#rows .row').count() == 4 and '1 version over the limit' in pg.inner_text('#count') and '379 of 350 characters, 29 over' in pg.inner_text('#rows'), 'lists answers and flags a version over its limit')
+    check('Northern Light Media Foundation' in pg.inner_text('#sentList'), 'shows what was sent recently')
+
+    pg.click('[data-edit="narrative-synopsis"]')
+    box = pg.locator('[data-vid="version-synopsis-350c"]')
+    box.locator('.v-text').fill('A schoolteacher, a levee man and a grandson remember three floods as the river rises again.')
+    check('of 350 characters' in box.locator('.v-count').inner_text() and 'over' not in box.locator('.v-count').inner_text(), 'counts as you type')
+    pg.click('#addVersionBtn')
+    new = pg.locator('#versions .v-edit').last
+    new.locator('.v-limit').fill('20')
+    check('69 of 20 words, 49 over' in new.locator('.v-count').inner_text(), 'a new version starts from the longest text and shows how far over it is')
+    new.locator('.v-text').fill('A town remembers three floods.')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check('over the limit' not in pg.inner_text('#count') and '5 of 20 words' in pg.inner_text('#rows'), 'saves the edited and the new version')
+
+    check(pg.is_visible('#treatmentBtn'), 'offers sections of the treatment not in the library yet')
+    pg.click('#treatmentBtn'); pg.wait_for_timeout(200)
+    check(pg.locator('#rows .row').count() == 5 and 'Access' in pg.inner_text('#rows') and not pg.is_visible('#treatmentBtn'), 'adds them from the treatment')
+
+    pg.click('#addBtn')
+    pg.fill('#f-title', 'Budget narrative')
+    pg.locator('#versions .v-limit').first.fill('250'); pg.locator('#versions .v-text').first.fill('We are raising the last third of the budget.')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check('9 of 250 words' in pg.inner_text('#rows'), 'adds an answer')
+
+    pg.click('#setBtn')
+    pg.select_option('#setGrant', 'grant-riverbend')
+    pg.select_option('#setList [data-answer="narrative-logline"]', 'version-logline-25w')
+    pg.select_option('#setList [data-answer="narrative-impact"]', 'version-impact-150w')
+    out = pg.input_value('#setOut')
+    check(out.startswith('Logline (25 words)\n\nWhen the river') and 'Impact statement (150 words)' in out, 'pulls together the picked versions for one application')
+    pg.click('#setCopyBtn'); pg.wait_for_timeout(200)
+    check('Copied' in pg.inner_text('#toast'), 'copies the set')
+    with pg.expect_download() as d:
+        pg.click('#setTxtBtn')
+    check(d.value.suggested_filename.endswith('riverbend-documentary-fund.txt') and 'Impact statement (150 words)' in open(d.value.path(), encoding='utf-8').read(), 'downloads the set as text')
+    pg.fill('#setDate', '2027-02-10')
+    pg.click('#setRecordBtn'); pg.wait_for_timeout(200)
+    pg.select_option('#setList [data-answer="narrative-logline"]', 'version-logline-150c')
+    pg.click('#setRecordBtn'); pg.wait_for_timeout(200)
+    pg.select_option('#setGrant', '')
+    pg.fill('#setFunder', 'Station pitch')
+    pg.select_option('#setList [data-answer="narrative-bio-ana"]', 'version-bio-ana-50w')
+    pg.click('#setRecordBtn'); pg.wait_for_timeout(200)
+    pg.click('#setClose')
+    check('Station pitch' in pg.inner_text('#sentList'), 'notes a set sent to a funder outside the grant calendar')
+
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    check(rows[0][:3] == ['Answer', 'Version', 'Limit'] and len(rows) == 1 + 9 and any(r[0] == 'Logline' and 'Riverbend Documentary Fund' in r[9] for r in rows), 'CSV lists every version with where it was sent')
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    check('Budget narrative' in pg.inner_text('#report') and 'Access' in pg.inner_text('#report'), 'prints every answer')
+
+    data = saved_project(pg, fake)
+    versions = {v['id']: v for a in data['narratives'] for v in a['versions']}
+    rb = lambda vid: [u for u in versions[vid].get('uses', []) if u.get('grantId') == 'grant-riverbend']
+    check(rb('version-logline-150c') == [{'grantId': 'grant-riverbend', 'date': '2027-02-10'}] and rb('version-logline-25w') == [] and len(rb('version-impact-150w')) == 1,
+          'one version of each answer per application: sending another length replaces the first')
+    check(versions['version-bio-ana-50w']['uses'] == [{'funder': 'Station pitch', 'date': '2027-02-10'}], 'a funder outside the calendar is saved by name')
+    check(versions['version-synopsis-350c']['updated'] != '2026-10-20' and versions['version-synopsis-100w']['updated'] == '2026-09-15', 'only changed versions get a new date')
+    original = json.loads(sample)
+    check(data['grants'] == original['grants'] and data['treatment'] == original['treatment'] and data['people'] == original['people'], "other tools' data is unchanged")
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
 def test_template_columns(browser, fake):
     for name, template in TEMPLATE_EXPORTS:
         ctx, pg, errs = new_page(browser, name, fake)
@@ -718,6 +857,10 @@ def main():
         test_treatment_builder(browser, fake)
         print('== pitch-deck / slides, images and print sizes')
         test_pitch_deck(browser, fake)
+        print('== grant-calendar / deadlines, materials, calendar file and links')
+        test_grant_calendar(browser, fake)
+        print('== narrative-library / counts, versions, sets and who got what')
+        test_narrative_library(browser, fake)
         print('== templates / columns match the tools\' exports')
         test_template_columns(browser, fake)
         browser.close()

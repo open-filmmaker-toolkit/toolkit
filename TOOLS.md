@@ -1,6 +1,6 @@
 # Tools
 
-The tools we build, by production phase. Each one is a single page that runs in your browser on the shared project file, with nothing to install and nothing sent anywhere. 11 are ready to use and 51 are planned.
+The tools we build, by production phase. Each one is a single page that runs in your browser on the shared project file, with nothing to install and nothing sent anywhere. 13 are ready to use and 49 are planned.
 
 - **Ready to use:** linked tools. Each has a README with what it does.
 - **Planned:** each has an issue. Comment there if you need the tool or want to help build it. Order of work is in [ROADMAP.md](ROADMAP.md).
@@ -22,8 +22,8 @@ Looking for other free, open-source software for filmmaking, such as editing, so
 
 | Tool | Use it for | Status |
 | --- | --- | --- |
-| Grant calendar | See every grant and fund deadline in one place, with what each application needs and where it stands. | Planned, [#46](https://github.com/open-filmmaker-toolkit/toolkit/issues/46) |
-| Grant narrative library | Keep reusable application answers, such as the logline, synopsis, impact statement, budget narrative and bios, in the lengths funders ask for. | Planned, [#47](https://github.com/open-filmmaker-toolkit/toolkit/issues/47) |
+| [Grant calendar](tools/grant-calendar/) | Seeing every grant and fund deadline in one place, with what each application needs and where it stands, and sending the deadlines to your calendar | First version |
+| [Grant narrative library](tools/narrative-library/) | Keeping your application answers in every length funders ask for, with live counts, and noting which funder got which version | First version |
 | Funder-format budget converter | Turn one production budget into the categories and layouts different funders ask for. | Planned, [#48](https://github.com/open-filmmaker-toolkit/toolkit/issues/48) |
 | Finance plan | Show how the film gets paid for: grants, equity, presales, in-kind support and deferrals, against the budget. | Planned, [#49](https://github.com/open-filmmaker-toolkit/toolkit/issues/49) |
 | Funder CRM | Keep track of relationships with foundations, funders, investors and broadcasters: who you've talked to, what you asked for, and what's next. | Planned, [#50](https://github.com/open-filmmaker-toolkit/toolkit/issues/50) |
