@@ -1,6 +1,6 @@
 # Tools
 
-The tools we build, by production phase. Each one is a single page that runs in your browser on the shared project file, with nothing to install and nothing sent anywhere. 13 are ready to use and 49 are planned.
+The tools we build, by production phase. Each one is a single page that runs in your browser on the shared project file, with nothing to install and nothing sent anywhere. 16 are ready to use and 46 are planned.
 
 - **Ready to use:** linked tools. Each has a README with what it does.
 - **Planned:** each has an issue. Comment there if you need the tool or want to help build it. Order of work is in [ROADMAP.md](ROADMAP.md).
@@ -24,15 +24,15 @@ Looking for other free, open-source software for filmmaking, such as editing, so
 | --- | --- | --- |
 | [Grant calendar](tools/grant-calendar/) | Seeing every grant and fund deadline in one place, with what each application needs and where it stands, and sending the deadlines to your calendar | First version |
 | [Grant narrative library](tools/narrative-library/) | Keeping your application answers in every length funders ask for, with live counts, and noting which funder got which version | First version |
-| Funder-format budget converter | Turn one production budget into the categories and layouts different funders ask for. | Planned, [#48](https://github.com/open-filmmaker-toolkit/toolkit/issues/48) |
-| Finance plan | Show how the film gets paid for: grants, equity, presales, in-kind support and deferrals, against the budget. | Planned, [#49](https://github.com/open-filmmaker-toolkit/toolkit/issues/49) |
+| [Funder-format budget converter](tools/budget-converter/) | Turning your budget into the categories each funder asks for, flagging what doesn't map, and saving the mapping for next time | First version |
+| [Finance plan](tools/finance-plan/) | Showing how the film gets paid for, against the budget: the gap still to raise and when the money arrives | First version |
 | Funder CRM | Keep track of relationships with foundations, funders, investors and broadcasters: who you've talked to, what you asked for, and what's next. | Planned, [#50](https://github.com/open-filmmaker-toolkit/toolkit/issues/50) |
 
 ## Pre-Production
 
 | Tool | Use it for | Status |
 | --- | --- | --- |
-| Budget (top sheet and detail) | Build a documentary or indie budget with detail lines that roll up to a top sheet. | Planned, [#51](https://github.com/open-filmmaker-toolkit/toolkit/issues/51) |
+| [Budget (top sheet and detail)](tools/budget/) | Building a documentary or indie budget with detail lines, fringes and contingency that roll up to a top sheet, with versions to compare | First version |
 | Cash flow | Plan when money goes out and comes in, week by week or month by month. | Planned, [#52](https://github.com/open-filmmaker-toolkit/toolkit/issues/52) |
 | Shooting calendar | Plan shoot days across weeks or months, for a production that shoots in bursts: who's needed, where, and what you're filming. | Planned, [#53](https://github.com/open-filmmaker-toolkit/toolkit/issues/53) |
 | Interview prep | Prepare for interviews: research notes, questions in order, and what each interview has to cover. | Planned, [#54](https://github.com/open-filmmaker-toolkit/toolkit/issues/54) |

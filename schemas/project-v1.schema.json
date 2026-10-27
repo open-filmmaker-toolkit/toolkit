@@ -104,6 +104,35 @@
         "$ref": "#/$defs/narrative"
       },
       "description": "Reusable grant application answers in versions by length, kept by the grant narrative library."
+    },
+    "budget": {
+      "$ref": "#/$defs/budget",
+      "description": "The production budget, kept by the budget tool. A record rather than a collection."
+    },
+    "budgetFormats": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/budgetFormat"
+      },
+      "description": "Funder budget formats and how the budget maps to them, kept by the budget converter."
+    },
+    "financePlan": {
+      "type": "object",
+      "properties": {
+        "budgetTotal": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Used when the project has no budget."
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/financeSource"
+          }
+        }
+      },
+      "additionalProperties": true,
+      "description": "Where the money comes from, kept by the finance plan. A record rather than a collection."
     }
   },
   "additionalProperties": true,
@@ -1347,6 +1376,300 @@
                   "additionalProperties": true
                 },
                 "description": "Who this version was sent to, and when: a grant in grants, or a funder by name."
+              }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "budgetAccount": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "code": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "section": {
+          "type": "string",
+          "enum": [
+            "atl",
+            "production",
+            "post",
+            "other"
+          ]
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "budgetLine": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "accountId": {
+          "$ref": "#/$defs/id"
+        },
+        "description": {
+          "type": "string"
+        },
+        "quantity": {
+          "type": "number"
+        },
+        "unit": {
+          "type": "string"
+        },
+        "multiplier": {
+          "type": "number",
+          "description": "Such as the number of people. Defaults to 1."
+        },
+        "rate": {
+          "type": "number"
+        },
+        "fringeId": {
+          "$ref": "#/$defs/id"
+        }
+      },
+      "additionalProperties": true
+    },
+    "budgetRate": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string"
+        },
+        "percent": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": true
+    },
+    "budget": {
+      "type": "object",
+      "properties": {
+        "accounts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/budgetAccount"
+          }
+        },
+        "lines": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/budgetLine"
+          }
+        },
+        "fringes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/budgetRate"
+          },
+          "description": "Percentages of the lines they're applied to."
+        },
+        "markups": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/budgetRate"
+          },
+          "description": "Percentages of all lines plus fringes, such as contingency and insurance."
+        },
+        "versions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "accounts": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/budgetAccount"
+                }
+              },
+              "lines": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/budgetLine"
+                }
+              },
+              "fringes": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/budgetRate"
+                },
+                "description": "Percentages of the lines they're applied to."
+              },
+              "markups": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/budgetRate"
+                },
+                "description": "Percentages of all lines plus fringes, such as contingency and insurance."
+              },
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "label": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "additionalProperties": true
+          },
+          "description": "Saved copies of the budget to compare against."
+        }
+      },
+      "additionalProperties": true
+    },
+    "budgetFormat": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string"
+        },
+        "grantId": {
+          "$ref": "#/$defs/id"
+        },
+        "notes": {
+          "type": "string"
+        },
+        "categories": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "accountMap": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Account id to category id; an empty string means left out."
+        },
+        "lineMap": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Line id to category id, overriding its account."
+        },
+        "markupMap": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "fringeTo": {
+          "type": "string",
+          "description": "\"line\" to keep fringes with their lines, a category id, or an empty string to leave them out."
+        }
+      },
+      "additionalProperties": true
+    },
+    "financeSource": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "grant",
+            "equity",
+            "presale",
+            "in-kind",
+            "deferral",
+            "loan",
+            "donation",
+            "other"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "confirmed",
+            "pending",
+            "prospective"
+          ]
+        },
+        "amount": {
+          "type": "number",
+          "minimum": 0
+        },
+        "terms": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        },
+        "grantId": {
+          "$ref": "#/$defs/id",
+          "description": "A grant in grants; the source then follows its status and amount."
+        },
+        "payments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "date": {
+                "type": "string",
+                "format": "date"
+              },
+              "amount": {
+                "type": "number",
+                "minimum": 0
               }
             },
             "additionalProperties": true

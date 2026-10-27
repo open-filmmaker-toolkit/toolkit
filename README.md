@@ -72,6 +72,9 @@ The toolkit has two halves:
 | [Pitch deck builder](tools/pitch-deck/) | Putting together a pitch deck or lookbook from your project and your own stills, for screen or print | First version |
 | [Grant calendar](tools/grant-calendar/) | Seeing every grant and fund deadline in one place, with what each application needs and where it stands, and sending the deadlines to your calendar | First version |
 | [Grant narrative library](tools/narrative-library/) | Keeping your application answers in every length funders ask for, with live counts, and noting which funder got which version | First version |
+| [Budget converter](tools/budget-converter/) | Turning your budget into the categories each funder asks for, flagging what doesn't map, and saving the mapping for next time | First version |
+| [Finance plan](tools/finance-plan/) | Showing how the film gets paid for, against the budget: the gap still to raise and when the money arrives | First version |
+| [Budget](tools/budget/) | Building a documentary or indie budget with detail lines, fringes and contingency that roll up to a top sheet, with versions to compare | First version |
 | [Clearance log](tools/clearance-log/) | Tracking every piece of third-party material until it's cleared, then printing a report for your E&O attorney | First version |
 | [Music cue sheet](tools/music-cue-sheet/) | Building the music cue sheet your distributor or broadcaster needs, from the music already in your clearance log | First version |
 | [Call sheet](tools/call-sheet/) | Building shoot-day call sheets from the people and locations in your project; weather lookup is optional and off until you click it | First version |
@@ -108,6 +111,9 @@ toolkit/
 |   |-- pitch-deck/
 |   |-- grant-calendar/
 |   |-- narrative-library/
+|   |-- budget/
+|   |-- budget-converter/
+|   |-- finance-plan/
 |   |-- comps-tracker/
 |   |-- treatment-builder/
 |   |-- clearance-log/
