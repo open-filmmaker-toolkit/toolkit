@@ -97,6 +97,9 @@ def make_driver(browser, dark=False):
         opts.add_argument('-headless')
         if dark:
             opts.set_preference('ui.systemUsesDarkTheme', 1)
+            # Headless Firefox takes its window size from these; resizing later doesn't go below desktop size.
+            opts.add_argument('--width=390')
+            opts.add_argument('--height=844')
         return webdriver.Firefox(options=opts)
     if browser == 'safari':
         return webdriver.Safari()
