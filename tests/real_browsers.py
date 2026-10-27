@@ -12,8 +12,8 @@ runners, with nothing to download.
 
 Per tool: the page starts, the sample opens, saving produces a project file that
 keeps the sample's data and reopens, the tool's own export downloads, its main
-dialog opens, printing builds the report, and there are no script errors. Firefox
-also checks dark mode and phone width.
+dialog opens, printing builds the report, it fits phone width without sideways
+scrolling, and there are no script errors. Firefox also checks dark mode.
 """
 import ast, functools, http.server, json, pathlib, socketserver, sys, threading, time
 
@@ -86,6 +86,19 @@ def serve():
     class Quiet(http.server.SimpleHTTPRequestHandler):
         def log_message(self, *args):
             pass
+        def do_GET(self):
+            # /__phone/<tool> shows the tool in a 390px-wide frame: the tool lays out exactly as on a phone.
+            if self.path.startswith('/__phone/'):
+                tool = self.path.split('/')[2]
+                body = ('<!doctype html><meta charset="utf-8"><body style="margin:0">'
+                        '<iframe id="f" src="/tools/%s/index.html" style="width:390px;height:844px;border:0"></iframe>' % tool).encode()
+                self.send_response(200)
+                self.send_header('Content-Type', 'text/html; charset=utf-8')
+                self.send_header('Content-Length', str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return
+            super().do_GET()
     handler = functools.partial(Quiet, directory=str(root))
     httpd = socketserver.TCPServer(('127.0.0.1', 0), handler)
     threading.Thread(target=httpd.serve_forever, daemon=True).start()
@@ -97,9 +110,6 @@ def make_driver(browser, dark=False):
         opts.add_argument('-headless')
         if dark:
             opts.set_preference('ui.systemUsesDarkTheme', 1)
-            # Headless Firefox takes its window size from these; resizing later doesn't go below desktop size.
-            opts.add_argument('--width=390')
-            opts.add_argument('--height=844')
         return webdriver.Firefox(options=opts)
     if browser == 'safari':
         return webdriver.Safari()
@@ -184,21 +194,27 @@ def luminance(css):
     ch = lambda v: (v / 255) / 12.92 if v / 255 <= 0.03928 else ((v / 255 + 0.055) / 1.055) ** 2.4
     return 0.2126 * ch(nums[0]) + 0.7152 * ch(nums[1]) + 0.0722 * ch(nums[2])
 
-def test_dark_and_phone(base, browser):
+def test_phone(driver, base, name):
+    driver.get('%s/__phone/%s' % (base, name))
+    driver.switch_to.frame(driver.find_element(By.ID, 'f'))
+    try:
+        wait_for(lambda: driver.execute_script("return document.readyState === 'complete'"))
+        driver.execute_script(HOOKS)
+        open_project(driver, sample_text)
+        width = driver.execute_script('return window.innerWidth')
+        over = driver.execute_script('return document.documentElement.scrollWidth - document.documentElement.clientWidth')
+        check(width <= 400 and over <= 1, '%s: at phone width (%dpx) nothing scrolls sideways (%dpx over)' % (name, width, over))
+    finally:
+        driver.switch_to.default_content()
+
+def test_dark(base, browser):
     driver = make_driver(browser, dark=True)
     try:
-        driver.set_window_size(390, 844)
         for name in TOOLS:
             load(driver, base, name)
             open_project(driver, sample_text)
             bg = driver.execute_script('return getComputedStyle(document.body).backgroundColor')
             check(luminance(bg) < 0.2, '%s: dark mode background is dark (%s)' % (name, bg))
-            width = driver.execute_script('return window.innerWidth')
-            if width <= 440:
-                over = driver.execute_script('return document.documentElement.scrollWidth - document.documentElement.clientWidth')
-                check(over <= 1, '%s: phone width (%dpx) does not scroll sideways (%dpx over)' % (name, width, over))
-            else:
-                print('SKIP %s: the window could not be made phone-sized (%dpx)' % (name, width))
     finally:
         driver.quit()
 
@@ -213,15 +229,16 @@ def main():
         print('#### %s' % version, flush=True)
         driver.set_window_size(1280, 900)
         for name in TOOLS:
-            try:
-                test_tool(driver, base, name)
-            except Exception as exc:  # keep going, so one tool's failure doesn't hide the others
-                check(False, '%s: stopped with %s: %s' % (name, type(exc).__name__, str(exc).splitlines()[0] if str(exc) else ''))
+            for test in (test_tool, test_phone):
+                try:
+                    test(driver, base, name)
+                except Exception as exc:  # keep going, so one failure doesn't hide the rest
+                    check(False, '%s: %s stopped with %s: %s' % (name, test.__name__, type(exc).__name__, str(exc).splitlines()[0] if str(exc) else ''))
     finally:
         driver.quit()
     if browser == 'firefox':
-        print('== dark mode and phone width', flush=True)
-        test_dark_and_phone(base, browser)
+        print('== dark mode', flush=True)
+        test_dark(base, browser)
     httpd.shutdown()
     print('FAILS', fails)
     # A one-line result GitHub shows on the run, so it can be read without the full log.
