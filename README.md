@@ -6,13 +6,13 @@
 </p>
 
 <p align="center">
-  <b>Free tools for the paperwork behind a documentary. No accounts, no cloud, no subscriptions.</b>
+  <b>Free tools for the paperwork behind a documentary or independent film. No accounts, no cloud, no subscriptions.</b>
 </p>
 
 <p align="center">
   <a href="https://github.com/open-filmmaker-toolkit/toolkit/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/open-filmmaker-toolkit/toolkit/actions/workflows/ci.yml/badge.svg" /></a>
   <a href="https://github.com/open-filmmaker-toolkit/toolkit/actions/workflows/dco.yml"><img alt="DCO" src="https://github.com/open-filmmaker-toolkit/toolkit/actions/workflows/dco.yml/badge.svg" /></a>
-  <img alt="Status: pre-launch" src="https://img.shields.io/badge/status-pre--launch-d29922" />
+  <img alt="Status: early release" src="https://img.shields.io/badge/status-early%20release-d29922" />
   <a href="#licenses"><img alt="License: GPL-3.0 and CC BY-SA 4.0" src="https://img.shields.io/badge/license-GPL--3.0%20%7C%20CC%20BY--SA%204.0-blue" /></a>
   <img alt="Runs offline" src="https://img.shields.io/badge/runs-offline-2ea44f" />
   <img alt="No dependencies" src="https://img.shields.io/badge/dependencies-none-2ea44f" />
@@ -25,7 +25,7 @@ Free, open-source tools and templates for documentary and independent narrative 
 
 ![One project file shared by the clearance log and the music cue sheet](docs/assets/demo-preview.svg)
 
-> **Status:** Pre-launch. This repository is private until we launch. Curious where this is headed? See the [**Roadmap**](ROADMAP.md).
+> **Status:** Early release. Every tool is a first version, so expect rough edges, and tell us what's broken or missing from the [new issue page](https://github.com/open-filmmaker-toolkit/toolkit/issues/new/choose). Where it's headed: the [**Roadmap**](ROADMAP.md).
 
 ## Contents
 
@@ -63,39 +63,39 @@ The toolkit has two halves:
 
 ## The tools
 
-| Tool | Use it for | Status |
+| Tool | Phase | Use it for |
 | --- | --- | --- |
-| [Subject tracker](tools/subject-tracker/) | Keeping track of the people you might film, where access stands and when to follow up, then adding them to your project | First version |
-| [Research and archival log](tools/research-log/) | Logging archival leads and research sources as you find them, and sending leads to the clearance log when they're ready | First version |
-| [Comps tracker](tools/comps-tracker/) | Tracking comparable films for pitches and sales, with a source for every figure, and printing a comps page | First version |
-| [Treatment builder](tools/treatment-builder/) | Writing a treatment section by section, with word counts against your targets and versions you can compare | First version |
-| [Pitch deck builder](tools/pitch-deck/) | Putting together a pitch deck or lookbook from your project and your own stills, for screen or print | First version |
-| [Grant calendar](tools/grant-calendar/) | Seeing every grant and fund deadline in one place, with what each application needs and where it stands, and sending the deadlines to your calendar | First version |
-| [Grant narrative library](tools/narrative-library/) | Keeping your application answers in every length funders ask for, with live counts, and noting which funder got which version | First version |
-| [Budget converter](tools/budget-converter/) | Turning your budget into the categories each funder asks for, flagging what doesn't map, and saving the mapping for next time | First version |
-| [Finance plan](tools/finance-plan/) | Showing how the film gets paid for, against the budget: the gap still to raise and when the money arrives | First version |
-| [Funder CRM](tools/funder-crm/) | Keeping track of funders, investors and broadcasters: the people you know there, every meeting, call and email, and the next step with each | First version |
-| [Budget](tools/budget/) | Building a documentary or indie budget with detail lines, fringes and contingency that roll up to a top sheet, with versions to compare | First version |
-| [Cash flow](tools/cash-flow/) | Planning when money goes out and comes in, month by month or week by week, from the budget and the finance plan, and seeing where the balance runs short | First version |
-| [Shooting calendar](tools/shooting-calendar/) | Planning shoot days, travel days and holds across weeks or months, with who's needed and where, and starting each day's call sheet | First version |
-| [Interview prep](tools/interview-prep/) | Preparing each interview: research, the story beats to cover, questions in order with must-asks marked, and a one-page guide to print | First version |
-| [Clearance log](tools/clearance-log/) | Tracking every piece of third-party material until it's cleared, then printing a report for your E&O attorney | First version |
-| [Music cue sheet](tools/music-cue-sheet/) | Building the music cue sheet your distributor or broadcaster needs, from the music already in your clearance log | First version |
-| [Call sheet](tools/call-sheet/) | Building shoot-day call sheets from the people and locations in your project; weather lookup is optional and off until you click it | First version |
-| [Release tracker](tools/release-tracker/) | Tracking who signed what: appearance, location and materials releases, with the signed copies, and flagging anyone on camera with no release on file | First version |
-| [Name supers list](tools/name-supers/) | Keeping on-screen names and titles spelled the way the rest of your project spells them, and showing graphics what changed since their last list | First version |
-| [Credits builder](tools/credits-builder/) | Building end credits from the people, music and archival material in your project, checking that every credit your contracts require is there, and exporting the crawl as text | First version |
+| [Subject tracker](tools/subject-tracker/) | Development | Keeping track of the people you might film, where access stands and when to follow up, then adding them to your project |
+| [Research and archival log](tools/research-log/) | Development | Logging archival leads and research sources as you find them, and sending leads to the clearance log when they're ready |
+| [Comps tracker](tools/comps-tracker/) | Development | Tracking comparable films for pitches and sales, with a source for every figure, and printing a comps page |
+| [Treatment builder](tools/treatment-builder/) | Development | Writing a treatment section by section, with word counts against your targets and versions you can compare |
+| [Pitch deck builder](tools/pitch-deck/) | Development | Putting together a pitch deck or lookbook from your project and your own stills, for screen or print |
+| [Grant calendar](tools/grant-calendar/) | Funding | Seeing every grant and fund deadline in one place, with what each application needs and where it stands, and sending the deadlines to your calendar |
+| [Grant narrative library](tools/narrative-library/) | Funding | Keeping your application answers in every length funders ask for, with live counts, and noting which funder got which version |
+| [Budget converter](tools/budget-converter/) | Funding | Turning your budget into the categories each funder asks for, flagging what doesn't map, and saving the mapping for next time |
+| [Finance plan](tools/finance-plan/) | Funding | Showing how the film gets paid for, against the budget: the gap still to raise and when the money arrives |
+| [Funder CRM](tools/funder-crm/) | Funding | Keeping track of funders, investors and broadcasters: the people you know there, every meeting, call and email, and the next step with each |
+| [Budget](tools/budget/) | Pre-production | Building a documentary or indie budget with detail lines, fringes and contingency that roll up to a top sheet, with versions to compare |
+| [Cash flow](tools/cash-flow/) | Pre-production | Planning when money goes out and comes in, month by month or week by week, from the budget and the finance plan, and seeing where the balance runs short |
+| [Shooting calendar](tools/shooting-calendar/) | Pre-production | Planning shoot days, travel days and holds across weeks or months, with who's needed and where, and starting each day's call sheet |
+| [Interview prep](tools/interview-prep/) | Pre-production | Preparing each interview: research, the story beats to cover, questions in order with must-asks marked, and a one-page guide to print |
+| [Call sheet](tools/call-sheet/) | Production | Building shoot-day call sheets from the people and locations in your project; weather lookup is optional and off until you click it |
+| [Release tracker](tools/release-tracker/) | Production | Tracking who signed what: appearance, location and materials releases, with the signed copies, and flagging anyone on camera with no release on file |
+| [Name supers list](tools/name-supers/) | Post-production | Keeping on-screen names and titles spelled the way the rest of your project spells them, and showing graphics what changed since their last list |
+| [Music cue sheet](tools/music-cue-sheet/) | Post-production | Building the music cue sheet your distributor or broadcaster needs, from the music already in your clearance log |
+| [Credits builder](tools/credits-builder/) | Post-production | Building end credits from the people, music and archival material in your project, checking that every credit your contracts require is there, and exporting the crawl as text |
+| [Clearance log](tools/clearance-log/) | Legal and clearances | Tracking every piece of third-party material until it's cleared, then printing a report for your E&O attorney |
 
-Everything else we plan to build is listed by production phase in [TOOLS.md](TOOLS.md).
+All 20 are first versions: they work, and they're still changing. Everything else we plan to build is listed by production phase in [TOOLS.md](TOOLS.md).
 
 ## How our tools work
 
 - **Forever free.** No subscriptions, no paid tiers, no "pro" version.
 - **Local-first.** Every tool runs in your browser or on your own machine. No accounts and no cloud. Your project data never leaves your computer.
-- **Works offline.** Tools can be installed from the browser and used on set with no signal.
-- **One shared project file.** All tools read and write the same project: people, locations, third-party elements, contracts. Enter a person once in the release tracker and they show up in your credits, clearance log and chain-of-title binder.
+- **Works offline.** Each tool is one HTML file. Keep a copy on your laptop and it works on set with no signal.
+- **One shared project file.** All tools read and write the same project. Add a person once and they show up in your call sheets, releases, name supers and credits; log an archival clip once and it flows from the research log to the clearance log to the credits.
 - **Your file, your copy.** Projects save as a file on disk that you back up and share however you already do (Drive, Dropbox, a hard drive).
-- **Plain templates too.** Every tool also has a blank spreadsheet or Word [template](templates/) for people who never open the app.
+- **Plain templates too.** Most tools also have a blank spreadsheet or Word [template](templates/) for people who'd rather not use the tool.
 
 ## Shared project file
 
@@ -110,26 +110,6 @@ Documentary and independent narrative filmmakers, producers, coordinators and AD
 ```text
 toolkit/
 |-- tools/                # One folder per tool: index.html plus its own README
-|   |-- subject-tracker/
-|   |-- research-log/
-|   |-- pitch-deck/
-|   |-- grant-calendar/
-|   |-- narrative-library/
-|   |-- budget/
-|   |-- budget-converter/
-|   |-- finance-plan/
-|   |-- funder-crm/
-|   |-- cash-flow/
-|   |-- shooting-calendar/
-|   |-- interview-prep/
-|   |-- comps-tracker/
-|   |-- treatment-builder/
-|   |-- clearance-log/
-|   |-- music-cue-sheet/
-|   |-- call-sheet/
-|   |-- release-tracker/
-|   |-- credits-builder/
-|   `-- name-supers/
 |-- schemas/              # JSON Schema and data model notes for the project file
 |-- samples/              # Fictional sample project to try the tools with
 |-- templates/            # Blank templates for people who don't use the tools

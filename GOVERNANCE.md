@@ -21,7 +21,7 @@ These don't change:
 
 ## Contributions
 
-Once the project is public, contributions will be accepted under a Developer Certificate of Origin (DCO). Contributors keep the copyright to their work. There is no contributor license agreement that assigns copyright to anyone.
+Contributions are accepted under a [Developer Certificate of Origin](CONTRIBUTING.md#sign-off-your-commits) (DCO). Contributors keep the copyright to their work. There is no contributor license agreement that assigns copyright to anyone.
 
 ## Money and the name
 
