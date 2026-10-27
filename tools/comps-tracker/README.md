@@ -56,7 +56,6 @@ A `comps` list. Each comp has an `id`, and optional `title`, `year`, `runtime` (
 ## Not yet
 
 - Comparing comps side by side, or charting their figures
-- A comps slide for the pitch deck builder
 - Importing comps from a spreadsheet
 
 ## License
