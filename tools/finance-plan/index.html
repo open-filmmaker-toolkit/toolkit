@@ -508,6 +508,28 @@ pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; b
     catch (e) { return Number(n).toLocaleString(undefined, { minimumFractionDigits: opts.minimumFractionDigits, maximumFractionDigits: opts.maximumFractionDigits }); }
   }
   const hasBudget = () => !!(doc.budget && typeof doc.budget === 'object' && objs(doc.budget.lines).length);
+  // ---------- Finance plan sources (the same in the finance plan and cash flow) ----------
+  // Kinds that cover costs without cash changing hands.
+  const NON_CASH = ['in-kind', 'deferral'];
+  const fpGrants = () => objs(doc.grants);
+  const fpGrantName = g => [g.funder || 'Unnamed funder', g.program].filter(Boolean).join(': ');
+  // A source linked to the grant calendar follows the grant's status and amount.
+  function sourceView(s) {
+    const g = s.grantId ? fpGrants().find(x => x.id === s.grantId) : null;
+    if (!g) return { name: s.name, amount: num(s.amount), status: s.status, linked: false, lost: !!s.grantId };
+    const status = g.status === 'awarded' ? 'confirmed' : g.status === 'submitted' ? 'pending' : g.status === 'declined' ? 'declined' : 'prospective';
+    const amount = g.status === 'awarded' && g.awarded != null ? num(g.awarded) : num(g.requested != null ? g.requested : s.amount);
+    return { name: s.name || fpGrantName(g), amount, status, linked: true, grant: g };
+  }
+  const sourcePayments = s => objs(s.payments).filter(p => /^\d{4}-\d{2}-\d{2}$/.test(str(p.date)));
+  // Payments as they'll arrive. A linked grant's payments scale to its current amount, so an award smaller than the ask shows smaller payments.
+  function scheduledPayments(s) {
+    const v = sourceView(s);
+    const ps = sourcePayments(s);
+    const paid = ps.reduce((t, p) => t + num(p.amount), 0);
+    const scale = v.linked && paid > 0 ? v.amount / paid : 1;
+    return ps.map(p => ({ date: p.date, amount: cents(num(p.amount) * scale) }));
+  }
 
   const KINDS = [
     { id: 'grant', label: 'Grant' }, { id: 'equity', label: 'Equity' }, { id: 'presale', label: 'Presale or license' },
@@ -515,8 +537,6 @@ pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; b
     { id: 'donation', label: 'Donations' }, { id: 'other', label: 'Other' },
   ];
   const STATUSES = [{ id: 'confirmed', label: 'Confirmed' }, { id: 'pending', label: 'Pending' }, { id: 'prospective', label: 'Prospective' }];
-  // Kinds that cover costs without cash changing hands.
-  const NON_CASH = ['in-kind', 'deferral'];
   const kindLabel = id => (KINDS.find(k => k.id === id) || KINDS[KINDS.length - 1]).label;
   const statusLabel = id => (id === 'declined' ? 'Declined' : (STATUSES.find(s => s.id === id) || STATUSES[2]).label);
   let filter = 'all';
@@ -542,17 +562,9 @@ pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; b
   }
   const entries = () => doc.financePlan.sources;
   const grants = () => objs(doc.grants);
-  const grantOf = s => (s.grantId ? grants().find(g => g.id === s.grantId) : null);
-  const grantName = g => [g.funder || 'Unnamed funder', g.program].filter(Boolean).join(': ');
-  // A source linked to the grant calendar follows the grant's status and amount.
-  function view(s) {
-    const g = grantOf(s);
-    if (!g) return { name: s.name, amount: num(s.amount), status: s.status, linked: false, lost: !!s.grantId };
-    const status = g.status === 'awarded' ? 'confirmed' : g.status === 'submitted' ? 'pending' : g.status === 'declined' ? 'declined' : 'prospective';
-    const amount = g.status === 'awarded' && g.awarded != null ? num(g.awarded) : num(g.requested != null ? g.requested : s.amount);
-    return { name: s.name || grantName(g), amount, status, linked: true, grant: g };
-  }
-  const payments = s => objs(s.payments).filter(p => /^\d{4}-\d{2}-\d{2}$/.test(str(p.date)));
+  const grantName = fpGrantName;
+  const view = sourceView;
+  const payments = sourcePayments;
   const budgetTotal = () => (hasBudget() ? budgetTotals(doc.budget).grand : num(doc.financePlan.budgetTotal));
   const RANK = { confirmed: 0, pending: 1, prospective: 2, declined: 3 };
   const sorted = list => [...list].sort((a, b) => RANK[view(a).status] - RANK[view(b).status] || view(b).amount - view(a).amount || str(view(a).name).localeCompare(str(view(b).name)));
@@ -570,15 +582,12 @@ pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; b
     for (const s of entries()) {
       const v = view(s);
       if (v.status !== 'confirmed' && v.status !== 'pending') continue;
-      const ps = payments(s);
-      const paid = ps.reduce((t, p) => t + num(p.amount), 0);
-      // A linked grant's payments scale to its current amount, so an award smaller than the ask shows smaller payments.
-      const scale = v.linked && paid > 0 ? v.amount / paid : 1;
+      const ps = scheduledPayments(s);
       for (const p of ps) {
         const m = p.date.slice(0, 7);
         months[m] = months[m] || { confirmed: 0, pending: 0, items: [] };
-        months[m][v.status] = cents(months[m][v.status] + num(p.amount) * scale);
-        months[m].items.push(`${v.name}: ${money(num(p.amount) * scale)}`);
+        months[m][v.status] = cents(months[m][v.status] + p.amount);
+        months[m].items.push(`${v.name}: ${money(p.amount)}`);
       }
     }
     let run = 0;

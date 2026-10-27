@@ -130,6 +130,23 @@ for sample in sorted((ROOT / "samples").glob("*.oft.json")):
     for src in plan.get("sources", []):
         if src.get("grantId") and src["grantId"] not in set(grant_ids):
             fail(f"{name}: finance source {src.get('id')} grantId points to a missing grant")
+    funder_ids = [f.get("id") for f in data.get("funders", []) if isinstance(f, dict)]
+    if len(funder_ids) != len(set(funder_ids)):
+        fail(f"{name}: duplicate IDs in funders")
+    for funder in data.get("funders", []):
+        contact_ids = {c.get("id") for c in funder.get("contacts", []) if isinstance(c, dict)}
+        for item in funder.get("interactions", []):
+            if item.get("contactId") and item["contactId"] not in contact_ids:
+                fail(f"{name}: funder {funder.get('id')} interaction {item.get('id')} contactId points to a missing contact")
+        missing = set(funder.get("grantIds", [])) - set(grant_ids)
+        if missing:
+            fail(f"{name}: funder {funder.get('id')} grantIds points to missing grants {sorted(missing)}")
+    cash = data.get("cashFlow") if isinstance(data.get("cashFlow"), dict) else {}
+    for key, part in (("accounts", "accounts"), ("lines", "lines"), ("markups", "markups")):
+        known = {x.get("id") for x in budget.get(part, []) if isinstance(x, dict)}
+        missing = set((cash.get(key) or {}).keys()) - known
+        if missing:
+            fail(f"{name}: cashFlow {key} points to missing budget {part} {sorted(missing)}")
     treatment = data.get("treatment") if isinstance(data.get("treatment"), dict) else {}
     version_ids = [v.get("id") for v in treatment.get("versions", []) if isinstance(v, dict)]
     if len(version_ids) != len(set(version_ids)):

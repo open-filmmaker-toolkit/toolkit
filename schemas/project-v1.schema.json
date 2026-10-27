@@ -133,6 +133,65 @@
       },
       "additionalProperties": true,
       "description": "Where the money comes from, kept by the finance plan. A record rather than a collection."
+    },
+    "funders": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/funder"
+      },
+      "description": "Funders, investors, broadcasters and other organizations, with contacts, a log and next steps, kept by the funder CRM."
+    },
+    "cashFlow": {
+      "type": "object",
+      "properties": {
+        "period": {
+          "type": "string",
+          "enum": [
+            "month",
+            "week"
+          ]
+        },
+        "openingBalance": {
+          "type": "number"
+        },
+        "start": {
+          "type": "string",
+          "format": "date"
+        },
+        "end": {
+          "type": "string",
+          "format": "date"
+        },
+        "includePending": {
+          "type": "boolean"
+        },
+        "includeProspective": {
+          "type": "boolean"
+        },
+        "accounts": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/cashSchedule"
+          },
+          "description": "Budget account id to when it's paid."
+        },
+        "lines": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/cashSchedule"
+          },
+          "description": "Budget line id to when it's paid, overriding its account."
+        },
+        "markups": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/cashSchedule"
+          },
+          "description": "Budget percentage id to when it's paid."
+        }
+      },
+      "additionalProperties": true,
+      "description": "When the budget's costs are paid, kept by the cash flow tool. A record rather than a collection."
     }
   },
   "additionalProperties": true,
@@ -1677,6 +1736,183 @@
         }
       },
       "additionalProperties": true
+    },
+    "funder": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "foundation",
+            "government",
+            "broadcaster",
+            "investor",
+            "distributor",
+            "company",
+            "individual",
+            "other"
+          ]
+        },
+        "stage": {
+          "type": "string",
+          "enum": [
+            "prospect",
+            "talking",
+            "funding",
+            "passed"
+          ]
+        },
+        "website": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        },
+        "contacts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "name": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string"
+              },
+              "phone": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "interactions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "date": {
+                "type": "string",
+                "format": "date"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "meeting",
+                  "call",
+                  "email",
+                  "event",
+                  "other"
+                ]
+              },
+              "contactId": {
+                "$ref": "#/$defs/id"
+              },
+              "note": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "nextSteps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "due": {
+                "type": "string",
+                "format": "date"
+              },
+              "text": {
+                "type": "string"
+              },
+              "done": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "grantIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true,
+          "description": "Applications in grants."
+        }
+      },
+      "additionalProperties": true
+    },
+    "cashSchedule": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "mode"
+          ],
+          "properties": {
+            "mode": {
+              "const": "spread"
+            },
+            "from": {
+              "type": "string",
+              "format": "date"
+            },
+            "to": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          "additionalProperties": true
+        },
+        {
+          "type": "object",
+          "required": [
+            "mode"
+          ],
+          "properties": {
+            "mode": {
+              "enum": [
+                "deferred",
+                "in-kind"
+              ]
+            }
+          },
+          "additionalProperties": true
+        }
+      ]
     }
   }
 }
