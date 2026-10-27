@@ -12,10 +12,20 @@ body:
     attributes:
       label: Where is the problem?
       options:
+        - Subject tracker
+        - Research and archival log
+        - Comps tracker
+        - Treatment builder
+        - Pitch deck and lookbook builder
         - Clearance log
         - Music cue sheet
+        - Call sheet
+        - Release tracker
+        - Name supers list
+        - Credits builder
         - A template or form
-        - The tool directory (TOOLS.md)
+        - The tool list (TOOLS.md)
+        - The directory of other open-source tools
         - Something else
     validations:
       required: true
