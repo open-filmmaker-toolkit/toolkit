@@ -44,7 +44,11 @@ Free, open-source tools and templates for documentary and independent narrative 
 
 ## Quick start
 
-1. Clone the repo:
+The easiest way in is the [toolkit's home page](https://open-filmmaker-toolkit.github.io/toolkit/): every tool, by stage of production, with how they connect. Click a tool to use it in your browser.
+
+To use the tools offline, or to work on them:
+
+1. Clone the repo, or [download it as a ZIP](https://github.com/open-filmmaker-toolkit/toolkit/archive/refs/heads/main.zip):
    ```bash
    git clone https://github.com/open-filmmaker-toolkit/toolkit.git
    ```
@@ -52,14 +56,14 @@ Free, open-source tools and templates for documentary and independent narrative 
 3. Click **Open file** and choose [`samples/the-river-keeps.oft.json`](samples/the-river-keeps.oft.json).
 4. Make a change, then save. The same file opens in the [music cue sheet](tools/music-cue-sheet/index.html).
 
-That's it. No install, no build step, no account. Each tool is one self-contained HTML file.
+That's it. No install, no build step, no account. Each tool is one self-contained HTML file. Open [`index.html`](index.html) for the home page, which works offline too.
 
 ## What this is
 
 The toolkit has two halves:
 
 1. **Tools we build to fill the gaps,** especially the paperwork that runs on hand-built spreadsheets today: clearances, releases, rights, funding and impact. All of them, built and planned, are listed by production phase in [TOOLS.md](TOOLS.md).
-2. **A directory of other people's open-source tools,** sorted by production phase, so filmmakers don't pay for what's already free. See [Other open-source tools](docs/other-tools.md). It will move to the toolkit's website when there is one.
+2. **A directory of other people's open-source tools,** sorted by production phase, so filmmakers don't pay for what's already free. See [Other open-source tools](docs/other-tools.md), also linked from the home page.
 
 ## The tools
 
@@ -109,6 +113,7 @@ Documentary and independent narrative filmmakers, producers, coordinators and AD
 
 ```text
 toolkit/
+|-- index.html            # The home page: every tool by stage, how they connect, search
 |-- tools/                # One folder per tool: index.html plus its own README
 |-- schemas/              # JSON Schema and data model notes for the project file
 |-- samples/              # Fictional sample project to try the tools with
@@ -127,7 +132,7 @@ toolkit/
 
 ## Validation
 
-CI checks the project schema against the sample files, that IDs and references in samples resolve, that every tool has a README and makes no network requests, and that templates are plain spreadsheets or Word files with no macros or external links. Run the same check locally:
+CI checks the project schema against the sample files, that IDs and references in samples resolve, that every tool has a README and makes no network requests, that the home page lists every tool just as TOOLS.md does, and that templates are plain spreadsheets or Word files with no macros or external links. Run the same check locally:
 
 ```bash
 python3 -m pip install jsonschema

@@ -18,7 +18,7 @@ Each milestone below is a [GitHub milestone](https://github.com/open-filmmaker-t
 - [x] Add a one-line "use it for" note to each entry ([#10](https://github.com/open-filmmaker-toolkit/toolkit/issues/10))
 - [x] Remove anything unmaintained or not actually open source ([#11](https://github.com/open-filmmaker-toolkit/toolkit/issues/11))
 - [x] Move the directory of other people's tools to [its own page](docs/other-tools.md), so [TOOLS.md](TOOLS.md) lists only the tools we build
-- [ ] A website (GitHub Pages) that shows our tools and the directory of other tools
+- [x] A home page that shows our tools by stage, how they connect, search, and the directory of other tools: [`index.html`](index.html), served by GitHub Pages once Pages is turned on
 - [ ] Make the repo public ([#12](https://github.com/open-filmmaker-toolkit/toolkit/issues/12))
 
 ## Milestone 2: The shared project file
@@ -43,6 +43,15 @@ Three tools on one data model. This is the documentary-specific gap.
 - [x] Call sheet built from the project's people and locations ([#21](https://github.com/open-filmmaker-toolkit/toolkit/issues/21)), first version with optional online weather lookup
 - [x] Plain template version ([#22](https://github.com/open-filmmaker-toolkit/toolkit/issues/22)): spreadsheet export and a blank [template](templates/call-sheet-template.csv). Printing to PDF works from the browser's print dialog
 - [ ] Import an Analyze Video report (timestamps and frames) into a project's footage log or research notes. This lives in the [Analyze-Video-Skill repo](https://github.com/evillollive/Analyze-Video-Skill) ([tracked there](https://github.com/evillollive/Analyze-Video-Skill/issues/22)), not here: it writes a project file the toolkit tools already read
+
+## Milestone 5: The hub
+
+The home page becomes a place to work, not just a list. Each step gets an issue before work starts.
+
+- [x] First version: every tool by stage and phase, workflows that show how the tools connect, search, and planned tools linked to their issues
+- [ ] Open a project once in the hub and move between tools without opening and saving the file in each
+- [ ] Show what's in the open project, such as "14 cues, no clearance items yet", from the tools' own checks
+- [ ] Install the hub as an app for offline use
 
 ## Backlog
 
