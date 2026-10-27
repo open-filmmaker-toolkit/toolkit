@@ -47,5 +47,5 @@ body:
     attributes:
       label: Before you send
       options:
-        - label: I checked [TOOLS.md](https://github.com/open-filmmaker-toolkit/toolkit/blob/main/TOOLS.md) and this isn't already listed.
+        - label: I checked [TOOLS.md](https://github.com/open-filmmaker-toolkit/toolkit/blob/main/TOOLS.md) and this isn't already listed or planned.
           required: false

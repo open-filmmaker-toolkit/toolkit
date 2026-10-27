@@ -58,8 +58,8 @@ That's it. No install, no build step, no account. Each tool is one self-containe
 
 The toolkit has two halves:
 
-1. **A directory of open-source tools that already exist,** sorted by production phase, so filmmakers don't pay for what's already free. See [TOOLS.md](TOOLS.md).
-2. **Tools we build to fill the gaps,** especially the paperwork that runs on hand-built spreadsheets today: clearances, releases, rights, funding and impact.
+1. **Tools we build to fill the gaps,** especially the paperwork that runs on hand-built spreadsheets today: clearances, releases, rights, funding and impact. All of them, built and planned, are listed by production phase in [TOOLS.md](TOOLS.md).
+2. **A directory of other people's open-source tools,** sorted by production phase, so filmmakers don't pay for what's already free. See [Other open-source tools](docs/other-tools.md). It will move to the toolkit's website when there is one.
 
 ## The tools
 
@@ -77,7 +77,7 @@ The toolkit has two halves:
 | [Name supers list](tools/name-supers/) | Keeping on-screen names and titles spelled the way the rest of your project spells them, and showing graphics what changed since their last list | First version |
 | [Credits builder](tools/credits-builder/) | Building end credits from the people, music and archival material in your project, checking that every credit your contracts require is there, and exporting the crawl as text | First version |
 
-Everything else we plan to build is listed by production phase in [TOOLS.md](TOOLS.md#part-2-built-here).
+Everything else we plan to build is listed by production phase in [TOOLS.md](TOOLS.md).
 
 ## How our tools work
 
@@ -116,11 +116,11 @@ toolkit/
 |-- samples/              # Fictional sample project to try the tools with
 |-- templates/            # Blank templates for people who don't use the tools
 |-- tests/                # Browser tests CI runs in Chromium
-|-- docs/assets/          # Logo and preview artwork
+|-- docs/                 # Directory of other open-source tools; logo and artwork in docs/assets/
 |-- .github/
 |   |-- workflows/        # DCO and CI checks
 |   `-- scripts/          # validate_repo.py, the check CI runs
-|-- TOOLS.md              # Directory of existing open-source tools, plus what we build
+|-- TOOLS.md              # Every tool we build or plan to, by production phase
 |-- ROADMAP.md            # Milestones, each linked to its issue
 |-- GOVERNANCE.md         # How decisions get made
 |-- CONTRIBUTING.md       # How to contribute, DCO sign-off, CI practices
