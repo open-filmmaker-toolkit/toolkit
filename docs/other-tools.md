@@ -108,16 +108,6 @@ FilmCraft and the other "Craft" apps are free apps from the team behind ArtCraft
 
 ArtCraft itself is an AI image and video studio. The app is open source, but generating images and video uses cloud AI models, paid with ArtCraft credits or through your own accounts with providers such as Midjourney and Sora. If generated images or video end up in a documentary, log them in your clearance log and tell your E&O attorney.
 
-### Checked and left out
-
-| Tool | Why it isn't listed |
-| --- | --- |
-| Storyboarder | Not open source: released under a proprietary license. No code changes since June 2022 |
-| CineSched and CineSpend | No source code or downloads found. Mac only |
-| Natron | No stable release since November 2022. Blender covers compositing |
-| Offloader | New project with no releases yet. Worth checking again later |
-| Whisper Transcriber Suite | No source code or official project page found |
-| Aegisub, original project | Stopped in 2019. The maintained continuation is listed above |
 
 ## Companions
 
