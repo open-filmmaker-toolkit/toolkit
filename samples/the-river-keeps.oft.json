@@ -912,5 +912,88 @@
       "itemId": "June 3–7, 1985",
       "notes": "Possible title quote; check the rights to quote it on screen"
     }
+  ],
+  "comps": [
+    {
+      "id": "comp-backwater",
+      "title": "Backwater Hymnal",
+      "year": 2024,
+      "runtime": 88,
+      "director": "Ines Calloway",
+      "premiere": "Heartland Documentary Festival, competition",
+      "distributor": "Low Plains Pictures",
+      "platforms": "Limited theatrical, then public television",
+      "figures": [
+        {
+          "label": "Reported sale",
+          "amount": "$350,000",
+          "source": "Fictional trade report, Feb 2024"
+        },
+        {
+          "label": "Broadcast audience",
+          "amount": "1.1 million",
+          "source": "Fictional broadcaster release, Nov 2024"
+        }
+      ],
+      "subjectTags": [
+        "floods",
+        "small towns"
+      ],
+      "styleTags": [
+        "observational"
+      ],
+      "audienceTags": [
+        "public media"
+      ],
+      "why": "A river town documentary with a public media audience and a regional theatrical run.",
+      "inPitch": true
+    },
+    {
+      "id": "comp-seawall",
+      "title": "The Seawall Years",
+      "year": 2022,
+      "runtime": 96,
+      "premiere": "Coastline Film Festival",
+      "distributor": "Fieldhouse Docs",
+      "platforms": "Streaming",
+      "figures": [
+        {
+          "label": "Box office (US)",
+          "amount": "$210,000"
+        }
+      ],
+      "subjectTags": [
+        "climate",
+        "infrastructure"
+      ],
+      "styleTags": [
+        "archival-led"
+      ],
+      "audienceTags": [
+        "streaming"
+      ],
+      "why": "Archival-led story about a community and its flood defenses.",
+      "inPitch": true
+    },
+    {
+      "id": "comp-ledger",
+      "title": "Ledger of the Low Water",
+      "year": 2016,
+      "runtime": 74,
+      "premiere": "Riverbank Docs Week",
+      "distributor": "Self-distributed",
+      "platforms": "Educational and community screenings",
+      "subjectTags": [
+        "floods",
+        "oral history"
+      ],
+      "styleTags": [
+        "archival-led"
+      ],
+      "audienceTags": [
+        "educational"
+      ],
+      "notes": "Strong educational sales; ask the filmmaker about numbers."
+    }
   ]
 }

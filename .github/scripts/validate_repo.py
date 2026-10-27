@@ -89,6 +89,9 @@ for sample in sorted((ROOT / "samples").glob("*.oft.json")):
     for source in data.get("sources", []):
         if source.get("elementId") and source["elementId"] not in ids["thirdPartyElements"]:
             fail(f"{name}: source {source.get('id')} elementId points to a missing third-party element")
+    comp_ids = [item.get("id") for item in data.get("comps", []) if isinstance(item, dict)]
+    if len(comp_ids) != len(set(comp_ids)):
+        fail(f"{name}: duplicate IDs in comps")
     supers = data.get("supers") if isinstance(data.get("supers"), dict) else {}
     super_ids = [entry.get("id") for entry in supers.get("entries", []) if isinstance(entry, dict)]
     if len(super_ids) != len(set(super_ids)):

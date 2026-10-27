@@ -11,7 +11,7 @@ Checks, per tool: opening the sample, saving, all CSV exports, phone width, dark
 mode and print layout. Chromium also covers the save-conflict warning (it has the
 file picker API; its handles are faked in memory) and renders a real PDF.
 chromium-fallback, Firefox and WebKit (Safari's engine) use the download/upload fallback instead.
-The call sheet, release tracker, credits builder, name supers list, subject tracker and research and archival log also get end-to-end checks
+The call sheet, release tracker, credits builder, name supers list, subject tracker, research and archival log and comps tracker also get end-to-end checks
 of their own, and the spreadsheet templates are checked against the tools' exports.
 """
 import csv, io, json, os, pathlib, sys
@@ -19,10 +19,10 @@ from playwright.sync_api import sync_playwright
 
 root = pathlib.Path(__file__).resolve().parents[1]
 sample = (root / 'samples/the-river-keeps.oft.json').read_text()
-TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log']
+TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker']
 COLLECTIONS = ['project', 'people', 'locations', 'thirdPartyElements', 'contracts', 'assets', 'musicCueSheet', 'callSheets']
 PRINT_BTN = {'clearance-log': '#printBtn', 'music-cue-sheet': '#printBtn', 'call-sheet': '#printAllBtn', 'release-tracker': '#printBtn',
-             'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn'}
+             'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn'}
 PHONE = {'width': 390, 'height': 844}
 
 STUB_PRINT = 'window.print = () => { window.__printed = true; };'
@@ -385,7 +385,8 @@ def test_credits_builder(browser, fake):
 # Each spreadsheet template's columns must appear in its tool's CSV export, in the same order.
 TEMPLATE_EXPORTS = [('clearance-log', 'clearance-log-template.csv'), ('release-tracker', 'release-log-template.csv'),
                     ('music-cue-sheet', 'music-cue-sheet-template.csv'), ('name-supers', 'name-supers-template.csv'),
-                    ('subject-tracker', 'subject-tracker-template.csv'), ('research-log', 'research-log-template.csv')]
+                    ('subject-tracker', 'subject-tracker-template.csv'), ('research-log', 'research-log-template.csv'),
+                    ('comps-tracker', 'comps-tracker-template.csv')]
 
 def test_name_supers(browser, fake):
     ctx, pg, errs = new_page(browser, 'name-supers', fake)
@@ -523,6 +524,49 @@ def test_research_log(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
+def test_comps_tracker(browser, fake):
+    ctx, pg, errs = new_page(browser, 'comps-tracker', fake)
+    open_sample(pg, fake)
+    rows = pg.inner_text('#rows')
+    check(pg.locator('#rows .row').count() == 3 and rows.count('No source') == 1, 'lists comps and flags a figure without a source')
+    pg.click('[data-tag="subjectTags:floods"]')
+    check(pg.locator('#rows .row').count() == 2, 'filters by tag')
+    pg.click('[data-tag="subjectTags:floods"]')
+    check('Fewer than three comps' in pg.inner_text('#checks') and 'without a source' in pg.inner_text('#checks'), 'checks the comps page before the pitch')
+    pg.check('[data-pitch="comp-ledger"]'); pg.wait_for_timeout(100)
+    check('Fewer than three' not in pg.inner_text('#checks') and 'more than seven years old' in pg.inner_text('#checks'), 'picking a comp updates the checks')
+
+    pg.click('[data-edit="comp-seawall"]')
+    pg.locator('#figRows .fig-source').first.fill('Fictional box office tracker, 2022')
+    pg.click('#addFigBtn'); pg.locator('#figRows .fig-label').last.fill('Budget'); pg.locator('#figRows .fig-amount').last.fill('$600,000')
+    pg.fill('#f-style', 'archival-led, essay')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check(pg.inner_text('#rows').count('No source') == 1 and 'Style: essay' in pg.inner_text('#rows'), 'adds a figure and a tag; the new unsourced figure is flagged')
+
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    report = pg.inner_text('#report')
+    check('$210,000' in report and 'Fictional box office tracker, 2022' in report and '$600,000' not in report and 'Ledger of the Low Water' in report, 'the comps page lists picked comps with sourced figures only')
+
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    lines = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    check(lines[1][0] == 'Backwater Hymnal' and 'Budget: $600,000 (no source)' in lines[2][7], 'CSV lists comps newest first with their figures')
+
+    if fake:
+        pg.click('#saveBtn'); pg.wait_for_timeout(300)
+        data = json.loads(pg.evaluate('window.__file.text'))
+    else:
+        with pg.expect_download() as d:
+            pg.click('#saveBtn')
+        data = json.loads(open(d.value.path(), encoding='utf-8').read())
+    seawall = next(c for c in data['comps'] if c['id'] == 'comp-seawall')
+    ledger = next(c for c in data['comps'] if c['id'] == 'comp-ledger')
+    check(seawall['figures'][1] == {'label': 'Budget', 'amount': '$600,000'} and seawall['styleTags'] == ['archival-led', 'essay'] and ledger.get('inPitch') is True, 'comps are saved')
+    original = json.loads(sample)
+    check(data['people'] == original['people'] and data.get('sources') == original['sources'] and data['thirdPartyElements'] == original['thirdPartyElements'], "other tools' data is unchanged")
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
 def test_template_columns(browser, fake):
     for name, template in TEMPLATE_EXPORTS:
         ctx, pg, errs = new_page(browser, name, fake)
@@ -564,6 +608,8 @@ def main():
         test_subject_tracker(browser, fake)
         print('== research-log / tabs, statuses and sending to the clearance log')
         test_research_log(browser, fake)
+        print('== comps-tracker / sources, tags and the comps page')
+        test_comps_tracker(browser, fake)
         print('== templates / columns match the tools\' exports')
         test_template_columns(browser, fake)
         browser.close()
