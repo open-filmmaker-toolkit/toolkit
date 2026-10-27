@@ -2,8 +2,6 @@
 
 Thanks for helping build free tools for filmmakers. You don't need to write code to contribute: requests, templates and problem reports are just as useful.
 
-> **Pre-launch.** The repo is private until we launch. Until it's public, contributions come from the maintainers and people we've invited.
-
 By taking part, you agree to follow our [code of conduct](CODE_OF_CONDUCT.md).
 
 ## Contribute without writing code
@@ -65,7 +63,7 @@ CI runs `tests/browser_tools.py` in headless Chromium on every pull request, twi
 
 A separate **Real browsers** workflow runs [tests/real_browsers.py](tests/real_browsers.py) with Selenium in the Firefox on GitHub's Linux runners and the Safari on its Mac runners, which come installed, so nothing is downloaded. For every tool it checks that the page starts, the sample opens, saving keeps the data and reopens, the tool's export downloads, its main dialog opens and printing builds the report and the tool fits phone width, with no script errors; in Firefox it also checks dark mode. It runs weekly, on demand from the Actions tab, and on pull requests that change it. It isn't one of the required checks.
 
-CI can't judge how a tool looks and feels, can't drive a real printer or phone, and doesn't qualify a release. Do the manual checks above for anything you changed visually, and for new behavior the tests don't cover; add a check to `tests/browser_tools.py` when you add a feature. While the repo is private on a free plan, branch protection isn't available, so reviewers should confirm all four checks (DCO, schema, and the two Chromium runs) are green before merging.
+CI can't judge how a tool looks and feels, can't drive a real printer or phone, and doesn't qualify a release. Do the manual checks above for anything you changed visually, and for new behavior the tests don't cover; add a check to `tests/browser_tools.py` when you add a feature. Reviewers confirm all four required checks (DCO, schema, and the two Chromium runs) are green on the latest commit before merging.
 
 - Finish related changes as one candidate and run local checks before triggering CI. Where a CI check has a local equivalent, use the same check.
 - Avoid overlapping runs and extra pushes while a candidate is being qualified. A passing result applies only to the commit it checked; a later commit needs its own passing run.

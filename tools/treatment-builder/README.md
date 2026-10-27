@@ -59,7 +59,7 @@ Everything else in the file is preserved. See the [data model notes](../../schem
 
 ## Not yet
 
-- Character counts, for funders who limit characters instead of words
+- Character counts, for funders who limit characters instead of words. The grant narrative library has them, for answers you reuse
 - More than one treatment in a project, such as a short and a long version
 - Export to Word
 

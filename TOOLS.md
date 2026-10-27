@@ -16,7 +16,7 @@ Looking for other free, open-source software for filmmaking, such as editing, so
 | [Research and archival log](tools/research-log/) | Logging archival leads and research sources as you find them, and sending leads to the clearance log when they're ready | First version |
 | [Comps tracker](tools/comps-tracker/) | Tracking comparable films for pitches and sales, with a source for every figure, and printing a comps page | First version |
 | [Treatment builder](tools/treatment-builder/) | Writing a treatment section by section, with word counts against your targets and versions you can compare | First version |
-| [Pitch deck and lookbook builder](tools/pitch-deck/) | Putting together a pitch deck or lookbook from your project and your own stills, for screen or print | First version |
+| [Pitch deck builder](tools/pitch-deck/) | Putting together a pitch deck or lookbook from your project and your own stills, for screen or print | First version |
 
 ## Funding
 
@@ -24,7 +24,7 @@ Looking for other free, open-source software for filmmaking, such as editing, so
 | --- | --- | --- |
 | [Grant calendar](tools/grant-calendar/) | Seeing every grant and fund deadline in one place, with what each application needs and where it stands, and sending the deadlines to your calendar | First version |
 | [Grant narrative library](tools/narrative-library/) | Keeping your application answers in every length funders ask for, with live counts, and noting which funder got which version | First version |
-| [Funder-format budget converter](tools/budget-converter/) | Turning your budget into the categories each funder asks for, flagging what doesn't map, and saving the mapping for next time | First version |
+| [Budget converter](tools/budget-converter/) | Turning your budget into the categories each funder asks for, flagging what doesn't map, and saving the mapping for next time | First version |
 | [Finance plan](tools/finance-plan/) | Showing how the film gets paid for, against the budget: the gap still to raise and when the money arrives | First version |
 | [Funder CRM](tools/funder-crm/) | Keeping track of funders, investors and broadcasters: the people you know there, every meeting, call and email, and the next step with each | First version |
 
@@ -32,7 +32,7 @@ Looking for other free, open-source software for filmmaking, such as editing, so
 
 | Tool | Use it for | Status |
 | --- | --- | --- |
-| [Budget (top sheet and detail)](tools/budget/) | Building a documentary or indie budget with detail lines, fringes and contingency that roll up to a top sheet, with versions to compare | First version |
+| [Budget](tools/budget/) | Building a documentary or indie budget with detail lines, fringes and contingency that roll up to a top sheet, with versions to compare | First version |
 | [Cash flow](tools/cash-flow/) | Planning when money goes out and comes in, month by month or week by week, from the budget and the finance plan, and seeing where the balance runs short | First version |
 | [Shooting calendar](tools/shooting-calendar/) | Planning shoot days, travel days and holds across weeks or months, with who's needed and where, and starting each day's call sheet | First version |
 | [Interview prep](tools/interview-prep/) | Preparing each interview: research, the story beats to cover, questions in order with must-asks marked, and a one-page guide to print | First version |
@@ -73,7 +73,7 @@ Looking for other free, open-source software for filmmaking, such as editing, so
 
 | Tool | Use it for | Status |
 | --- | --- | --- |
-| [E&O / clearance log](tools/clearance-log/) | Tracking every piece of third-party material until it's cleared, then printing a report for your E&O attorney | First version |
+| [Clearance log](tools/clearance-log/) | Tracking every piece of third-party material until it's cleared, then printing a report for your E&O attorney | First version |
 | Fair use log and memo builder | Document fair use decisions element by element, with the reasoning your E&O attorney will ask for. | Planned, [#73](https://github.com/open-filmmaker-toolkit/toolkit/issues/73) |
 | Archival and music license trackers | Track the terms of each license: media, territory, term, fees, payments, and options you have to exercise in time. | Planned, [#74](https://github.com/open-filmmaker-toolkit/toolkit/issues/74) |
 | Annotated-transcript clearance report | Produce the annotated script or transcript an E&O insurer asks for, with each reference marked with how it's cleared. | Planned, [#75](https://github.com/open-filmmaker-toolkit/toolkit/issues/75) |
