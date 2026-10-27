@@ -60,6 +60,8 @@ Everything else in [TOOLS.md](TOOLS.md), prioritized by what contributors ask fo
 - [x] Finance plan: sources with amount, status and terms, grants linked from the grant calendar, totals and the gap against the budget, payments by month, and a printed plan ([#49](https://github.com/open-filmmaker-toolkit/toolkit/issues/49))
 - [x] Funder CRM: organizations and the people there, a log of meetings, calls and emails, next steps with the overdue ones first, links to the grant calendar, and CSV ([#50](https://github.com/open-filmmaker-toolkit/toolkit/issues/50))
 - [x] Cash flow: budget accounts and lines spread across months or weeks, deferred and in-kind costs left out, income from the finance plan, the running balance with shortfalls flagged, and CSV ([#52](https://github.com/open-filmmaker-toolkit/toolkit/issues/52))
+- [x] Shooting calendar: shoot days, travel days and holds in month and list views, linked to people and locations, call sheets started from a day, a calendar file and a printed month view ([#53](https://github.com/open-filmmaker-toolkit/toolkit/issues/53))
+- [x] Interview prep: research notes, story beats, questions in order with must-asks marked, linked to the person and the shoot day, and a one-page guide to print ([#54](https://github.com/open-filmmaker-toolkit/toolkit/issues/54))
 - [x] Name supers list: names from the project, near-miss spellings flagged, changes since the last export to graphics, CSV export ([#71](https://github.com/open-filmmaker-toolkit/toolkit/issues/71))
 
 Finding a third maintainer is on hold. Basil and Alex maintain the project for now ([#8](https://github.com/open-filmmaker-toolkit/toolkit/issues/8), closed).

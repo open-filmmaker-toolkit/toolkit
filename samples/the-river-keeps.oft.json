@@ -2565,5 +2565,218 @@
         "to": "2026-06-30"
       }
     }
-  }
+  },
+  "shootDays": [
+    {
+      "id": "shootday-may-travel-out",
+      "date": "2026-05-11",
+      "kind": "travel",
+      "block": "Spring flood trip",
+      "title": "Drive to Riverside",
+      "personIds": [
+        "person-ana-reyes",
+        "person-lena-ward",
+        "person-teo-ramirez"
+      ]
+    },
+    {
+      "id": "shootday-may-1",
+      "date": "2026-05-12",
+      "kind": "shoot",
+      "block": "Spring flood trip",
+      "title": "Daniel on the levee, then river b-roll",
+      "locationId": "location-riverside-levee",
+      "personIds": [
+        "person-ana-reyes",
+        "person-lena-ward",
+        "person-teo-ramirez",
+        "person-daniel-okafor"
+      ],
+      "callSheetId": "callsheet-day-1"
+    },
+    {
+      "id": "shootday-may-2",
+      "date": "2026-05-13",
+      "kind": "shoot",
+      "block": "Spring flood trip",
+      "title": "Levee crew at work",
+      "locationId": "location-riverside-levee",
+      "personIds": [
+        "person-ana-reyes",
+        "person-lena-ward",
+        "person-teo-ramirez",
+        "person-marcus-bell"
+      ]
+    },
+    {
+      "id": "shootday-may-travel-back",
+      "date": "2026-05-14",
+      "kind": "travel",
+      "block": "Spring flood trip",
+      "title": "Drive home"
+    },
+    {
+      "id": "shootday-nov-1",
+      "date": "2026-11-10",
+      "kind": "shoot",
+      "block": "Anniversary shoot",
+      "title": "Ruth reads from the diary",
+      "locationId": "location-hammond-house",
+      "personIds": [
+        "person-lena-ward",
+        "person-teo-ramirez",
+        "person-ruth-hammond"
+      ],
+      "notes": "Ruth prefers mornings. Bring the diary scans."
+    },
+    {
+      "id": "shootday-nov-hold",
+      "date": "2026-11-11",
+      "kind": "hold",
+      "block": "Anniversary shoot",
+      "title": "Weather hold: river at dawn",
+      "locationId": "location-riverside-levee",
+      "personIds": [
+        "person-teo-ramirez"
+      ]
+    },
+    {
+      "id": "shootday-mar-1",
+      "date": "2027-03-16",
+      "kind": "shoot",
+      "block": "Spring melt",
+      "title": "Leon at the grain elevator",
+      "locationId": "location-grain-elevator",
+      "personIds": [
+        "person-ana-reyes",
+        "person-lena-ward",
+        "person-teo-ramirez",
+        "person-leon-pryor"
+      ]
+    }
+  ],
+  "interviews": [
+    {
+      "id": "interview-ruth",
+      "personId": "person-ruth-hammond",
+      "shootDayId": "shootday-nov-1",
+      "minutes": 90,
+      "status": "planned",
+      "goal": "Her account of the 1965 flood, in her own words, and why she kept the diary secret",
+      "research": "Taught fourth grade in Riverside for 31 years. The diary runs from March to June 1965. Check the spelling of the neighbors she names against the county records.",
+      "beats": [
+        {
+          "id": "beat-ruth-night",
+          "text": "The night the levee broke"
+        },
+        {
+          "id": "beat-ruth-diary",
+          "text": "Why she kept the diary secret"
+        },
+        {
+          "id": "beat-ruth-now",
+          "text": "What she wants the town to remember"
+        }
+      ],
+      "questions": [
+        {
+          "id": "q-ruth-1",
+          "text": "Tell me about the house you grew up in."
+        },
+        {
+          "id": "q-ruth-2",
+          "text": "Where were you when you heard the levee had gone?",
+          "must": true,
+          "beatId": "beat-ruth-night"
+        },
+        {
+          "id": "q-ruth-3",
+          "text": "What did you take with you when you left?",
+          "beatId": "beat-ruth-night"
+        },
+        {
+          "id": "q-ruth-4",
+          "text": "When did you start writing in the diary?",
+          "beatId": "beat-ruth-diary"
+        },
+        {
+          "id": "q-ruth-5",
+          "text": "Why didn’t you show it to anyone for sixty years?",
+          "must": true,
+          "beatId": "beat-ruth-diary"
+        },
+        {
+          "id": "q-ruth-6",
+          "text": "Will you read us the entry from the night of the flood?",
+          "must": true,
+          "beatId": "beat-ruth-diary"
+        },
+        {
+          "id": "q-ruth-7",
+          "text": "What do you want the people building the new levee to know?",
+          "beatId": "beat-ruth-now"
+        },
+        {
+          "id": "q-ruth-8",
+          "text": "Is there anything I haven’t asked that you want to say?"
+        }
+      ]
+    },
+    {
+      "id": "interview-leon",
+      "personId": "person-leon-pryor",
+      "shootDayId": "shootday-mar-1",
+      "minutes": 60,
+      "status": "planned",
+      "goal": "The 1988 flood from the levee board’s side",
+      "beats": [
+        {
+          "id": "beat-leon-1988",
+          "text": "Fighting the 1988 flood"
+        },
+        {
+          "id": "beat-leon-blame",
+          "text": "Who the town blamed"
+        }
+      ],
+      "questions": [
+        {
+          "id": "q-leon-1",
+          "text": "How did you end up on the levee board?"
+        },
+        {
+          "id": "q-leon-2",
+          "text": "Walk me through the first night of the 1988 flood.",
+          "must": true,
+          "beatId": "beat-leon-1988"
+        },
+        {
+          "id": "q-leon-3",
+          "text": "Would the new levee have held in 1988?",
+          "beatId": "beat-leon-1988"
+        }
+      ]
+    },
+    {
+      "id": "interview-daniel",
+      "personId": "person-daniel-okafor",
+      "date": "2026-05-12",
+      "minutes": 45,
+      "status": "done",
+      "goal": "His grandmother’s photographs of the third flood",
+      "questions": [
+        {
+          "id": "q-daniel-1",
+          "text": "Where did you find the photographs?",
+          "must": true,
+          "asked": true
+        },
+        {
+          "id": "q-daniel-2",
+          "text": "What do you know about the day she took them?",
+          "asked": true
+        }
+      ]
+    }
+  ]
 }

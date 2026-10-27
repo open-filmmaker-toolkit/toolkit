@@ -1,6 +1,6 @@
 # Tools
 
-The tools we build, by production phase. Each one is a single page that runs in your browser on the shared project file, with nothing to install and nothing sent anywhere. 18 are ready to use and 44 are planned.
+The tools we build, by production phase. Each one is a single page that runs in your browser on the shared project file, with nothing to install and nothing sent anywhere. 20 are ready to use and 42 are planned.
 
 - **Ready to use:** linked tools. Each has a README with what it does.
 - **Planned:** each has an issue. Comment there if you need the tool or want to help build it. Order of work is in [ROADMAP.md](ROADMAP.md).
@@ -34,8 +34,8 @@ Looking for other free, open-source software for filmmaking, such as editing, so
 | --- | --- | --- |
 | [Budget (top sheet and detail)](tools/budget/) | Building a documentary or indie budget with detail lines, fringes and contingency that roll up to a top sheet, with versions to compare | First version |
 | [Cash flow](tools/cash-flow/) | Planning when money goes out and comes in, month by month or week by week, from the budget and the finance plan, and seeing where the balance runs short | First version |
-| Shooting calendar | Plan shoot days across weeks or months, for a production that shoots in bursts: who's needed, where, and what you're filming. | Planned, [#53](https://github.com/open-filmmaker-toolkit/toolkit/issues/53) |
-| Interview prep | Prepare for interviews: research notes, questions in order, and what each interview has to cover. | Planned, [#54](https://github.com/open-filmmaker-toolkit/toolkit/issues/54) |
+| [Shooting calendar](tools/shooting-calendar/) | Planning shoot days, travel days and holds across weeks or months, with who's needed and where, and starting each day's call sheet | First version |
+| [Interview prep](tools/interview-prep/) | Preparing each interview: research, the story beats to cover, questions in order with must-asks marked, and a one-page guide to print | First version |
 | Location scout sheet | Record what you learn on a scout: access, power, sound, light, parking, permits and photos. | Planned, [#55](https://github.com/open-filmmaker-toolkit/toolkit/issues/55) |
 | Deal memos | Fill in crew deal memos: role, dates, rate, kit fee, overtime, credit and payment terms. | Planned, [#56](https://github.com/open-filmmaker-toolkit/toolkit/issues/56) |
 | Gear list | List the gear for a shoot: what you own, what you're renting and from whom, and what it costs. | Planned, [#57](https://github.com/open-filmmaker-toolkit/toolkit/issues/57) |
