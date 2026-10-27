@@ -62,8 +62,11 @@ input.dispatchEvent(new Event('change', { bubbles: true }));
 """
 
 fails = []
+passed = []
 def check(ok, msg):
     print(('PASS ' if ok else 'FAIL ') + msg, flush=True)
+    if ok:
+        passed.append(msg)
     if not ok:
         fails.append(msg)
 
@@ -200,9 +203,11 @@ def main():
     browser = sys.argv[1] if len(sys.argv) > 1 else 'firefox'
     httpd, base = serve()
     driver = make_driver(browser)
+    version = ''
     try:
         caps = driver.capabilities
-        print('#### %s %s' % (caps.get('browserName'), caps.get('browserVersion')), flush=True)
+        version = '%s %s' % (caps.get('browserName'), caps.get('browserVersion'))
+        print('#### %s' % version, flush=True)
         driver.set_window_size(1280, 900)
         for name in TOOLS:
             try:
@@ -216,6 +221,8 @@ def main():
         test_dark_and_phone(base, browser)
     httpd.shutdown()
     print('FAILS', fails)
+    # A one-line result GitHub shows on the run, so it can be read without the full log.
+    print('::notice title=Real browser results::%s: %d checks passed, %d failed, across %d tools' % (version, len(passed), len(fails), len(TOOLS)))
     sys.exit(1 if fails else 0)
 
 if __name__ == '__main__':
