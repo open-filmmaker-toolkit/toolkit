@@ -53,6 +53,8 @@ Everything else in [TOOLS.md](TOOLS.md), prioritized by what contributors ask fo
 - [x] Comps tracker: comparable films with a source for every figure, tags, and a printed comps page ([#43](https://github.com/open-filmmaker-toolkit/toolkit/issues/43))
 - [x] Treatment builder: sections with word targets, subjects and team from the project, saved versions to compare, and print, Markdown and text export ([#44](https://github.com/open-filmmaker-toolkit/toolkit/issues/44))
 - [x] Pitch deck and lookbook builder: slides drafted from the project, your own stills kept in the project file, team and comps that follow the project, and print to PDF in widescreen or letter ([#45](https://github.com/open-filmmaker-toolkit/toolkit/issues/45))
+- [x] Grant calendar: deadlines, amounts, eligibility, a checklist of materials and status, in list and month views, with a calendar file (.ics) and CSV export, linked to the answers each application used ([#46](https://github.com/open-filmmaker-toolkit/toolkit/issues/46))
+- [x] Grant narrative library: answers in versions by word or character limit, counted as you write, pulled together for one application to copy or download, with who got which version and when ([#47](https://github.com/open-filmmaker-toolkit/toolkit/issues/47))
 - [x] Name supers list: names from the project, near-miss spellings flagged, changes since the last export to graphics, CSV export ([#71](https://github.com/open-filmmaker-toolkit/toolkit/issues/71))
 
 Finding a third maintainer is on hold. Basil and Alex maintain the project for now ([#8](https://github.com/open-filmmaker-toolkit/toolkit/issues/8), closed).

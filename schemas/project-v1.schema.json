@@ -90,6 +90,20 @@
     },
     "pitchDeck": {
       "$ref": "#/$defs/pitchDeck"
+    },
+    "grants": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/grant"
+      },
+      "description": "Grants and funds applied to or considered, kept by the grant calendar."
+    },
+    "narratives": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/narrative"
+      },
+      "description": "Reusable grant application answers in versions by length, kept by the grant narrative library."
     }
   },
   "additionalProperties": true,
@@ -1171,6 +1185,168 @@
                 "type": "string",
                 "pattern": "^data:image/",
                 "description": "The image, resized, as a data URL, so it opens in any browser without leaving the project file."
+              }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "grant": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "funder": {
+          "type": "string"
+        },
+        "program": {
+          "type": "string"
+        },
+        "deadline": {
+          "type": "string",
+          "format": "date"
+        },
+        "deadlineTime": {
+          "type": "string",
+          "description": "Time and time zone of the deadline, as text, such as \"5 pm Eastern\"."
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "researching",
+            "drafting",
+            "submitted",
+            "awarded",
+            "declined"
+          ]
+        },
+        "amount": {
+          "type": "string",
+          "description": "What the funder offers, as text, such as \"Up to $50,000\"."
+        },
+        "requested": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Amount asked for, in the project's currency."
+        },
+        "awarded": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Amount awarded, in the project's currency."
+        },
+        "eligibility": {
+          "type": "string"
+        },
+        "materials": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "done": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": true
+          },
+          "description": "What the application needs, ticked off when ready."
+        },
+        "url": {
+          "type": "string"
+        },
+        "contact": {
+          "type": "string"
+        },
+        "submittedOn": {
+          "type": "string",
+          "format": "date"
+        },
+        "decisionOn": {
+          "type": "string",
+          "format": "date"
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "narrative": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "title": {
+          "type": "string",
+          "description": "What the answer is, such as Logline."
+        },
+        "notes": {
+          "type": "string"
+        },
+        "versions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "unit": {
+                "type": "string",
+                "enum": [
+                  "words",
+                  "characters"
+                ]
+              },
+              "limit": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "label": {
+                "type": "string",
+                "description": "A name for the version, when the length isn't enough."
+              },
+              "text": {
+                "type": "string"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date"
+              },
+              "uses": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "grantId": {
+                      "$ref": "#/$defs/id"
+                    },
+                    "funder": {
+                      "type": "string"
+                    },
+                    "date": {
+                      "type": "string",
+                      "format": "date"
+                    }
+                  },
+                  "additionalProperties": true
+                },
+                "description": "Who this version was sent to, and when: a grant in grants, or a funder by name."
               }
             },
             "additionalProperties": true

@@ -92,6 +92,17 @@ for sample in sorted((ROOT / "samples").glob("*.oft.json")):
     comp_ids = [item.get("id") for item in data.get("comps", []) if isinstance(item, dict)]
     if len(comp_ids) != len(set(comp_ids)):
         fail(f"{name}: duplicate IDs in comps")
+    grant_ids = [item.get("id") for item in data.get("grants", []) if isinstance(item, dict)]
+    if len(grant_ids) != len(set(grant_ids)):
+        fail(f"{name}: duplicate IDs in grants")
+    narratives = [item for item in data.get("narratives", []) if isinstance(item, dict)]
+    narrative_versions = [v for item in narratives for v in item.get("versions", []) if isinstance(v, dict)]
+    if len({n.get("id") for n in narratives}) != len(narratives) or len({v.get("id") for v in narrative_versions}) != len(narrative_versions):
+        fail(f"{name}: duplicate IDs in narratives or their versions")
+    for version in narrative_versions:
+        for use in version.get("uses", []):
+            if isinstance(use, dict) and use.get("grantId") and use["grantId"] not in set(grant_ids):
+                fail(f"{name}: narrative version {version.get('id')} uses points to missing grant {use['grantId']}")
     treatment = data.get("treatment") if isinstance(data.get("treatment"), dict) else {}
     version_ids = [v.get("id") for v in treatment.get("versions", []) if isinstance(v, dict)]
     if len(version_ids) != len(set(version_ids)):

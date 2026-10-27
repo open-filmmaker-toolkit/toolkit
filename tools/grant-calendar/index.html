@@ -1,0 +1,1037 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grant calendar · Open Filmmaker Toolkit</title>
+<meta name="description" content="See every grant and fund deadline in one place, with what each application needs and where it stands. Runs in your browser; your data stays on your computer.">
+<style>
+:root {
+  --paper: #f1f3f2; --sheet: #ffffff; --ink: #1a2130; --ink-2: #4b556a; --ink-3: #6d778a;
+  --rule: #d4dad8; --rule-soft: #e6eae8; --hover: #f6f8f7; --focus: #2f6fdb;
+  --good: #2b7a57; --good-bg: #dff1e8; --warn: #8a5a00; --warn-bg: #fbf0d9; --bad: #b3392d; --bad-bg: #f8e1de;
+  --screen: #050506; --screen-ink: #f4f1ea; --screen-dim: #a7a29a;
+  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #141922; --sheet: #1b212b; --ink: #e6e9ee; --ink-2: #a6afbd; --ink-3: #8790a0;
+    --rule: #2f3744; --rule-soft: #262d38; --hover: #212834; --focus: #7aa7ff;
+    --good: #4fb386; --good-bg: #1a3329; --warn: #e2a531; --warn-bg: #3a2f17; --bad: #e26657; --bad-bg: #3b2220;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans); }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+[hidden] { display: none !important; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.foot { margin-top: 28px; font-size: 13px; color: var(--ink-3); }
+.cant-run { display: none; max-width: 640px; margin: 64px auto; padding: 0 24px; }
+.cant-run h1 { margin: 0 0 8px; font: 600 26px/1.2 var(--serif); }
+.cant-run p { margin: 0 0 10px; color: var(--ink-2); }
+.no-js .cant-run { display: block; }
+.no-js .page { display: none; }
+.page { max-width: 1240px; margin: 0 auto; padding: 0 24px 48px; }
+
+.masthead { display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: flex-end; justify-content: space-between; padding: 28px 0 20px; }
+.tool-name { margin: 0 0 2px; font-size: 14px; font-weight: 600; color: var(--ink-2); }
+.film-title { margin: 0; font: 600 32px/1.15 var(--serif); letter-spacing: -0.01em; overflow-wrap: anywhere; cursor: pointer; }
+.film-title.is-empty { color: var(--ink-3); font-style: italic; font-weight: 400; }
+.film-meta { margin: 4px 0 0; color: var(--ink-2); font-size: 14px; }
+.file { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.file-state { margin: 0; font-size: 13px; color: var(--ink-2); text-align: right; }
+.file-state .dirty { color: var(--warn); font-weight: 600; }
+.file-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; }
+.btn:hover { border-color: var(--ink-3); }
+.btn.primary { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.btn.primary:hover { opacity: 0.88; }
+.btn.danger { color: var(--bad); }
+.btn.small { padding: 4px 10px; font-size: 13px; }
+.link-btn { padding: 0; border: 0; background: none; cursor: pointer; color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; font-size: 14px; }
+.link-btn:hover { color: var(--ink); }
+
+.banner { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 0 0 16px; padding: 12px 16px; border-radius: 8px; background: var(--warn-bg); border: 1px solid color-mix(in srgb, var(--warn) 40%, transparent); }
+.banner p { margin: 0; flex: 1 1 280px; }
+.banner .actions { display: flex; gap: 8px; }
+
+.workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr); gap: 24px; align-items: start; }
+.col { display: grid; gap: 18px; min-width: 0; }
+.card { background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 18px; min-width: 0; }
+.card-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; margin: 0 0 6px; }
+.card-head h2 { margin: 0; font: 600 18px/1.3 var(--serif); }
+.card-head .count { font-size: 13px; color: var(--ink-2); }
+.card-head .spacer { flex: 1; }
+.card p.lead { margin: 0 0 8px; font-size: 14px; color: var(--ink-2); }
+
+/* Side cards */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 2px; padding: 0; list-style: none; }
+.chip { display: inline-flex; border: 1px solid var(--rule); border-radius: 999px; overflow: hidden; background: var(--paper); }
+.chip button { padding: 4px 10px; border: 0; background: none; cursor: pointer; font-size: 13px; font-weight: 600; }
+.chip button:hover { background: var(--hover); }
+.chip .sub { font-weight: 400; color: var(--ink-3); margin-left: 4px; }
+.empty-line { margin: 4px 0; color: var(--ink-2); font-size: 14px; }
+.changes { margin: 0; padding-left: 18px; font-size: 14px; }
+.changes li + li { margin-top: 2px; }
+
+/* The supers list */
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 10px; }
+.toolbar h2 { margin: 0 8px 0 0; font: 600 20px/1.2 var(--serif); }
+.toolbar .count { font-size: 13px; color: var(--ink-2); }
+.toolbar .spacer { flex: 1; }
+.rows { list-style: none; margin: 0; padding: 0; background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; }
+.row { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 2px 14px; align-items: start; padding: 10px 14px; }
+.row + .row { border-top: 1px solid var(--rule-soft); }
+.row:hover { background: var(--hover); }
+.row.is-selected { background: var(--hover); box-shadow: inset 3px 0 0 var(--ink); }
+.row .tc { font-variant-numeric: tabular-nums; font-size: 14px; color: var(--ink-2); padding-top: 1px; }
+.row .what { min-width: 0; padding: 0; border: 0; background: none; text-align: left; cursor: pointer; overflow-wrap: anywhere; }
+.row .what:hover .nm { text-decoration: underline; text-underline-offset: 2px; }
+.row .nm { display: block; font-weight: 600; }
+.row .tt { display: block; font-size: 14px; color: var(--ink-2); }
+.flags { grid-column: 2; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.flag { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 999px; font-size: 12.5px; font-weight: 600; }
+.flag.new { background: var(--good-bg); color: var(--good); }
+.flag.changed { background: var(--warn-bg); color: var(--warn); }
+.flag.problem { background: var(--bad-bg); color: var(--bad); }
+.flag.linked { background: var(--paper); color: var(--ink-3); font-weight: 500; border: 1px solid var(--rule); }
+.flag button { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+
+.empty { padding: 36px 24px; text-align: center; background: var(--sheet); border: 1px dashed var(--rule); border-radius: 8px; }
+.empty h2 { margin: 0 0 6px; font: 600 20px/1.3 var(--serif); }
+.empty p { margin: 0 auto 16px; max-width: 52ch; color: var(--ink-2); }
+.empty .actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+
+
+.side { position: sticky; top: 16px; display: grid; gap: 18px; }
+.filters { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; align-items: center; }
+.filter { padding: 4px 11px; border: 1px solid var(--rule); border-radius: 999px; background: var(--sheet); font-size: 13px; cursor: pointer; }
+.filter[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.views { display: inline-flex; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; margin-left: auto; }
+.views button { padding: 4px 12px; border: 0; background: var(--sheet); font-size: 13px; cursor: pointer; }
+.views button + button { border-left: 1px solid var(--rule); }
+.views button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.row { grid-template-columns: 128px minmax(0, 1fr) auto; }
+.row .tc b { display: block; color: var(--ink); font-weight: 600; }
+.row .tc .left { font-size: 13px; }
+.row .tc .left.soon { color: var(--warn); font-weight: 600; }
+.row .tc .left.passed { color: var(--bad); font-weight: 600; }
+.row .st { font-size: 13px; font-weight: 600; padding-top: 2px; white-space: nowrap; }
+.st-researching { color: var(--ink-2); }
+.st-drafting { color: var(--warn); }
+.st-submitted { color: var(--ink); }
+.st-awarded { color: var(--good); }
+.st-declined { color: var(--ink-3); }
+.row.is-closed .nm { color: var(--ink-3); }
+.flags { grid-column: 2 / -1; }
+.stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 6px 0 0; }
+.stat { padding: 8px 10px; border: 1px solid var(--rule-soft); border-radius: 6px; min-width: 0; }
+.stat b { display: block; font: 600 20px/1.15 var(--serif); overflow-wrap: anywhere; }
+.stat span { font-size: 13px; color: var(--ink-2); }
+.due-list { list-style: none; margin: 4px 0 0; padding: 0; }
+.due-list li { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; font-size: 14px; }
+.due-list li + li { border-top: 1px solid var(--rule-soft); }
+.due-list button { padding: 0; border: 0; background: none; cursor: pointer; text-align: left; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; min-width: 0; overflow-wrap: anywhere; }
+.due-list .when { color: var(--ink-2); white-space: nowrap; }
+.due-list .when.soon { color: var(--warn); font-weight: 600; }
+/* Month view */
+.cal { background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 10px; }
+.cal-head { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; }
+.cal-head h3 { margin: 0; flex: 1; font: 600 18px/1.2 var(--serif); }
+.cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; }
+.cal-dow { font-size: 12px; color: var(--ink-3); text-align: center; padding: 2px 0; }
+.cal-day { min-height: 78px; padding: 4px; border: 1px solid var(--rule-soft); border-radius: 4px; min-width: 0; }
+.cal-day.out { background: var(--paper); opacity: 0.55; }
+.cal-day.today { box-shadow: inset 0 0 0 2px var(--ink); }
+.cal-day .d { font-size: 12px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.cal-day button { display: block; width: 100%; margin-top: 3px; padding: 2px 4px; border: 0; border-radius: 3px; background: var(--hover); font-size: 12px; text-align: left; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cal-day button.st-awarded { background: var(--good-bg); color: var(--good); }
+.cal-day button.st-drafting, .cal-day button.st-researching { background: var(--warn-bg); color: var(--warn); }
+.cal-day button.st-declined { color: var(--ink-3); text-decoration: line-through; }
+.cal-none { margin: 8px 0 0; font-size: 13px; color: var(--ink-2); }
+/* Editor */
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.three { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.mat-rows { display: grid; gap: 6px; }
+.mat-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+.mat-row input[type="checkbox"] { width: 18px; height: 18px; margin: 0; }
+.mat-row input[type="text"] { min-width: 0; padding: 7px 9px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); }
+.icon-btn { width: 30px; height: 30px; padding: 0; border: 1px solid transparent; border-radius: 6px; background: none; color: var(--ink-2); cursor: pointer; font-size: 16px; line-height: 1; }
+.icon-btn:hover { border-color: var(--rule); color: var(--ink); }
+.answers { display: grid; gap: 10px; }
+.answers fieldset { margin: 0; padding: 0; border: 0; min-width: 0; }
+.answers legend { padding: 0; font-weight: 600; font-size: 14px; }
+.answers label { display: flex; gap: 8px; align-items: baseline; font-size: 14px; margin-top: 4px; }
+.answers input { width: 16px; height: 16px; margin: 0; flex: none; }
+.answers .sub { color: var(--ink-3); }
+@media (max-width: 720px) {
+  .two, .three { grid-template-columns: 1fr; }
+  .row { grid-template-columns: minmax(0, 1fr) auto; }
+  .row .tc { grid-column: 1 / -1; display: flex; gap: 8px; align-items: baseline; }
+  .flags { grid-column: 1 / -1; }
+  .views { margin-left: 0; }
+  .cal { padding: 6px; }
+  .cal-grid { gap: 1px; }
+  .cal-day { min-height: 56px; padding: 2px; }
+  .cal-day button { font-size: 10.5px; padding: 1px 2px; }
+}
+
+dialog { border: 0; padding: 0; color: var(--ink); background: var(--sheet); box-shadow: 0 10px 40px rgba(10, 14, 22, 0.25); }
+dialog::backdrop { background: rgba(16, 20, 28, 0.42); }
+dialog.drawer { margin: 0 0 0 auto; width: min(600px, 100vw); height: 100dvh; max-height: 100dvh; max-width: 100vw; border-left: 1px solid var(--rule); }
+dialog.modal { width: min(560px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); border-radius: 10px; }
+dialog form { display: flex; flex-direction: column; height: 100%; max-height: inherit; }
+.dlg-head { padding: 20px 24px 12px; border-bottom: 1px solid var(--rule-soft); }
+.dlg-head h2 { margin: 0; font: 600 22px/1.25 var(--serif); }
+.dlg-body { flex: 1; overflow-y: auto; padding: 16px 24px 24px; display: grid; gap: 14px; align-content: start; }
+.dlg-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 14px 24px; border-top: 1px solid var(--rule-soft); }
+.dlg-foot .spacer { flex: 1; }
+.field { display: grid; gap: 4px; }
+.field > label, .field > .label, .group h3 { font-size: 14px; font-weight: 600; margin: 0; }
+.hint { margin: 0; font-size: 13px; color: var(--ink-3); }
+.field input, .field select, .field textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); }
+.group { display: grid; gap: 8px; padding-top: 10px; border-top: 1px solid var(--rule-soft); }
+.checks { display: grid; gap: 2px; max-height: 260px; overflow-y: auto; padding: 2px; }
+.check { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; align-items: start; padding: 5px 4px; border-radius: 6px; cursor: pointer; }
+.check:hover { background: var(--hover); }
+.check input { width: 18px; height: 18px; margin: 2px 0 0; }
+.check .who { overflow-wrap: anywhere; }
+.check .sub { margin-left: 4px; font-size: 13px; color: var(--ink-3); }
+.check .lines { display: block; font-size: 13px; color: var(--ink-3); white-space: pre-line; }
+#songList, #sourceList { max-height: none; }
+.radio-row { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.radio-row label { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; cursor: pointer; }
+pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); font-size: 13px; white-space: pre-wrap; }
+
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); max-width: calc(100vw - 32px); padding: 10px 16px; border-radius: 8px; background: var(--ink); color: var(--paper); font-size: 14px; box-shadow: 0 6px 24px rgba(10, 14, 22, 0.25); z-index: 10; }
+.toast.error { background: var(--bad); color: #ffffff; }
+.report { display: none; }
+
+@media (max-width: 900px) {
+  .workspace { grid-template-columns: 1fr; }
+  .side { position: static; }
+}
+@media (max-width: 720px) {
+  .page { padding: 0 16px 40px; }
+  .film-title { font-size: 26px; }
+  .file { align-items: flex-start; }
+  .file-state { text-align: left; }
+  .toolbar h2 { flex-basis: 100%; order: -2; }
+  .toolbar #addBtn { flex: 1 1 100%; justify-content: center; order: -1; }
+  .row { grid-template-columns: minmax(0, 1fr); }
+  .flags { grid-column: 1; }
+}
+@media print {
+  @page { size: portrait; margin: 16mm; }
+  :root { color-scheme: light; }
+  body { background: #ffffff; color: #000000; font-size: 10pt; }
+  .page, dialog, .toast { display: none !important; }
+  .report { display: block; }
+  .report h1 { margin: 0; font: 700 18pt/1.2 var(--serif); }
+  .report h2 { margin: 14pt 0 4pt; font: 700 12pt/1.2 var(--serif); break-after: avoid; page-break-after: avoid; }
+  .report .r-meta { margin: 2pt 0 10pt; }
+  .report table { width: 100%; border-collapse: collapse; }
+  .report th, .report td { padding: 4pt 5pt; border-bottom: 0.75pt solid #999999; text-align: left; vertical-align: top; }
+  .report th { font-size: 9pt; border-bottom: 1pt solid #000000; }
+  .report tr { break-inside: avoid; page-break-inside: avoid; }
+  .report .r-sub { display: block; font-size: 8.5pt; color: #333333; }
+  .report .r-note { margin-top: 14pt; font-size: 8pt; color: #333333; }
+
+}
+</style>
+</head>
+<body>
+<div class="cant-run" id="cantRun">
+  <h1 id="cantRunTitle">Open this file in a web browser</h1>
+  <p id="cantRunText">This tool runs in Chrome, Edge, Firefox or Safari. You're seeing a preview that doesn't run it, so none of the buttons would work.</p>
+  <p id="cantRunHow">In your browser, choose File, then Open File, and pick this file. Or right-click the file and open it with your browser.</p>
+</div>
+<div class="page">
+  <header class="masthead">
+    <div>
+      <p class="tool-name">Grant calendar</p>
+      <h1 class="film-title" id="filmTitle">Untitled film</h1>
+      <p class="film-meta"><span id="filmMeta"></span> <button type="button" class="link-btn" id="editProjectBtn">Edit film details</button></p>
+    </div>
+    <div class="file">
+      <p class="file-state" id="fileState">Not saved to a file yet</p>
+      <div class="file-actions">
+        <button type="button" class="btn" id="newBtn">New project</button>
+        <button type="button" class="btn" id="openBtn">Open file</button>
+        <button type="button" class="btn" id="projectCsvBtn">Export project data (CSV)</button>
+        <button type="button" class="btn primary" id="saveBtn">Save file</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="banner" id="recovery" role="region" aria-label="Unsaved work" hidden>
+    <p id="recoveryText"></p>
+    <div class="actions">
+      <button type="button" class="btn primary" id="restoreBtn">Restore it</button>
+      <button type="button" class="btn" id="discardBtn">Discard it</button>
+    </div>
+  </div>
+
+  <main class="workspace">
+    <section aria-labelledby="listHead">
+      <div class="toolbar">
+        <h2 id="listHead">Grants and funds</h2>
+        <span class="count" id="count"></span>
+        <span class="spacer"></span>
+        <button type="button" class="btn primary" id="addBtn">Add a grant</button>
+        <button type="button" class="btn" id="icsBtn">Export calendar</button>
+        <button type="button" class="btn" id="csvBtn">Export CSV</button>
+        <button type="button" class="btn" id="printBtn">Print</button>
+      </div>
+      <div class="filters" id="filterBar">
+        <span id="filters" role="group" aria-label="Show grants by status" style="display:contents"></span>
+        <span class="views" role="group" aria-label="View">
+          <button type="button" id="listViewBtn" aria-pressed="true">List</button>
+          <button type="button" id="calViewBtn" aria-pressed="false">Calendar</button>
+        </span>
+      </div>
+      <ol class="rows" id="rows" aria-labelledby="listHead"></ol>
+      <div class="cal" id="cal" hidden>
+        <div class="cal-head">
+          <button type="button" class="btn small" id="prevMonth" aria-label="Previous month">&#8249;</button>
+          <h3 id="calTitle" aria-live="polite"></h3>
+          <button type="button" class="btn small" id="thisMonth">Today</button>
+          <button type="button" class="btn small" id="nextMonth" aria-label="Next month">&#8250;</button>
+        </div>
+        <div class="cal-grid" id="calGrid"></div>
+        <p class="cal-none" id="calNone" hidden></p>
+      </div>
+      <p class="empty-line" id="noMatch" hidden>No grants with that status.</p>
+      <div class="empty" id="empty" hidden>
+        <h2>No grants yet</h2>
+        <p>Add the grants and funds you're applying to, or thinking about: the deadline, what each one asks for, and where your application stands. Then export the deadlines to your calendar.</p>
+        <div class="actions">
+          <button type="button" class="btn primary" id="emptyAddBtn">Add a grant</button>
+          <button type="button" class="btn" id="emptyOpenBtn">Open file</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="side">
+      <section class="card" aria-labelledby="dueHead">
+        <div class="card-head"><h2 id="dueHead">Next deadlines</h2><span class="count" id="dueCount"></span></div>
+        <ul class="due-list" id="dueList"></ul>
+      </section>
+      <section class="card" aria-labelledby="statsHead">
+        <div class="card-head"><h2 id="statsHead">Where things stand</h2></div>
+        <div class="stats" id="stats"></div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="foot">
+    <p>Part of the Open Filmmaker Toolkit. This page makes no network requests: everything stays on this computer until you save or export it. Uses the same project file as the other toolkit tools.</p>
+  </footer>
+</div>
+
+<dialog class="drawer" id="editor" aria-labelledby="editorTitle">
+  <form id="editorForm" method="dialog" novalidate>
+    <div class="dlg-head"><h2 id="editorTitle">Grant</h2></div>
+    <div class="dlg-body">
+      <div class="two">
+        <div class="field"><label for="f-funder">Funder</label><input id="f-funder" type="text" autocomplete="off" required></div>
+        <div class="field"><label for="f-program">Grant or program</label><input id="f-program" type="text" placeholder="Production fund, spring round" autocomplete="off"></div>
+      </div>
+      <div class="three">
+        <div class="field"><label for="f-deadline">Deadline</label><input id="f-deadline" type="date"></div>
+        <div class="field"><label for="f-time">Time and time zone</label><input id="f-time" type="text" placeholder="5 pm Eastern" autocomplete="off"></div>
+        <div class="field"><label for="f-status">Status</label><select id="f-status"></select></div>
+      </div>
+      <div class="three">
+        <div class="field"><label for="f-amount">Amount available</label><input id="f-amount" type="text" placeholder="Up to $50,000" autocomplete="off"></div>
+        <div class="field"><label for="f-requested">You asked for</label><input id="f-requested" type="number" min="0" step="any" inputmode="decimal"></div>
+        <div class="field"><label for="f-awarded">Awarded</label><input id="f-awarded" type="number" min="0" step="any" inputmode="decimal"></div>
+      </div>
+      <div class="field"><label for="f-eligibility">Eligibility</label><textarea id="f-eligibility" rows="2" placeholder="Who can apply: stage of the film, where you live, fiscal sponsor"></textarea></div>
+      <div class="group">
+        <h3 id="matHead">What the application needs</h3>
+        <p class="hint">Tick each item when it's ready.</p>
+        <div class="mat-rows" id="matRows" role="group" aria-labelledby="matHead"></div>
+        <div><button type="button" class="btn small" id="addMatBtn">Add an item</button></div>
+      </div>
+      <div class="group">
+        <h3 id="ansHead">Answers used</h3>
+        <div class="answers" id="answers" role="group" aria-labelledby="ansHead"></div>
+      </div>
+      <div class="two">
+        <div class="field"><label for="f-submitted">Submitted on</label><input id="f-submitted" type="date"></div>
+        <div class="field"><label for="f-decision">Decision expected</label><input id="f-decision" type="date"></div>
+      </div>
+      <div class="two">
+        <div class="field"><label for="f-url">Guidelines link</label><input id="f-url" type="url" placeholder="https://" autocomplete="off"></div>
+        <div class="field"><label for="f-contact">Program officer or contact</label><input id="f-contact" type="text" autocomplete="off"></div>
+      </div>
+      <div class="field"><label for="f-notes">Notes</label><textarea id="f-notes" rows="3"></textarea></div>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn danger" id="deleteBtn">Remove grant</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="editorCancel">Cancel</button>
+      <button type="submit" class="btn primary" id="editorSubmit">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="projectDialog" aria-labelledby="projectDialogTitle">
+  <form id="projectForm" method="dialog">
+    <div class="dlg-head"><h2 id="projectDialogTitle">Film details</h2></div>
+    <div class="dlg-body">
+      <div class="field"><label for="p-title">Film title</label><input id="p-title" type="text" placeholder="Working title is fine"></div>
+      <div class="field"><label for="p-company">Production company</label><input id="p-company" type="text"></div>
+      <div class="field"><label for="p-producer">Producer</label><input id="p-producer" type="text"></div>
+    </div>
+    <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn" id="projectCancel">Cancel</button><button type="submit" class="btn primary">Save details</button></div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="projectCsvDialog" aria-labelledby="projectCsvTitle">
+  <form id="projectCsvForm" method="dialog">
+    <div class="dlg-head"><h2 id="projectCsvTitle">Export project data</h2></div>
+    <div class="dlg-body">
+      <div class="field">
+        <label for="projectCsvCollection">Data to export</label>
+        <select id="projectCsvCollection">
+          <option value="project">Project details</option>
+          <option value="people">People</option>
+          <option value="locations">Locations</option>
+          <option value="thirdPartyElements">Third-party elements</option>
+          <option value="contracts">Contracts</option>
+          <option value="assets">Assets</option>
+          <option value="musicCueSheet">Music cue sheet details</option>
+          <option value="callSheets">Call sheets</option>
+        </select>
+      </div>
+      <p class="hint">Exports one CSV file for the selected collection. Nested values are kept as JSON in their cell.</p>
+    </div>
+    <div class="dlg-foot">
+      <button type="submit" class="btn primary">Export CSV</button>
+      <button type="button" class="btn" id="projectCsvCancel">Cancel</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="conflictDialog" aria-labelledby="conflictTitle">
+  <form method="dialog">
+    <div class="dlg-head"><h2 id="conflictTitle">Project file changed</h2></div>
+    <div class="dlg-body">
+      <p id="conflictText">This project file changed after you opened it. Saving will replace those changes.</p>
+      <p class="hint">Your edits are still here. Choose whether to overwrite the changed file, save a separate copy, or load its latest contents. Save in one tool at a time; simultaneous saves can still race.</p>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn" id="conflictReloadBtn">Reload latest</button>
+      <button type="button" class="btn" id="conflictCopyBtn">Save a copy</button>
+      <button type="button" class="btn danger" id="conflictOverwriteBtn">Overwrite file</button>
+      <button type="button" class="btn" id="conflictCancelBtn">Keep editing</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="report" id="report" aria-hidden="true"></div>
+<input type="file" id="fileInput" accept=".json,application/json" hidden>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+(() => {
+  'use strict';
+
+  const FORMAT = 'open-filmmaker-toolkit/project';
+  const FORMAT_VERSION = 1;
+  const TOOL = 'grant-calendar 0.1.0';
+  const DRAFT_KEY = 'oft.grant-calendar.draft';
+  const PROJECT_TEXT = ['title', 'company', 'producer'];
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const str = v => (v == null ? '' : String(v));
+  const arr = v => (Array.isArray(v) ? v : []);
+  const norm = s => str(s).toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+
+  let doc = blankDoc();
+  let fileHandle = null;
+  let baselineText = null;
+  let fileName = null;
+  let dirty = false;
+
+  function blankDoc() {
+    return { format: FORMAT, formatVersion: FORMAT_VERSION, project: { title: '', company: '', producer: '', frameRate: 24, currency: 'USD' }, people: [], grants: [] };
+  }
+  function newId(prefix) {
+    if (window.crypto && crypto.randomUUID) return `${prefix}-${crypto.randomUUID()}`;
+    return `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+  }
+  function today() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  function fmtDate(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str(iso));
+    if (!m) return str(iso);
+    return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+  function daysUntil(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str(iso));
+    if (!m) return null;
+    const t = new Date(); const a = Date.UTC(t.getFullYear(), t.getMonth(), t.getDate());
+    return Math.round((Date.UTC(+m[1], +m[2] - 1, +m[3]) - a) / 86400000);
+  }
+
+  const STATUSES = [
+    { id: 'researching', label: 'Researching' },
+    { id: 'drafting', label: 'Drafting' },
+    { id: 'submitted', label: 'Submitted' },
+    { id: 'awarded', label: 'Awarded' },
+    { id: 'declined', label: 'Declined' },
+  ];
+  const OPEN = ['researching', 'drafting'];
+  const statusLabel = id => (STATUSES.find(s => s.id === id) || STATUSES[0]).label;
+  const DEFAULT_MATERIALS = ['Narrative', 'Budget', 'Work sample', 'Bios'];
+  const SOON = 14;
+  let filter = 'all';
+  let view = 'list';
+  let month = null; // [year, monthIndex]
+  let editing = null;
+  let isNew = false;
+
+  // Fills in only what this tool needs; everything else in the file is left as it was.
+  function normalize(d) {
+    if (!d.project || typeof d.project !== 'object') d.project = {};
+    for (const k of PROJECT_TEXT) if (typeof d.project[k] !== 'string') d.project[k] = str(d.project[k]);
+    if (!Array.isArray(d.people)) d.people = [];
+    if (!Array.isArray(d.grants)) d.grants = [];
+    d.grants = d.grants.filter(x => x && typeof x === 'object');
+    for (const g of d.grants) {
+      if (!g.id) g.id = newId('grant');
+      if (!STATUSES.some(x => x.id === g.status)) g.status = 'researching';
+      if (g.materials !== undefined && !Array.isArray(g.materials)) delete g.materials;
+    }
+    d.format = FORMAT;
+    d.formatVersion = FORMAT_VERSION;
+    return d;
+  }
+  const entries = () => doc.grants;
+  const materials = g => arr(g.materials).filter(m => m && typeof m === 'object');
+  const grantName = g => [g.funder || 'Unnamed funder', g.program].filter(Boolean).join(': ');
+  const isOpen = g => OPEN.includes(g.status);
+  function money(n) {
+    if (n == null || n === '' || !isFinite(Number(n))) return '';
+    try { return new Intl.NumberFormat(undefined, { style: 'currency', currency: doc.project.currency || 'USD', maximumFractionDigits: 0 }).format(Number(n)); }
+    catch (e) { return String(n); }
+  }
+  // Answers in the grant narrative library; each version keeps who it was sent to.
+  function narrativeVersions() {
+    return arr(doc.narratives).filter(a => a && typeof a === 'object').flatMap(a => arr(a.versions).filter(v => v && typeof v === 'object').map(v => ({ answer: a, version: v })));
+  }
+  const versionLabel = v => v.label || (Number(v.limit) > 0 ? `${Number(v.limit).toLocaleString()} ${v.unit === 'characters' ? 'characters' : 'words'}` : 'No limit');
+  const answersFor = id => narrativeVersions().filter(x => arr(x.version.uses).some(u => u && u.grantId === id));
+
+  // Open applications by deadline first, then those waiting on a decision, then decided ones, most recent first.
+  function sorted(list) {
+    const rank = g => (isOpen(g) ? (g.deadline ? 0 : 1) : g.status === 'submitted' ? 2 : 3);
+    return [...list].sort((a, b) => rank(a) - rank(b) ||
+      (rank(a) === 3 ? str(b.deadline).localeCompare(str(a.deadline)) : str(a.deadline || a.decisionOn).localeCompare(str(b.deadline || b.decisionOn))) ||
+      grantName(a).localeCompare(grantName(b)));
+  }
+  const visible = () => sorted(entries()).filter(g => filter === 'all' || g.status === filter);
+  function left(g) {
+    const n = daysUntil(g.deadline);
+    if (n == null) return null;
+    if (!isOpen(g)) return { cls: '', text: '' };
+    if (n < 0) return { cls: 'passed', text: `Passed ${-n} day${n === -1 ? '' : 's'} ago` };
+    if (n === 0) return { cls: 'soon', text: 'Due today' };
+    return { cls: n <= SOON ? 'soon' : '', text: `In ${n} day${n === 1 ? '' : 's'}` };
+  }
+
+  // ---------- Render ----------
+  function render() {
+    $('filmTitle').textContent = doc.project.title || 'Untitled film';
+    $('filmTitle').classList.toggle('is-empty', !doc.project.title);
+    $('filmMeta').textContent = [doc.project.company, doc.project.producer && `Producer: ${doc.project.producer}`].filter(Boolean).join(' · ');
+    $('fileState').innerHTML = (fileName ? esc(fileName) : 'Not saved to a file yet') + (dirty ? ' · <span class="dirty">Unsaved changes</span>' : '');
+    document.title = `${doc.project.title ? doc.project.title + ' · ' : ''}Grant calendar · Open Filmmaker Toolkit`;
+
+    const all = entries();
+    $('filters').innerHTML = [{ id: 'all', label: 'All' }, ...STATUSES].map(s => {
+      const n = s.id === 'all' ? all.length : all.filter(x => x.status === s.id).length;
+      return `<button type="button" class="filter" data-filter="${s.id}" aria-pressed="${filter === s.id}">${esc(s.label)} ${n}</button>`;
+    }).join('');
+    $('listViewBtn').setAttribute('aria-pressed', String(view === 'list'));
+    $('calViewBtn').setAttribute('aria-pressed', String(view === 'cal'));
+    const list = visible();
+    const soon = all.filter(g => isOpen(g) && g.deadline && daysUntil(g.deadline) >= 0 && daysUntil(g.deadline) <= SOON).length;
+    $('count').textContent = all.length ? `${all.length} grant${all.length === 1 ? '' : 's'}${soon ? ` · ${soon} due in the next two weeks` : ''}` : '';
+    $('empty').hidden = !!all.length;
+    $('filterBar').hidden = !all.length;
+    for (const id of ['csvBtn', 'printBtn', 'icsBtn']) $(id).hidden = !all.length;
+    $('rows').hidden = view !== 'list' || !list.length;
+    $('cal').hidden = view !== 'cal' || !all.length;
+    $('noMatch').hidden = view !== 'list' || !all.length || !!list.length;
+    $('rows').innerHTML = view === 'list' ? list.map(rowHtml).join('') : '';
+    if (view === 'cal') renderCalendar(list);
+    renderSide(all);
+  }
+  function rowHtml(g) {
+    const l = left(g);
+    const mats = materials(g);
+    const done = mats.filter(m => m.done).length;
+    const flags = [];
+    if (isOpen(g) && mats.length) flags.push(`<span class="flag ${done === mats.length ? 'new' : l && l.cls ? 'problem' : 'linked'}">${done} of ${mats.length} materials ready</span>`);
+    if (g.amount) flags.push(`<span class="flag linked">${esc(g.amount)}</span>`);
+    if (g.requested != null && g.requested !== '') flags.push(`<span class="flag linked">Asked for ${esc(money(g.requested))}</span>`);
+    if (g.status === 'awarded' && g.awarded != null) flags.push(`<span class="flag new">Awarded ${esc(money(g.awarded))}</span>`);
+    if (g.status === 'submitted' && g.decisionOn) flags.push(`<span class="flag linked">Decision expected ${esc(fmtDate(g.decisionOn))}</span>`);
+    const ans = answersFor(g.id);
+    if (ans.length) flags.push(`<span class="flag linked">${ans.length} answer${ans.length === 1 ? '' : 's'} from the library</span>`);
+    return `<li class="row${isOpen(g) || g.status === 'submitted' ? '' : ' is-closed'}" data-id="${esc(g.id)}">
+      <span class="tc">${g.deadline ? `<b>${esc(fmtDate(g.deadline))}</b>` : '<b>No deadline</b>'}${l && l.text ? `<span class="left ${l.cls}">${esc(l.text)}</span>` : ''}</span>
+      <button type="button" class="what" data-edit="${esc(g.id)}"><span class="nm">${esc(g.funder || 'Unnamed funder')}</span>${g.program || g.deadlineTime ? `<span class="tt">${esc([g.program, g.deadlineTime && `Due ${g.deadlineTime}`].filter(Boolean).join(' · '))}</span>` : ''}</button>
+      <span class="st st-${esc(g.status)}">${esc(statusLabel(g.status))}</span>
+      ${flags.length ? `<div class="flags">${flags.join('')}</div>` : ''}
+    </li>`;
+  }
+  function renderCalendar(list) {
+    if (!month) {
+      const first = sorted(entries()).find(g => isOpen(g) && g.deadline && daysUntil(g.deadline) >= 0);
+      const t = new Date();
+      month = first ? [Number(first.deadline.slice(0, 4)), Number(first.deadline.slice(5, 7)) - 1] : [t.getFullYear(), t.getMonth()];
+    }
+    const [y, m] = month;
+    $('calTitle').textContent = new Date(y, m, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+    const start = new Date(y, m, 1 - new Date(y, m, 1).getDay());
+    const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const dow = [...Array(7)].map((_, i) => new Date(2024, 0, 7 + i).toLocaleDateString(undefined, { weekday: 'short' }));
+    let html = dow.map(d => `<div class="cal-dow" aria-hidden="true">${esc(d)}</div>`).join('');
+    const weeks = new Date(y, m + 1, 0).getDate() + new Date(y, m, 1).getDay() > 35 ? 6 : 5;
+    for (let i = 0; i < weeks * 7; i++) {
+      const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+      const key = iso(d);
+      const due = list.filter(g => g.deadline === key);
+      html += `<div class="cal-day${d.getMonth() !== m ? ' out' : ''}${key === today() ? ' today' : ''}"><span class="d">${d.getDate()}</span>${due.map(g => `<button type="button" class="st-${esc(g.status)}" data-edit="${esc(g.id)}" title="${esc(grantName(g))}: ${esc(statusLabel(g.status))}">${esc(g.funder || 'Unnamed funder')}</button>`).join('')}</div>`;
+    }
+    $('calGrid').innerHTML = html;
+    const undated = list.filter(g => !g.deadline);
+    $('calNone').hidden = !undated.length;
+    $('calNone').textContent = undated.length ? `Not on the calendar, no deadline yet: ${undated.map(g => g.funder || 'Unnamed funder').join(', ')}` : '';
+  }
+  function renderSide(all) {
+    const next = sorted(all.filter(g => isOpen(g) && g.deadline && daysUntil(g.deadline) >= 0)).slice(0, 5);
+    $('dueCount').textContent = next.length ? String(next.length) : '';
+    $('dueList').innerHTML = next.length ? next.map(g => {
+      const n = daysUntil(g.deadline);
+      return `<li><button type="button" data-edit="${esc(g.id)}">${esc(g.funder || 'Unnamed funder')}</button><span class="when${n <= SOON ? ' soon' : ''}">${esc(fmtDate(g.deadline))}</span></li>`;
+    }).join('') : '<li class="empty-line">No open deadlines coming up.</li>';
+    const sum = (list, k) => list.reduce((t, g) => t + (Number(g[k]) || 0), 0);
+    const waiting = all.filter(g => g.status === 'submitted');
+    const won = all.filter(g => g.status === 'awarded');
+    const stats = [
+      [String(all.filter(isOpen).length), 'open applications'],
+      [String(waiting.length), 'waiting on a decision'],
+      [money(sum(waiting, 'requested')) || '0', 'asked for, waiting'],
+      [money(sum(won, 'awarded')) || '0', 'awarded'],
+    ];
+    $('stats').innerHTML = stats.map(([b, s]) => `<div class="stat"><b>${esc(b)}</b><span>${esc(s)}</span></div>`).join('');
+  }
+
+  // ---------- Editor ----------
+  function matRow(m) {
+    return `<div class="mat-row"><input type="checkbox" class="mat-done" aria-label="Ready"${m.done ? ' checked' : ''}>
+      <input type="text" class="mat-name" aria-label="What's needed" placeholder="Work sample, 10 minutes" value="${esc(m.name)}">
+      <button type="button" class="icon-btn" data-delmat aria-label="Remove this item">×</button></div>`;
+  }
+  function renderAnswers(id) {
+    const answers = arr(doc.narratives).filter(a => a && typeof a === 'object' && arr(a.versions).length);
+    $('answers').innerHTML = answers.length ? answers.map(a => `<fieldset><legend>${esc(a.title || 'Untitled answer')}</legend>${arr(a.versions).filter(v => v && typeof v === 'object').map(v => {
+      const used = arr(v.uses).some(u => u && u.grantId === id);
+      return `<label><input type="checkbox" data-version="${esc(v.id)}"${used ? ' checked' : ''}><span>${esc(versionLabel(v))} <span class="sub">${esc(str(v.text).slice(0, 70))}${str(v.text).length > 70 ? '…' : ''}</span></span></label>`;
+    }).join('')}</fieldset>`).join('') : '<p class="hint">Write your application answers in the grant narrative library, in the same project file, and tick the ones you used here.</p>';
+  }
+  function openEditor(id) {
+    const existing = id && entries().find(g => g.id === id);
+    isNew = !existing;
+    editing = existing ? structuredClone(existing) : { id: newId('grant'), status: 'researching', materials: DEFAULT_MATERIALS.map(name => ({ name })) };
+    $('f-status').innerHTML = STATUSES.map(s => `<option value="${s.id}">${esc(s.label)}</option>`).join('');
+    const vals = { 'f-funder': editing.funder, 'f-program': editing.program, 'f-deadline': editing.deadline, 'f-time': editing.deadlineTime, 'f-status': editing.status,
+      'f-amount': editing.amount, 'f-requested': editing.requested, 'f-awarded': editing.awarded, 'f-eligibility': editing.eligibility, 'f-submitted': editing.submittedOn,
+      'f-decision': editing.decisionOn, 'f-url': editing.url, 'f-contact': editing.contact, 'f-notes': editing.notes };
+    for (const [k, v] of Object.entries(vals)) $(k).value = v == null ? '' : String(v);
+    $('matRows').innerHTML = materials(editing).map(matRow).join('');
+    renderAnswers(editing.id);
+    $('editorTitle').textContent = isNew ? 'Add a grant' : 'Edit grant';
+    $('deleteBtn').hidden = isNew;
+    $('editor').showModal();
+    $('f-funder').focus();
+  }
+  function saveEditor() {
+    if (!$('f-funder').value.trim()) { $('f-funder').setCustomValidity('Type the funder’s name.'); $('f-funder').reportValidity(); return; }
+    for (const id of ['f-requested', 'f-awarded']) if ($(id).value && !$(id).checkValidity()) { $(id).reportValidity(); return; }
+    const e = editing;
+    const text = { funder: 'f-funder', program: 'f-program', deadline: 'f-deadline', deadlineTime: 'f-time', amount: 'f-amount', eligibility: 'f-eligibility',
+      submittedOn: 'f-submitted', decisionOn: 'f-decision', url: 'f-url', contact: 'f-contact', notes: 'f-notes' };
+    for (const [k, id] of Object.entries(text)) { const v = $(id).value.trim(); if (v) e[k] = v; else delete e[k]; }
+    e.status = $('f-status').value;
+    for (const [k, id] of [['requested', 'f-requested'], ['awarded', 'f-awarded']]) { const v = $(id).value; if (v !== '') e[k] = Number(v); else delete e[k]; }
+    const mats = [...$('matRows').querySelectorAll('.mat-row')].map(r => ({ name: r.querySelector('.mat-name').value.trim(), done: r.querySelector('.mat-done').checked }))
+      .filter(m => m.name).map(m => (m.done ? m : { name: m.name }));
+    if (mats.length) e.materials = mats; else delete e.materials;
+    // Ticked answers are recorded on the version, so the library shows which funder got it.
+    for (const box of $('answers').querySelectorAll('[data-version]')) {
+      const hit = narrativeVersions().find(x => x.version.id === box.dataset.version);
+      if (!hit) continue;
+      const v = hit.version;
+      const has = arr(v.uses).some(u => u && u.grantId === e.id);
+      if (box.checked && !has) v.uses = [...arr(v.uses), { grantId: e.id, date: e.submittedOn || today() }];
+      if (!box.checked && has) { v.uses = arr(v.uses).filter(u => !(u && u.grantId === e.id)); if (!v.uses.length) delete v.uses; }
+    }
+    if (isNew) entries().push(e); else entries()[entries().findIndex(x => x.id === e.id)] = e;
+    $('editor').close();
+    changed();
+  }
+  // The library keeps its record of what was sent, with the funder's name, after the grant is gone.
+  function removeEditing() {
+    for (const { version } of narrativeVersions()) {
+      if (!Array.isArray(version.uses)) continue;
+      version.uses = version.uses.map(u => (u && u.grantId === editing.id ? Object.assign({ funder: grantName(editing) }, u.date ? { date: u.date } : {}) : u));
+    }
+    doc.grants = entries().filter(g => g.id !== editing.id);
+    $('editor').close();
+    changed();
+    toast(`Removed ${editing.funder || 'that grant'}.`);
+  }
+
+  // ---------- Exports and print ----------
+  const CSV_HEAD = ['Funder', 'Program', 'Deadline', 'Deadline time', 'Status', 'Amount available', 'Requested', 'Awarded', 'Eligibility', 'Materials',
+    'Materials still to do', 'Link', 'Contact', 'Submitted on', 'Decision expected', 'Answers used', 'Notes'];
+  function exportCsv() {
+    const rows = sorted(entries()).map(g => [g.funder, g.program, g.deadline, g.deadlineTime, statusLabel(g.status), g.amount, g.requested, g.awarded, g.eligibility,
+      materials(g).map(m => m.name).join('; '), materials(g).filter(m => !m.done).map(m => m.name).join('; '), g.url, g.contact, g.submittedOn, g.decisionOn,
+      answersFor(g.id).map(x => `${x.answer.title || 'Untitled answer'} (${versionLabel(x.version)})`).join('; '), g.notes]);
+    const csv = '\ufeff' + [CSV_HEAD, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
+    const name = `${slug()}-grants.csv`;
+    download(csv, name, 'text/csv;charset=utf-8');
+    toast(`Exported ${rows.length} grant${rows.length === 1 ? '' : 's'} to ${name}`);
+  }
+  // Calendar file (RFC 5545): one all-day event per deadline, with a reminder a week before.
+  function icsText(s) { return str(s).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n'); }
+  function fold(line) {
+    const out = [];
+    let cur = '';
+    let bytes = 0;
+    for (const ch of line) {
+      const n = new TextEncoder().encode(ch).length;
+      if (bytes + n > (out.length ? 74 : 75)) { out.push(cur); cur = ''; bytes = 0; }
+      cur += ch; bytes += n;
+    }
+    out.push(cur);
+    return out.join('\r\n ');
+  }
+  function exportIcs() {
+    const dated = sorted(entries()).filter(g => /^\d{4}-\d{2}-\d{2}$/.test(str(g.deadline)) && g.status !== 'declined');
+    if (!dated.length) { toast('No deadlines to export. Add a deadline to a grant first.'); return; }
+    const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
+    const day = iso => iso.replace(/-/g, '');
+    const next = iso => { const d = new Date(Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10) + 1)); return d.toISOString().slice(0, 10).replace(/-/g, ''); };
+    const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Open Filmmaker Toolkit//Grant calendar 0.1.0//EN', 'CALSCALE:GREGORIAN',
+      `X-WR-CALNAME:${icsText(`${doc.project.title || 'Film'} grant deadlines`)}`];
+    for (const g of dated) {
+      const desc = [`Status: ${statusLabel(g.status)}`, g.deadlineTime && `Due: ${g.deadlineTime}`, g.amount && `Amount: ${g.amount}`,
+        isOpen(g) && materials(g).length && `Still to do: ${materials(g).filter(m => !m.done).map(m => m.name).join(', ') || 'nothing'}`, g.url, g.notes].filter(Boolean).join('\n');
+      lines.push('BEGIN:VEVENT', `UID:${g.id}@open-filmmaker-toolkit`, `DTSTAMP:${stamp}`, `DTSTART;VALUE=DATE:${day(g.deadline)}`, `DTEND;VALUE=DATE:${next(g.deadline)}`,
+        `SUMMARY:${icsText(`Deadline: ${grantName(g)}`)}`, `DESCRIPTION:${icsText(desc)}`);
+      if (/^https?:\/\//i.test(str(g.url))) lines.push(`URL:${g.url}`);
+      if (isOpen(g)) lines.push('BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${icsText(`One week to the ${g.funder || 'grant'} deadline`)}`, 'TRIGGER:-P7D', 'END:VALARM');
+      lines.push('END:VEVENT');
+    }
+    lines.push('END:VCALENDAR');
+    const name = `${slug()}-grant-deadlines.ics`;
+    download(lines.map(fold).join('\r\n') + '\r\n', name, 'text/calendar;charset=utf-8');
+    toast(`Exported ${dated.length} deadline${dated.length === 1 ? '' : 's'} to ${name}. Open it with your calendar app.`);
+  }
+  function renderReport() {
+    const list = sorted(entries());
+    $('report').innerHTML = `<h1>Grant calendar</h1>
+      <p class="r-meta">${esc([doc.project.title, doc.project.company, `Printed ${fmtDate(today())}`].filter(Boolean).join(' · '))}</p>
+      <table><thead><tr><th>Deadline</th><th>Funder</th><th>Status</th><th>Amount</th><th>Still to do</th></tr></thead><tbody>
+      ${list.map(g => `<tr><td>${esc(g.deadline ? fmtDate(g.deadline) : 'None yet')}${g.deadlineTime ? `<span class="r-sub">${esc(g.deadlineTime)}</span>` : ''}</td>
+        <td><b>${esc(g.funder || 'Unnamed funder')}</b>${g.program ? `<span class="r-sub">${esc(g.program)}</span>` : ''}</td>
+        <td>${esc(statusLabel(g.status))}${g.status === 'awarded' && g.awarded != null ? `<span class="r-sub">${esc(money(g.awarded))}</span>` : ''}</td>
+        <td>${esc(g.amount || '')}${g.requested != null ? `<span class="r-sub">Asked for ${esc(money(g.requested))}</span>` : ''}</td>
+        <td>${isOpen(g) ? esc(materials(g).filter(m => !m.done).map(m => m.name).join(', ')) : ''}</td></tr>`).join('')}
+      </tbody></table>`;
+  }
+
+  // ---------- Project CSV ----------
+  function csvCell(v) {
+    let s = v == null ? '' : String(v);
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+    return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }
+  const csvCollections = {
+    project: 'project details', people: 'people', locations: 'locations', thirdPartyElements: 'third-party elements',
+    contracts: 'contracts', assets: 'assets', musicCueSheet: 'music cue sheet details', callSheets: 'call sheets'
+  };
+  function exportProjectCsv() {
+    const collection = $('projectCsvCollection').value;
+    const value = doc[collection];
+    const rows = Array.isArray(value) ? value : value && typeof value === 'object' ? [value] : [];
+    if (rows.some(row => !row || typeof row !== 'object' || Array.isArray(row))) {
+      toast(`Couldn't export ${csvCollections[collection]}: the project contains an invalid record.`, true);
+      return;
+    }
+    const headers = [...new Set(rows.flatMap(row => Object.keys(row)))];
+    if (!headers.length) headers.push('id');
+    const csvRows = rows.map(row => headers.map(key => { const cell = row[key]; return cell && typeof cell === 'object' ? JSON.stringify(cell) : cell; }));
+    const csv = '﻿' + [headers, ...csvRows].map(row => row.map(csvCell).join(',')).join('\r\n') + '\r\n';
+    const name = suggestedName().replace(/\.oft\.json$/i, `-${collection}.csv`);
+    download(csv, name, 'text/csv;charset=utf-8');
+    toast(`Exported ${rows.length} ${csvCollections[collection]} to ${name}`);
+  }
+
+  // ---------- Film details ----------
+  function openProjectDialog() {
+    for (const k of PROJECT_TEXT) $(`p-${k}`).value = doc.project[k] || '';
+    $('projectDialog').showModal();
+    $('p-title').focus();
+  }
+  function saveProjectDialog() {
+    for (const k of PROJECT_TEXT) doc.project[k] = $(`p-${k}`).value.trim();
+    $('projectDialog').close();
+    changed();
+  }
+
+  // ---------- Dirty state & recovery draft ----------
+  function changed() { dirty = true; saveDraft(); render(); }
+  function saveDraft() {
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ doc, fileName, baselineText, at: new Date().toISOString() })); } catch { /* the file on disk is the real copy */ }
+  }
+  function clearDraft() {
+    try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+    $('recovery').hidden = true;
+  }
+  function checkDraft() {
+    let draft = null;
+    try { draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); } catch { draft = null; }
+    if (!draft || !draft.doc || draft.doc.format !== FORMAT) return;
+    const n = Array.isArray(draft.doc.grants) ? draft.doc.grants.length : 0;
+    if (!n && !(draft.doc.project && draft.doc.project.title)) { clearDraft(); return; }
+    const when = draft.at ? new Date(draft.at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'earlier';
+    const title = draft.doc.project && draft.doc.project.title ? `"${draft.doc.project.title}"` : 'an untitled project';
+    $('recoveryText').textContent = `You have unsaved changes to ${title} from ${when} (${n} grant${n === 1 ? '' : 's'}). Restore them, or discard them and start fresh.`;
+    $('recovery').hidden = false;
+    $('restoreBtn').onclick = () => {
+      doc = normalize(draft.doc); fileName = draft.fileName || null; fileHandle = null;
+      baselineText = typeof draft.baselineText === 'string' ? draft.baselineText : null; dirty = true;
+      $('recovery').hidden = true; render();
+      toast(fileName ? `Restored. Save to write the changes back to ${fileName}.` : 'Restored. Save to keep it as a file.');
+    };
+    $('discardBtn').onclick = () => { clearDraft(); toast('Discarded the unsaved changes.'); };
+  }
+
+  // ---------- Files ----------
+  const pickerTypes = [{ description: 'Film project file', accept: { 'application/json': ['.json'] } }];
+  function slug() {
+    return (doc.project.title || 'untitled-film').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'untitled-film';
+  }
+  const suggestedName = () => `${slug()}.oft.json`;
+  function serialize() {
+    doc.savedAt = new Date().toISOString();
+    doc.savedBy = TOOL;
+    return JSON.stringify(doc, null, 2) + '\n';
+  }
+  function download(text, name, type) {
+    const url = URL.createObjectURL(new Blob([text], { type }));
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  function afterSave(name, downloaded, content) {
+    fileName = name;
+    if (downloaded) fileHandle = null;
+    baselineText = content;
+    dirty = false; clearDraft(); render();
+    toast(downloaded ? `Downloaded ${name}. Keep it with your project files and open it here next time.` : `Saved to ${name}`);
+  }
+  async function writeProjectFile(handle, content) {
+    try {
+      const writable = await handle.createWritable();
+      await writable.write(content);
+      await writable.close();
+    } catch (err) {
+      if (err.name !== 'AbortError') toast(`Couldn't save the file: ${err.message}`, true);
+      return;
+    }
+    fileHandle = handle;
+    afterSave(handle.name, false, content);
+  }
+  function saveCopy(content) {
+    const base = (fileName || suggestedName()).replace(/\.oft\.json$/i, '');
+    const name = `${base}-copy.oft.json`;
+    download(content, name, 'application/json');
+    afterSave(name, true, content);
+  }
+  async function reloadLatest(handle) {
+    try {
+      const file = await handle.getFile();
+      loadText(await file.text(), handle.name, handle);
+    } catch (err) {
+      toast(`Couldn't reload the file: ${err.message}`, true);
+    }
+  }
+  function showConflictDialog(content, observedText, unknownBaseline = false) {
+    const handle = fileHandle;
+    dirty = true;
+    saveDraft();
+    render();
+    $('conflictText').textContent = unknownBaseline
+      ? `The tool can't verify whether ${handle.name} changed since your recovery copy was made. Your edits are not saved.`
+      : `${handle.name} changed after you opened it. Your edits are not saved. Overwriting replaces the newer file.`;
+    $('conflictDialog').showModal();
+    $('conflictReloadBtn').onclick = () => { $('conflictDialog').close(); reloadLatest(handle); };
+    $('conflictCopyBtn').onclick = () => { $('conflictDialog').close(); saveCopy(content); };
+    $('conflictOverwriteBtn').onclick = async () => {
+      $('conflictDialog').close();
+      let latestText;
+      try { latestText = await (await handle.getFile()).text(); }
+      catch (err) { toast(`Couldn't check the file before overwriting: ${err.message}`, true); return; }
+      if (latestText !== observedText) {
+        toast('The file changed again. Review the updated conflict warning before overwriting.', true);
+        showConflictDialog(content, latestText);
+        return;
+      }
+      await writeProjectFile(handle, content);
+    };
+    $('conflictCancelBtn').onclick = () => $('conflictDialog').close();
+  }
+  async function saveFile() {
+    const out = serialize();
+    if (fileHandle) {
+      let currentText;
+      try { currentText = await (await fileHandle.getFile()).text(); }
+      catch (err) { toast(`Couldn't check the file before saving: ${err.message}`, true); return; }
+      if (baselineText === null || currentText !== baselineText) { showConflictDialog(out, currentText, baselineText === null); return; }
+      await writeProjectFile(fileHandle, out);
+      return;
+    }
+    if (window.showSaveFilePicker && window.self === window.top) {
+      try {
+        const h = await window.showSaveFilePicker({ suggestedName: fileName || suggestedName(), types: pickerTypes });
+        if (h.name === fileName) {
+          const currentText = await (await h.getFile()).text();
+          if (baselineText === null || currentText !== baselineText) { fileHandle = h; showConflictDialog(out, currentText, baselineText === null); return; }
+        }
+        await writeProjectFile(h, out);
+      } catch (err) { if (err.name !== 'AbortError') toast(`Couldn't save the file: ${err.message}`, true); }
+      return;
+    }
+    const name = fileName || suggestedName();
+    download(out, name, 'application/json');
+    afterSave(name, true, out);
+  }
+  function loadText(text, name, handle) {
+    let data;
+    try { data = JSON.parse(text); } catch { toast(`Couldn't open ${name}: it isn't a project file.`, true); return; }
+    if (!data || data.format !== FORMAT) { toast(`Couldn't open ${name}: it isn't an Open Filmmaker Toolkit project file.`, true); return; }
+    if (Number(data.formatVersion) > FORMAT_VERSION) { toast(`Couldn't open ${name}: it was saved by a newer version of the toolkit. Get the latest version of this tool.`, true); return; }
+    doc = normalize(data); fileHandle = handle; baselineText = text; fileName = name; dirty = false;
+    clearDraft(); render();
+    const n = entries().length;
+    toast(`Opened ${name}: ${n ? `${n} grant${n === 1 ? '' : 's'}` : 'no grants yet'}`);
+  }
+  async function openFile() {
+    if (dirty && !confirm('You have unsaved changes. Open another file and lose them?')) return;
+    if (window.showOpenFilePicker && window.self === window.top) {
+      try { const [h] = await window.showOpenFilePicker({ types: pickerTypes }); const f = await h.getFile(); loadText(await f.text(), f.name, h); }
+      catch (err) { if (err.name !== 'AbortError') toast(`Couldn't open the file: ${err.message}`, true); }
+      return;
+    }
+    $('fileInput').click();
+  }
+  function newProject() {
+    if (dirty && !confirm('You have unsaved changes. Start a new project and lose them?')) return;
+    doc = normalize(blankDoc()); fileHandle = null; baselineText = null; fileName = null; dirty = false;
+    clearDraft(); render(); openProjectDialog();
+  }
+
+  let toastTimer = null;
+  function toast(msg, isError) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.classList.toggle('error', !!isError);
+    t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.hidden = true; }, isError ? 7000 : 4200);
+  }
+
+  // ---------- Wiring ----------
+  function init() {
+    doc = normalize(doc);
+    $('newBtn').onclick = newProject;
+    $('openBtn').onclick = openFile;
+    $('saveBtn').onclick = saveFile;
+    $('editProjectBtn').onclick = openProjectDialog;
+    $('filmTitle').onclick = openProjectDialog;
+    $('printBtn').onclick = () => { renderReport(); window.print(); };
+    window.addEventListener('beforeprint', renderReport);
+    $('projectCsvBtn').onclick = () => $('projectCsvDialog').showModal();
+    $('projectCsvCancel').onclick = () => $('projectCsvDialog').close();
+    $('projectCsvForm').addEventListener('submit', ev => { ev.preventDefault(); exportProjectCsv(); $('projectCsvDialog').close(); });
+    $('fileInput').addEventListener('change', async () => {
+      const f = $('fileInput').files[0];
+      if (f) loadText(await f.text(), f.name, null);
+      $('fileInput').value = '';
+    });
+    $('projectForm').addEventListener('submit', ev => { ev.preventDefault(); saveProjectDialog(); });
+    $('projectCancel').onclick = () => $('projectDialog').close();
+    $('addBtn').onclick = () => openEditor(null);
+    $('emptyAddBtn').onclick = () => openEditor(null);
+    $('emptyOpenBtn').onclick = openFile;
+    $('csvBtn').onclick = exportCsv;
+    $('icsBtn').onclick = exportIcs;
+    $('filters').addEventListener('click', ev => { const b = ev.target.closest('[data-filter]'); if (b) { filter = b.dataset.filter; render(); } });
+    $('listViewBtn').onclick = () => { view = 'list'; render(); };
+    $('calViewBtn').onclick = () => { view = 'cal'; render(); };
+    const shift = n => { month = [month[0], month[1] + n]; const d = new Date(month[0], month[1], 1); month = [d.getFullYear(), d.getMonth()]; render(); };
+    $('prevMonth').onclick = () => shift(-1);
+    $('nextMonth').onclick = () => shift(1);
+    $('thisMonth').onclick = () => { const t = new Date(); month = [t.getFullYear(), t.getMonth()]; render(); };
+    for (const id of ['rows', 'calGrid', 'dueList']) $(id).addEventListener('click', ev => { const b = ev.target.closest('[data-edit]'); if (b) openEditor(b.dataset.edit); });
+    $('addMatBtn').onclick = () => { $('matRows').insertAdjacentHTML('beforeend', matRow({})); $('matRows').lastElementChild.querySelector('.mat-name').focus(); };
+    $('matRows').addEventListener('click', ev => { const b = ev.target.closest('[data-delmat]'); if (b) b.closest('.mat-row').remove(); });
+    $('editorForm').addEventListener('submit', ev => { ev.preventDefault(); saveEditor(); });
+    $('editorForm').addEventListener('input', ev => { if (ev.target.setCustomValidity) ev.target.setCustomValidity(''); });
+    $('editorCancel').onclick = () => $('editor').close();
+    $('deleteBtn').onclick = removeEditing;
+
+    document.addEventListener('keydown', ev => {
+      const mod = ev.metaKey || ev.ctrlKey;
+      if (mod && ev.key.toLowerCase() === 's') { ev.preventDefault(); saveFile(); }
+      else if (mod && ev.key.toLowerCase() === 'o') { ev.preventDefault(); openFile(); }
+    });
+    window.addEventListener('beforeunload', ev => { if (dirty) { ev.preventDefault(); ev.returnValue = ''; } });
+    render();
+    checkDraft();
+  }
+
+  if (typeof HTMLDialogElement !== 'function' || typeof HTMLDialogElement.prototype.showModal !== 'function' || typeof structuredClone !== 'function') {
+    $('cantRunTitle').textContent = 'This browser is too old to run this tool';
+    $('cantRunText').textContent = 'Update to a current version of Chrome, Edge, Firefox or Safari, then open this file again.';
+    $('cantRunHow').hidden = true;
+    return;
+  }
+  document.documentElement.classList.remove('no-js');
+  window.addEventListener('error', ev => toast(`Something went wrong: ${ev.message}. Save your work, then reload the page.`, true));
+  window.addEventListener('unhandledrejection', ev => toast(`Something went wrong: ${ev.reason && ev.reason.message ? ev.reason.message : ev.reason}. Save your work, then reload the page.`, true));
+  init();
+})();
+</script>
+</body>
+</html>
