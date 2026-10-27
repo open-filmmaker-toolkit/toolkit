@@ -1107,5 +1107,207 @@
         "hidden": true
       }
     ]
-  }
+  },
+  "grants": [
+    {
+      "id": "grant-riverbend",
+      "funder": "Riverbend Documentary Fund",
+      "program": "Production grant, 2027 round",
+      "deadline": "2027-02-12",
+      "deadlineTime": "11:59 pm Central",
+      "status": "drafting",
+      "amount": "Up to $40,000",
+      "requested": 35000,
+      "eligibility": "Feature documentaries in production. Directors based in the US. Fiscal sponsor accepted.",
+      "materials": [
+        {
+          "name": "Narrative",
+          "done": true
+        },
+        {
+          "name": "Budget",
+          "done": true
+        },
+        {
+          "name": "Work sample, 10 minutes"
+        },
+        {
+          "name": "Bios",
+          "done": true
+        },
+        {
+          "name": "Two letters of support"
+        }
+      ],
+      "url": "https://example.org/riverbend-fund",
+      "contact": "Program officer, Riverbend Documentary Fund"
+    },
+    {
+      "id": "grant-prairie-arts",
+      "funder": "Prairie State Arts Board",
+      "program": "Media artist grant",
+      "deadline": "2027-04-01",
+      "status": "researching",
+      "amount": "$10,000",
+      "eligibility": "State residents only. Can't be used for work already completed.",
+      "materials": [
+        {
+          "name": "Artist statement"
+        },
+        {
+          "name": "Work sample"
+        },
+        {
+          "name": "Budget"
+        }
+      ]
+    },
+    {
+      "id": "grant-northlight",
+      "funder": "Northern Light Media Foundation",
+      "program": "Completion fund",
+      "deadline": "2026-09-30",
+      "status": "submitted",
+      "amount": "$5,000 to $25,000",
+      "requested": 25000,
+      "submittedOn": "2026-09-28",
+      "decisionOn": "2027-01-15",
+      "materials": [
+        {
+          "name": "Narrative",
+          "done": true
+        },
+        {
+          "name": "Budget",
+          "done": true
+        },
+        {
+          "name": "Rough cut link",
+          "done": true
+        }
+      ]
+    },
+    {
+      "id": "grant-county-heritage",
+      "funder": "Riverside County Heritage Trust",
+      "program": "Local history grant",
+      "deadline": "2026-03-15",
+      "status": "awarded",
+      "amount": "Up to $7,500",
+      "requested": 7500,
+      "awarded": 7500,
+      "submittedOn": "2026-03-01",
+      "notes": "Final report due when the film is finished."
+    },
+    {
+      "id": "grant-eastgate",
+      "funder": "Eastgate Film Initiative",
+      "program": "Development lab",
+      "deadline": "2026-06-01",
+      "status": "declined",
+      "requested": 15000,
+      "submittedOn": "2026-05-29",
+      "notes": "Feedback: strong access, apply again with a cut."
+    }
+  ],
+  "narratives": [
+    {
+      "id": "narrative-logline",
+      "title": "Logline",
+      "versions": [
+        {
+          "id": "version-logline-25w",
+          "unit": "words",
+          "limit": 25,
+          "updated": "2026-09-15",
+          "text": "When the river that drowned her town in 1965 rises again, a retired schoolteacher opens the flood diary she has kept secret for sixty years.",
+          "uses": [
+            {
+              "grantId": "grant-county-heritage",
+              "date": "2026-03-01"
+            },
+            {
+              "grantId": "grant-northlight",
+              "date": "2026-09-28"
+            }
+          ]
+        },
+        {
+          "id": "version-logline-150c",
+          "unit": "characters",
+          "limit": 150,
+          "updated": "2026-05-20",
+          "text": "A retired schoolteacher opens the flood diary she has kept for sixty years as the river rises again.",
+          "uses": [
+            {
+              "grantId": "grant-eastgate",
+              "date": "2026-05-29"
+            },
+            {
+              "funder": "Public television pitch session",
+              "date": "2026-06-18"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "narrative-synopsis",
+      "title": "Short synopsis",
+      "versions": [
+        {
+          "id": "version-synopsis-100w",
+          "unit": "words",
+          "limit": 100,
+          "updated": "2026-09-15",
+          "text": "Riverside has flooded three times in living memory. Ruth Hammond kept a diary through the first, Leon Pryor fought the second from the levee board, and Daniel Okafor is still finding his grandmother's photographs of the third. As engineers argue over whether the new levee will hold, The River Keeps follows the people who remember what the water took, and asks what a town owes the ones who stayed.",
+          "uses": [
+            {
+              "grantId": "grant-northlight",
+              "date": "2026-09-28"
+            }
+          ]
+        },
+        {
+          "id": "version-synopsis-350c",
+          "unit": "characters",
+          "limit": 350,
+          "updated": "2026-10-20",
+          "text": "Riverside has flooded three times in living memory. A schoolteacher kept a diary through the first, a levee board member fought the second, and a grandson is still finding photographs of the third. As engineers argue over the new levee, The River Keeps follows the people who remember what the water took, and asks what a town owes the ones who stayed behind when the water came."
+        }
+      ]
+    },
+    {
+      "id": "narrative-impact",
+      "title": "Impact statement",
+      "versions": [
+        {
+          "id": "version-impact-150w",
+          "unit": "words",
+          "limit": 150,
+          "updated": "2026-09-20",
+          "text": "We will screen The River Keeps in the six river towns where it was filmed, with county emergency managers and historical societies, and give every library in the county a copy with a discussion guide. The film's oral histories, with consent, will go to the county historical society's flood archive, so the people who remember are heard by the people who plan.",
+          "uses": [
+            {
+              "grantId": "grant-northlight",
+              "date": "2026-09-28"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "narrative-bio-ana",
+      "title": "Producer's bio: Ana Reyes",
+      "versions": [
+        {
+          "id": "version-bio-ana-50w",
+          "unit": "words",
+          "limit": 50,
+          "updated": "2026-08-02",
+          "text": "Ana Reyes is a producer whose documentaries follow small towns through big changes. She runs Lowwater Films and has produced work for public television and regional festivals. The River Keeps is her first feature as producer."
+        }
+      ]
+    }
+  ]
 }
