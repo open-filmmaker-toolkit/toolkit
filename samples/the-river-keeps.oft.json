@@ -2778,5 +2778,45 @@
         }
       ]
     }
+  ],
+  "journal": [
+    {
+      "id": "journal-levee-dawn",
+      "date": "2026-05-12",
+      "kind": "happened",
+      "title": "The levee at dawn",
+      "text": "Fictional sample entry. We reached the levee before sunrise and got the first interview done by nine. The light held until noon, then turned flat.",
+      "personIds": [
+        "person-ana-reyes",
+        "person-daniel-okafor"
+      ],
+      "locationIds": [
+        "location-riverside-levee"
+      ],
+      "callSheetId": "callsheet-day-1"
+    },
+    {
+      "id": "journal-quiet-room",
+      "date": "2026-05-13",
+      "kind": "learned",
+      "title": "Quiet rooms make better interviews",
+      "text": "Fictional sample entry. Moving the second interview indoors cut the wind noise and made Daniel more relaxed. Next time, scout for a quiet room first.",
+      "personIds": [
+        "person-daniel-okafor"
+      ],
+      "locationIds": [
+        "location-hammond-house"
+      ]
+    },
+    {
+      "id": "journal-flood-markers",
+      "date": "2026-05-14",
+      "kind": "idea",
+      "title": "Open on the flood markers",
+      "text": "Fictional sample idea: open the film on the painted flood markers along the grain elevator wall, one year per frame, before any voice is heard.",
+      "locationIds": [
+        "location-grain-elevator"
+      ]
+    }
   ]
 }

@@ -72,6 +72,7 @@ Everything else in [TOOLS.md](TOOLS.md), prioritized by what contributors ask fo
 - [x] Shooting calendar: shoot days, travel days and holds in month and list views, linked to people and locations, call sheets started from a day, a calendar file and a printed month view ([#53](https://github.com/open-filmmaker-toolkit/toolkit/issues/53))
 - [x] Interview prep: research notes, story beats, questions in order with must-asks marked, linked to the person and the shoot day, and a one-page guide to print ([#54](https://github.com/open-filmmaker-toolkit/toolkit/issues/54))
 - [x] Name supers list: names from the project, near-miss spellings flagged, changes since the last export to graphics, CSV export ([#71](https://github.com/open-filmmaker-toolkit/toolkit/issues/71))
+- [x] Field journal: dated entries of what happened, what you learned and story ideas, tagged with people and locations, searchable, linked to a shoot day's call sheet, with Markdown export and print ([#66](https://github.com/open-filmmaker-toolkit/toolkit/issues/66))
 
 Finding a third maintainer is on hold. Basil and Alex maintain the project for now ([#8](https://github.com/open-filmmaker-toolkit/toolkit/issues/8), closed).
 
