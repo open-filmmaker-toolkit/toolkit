@@ -1,6 +1,6 @@
 # Tools
 
-The tools we build, by production phase. Each one is a single page that runs in your browser on the shared project file, with nothing to install and nothing sent anywhere. 20 are ready to use and 42 are planned.
+The tools we build, by production phase. Each one is a single page that runs in your browser on the shared project file, with nothing to install and nothing sent anywhere. 21 are ready to use and 41 are planned.
 
 - **Ready to use:** linked tools. Each has a README with what it does.
 - **Planned:** each has an issue. Comment there if you need the tool or want to help build it. Order of work is in [ROADMAP.md](ROADMAP.md).
@@ -54,7 +54,7 @@ Looking for other free, open-source software for filmmaking, such as editing, so
 | Daily production report | Record what happened each shoot day: times, who worked, what was shot, problems and costs. | Planned, [#64](https://github.com/open-filmmaker-toolkit/toolkit/issues/64) |
 | [Release tracker](tools/release-tracker/) | Tracking who signed what: appearance, location and materials releases, with the signed copies, and flagging anyone on camera with no release on file | First version |
 | Expense log | Log receipts as you go and keep them tied to budget lines. | Planned, [#65](https://github.com/open-filmmaker-toolkit/toolkit/issues/65) |
-| Field journal | Keep a dated journal of the production: what happened, what you learned, and story ideas. | Planned, [#66](https://github.com/open-filmmaker-toolkit/toolkit/issues/66) |
+| [Field journal](tools/field-journal/) | Keeping a dated journal of the production: what happened, what you learned and story ideas, tagged with people and places and linked to shoot days | First version |
 
 ## Post-Production
 

@@ -85,12 +85,13 @@ The toolkit has two halves:
 | [Interview prep](tools/interview-prep/) | Pre-production | Preparing each interview: research, the story beats to cover, questions in order with must-asks marked, and a one-page guide to print |
 | [Call sheet](tools/call-sheet/) | Production | Building shoot-day call sheets from the people and locations in your project; weather lookup is optional and off until you click it |
 | [Release tracker](tools/release-tracker/) | Production | Tracking who signed what: appearance, location and materials releases, with the signed copies, and flagging anyone on camera with no release on file |
+| [Field journal](tools/field-journal/) | Production | Keeping a dated journal of the production: what happened, what you learned and story ideas, tagged with people and places and linked to shoot days |
 | [Name supers list](tools/name-supers/) | Post-production | Keeping on-screen names and titles spelled the way the rest of your project spells them, and showing graphics what changed since their last list |
 | [Music cue sheet](tools/music-cue-sheet/) | Post-production | Building the music cue sheet your distributor or broadcaster needs, from the music already in your clearance log |
 | [Credits builder](tools/credits-builder/) | Post-production | Building end credits from the people, music and archival material in your project, checking that every credit your contracts require is there, and exporting the crawl as text |
 | [Clearance log](tools/clearance-log/) | Legal and clearances | Tracking every piece of third-party material until it's cleared, then printing a report for your E&O attorney |
 
-All 20 are first versions: they work, and they're still changing. Everything else we plan to build is listed by production phase in [TOOLS.md](TOOLS.md).
+All 21 are first versions: they work, and they're still changing. Everything else we plan to build is listed by production phase in [TOOLS.md](TOOLS.md).
 
 ## How our tools work
 

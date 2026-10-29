@@ -19,10 +19,10 @@ from playwright.sync_api import sync_playwright
 
 root = pathlib.Path(__file__).resolve().parents[1]
 sample = (root / 'samples/the-river-keeps.oft.json').read_text()
-TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan', 'funder-crm', 'cash-flow', 'shooting-calendar', 'interview-prep']
+TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan', 'funder-crm', 'cash-flow', 'shooting-calendar', 'interview-prep', 'field-journal']
 COLLECTIONS = ['project', 'people', 'locations', 'thirdPartyElements', 'contracts', 'assets', 'musicCueSheet', 'callSheets']
 PRINT_BTN = {'clearance-log': '#printBtn', 'music-cue-sheet': '#printBtn', 'call-sheet': '#printAllBtn', 'release-tracker': '#printBtn',
-             'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn', 'treatment-builder': '#printBtn', 'pitch-deck': '#printBtn', 'grant-calendar': '#printBtn', 'narrative-library': '#printBtn', 'budget': '#printBtn', 'budget-converter': '#printBtn', 'finance-plan': '#printBtn', 'funder-crm': '#printBtn', 'cash-flow': '#printBtn', 'shooting-calendar': '#printBtn', 'interview-prep': '#printBtn'}
+             'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn', 'treatment-builder': '#printBtn', 'pitch-deck': '#printBtn', 'grant-calendar': '#printBtn', 'narrative-library': '#printBtn', 'budget': '#printBtn', 'budget-converter': '#printBtn', 'finance-plan': '#printBtn', 'funder-crm': '#printBtn', 'cash-flow': '#printBtn', 'shooting-calendar': '#printBtn', 'interview-prep': '#printBtn', 'field-journal': '#printBtn'}
 PHONE = {'width': 390, 'height': 844}
 # The button that opens each tool's main dialog, for the phone-width check. Most tools use #addBtn.
 DIALOG_BTN = {'treatment-builder': '[data-compare]', 'cash-flow': '#settingsBtn'}
@@ -1152,6 +1152,63 @@ def test_interview_prep(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
+def test_field_journal(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'field-journal', fake)
+    open_sample(pg, fake)
+    check(pg.locator('#rows .row').count() == 3 and pg.locator('#rows .row').first.get_attribute('data-id') == 'journal-flood-markers', 'lists entries, newest first')
+    check('Shoot day: May 12, 2026: Day 1 of 2' in pg.inner_text('[data-id="journal-levee-dawn"]') and 'Riverside levee' in pg.inner_text('[data-id="journal-levee-dawn"]'), 'shows the shoot day and tags')
+    pg.fill('#search', 'wind noise')
+    check(pg.locator('#rows .row').count() == 1 and pg.is_visible('[data-id="journal-quiet-room"]'), 'search finds words in the text')
+    pg.fill('#search', 'grain elevator')
+    check(pg.locator('#rows .row').count() == 1 and pg.is_visible('[data-id="journal-flood-markers"]'), 'search finds a tagged location')
+    pg.fill('#search', 'day 1 of 2')
+    check(pg.locator('#rows .row').count() == 1 and pg.is_visible('[data-id="journal-levee-dawn"]'), 'search finds the linked shoot day')
+    pg.fill('#search', '')
+    pg.select_option('#fPerson', 'person-daniel-okafor')
+    check(pg.locator('#rows .row').count() == 2, 'filters by person')
+    pg.select_option('#fKind', 'learned')
+    check(pg.locator('#rows .row').count() == 1, 'filters by kind as well')
+    pg.select_option('#fPerson', ''); pg.select_option('#fKind', '')
+
+    pg.click('#addBtn')
+    check(pg.input_value('#f-date') != '', 'a new entry starts with today')
+    pg.fill('#f-date', ''); pg.fill('#f-title', 'Second unit at the elevator'); pg.fill('#f-text', 'Fictional test entry: dust everywhere.\nBring masks.')
+    pg.select_option('#f-kind', 'learned')
+    pg.select_option('#f-sheet', 'callsheet-day-1')
+    check(pg.input_value('#f-date') == '2026-05-12', 'picking a call sheet fills the empty date')
+    pg.check('[data-person="person-lena-ward"]'); pg.check('[data-location="location-grain-elevator"]')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check(pg.locator('#rows .row').count() == 4 and 'Lena Ward' in pg.inner_text('#rows'), 'adds an entry tagged with a person and a location')
+    pg.click('[data-edit="journal-quiet-room"]')
+    pg.uncheck('[data-person="person-daniel-okafor"]')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+
+    with pg.expect_download() as d:
+        pg.click('#mdBtn')
+    md = open(d.value.path(), encoding='utf-8').read()
+    check(d.value.suggested_filename.endswith('-field-journal.md') and md.startswith('# Field journal: The River Keeps') and '## 2026-05-12 · The levee at dawn' in md
+          and 'People: Ana Reyes, Daniel Okafor' in md and 'Locations: Riverside levee' in md and '*Shoot day: May 12, 2026: Day 1 of 2*' in md and md.index('The levee at dawn') < md.index('Open on the flood markers'), 'Markdown export lists every entry, oldest first, with tags and the shoot day')
+    pg.fill('#search', 'masks')
+    with pg.expect_download() as d:
+        pg.click('#mdBtn')
+    md = open(d.value.path(), encoding='utf-8').read()
+    check('Second unit at the elevator' in md and 'The levee at dawn' not in md and 'dust everywhere' in md, 'Markdown exports only the entries found by a search')
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    check('Second unit at the elevator' in pg.inner_text('#report') and 'The levee at dawn' not in pg.evaluate('document.getElementById("report").textContent'), 'prints the entries shown')
+    pg.fill('#search', '')
+
+    data = saved_project(pg, fake)
+    new = next(e for e in data['journal'] if e.get('title') == 'Second unit at the elevator')
+    check(new['date'] == '2026-05-12' and new['kind'] == 'learned' and new['callSheetId'] == 'callsheet-day-1' and new['personIds'] == ['person-lena-ward']
+          and new['locationIds'] == ['location-grain-elevator'] and new['text'].endswith('Bring masks.'), 'the new entry is saved with its tags and shoot day')
+    quiet = next(e for e in data['journal'] if e['id'] == 'journal-quiet-room')
+    check('personIds' not in quiet and quiet['locationIds'] == ['location-hammond-house'], 'removing every tag drops the empty list')
+    check(data['journal'][0] == original['journal'][0] and data['people'] == original['people'] and data['locations'] == original['locations'] and data['callSheets'] == original['callSheets']
+          and data['interviews'] == original['interviews'], "other tools' data is unchanged")
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
 def test_hub(browser, fake):
     for scheme, vp in [('light', {'width': 1280, 'height': 900}), ('dark', PHONE)]:
         ctx = browser.new_context(viewport=vp, color_scheme=scheme)
@@ -1243,6 +1300,8 @@ def main():
         test_shooting_calendar(browser, fake)
         print('== interview-prep / beats, questions and the guide')
         test_interview_prep(browser, fake)
+        print('== field-journal / entries, tags, search and Markdown')
+        test_field_journal(browser, fake)
         print('== home page / tools, search and links')
         test_hub(browser, fake)
         print('== templates / columns match the tools\' exports')

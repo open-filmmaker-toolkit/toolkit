@@ -171,6 +171,16 @@ for sample in sorted((ROOT / "samples").glob("*.oft.json")):
         for q in item.get("questions", []):
             if isinstance(q, dict) and q.get("beatId") and q["beatId"] not in beat_ids:
                 fail(f"{name}: interview {item.get('id')} question {q.get('id')} beatId points to a missing beat")
+    journal_ids = [x.get("id") for x in data.get("journal", []) if isinstance(x, dict)]
+    if len(journal_ids) != len(set(journal_ids)):
+        fail(f"{name}: duplicate IDs in journal")
+    for entry in data.get("journal", []):
+        if set(entry.get("personIds", [])) - ids["people"]:
+            fail(f"{name}: journal entry {entry.get('id')} personIds points to missing people")
+        if set(entry.get("locationIds", [])) - ids["locations"]:
+            fail(f"{name}: journal entry {entry.get('id')} locationIds points to missing locations")
+        if entry.get("callSheetId") and entry["callSheetId"] not in sheet_ids:
+            fail(f"{name}: journal entry {entry.get('id')} callSheetId points to a missing call sheet")
     treatment = data.get("treatment") if isinstance(data.get("treatment"), dict) else {}
     version_ids = [v.get("id") for v in treatment.get("versions", []) if isinstance(v, dict)]
     if len(version_ids) != len(set(version_ids)):

@@ -206,6 +206,13 @@
         "$ref": "#/$defs/interview"
       },
       "description": "Interview plans with research, story beats and questions, kept by interview prep."
+    },
+    "journal": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/journalEntry"
+      },
+      "description": "Dated journal entries tagged with people and locations and linked to call sheets, kept by the field journal."
     }
   },
   "additionalProperties": true,
@@ -2063,6 +2070,55 @@
             "additionalProperties": true
           },
           "description": "In the order they're asked."
+        }
+      },
+      "additionalProperties": true
+    },
+    "journalEntry": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "date": {
+          "type": "string",
+          "format": "date"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "happened",
+            "learned",
+            "idea"
+          ],
+          "description": "What happened, what was learned, or a story idea."
+        },
+        "title": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "personIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "description": "People in people."
+        },
+        "locationIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "description": "Locations in locations."
+        },
+        "callSheetId": {
+          "$ref": "#/$defs/id",
+          "description": "The shoot day: a call sheet in callSheets."
         }
       },
       "additionalProperties": true
