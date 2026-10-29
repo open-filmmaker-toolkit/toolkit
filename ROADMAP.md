@@ -18,8 +18,8 @@ Each milestone below is a [GitHub milestone](https://github.com/open-filmmaker-t
 - [x] Add a one-line "use it for" note to each entry ([#10](https://github.com/open-filmmaker-toolkit/toolkit/issues/10))
 - [x] Remove anything unmaintained or not actually open source ([#11](https://github.com/open-filmmaker-toolkit/toolkit/issues/11))
 - [x] Move the directory of other people's tools to [its own page](docs/other-tools.md), so [TOOLS.md](TOOLS.md) lists only the tools we build
-- [x] A home page that shows our tools by stage, how they connect, search, and the directory of other tools: [`index.html`](index.html), served by GitHub Pages once Pages is turned on
-- [ ] Make the repo public ([#12](https://github.com/open-filmmaker-toolkit/toolkit/issues/12))
+- [x] A home page that shows our tools by stage, how they connect, search, and the directory of other tools: [`index.html`](index.html), served by GitHub Pages
+- [x] Make the repo public, with the home page live at [open-filmmaker-toolkit.github.io/toolkit](https://open-filmmaker-toolkit.github.io/toolkit/) ([#12](https://github.com/open-filmmaker-toolkit/toolkit/issues/12))
 
 ## Milestone 2: The shared project file
 
