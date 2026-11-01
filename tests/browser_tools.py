@@ -14,15 +14,15 @@ chromium-fallback, Firefox and WebKit (Safari's engine) use the download/upload 
 The call sheet, release tracker, credits builder, name supers list, subject tracker, research and archival log, comps tracker, treatment builder and pitch deck builder also get end-to-end checks
 of their own, and the spreadsheet templates are checked against the tools' exports.
 """
-import datetime, csv, io, json, os, pathlib, sys
+import base64, datetime, csv, io, json, os, pathlib, sys
 from playwright.sync_api import sync_playwright
 
 root = pathlib.Path(__file__).resolve().parents[1]
 sample = (root / 'samples/the-river-keeps.oft.json').read_text()
-TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan', 'funder-crm', 'cash-flow', 'shooting-calendar', 'interview-prep', 'field-journal']
+TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan', 'funder-crm', 'cash-flow', 'shooting-calendar', 'interview-prep', 'field-journal', 'location-scout', 'deal-memos']
 COLLECTIONS = ['project', 'people', 'locations', 'thirdPartyElements', 'contracts', 'assets', 'musicCueSheet', 'callSheets']
 PRINT_BTN = {'clearance-log': '#printBtn', 'music-cue-sheet': '#printBtn', 'call-sheet': '#printAllBtn', 'release-tracker': '#printBtn',
-             'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn', 'treatment-builder': '#printBtn', 'pitch-deck': '#printBtn', 'grant-calendar': '#printBtn', 'narrative-library': '#printBtn', 'budget': '#printBtn', 'budget-converter': '#printBtn', 'finance-plan': '#printBtn', 'funder-crm': '#printBtn', 'cash-flow': '#printBtn', 'shooting-calendar': '#printBtn', 'interview-prep': '#printBtn', 'field-journal': '#printBtn'}
+             'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn', 'treatment-builder': '#printBtn', 'pitch-deck': '#printBtn', 'grant-calendar': '#printBtn', 'narrative-library': '#printBtn', 'budget': '#printBtn', 'budget-converter': '#printBtn', 'finance-plan': '#printBtn', 'funder-crm': '#printBtn', 'cash-flow': '#printBtn', 'shooting-calendar': '#printBtn', 'interview-prep': '#printBtn', 'field-journal': '#printBtn', 'location-scout': '#printBtn', 'deal-memos': '#printBtn'}
 PHONE = {'width': 390, 'height': 844}
 # The button that opens each tool's main dialog, for the phone-width check. Most tools use #addBtn.
 DIALOG_BTN = {'treatment-builder': '[data-compare]', 'cash-flow': '#settingsBtn'}
@@ -301,12 +301,12 @@ def test_release_tracker(browser, fake):
 def test_credits_builder(browser, fake):
     ctx, pg, errs = new_page(browser, 'credits-builder', fake)
     open_sample(pg, fake)
-    check(pg.inner_text('#reqCount') == '1 of 2 in the credits', 'flags the required credit that is missing (%s)' % pg.inner_text('#reqCount'))
+    check(pg.inner_text('#reqCount') == '2 of 4 in the credits', 'flags the required credits that are missing, including deal memos (%s)' % pg.inner_text('#reqCount'))
     crawl = pg.inner_text('#crawl')
     check('Lena Ward' in crawl and 'Muddy Water Hymn' in crawl and 'levee at night' not in crawl.lower(), 'crawl shows people and songs, without excluded score cues')
 
     pg.click('#reqs [data-addreq="contract-rchs-license"]'); pg.wait_for_timeout(200)
-    check(pg.inner_text('#reqCount') == '2 of 2 in the credits', 'adding the required wording meets it')
+    check(pg.inner_text('#reqCount') == '3 of 4 in the credits', 'adding the required wording meets it (%s)' % pg.inner_text('#reqCount'))
 
     pg.click('#exportBtn')
     text = pg.inner_text('#exportPreview')
@@ -341,7 +341,7 @@ def test_credits_builder(browser, fake):
     pg.select_option('#r-element', 'sample-07')
     pg.fill('#r-text', 'Courtesy of the Test Archive')
     pg.click('#reqForm button[type=submit]'); pg.wait_for_timeout(200)
-    check(pg.inner_text('#reqCount') == '2 of 3 in the credits', 'a new requirement is flagged until the credits include it')
+    check(pg.inner_text('#reqCount') == '3 of 5 in the credits', 'a new requirement is flagged until the credits include it (%s)' % pg.inner_text('#reqCount'))
 
     pg.click('#playBtn')
     check('is-playing' in pg.get_attribute('#screen', 'class'), 'play crawl starts the roll')
@@ -380,12 +380,12 @@ def test_credits_builder(browser, fake):
     check(roles[:6] == ['Director', 'Producer', 'Editor', 'Director of photography', 'Composer', 'Featuring'], 'draft puts key creatives first, then featuring %s' % roles[:6])
     crawl = pg.inner_text('#crawl')
     check('Daniel Okafor' in crawl and 'Muddy Water Hymn' in crawl and 'All rights reserved' in crawl, 'draft has people, music and a copyright line')
-    check(pg.inner_text('#reqCount') == '2 of 2 in the credits', 'draft includes the required wording')
+    check(pg.inner_text('#reqCount') == '4 of 4 in the credits', 'draft includes the required wording, deal memo credits too (%s)' % pg.inner_text('#reqCount'))
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
 # Each spreadsheet template's columns must appear in its tool's CSV export, in the same order.
-TEMPLATE_EXPORTS = [('shooting-calendar', 'shooting-calendar-template.csv'), ('interview-prep', 'interview-questions-template.csv'), ('funder-crm', 'funder-crm-template.csv'), ('cash-flow', 'cash-flow-template.csv'), ('budget', 'budget-template.csv'), ('finance-plan', 'finance-plan-template.csv'), ('grant-calendar', 'grant-calendar-template.csv'), ('clearance-log', 'clearance-log-template.csv'), ('release-tracker', 'release-log-template.csv'),
+TEMPLATE_EXPORTS = [('location-scout', 'location-scout-template.csv'), ('deal-memos', 'deal-memos-template.csv'), ('shooting-calendar', 'shooting-calendar-template.csv'), ('interview-prep', 'interview-questions-template.csv'), ('funder-crm', 'funder-crm-template.csv'), ('cash-flow', 'cash-flow-template.csv'), ('budget', 'budget-template.csv'), ('finance-plan', 'finance-plan-template.csv'), ('grant-calendar', 'grant-calendar-template.csv'), ('clearance-log', 'clearance-log-template.csv'), ('release-tracker', 'release-log-template.csv'),
                     ('music-cue-sheet', 'music-cue-sheet-template.csv'), ('name-supers', 'name-supers-template.csv'),
                     ('subject-tracker', 'subject-tracker-template.csv'), ('research-log', 'research-log-template.csv'),
                     ('comps-tracker', 'comps-tracker-template.csv')]
@@ -1235,6 +1235,118 @@ def test_hub(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
+# A 2x2 PNG, for adding a photo without any image files in the repo.
+TINY_PNG = base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGP8z8DAwMDAxMDAwMDAAAANHQEDK+mmyAAAAABJRU5ErkJggg==')
+
+def test_location_scout(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'location-scout', fake)
+    open_sample(pg, fake)
+    check(pg.locator('#rows .row').count() == 2 and 'No location release yet' in pg.inner_text('[data-id="scout-levee"]') and 'Location release signed' in pg.inner_text('[data-id="scout-elevator"]'),
+          'lists scouts with their location release')
+    check('Hammond house' in pg.inner_text('#todo'), 'lists places with no scout')
+    pg.click('[data-filter="maybe"]')
+    check(pg.locator('#rows .row').count() == 1, 'filters by verdict')
+    pg.click('[data-filter="all"]')
+
+    pg.click('[data-scout="location-hammond-house"]')
+    check(pg.input_value('#f-location') == 'location-hammond-house' and 'waiting for signature' in pg.inner_text('#relNote'), 'scouting a listed place shows its release')
+    pg.set_input_files('#photoInput', files=[{'name': 'porch.png', 'mimeType': 'image/png', 'buffer': TINY_PNG}])
+    pg.wait_for_function("document.querySelectorAll('#photos .photo').length === 1")
+    pg.fill('#photos [data-caption="0"]', 'The porch at noon')
+    pg.fill('#f-power', 'Kitchen outlets'); pg.select_option('#f-verdict', 'good')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check(pg.locator('#rows .row').count() == 3 and pg.locator('[data-id] img.thumb').count() == 3 and 'Every place' in pg.inner_text('#todo'), 'adds a scout with a photo')
+
+    pg.click('#addBtn')
+    pg.select_option('#f-location', '__new')
+    pg.fill('#f-locName', 'Boat launch'); pg.fill('#f-locAddress', 'River Road')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check('Boat launch' in pg.inner_text('#rows'), 'a new place is added with its scout')
+
+    pg.click('[data-edit="scout-levee"]')
+    pg.click('#photos [data-delphoto="0"]')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    check(rows[0][:3] == ['Location', 'Address', 'Scouted on'] and len(rows) == 5, 'CSV lists every scout')
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    check(pg.locator('#report .r-scout').count() == 4 and pg.locator('#report .r-photos img').count() == 2, 'prints a report for each scout, with photos')
+    data = saved_project(pg, fake)
+    sc = {s['locationId']: s for s in data['scouts']}
+    photo = next(a for a in data['assets'] if a['id'] == sc['location-hammond-house']['photoIds'][0])
+    newloc = next(l for l in data['locations'] if l['name'] == 'Boat launch')
+    check(photo['type'] == 'scout photo' and photo['data'].startswith('data:image/jpeg') and photo['caption'] == 'The porch at noon', 'the photo is saved in the project file')
+    check('photoIds' not in sc['location-riverside-levee'] and not any(a['id'] == 'asset-scout-levee-1' for a in data['assets']) and newloc['address'] == 'River Road' and newloc['id'] in sc,
+          'a removed photo is gone, and the new place is in the project')
+    check(data['contracts'] == original['contracts'] and data['budget'] == original['budget'], "other tools' data is unchanged")
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+def test_deal_memos(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'deal-memos', fake)
+    open_sample(pg, fake)
+    check(pg.locator('#rows .row').count() == 3 and 'In the budget' in pg.inner_text('[data-id="contract-deal-teo"]') and 'Not in the budget yet' in pg.inner_text('[data-id="contract-deal-priya"]'),
+          'lists deal memos with their place in the budget')
+    check('Priya Nair' in pg.inner_text('#waiting') and 'Lena Ward' in pg.inner_text('#crew'), 'lists memos waiting for a signature, and crew without one')
+
+    pg.click('[data-for="person-lena-ward"]')
+    check(pg.input_value('#f-role') == 'Director' and pg.is_visible('#calNote') and '4 days' in pg.inner_text('#calText'), 'fills in the role, and finds their days in the shooting calendar')
+    pg.click('#calBtn')
+    pg.fill('#f-rate', '900'); pg.locator('#f-rate').dispatch_event('input')
+    check(pg.input_value('#f-start') == '2026-05-12' and pg.input_value('#f-guarantee') == '4' and pg.input_value('#f-total') == '$3,600', 'uses the calendar dates and works out the total')
+    pg.fill('#f-credit', 'Directed by Lena Ward')
+    pg.select_option('#f-account', 'account-1300'); pg.select_option('#f-fringe', 'fringe-payroll'); pg.select_option('#f-status', 'sent')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(300)
+    check('In the budget' in pg.inner_text('#rows .row:has-text("Lena Ward")'), 'sends the rate to the budget')
+
+    pg.click('[data-edit="contract-deal-teo"]')
+    pg.fill('#f-rate', '800')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(300)
+    pg.click('#addBtn')
+    pg.select_option('#f-person', '__new'); pg.fill('#f-pname', 'Jo Park'); pg.fill('#f-role', 'Sound recordist'); pg.fill('#f-rate', '550')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(300)
+    pg.click('[data-edit="contract-deal-priya"]')
+    pg.set_input_files('#scanInput', files=[{'name': 'priya signed.pdf', 'mimeType': 'application/pdf', 'buffer': b'%PDF-1.4 sample'}])
+    check(pg.input_value('#f-status') == 'signed', 'attaching a signed copy marks the memo signed')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(300)
+
+    pg.select_option('#printSel', 'contract-deal-teo')
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    r = pg.inner_text('#report')
+    check(r.startswith('Not legal advice') and 'written for California, USA' in r and '$800 a day' in r and 'Crew member' in r, 'prints the memo to sign, with the notice first')
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    check(rows[0][:3] == ['Name', 'Role', 'Status'] and len(rows) == 6, 'CSV lists every deal memo')
+    data = saved_project(pg, fake)
+    memos = {c['id']: c for c in data['contracts'] if c.get('type') == 'deal memo'}
+    lines = {l['id']: l for l in data['budget']['lines']}
+    lena = next(c for c in memos.values() if c['personIds'] == ['person-lena-ward'])
+    ll = lines[lena['budgetLineIds'][0]]
+    check(ll['accountId'] == 'account-1300' and ll['quantity'] == 4 and ll['rate'] == 900 and ll['unit'] == 'Days' and ll['fringeId'] == 'fringe-payroll' and lena['status'] == 'sent' and lena['sentDate'],
+          'the new memo and its budget line are saved')
+    check(lines['line-2000-5']['rate'] == 800 and lines['line-2000-5']['description'] == 'Cinematographer' and lines['line-2100-7']['accountId'] == 'account-2100',
+          'an existing budget line takes the new rate and keeps its account and name')
+    jo = next(p for p in data['people'] if p['name'] == 'Jo Park')
+    priya = memos['contract-deal-priya']
+    scan = next(a for a in data['assets'] if a['id'] == priya['assetIds'][0])
+    check(jo['roles'] == ['Sound recordist'] and priya['status'] == 'signed' and scan['type'] == 'signed deal memo' and scan['relativePath'] == 'deal-memos/priya signed.pdf',
+          'a new person joins the project, and the signed copy is recorded')
+    check(data['locations'] == original['locations'] and [c for c in data['contracts'] if c.get('type') != 'deal memo'] == [c for c in original['contracts'] if c.get('type') != 'deal memo'],
+          "other contracts and data are unchanged")
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+    # The credits builder checks the credit a deal memo requires.
+    ctx, pg, errs = new_page(browser, 'credits-builder', False)
+    pg.set_input_files('#fileInput', files=[{'name': 'p.oft.json', 'mimeType': 'application/json', 'buffer': json.dumps(data).encode()}])
+    pg.wait_for_function("document.getElementById('filmMeta').textContent.trim() !== ''")
+    check('Directed by Lena Ward' in pg.inner_text('body'), "the credits builder lists a deal memo's required credit")
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
 def test_template_columns(browser, fake):
     for name, template in TEMPLATE_EXPORTS:
         ctx, pg, errs = new_page(browser, name, fake)
@@ -1304,6 +1416,10 @@ def main():
         test_field_journal(browser, fake)
         print('== home page / tools, search and links')
         test_hub(browser, fake)
+        print('== location-scout / scouts, photos and releases')
+        test_location_scout(browser, fake)
+        print('== deal-memos / calendar, budget, signed copies and print')
+        test_deal_memos(browser, fake)
         print('== templates / columns match the tools\' exports')
         test_template_columns(browser, fake)
         browser.close()

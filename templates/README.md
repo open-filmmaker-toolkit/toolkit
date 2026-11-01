@@ -16,6 +16,8 @@ Part of the [Open Filmmaker Toolkit](../README.md).
 | Funder CRM | [funder-crm-template.csv](funder-crm-template.csv) | | [Funder CRM](../tools/funder-crm/) |
 | Cash flow | [cash-flow-template.csv](cash-flow-template.csv) | | [Cash flow](../tools/cash-flow/) |
 | Shooting calendar | [shooting-calendar-template.csv](shooting-calendar-template.csv) | | [Shooting calendar](../tools/shooting-calendar/) |
+| Location scout sheet | [location-scout-template.csv](location-scout-template.csv) | [location-scout-template.docx](location-scout-template.docx) | [Location scout sheet](../tools/location-scout/) |
+| Deal memos | [deal-memos-template.csv](deal-memos-template.csv) | | [Deal memos](../tools/deal-memos/) |
 | Interview questions | [interview-questions-template.csv](interview-questions-template.csv) | | [Interview prep](../tools/interview-prep/) |
 | Grant narrative library | | [grant-narrative-library-template.docx](grant-narrative-library-template.docx) | [Grant narrative library](../tools/narrative-library/) |
 | Pitch deck | | [pitch-deck-template.docx](pitch-deck-template.docx) | [Pitch deck builder](../tools/pitch-deck/) |
@@ -38,6 +40,8 @@ Part of the [Open Filmmaker Toolkit](../README.md).
 - **Funder CRM.** One row for each funder, investor or broadcaster: kind, stage, the people there, the last contact, the next step and when it's due, and applications.
 - **Cash flow.** One row for each month or week: money out, money in, the net and the running balance, and whether it's short.
 - **Shooting calendar.** One row for each shoot day, travel day or hold: the trip, what you're filming, where, who's needed, and whether the call sheet is started.
+- **Location scout sheet.** One row for each scout: the place, when and who, the verdict, who to call, and access, power, sound, light, parking, restrooms, signal and permits. The document is a sheet to print and fill in on the visit.
+- **Deal memos.** One row for each crew deal memo: role, dates, rate, guarantee, kit fee, overtime, payment terms, credit and status. To sign one, use the deal memo form under legal forms.
 - **Interview questions.** One row for each question, in order, for each interview: must-asks marked, the story beat it covers, and whether you asked it.
 - **Grant narrative library.** The answers applications usually ask for, from logline to bios, each in typical lengths with a place to note the count, and a table of which funder got which version.
 - **Pitch deck.** An outline with one heading per slide, from title and logline to contact, each with a note on what goes on it and a line for its images.
@@ -51,13 +55,25 @@ Part of the [Open Filmmaker Toolkit](../README.md).
 
 - **Spreadsheets** (`.csv`) open in Excel, Numbers, Google Sheets (**File > Import**) and LibreOffice. Save a copy as `.xlsx` from there if you need that format.
 - **Documents** (`.docx`) open in Word, Google Docs, Pages and LibreOffice. They're US Letter; switch to A4 in your page setup if you need to. To add a row to a table, put the cursor in the last cell and press Tab. To fill them in by hand, print them; the logs repeat their column headings on every page.
-- **Same columns as the tools.** The subject tracker, research and archival log, comps tracker, grant calendar, budget, finance plan, funder CRM, cash flow, shooting calendar, interview questions, clearance log, release log, music cue sheet and name supers spreadsheets have the same columns, in the same order, as each tool's CSV export, and the call sheet matches the call sheet's spreadsheet export. Some exports add columns the tool works out for you, such as a cue's duration in seconds or what's still missing.
+- **Same columns as the tools.** The subject tracker, research and archival log, comps tracker, grant calendar, budget, finance plan, funder CRM, cash flow, shooting calendar, interview questions, location scout sheet, deal memos, clearance log, release log, music cue sheet and name supers spreadsheets have the same columns, in the same order, as each tool's CSV export, and the call sheet matches the call sheet's spreadsheet export. Some exports add columns the tool works out for you, such as a cue's duration in seconds or what's still missing.
 
-These templates are working records, not legal advice, and you use them at your own risk: see [Not legal advice](../README.md#not-legal-advice). Check what your distributor, broadcaster and E&O insurer need. Blank release forms aren't here yet.
+These templates are working records, not legal advice, and you use them at your own risk: see [Not legal advice](../README.md#not-legal-advice). Check what your distributor, broadcaster and E&O insurer need.
+
+## Legal forms
+
+Forms you sign, in [legal-forms](legal-forms/). They're under [CC0 1.0](../LICENSES/CC0-1.0.txt): no rights reserved, so you can turn one into your own contract without crediting us.
+
+| Form | Document | Fill it in with |
+| --- | --- | --- |
+| Crew deal memo | [legal-forms/deal-memo-template.docx](legal-forms/deal-memo-template.docx) | [Deal memos](../tools/deal-memos/) |
+
+Each form starts with a not-legal-advice notice and a "Written for" line. Fill in where you are, have a lawyer licensed there review the form, and only then delete the notice. Blank release forms aren't here yet.
 
 ## Contributing
 
 Have a template that works better? Share it from the [new issue page](https://github.com/open-filmmaker-toolkit/toolkit/issues/new/choose) with **Submit a template**. Remove real names, contact details, rates and anything private first.
+
+To contribute a legal form, say where it was written for and keep the not-legal-advice notice at the top; CI checks for both.
 
 If you change a tool's CSV export, update its template here too. CI checks that each template's columns appear in the tool's export, in the same order. Edit the `.docx` files in Word or LibreOffice. Don't add macros, linked images or other external links: the validator rejects them.
 
