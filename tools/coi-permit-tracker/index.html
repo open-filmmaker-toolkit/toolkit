@@ -1,0 +1,1035 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>COI and permit tracker · Open Filmmaker Toolkit</title>
+<meta name="description" content="Track certificates of insurance and filming permits: requested and received, who issued them, who's named on them, conditions and expiry, linked to locations and shoot days, with what's missing flagged before each day. Runs in your browser; your data stays on your computer.">
+<style>
+:root {
+  --paper: #f1f3f2; --sheet: #ffffff; --ink: #1a2130; --ink-2: #4b556a; --ink-3: #6d778a;
+  --rule: #d4dad8; --rule-soft: #e6eae8; --hover: #f6f8f7; --focus: #2f6fdb;
+  --good: #2b7a57; --good-bg: #dff1e8; --warn: #8a5a00; --warn-bg: #fbf0d9; --bad: #b3392d; --bad-bg: #f8e1de;
+  --screen: #050506; --screen-ink: #f4f1ea; --screen-dim: #a7a29a;
+  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #141922; --sheet: #1b212b; --ink: #e6e9ee; --ink-2: #a6afbd; --ink-3: #8790a0;
+    --rule: #2f3744; --rule-soft: #262d38; --hover: #212834; --focus: #7aa7ff;
+    --good: #4fb386; --good-bg: #1a3329; --warn: #e2a531; --warn-bg: #3a2f17; --bad: #e26657; --bad-bg: #3b2220;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans); }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+[hidden] { display: none !important; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.foot { margin-top: 28px; font-size: 13px; color: var(--ink-3); }
+.cant-run { display: none; max-width: 640px; margin: 64px auto; padding: 0 24px; }
+.cant-run h1 { margin: 0 0 8px; font: 600 26px/1.2 var(--serif); }
+.cant-run p { margin: 0 0 10px; color: var(--ink-2); }
+.no-js .cant-run { display: block; }
+.no-js .page { display: none; }
+.page { max-width: 1240px; margin: 0 auto; padding: 0 24px 48px; }
+
+.masthead { display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: flex-end; justify-content: space-between; padding: 28px 0 20px; }
+.tool-name { margin: 0 0 2px; font-size: 14px; font-weight: 600; color: var(--ink-2); }
+.film-title { margin: 0; font: 600 32px/1.15 var(--serif); letter-spacing: -0.01em; overflow-wrap: anywhere; cursor: pointer; }
+.film-title.is-empty { color: var(--ink-3); font-style: italic; font-weight: 400; }
+.film-meta { margin: 4px 0 0; color: var(--ink-2); font-size: 14px; }
+.file { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.file-state { margin: 0; font-size: 13px; color: var(--ink-2); text-align: right; }
+.file-state .dirty { color: var(--warn); font-weight: 600; }
+.file-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; }
+.btn:hover { border-color: var(--ink-3); }
+.btn.primary { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.btn.primary:hover { opacity: 0.88; }
+.btn.danger { color: var(--bad); }
+.btn.small { padding: 4px 10px; font-size: 13px; }
+.link-btn { padding: 0; border: 0; background: none; cursor: pointer; color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; font-size: 14px; }
+.link-btn:hover { color: var(--ink); }
+
+.banner { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 0 0 16px; padding: 12px 16px; border-radius: 8px; background: var(--warn-bg); border: 1px solid color-mix(in srgb, var(--warn) 40%, transparent); }
+.banner p { margin: 0; flex: 1 1 280px; }
+.banner .actions { display: flex; gap: 8px; }
+
+.workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr); gap: 24px; align-items: start; }
+.col { display: grid; gap: 18px; min-width: 0; }
+.card { background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 18px; min-width: 0; }
+.card-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; margin: 0 0 6px; }
+.card-head h2 { margin: 0; font: 600 18px/1.3 var(--serif); }
+.card-head .count { font-size: 13px; color: var(--ink-2); }
+.card-head .spacer { flex: 1; }
+.card p.lead { margin: 0 0 8px; font-size: 14px; color: var(--ink-2); }
+
+/* Side cards */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 2px; padding: 0; list-style: none; }
+.chip { display: inline-flex; border: 1px solid var(--rule); border-radius: 999px; overflow: hidden; background: var(--paper); }
+.chip button { padding: 4px 10px; border: 0; background: none; cursor: pointer; font-size: 13px; font-weight: 600; }
+.chip button:hover { background: var(--hover); }
+.chip .sub { font-weight: 400; color: var(--ink-3); margin-left: 4px; }
+.empty-line { margin: 4px 0; color: var(--ink-2); font-size: 14px; }
+.changes { margin: 0; padding-left: 18px; font-size: 14px; }
+.changes li + li { margin-top: 2px; }
+
+/* The supers list */
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 10px; }
+.toolbar h2 { margin: 0 8px 0 0; font: 600 20px/1.2 var(--serif); }
+.toolbar .count { font-size: 13px; color: var(--ink-2); }
+.toolbar .spacer { flex: 1; }
+.rows { list-style: none; margin: 0; padding: 0; background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; }
+.row { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 2px 14px; align-items: start; padding: 10px 14px; }
+.row + .row { border-top: 1px solid var(--rule-soft); }
+.row:hover { background: var(--hover); }
+.row.is-selected { background: var(--hover); box-shadow: inset 3px 0 0 var(--ink); }
+.row .tc { font-variant-numeric: tabular-nums; font-size: 14px; color: var(--ink-2); padding-top: 1px; }
+.row .what { min-width: 0; padding: 0; border: 0; background: none; text-align: left; cursor: pointer; overflow-wrap: anywhere; }
+.row .what:hover .nm { text-decoration: underline; text-underline-offset: 2px; }
+.row .nm { display: block; font-weight: 600; }
+.row .tt { display: block; font-size: 14px; color: var(--ink-2); }
+.flags { grid-column: 2; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.flag { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 999px; font-size: 12.5px; font-weight: 600; }
+.flag.new { background: var(--good-bg); color: var(--good); }
+.flag.changed { background: var(--warn-bg); color: var(--warn); }
+.flag.problem { background: var(--bad-bg); color: var(--bad); }
+.flag.linked { background: var(--paper); color: var(--ink-3); font-weight: 500; border: 1px solid var(--rule); }
+.flag button { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+
+.empty { padding: 36px 24px; text-align: center; background: var(--sheet); border: 1px dashed var(--rule); border-radius: 8px; }
+.empty h2 { margin: 0 0 6px; font: 600 20px/1.3 var(--serif); }
+.empty p { margin: 0 auto 16px; max-width: 52ch; color: var(--ink-2); }
+.empty .actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+
+
+.workspace > * { min-width: 0; }
+.side { position: sticky; top: 16px; display: grid; gap: 18px; }
+.filters { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
+.filter { padding: 4px 11px; border: 1px solid var(--rule); border-radius: 999px; background: var(--sheet); font-size: 13px; cursor: pointer; }
+.filter[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.row { grid-template-columns: 120px minmax(0, 1fr) auto; }
+.row .kd { font-size: 13px; color: var(--ink-2); padding-top: 2px; }
+.row .st { font-size: 13px; font-weight: 600; padding-top: 2px; white-space: nowrap; }
+.st-needed { color: var(--bad); }
+.st-requested, .st-applied { color: var(--warn); }
+.st-received, .st-issued { color: var(--good); }
+.flags { grid-column: 2 / -1; }
+.days { list-style: none; margin: 4px 0 0; padding: 0; }
+.days > li { padding: 8px 0; font-size: 14px; }
+.days > li + li { border-top: 1px solid var(--rule-soft); }
+.days .dh { font-weight: 600; }
+.days .sub { color: var(--ink-3); font-size: 13px; }
+.days ul { margin: 4px 0 0; padding-left: 18px; }
+.days ul li { margin: 2px 0; }
+.days .ok { color: var(--good); }
+.days .warn { color: var(--warn); }
+.days .bad { color: var(--bad); }
+.days .info { color: var(--ink-2); }
+.todo { list-style: none; margin: 4px 0 0; padding: 0; }
+.todo li { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 6px 0; font-size: 14px; }
+.todo li + li { border-top: 1px solid var(--rule-soft); }
+.todo .sub { display: block; color: var(--ink-3); font-size: 13px; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.three { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.picks { display: grid; gap: 4px; max-height: 180px; overflow: auto; padding: 2px; }
+.picks label { display: flex; gap: 8px; align-items: baseline; font-size: 14px; }
+.picks input { width: 16px; height: 16px; margin: 0; flex: none; }
+.picks .sub { color: var(--ink-3); font-size: 12.5px; }
+.scan { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 8px 10px; border: 1px solid var(--rule-soft); border-radius: 6px; }
+.scan .name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.scan .sub { display: block; font-size: 12.5px; color: var(--ink-3); }
+.scans { display: grid; gap: 6px; }
+@media (max-width: 720px) {
+  .two, .three { grid-template-columns: 1fr; }
+  .row { grid-template-columns: minmax(0, 1fr) auto; }
+  .row .kd { grid-column: 1 / -1; }
+  .flags { grid-column: 1 / -1; }
+}
+
+dialog { border: 0; padding: 0; color: var(--ink); background: var(--sheet); box-shadow: 0 10px 40px rgba(10, 14, 22, 0.25); }
+dialog::backdrop { background: rgba(16, 20, 28, 0.42); }
+dialog.drawer { margin: 0 0 0 auto; width: min(600px, 100vw); height: 100dvh; max-height: 100dvh; max-width: 100vw; border-left: 1px solid var(--rule); }
+dialog.modal { width: min(560px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); border-radius: 10px; }
+dialog form { display: flex; flex-direction: column; height: 100%; max-height: inherit; }
+.dlg-head { padding: 20px 24px 12px; border-bottom: 1px solid var(--rule-soft); }
+.dlg-head h2 { margin: 0; font: 600 22px/1.25 var(--serif); }
+.dlg-body { flex: 1; overflow-y: auto; padding: 16px 24px 24px; display: grid; gap: 14px; align-content: start; }
+.dlg-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 14px 24px; border-top: 1px solid var(--rule-soft); }
+.dlg-foot .spacer { flex: 1; }
+.field { display: grid; gap: 4px; }
+.field > label, .field > .label, .group h3 { font-size: 14px; font-weight: 600; margin: 0; }
+.hint { margin: 0; font-size: 13px; color: var(--ink-3); }
+.field input, .field select, .field textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); }
+.group { display: grid; gap: 8px; padding-top: 10px; border-top: 1px solid var(--rule-soft); }
+.checks { display: grid; gap: 2px; max-height: 260px; overflow-y: auto; padding: 2px; }
+.check { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; align-items: start; padding: 5px 4px; border-radius: 6px; cursor: pointer; }
+.check:hover { background: var(--hover); }
+.check input { width: 18px; height: 18px; margin: 2px 0 0; }
+.check .who { overflow-wrap: anywhere; }
+.check .sub { margin-left: 4px; font-size: 13px; color: var(--ink-3); }
+.check .lines { display: block; font-size: 13px; color: var(--ink-3); white-space: pre-line; }
+#songList, #sourceList { max-height: none; }
+.radio-row { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.radio-row label { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; cursor: pointer; }
+pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); font-size: 13px; white-space: pre-wrap; }
+
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); max-width: calc(100vw - 32px); padding: 10px 16px; border-radius: 8px; background: var(--ink); color: var(--paper); font-size: 14px; box-shadow: 0 6px 24px rgba(10, 14, 22, 0.25); z-index: 10; }
+.toast.error { background: var(--bad); color: #ffffff; }
+.report { display: none; }
+
+@media (max-width: 900px) {
+  .workspace { grid-template-columns: 1fr; }
+  .side { position: static; }
+}
+@media (max-width: 720px) {
+  .page { padding: 0 16px 40px; }
+  .film-title { font-size: 26px; }
+  .file { align-items: flex-start; }
+  .file-state { text-align: left; }
+  .toolbar h2 { flex-basis: 100%; order: -2; }
+  .toolbar #addBtn { flex: 1 1 100%; justify-content: center; order: -1; }
+  .row { grid-template-columns: minmax(0, 1fr); }
+  .flags { grid-column: 1; }
+}
+@media print {
+  @page { size: portrait; margin: 16mm; }
+  :root { color-scheme: light; }
+  body { background: #ffffff; color: #000000; font-size: 10pt; }
+  .page, dialog, .toast { display: none !important; }
+  .report { display: block; }
+  .report h1 { margin: 0; font: 700 18pt/1.2 var(--serif); }
+  .report h2 { margin: 14pt 0 4pt; font: 700 12pt/1.2 var(--serif); break-after: avoid; page-break-after: avoid; }
+  .report .r-meta { margin: 2pt 0 10pt; }
+  .report table { width: 100%; border-collapse: collapse; }
+  .report th, .report td { padding: 4pt 5pt; border-bottom: 0.75pt solid #999999; text-align: left; vertical-align: top; }
+  .report th { font-size: 9pt; border-bottom: 1pt solid #000000; }
+  .report tr { break-inside: avoid; page-break-inside: avoid; }
+  .report .r-sub { display: block; font-size: 8.5pt; color: #333333; }
+  .report .r-note { margin-top: 14pt; font-size: 8pt; color: #333333; }
+  .report h3 { margin: 10pt 0 4pt; font-size: 11pt; }
+  .report .r-mark { width: 52pt; font-weight: 700; }
+}
+</style>
+</head>
+<body>
+<div class="cant-run" id="cantRun">
+  <h1 id="cantRunTitle">Open this file in a web browser</h1>
+  <p id="cantRunText">This tool runs in Chrome, Edge, Firefox or Safari. You're seeing a preview that doesn't run it, so none of the buttons would work.</p>
+  <p id="cantRunHow">In your browser, choose File, then Open File, and pick this file. Or right-click the file and open it with your browser.</p>
+</div>
+<div class="page">
+  <header class="masthead">
+    <div>
+      <p class="tool-name">COI and permit tracker</p>
+      <h1 class="film-title" id="filmTitle">Untitled film</h1>
+      <p class="film-meta"><span id="filmMeta"></span> <button type="button" class="link-btn" id="editProjectBtn">Edit film details</button></p>
+    </div>
+    <div class="file">
+      <p class="file-state" id="fileState">Not saved to a file yet</p>
+      <div class="file-actions">
+        <button type="button" class="btn" id="newBtn">New project</button>
+        <button type="button" class="btn" id="openBtn">Open file</button>
+        <button type="button" class="btn" id="projectCsvBtn">Export project data (CSV)</button>
+        <button type="button" class="btn primary" id="saveBtn">Save file</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="banner" id="recovery" role="region" aria-label="Unsaved work" hidden>
+    <p id="recoveryText"></p>
+    <div class="actions">
+      <button type="button" class="btn primary" id="restoreBtn">Restore it</button>
+      <button type="button" class="btn" id="discardBtn">Discard it</button>
+    </div>
+  </div>
+
+  <main class="workspace">
+    <section aria-labelledby="listHead">
+      <div class="toolbar">
+        <h2 id="listHead">Certificates and permits</h2>
+        <span class="count" id="count"></span>
+        <span class="spacer"></span>
+        <button type="button" class="btn primary" id="addBtn">Add a certificate</button>
+        <button type="button" class="btn" id="addPermitBtn">Add a permit</button>
+        <button type="button" class="btn" id="csvBtn">Export CSV</button>
+      </div>
+      <div class="filters" id="filters" role="group" aria-label="Show"></div>
+      <ol class="rows" id="rows" aria-labelledby="listHead"></ol>
+      <p class="empty-line" id="noMatch" hidden>Nothing to show here.</p>
+      <div class="empty" id="empty" hidden>
+        <h2>No certificates or permits yet</h2>
+        <p>Log the certificates of insurance you request from rental houses and locations, and the permits you apply for, with who issued them, who's named on them and when they expire. Before each shoot day, see what's missing or about to run out.</p>
+        <div class="actions">
+          <button type="button" class="btn primary" id="emptyAddBtn">Add a certificate</button>
+          <button type="button" class="btn" id="emptyPermitBtn">Add a permit</button>
+          <button type="button" class="btn" id="emptyOpenBtn">Open file</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="side">
+      <section class="card" aria-labelledby="daysHead">
+        <div class="card-head"><h2 id="daysHead">Before each shoot day</h2><span class="count" id="daysCount"></span></div>
+        <ul class="days" id="days"></ul>
+        <div><button type="button" class="btn" id="printBtn">Print the shoot-day check</button></div>
+      </section>
+      <section class="card" aria-labelledby="soonHead">
+        <div class="card-head"><h2 id="soonHead">Expiring in the next 30 days</h2><span class="count" id="soonCount"></span></div>
+        <ul class="todo" id="soon"></ul>
+      </section>
+      <section class="card" aria-labelledby="vendHead">
+        <div class="card-head"><h2 id="vendHead">Rental houses without a certificate</h2><span class="count" id="vendCount"></span></div>
+        <p class="lead">From the gear list.</p>
+        <ul class="todo" id="vendors"></ul>
+      </section>
+    </div>
+  </main>
+
+  <footer class="foot">
+    <p>Part of the Open Filmmaker Toolkit. This page makes no network requests: everything stays on this computer until you save or export it. Uses the same project file as the other toolkit tools.</p>
+  </footer>
+</div>
+
+<dialog class="drawer" id="editor" aria-labelledby="editorTitle">
+  <form id="editorForm" method="dialog" novalidate>
+    <div class="dlg-head"><h2 id="editorTitle">Certificate</h2></div>
+    <div class="dlg-body">
+      <div class="two">
+        <div class="field"><label for="f-type">What it is</label><select id="f-type"><option value="certificate of insurance">Certificate of insurance</option><option value="permit">Filming permit</option></select></div>
+        <div class="field"><label for="f-status">Status</label><select id="f-status"></select></div>
+      </div>
+      <div class="two">
+        <div class="field"><label for="f-party" id="partyLabel">Vendor or location</label><input id="f-party" type="text" list="partyList" autocomplete="off"><datalist id="partyList"></datalist></div>
+        <div class="field" data-for="coi"><label for="f-insurer">Insurer or broker</label><input id="f-insurer" type="text" placeholder="Who the certificate comes from" autocomplete="off"></div>
+        <div class="field" data-for="permit"><label for="f-ref">Permit number</label><input id="f-ref" type="text" autocomplete="off"></div>
+      </div>
+      <div class="field" data-for="coi"><label for="f-named">Named on it</label><input id="f-named" type="text" placeholder="Certificate holder and additional insured, as they must appear" autocomplete="off"></div>
+      <div class="two">
+        <div class="field"><label for="f-requested" id="requestedLabel">Requested on</label><input id="f-requested" type="date"></div>
+        <div class="field"><label for="f-received" id="receivedLabel">Received on</label><input id="f-received" type="date"></div>
+      </div>
+      <div class="two">
+        <div class="field"><label for="f-effective">In effect from</label><input id="f-effective" type="date"></div>
+        <div class="field"><label for="f-expires">Expires</label><input id="f-expires" type="date"></div>
+      </div>
+      <div class="field" data-for="permit"><label for="f-conditions">Conditions</label><textarea id="f-conditions" rows="3" placeholder="Hours, crew size, no tripods on the sidewalk, notify neighbors 48 hours ahead"></textarea></div>
+      <div class="two">
+        <div class="group">
+          <h3 id="locHead">Locations</h3>
+          <div class="picks" id="locPicks" role="group" aria-labelledby="locHead"></div>
+        </div>
+        <div class="group">
+          <h3 id="dayHead">Shoot days</h3>
+          <div class="picks" id="dayPicks" role="group" aria-labelledby="dayHead"></div>
+          <p class="hint">Leave these empty and it counts for every day at its locations, or every day if it has none.</p>
+        </div>
+      </div>
+      <div class="field"><label for="f-notes">Notes</label><textarea id="f-notes" rows="2"></textarea></div>
+      <div class="group">
+        <h3>Scan</h3>
+        <div class="scans" id="scans"></div>
+        <p class="hint" id="folderNote"></p>
+        <div><button type="button" class="btn small" id="attachBtn">Attach a scan</button> <button type="button" class="btn small" id="connectFolderBtn" hidden>Connect project folder</button></div>
+      </div>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn danger" id="deleteBtn">Remove</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="editorCancel">Cancel</button>
+      <button type="submit" class="btn primary" id="editorSubmit">Save</button>
+    </div>
+  </form>
+</dialog>
+<input type="file" id="scanInput" accept="application/pdf,image/*" multiple hidden>
+
+<dialog class="modal" id="projectDialog" aria-labelledby="projectDialogTitle">
+  <form id="projectForm" method="dialog">
+    <div class="dlg-head"><h2 id="projectDialogTitle">Film details</h2></div>
+    <div class="dlg-body">
+      <div class="field"><label for="p-title">Film title</label><input id="p-title" type="text" placeholder="Working title is fine"></div>
+      <div class="field"><label for="p-company">Production company</label><input id="p-company" type="text"></div>
+      <div class="field"><label for="p-producer">Producer</label><input id="p-producer" type="text"></div>
+    </div>
+    <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn" id="projectCancel">Cancel</button><button type="submit" class="btn primary">Save details</button></div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="projectCsvDialog" aria-labelledby="projectCsvTitle">
+  <form id="projectCsvForm" method="dialog">
+    <div class="dlg-head"><h2 id="projectCsvTitle">Export project data</h2></div>
+    <div class="dlg-body">
+      <div class="field">
+        <label for="projectCsvCollection">Data to export</label>
+        <select id="projectCsvCollection">
+          <option value="project">Project details</option>
+          <option value="people">People</option>
+          <option value="locations">Locations</option>
+          <option value="thirdPartyElements">Third-party elements</option>
+          <option value="contracts">Contracts</option>
+          <option value="assets">Assets</option>
+          <option value="musicCueSheet">Music cue sheet details</option>
+          <option value="callSheets">Call sheets</option>
+        </select>
+      </div>
+      <p class="hint">Exports one CSV file for the selected collection. Nested values are kept as JSON in their cell.</p>
+    </div>
+    <div class="dlg-foot">
+      <button type="submit" class="btn primary">Export CSV</button>
+      <button type="button" class="btn" id="projectCsvCancel">Cancel</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="conflictDialog" aria-labelledby="conflictTitle">
+  <form method="dialog">
+    <div class="dlg-head"><h2 id="conflictTitle">Project file changed</h2></div>
+    <div class="dlg-body">
+      <p id="conflictText">This project file changed after you opened it. Saving will replace those changes.</p>
+      <p class="hint">Your edits are still here. Choose whether to overwrite the changed file, save a separate copy, or load its latest contents. Save in one tool at a time; simultaneous saves can still race.</p>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn" id="conflictReloadBtn">Reload latest</button>
+      <button type="button" class="btn" id="conflictCopyBtn">Save a copy</button>
+      <button type="button" class="btn danger" id="conflictOverwriteBtn">Overwrite file</button>
+      <button type="button" class="btn" id="conflictCancelBtn">Keep editing</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="report" id="report" aria-hidden="true"></div>
+<input type="file" id="fileInput" accept=".json,application/json" hidden>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+(() => {
+  'use strict';
+
+  const FORMAT = 'open-filmmaker-toolkit/project';
+  const FORMAT_VERSION = 1;
+  const TOOL = 'coi-permit-tracker 0.1.0';
+  const DRAFT_KEY = 'oft.coi-permit-tracker.draft';
+  const PROJECT_TEXT = ['title', 'company', 'producer'];
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const str = v => (v == null ? '' : String(v));
+  const arr = v => (Array.isArray(v) ? v : []);
+  const norm = s => str(s).toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+
+  let doc = blankDoc();
+  let fileHandle = null;
+  let baselineText = null;
+  let fileName = null;
+  let dirty = false;
+
+  function blankDoc() {
+    return { format: FORMAT, formatVersion: FORMAT_VERSION, project: { title: '', company: '', producer: '', frameRate: 24, currency: 'USD' }, people: [], contracts: [], assets: [] };
+  }
+  function newId(prefix) {
+    if (window.crypto && crypto.randomUUID) return `${prefix}-${crypto.randomUUID()}`;
+    return `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+  }
+  function today() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  function fmtDate(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str(iso));
+    if (!m) return str(iso);
+    return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+  function daysUntil(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str(iso));
+    if (!m) return null;
+    const t = new Date(); const a = Date.UTC(t.getFullYear(), t.getMonth(), t.getDate());
+    return Math.round((Date.UTC(+m[1], +m[2] - 1, +m[3]) - a) / 86400000);
+  }
+
+
+  const COI = 'certificate of insurance', PERMIT = 'permit';
+  const SCAN_FOLDER = 'certificates-and-permits';
+  const STATUS = { [COI]: [{ id: 'needed', label: 'Needed' }, { id: 'requested', label: 'Requested' }, { id: 'received', label: 'Received' }],
+    [PERMIT]: [{ id: 'needed', label: 'Needed' }, { id: 'applied', label: 'Applied for' }, { id: 'issued', label: 'Issued' }] };
+  const DONE = ['received', 'issued'];
+  const doneFor = t => (t === PERMIT ? 'issued' : 'received');
+  const SOON = 30;
+  const statusLabel = c => ((STATUS[c.type] || STATUS[COI]).find(s => s.id === c.status) || { label: 'Needed' }).label;
+  let filter = 'all';
+  let editing = null, isNew = false;
+  let pendingScans = [], removedScanIds = [];
+  let projectDir = null, projectDirFor = null; // the folder holding the project file, when connected (Chrome and Edge)
+
+  // Fills in only what this tool needs; everything else in the file is left as it was.
+  function normalize(d) {
+    if (!d.project || typeof d.project !== 'object') d.project = {};
+    for (const k of PROJECT_TEXT) if (typeof d.project[k] !== 'string') d.project[k] = str(d.project[k]);
+    for (const k of ['contracts', 'assets']) if (!Array.isArray(d[k])) d[k] = [];
+    for (const c of d.contracts) if (c && (c.type === COI || c.type === PERMIT)) { if (!c.id) c.id = newId('contract'); if (!STATUS[c.type].some(s => s.id === c.status)) c.status = 'needed'; }
+    d.format = FORMAT;
+    d.formatVersion = FORMAT_VERSION;
+    return d;
+  }
+  const items = () => doc.contracts.filter(c => c && (c.type === COI || c.type === PERMIT));
+  const entries = items;
+  const objs = v => (Array.isArray(v) ? v.filter(x => x && typeof x === 'object') : []);
+  const asset = id => doc.assets.find(a => a && a.id === id);
+  const place = id => arr(doc.locations).find(l => l && l.id === id);
+  const isDate = s => /^\d{4}-\d{2}-\d{2}$/.test(str(s));
+  const folderOK = () => !!(projectDir && projectDirFor === fileName);
+  const safeName = s => str(s).replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ').trim() || 'scan';
+  const isDone = c => DONE.includes(c.status);
+  const kindLabel = c => (c.type === PERMIT ? 'Permit' : 'Certificate');
+  const party = c => c.vendor || c.issuer || (place(arr(c.locationIds)[0]) || {}).name || (c.type === PERMIT ? 'Issuing office not named' : 'Vendor not named');
+  const days = () => arr(doc.shootDays).filter(d => d && d.id && isDate(d.date) && d.kind !== 'travel').sort((a, b) => a.date.localeCompare(b.date));
+  const dayLabel = d => `${fmtDate(d.date)}${d.title ? `: ${d.title}` : ''}${d.kind === 'hold' ? ' (hold)' : ''}`;
+  function addDays(iso, n) { const t = new Date(iso + 'T12:00:00'); t.setDate(t.getDate() + n); return t.toISOString().slice(0, 10); }
+  // What counts for a day: picked for it, or for its location with no days picked, or for nothing in particular.
+  function covers(c, d) {
+    if (arr(c.shootDayIds).length) return arr(c.shootDayIds).includes(d.id);
+    if (arr(c.locationIds).length) return !!d.locationId && arr(c.locationIds).includes(d.locationId);
+    return false;
+  }
+  const same = (a, b) => str(a).trim().toLowerCase() === str(b).trim().toLowerCase();
+  // Rental houses in the gear packed for a day, from the gear list.
+  function rentalHouses(d) {
+    const g = doc.gear && typeof doc.gear === 'object' ? doc.gear : {};
+    const its = objs(g.items);
+    const ids = new Set(objs(g.packages).filter(p => !d || p.shootDayId === d.id).flatMap(p => arr(p.itemIds)));
+    return [...new Set(its.filter(i => i.source === 'rental' && i.from && (!d ? true : ids.has(i.id))).map(i => i.from.trim()))];
+  }
+  const certFor = vendor => items().filter(c => c.type === COI && same(c.vendor, vendor));
+  // Everything to sort out before a day, worst first.
+  function dayIssues(d) {
+    const out = [];
+    for (const c of items().filter(c => covers(c, d))) {
+      const what = `${kindLabel(c)}, ${party(c)}`;
+      if (!isDone(c)) out.push({ level: 'bad', text: `${what}: ${statusLabel(c).toLowerCase()}${c.requestedDate ? ` since ${fmtDate(c.requestedDate)}` : ''}`, id: c.id });
+      else if (isDate(c.expirationDate) && c.expirationDate < d.date) out.push({ level: 'bad', text: `${what}: expires ${fmtDate(c.expirationDate)}, before the day`, id: c.id });
+      else if (isDate(c.effectiveDate) && c.effectiveDate > d.date) out.push({ level: 'bad', text: `${what}: not in effect until ${fmtDate(c.effectiveDate)}`, id: c.id });
+      else if (isDate(c.expirationDate) && c.expirationDate <= addDays(d.date, 7)) out.push({ level: 'warn', text: `${what}: expires ${fmtDate(c.expirationDate)}, soon after`, id: c.id });
+      else out.push({ level: 'ok', text: `${what}: ${statusLabel(c).toLowerCase()}`, id: c.id });
+    }
+    for (const v of rentalHouses(d)) {
+      const cs = certFor(v);
+      if (!cs.length) out.push({ level: 'bad', text: `No certificate logged for ${v}, renting gear for the day`, vendor: v });
+      else if (!cs.some(c => isDone(c) && !(isDate(c.expirationDate) && c.expirationDate < d.date))) {
+        if (!cs.some(c => covers(c, d))) out.push({ level: 'bad', text: `Certificate for ${v}: ${cs.some(isDone) ? 'expires before the day' : statusLabel(cs[0]).toLowerCase()}`, id: cs[0].id });
+      } else if (!cs.some(c => covers(c, d))) out.push({ level: 'ok', text: `Certificate, ${v}: ${statusLabel(cs.find(isDone)).toLowerCase()}`, id: cs.find(isDone).id });
+    }
+    const l = d.locationId && place(d.locationId);
+    if (l && !items().some(c => covers(c, d) && arr(c.locationIds).includes(l.id))) out.push({ level: 'info', text: `Nothing logged for ${l.name || 'the location'}. Check whether it needs a permit or a certificate.`, location: l.id, day: d.id });
+    const rank = { bad: 0, warn: 1, info: 2, ok: 3 };
+    return out.sort((a, b) => rank[a.level] - rank[b.level]);
+  }
+  const upcoming = () => days().filter(d => d.date >= today());
+
+  // ---------- Render ----------
+  function render() {
+    $('filmTitle').textContent = doc.project.title || 'Untitled film';
+    $('filmTitle').classList.toggle('is-empty', !doc.project.title);
+    $('filmMeta').textContent = [doc.project.company, doc.project.producer && `Producer: ${doc.project.producer}`].filter(Boolean).join(' · ');
+    $('fileState').innerHTML = (fileName ? esc(fileName) : 'Not saved to a file yet') + (dirty ? ' · <span class="dirty">Unsaved changes</span>' : '');
+    document.title = `${doc.project.title ? doc.project.title + ' · ' : ''}COI and permit tracker · Open Filmmaker Toolkit`;
+
+    const all = items();
+    const t = today(), soonEnd = addDays(t, SOON);
+    const expSoon = c => isDone(c) && isDate(c.expirationDate) && c.expirationDate >= t && c.expirationDate <= soonEnd;
+    const expired = c => isDone(c) && isDate(c.expirationDate) && c.expirationDate < t;
+    const F = [{ id: 'all', label: 'All', f: () => true }, { id: 'coi', label: 'Certificates', f: c => c.type === COI }, { id: 'permit', label: 'Permits', f: c => c.type === PERMIT },
+      { id: 'open', label: 'Not in yet', f: c => !isDone(c) }, { id: 'soon', label: 'Expiring or expired', f: c => expSoon(c) || expired(c) }];
+    $('filters').innerHTML = F.map(x => `<button type="button" class="filter" data-filter="${x.id}" aria-pressed="${filter === x.id}">${esc(x.label)} ${all.filter(x.f).length}</button>`).join('');
+    const list = all.filter((F.find(x => x.id === filter) || F[0]).f)
+      .sort((a, b) => isDone(a) - isDone(b) || str(a.expirationDate || '9999').localeCompare(str(b.expirationDate || '9999')) || party(a).localeCompare(party(b)));
+    const open = all.filter(c => !isDone(c)).length;
+    $('count').textContent = all.length ? `${all.length} logged${open ? ` · ${open} not in yet` : ''}` : '';
+    $('empty').hidden = !!all.length;
+    $('rows').hidden = !list.length;
+    $('noMatch').hidden = !all.length || !!list.length;
+    $('filters').hidden = $('csvBtn').hidden = !all.length;
+    $('rows').innerHTML = list.map(c => {
+      const flags = [];
+      if (expired(c)) flags.push(`<span class="flag ${upcoming().some(d => covers(c, d)) ? 'problem' : 'linked'}">Expired ${esc(fmtDate(c.expirationDate))}</span>`);
+      else if (expSoon(c)) flags.push(`<span class="flag changed">Expires ${esc(fmtDate(c.expirationDate))}</span>`);
+      else if (isDate(c.expirationDate)) flags.push(`<span class="flag linked">Expires ${esc(fmtDate(c.expirationDate))}</span>`);
+      if (!isDone(c) && c.requestedDate) flags.push(`<span class="flag linked">${c.type === PERMIT ? 'Applied' : 'Requested'} ${esc(fmtDate(c.requestedDate))}</span>`);
+      for (const id of arr(c.locationIds)) flags.push(place(id) ? `<span class="flag linked">${esc(place(id).name)}</span>` : '<span class="flag problem">A location no longer in the project</span>');
+      const ds = arr(c.shootDayIds).map(id => days().find(d => d.id === id)).filter(Boolean);
+      if (ds.length) flags.push(`<span class="flag linked">${esc(ds.map(d => fmtDate(d.date)).join(', '))}</span>`);
+      if (isDone(c) && !arr(c.assetIds).length) flags.push('<span class="flag changed">No scan attached</span>');
+      const sub = c.type === PERMIT ? [c.reference && `No. ${c.reference}`, c.conditions].filter(Boolean).join(' · ') : c.namedOn ? `Names ${c.namedOn}` : '';
+      return `<li class="row" data-id="${esc(c.id)}"><span class="kd">${esc(kindLabel(c))}</span>
+        <button type="button" class="what" data-edit="${esc(c.id)}"><span class="nm">${esc(party(c))}</span>${sub ? `<span class="tt">${esc(sub)}</span>` : ''}</button>
+        <span class="st st-${esc(c.status)}">${esc(statusLabel(c))}</span>
+        ${flags.length ? `<div class="flags">${flags.join('')}</div>` : ''}</li>`;
+    }).join('');
+
+    const up = upcoming();
+    let problems = 0;
+    $('days').innerHTML = up.length ? up.map(d => {
+      const is = dayIssues(d);
+      const bad = is.filter(i => i.level === 'bad' || i.level === 'warn').length;
+      problems += bad;
+      const l = d.locationId && place(d.locationId);
+      return `<li data-day="${esc(d.id)}"><span class="dh">${esc(dayLabel(d))}</span>${l ? ` <span class="sub">${esc(l.name)}</span>` : ''}
+        <ul>${is.length ? is.map(i => `<li class="${i.level}">${esc(i.text)}${i.vendor ? ` <button type="button" class="btn small" data-vendor="${esc(i.vendor)}" data-day="${esc(d.id)}">Add it</button>` : i.location ? ` <button type="button" class="btn small" data-loc="${esc(i.location)}" data-day="${esc(d.id)}">Add one</button>` : ''}</li>`).join('') : '<li class="info">Nothing logged for this day.</li>'}</ul></li>`;
+    }).join('') : '<li class="empty-line">No shoot days coming up. Add them in the shooting calendar.</li>';
+    $('daysCount').textContent = problems ? `${problems} to sort out` : '';
+    $('printBtn').disabled = !up.length && !all.length;
+    const soon = all.filter(expSoon).sort((a, b) => a.expirationDate.localeCompare(b.expirationDate));
+    $('soonCount').textContent = soon.length ? String(soon.length) : '';
+    $('soon').innerHTML = soon.length ? soon.map(c => `<li><span>${esc(party(c))}<span class="sub">${esc(kindLabel(c))}, expires ${esc(fmtDate(c.expirationDate))}</span></span><button type="button" class="btn small" data-edit="${esc(c.id)}">Open</button></li>`).join('')
+      : '<li class="empty-line">Nothing expiring soon.</li>';
+    const missing = rentalHouses(null).filter(v => !certFor(v).length);
+    $('vendCount').textContent = missing.length ? String(missing.length) : '';
+    $('vendors').innerHTML = missing.length ? missing.map(v => `<li><span>${esc(v)}</span><button type="button" class="btn small" data-vendor="${esc(v)}">Add a certificate</button></li>`).join('')
+      : `<li class="empty-line">${rentalHouses(null).length ? 'Every rental house has a certificate logged.' : 'No rentals in the gear list.'}</li>`;
+  }
+
+  // ---------- Editor ----------
+  function showType() {
+    const t = $('f-type').value;
+    const cur = $('f-status').value;
+    $('f-status').innerHTML = STATUS[t].map(s => `<option value="${s.id}">${esc(s.label)}</option>`).join('');
+    const idx = Math.max(0, STATUS[t === COI ? PERMIT : COI].findIndex(s => s.id === cur));
+    $('f-status').value = STATUS[t].some(s => s.id === cur) ? cur : STATUS[t][idx].id;
+    for (const el of $('editorForm').querySelectorAll('[data-for]')) el.hidden = el.dataset.for !== (t === PERMIT ? 'permit' : 'coi');
+    $('partyLabel').textContent = t === PERMIT ? 'Issuing office' : 'Vendor or location';
+    $('f-party').placeholder = t === PERMIT ? 'City film office' : 'Northside Camera Rental';
+    $('requestedLabel').textContent = t === PERMIT ? 'Applied on' : 'Requested on';
+    $('receivedLabel').textContent = t === PERMIT ? 'Issued on' : 'Received on';
+    const names = t === PERMIT ? items().map(c => c.issuer) : [...rentalHouses(null), ...arr(doc.locations).map(l => l && l.name), ...items().map(c => c.vendor)];
+    $('partyList').innerHTML = [...new Set(names.filter(Boolean))].map(n => `<option value="${esc(n)}">`).join('');
+    $('editorTitle').textContent = `${isNew ? 'Add' : 'Edit'} ${t === PERMIT ? 'a permit' : 'a certificate'}`;
+  }
+  function openEditor(id, opts = {}) {
+    const existing = id && items().find(c => c.id === id);
+    isNew = !existing;
+    editing = existing ? structuredClone(existing) : { id: newId('contract'), title: '', type: opts.type || COI, status: 'needed' };
+    if (isNew && opts.vendor) editing.vendor = opts.vendor;
+    if (isNew && opts.location) editing.locationIds = [opts.location];
+    if (isNew && opts.day) editing.shootDayIds = [opts.day];
+    pendingScans = []; removedScanIds = [];
+    $('f-type').value = editing.type;
+    $('f-status').innerHTML = STATUS[editing.type].map(s => `<option value="${s.id}">${esc(s.label)}</option>`).join('');
+    $('f-status').value = editing.status;
+    showType();
+    const vals = { 'f-party': editing.type === PERMIT ? editing.issuer : editing.vendor, 'f-insurer': editing.insurer, 'f-ref': editing.reference, 'f-named': editing.namedOn,
+      'f-requested': editing.requestedDate, 'f-received': editing.receivedDate, 'f-effective': editing.effectiveDate, 'f-expires': editing.expirationDate, 'f-conditions': editing.conditions, 'f-notes': editing.notes };
+    for (const [k, v] of Object.entries(vals)) $(k).value = v == null ? '' : String(v);
+    const locs = new Set(arr(editing.locationIds)), ds = new Set(arr(editing.shootDayIds));
+    $('locPicks').innerHTML = arr(doc.locations).filter(l => l && l.id).map(l => `<label><input type="checkbox" value="${esc(l.id)}"${locs.has(l.id) ? ' checked' : ''}><span>${esc(l.name || 'Unnamed location')}</span></label>`).join('') || '<p class="hint">No locations in the project yet.</p>';
+    $('dayPicks').innerHTML = days().map(d => `<label><input type="checkbox" value="${esc(d.id)}"${ds.has(d.id) ? ' checked' : ''}><span>${esc(dayLabel(d))}</span></label>`).join('') || '<p class="hint">No shoot days yet.</p>';
+    renderScans();
+    $('deleteBtn').hidden = isNew;
+    $('editor').showModal();
+    $('f-party').focus();
+  }
+  async function saveEditor() {
+    const t = $('f-type').value;
+    if (!$('f-party').value.trim() && !$('locPicks').querySelector('input:checked')) { $('f-party').setCustomValidity(t === PERMIT ? 'Name the issuing office, or pick a location.' : 'Name the vendor or location, or pick a location.'); $('f-party').reportValidity(); return; }
+    const c = editing;
+    c.type = t; c.status = $('f-status').value;
+    delete c.vendor; delete c.issuer;
+    const p = $('f-party').value.trim();
+    if (p) c[t === PERMIT ? 'issuer' : 'vendor'] = p;
+    const text = { insurer: 'f-insurer', reference: 'f-ref', namedOn: 'f-named', requestedDate: 'f-requested', receivedDate: 'f-received', effectiveDate: 'f-effective', expirationDate: 'f-expires', conditions: 'f-conditions', notes: 'f-notes' };
+    for (const [k, id] of Object.entries(text)) { const v = $(id).value.trim(); if (v) c[k] = v; else delete c[k]; }
+    if (t === PERMIT) { delete c.insurer; delete c.namedOn; } else { delete c.reference; delete c.conditions; }
+    if (isDone(c) && !c.receivedDate) c.receivedDate = today();
+    if (c.status !== 'needed' && !c.requestedDate) c.requestedDate = today();
+    for (const [k, box] of [['locationIds', 'locPicks'], ['shootDayIds', 'dayPicks']]) {
+      const on = [...$(box).querySelectorAll('input:checked')].map(i => i.value);
+      const keep = arr(c[k]).filter(id => !$(box).querySelector(`input[value="${CSS.escape(id)}"]`)); // links to things not shown here stay
+      const v = [...keep, ...on];
+      if (v.length) c[k] = v; else delete c[k];
+    }
+    c.title = `${t === PERMIT ? 'Permit' : 'Certificate of insurance'}: ${party(c)}`;
+    const filed = [];
+    for (const s of pendingScans) {
+      if (folderOK()) { try { s.asset.relativePath = await copyIntoFolder(s.file); } catch (err) { toast(`Couldn't copy ${s.file.name} into the project folder: ${err.message}. It's linked by name instead.`, true); } }
+      filed.push(s.asset);
+    }
+    c.assetIds = [...arr(c.assetIds).filter(id => !removedScanIds.includes(id)), ...filed.map(a => a.id)];
+    if (!c.assetIds.length) delete c.assetIds;
+    doc.assets.push(...filed);
+    for (const id of removedScanIds) { const a = asset(id); if (a && /^(certificate|permit) scan$/.test(a.type) && !doc.contracts.some(x => x.id !== c.id && arr(x.assetIds).includes(id))) doc.assets = doc.assets.filter(x => x.id !== id); }
+    if (isNew) doc.contracts.push(c); else doc.contracts[doc.contracts.findIndex(x => x.id === c.id)] = c;
+    pendingScans = []; removedScanIds = [];
+    $('editor').close();
+    changed();
+  }
+  function removeEditing() {
+    if (!confirm(`Remove the ${kindLabel(editing).toLowerCase()} for ${party(editing)}? Any scans stay in your project folder.`)) return;
+    doc.contracts = doc.contracts.filter(c => c.id !== editing.id);
+    for (const id of arr(editing.assetIds)) { const a = asset(id); if (a && /^(certificate|permit) scan$/.test(a.type)) doc.assets = doc.assets.filter(x => x.id !== id); }
+    $('editor').close();
+    changed();
+    toast(`Removed the ${kindLabel(editing).toLowerCase()} for ${party(editing)}.`);
+  }
+
+  // ---------- Scans ----------
+  function renderScans() {
+    const linked = arr(editing.assetIds).filter(id => !removedScanIds.includes(id)).map(asset).filter(Boolean);
+    const rows = linked.map(a => `<div class="scan"><span class="name">${esc(a.name)}<span class="sub">${esc(a.relativePath || 'No file location recorded')}</span></span>
+      <button type="button" class="btn small" data-open="${esc(a.id)}"${folderOK() && a.relativePath ? '' : ' disabled title="Connect the project folder to open scans here"'}>Open</button>
+      <button type="button" class="btn small" data-unlink="${esc(a.id)}" aria-label="Remove ${esc(a.name)}">Remove</button></div>`);
+    for (const [i, s] of pendingScans.entries()) rows.push(`<div class="scan"><span class="name">${esc(s.asset.name)}<span class="sub">${folderOK() ? `Copied to ${esc(s.asset.relativePath)} when you save` : `Linked as ${esc(s.asset.relativePath)} when you save`}</span></span>
+      <button type="button" class="btn small" data-drop="${i}" aria-label="Remove ${esc(s.asset.name)}">Remove</button></div>`);
+    $('scans').innerHTML = rows.join('') || '<p class="hint">No scan attached yet.</p>';
+    const canFolder = !!(window.showDirectoryPicker && window.self === window.top);
+    $('connectFolderBtn').hidden = !canFolder || folderOK();
+    $('folderNote').textContent = folderOK() ? `Scans are copied into the ${SCAN_FOLDER} folder inside ${projectDir.name}, next to your project file.`
+      : canFolder ? `Connect the folder your project file is in, and scans are copied into a ${SCAN_FOLDER} folder there. Otherwise the tool records the file name; keep the file in a ${SCAN_FOLDER} folder next to your project file.`
+      : `This browser can't copy files into folders. The tool records each file's name; keep it in a ${SCAN_FOLDER} folder next to your project file.`;
+  }
+  function attachFiles(files) {
+    for (const file of files) {
+      const a = { id: newId('asset'), name: file.name, type: editing.type === 'permit' ? 'permit scan' : 'certificate scan', relativePath: `${SCAN_FOLDER}/${safeName(file.name)}` };
+      if (file.type) a.mimeType = file.type;
+      pendingScans.push({ asset: a, file });
+    }
+    if (files.length && !DONE.includes($('f-status').value)) $('f-status').value = doneFor($('f-type').value);
+    renderScans();
+  }
+  async function copyIntoFolder(file) {
+    const dir = await projectDir.getDirectoryHandle(SCAN_FOLDER, { create: true });
+    const name = safeName(file.name);
+    const dot = name.lastIndexOf('.');
+    const base = dot > 0 ? name.slice(0, dot) : name, ext = dot > 0 ? name.slice(dot) : '';
+    let finalName = name;
+    for (let i = 2; i < 1000; i++) { try { await dir.getFileHandle(finalName); finalName = `${base}-${i}${ext}`; } catch { break; } }
+    const fh = await dir.getFileHandle(finalName, { create: true });
+    const w = await fh.createWritable(); await w.write(file); await w.close();
+    return `${SCAN_FOLDER}/${finalName}`;
+  }
+  async function connectFolder() {
+    if (!fileName) { toast("Save your project file first, then connect the folder it's in.", true); return; }
+    let dir;
+    try { dir = await window.showDirectoryPicker({ id: 'oft-project', mode: 'readwrite' }); }
+    catch (err) { if (err.name !== 'AbortError') toast(`Couldn't connect the folder: ${err.message}`, true); return; }
+    let found = false;
+    try { const fh = await dir.getFileHandle(fileName); found = fileHandle && fh.isSameEntry ? await fh.isSameEntry(fileHandle) : true; } catch { found = false; }
+    if (!found) { toast(`That folder doesn't hold ${fileName}. Choose the folder your project file is in.`, true); return; }
+    projectDir = dir; projectDirFor = fileName;
+    renderScans();
+    toast(`Connected ${dir.name}. Scans you attach are copied into its ${SCAN_FOLDER} folder.`);
+  }
+  async function openScan(a) {
+    try {
+      let dir = projectDir;
+      const parts = str(a.relativePath).split('/').filter(Boolean);
+      for (const p of parts.slice(0, -1)) dir = await dir.getDirectoryHandle(p);
+      const file = await (await dir.getFileHandle(parts[parts.length - 1])).getFile();
+      const url = URL.createObjectURL(file);
+      window.open(url, '_blank', 'noopener');
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    } catch { toast(`Couldn't find ${a.relativePath} in ${projectDir.name}. Check the file is there.`, true); }
+  }
+
+
+  // ---------- CSV and print ----------
+  const CSV_HEAD = ['Type', 'Vendor or issuing office', 'Status', 'Requested or applied', 'Received or issued', 'In effect from', 'Expires', 'Insurer', 'Named on it', 'Permit number', 'Conditions', 'Locations', 'Shoot days', 'Scan', 'Notes'];
+  function exportCsv() {
+    const rows = items().map(c => [c.type === PERMIT ? 'Permit' : 'Certificate of insurance', party(c), statusLabel(c), c.requestedDate, c.receivedDate, c.effectiveDate, c.expirationDate, c.insurer, c.namedOn, c.reference, c.conditions,
+      arr(c.locationIds).map(place).filter(Boolean).map(l => l.name).join('; '), arr(c.shootDayIds).map(id => days().find(d => d.id === id)).filter(Boolean).map(d => d.date).join('; '),
+      arr(c.assetIds).map(asset).filter(Boolean).map(a => a.relativePath || a.name).join('; '), c.notes]);
+    const csv = '﻿' + [CSV_HEAD, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
+    const name = `${slug()}-certificates-and-permits.csv`;
+    download(csv, name, 'text/csv;charset=utf-8');
+    toast(`Exported ${rows.length} certificate${rows.length === 1 ? '' : 's'} and permit${rows.length === 1 ? '' : 's'} to ${name}`);
+  }
+  // The shoot-day check: each upcoming day with what covers it, then everything logged.
+  function renderReport() {
+    const up = upcoming();
+    const mark = { bad: 'Missing', warn: 'Check', info: 'Check', ok: 'OK' };
+    $('report').innerHTML = `<h1>Certificates and permits</h1>
+      <p class="r-meta">${esc([doc.project.title, doc.project.company, `Printed ${fmtDate(today())}`].filter(Boolean).join(' · '))}</p>
+      ${up.length ? `<h2>Before each shoot day</h2>${up.map(d => { const is = dayIssues(d); const l = d.locationId && place(d.locationId);
+        return `<h3>${esc(dayLabel(d))}${l ? `, ${esc(l.name)}` : ''}</h3><table><tbody>${is.length ? is.map(i => `<tr><td class="r-mark">${mark[i.level]}</td><td>${esc(i.text)}</td></tr>`).join('') : '<tr><td colspan="2">Nothing logged for this day.</td></tr>'}</tbody></table>`; }).join('')}` : ''}
+      <h2>Everything logged</h2>
+      <table><thead><tr><th>Type</th><th>Vendor or office</th><th>Status</th><th>Expires</th><th>Named on it or conditions</th></tr></thead><tbody>
+      ${items().map(c => `<tr><td>${esc(kindLabel(c))}</td><td>${esc(party(c))}${c.reference ? `<br>No. ${esc(c.reference)}` : ''}</td><td>${esc(statusLabel(c))}</td><td>${esc(c.expirationDate ? fmtDate(c.expirationDate) : '')}</td><td>${esc(c.type === PERMIT ? c.conditions || '' : c.namedOn || '')}</td></tr>`).join('') || '<tr><td colspan="5">Nothing logged yet.</td></tr>'}
+      </tbody></table>`;
+  }
+
+  // ---------- Project CSV ----------
+  function csvCell(v) {
+    let s = v == null ? '' : String(v);
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+    return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }
+  const csvCollections = {
+    project: 'project details', people: 'people', locations: 'locations', thirdPartyElements: 'third-party elements',
+    contracts: 'contracts', assets: 'assets', musicCueSheet: 'music cue sheet details', callSheets: 'call sheets'
+  };
+  function exportProjectCsv() {
+    const collection = $('projectCsvCollection').value;
+    const value = doc[collection];
+    const rows = Array.isArray(value) ? value : value && typeof value === 'object' ? [value] : [];
+    if (rows.some(row => !row || typeof row !== 'object' || Array.isArray(row))) {
+      toast(`Couldn't export ${csvCollections[collection]}: the project contains an invalid record.`, true);
+      return;
+    }
+    const headers = [...new Set(rows.flatMap(row => Object.keys(row)))];
+    if (!headers.length) headers.push('id');
+    const csvRows = rows.map(row => headers.map(key => { const cell = row[key]; return cell && typeof cell === 'object' ? JSON.stringify(cell) : cell; }));
+    const csv = '﻿' + [headers, ...csvRows].map(row => row.map(csvCell).join(',')).join('\r\n') + '\r\n';
+    const name = suggestedName().replace(/\.oft\.json$/i, `-${collection}.csv`);
+    download(csv, name, 'text/csv;charset=utf-8');
+    toast(`Exported ${rows.length} ${csvCollections[collection]} to ${name}`);
+  }
+
+  // ---------- Film details ----------
+  function openProjectDialog() {
+    for (const k of PROJECT_TEXT) $(`p-${k}`).value = doc.project[k] || '';
+    $('projectDialog').showModal();
+    $('p-title').focus();
+  }
+  function saveProjectDialog() {
+    for (const k of PROJECT_TEXT) doc.project[k] = $(`p-${k}`).value.trim();
+    $('projectDialog').close();
+    changed();
+  }
+
+  // ---------- Dirty state & recovery draft ----------
+  function changed() { dirty = true; saveDraft(); render(); }
+  function saveDraft() {
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ doc, fileName, baselineText, at: new Date().toISOString() })); } catch { /* the file on disk is the real copy */ }
+  }
+  function clearDraft() {
+    try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+    $('recovery').hidden = true;
+  }
+  function checkDraft() {
+    let draft = null;
+    try { draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); } catch { draft = null; }
+    if (!draft || !draft.doc || draft.doc.format !== FORMAT) return;
+    const n = Array.isArray(draft.doc.contracts) ? draft.doc.contracts.filter(c => c && (c.type === 'certificate of insurance' || c.type === 'permit')).length : 0;
+    if (!n && !(draft.doc.project && draft.doc.project.title)) { clearDraft(); return; }
+    const when = draft.at ? new Date(draft.at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'earlier';
+    const title = draft.doc.project && draft.doc.project.title ? `"${draft.doc.project.title}"` : 'an untitled project';
+    $('recoveryText').textContent = `You have unsaved changes to ${title} from ${when} (${n} certificate or permit${n === 1 ? '' : 's'}). Restore them, or discard them and start fresh.`;
+    $('recovery').hidden = false;
+    $('restoreBtn').onclick = () => {
+      doc = normalize(draft.doc); fileName = draft.fileName || null; fileHandle = null;
+      baselineText = typeof draft.baselineText === 'string' ? draft.baselineText : null; dirty = true;
+      $('recovery').hidden = true; render();
+      toast(fileName ? `Restored. Save to write the changes back to ${fileName}.` : 'Restored. Save to keep it as a file.');
+    };
+    $('discardBtn').onclick = () => { clearDraft(); toast('Discarded the unsaved changes.'); };
+  }
+
+  // ---------- Files ----------
+  const pickerTypes = [{ description: 'Film project file', accept: { 'application/json': ['.json'] } }];
+  function slug() {
+    return (doc.project.title || 'untitled-film').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'untitled-film';
+  }
+  const suggestedName = () => `${slug()}.oft.json`;
+  function serialize() {
+    doc.savedAt = new Date().toISOString();
+    doc.savedBy = TOOL;
+    return JSON.stringify(doc, null, 2) + '\n';
+  }
+  function download(text, name, type) {
+    const url = URL.createObjectURL(new Blob([text], { type }));
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  function afterSave(name, downloaded, content) {
+    fileName = name;
+    if (downloaded) fileHandle = null;
+    baselineText = content;
+    dirty = false; clearDraft(); render();
+    toast(downloaded ? `Downloaded ${name}. Keep it with your project files and open it here next time.` : `Saved to ${name}`);
+  }
+  async function writeProjectFile(handle, content) {
+    try {
+      const writable = await handle.createWritable();
+      await writable.write(content);
+      await writable.close();
+    } catch (err) {
+      if (err.name !== 'AbortError') toast(`Couldn't save the file: ${err.message}`, true);
+      return;
+    }
+    fileHandle = handle;
+    afterSave(handle.name, false, content);
+  }
+  function saveCopy(content) {
+    const base = (fileName || suggestedName()).replace(/\.oft\.json$/i, '');
+    const name = `${base}-copy.oft.json`;
+    download(content, name, 'application/json');
+    afterSave(name, true, content);
+  }
+  async function reloadLatest(handle) {
+    try {
+      const file = await handle.getFile();
+      loadText(await file.text(), handle.name, handle);
+    } catch (err) {
+      toast(`Couldn't reload the file: ${err.message}`, true);
+    }
+  }
+  function showConflictDialog(content, observedText, unknownBaseline = false) {
+    const handle = fileHandle;
+    dirty = true;
+    saveDraft();
+    render();
+    $('conflictText').textContent = unknownBaseline
+      ? `The tool can't verify whether ${handle.name} changed since your recovery copy was made. Your edits are not saved.`
+      : `${handle.name} changed after you opened it. Your edits are not saved. Overwriting replaces the newer file.`;
+    $('conflictDialog').showModal();
+    $('conflictReloadBtn').onclick = () => { $('conflictDialog').close(); reloadLatest(handle); };
+    $('conflictCopyBtn').onclick = () => { $('conflictDialog').close(); saveCopy(content); };
+    $('conflictOverwriteBtn').onclick = async () => {
+      $('conflictDialog').close();
+      let latestText;
+      try { latestText = await (await handle.getFile()).text(); }
+      catch (err) { toast(`Couldn't check the file before overwriting: ${err.message}`, true); return; }
+      if (latestText !== observedText) {
+        toast('The file changed again. Review the updated conflict warning before overwriting.', true);
+        showConflictDialog(content, latestText);
+        return;
+      }
+      await writeProjectFile(handle, content);
+    };
+    $('conflictCancelBtn').onclick = () => $('conflictDialog').close();
+  }
+  async function saveFile() {
+    const out = serialize();
+    if (fileHandle) {
+      let currentText;
+      try { currentText = await (await fileHandle.getFile()).text(); }
+      catch (err) { toast(`Couldn't check the file before saving: ${err.message}`, true); return; }
+      if (baselineText === null || currentText !== baselineText) { showConflictDialog(out, currentText, baselineText === null); return; }
+      await writeProjectFile(fileHandle, out);
+      return;
+    }
+    if (window.showSaveFilePicker && window.self === window.top) {
+      try {
+        const h = await window.showSaveFilePicker({ suggestedName: fileName || suggestedName(), types: pickerTypes });
+        if (h.name === fileName) {
+          const currentText = await (await h.getFile()).text();
+          if (baselineText === null || currentText !== baselineText) { fileHandle = h; showConflictDialog(out, currentText, baselineText === null); return; }
+        }
+        await writeProjectFile(h, out);
+      } catch (err) { if (err.name !== 'AbortError') toast(`Couldn't save the file: ${err.message}`, true); }
+      return;
+    }
+    const name = fileName || suggestedName();
+    download(out, name, 'application/json');
+    afterSave(name, true, out);
+  }
+  function loadText(text, name, handle) {
+    let data;
+    try { data = JSON.parse(text); } catch { toast(`Couldn't open ${name}: it isn't a project file.`, true); return; }
+    if (!data || data.format !== FORMAT) { toast(`Couldn't open ${name}: it isn't an Open Filmmaker Toolkit project file.`, true); return; }
+    if (Number(data.formatVersion) > FORMAT_VERSION) { toast(`Couldn't open ${name}: it was saved by a newer version of the toolkit. Get the latest version of this tool.`, true); return; }
+    doc = normalize(data); fileHandle = handle; baselineText = text; fileName = name; dirty = false;
+    clearDraft(); render();
+    const n = entries().length;
+    toast(`Opened ${name}: ${n ? `${n} certificate or permit${n === 1 ? '' : 's'}` : 'no certificate or permits yet'}`);
+  }
+  async function openFile() {
+    if (dirty && !confirm('You have unsaved changes. Open another file and lose them?')) return;
+    if (window.showOpenFilePicker && window.self === window.top) {
+      try { const [h] = await window.showOpenFilePicker({ types: pickerTypes }); const f = await h.getFile(); loadText(await f.text(), f.name, h); }
+      catch (err) { if (err.name !== 'AbortError') toast(`Couldn't open the file: ${err.message}`, true); }
+      return;
+    }
+    $('fileInput').click();
+  }
+  function newProject() {
+    if (dirty && !confirm('You have unsaved changes. Start a new project and lose them?')) return;
+    doc = normalize(blankDoc()); fileHandle = null; baselineText = null; fileName = null; dirty = false;
+    clearDraft(); render(); openProjectDialog();
+  }
+
+  let toastTimer = null;
+  function toast(msg, isError) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.classList.toggle('error', !!isError);
+    t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.hidden = true; }, isError ? 7000 : 4200);
+  }
+
+  // ---------- Wiring ----------
+  function init() {
+    doc = normalize(doc);
+    $('newBtn').onclick = newProject;
+    $('openBtn').onclick = openFile;
+    $('saveBtn').onclick = saveFile;
+    $('editProjectBtn').onclick = openProjectDialog;
+    $('filmTitle').onclick = openProjectDialog;
+    $('printBtn').onclick = () => { renderReport(); window.print(); };
+    window.addEventListener('beforeprint', renderReport);
+    $('projectCsvBtn').onclick = () => $('projectCsvDialog').showModal();
+    $('projectCsvCancel').onclick = () => $('projectCsvDialog').close();
+    $('projectCsvForm').addEventListener('submit', ev => { ev.preventDefault(); exportProjectCsv(); $('projectCsvDialog').close(); });
+    $('fileInput').addEventListener('change', async () => {
+      const f = $('fileInput').files[0];
+      if (f) loadText(await f.text(), f.name, null);
+      $('fileInput').value = '';
+    });
+    $('projectForm').addEventListener('submit', ev => { ev.preventDefault(); saveProjectDialog(); });
+    $('projectCancel').onclick = () => $('projectDialog').close();
+    $('addBtn').onclick = () => openEditor(null);
+    $('addPermitBtn').onclick = () => openEditor(null, { type: PERMIT });
+    $('emptyAddBtn').onclick = () => openEditor(null);
+    $('emptyPermitBtn').onclick = () => openEditor(null, { type: PERMIT });
+    $('emptyOpenBtn').onclick = openFile;
+    $('csvBtn').onclick = exportCsv;
+    $('filters').addEventListener('click', ev => { const b = ev.target.closest('[data-filter]'); if (b) { filter = b.dataset.filter; render(); } });
+    for (const id of ['rows', 'soon', 'days', 'vendors']) $(id).addEventListener('click', ev => {
+      const b = ev.target.closest('button'); if (!b) return;
+      if (b.dataset.edit) openEditor(b.dataset.edit);
+      else if (b.dataset.vendor) openEditor(null, { vendor: b.dataset.vendor, day: b.dataset.day });
+      else if (b.dataset.loc) openEditor(null, { type: PERMIT, location: b.dataset.loc, day: b.dataset.day });
+    });
+    $('f-type').addEventListener('change', showType);
+    $('attachBtn').onclick = () => $('scanInput').click();
+    $('scanInput').addEventListener('change', () => { attachFiles([...$('scanInput').files]); $('scanInput').value = ''; });
+    $('connectFolderBtn').onclick = connectFolder;
+    $('scans').addEventListener('click', ev => {
+      const b = ev.target.closest('button'); if (!b) return;
+      if (b.dataset.open) { const a = asset(b.dataset.open); if (a && folderOK()) openScan(a); }
+      else if (b.dataset.unlink) { removedScanIds.push(b.dataset.unlink); renderScans(); }
+      else if (b.dataset.drop != null) { pendingScans.splice(Number(b.dataset.drop), 1); renderScans(); }
+    });
+    $('editorForm').addEventListener('submit', ev => { ev.preventDefault(); saveEditor(); });
+    $('editorForm').addEventListener('input', ev => { if (ev.target.setCustomValidity) ev.target.setCustomValidity(''); });
+    $('editorCancel').onclick = () => $('editor').close();
+    $('deleteBtn').onclick = removeEditing;
+
+    document.addEventListener('keydown', ev => {
+      const mod = ev.metaKey || ev.ctrlKey;
+      if (mod && ev.key.toLowerCase() === 's') { ev.preventDefault(); saveFile(); }
+      else if (mod && ev.key.toLowerCase() === 'o') { ev.preventDefault(); openFile(); }
+    });
+    window.addEventListener('beforeunload', ev => { if (dirty) { ev.preventDefault(); ev.returnValue = ''; } });
+    render();
+    checkDraft();
+  }
+
+  if (typeof HTMLDialogElement !== 'function' || typeof HTMLDialogElement.prototype.showModal !== 'function' || typeof structuredClone !== 'function') {
+    $('cantRunTitle').textContent = 'This browser is too old to run this tool';
+    $('cantRunText').textContent = 'Update to a current version of Chrome, Edge, Firefox or Safari, then open this file again.';
+    $('cantRunHow').hidden = true;
+    return;
+  }
+  document.documentElement.classList.remove('no-js');
+  window.addEventListener('error', ev => toast(`Something went wrong: ${ev.message}. Save your work, then reload the page.`, true));
+  window.addEventListener('unhandledrejection', ev => toast(`Something went wrong: ${ev.reason && ev.reason.message ? ev.reason.message : ev.reason}. Save your work, then reload the page.`, true));
+  init();
+})();
+</script>
+</body>
+</html>

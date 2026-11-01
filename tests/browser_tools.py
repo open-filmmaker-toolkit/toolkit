@@ -19,10 +19,10 @@ from playwright.sync_api import sync_playwright
 
 root = pathlib.Path(__file__).resolve().parents[1]
 sample = (root / 'samples/the-river-keeps.oft.json').read_text()
-TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan', 'funder-crm', 'cash-flow', 'shooting-calendar', 'interview-prep', 'field-journal', 'location-scout', 'deal-memos']
+TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan', 'funder-crm', 'cash-flow', 'shooting-calendar', 'interview-prep', 'field-journal', 'location-scout', 'deal-memos', 'gear-list', 'coi-permit-tracker']
 COLLECTIONS = ['project', 'people', 'locations', 'thirdPartyElements', 'contracts', 'assets', 'musicCueSheet', 'callSheets']
 PRINT_BTN = {'clearance-log': '#printBtn', 'music-cue-sheet': '#printBtn', 'call-sheet': '#printAllBtn', 'release-tracker': '#printBtn',
-             'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn', 'treatment-builder': '#printBtn', 'pitch-deck': '#printBtn', 'grant-calendar': '#printBtn', 'narrative-library': '#printBtn', 'budget': '#printBtn', 'budget-converter': '#printBtn', 'finance-plan': '#printBtn', 'funder-crm': '#printBtn', 'cash-flow': '#printBtn', 'shooting-calendar': '#printBtn', 'interview-prep': '#printBtn', 'field-journal': '#printBtn', 'location-scout': '#printBtn', 'deal-memos': '#printBtn'}
+             'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn', 'treatment-builder': '#printBtn', 'pitch-deck': '#printBtn', 'grant-calendar': '#printBtn', 'narrative-library': '#printBtn', 'budget': '#printBtn', 'budget-converter': '#printBtn', 'finance-plan': '#printBtn', 'funder-crm': '#printBtn', 'cash-flow': '#printBtn', 'shooting-calendar': '#printBtn', 'interview-prep': '#printBtn', 'field-journal': '#printBtn', 'location-scout': '#printBtn', 'deal-memos': '#printBtn', 'gear-list': '#printBtn', 'coi-permit-tracker': '#printBtn'}
 PHONE = {'width': 390, 'height': 844}
 # The button that opens each tool's main dialog, for the phone-width check. Most tools use #addBtn.
 DIALOG_BTN = {'treatment-builder': '[data-compare]', 'cash-flow': '#settingsBtn'}
@@ -385,7 +385,7 @@ def test_credits_builder(browser, fake):
     ctx.close()
 
 # Each spreadsheet template's columns must appear in its tool's CSV export, in the same order.
-TEMPLATE_EXPORTS = [('location-scout', 'location-scout-template.csv'), ('deal-memos', 'deal-memos-template.csv'), ('shooting-calendar', 'shooting-calendar-template.csv'), ('interview-prep', 'interview-questions-template.csv'), ('funder-crm', 'funder-crm-template.csv'), ('cash-flow', 'cash-flow-template.csv'), ('budget', 'budget-template.csv'), ('finance-plan', 'finance-plan-template.csv'), ('grant-calendar', 'grant-calendar-template.csv'), ('clearance-log', 'clearance-log-template.csv'), ('release-tracker', 'release-log-template.csv'),
+TEMPLATE_EXPORTS = [('gear-list', 'gear-list-template.csv'), ('coi-permit-tracker', 'certificates-and-permits-template.csv'), ('location-scout', 'location-scout-template.csv'), ('deal-memos', 'deal-memos-template.csv'), ('shooting-calendar', 'shooting-calendar-template.csv'), ('interview-prep', 'interview-questions-template.csv'), ('funder-crm', 'funder-crm-template.csv'), ('cash-flow', 'cash-flow-template.csv'), ('budget', 'budget-template.csv'), ('finance-plan', 'finance-plan-template.csv'), ('grant-calendar', 'grant-calendar-template.csv'), ('clearance-log', 'clearance-log-template.csv'), ('release-tracker', 'release-log-template.csv'),
                     ('music-cue-sheet', 'music-cue-sheet-template.csv'), ('name-supers', 'name-supers-template.csv'),
                     ('subject-tracker', 'subject-tracker-template.csv'), ('research-log', 'research-log-template.csv'),
                     ('comps-tracker', 'comps-tracker-template.csv')]
@@ -1284,6 +1284,112 @@ def test_location_scout(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
+# Pins the page's clock to a date, so checks that depend on what's coming up don't change with the day the tests run.
+def fixed_today(iso):
+    return "(() => { const T = new Date('%sT12:00:00').getTime(); const D = Date; class F extends D { constructor(...a) { super(...(a.length ? a : [T])); } static now() { return T; } } window.Date = F; })();" % iso
+
+def test_gear_list(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'gear-list', fake, fixed_today('2026-11-01'))
+    pg.on('dialog', lambda d: d.accept())
+    open_sample(pg, fake)
+    check(pg.locator('#gearView .row').count() == 8 and 'Rented from Northside Camera Rental' in pg.inner_text('[data-id="gear-primes"]'), 'lists gear by department, with where it comes from')
+    sums = pg.inner_text('#sums')
+    check('$10,520' in sums and '$360' in sums and '$455' in sums, 'totals owned value and rentals for the days packed')
+
+    pg.click('#addBtn')
+    pg.fill('#f-name', 'Slider'); pg.select_option('#f-dept', 'grip'); pg.select_option('#f-source', 'rental')
+    check(pg.inner_text('#fromLabel') == 'Rental house', 'asks for the rental house when the gear is rented')
+    pg.fill('#f-from', 'Bright Line Grip'); pg.fill('#f-day', '40'); pg.fill('#f-week', '160'); pg.fill('#f-value', '1200'); pg.fill('#f-serial', 'BLG-0981')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    slider = pg.locator('#gearView .row:has-text("Slider")')
+    check(slider.count() == 1 and 'Not in a package yet' in slider.inner_text(), 'adds gear')
+
+    pg.click('#addPkgBtn')
+    check(pg.is_disabled('#p-day option[value="shootday-nov-1"]'), "a day that has a package can't get a second one")
+    pg.select_option('#p-day', 'shootday-mar-1'); pg.select_option('#p-copy', 'package-nov-1')
+    check(pg.locator('#picks input:checked').count() == 6, 'starts a package from another day')
+    pg.check('#picks input[value="%s"]' % slider.get_attribute('data-id'))
+    pg.click('#pkgForm button[type="submit"]'); pg.wait_for_timeout(200)
+    check(pg.is_visible('#pkgView') and pg.locator('#pkgs .pkg').count() == 3 and 'Leon at the grain elevator' in pg.inner_text('#pkgs'), 'adds a package for a shoot day')
+    check('$630' in pg.inner_text('#sums'), 'rental costs follow the days packed, at the cheaper of day or week rates')
+
+    pg.select_option('#printSel', 'package-nov-1')
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    r = pg.inner_text('#report')
+    check('Load-out: Hammond house interview' in r and 'NCR-PR-1107' in r and 'Out' in r and 'Boom pole' not in r, 'prints a load-out checklist for a package')
+    pg.click('#scheduleBtn'); pg.wait_for_timeout(200)
+    r = pg.inner_text('#report')
+    check('Equipment schedule' in r and 'FX6-0042117' in r and '$10,520' in r and 'Rented' in r, 'prints the insurance schedule with values and serial numbers')
+
+    pg.click('#gearViewBtn')
+    pg.click('[data-edit="gear-boom"]'); pg.click('#deleteBtn'); pg.wait_for_timeout(200)
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    check(rows[0][:3] == ['Item', 'Department', 'How many'] and len(rows) == 9, 'CSV lists every item')
+    data = saved_project(pg, fake)
+    g = data['gear']
+    new = next(i for i in g['items'] if i['name'] == 'Slider')
+    pk = {p['id']: p for p in g['packages']}
+    mar = next(p for p in g['packages'] if p.get('shootDayId') == 'shootday-mar-1')
+    check(new['source'] == 'rental' and new['dayRate'] == 40 and new['department'] == 'grip' and new['id'] in mar['itemIds'] and 'gear-primes' in mar['itemIds'],
+          'the new gear and package are saved')
+    check('gear-boom' not in pk['package-may-1']['itemIds'] and not any(i['id'] == 'gear-boom' for i in g['items']), 'removed gear leaves its packages')
+    check(data['contracts'] == original['contracts'] and data['shootDays'] == original['shootDays'], 'other data is unchanged')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+def test_coi_permits(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'coi-permit-tracker', fake, fixed_today('2026-11-01'))
+    open_sample(pg, fake)
+    check(pg.locator('#rows .row').count() == 3, 'lists certificates and permits')
+    days = pg.inner_text('#days')
+    check('requested since' in days and 'No certificate logged for Bright Line Grip' in days and pg.inner_text('#daysCount') == '2 to sort out', 'flags what is missing before each shoot day')
+    check('Northside Camera Rental' in pg.inner_text('#soon') and 'Bright Line Grip' in pg.inner_text('#vendors'), 'lists what expires soon, and rental houses from the gear list without a certificate')
+
+    pg.click('#vendors [data-vendor="Bright Line Grip"]')
+    check(pg.input_value('#f-party') == 'Bright Line Grip' and pg.input_value('#f-type') == 'certificate of insurance' and pg.is_visible('#f-named') and not pg.is_visible('#f-conditions'), 'starts a certificate for the rental house')
+    pg.fill('#f-named', 'Bright Line Grip, additional insured'); pg.fill('#f-expires', '2027-01-31')
+    pg.set_input_files('#scanInput', files=[{'name': 'bl coi.pdf', 'mimeType': 'application/pdf', 'buffer': b'%PDF-1.4 sample'}])
+    check(pg.input_value('#f-status') == 'received', 'attaching a scan marks it received')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check('Every rental house has a certificate' in pg.inner_text('#vendors'), 'the rental house is covered')
+
+    pg.click('#days [data-loc="location-grain-elevator"]')
+    check(pg.input_value('#f-type') == 'permit' and pg.is_checked('#locPicks input[value="location-grain-elevator"]') and pg.is_checked('#dayPicks input[value="shootday-mar-1"]'),
+          'starts a permit for the location and day')
+    pg.fill('#f-party', 'County film office'); pg.fill('#f-ref', 'CF-27-112'); pg.fill('#f-conditions', 'Weekdays only'); pg.select_option('#f-status', 'applied')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    pg.click('[data-edit="contract-coi-hammond-house"]'); pg.select_option('#f-status', 'received'); pg.fill('#f-expires', '2026-11-30')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check(pg.inner_text('#daysCount') == '1 to sort out' and 'County film office: applied for' in pg.inner_text('#days'), 'the checks follow what changed')
+    pg.click('[data-filter="permit"]')
+    check(pg.locator('#rows .row').count() == 2, 'filters to permits')
+
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    r = pg.inner_text('#report')
+    check('Before each shoot day' in r and 'Missing' in r and 'CF-27-112' in r and 'Weekdays only' in r, 'prints the shoot-day check')
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    check(rows[0][:3] == ['Type', 'Vendor or issuing office', 'Status'] and len(rows) == 6, 'CSV lists every certificate and permit')
+    data = saved_project(pg, fake)
+    cs = {c['id']: c for c in data['contracts']}
+    bl = next(c for c in cs.values() if c.get('vendor') == 'Bright Line Grip')
+    scan = next(a for a in data['assets'] if a['id'] == bl['assetIds'][0])
+    permit = next(c for c in cs.values() if c.get('issuer') == 'County film office')
+    check(bl['status'] == 'received' and bl['receivedDate'] == '2026-11-01' and scan['type'] == 'certificate scan' and scan['relativePath'] == 'certificates-and-permits/bl coi.pdf',
+          'the certificate and its scan are saved')
+    check(permit['type'] == 'permit' and permit['locationIds'] == ['location-grain-elevator'] and permit['shootDayIds'] == ['shootday-mar-1'] and permit['requestedDate'] == '2026-11-01' and 'namedOn' not in permit,
+          'the permit is saved, linked to the location and day')
+    check(cs['contract-coi-hammond-house']['receivedDate'] == '2026-11-01', 'marking a certificate received records the date')
+    others = lambda d: [c for c in d['contracts'] if c.get('type') not in ('certificate of insurance', 'permit')]
+    check(others(data) == others(original) and data['gear'] == original['gear'], 'other contracts and data are unchanged')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
 def test_deal_memos(browser, fake):
     original = json.loads(sample)
     ctx, pg, errs = new_page(browser, 'deal-memos', fake)
@@ -1420,6 +1526,10 @@ def main():
         test_location_scout(browser, fake)
         print('== deal-memos / calendar, budget, signed copies and print')
         test_deal_memos(browser, fake)
+        print('== gear-list / gear, packages, costs and print')
+        test_gear_list(browser, fake)
+        print('== coi-permit-tracker / certificates, permits and shoot-day checks')
+        test_coi_permits(browser, fake)
         print('== templates / columns match the tools\' exports')
         test_template_columns(browser, fake)
         browser.close()

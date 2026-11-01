@@ -29,6 +29,7 @@ The file is a JSON object with a `project` record and collections for reusable e
 | `interviews` | Interview plans, kept by [interview prep](../tools/interview-prep/README.md#what-it-adds-to-the-project-file): research, story beats and questions in order; refer to `people` and `shootDays` |
 | `journal` | Dated field journal entries, kept by the [field journal](../tools/field-journal/README.md#what-it-adds-to-the-project-file): `kind` (`happened`, `learned` or `idea`), `title`, `text`, and tags that refer to `people` and `locations` by `personIds` and `locationIds`, plus a `callSheetId` linking the entry to a shoot day in `callSheets` |
 | `scouts` | Location scouts, kept by the [location scout sheet](../tools/location-scout/README.md#what-it-adds-to-the-project-file); each points to a place in `locations`, and its photos are `assets` with the image in `data` |
+| `gear` | Gear by department, owned, borrowed or rented, and the packages for each shoot day, kept by the [gear list](../tools/gear-list/README.md#what-it-adds-to-the-project-file). Packages refer to `shootDays` and to gear by `itemIds`. A record rather than a collection |
 | `pitchDeck` | A pitch deck or lookbook: page size, slides in order, and the images, resized and stored as data URLs. A record rather than a collection; see the [pitch deck builder](../tools/pitch-deck/README.md#what-it-adds-to-the-project-file) |
 | `credits` | The end credits, in order. A record rather than a collection; see [Credits](#credits) |
 | `supers` | On-screen names and titles (supers and lower thirds), and the list as it was last exported for graphics. A record rather than a collection; entries refer to `people` by `personId`, whose `name` is the spelling used. See the [name supers list](../tools/name-supers/README.md#what-it-adds-to-the-project-file) |
@@ -43,6 +44,7 @@ The release tracker treats a contract as a release when its `type` contains "rel
 - A location needs a release when `onCamera` is true, or when it's unset and a call sheet or a location or other release names it.
 - `onCamera: false` takes someone or somewhere off the list even if a release or call sheet names them.
 - Materials releases cover clearance-log items through `thirdPartyElementIds`; each item records the release in `contractIds`. They don't cover a person's appearance.
+- Certificates of insurance and permits are contracts too, with `type` "certificate of insurance" or "permit", and refer to `locations` and `shootDays`. See the [COI and permit tracker](../tools/coi-permit-tracker/README.md#what-it-adds-to-the-project-file).
 - Deal memos are contracts too, with `type` "deal memo"; they aren't releases. See the [deal memos](../tools/deal-memos/README.md#what-it-adds-to-the-project-file) for their fields.
 - Signed copies are `assets` with `type` "release scan" and a `relativePath` under `releases/`, relative to the project file.
 

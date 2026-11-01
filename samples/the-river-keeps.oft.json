@@ -619,6 +619,51 @@
       "rateUnit": "flat",
       "paymentTerms": "Half on signing, half on delivery of the final mix stems",
       "writtenFor": "California, USA"
+    },
+    {
+      "id": "contract-coi-northside",
+      "title": "Certificate of insurance: Northside Camera Rental",
+      "type": "certificate of insurance",
+      "status": "received",
+      "vendor": "Northside Camera Rental",
+      "insurer": "Example Media Insurance",
+      "namedOn": "Northside Camera Rental, additional insured and loss payee",
+      "requestedDate": "2026-04-20",
+      "receivedDate": "2026-04-24",
+      "effectiveDate": "2026-04-24",
+      "expirationDate": "2026-11-20"
+    },
+    {
+      "id": "contract-coi-hammond-house",
+      "title": "Certificate of insurance: Hammond house",
+      "type": "certificate of insurance",
+      "status": "requested",
+      "vendor": "Ruth Hammond",
+      "namedOn": "Ruth Hammond, certificate holder",
+      "locationIds": [
+        "location-hammond-house"
+      ],
+      "requestedDate": "2026-10-28"
+    },
+    {
+      "id": "contract-permit-levee",
+      "title": "Permit: Riverside film office",
+      "type": "permit",
+      "status": "issued",
+      "issuer": "Riverside film office",
+      "reference": "FP-2026-0418",
+      "conditions": "7 am to 6 pm only. No more than 8 crew. Keep the levee path open to the public.",
+      "locationIds": [
+        "location-riverside-levee"
+      ],
+      "shootDayIds": [
+        "shootday-may-1",
+        "shootday-may-2"
+      ],
+      "requestedDate": "2026-04-02",
+      "receivedDate": "2026-04-21",
+      "effectiveDate": "2026-05-12",
+      "expirationDate": "2026-05-13"
     }
   ],
   "assets": [
@@ -2940,5 +2985,118 @@
         "asset-scout-elevator-1"
       ]
     }
-  ]
+  ],
+  "gear": {
+    "items": [
+      {
+        "id": "gear-camera-body",
+        "name": "Cinema camera body",
+        "department": "camera",
+        "source": "owned",
+        "from": "Lowwater Films",
+        "value": 6500,
+        "serial": "FX6-0042117",
+        "notes": "With two batteries and the top handle"
+      },
+      {
+        "id": "gear-zoom",
+        "name": "24-70mm zoom lens",
+        "department": "lenses",
+        "source": "owned",
+        "from": "Lowwater Films",
+        "value": 2200,
+        "serial": "2471-88302"
+      },
+      {
+        "id": "gear-primes",
+        "name": "Prime lens set (25, 35, 50, 85mm)",
+        "department": "lenses",
+        "source": "rental",
+        "from": "Northside Camera Rental",
+        "dayRate": 180,
+        "weekRate": 720,
+        "value": 14000,
+        "serial": "NCR-PR-1107"
+      },
+      {
+        "id": "gear-recorder",
+        "name": "Field recorder",
+        "department": "sound",
+        "source": "owned",
+        "from": "Teo Ramirez",
+        "value": 1100,
+        "serial": "MX-23-55910"
+      },
+      {
+        "id": "gear-wireless",
+        "name": "Wireless lav kit",
+        "department": "sound",
+        "source": "rental",
+        "from": "Northside Camera Rental",
+        "quantity": 2,
+        "dayRate": 45,
+        "weekRate": 180,
+        "value": 1800,
+        "serial": "NCR-WL-301, NCR-WL-302"
+      },
+      {
+        "id": "gear-boom",
+        "name": "Boom pole and shotgun mic",
+        "department": "sound",
+        "source": "borrowed",
+        "from": "Marcus Bell",
+        "value": 900
+      },
+      {
+        "id": "gear-led",
+        "name": "LED panel kit",
+        "department": "lighting",
+        "source": "rental",
+        "from": "Bright Line Grip",
+        "dayRate": 95,
+        "weekRate": 380,
+        "value": 3200,
+        "serial": "BLG-2210"
+      },
+      {
+        "id": "gear-cards",
+        "name": "Media cards, 160 GB",
+        "department": "data",
+        "source": "owned",
+        "from": "Lowwater Films",
+        "quantity": 4,
+        "value": 180
+      }
+    ],
+    "packages": [
+      {
+        "id": "package-may-1",
+        "shootDayId": "shootday-may-1",
+        "name": "Levee, run and gun",
+        "itemIds": [
+          "gear-camera-body",
+          "gear-zoom",
+          "gear-recorder",
+          "gear-wireless",
+          "gear-boom",
+          "gear-cards"
+        ],
+        "notes": "Charge everything the night before."
+      },
+      {
+        "id": "package-nov-1",
+        "shootDayId": "shootday-nov-1",
+        "name": "Hammond house interview",
+        "itemIds": [
+          "gear-camera-body",
+          "gear-primes",
+          "gear-recorder",
+          "gear-wireless",
+          "gear-led",
+          "gear-cards"
+        ],
+        "notes": "Pick up rentals at 8 am the day before."
+      }
+    ]
+  }
 }
