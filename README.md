@@ -83,6 +83,8 @@ The toolkit has two halves:
 | [Cash flow](tools/cash-flow/) | Pre-production | Planning when money goes out and comes in, month by month or week by week, from the budget and the finance plan, and seeing where the balance runs short |
 | [Shooting calendar](tools/shooting-calendar/) | Pre-production | Planning shoot days, travel days and holds across weeks or months, with who's needed and where, and starting each day's call sheet |
 | [Interview prep](tools/interview-prep/) | Pre-production | Preparing each interview: research, the story beats to cover, questions in order with must-asks marked, and a one-page guide to print |
+| [Location scout sheet](tools/location-scout/) | Pre-production | Recording what you learn on a scout, with your photos, linked to the place and its release, and printing a scout report for the crew |
+| [Deal memos](tools/deal-memos/) | Pre-production | Filling in crew deal memos from the project, printing them to sign, keeping the signed copy and sending the rates to the budget |
 | [Call sheet](tools/call-sheet/) | Production | Building shoot-day call sheets from the people and locations in your project; weather lookup is optional and off until you click it |
 | [Release tracker](tools/release-tracker/) | Production | Tracking who signed what: appearance, location and materials releases, with the signed copies, and flagging anyone on camera with no release on file |
 | [Field journal](tools/field-journal/) | Production | Keeping a dated journal of the production: what happened, what you learned and story ideas, tagged with people and places and linked to shoot days |
@@ -91,7 +93,7 @@ The toolkit has two halves:
 | [Credits builder](tools/credits-builder/) | Post-production | Building end credits from the people, music and archival material in your project, checking that every credit your contracts require is there, and exporting the crawl as text |
 | [Clearance log](tools/clearance-log/) | Legal and clearances | Tracking every piece of third-party material until it's cleared, then printing a report for your E&O attorney |
 
-All 21 are first versions: they work, and they're still changing. Everything else we plan to build is listed by production phase in [TOOLS.md](TOOLS.md).
+All 23 are first versions: they work, and they're still changing. Everything else we plan to build is listed by production phase in [TOOLS.md](TOOLS.md).
 
 ## How our tools work
 
@@ -150,7 +152,7 @@ Copyright © 2026 the Open Filmmaker Toolkit contributors. Contributors keep the
 | --- | --- | --- |
 | Code | The tools, project schema, sample project, tests and CI scripts | [GPL-3.0-or-later](LICENSE) |
 | Templates, guides and documentation | `templates/` (except legal forms), `docs/`, and the README and other Markdown files | [CC BY-SA 4.0](LICENSES/CC-BY-SA-4.0.txt) |
-| Legal forms, such as releases and deal memos | `templates/legal-forms/`, once we add them | [CC0 1.0](LICENSES/CC0-1.0.txt): no rights reserved, so you can turn a form into your own contract without crediting us |
+| Legal forms, such as releases and deal memos | `templates/legal-forms/` | [CC0 1.0](LICENSES/CC0-1.0.txt): no rights reserved, so you can turn a form into your own contract without crediting us |
 
 If we ever run a tool as a hosted service, that code will be under AGPL-3.0.
 

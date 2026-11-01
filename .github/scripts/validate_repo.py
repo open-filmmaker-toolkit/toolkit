@@ -181,6 +181,22 @@ for sample in sorted((ROOT / "samples").glob("*.oft.json")):
             fail(f"{name}: journal entry {entry.get('id')} locationIds points to missing locations")
         if entry.get("callSheetId") and entry["callSheetId"] not in sheet_ids:
             fail(f"{name}: journal entry {entry.get('id')} callSheetId points to a missing call sheet")
+    asset_ids = {a.get("id") for a in data.get("assets", []) if isinstance(a, dict)}
+    scout_ids = [x.get("id") for x in data.get("scouts", []) if isinstance(x, dict)]
+    if len(scout_ids) != len(set(scout_ids)):
+        fail(f"{name}: duplicate IDs in scouts")
+    for scout in data.get("scouts", []):
+        if scout.get("locationId") not in ids["locations"]:
+            fail(f"{name}: scout {scout.get('id')} locationId points to a missing location")
+        if set(scout.get("photoIds", [])) - asset_ids:
+            fail(f"{name}: scout {scout.get('id')} photoIds points to missing assets")
+    budget_line_ids = {l.get("id") for l in (data.get("budget") or {}).get("lines", []) if isinstance(l, dict)}
+    for contract in data.get("contracts", []):
+        if contract.get("type") == "deal memo":
+            if len(contract.get("personIds", [])) != 1:
+                fail(f"{name}: deal memo {contract.get('id')} should name one person")
+            if set(contract.get("budgetLineIds", [])) - budget_line_ids:
+                fail(f"{name}: deal memo {contract.get('id')} budgetLineIds points to missing budget lines")
     treatment = data.get("treatment") if isinstance(data.get("treatment"), dict) else {}
     version_ids = [v.get("id") for v in treatment.get("versions", []) if isinstance(v, dict)]
     if len(version_ids) != len(set(version_ids)):
@@ -245,15 +261,24 @@ template_readme = TEMPLATES / "README.md"
 listed = template_readme.read_text(encoding="utf-8") if template_readme.is_file() else ""
 if not listed:
     fail("templates: missing README.md")
-for path in sorted(TEMPLATES.iterdir()) if TEMPLATES.is_dir() else []:
+for path in sorted(p for p in TEMPLATES.rglob("*") if p.is_file()) if TEMPLATES.is_dir() else []:
     rel = path.relative_to(ROOT)
     if path.name == "README.md":
         continue
     if path.suffix.lower() not in (".csv", ".docx"):
         fail(f"{rel}: templates must be .csv or .docx files")
         continue
-    if f"({path.name})" not in listed:
+    if f"({path.relative_to(TEMPLATES).as_posix()})" not in listed:
         fail(f"{rel}: not listed in templates/README.md")
+    # Legal forms (CC0) carry the not-legal-advice notice and say where they were written for.
+    if path.parent.name == "legal-forms" and path.suffix.lower() == ".docx":
+        try:
+            with zipfile.ZipFile(path) as docx:
+                text = re.sub(r"<[^>]+>", "", docx.read("word/document.xml").decode("utf-8", "replace"))
+            if "Not legal advice" not in text or "Written for" not in text:
+                fail(f"{rel}: legal forms need the not-legal-advice notice and a 'Written for' line at the top")
+        except (zipfile.BadZipFile, KeyError):
+            pass
     if path.suffix.lower() == ".csv":
         try:
             rows = list(csv.reader(io.StringIO(path.read_text(encoding="utf-8-sig"))))
