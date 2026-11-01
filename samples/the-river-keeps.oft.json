@@ -3098,5 +3098,212 @@
         "notes": "Pick up rentals at 8 am the day before."
       }
     ]
+  },
+  "trips": [
+    {
+      "id": "trip-spring-flood",
+      "name": "Spring flood trip",
+      "block": "Spring flood trip",
+      "destination": "Riverside, California",
+      "startDate": "2026-05-11",
+      "endDate": "2026-05-14",
+      "personIds": [
+        "person-ana-reyes",
+        "person-lena-ward",
+        "person-teo-ramirez"
+      ],
+      "locationIds": [
+        "location-riverside-levee"
+      ],
+      "legs": [
+        {
+          "id": "leg-flood-out",
+          "kind": "drive",
+          "date": "2026-05-11",
+          "departs": "08:00",
+          "arrives": "15:30",
+          "from": "Lowwater Films office",
+          "to": "River Bend Motel",
+          "carrier": "Production van, Ana driving",
+          "notes": "Gear loaded the night before."
+        },
+        {
+          "id": "leg-flood-teo",
+          "kind": "flight",
+          "date": "2026-05-11",
+          "departs": "09:40",
+          "arrives": "11:05",
+          "from": "SFO",
+          "to": "ONT",
+          "carrier": "Example Air",
+          "number": "EA 214",
+          "confirmation": "QX7K2P",
+          "personIds": [
+            "person-teo-ramirez"
+          ],
+          "notes": "Ana picks Teo up at arrivals."
+        },
+        {
+          "id": "leg-flood-back",
+          "kind": "drive",
+          "date": "2026-05-14",
+          "departs": "09:00",
+          "from": "River Bend Motel",
+          "to": "Lowwater Films office",
+          "carrier": "Production van"
+        }
+      ],
+      "stays": [
+        {
+          "id": "stay-river-bend",
+          "name": "River Bend Motel (fictional)",
+          "address": "200 Sample Road, Riverside",
+          "phone": "555-0142",
+          "checkIn": "2026-05-11",
+          "checkOut": "2026-05-14",
+          "confirmation": "RB-55120",
+          "notes": "Three rooms under Lowwater Films."
+        }
+      ],
+      "contacts": [
+        {
+          "id": "contact-flood-fixer",
+          "name": "Jo Alvarez",
+          "role": "Local fixer",
+          "phone": "555-0177"
+        }
+      ],
+      "emergencyNumber": "911",
+      "hospital": {
+        "name": "Riverside Community Hospital (fictional)",
+        "address": "1 Sample Way, Riverside",
+        "phone": "555-0100"
+      },
+      "notes": "Per diem is paid on arrival. Bring waders and a warm layer for the levee at dawn."
+    }
+  ],
+  "riskPlans": [
+    {
+      "id": "risk-spring-flood",
+      "title": "Spring flood shoot",
+      "level": "elevated",
+      "startDate": "2026-05-11",
+      "endDate": "2026-05-14",
+      "author": "Ana Reyes",
+      "locationIds": [
+        "location-riverside-levee"
+      ],
+      "personIds": [
+        "person-ana-reyes",
+        "person-lena-ward",
+        "person-teo-ramirez"
+      ],
+      "hazards": [
+        {
+          "id": "hazard-flood-water",
+          "hazard": "Water and flooding",
+          "likelihood": 3,
+          "impact": 3,
+          "ownerId": "person-ana-reyes",
+          "controls": "Stay back from the bank and fast water; life jackets on anyone near the edge; a spotter for every water shot; check flood warnings each morning."
+        },
+        {
+          "id": "hazard-flood-driving",
+          "hazard": "Traffic and driving",
+          "likelihood": 2,
+          "impact": 3,
+          "ownerId": "person-ana-reyes",
+          "controls": "Rested drivers only; no driving after a 12-hour day; avoid flooded roads."
+        },
+        {
+          "id": "hazard-flood-cold",
+          "hazard": "Cold and wet weather",
+          "likelihood": 2,
+          "impact": 1,
+          "controls": "Waterproofs and a warm layer; the van stays nearby as shelter."
+        }
+      ],
+      "contacts": [
+        {
+          "id": "contact-risk-sam",
+          "name": "Sam Okafor",
+          "role": "Producer at home base",
+          "phone": "555-0123"
+        },
+        {
+          "id": "contact-risk-fixer",
+          "name": "Jo Alvarez",
+          "role": "Local fixer",
+          "phone": "555-0177"
+        }
+      ],
+      "hospitals": [
+        {
+          "id": "hospital-riverside",
+          "name": "Riverside Community Hospital (fictional)",
+          "address": "1 Sample Way, Riverside",
+          "phone": "555-0100",
+          "notes": "15 minutes from the levee; emergency room open all night."
+        }
+      ],
+      "meetingPoint": "The van in the gravel lot at the foot of the levee road.",
+      "evacuation": "If the water rises or the levee is closed, everyone walks back to the van and drives to higher ground on Sample Road. Leave gear behind if you have to.",
+      "checkIns": {
+        "times": "07:00, 13:00, 20:00",
+        "contact": "Sam Okafor",
+        "method": "Text the group chat; call if there is no answer in 15 minutes.",
+        "escalation": [
+          {
+            "after": "15 minutes late",
+            "action": "Call and text them, then the rest of the team."
+          },
+          {
+            "after": "1 hour late",
+            "action": "Call the fixer and the motel. Tell Sam."
+          },
+          {
+            "after": "2 hours late",
+            "action": "Sam calls 911 and the insurer’s assistance line."
+          }
+        ]
+      }
+    }
+  ],
+  "security": {
+    "level": "standard",
+    "personIds": [
+      "person-ana-reyes",
+      "person-lena-ward",
+      "person-teo-ramirez",
+      "person-priya-nair"
+    ],
+    "items": [
+      {
+        "id": "check-diary-scans",
+        "section": "sources",
+        "text": "Keep scans of the Hammond diary off shared drives until the family agrees how they’re used."
+      }
+    ],
+    "hidden": [],
+    "done": {
+      "dev-disk": [
+        "person-ana-reyes",
+        "person-lena-ward",
+        "person-teo-ramirez",
+        "person-priya-nair"
+      ],
+      "acc-pm": [
+        "person-ana-reyes",
+        "person-priya-nair"
+      ],
+      "acc-2fa": [
+        "person-ana-reyes"
+      ],
+      "ftg-copies": [
+        "person-teo-ramirez",
+        "person-priya-nair"
+      ]
+    },
+    "notes": "Footage goes to two drives each night; Priya holds the second set. Signal for anything about the Hammond family."
   }
 }

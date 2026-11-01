@@ -87,6 +87,9 @@ The toolkit has two halves:
 | [Deal memos](tools/deal-memos/) | Pre-production | Filling in crew deal memos from the project, printing them to sign, keeping the signed copy and sending the rates to the budget |
 | [Gear list](tools/gear-list/) | Pre-production | Listing the gear by department, owned, borrowed or rented, packing it by shoot day, and printing load-out checklists and the schedule your insurer asks for |
 | [COI and permit tracker](tools/coi-permit-tracker/) | Pre-production | Tracking certificates of insurance and filming permits for each vendor and location, and seeing what's missing or expiring before each shoot day |
+| [Travel sheet](tools/travel-sheet/) | Pre-production | Giving everyone on a trip one sheet with their flights, hotels, ground transport, local contacts, the emergency number and the nearest hospital |
+| [Risk and hostile-environment plans](tools/risk-plan/) | Pre-production | Planning for risk on a shoot, especially in hostile environments: hazards rated with what you'll do about them, emergency contacts, hospitals, a way out and check-ins |
+| [Security checklist](tools/security-checklist/) | Pre-production | Protecting footage, sources and devices on sensitive productions, with a checklist for digital and physical security ticked off for each person on the crew |
 | [Call sheet](tools/call-sheet/) | Production | Building shoot-day call sheets from the people and locations in your project; weather lookup is optional and off until you click it |
 | [Release tracker](tools/release-tracker/) | Production | Tracking who signed what: appearance, location and materials releases, with the signed copies, and flagging anyone on camera with no release on file |
 | [Field journal](tools/field-journal/) | Production | Keeping a dated journal of the production: what happened, what you learned and story ideas, tagged with people and places and linked to shoot days |
@@ -95,7 +98,7 @@ The toolkit has two halves:
 | [Credits builder](tools/credits-builder/) | Post-production | Building end credits from the people, music and archival material in your project, checking that every credit your contracts require is there, and exporting the crawl as text |
 | [Clearance log](tools/clearance-log/) | Legal and clearances | Tracking every piece of third-party material until it's cleared, then printing a report for your E&O attorney |
 
-All 25 are first versions: they work, and they're still changing. Everything else we plan to build is listed by production phase in [TOOLS.md](TOOLS.md).
+All 28 are first versions: they work, and they're still changing. Everything else we plan to build is listed by production phase in [TOOLS.md](TOOLS.md).
 
 ## How our tools work
 

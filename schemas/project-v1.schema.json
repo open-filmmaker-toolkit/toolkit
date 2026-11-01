@@ -224,6 +224,24 @@
     "gear": {
       "$ref": "#/$defs/gear",
       "description": "Gear by department and the packages for each shoot day, kept by the gear list. A record rather than a collection."
+    },
+    "trips": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/trip"
+      },
+      "description": "Trips with travel, places to stay, local contacts and emergency details, kept by the travel sheet."
+    },
+    "riskPlans": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/riskPlan"
+      },
+      "description": "Risk assessments and emergency plans, kept by the risk and hostile-environment plans tool."
+    },
+    "security": {
+      "$ref": "#/$defs/security",
+      "description": "The security checklist: who is on it and what each person has done. A record rather than a collection."
     }
   },
   "additionalProperties": true,
@@ -2437,6 +2455,460 @@
           },
           "uniqueItems": true,
           "description": "Gear items going that day."
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "trip": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string"
+        },
+        "block": {
+          "type": "string",
+          "description": "The trip in the shooting calendar: the block shared by its shootDays."
+        },
+        "destination": {
+          "type": "string"
+        },
+        "startDate": {
+          "type": "string",
+          "format": "date"
+        },
+        "endDate": {
+          "type": "string",
+          "format": "date"
+        },
+        "personIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true,
+          "description": "Who is going."
+        },
+        "locationIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true
+        },
+        "legs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "flight",
+                  "train",
+                  "drive",
+                  "ground",
+                  "other"
+                ]
+              },
+              "date": {
+                "type": "string",
+                "format": "date"
+              },
+              "departs": {
+                "type": "string"
+              },
+              "arrives": {
+                "type": "string"
+              },
+              "from": {
+                "type": "string"
+              },
+              "to": {
+                "type": "string"
+              },
+              "carrier": {
+                "type": "string"
+              },
+              "number": {
+                "type": "string"
+              },
+              "confirmation": {
+                "type": "string"
+              },
+              "personIds": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/id"
+                },
+                "uniqueItems": true,
+                "description": "Who this is for; everyone on the trip when unset."
+              },
+              "notes": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "stays": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "name": {
+                "type": "string"
+              },
+              "address": {
+                "type": "string"
+              },
+              "phone": {
+                "type": "string"
+              },
+              "checkIn": {
+                "type": "string",
+                "format": "date"
+              },
+              "checkOut": {
+                "type": "string",
+                "format": "date"
+              },
+              "confirmation": {
+                "type": "string"
+              },
+              "personIds": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/id"
+                },
+                "uniqueItems": true,
+                "description": "Who stays here; everyone on the trip when unset."
+              },
+              "notes": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "contacts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "name": {
+                "type": "string"
+              },
+              "role": {
+                "type": "string"
+              },
+              "phone": {
+                "type": "string"
+              },
+              "notes": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "emergencyNumber": {
+          "type": "string"
+        },
+        "hospital": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "address": {
+              "type": "string"
+            },
+            "phone": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": true
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "riskPlan": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "title": {
+          "type": "string"
+        },
+        "level": {
+          "type": "string",
+          "enum": [
+            "standard",
+            "elevated",
+            "hostile"
+          ]
+        },
+        "startDate": {
+          "type": "string",
+          "format": "date"
+        },
+        "endDate": {
+          "type": "string",
+          "format": "date"
+        },
+        "author": {
+          "type": "string"
+        },
+        "locationIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true
+        },
+        "personIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true,
+          "description": "The team."
+        },
+        "hazards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "hazard": {
+                "type": "string"
+              },
+              "likelihood": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 3
+              },
+              "impact": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 3
+              },
+              "controls": {
+                "type": "string",
+                "description": "What you will do about it."
+              },
+              "ownerId": {
+                "$ref": "#/$defs/id",
+                "description": "Who makes sure, in people."
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "contacts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "name": {
+                "type": "string"
+              },
+              "role": {
+                "type": "string"
+              },
+              "phone": {
+                "type": "string"
+              },
+              "notes": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "hospitals": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "name": {
+                "type": "string"
+              },
+              "address": {
+                "type": "string"
+              },
+              "phone": {
+                "type": "string"
+              },
+              "notes": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "meetingPoint": {
+          "type": "string"
+        },
+        "evacuation": {
+          "type": "string"
+        },
+        "checkIns": {
+          "type": "object",
+          "properties": {
+            "times": {
+              "type": "string",
+              "description": "Check-in times, separated by commas."
+            },
+            "contact": {
+              "type": "string"
+            },
+            "method": {
+              "type": "string"
+            },
+            "escalation": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "after": {
+                    "type": "string"
+                  },
+                  "action": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": true
+              },
+              "description": "What to do when someone misses a check-in, in order."
+            }
+          },
+          "additionalProperties": true
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "security": {
+      "type": "object",
+      "properties": {
+        "level": {
+          "type": "string",
+          "enum": [
+            "standard",
+            "high"
+          ]
+        },
+        "personIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true,
+          "description": "Who is on the checklist."
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "section": {
+                "type": "string",
+                "enum": [
+                  "devices",
+                  "accounts",
+                  "sources",
+                  "footage",
+                  "borders",
+                  "physical"
+                ]
+              },
+              "text": {
+                "type": "string"
+              },
+              "high": {
+                "type": "boolean",
+                "description": "Only for a high-risk shoot."
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "hidden": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Built-in items set aside as not for this production."
+        },
+        "done": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/id"
+            }
+          },
+          "description": "Item id to the people who have done it."
         },
         "notes": {
           "type": "string"

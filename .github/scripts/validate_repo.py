@@ -201,6 +201,24 @@ for sample in sorted((ROOT / "samples").glob("*.oft.json")):
             fail(f"{name}: gear package {package.get('id')} shootDayId points to a missing shoot day")
         if set(package.get("itemIds", [])) - set(gear_ids):
             fail(f"{name}: gear package {package.get('id')} itemIds points to missing gear")
+    for trip in data.get("trips", []):
+        if set(trip.get("personIds", [])) - ids["people"] or set(trip.get("locationIds", [])) - ids["locations"]:
+            fail(f"{name}: trip {trip.get('id')} points to missing people or locations")
+        for part in trip.get("legs", []) + trip.get("stays", []):
+            if set(part.get("personIds", [])) - set(trip.get("personIds", [])):
+                fail(f"{name}: trip {trip.get('id')} has travel or a stay for someone not on the trip")
+    for plan in data.get("riskPlans", []):
+        if set(plan.get("personIds", [])) - ids["people"] or set(plan.get("locationIds", [])) - ids["locations"]:
+            fail(f"{name}: risk plan {plan.get('id')} points to missing people or locations")
+        for hazard in plan.get("hazards", []):
+            if hazard.get("ownerId") and hazard["ownerId"] not in ids["people"]:
+                fail(f"{name}: risk plan {plan.get('id')} hazard {hazard.get('id')} ownerId points to a missing person")
+    security = data.get("security") if isinstance(data.get("security"), dict) else {}
+    if set(security.get("personIds", [])) - ids["people"]:
+        fail(f"{name}: security personIds points to missing people")
+    for item_id, done in (security.get("done") or {}).items():
+        if set(done) - ids["people"]:
+            fail(f"{name}: security item {item_id} is marked done by missing people")
     for contract in data.get("contracts", []):
         if contract.get("type") == "deal memo":
             if len(contract.get("personIds", [])) != 1:
