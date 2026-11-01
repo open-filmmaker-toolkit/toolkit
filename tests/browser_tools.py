@@ -19,10 +19,10 @@ from playwright.sync_api import sync_playwright
 
 root = pathlib.Path(__file__).resolve().parents[1]
 sample = (root / 'samples/the-river-keeps.oft.json').read_text()
-TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan', 'funder-crm', 'cash-flow', 'shooting-calendar', 'interview-prep', 'field-journal', 'location-scout', 'deal-memos', 'gear-list', 'coi-permit-tracker']
+TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan', 'funder-crm', 'cash-flow', 'shooting-calendar', 'interview-prep', 'field-journal', 'location-scout', 'deal-memos', 'gear-list', 'coi-permit-tracker', 'travel-sheet', 'risk-plan', 'security-checklist']
 COLLECTIONS = ['project', 'people', 'locations', 'thirdPartyElements', 'contracts', 'assets', 'musicCueSheet', 'callSheets']
 PRINT_BTN = {'clearance-log': '#printBtn', 'music-cue-sheet': '#printBtn', 'call-sheet': '#printAllBtn', 'release-tracker': '#printBtn',
-             'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn', 'treatment-builder': '#printBtn', 'pitch-deck': '#printBtn', 'grant-calendar': '#printBtn', 'narrative-library': '#printBtn', 'budget': '#printBtn', 'budget-converter': '#printBtn', 'finance-plan': '#printBtn', 'funder-crm': '#printBtn', 'cash-flow': '#printBtn', 'shooting-calendar': '#printBtn', 'interview-prep': '#printBtn', 'field-journal': '#printBtn', 'location-scout': '#printBtn', 'deal-memos': '#printBtn', 'gear-list': '#printBtn', 'coi-permit-tracker': '#printBtn'}
+             'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn', 'treatment-builder': '#printBtn', 'pitch-deck': '#printBtn', 'grant-calendar': '#printBtn', 'narrative-library': '#printBtn', 'budget': '#printBtn', 'budget-converter': '#printBtn', 'finance-plan': '#printBtn', 'funder-crm': '#printBtn', 'cash-flow': '#printBtn', 'shooting-calendar': '#printBtn', 'interview-prep': '#printBtn', 'field-journal': '#printBtn', 'location-scout': '#printBtn', 'deal-memos': '#printBtn', 'gear-list': '#printBtn', 'coi-permit-tracker': '#printBtn', 'travel-sheet': '#printBtn', 'risk-plan': '#printBtn', 'security-checklist': '#printBtn'}
 PHONE = {'width': 390, 'height': 844}
 # The button that opens each tool's main dialog, for the phone-width check. Most tools use #addBtn.
 DIALOG_BTN = {'treatment-builder': '[data-compare]', 'cash-flow': '#settingsBtn'}
@@ -385,7 +385,7 @@ def test_credits_builder(browser, fake):
     ctx.close()
 
 # Each spreadsheet template's columns must appear in its tool's CSV export, in the same order.
-TEMPLATE_EXPORTS = [('gear-list', 'gear-list-template.csv'), ('coi-permit-tracker', 'certificates-and-permits-template.csv'), ('location-scout', 'location-scout-template.csv'), ('deal-memos', 'deal-memos-template.csv'), ('shooting-calendar', 'shooting-calendar-template.csv'), ('interview-prep', 'interview-questions-template.csv'), ('funder-crm', 'funder-crm-template.csv'), ('cash-flow', 'cash-flow-template.csv'), ('budget', 'budget-template.csv'), ('finance-plan', 'finance-plan-template.csv'), ('grant-calendar', 'grant-calendar-template.csv'), ('clearance-log', 'clearance-log-template.csv'), ('release-tracker', 'release-log-template.csv'),
+TEMPLATE_EXPORTS = [('travel-sheet', 'travel-sheet-template.csv'), ('risk-plan', 'risk-assessment-template.csv'), ('security-checklist', 'security-checklist-template.csv'), ('gear-list', 'gear-list-template.csv'), ('coi-permit-tracker', 'certificates-and-permits-template.csv'), ('location-scout', 'location-scout-template.csv'), ('deal-memos', 'deal-memos-template.csv'), ('shooting-calendar', 'shooting-calendar-template.csv'), ('interview-prep', 'interview-questions-template.csv'), ('funder-crm', 'funder-crm-template.csv'), ('cash-flow', 'cash-flow-template.csv'), ('budget', 'budget-template.csv'), ('finance-plan', 'finance-plan-template.csv'), ('grant-calendar', 'grant-calendar-template.csv'), ('clearance-log', 'clearance-log-template.csv'), ('release-tracker', 'release-log-template.csv'),
                     ('music-cue-sheet', 'music-cue-sheet-template.csv'), ('name-supers', 'name-supers-template.csv'),
                     ('subject-tracker', 'subject-tracker-template.csv'), ('research-log', 'research-log-template.csv'),
                     ('comps-tracker', 'comps-tracker-template.csv')]
@@ -1390,6 +1390,118 @@ def test_coi_permits(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
+def test_travel_sheet(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'travel-sheet', fake, fixed_today('2026-11-01'))
+    open_sample(pg, fake)
+    check(pg.locator('#rows .row').count() == 1 and 'Anniversary shoot' in pg.inner_text('#cal') and 'Spring flood trip' not in pg.inner_text('#cal'), 'lists trips, and trips in the shooting calendar without a sheet')
+    pg.click('#cal [data-block="Anniversary shoot"]')
+    check(pg.input_value('#f-name') == 'Anniversary shoot' and pg.input_value('#f-start') == '2026-11-10' and pg.input_value('#f-end') == '2026-11-11'
+          and pg.is_checked('#peoplePicks input[value="person-ruth-hammond"]') and pg.is_checked('#locPicks input[value="location-hammond-house"]'), 'a trip from the calendar starts with its dates, people and places')
+    check(pg.is_visible('#hospNote'), "offers the hospital from a call sheet")
+    pg.click('#hospBtn')
+    check(pg.input_value('#f-hname').startswith('Riverside Community Hospital'), 'uses the call sheet hospital')
+    pg.click('[data-add="legs"]')
+    pg.select_option('#legs-0-kind', 'flight'); pg.fill('#legs-0-date', '2026-11-09'); pg.fill('#legs-0-from', 'MSP'); pg.fill('#legs-0-to', 'ONT'); pg.fill('#legs-0-number', 'EA 88')
+    pg.check('#legs [data-who][value="person-teo-ramirez"]')
+    pg.click('[data-add="stays"]'); pg.fill('#stays-0-name', 'Mission Lodge (fictional)'); pg.fill('#stays-0-checkIn', '2026-11-09')
+    pg.click('[data-add="contacts"]')
+    pg.fill('#f-emergency', '911')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    row = pg.inner_text('#rows .row:has-text("Anniversary shoot")')
+    check('No travel for' in row and 'Lena Ward' in row.split('No travel for')[1] and 'Ruth Hammond' in row.split('No travel for')[1] and 'Teo' not in row.split('No travel for')[1] and 'No hospital' not in row, 'flags people going with no travel')
+    trip_id = pg.locator('#rows .row:has-text("Anniversary shoot")').get_attribute('data-id')
+    pg.select_option('#printSel', trip_id); pg.select_option('#printWho', 'person-teo-ramirez')
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    r = pg.inner_text('#report')
+    check('Anniversary shoot: Teo Ramirez' in r and 'MSP to ONT' in r and 'Emergency: 911' in r and 'Ruth reads from the diary' in r, "prints one person's sheet with their travel and shoot days")
+    pg.select_option('#printWho', 'person-lena-ward'); pg.click('#printBtn'); pg.wait_for_timeout(200)
+    check('MSP to ONT' not in pg.inner_text('#report') and 'Mission Lodge' in pg.inner_text('#report'), "leaves out travel that isn't theirs")
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    check(rows[0][:3] == ['Trip', 'Type', 'Date'] and len(rows) == 8, 'CSV lists travel, stays and contacts')
+    data = saved_project(pg, fake)
+    t = next(x for x in data['trips'] if x.get('block') == 'Anniversary shoot')
+    check(t['legs'][0]['personIds'] == ['person-teo-ramirez'] and t['legs'][0]['id'] and t['stays'][0]['checkIn'] == '2026-11-09' and 'contacts' not in t and t['emergencyNumber'] == '911',
+          'the trip is saved, and empty rows are dropped')
+    check(data['trips'][0] == original['trips'][0] and data['shootDays'] == original['shootDays'], 'other data is unchanged')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+def test_risk_plan(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'risk-plan', fake, fixed_today('2026-11-01'))
+    open_sample(pg, fake)
+    check('2 rated high' in pg.inner_text('#rows') and pg.inner_text('#uncCount') == '3', 'flags high hazards, and shoot days no plan covers')
+    pg.click('#uncovered [data-day="shootday-nov-1"]')
+    check(pg.input_value('#f-title') == 'Anniversary shoot' and pg.is_checked('#locPicks input[value="location-hammond-house"]') and pg.locator('#escalation .item').count() == 3 and pg.locator('#hospitals .item').count() == 1,
+          'a plan from a shoot day starts with its places, call sheet hospitals and default check-in steps')
+    pg.click('[data-add="hazards"]')
+    pg.fill('#hazards-0-hazard', 'Heat'); pg.locator('#hazards-0-hazard').dispatch_event('change')
+    check(pg.input_value('#hazards-0-controls').startswith('Water and shade'), 'a common hazard suggests what to do')
+    pg.select_option('#hazards-0-likelihood', '3'); pg.select_option('#hazards-0-impact', '2'); pg.select_option('#hazards-0-ownerId', 'person-lena-ward')
+    check('High (6)' in pg.inner_text('#hazards legend'), 'rates the hazard')
+    pg.click('#fromSheetsBtn'); pg.wait_for_timeout(100)
+    check(pg.locator('#hospitals .item').count() == 1, "doesn't add the same hospital twice")
+    pg.fill('#f-ciTimes', '08:00, 20:00'); pg.fill('#f-ciWho', 'Sam Okafor')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check(pg.inner_text('#uncCount') == '1', 'the new plan covers its days')
+    plan_id = pg.locator('#rows .row:has-text("Anniversary shoot")').get_attribute('data-id')
+    pg.select_option('#printSel', plan_id)
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    r = pg.inner_text('#report')
+    check('If someone misses a check-in' in r and 'Heat' in r and 'Riverside Community Hospital' in r and 'Risk assessment' not in r, 'prints the crew copy')
+    pg.click('#insurerBtn'); pg.wait_for_timeout(200)
+    r = pg.inner_text('#report')
+    check('Risk assessment' in r and 'High (6)' in r and 'Signed for the production' in r and 'Lena Ward' in r, "prints the insurer's copy")
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    check(rows[0][:3] == ['Plan', 'Kind of shoot', 'Hazard'] and len(rows) == 5, 'CSV lists every hazard')
+    data = saved_project(pg, fake)
+    p = next(x for x in data['riskPlans'] if x['id'] == plan_id)
+    h = p['hazards'][0]
+    check(h['likelihood'] == 3 and h['impact'] == 2 and h['ownerId'] == 'person-lena-ward' and len(p['checkIns']['escalation']) == 3 and p['checkIns']['times'] == '08:00, 20:00' and 'escalation' not in p,
+          'the plan is saved with its hazards and check-ins')
+    check(data['riskPlans'][0] == original['riskPlans'][0] and data['people'] == original['people'], 'other data is unchanged')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+def test_security_checklist(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'security-checklist', fake)
+    open_sample(pg, fake)
+    check(pg.inner_text('#count') == '29 items · 4 people' and '3 of 29' in pg.inner_text('#progress'), 'shows the checklist and who has done what')
+    pg.click('#highBtn'); pg.wait_for_timeout(100)
+    check(pg.inner_text('#count').startswith('36 items') and pg.locator('.high-note').count() == 6, 'a high-risk shoot adds items and notes')
+    pg.select_option('#whoSel', 'person-lena-ward')
+    pg.check('#chk-dev-phone'); pg.wait_for_timeout(100)
+    check('2 of 36' in pg.inner_text('#progress li:has-text("Lena Ward")'), 'ticks an item off for one person')
+    pg.click('[data-hide="phy-lost"]'); pg.wait_for_timeout(100)
+    check(pg.is_visible('#hiddenLine') and pg.inner_text('#count').startswith('35 items'), 'sets aside an item')
+    pg.click('#addBtn'); pg.fill('#f-text', 'Agree a code word for when someone can’t talk freely'); pg.select_option('#f-section', 'borders'); pg.check('#f-high')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(100)
+    check('Agree a code word' in pg.inner_text('#sections') and pg.inner_text('#count').startswith('36 items'), 'adds your own item')
+    pg.click('#crewBtn'); pg.click('#crewFromShoot')
+    check(pg.is_checked('#crewPicks input[value="person-teo-ramirez"]') and not pg.is_checked('#crewPicks input[value="person-ruth-hammond"]'), 'ticks the crew, not people on camera')
+    pg.check('#crewPicks input[value="person-sam-okafor"]'); pg.click('#crewForm button[type="submit"]'); pg.wait_for_timeout(100)
+    pg.fill('#planNotes', 'Signal only.'); pg.locator('#planNotes').dispatch_event('change')
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    r = pg.inner_text('#report')
+    check('High-risk shoot:' in r and 'Sam Okafor' in r and '✓' in r and 'Signal only.' in r, 'prints the checklist with a tick for each person')
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    check(rows[0] == ['Section', 'Item', 'For high-risk shoots', 'Person', 'Done'] and len(rows) == 1 + 36 * 5, 'CSV has a row for each item and person')
+    data = saved_project(pg, fake)
+    sec = data['security']
+    check(sec['level'] == 'high' and 'person-lena-ward' in sec['done']['dev-phone'] and sec['hidden'] == ['phy-lost'] and len(sec['items']) == 2 and sec['items'][1]['high'] is True
+          and 'person-sam-okafor' in sec['personIds'] and sec['notes'] == 'Signal only.', 'the checklist is saved')
+    check(data['people'] == original['people'] and data['trips'] == original['trips'], 'other data is unchanged')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
 def test_deal_memos(browser, fake):
     original = json.loads(sample)
     ctx, pg, errs = new_page(browser, 'deal-memos', fake)
@@ -1530,6 +1642,12 @@ def main():
         test_gear_list(browser, fake)
         print('== coi-permit-tracker / certificates, permits and shoot-day checks')
         test_coi_permits(browser, fake)
+        print('== travel-sheet / trips, travel for each person and print')
+        test_travel_sheet(browser, fake)
+        print('== risk-plan / hazards, check-ins and two prints')
+        test_risk_plan(browser, fake)
+        print('== security-checklist / items, people and high-risk shoots')
+        test_security_checklist(browser, fake)
         print('== templates / columns match the tools\' exports')
         test_template_columns(browser, fake)
         browser.close()
