@@ -19,10 +19,10 @@ from playwright.sync_api import sync_playwright
 
 root = pathlib.Path(__file__).resolve().parents[1]
 sample = (root / 'samples/the-river-keeps.oft.json').read_text()
-TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan', 'funder-crm', 'cash-flow', 'shooting-calendar', 'interview-prep', 'field-journal', 'location-scout', 'deal-memos', 'gear-list', 'coi-permit-tracker', 'travel-sheet', 'risk-plan', 'security-checklist']
+TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan', 'funder-crm', 'cash-flow', 'shooting-calendar', 'interview-prep', 'field-journal', 'location-scout', 'deal-memos', 'gear-list', 'coi-permit-tracker', 'travel-sheet', 'risk-plan', 'security-checklist', 'camera-sound-reports', 'interview-log']
 COLLECTIONS = ['project', 'people', 'locations', 'thirdPartyElements', 'contracts', 'assets', 'musicCueSheet', 'callSheets']
 PRINT_BTN = {'clearance-log': '#printBtn', 'music-cue-sheet': '#printBtn', 'call-sheet': '#printAllBtn', 'release-tracker': '#printBtn',
-             'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn', 'treatment-builder': '#printBtn', 'pitch-deck': '#printBtn', 'grant-calendar': '#printBtn', 'narrative-library': '#printBtn', 'budget': '#printBtn', 'budget-converter': '#printBtn', 'finance-plan': '#printBtn', 'funder-crm': '#printBtn', 'cash-flow': '#printBtn', 'shooting-calendar': '#printBtn', 'interview-prep': '#printBtn', 'field-journal': '#printBtn', 'location-scout': '#printBtn', 'deal-memos': '#printBtn', 'gear-list': '#printBtn', 'coi-permit-tracker': '#printBtn', 'travel-sheet': '#printBtn', 'risk-plan': '#printBtn', 'security-checklist': '#printBtn'}
+             'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn', 'treatment-builder': '#printBtn', 'pitch-deck': '#printBtn', 'grant-calendar': '#printBtn', 'narrative-library': '#printBtn', 'budget': '#printBtn', 'budget-converter': '#printBtn', 'finance-plan': '#printBtn', 'funder-crm': '#printBtn', 'cash-flow': '#printBtn', 'shooting-calendar': '#printBtn', 'interview-prep': '#printBtn', 'field-journal': '#printBtn', 'location-scout': '#printBtn', 'deal-memos': '#printBtn', 'gear-list': '#printBtn', 'coi-permit-tracker': '#printBtn', 'travel-sheet': '#printBtn', 'risk-plan': '#printBtn', 'security-checklist': '#printBtn', 'camera-sound-reports': '#printBtn', 'interview-log': '#printBtn'}
 PHONE = {'width': 390, 'height': 844}
 # The button that opens each tool's main dialog, for the phone-width check. Most tools use #addBtn.
 DIALOG_BTN = {'treatment-builder': '[data-compare]', 'cash-flow': '#settingsBtn'}
@@ -385,7 +385,7 @@ def test_credits_builder(browser, fake):
     ctx.close()
 
 # Each spreadsheet template's columns must appear in its tool's CSV export, in the same order.
-TEMPLATE_EXPORTS = [('travel-sheet', 'travel-sheet-template.csv'), ('risk-plan', 'risk-assessment-template.csv'), ('security-checklist', 'security-checklist-template.csv'), ('gear-list', 'gear-list-template.csv'), ('coi-permit-tracker', 'certificates-and-permits-template.csv'), ('location-scout', 'location-scout-template.csv'), ('deal-memos', 'deal-memos-template.csv'), ('shooting-calendar', 'shooting-calendar-template.csv'), ('interview-prep', 'interview-questions-template.csv'), ('funder-crm', 'funder-crm-template.csv'), ('cash-flow', 'cash-flow-template.csv'), ('budget', 'budget-template.csv'), ('finance-plan', 'finance-plan-template.csv'), ('grant-calendar', 'grant-calendar-template.csv'), ('clearance-log', 'clearance-log-template.csv'), ('release-tracker', 'release-log-template.csv'),
+TEMPLATE_EXPORTS = [('camera-sound-reports', 'camera-and-sound-reports-template.csv'), ('interview-log', 'interview-moments-template.csv'), ('travel-sheet', 'travel-sheet-template.csv'), ('risk-plan', 'risk-assessment-template.csv'), ('security-checklist', 'security-checklist-template.csv'), ('gear-list', 'gear-list-template.csv'), ('coi-permit-tracker', 'certificates-and-permits-template.csv'), ('location-scout', 'location-scout-template.csv'), ('deal-memos', 'deal-memos-template.csv'), ('shooting-calendar', 'shooting-calendar-template.csv'), ('interview-prep', 'interview-questions-template.csv'), ('funder-crm', 'funder-crm-template.csv'), ('cash-flow', 'cash-flow-template.csv'), ('budget', 'budget-template.csv'), ('finance-plan', 'finance-plan-template.csv'), ('grant-calendar', 'grant-calendar-template.csv'), ('clearance-log', 'clearance-log-template.csv'), ('release-tracker', 'release-log-template.csv'),
                     ('music-cue-sheet', 'music-cue-sheet-template.csv'), ('name-supers', 'name-supers-template.csv'),
                     ('subject-tracker', 'subject-tracker-template.csv'), ('research-log', 'research-log-template.csv'),
                     ('comps-tracker', 'comps-tracker-template.csv')]
@@ -1502,6 +1502,91 @@ def test_security_checklist(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
+def test_camera_sound(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'camera-sound-reports', fake, fixed_today('2026-11-01'))
+    open_sample(pg, fake)
+    check(pg.locator('#days .row').count() == 2 and 'A001C001 to A001C004' in pg.inner_text('#days') and pg.inner_text('#missCount') == '1', 'lists reports by day, and shoot days with none')
+    pg.click('#missing [data-day="shootday-may-2"]')
+    check(pg.input_value('#f-roll') == 'A002' and pg.input_value('#f-device') == 'A camera' and pg.input_value('#f-codec') == 'ProRes 422 HQ' and pg.input_value('#f-date') == '2026-05-13' and not pg.is_visible('#sheetNote'),
+          'a new report takes the next card name and the last settings')
+    pg.click('[data-add="clips"]'); pg.fill('#clips-0-clip', 'A002C001'); pg.fill('#clips-0-subject', 'Levee crew'); pg.check('#clips-0-good')
+    pg.fill('#f-path', 'footage/2026-05-13/A002'); pg.check('#f-backed')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check('Every shoot day so far has a report' in pg.inner_text('#missing'), 'the day now has a report')
+    pg.click('#addSoundBtn')
+    check(pg.input_value('#f-kind') == 'sound' and pg.input_value('#f-roll') == 'S002' and pg.is_visible('#f-layout') and not pg.is_visible('#f-codec'), 'a sound report asks for sound settings')
+    pg.select_option('#f-day', 'shootday-may-1')
+    check(pg.is_visible('#sheetNote') and 'Day 1 of 2' in pg.inner_text('#sheetNote'), 'links to the call sheet for the day')
+    pg.click('[data-add="clips"]')
+    check(pg.input_value('#clips-0-lens') == '1 mix, 2 boom, 3 lav (Daniel)', 'a new file starts with the track layout')
+    pg.fill('#clips-0-clip', 'S002T01')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    pg.select_option('#printSel', 'day:shootday-may-1')
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    r = pg.inner_text('#report')
+    check('Camera report: A001' in r and 'Sound report: S002' in r and 'Day 1 of 2' in r and 'A002' not in r, "prints a day's reports")
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    check(rows[0][:4] == ['Date', 'Shoot day', 'Report', 'Card or roll'] and len(rows) == 9, 'CSV for the edit has a row for each clip and file')
+    data = saved_project(pg, fake)
+    rs = {r['roll']: r for r in data['mediaReports']}
+    a = next(x for x in data['assets'] if x['id'] == rs['A002']['assetId'])
+    check(rs['A002']['shootDayId'] == 'shootday-may-2' and 'callSheetId' not in rs['A002'] and rs['A002']['backedUp'] is True and rs['A002']['clips'][0]['good'] is True
+          and a['type'] == 'camera card' and a['relativePath'] == 'footage/2026-05-13/A002', 'the camera report and its card are saved')
+    check(rs['S002']['kind'] == 'sound' and rs['S002']['callSheetId'] == 'callsheet-day-1' and 'codec' not in rs['S002'] and rs['S002']['trackLayout'], 'the sound report is saved')
+    check(data['interviews'] == original['interviews'] and data['callSheets'] == original['callSheets'], 'other data is unchanged')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+def test_interview_log(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'interview-log', fake, fixed_today('2026-11-01'))
+    open_sample(pg, fake)
+    daniel = pg.inner_text('[data-id="interview-daniel"]')
+    check(pg.locator('#rows .row').count() == 3 and 'No release on file' in daniel and 'Cards A001, S001' in daniel and 'Release pending' in pg.inner_text('[data-id="interview-leon"]'),
+          'lists interviews with their cards and release status')
+    pg.click('[data-edit="interview-ruth"]')
+    check('Release signed' in pg.inner_text('#releaseNote') and pg.input_value('#f-day') == 'shootday-nov-1' and pg.input_value('#f-loc') == 'location-hammond-house', 'opens a planned interview with its release, day and place')
+    pg.fill('#f-cards', 'A010, S010')
+    pg.click('[data-add="moments"]'); pg.fill('#moments-0-tc', '00:42:10'); pg.fill('#moments-0-text', 'Reads the entry from the night of the flood'); pg.select_option('#moments-0-beatId', 'beat-ruth-diary'); pg.check('#moments-0-fav')
+    pg.click('[data-add="moments"]'); pg.fill('#moments-1-tc', '00:05:00'); pg.fill('#moments-1-text', 'The house she grew up in')
+    pg.click('[data-add="moments"]'); pg.fill('#moments-2-tc', '5 min'); pg.fill('#moments-2-text', 'Shows the diary to camera')
+    pg.fill('#f-transcript', 'transcripts/ruth-hammond.docx')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check(pg.is_visible('#editor'), 'a badly formed timecode is refused')
+    pg.fill('#moments-2-tc', '01:02:03')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    ruth = pg.inner_text('[data-id="interview-ruth"]')
+    check('Done' in ruth and '3 moments, 1 ★' in ruth and 'Transcript' in ruth and 'A010' in ruth, 'logging moments marks the interview done')
+    pg.select_option('#printSel', 'interview-ruth'); pg.check('#favOnly')
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    r = pg.inner_text('#report')
+    check('Reads the entry' in r and 'The house she grew up in' not in r and 'Why she kept the diary secret' in r, 'prints favorites with their story beat')
+    pg.uncheck('#favOnly'); pg.click('#printBtn'); pg.wait_for_timeout(200)
+    r = pg.inner_text('#report')
+    check(r.index('The house she grew up in') < r.index('Reads the entry') < r.index('Shows the diary'), 'prints moments in timecode order')
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    check(rows[0][:5] == ['Interview', 'Date', 'Location', 'Cards', 'Timecode'] and len(rows) == 7 and [x[4] for x in rows if x[0] == 'Ruth Hammond'] == ['00:05:00', '00:42:10', '01:02:03'],
+          'CSV for the paper edit lists every moment in order')
+    pg.click('#addBtn'); pg.select_option('#f-person', '__name'); pg.fill('#f-name', 'Neighbor on Mill Road'); pg.fill('#f-date', '2026-05-13')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check('Neighbor on Mill Road' in pg.inner_text('#todo'), 'lists interviews filmed but not logged')
+    data = saved_project(pg, fake)
+    iv = {i['id']: i for i in data['interviews']}
+    ruth = iv['interview-ruth']
+    t = next(a for a in data['assets'] if a['id'] == ruth['transcriptAssetId'])
+    check(ruth['status'] == 'done' and ruth['cards'] == 'A010, S010' and ruth['moments'][0]['beatId'] == 'beat-ruth-diary' and ruth['moments'][0]['fav'] is True and 'locationId' not in ruth
+          and t['type'] == 'transcript' and t['relativePath'] == 'transcripts/ruth-hammond.docx', 'the log is saved on the interview')
+    orig = next(i for i in original['interviews'] if i['id'] == 'interview-ruth')
+    check(ruth['questions'] == orig['questions'] and ruth['beats'] == orig['beats'] and ruth['goal'] == orig['goal'], 'the plan from interview prep is kept')
+    check(any(i.get('name') == 'Neighbor on Mill Road' for i in iv.values()) and data['contracts'] == original['contracts'], 'a new interview is saved and other data is unchanged')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
 def test_deal_memos(browser, fake):
     original = json.loads(sample)
     ctx, pg, errs = new_page(browser, 'deal-memos', fake)
@@ -1648,6 +1733,10 @@ def main():
         test_risk_plan(browser, fake)
         print('== security-checklist / items, people and high-risk shoots')
         test_security_checklist(browser, fake)
+        print('== camera-sound-reports / cards, clips, call sheets and CSV')
+        test_camera_sound(browser, fake)
+        print('== interview-log / moments, releases and the paper edit')
+        test_interview_log(browser, fake)
         print('== templates / columns match the tools\' exports')
         test_template_columns(browser, fake)
         browser.close()

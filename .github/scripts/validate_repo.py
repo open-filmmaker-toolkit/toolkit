@@ -213,6 +213,28 @@ for sample in sorted((ROOT / "samples").glob("*.oft.json")):
         for hazard in plan.get("hazards", []):
             if hazard.get("ownerId") and hazard["ownerId"] not in ids["people"]:
                 fail(f"{name}: risk plan {plan.get('id')} hazard {hazard.get('id')} ownerId points to a missing person")
+    report_ids = {r.get("id") for r in data.get("mediaReports", []) if isinstance(r, dict)}
+    if len(report_ids) != len([r for r in data.get("mediaReports", []) if isinstance(r, dict)]):
+        fail(f"{name}: duplicate IDs in mediaReports")
+    for rep in data.get("mediaReports", []):
+        if rep.get("shootDayId") and rep["shootDayId"] not in day_ids:
+            fail(f"{name}: report {rep.get('id')} shootDayId points to a missing shoot day")
+        if rep.get("callSheetId") and rep["callSheetId"] not in sheet_ids:
+            fail(f"{name}: report {rep.get('id')} callSheetId points to a missing call sheet")
+        if rep.get("assetId") and rep["assetId"] not in asset_ids:
+            fail(f"{name}: report {rep.get('id')} assetId points to a missing asset")
+        if rep.get("operatorId") and rep["operatorId"] not in ids["people"]:
+            fail(f"{name}: report {rep.get('id')} operatorId points to a missing person")
+    for interview in data.get("interviews", []):
+        if set(interview.get("mediaReportIds", [])) - report_ids:
+            fail(f"{name}: interview {interview.get('id')} mediaReportIds points to missing reports")
+        if interview.get("transcriptAssetId") and interview["transcriptAssetId"] not in asset_ids:
+            fail(f"{name}: interview {interview.get('id')} transcriptAssetId points to a missing asset")
+        if interview.get("locationId") and interview["locationId"] not in ids["locations"]:
+            fail(f"{name}: interview {interview.get('id')} locationId points to a missing location")
+        beats = {b.get("id") for b in interview.get("beats", [])}
+        if {m.get("beatId") for m in interview.get("moments", []) if m.get("beatId")} - beats:
+            fail(f"{name}: interview {interview.get('id')} has a moment pointing to a missing beat")
     security = data.get("security") if isinstance(data.get("security"), dict) else {}
     if set(security.get("personIds", [])) - ids["people"]:
         fail(f"{name}: security personIds points to missing people")

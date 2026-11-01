@@ -242,6 +242,13 @@
     "security": {
       "$ref": "#/$defs/security",
       "description": "The security checklist: who is on it and what each person has done. A record rather than a collection."
+    },
+    "mediaReports": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/mediaReport"
+      },
+      "description": "Camera and sound reports, one for each card or roll, kept by camera and sound reports."
     }
   },
   "additionalProperties": true,
@@ -2223,6 +2230,58 @@
             "additionalProperties": true
           },
           "description": "In the order they're asked."
+        },
+        "locationId": {
+          "$ref": "#/$defs/id",
+          "description": "Interview log: where it was filmed, when not the shoot day's location."
+        },
+        "mediaReportIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true,
+          "description": "Interview log: the camera and sound reports for the cards it's on."
+        },
+        "cards": {
+          "type": "string",
+          "description": "Interview log: other cards or files, separated by commas."
+        },
+        "transcriptAssetId": {
+          "$ref": "#/$defs/id",
+          "description": "Interview log: the transcript, an asset with type \"transcript\"."
+        },
+        "moments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "tc": {
+                "type": "string"
+              },
+              "text": {
+                "type": "string"
+              },
+              "fav": {
+                "type": "boolean"
+              },
+              "beatId": {
+                "$ref": "#/$defs/id",
+                "description": "A beat in this interview's beats."
+              }
+            },
+            "additionalProperties": true
+          },
+          "description": "Interview log: timestamped moments."
+        },
+        "logNotes": {
+          "type": "string"
         }
       },
       "additionalProperties": true
@@ -2909,6 +2968,125 @@
             }
           },
           "description": "Item id to the people who have done it."
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "mediaReport": {
+      "type": "object",
+      "required": [
+        "id",
+        "kind"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "camera",
+            "sound"
+          ]
+        },
+        "shootDayId": {
+          "$ref": "#/$defs/id",
+          "description": "The shoot day in shootDays."
+        },
+        "callSheetId": {
+          "$ref": "#/$defs/id",
+          "description": "The call sheet for that day, in callSheets."
+        },
+        "date": {
+          "type": "string",
+          "format": "date"
+        },
+        "roll": {
+          "type": "string",
+          "description": "The card or roll name, such as A001."
+        },
+        "device": {
+          "type": "string",
+          "description": "The camera or recorder."
+        },
+        "operatorId": {
+          "$ref": "#/$defs/id",
+          "description": "Who ran it, in people."
+        },
+        "codec": {
+          "type": "string"
+        },
+        "resolution": {
+          "type": "string"
+        },
+        "frameRate": {
+          "type": "string"
+        },
+        "lensNotes": {
+          "type": "string"
+        },
+        "fileFormat": {
+          "type": "string"
+        },
+        "sampleRate": {
+          "type": "string"
+        },
+        "timecode": {
+          "type": "string"
+        },
+        "trackLayout": {
+          "type": "string"
+        },
+        "firstClip": {
+          "type": "string"
+        },
+        "lastClip": {
+          "type": "string"
+        },
+        "clips": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "clip": {
+                "type": "string"
+              },
+              "subject": {
+                "type": "string"
+              },
+              "tc": {
+                "type": "string"
+              },
+              "lens": {
+                "type": "string",
+                "description": "The lens for camera clips, the tracks for sound files."
+              },
+              "good": {
+                "type": "boolean",
+                "description": "Circled."
+              },
+              "notes": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "assetId": {
+          "$ref": "#/$defs/id",
+          "description": "The card itself, an asset with type \"camera card\" or \"sound card\" and a relativePath."
+        },
+        "backedUp": {
+          "type": "boolean"
         },
         "notes": {
           "type": "string"
