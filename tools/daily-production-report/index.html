@@ -1,0 +1,986 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Daily production report · Open Filmmaker Toolkit</title>
+<meta name="description" content="Record what happened each shoot day: call, meal and wrap times and hours for crew and talent, what was shot and on which cards, and incidents, delays and notes. Start from that day's call sheet, print the report and export crew hours as CSV. Runs in your browser; your data stays on your computer.">
+<style>
+:root {
+  --paper: #f1f3f2; --sheet: #ffffff; --ink: #1a2130; --ink-2: #4b556a; --ink-3: #6d778a;
+  --rule: #d4dad8; --rule-soft: #e6eae8; --hover: #f6f8f7; --focus: #2f6fdb;
+  --good: #2b7a57; --good-bg: #dff1e8; --warn: #8a5a00; --warn-bg: #fbf0d9; --bad: #b3392d; --bad-bg: #f8e1de;
+  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #141922; --sheet: #1b212b; --ink: #e6e9ee; --ink-2: #a6afbd; --ink-3: #8790a0;
+    --rule: #2f3744; --rule-soft: #262d38; --hover: #212834; --focus: #7aa7ff;
+    --good: #4fb386; --good-bg: #1a3329; --warn: #e2a531; --warn-bg: #3a2f17; --bad: #e26657; --bad-bg: #3b2220;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans); }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+[hidden] { display: none !important; }
+.foot { margin-top: 28px; font-size: 13px; color: var(--ink-3); }
+.cant-run { display: none; max-width: 640px; margin: 64px auto; padding: 0 24px; }
+.cant-run h1 { margin: 0 0 8px; font: 600 26px/1.2 var(--serif); }
+.cant-run p { margin: 0 0 10px; color: var(--ink-2); }
+.no-js .cant-run { display: block; }
+.no-js .page { display: none; }
+.page { max-width: 1240px; margin: 0 auto; padding: 0 24px 48px; }
+
+.masthead { display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: flex-end; justify-content: space-between; padding: 28px 0 20px; }
+.tool-name { margin: 0 0 2px; font-size: 14px; font-weight: 600; color: var(--ink-2); }
+.film-title { margin: 0; font: 600 32px/1.15 var(--serif); letter-spacing: -0.01em; overflow-wrap: anywhere; cursor: pointer; }
+.film-title.is-empty { color: var(--ink-3); font-style: italic; font-weight: 400; }
+.film-meta { margin: 4px 0 0; color: var(--ink-2); font-size: 14px; }
+.file { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.file-state { margin: 0; font-size: 13px; color: var(--ink-2); text-align: right; }
+.file-state .dirty { color: var(--warn); font-weight: 600; }
+.file-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; }
+.btn:hover { border-color: var(--ink-3); }
+.btn:disabled { opacity: 0.5; cursor: default; }
+.btn.primary { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.btn.primary:hover { opacity: 0.88; }
+.btn.danger { color: var(--bad); }
+.btn.small { padding: 4px 10px; font-size: 13px; }
+.link-btn { padding: 0; border: 0; background: none; cursor: pointer; color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; font-size: 14px; }
+.link-btn:hover { color: var(--ink); }
+
+.banner { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 0 0 16px; padding: 12px 16px; border-radius: 8px; background: var(--warn-bg); border: 1px solid color-mix(in srgb, var(--warn) 40%, transparent); }
+.banner p { margin: 0; flex: 1 1 280px; }
+.banner .actions { display: flex; gap: 8px; }
+
+.workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr); gap: 24px; align-items: start; }
+.workspace > * { min-width: 0; }
+.card { background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 18px; min-width: 0; }
+.card-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; margin: 0 0 6px; }
+.card-head h2 { margin: 0; font: 600 18px/1.3 var(--serif); }
+.card-head .count { font-size: 13px; color: var(--ink-2); }
+.card p.lead { margin: 0 0 8px; font-size: 14px; color: var(--ink-2); }
+.empty-line { margin: 4px 0; color: var(--ink-2); font-size: 14px; }
+
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 10px; }
+.toolbar h2 { margin: 0 8px 0 0; font: 600 20px/1.2 var(--serif); }
+.toolbar .count { font-size: 13px; color: var(--ink-2); }
+.toolbar .spacer { flex: 1; }
+.rows { list-style: none; margin: 0; padding: 0; background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; }
+.row { display: grid; grid-template-columns: 112px minmax(0, 1fr) auto; gap: 2px 14px; align-items: start; padding: 10px 14px; }
+.row + .row { border-top: 1px solid var(--rule-soft); }
+.row:hover { background: var(--hover); }
+.row .kd { font-size: 13px; color: var(--ink-2); padding-top: 2px; }
+.row .what { min-width: 0; padding: 0; border: 0; background: none; text-align: left; cursor: pointer; overflow-wrap: anywhere; }
+.row .what:hover .nm { text-decoration: underline; text-underline-offset: 2px; }
+.row .nm { display: block; font-weight: 600; }
+.row .tt { display: block; font-size: 14px; color: var(--ink-2); }
+.row .rt { font-size: 13px; color: var(--ink-2); white-space: nowrap; padding-top: 2px; text-align: right; }
+.flags { grid-column: 2 / -1; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.flag { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 999px; font-size: 12.5px; font-weight: 600; }
+.flag.changed { background: var(--warn-bg); color: var(--warn); }
+.flag.problem { background: var(--bad-bg); color: var(--bad); }
+.flag.linked { background: var(--paper); color: var(--ink-3); font-weight: 500; border: 1px solid var(--rule); }
+
+.empty { padding: 36px 24px; text-align: center; background: var(--sheet); border: 1px dashed var(--rule); border-radius: 8px; }
+.empty h2 { margin: 0 0 6px; font: 600 20px/1.3 var(--serif); }
+.empty p { margin: 0 auto 16px; max-width: 52ch; color: var(--ink-2); }
+.empty .actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+
+.side { position: sticky; top: 16px; display: grid; gap: 18px; }
+.todo { list-style: none; margin: 4px 0 0; padding: 0; }
+.todo li { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 6px 0; font-size: 14px; }
+.todo li + li { border-top: 1px solid var(--rule-soft); }
+.todo .sub { display: block; color: var(--ink-3); font-size: 13px; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.print-row { display: grid; gap: 8px; }
+.toolbar .btn { white-space: nowrap; }
+
+.items { display: grid; gap: 10px; }
+.item { margin: 0; padding: 10px 12px 12px; border: 1px solid var(--rule); border-radius: 8px; background: var(--sheet); min-width: 0; }
+.item legend { padding: 0 4px; font-size: 13px; font-weight: 600; color: var(--ink-2); }
+.item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px 10px; }
+.item-grid .wide { grid-column: 1 / -1; }
+.item-foot { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; margin-top: 8px; }
+.item-foot .spacer { flex: 1; }
+.list-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+.list-head h3 { margin: 0; }
+.totals { margin: 0; padding: 8px 12px; border-radius: 6px; background: var(--paper); border: 1px solid var(--rule); font-weight: 600; }
+
+dialog { border: 0; padding: 0; color: var(--ink); background: var(--sheet); box-shadow: 0 10px 40px rgba(10, 14, 22, 0.25); }
+dialog::backdrop { background: rgba(16, 20, 28, 0.42); }
+dialog.drawer { margin: 0 0 0 auto; width: min(600px, 100vw); height: 100dvh; max-height: 100dvh; max-width: 100vw; border-left: 1px solid var(--rule); }
+dialog.modal { width: min(560px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); border-radius: 10px; }
+dialog form { display: flex; flex-direction: column; height: 100%; max-height: inherit; }
+.dlg-head { padding: 20px 24px 12px; border-bottom: 1px solid var(--rule-soft); }
+.dlg-head h2 { margin: 0; font: 600 22px/1.25 var(--serif); }
+.dlg-body { flex: 1; overflow-y: auto; padding: 16px 24px 24px; display: grid; gap: 14px; align-content: start; }
+.dlg-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 14px 24px; border-top: 1px solid var(--rule-soft); }
+.dlg-foot .spacer { flex: 1; }
+.field { display: grid; gap: 4px; }
+.field > label, .field > .label, .group h3 { font-size: 14px; font-weight: 600; margin: 0; }
+.hint { margin: 0; font-size: 13px; color: var(--ink-3); }
+.field input, .field select, .field textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); }
+.group { display: grid; gap: 8px; padding-top: 10px; border-top: 1px solid var(--rule-soft); }
+.checks { display: grid; gap: 2px; max-height: 260px; overflow-y: auto; padding: 2px; }
+.check { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; align-items: start; padding: 5px 4px; border-radius: 6px; cursor: pointer; }
+.check:hover { background: var(--hover); }
+.check input { width: 18px; height: 18px; margin: 2px 0 0; }
+.check .who { overflow-wrap: anywhere; }
+.check .sub { margin-left: 4px; font-size: 13px; color: var(--ink-3); }
+
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); max-width: calc(100vw - 32px); padding: 10px 16px; border-radius: 8px; background: var(--ink); color: var(--paper); font-size: 14px; box-shadow: 0 6px 24px rgba(10, 14, 22, 0.25); z-index: 10; }
+.toast.error { background: var(--bad); color: #ffffff; }
+.report { display: none; }
+
+@media (max-width: 900px) {
+  .workspace { grid-template-columns: 1fr; }
+  .side { position: static; }
+}
+@media (max-width: 720px) {
+  .page { padding: 0 16px 40px; }
+  .film-title { font-size: 26px; }
+  .file { align-items: flex-start; }
+  .file-state { text-align: left; }
+  .toolbar h2 { flex-basis: 100%; order: -2; }
+  .toolbar #addBtn { flex: 1 1 100%; justify-content: center; order: -1; }
+  .two { grid-template-columns: 1fr; }
+  .row { grid-template-columns: minmax(0, 1fr); }
+  .row .rt { text-align: left; }
+  .flags { grid-column: 1; }
+}
+@media print {
+  @page { size: portrait; margin: 14mm; }
+  :root { color-scheme: light; }
+  body { background: #ffffff; color: #000000; font-size: 9.5pt; line-height: 1.35; }
+  .page, dialog, .toast { display: none !important; }
+  .report { display: block; }
+  .report h1 { margin: 0; font: 700 18pt/1.2 var(--serif); }
+  .report h2 { margin: 11pt 0 3pt; font: 700 11.5pt/1.2 var(--serif); break-after: avoid; page-break-after: avoid; }
+  .report .r-meta { margin: 2pt 0 8pt; }
+  .report table { width: 100%; border-collapse: collapse; }
+  .report th, .report td { padding: 3pt 5pt; border-bottom: 0.75pt solid #999999; text-align: left; vertical-align: top; }
+  .report th { font-size: 9pt; border-bottom: 1pt solid #000000; }
+  .report tr { break-inside: avoid; page-break-inside: avoid; }
+  .report .r-facts th { width: 20%; }
+  .report .r-sub { display: block; font-size: 8.5pt; color: #333333; }
+  .report .r-num { text-align: right; white-space: nowrap; }
+  .report .r-total td { font-weight: 700; border-top: 1pt solid #000000; }
+  .report .r-text { margin: 0; white-space: pre-wrap; }
+  .report .r-note { margin-top: 10pt; font-size: 8pt; color: #333333; }
+}
+</style>
+</head>
+<body>
+<div class="cant-run" id="cantRun">
+  <h1 id="cantRunTitle">Open this file in a web browser</h1>
+  <p id="cantRunText">This tool runs in Chrome, Edge, Firefox or Safari. You're seeing a preview that doesn't run it, so none of the buttons would work.</p>
+  <p id="cantRunHow">In your browser, choose File, then Open File, and pick this file. Or right-click the file and open it with your browser.</p>
+</div>
+<div class="page">
+  <header class="masthead">
+    <div>
+      <p class="tool-name">Daily production report</p>
+      <h1 class="film-title" id="filmTitle">Untitled film</h1>
+      <p class="film-meta"><span id="filmMeta"></span> <button type="button" class="link-btn" id="editProjectBtn">Edit film details</button></p>
+    </div>
+    <div class="file">
+      <p class="file-state" id="fileState">Not saved to a file yet</p>
+      <div class="file-actions">
+        <button type="button" class="btn" id="newBtn">New project</button>
+        <button type="button" class="btn" id="openBtn">Open file</button>
+        <button type="button" class="btn" id="projectCsvBtn">Export project data (CSV)</button>
+        <button type="button" class="btn primary" id="saveBtn">Save file</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="banner" id="recovery" role="region" aria-label="Unsaved work" hidden>
+    <p id="recoveryText"></p>
+    <div class="actions">
+      <button type="button" class="btn primary" id="restoreBtn">Restore it</button>
+      <button type="button" class="btn" id="discardBtn">Discard it</button>
+    </div>
+  </div>
+
+  <main class="workspace">
+    <section aria-labelledby="listHead">
+      <div class="toolbar">
+        <h2 id="listHead">Daily reports</h2>
+        <span class="count" id="count"></span>
+        <span class="spacer"></span>
+        <button type="button" class="btn primary" id="addBtn">Start a daily report</button>
+        <button type="button" class="btn" id="csvBtn">Export crew hours (CSV)</button>
+      </div>
+      <ol class="rows" id="rows"></ol>
+      <div class="empty" id="empty" hidden>
+        <h2>No daily reports yet</h2>
+        <p>Record what happened on a shoot day: call, meal and wrap times and hours for crew and talent, what was shot and on which cards, and any incidents or delays. A new report starts from that day's call sheet. Print it, and export crew hours as CSV.</p>
+        <div class="actions">
+          <button type="button" class="btn primary" id="emptyAddBtn">Start a daily report</button>
+          <button type="button" class="btn" id="emptyOpenBtn">Open file</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="side">
+      <section class="card" aria-labelledby="printHead">
+        <div class="card-head"><h2 id="printHead">Print</h2></div>
+        <div class="print-row">
+          <div class="field"><label for="printSel">Report for</label><select id="printSel"></select></div>
+          <div><button type="button" class="btn" id="printBtn">Print the report</button></div>
+        </div>
+      </section>
+      <section class="card" aria-labelledby="missHead">
+        <div class="card-head"><h2 id="missHead">Shoot days with no report</h2><span class="count" id="missCount"></span></div>
+        <p class="lead">Days in the shooting calendar up to today.</p>
+        <ul class="todo" id="missing"></ul>
+      </section>
+    </div>
+  </main>
+
+  <footer class="foot">
+    <p>Part of the Open Filmmaker Toolkit. This page makes no network requests: everything stays on this computer until you save or export it. Uses the same project file as the other toolkit tools.</p>
+  </footer>
+</div>
+
+<dialog class="drawer" id="editor" aria-labelledby="editorTitle">
+  <form id="editorForm" method="dialog" novalidate>
+    <div class="dlg-head"><h2 id="editorTitle">Daily report</h2></div>
+    <div class="dlg-body">
+      <div class="field"><label for="f-day">Shoot day</label><select id="f-day"></select><p class="hint" id="sheetNote"></p></div>
+      <div class="two">
+        <div class="field"><label for="f-call">Call time</label><input id="f-call" data-time type="text" inputmode="numeric" placeholder="07:00" autocomplete="off"></div>
+        <div class="field"><label for="f-wrap">Wrap time</label><input id="f-wrap" data-time type="text" inputmode="numeric" placeholder="17:30" autocomplete="off"></div>
+      </div>
+      <div class="two">
+        <div class="field"><label for="f-lunch1">Lunch starts</label><input id="f-lunch1" data-time type="text" inputmode="numeric" placeholder="12:00" autocomplete="off"></div>
+        <div class="field"><label for="f-lunch2">Lunch ends</label><input id="f-lunch2" data-time type="text" inputmode="numeric" placeholder="12:45" autocomplete="off"></div>
+      </div>
+      <p class="hint">Times are 24-hour, like 07:30.</p>
+      <div class="group">
+        <div class="list-head"><h3>Crew and talent</h3><button type="button" class="btn small" data-add="crew" id="addCrewBtn">Add a person</button></div>
+        <p class="hint">Hours are wrap minus call, less the meal break. A wrap earlier than the call counts as the next day.</p>
+        <div class="items" id="crew"></div>
+      </div>
+      <div class="field"><label for="f-shot">What was shot</label><textarea id="f-shot" rows="3" placeholder="Interview with Daniel on the levee, then river b-roll"></textarea></div>
+      <div class="group">
+        <h3>Cards</h3>
+        <p class="hint">Tick the camera and sound reports for this day. Add the reports in camera and sound reports.</p>
+        <div class="checks" id="cards"></div>
+      </div>
+      <div class="group">
+        <div class="list-head"><h3>Incidents and delays</h3><button type="button" class="btn small" data-add="incidents" id="addIncidentBtn">Add an incident</button></div>
+        <div class="items" id="incidents"></div>
+      </div>
+      <div class="field"><label for="f-notes">Notes</label><textarea id="f-notes" rows="3" placeholder="Anything the next day or the edit should know"></textarea></div>
+      <p class="totals" id="totals"></p>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn danger" id="deleteBtn">Remove report</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="editorCancel">Cancel</button>
+      <button type="submit" class="btn primary" id="editorSubmit">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="projectDialog" aria-labelledby="projectDialogTitle">
+  <form id="projectForm" method="dialog">
+    <div class="dlg-head"><h2 id="projectDialogTitle">Film details</h2></div>
+    <div class="dlg-body">
+      <div class="field"><label for="p-title">Film title</label><input id="p-title" type="text" placeholder="Working title is fine"></div>
+      <div class="field"><label for="p-company">Production company</label><input id="p-company" type="text"></div>
+      <div class="field"><label for="p-producer">Producer</label><input id="p-producer" type="text"></div>
+    </div>
+    <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn" id="projectCancel">Cancel</button><button type="submit" class="btn primary">Save details</button></div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="projectCsvDialog" aria-labelledby="projectCsvTitle">
+  <form id="projectCsvForm" method="dialog">
+    <div class="dlg-head"><h2 id="projectCsvTitle">Export project data</h2></div>
+    <div class="dlg-body">
+      <div class="field">
+        <label for="projectCsvCollection">Data to export</label>
+        <select id="projectCsvCollection">
+          <option value="project">Project details</option>
+          <option value="people">People</option>
+          <option value="locations">Locations</option>
+          <option value="thirdPartyElements">Third-party elements</option>
+          <option value="contracts">Contracts</option>
+          <option value="assets">Assets</option>
+          <option value="musicCueSheet">Music cue sheet details</option>
+          <option value="callSheets">Call sheets</option>
+        </select>
+      </div>
+      <p class="hint">Exports one CSV file for the selected collection. Nested values are kept as JSON in their cell.</p>
+    </div>
+    <div class="dlg-foot">
+      <button type="submit" class="btn primary">Export CSV</button>
+      <button type="button" class="btn" id="projectCsvCancel">Cancel</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="conflictDialog" aria-labelledby="conflictTitle">
+  <form method="dialog">
+    <div class="dlg-head"><h2 id="conflictTitle">Project file changed</h2></div>
+    <div class="dlg-body">
+      <p id="conflictText">This project file changed after you opened it. Saving will replace those changes.</p>
+      <p class="hint">Your edits are still here. Choose whether to overwrite the changed file, save a separate copy, or load its latest contents. Save in one tool at a time; simultaneous saves can still race.</p>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn" id="conflictReloadBtn">Reload latest</button>
+      <button type="button" class="btn" id="conflictCopyBtn">Save a copy</button>
+      <button type="button" class="btn danger" id="conflictOverwriteBtn">Overwrite file</button>
+      <button type="button" class="btn" id="conflictCancelBtn">Keep editing</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="report" id="report" aria-hidden="true"></div>
+<input type="file" id="fileInput" accept=".json,application/json" hidden>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+(() => {
+  'use strict';
+
+  const FORMAT = 'open-filmmaker-toolkit/project';
+  const FORMAT_VERSION = 1;
+  const TOOL = 'daily-production-report 0.1.0';
+  const DRAFT_KEY = 'oft.daily-production-report.draft';
+  const PROJECT_TEXT = ['title', 'company', 'producer'];
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const str = v => (v == null ? '' : String(v));
+  const arr = v => (Array.isArray(v) ? v : []);
+
+  let doc = blankDoc();
+  let fileHandle = null;
+  let baselineText = null;
+  let fileName = null;
+  let dirty = false;
+
+  function blankDoc() {
+    return { format: FORMAT, formatVersion: FORMAT_VERSION, project: { title: '', company: '', producer: '', frameRate: 24, currency: 'USD' }, people: [], dailyReports: [] };
+  }
+  function newId(prefix) {
+    if (window.crypto && crypto.randomUUID) return `${prefix}-${crypto.randomUUID()}`;
+    return `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+  }
+  function today() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  function fmtDate(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str(iso));
+    if (!m) return str(iso);
+    return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  // ---------- Times and hours ----------
+  // Times are 24-hour "HH:MM" text. Hours are worked out from them each time and never stored.
+  const mins = t => { const m = /^(\d{1,2}):(\d{2})$/.exec(str(t).trim()); if (!m) return null; const h = +m[1], n = +m[2]; return h < 24 && n < 60 ? h * 60 + n : null; };
+  const clock = m => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+  const normTime = t => { const m = mins(t); return m == null ? null : clock(m); };
+  const showTime = t => (mins(t) == null ? str(t) : clock(mins(t)));
+  // A wrap earlier than the call means the day ran past midnight.
+  const overnight = c => { const a = mins(c.call), b = mins(c.wrap); return a != null && b != null && b < a; };
+  function span(from, to) {
+    const a = mins(from), b = mins(to);
+    if (a == null || b == null) return null;
+    return b >= a ? b - a : b + 1440 - a;
+  }
+  function crewMinutes(c) {
+    const s = span(c.call, c.wrap);
+    if (s == null) return null;
+    return Math.max(0, s - Math.max(0, Number(c.mealMinutes) || 0));
+  }
+  const fmtHours = m => `${Math.round(m / 60 * 100) / 100}`;
+  const totalMinutes = r => arr(r.crew).reduce((n, c) => n + (crewMinutes(c) || 0), 0);
+  const minutesLost = r => arr(r.incidents).reduce((n, i) => n + (Number(i.minutesLost) || 0), 0);
+  const lunchMinutes = (a, b) => { const s = span(a, b); return s == null ? 0 : s; };
+
+  // ---------- Lists inside the editor ----------
+  const LISTS = {};
+  function listField(name, i, f, r) {
+    const id = `${name}-${i}-${f.k}`, v = r[f.k] == null ? '' : String(r[f.k]);
+    const attrs = `id="${id}" data-k="${f.k}"${f.placeholder ? ` placeholder="${esc(f.placeholder)}"` : ''}${f.time ? ' data-time' : ''}`;
+    const input = f.type === 'select' ? `<select ${attrs}>${f.options().map(o => `<option value="${esc(o.id)}"${String(o.id) === v ? ' selected' : ''}>${esc(o.label)}</option>`).join('')}</select>`
+      : f.type === 'textarea' ? `<textarea ${attrs} rows="2">${esc(v)}</textarea>`
+      : `<input ${attrs} type="${f.type || 'text'}"${f.type === 'number' ? ' min="0" step="any" inputmode="decimal"' : f.time ? ' inputmode="numeric"' : ''} value="${esc(v)}" autocomplete="off">`;
+    return `<div class="field${f.wide ? ' wide' : ''}"><label for="${id}">${esc(f.label)}</label>${input}</div>`;
+  }
+  function drawList(name) {
+    const L = LISTS[name], rows = arr(editing[name]);
+    $(L.box).innerHTML = rows.map((r, i) => `<fieldset class="item" data-list="${name}" data-i="${i}"><legend>${esc(L.title(r, i))}</legend>
+      <div class="item-grid">${L.fields.map(f => listField(name, i, f, r)).join('')}</div>
+      <div class="item-foot"><span class="spacer"></span><button type="button" class="btn small" data-remove aria-label="Remove ${esc(L.title(r, i))}">Remove</button></div></fieldset>`).join('')
+      || `<p class="hint">${esc(L.empty)}</p>`;
+  }
+  function drawLists() { for (const n of Object.keys(LISTS)) drawList(n); }
+  function wireLists(form) {
+    form.addEventListener('input', ev => listInput(ev.target));
+    form.addEventListener('change', ev => listInput(ev.target));
+    form.addEventListener('click', ev => {
+      const add = ev.target.closest('[data-add]');
+      if (add) { const n = add.dataset.add; editing[n] = [...arr(editing[n]), LISTS[n].blank()]; drawList(n); const rows = $(LISTS[n].box).querySelectorAll('.item'); const last = rows[rows.length - 1]; if (last) { const el = last.querySelector('input, select, textarea'); if (el) el.focus(); } return; }
+      const rm = ev.target.closest('[data-remove]');
+      if (rm) { const fs = rm.closest('[data-list]'); editing[fs.dataset.list].splice(Number(fs.dataset.i), 1); drawList(fs.dataset.list); }
+    });
+  }
+  function listInput(el) {
+    const fs = el.closest && el.closest('[data-list]');
+    if (!fs) return;
+    const r = editing[fs.dataset.list][Number(fs.dataset.i)];
+    const k = el.dataset.k; if (!k) return;
+    if (el.type === 'number') { if (el.value === '') delete r[k]; else r[k] = Number(el.value); }
+    else if (el.value.trim()) r[k] = el.value; else delete r[k];
+    const lg = fs.querySelector('legend'); if (lg) lg.textContent = LISTS[fs.dataset.list].title(r, Number(fs.dataset.i));
+  }
+  // Rows with nothing typed in them are dropped on save; text is trimmed.
+  function cleanList(rows, keep) {
+    return arr(rows).map(r => { const o = {}; for (const [k, v] of Object.entries(r)) { if (typeof v === 'string') { if (v.trim()) o[k] = v.trim(); } else if (v != null) o[k] = v; } return o; })
+      .filter(r => Object.keys(r).some(k => !['id', ...(keep || [])].includes(k)));
+  }
+
+  const INCIDENT = { delay: 'Delay', injury: 'Injury', equipment: 'Equipment', weather: 'Weather', other: 'Other' };
+  let editing = null, isNew = false, touched = false;
+  let printKey = '';
+
+  // Fills in only what this tool needs; everything else in the file is left as it was.
+  function normalize(d) {
+    if (!d.project || typeof d.project !== 'object') d.project = {};
+    for (const k of PROJECT_TEXT) if (typeof d.project[k] !== 'string') d.project[k] = str(d.project[k]);
+    for (const k of ['people', 'dailyReports']) if (!Array.isArray(d[k])) d[k] = [];
+    d.dailyReports = d.dailyReports.filter(r => r && typeof r === 'object');
+    for (const r of d.dailyReports) {
+      if (!r.id) r.id = newId('dailyreport');
+      for (const k of ['crew', 'incidents', 'mediaReportIds']) if (r[k] !== undefined && !Array.isArray(r[k])) delete r[k];
+      if (r.crew) r.crew = r.crew.filter(c => c && typeof c === 'object');
+      if (r.incidents) r.incidents = r.incidents.filter(c => c && typeof c === 'object');
+      for (const c of arr(r.crew)) if (!c.id) c.id = newId('dr-crew');
+      for (const c of arr(r.incidents)) if (!c.id) c.id = newId('dr-inc');
+    }
+    d.format = FORMAT;
+    d.formatVersion = FORMAT_VERSION;
+    return d;
+  }
+  const reports = () => doc.dailyReports;
+  const people = () => arr(doc.people).filter(p => p && p.id);
+  const person = id => people().find(p => p.id === id);
+  const place = id => arr(doc.locations).find(l => l && l.id === id);
+  const isDate = s => /^\d{4}-\d{2}-\d{2}$/.test(str(s));
+  const days = () => arr(doc.shootDays).filter(d => d && d.id && isDate(d.date) && d.kind !== 'travel').sort((a, b) => a.date.localeCompare(b.date));
+  const dayOf = r => days().find(d => d.id === r.shootDayId);
+  const sheetFor = d => arr(doc.callSheets).find(s => s && d.callSheetId && s.id === d.callSheetId) || arr(doc.callSheets).find(s => s && s.date === d.date);
+  const sheetOf = r => arr(doc.callSheets).find(s => s && r.callSheetId && s.id === r.callSheetId);
+  const dateOf = r => (dayOf(r) || sheetOf(r) || {}).date || '';
+  const crewName = c => (person(c.personId) || {}).name || str(c.name);
+  const mediaReports = () => arr(doc.mediaReports).filter(m => m && m.id);
+  const media = id => mediaReports().find(m => m.id === id);
+  const mediaKind = m => (m.kind === 'sound' ? 'Sound' : 'Camera');
+  function mediaRange(m) {
+    const cs = arr(m.clips).map(c => c && c.clip).filter(Boolean);
+    const first = m.firstClip || cs[0], last = m.lastClip || cs[cs.length - 1];
+    return first && last && first !== last ? `${first} to ${last}` : first || last || '';
+  }
+  // Cards for a day: reports tied to that shoot day, or to its date when they aren't tied to a day.
+  const cardsFor = d => mediaReports().filter(m => m.shootDayId === d.id || (!m.shootDayId && m.date === d.date));
+
+  // A new report starts from the call sheet: call and wrap, lunch from the schedule, and the crew with their calls.
+  function prefill(r, day) {
+    for (const k of ['callSheetId', 'callTime', 'wrapTime', 'lunchStart', 'lunchEnd']) delete r[k];
+    r.crew = [];
+    const s = day && sheetFor(day);
+    if (!s) return;
+    r.callSheetId = s.id;
+    if (mins(s.generalCall) != null) r.callTime = s.generalCall;
+    if (mins(s.wrapTime) != null) r.wrapTime = s.wrapTime;
+    const items = arr(s.schedule).filter(x => x && mins(x.time) != null).sort((a, b) => mins(a.time) - mins(b.time));
+    const at = items.findIndex(x => /lunch/i.test(str(x.description)));
+    if (at >= 0) {
+      r.lunchStart = clock(mins(items[at].time));
+      const next = items.slice(at + 1).find(x => mins(x.time) > mins(items[at].time));
+      if (next) r.lunchEnd = clock(mins(next.time));
+    }
+    const meal = lunchMinutes(r.lunchStart, r.lunchEnd);
+    for (const c of arr(s.crew)) {
+      if (!c || !c.personId) continue;
+      const row = { id: newId('dr-crew'), personId: c.personId };
+      if (c.role) row.role = c.role;
+      const call = mins(c.callTime) != null ? c.callTime : r.callTime;
+      if (call) row.call = call;
+      if (r.wrapTime) row.wrap = r.wrapTime;
+      if (meal) row.mealMinutes = meal;
+      r.crew.push(row);
+    }
+  }
+
+  LISTS.crew = { box: 'crew', empty: 'No one added yet.',
+    blank: () => {
+      const row = { id: newId('dr-crew') };
+      if ($('f-call').value.trim()) row.call = $('f-call').value.trim();
+      if ($('f-wrap').value.trim()) row.wrap = $('f-wrap').value.trim();
+      const meal = lunchMinutes($('f-lunch1').value, $('f-lunch2').value);
+      if (meal) row.mealMinutes = meal;
+      return row;
+    },
+    title: r => { const m = crewMinutes(r); return `${crewName(r) || 'New person'}${m != null ? ` · ${fmtHours(m)} h` : ''}${overnight(r) ? ' (wraps next day)' : ''}`; },
+    fields: [{ k: 'personId', label: 'Person', type: 'select', options: () => [{ id: '', label: 'Not in the project' }, ...people().map(p => ({ id: p.id, label: p.name || p.id }))] },
+      { k: 'name', label: 'Name, if not in the project' }, { k: 'role', label: 'Role' },
+      { k: 'call', label: 'Call', time: true, placeholder: '07:00' }, { k: 'wrap', label: 'Wrap', time: true, placeholder: '17:30' },
+      { k: 'mealMinutes', label: 'Meal break (minutes)', type: 'number' }, { k: 'note', label: 'Note', wide: true }] };
+  LISTS.incidents = { box: 'incidents', empty: 'Nothing to report.', blank: () => ({ id: newId('dr-inc'), kind: 'delay' }),
+    title: (r, i) => `${INCIDENT[r.kind] || 'Incident'} ${i + 1}`,
+    fields: [{ k: 'kind', label: 'Kind', type: 'select', options: () => Object.entries(INCIDENT).map(([id, label]) => ({ id, label })) },
+      { k: 'time', label: 'Time', time: true, placeholder: '14:10' }, { k: 'minutesLost', label: 'Minutes lost', type: 'number' },
+      { k: 'text', label: 'What happened', type: 'textarea', wide: true }] };
+
+  // ---------- Render ----------
+  function render() {
+    $('filmTitle').textContent = doc.project.title || 'Untitled film';
+    $('filmTitle').classList.toggle('is-empty', !doc.project.title);
+    $('filmMeta').textContent = [doc.project.company, doc.project.producer && `Producer: ${doc.project.producer}`].filter(Boolean).join(' · ');
+    $('fileState').innerHTML = (fileName ? esc(fileName) : 'Not saved to a file yet') + (dirty ? ' · <span class="dirty">Unsaved changes</span>' : '');
+    document.title = `${doc.project.title ? doc.project.title + ' · ' : ''}Daily production report · Open Filmmaker Toolkit`;
+
+    const all = [...reports()].sort((a, b) => dateOf(a).localeCompare(dateOf(b)) || a.id.localeCompare(b.id));
+    $('count').textContent = all.length ? `${all.length} report${all.length === 1 ? '' : 's'}` : '';
+    $('empty').hidden = !!all.length;
+    $('rows').hidden = !all.length;
+    $('csvBtn').hidden = !all.length;
+    $('rows').innerHTML = all.map(r => {
+      const d = dayOf(r), flags = [], m = totalMinutes(r), lost = minutesLost(r), cards = arr(r.mediaReportIds).filter(media);
+      if (r.callTime || r.wrapTime) flags.push(`<span class="flag linked">${esc(r.callTime ? showTime(r.callTime) : '?')} to ${esc(r.wrapTime ? showTime(r.wrapTime) : '?')}</span>`);
+      if (arr(r.crew).length) flags.push(`<span class="flag linked">${arr(r.crew).length} crew and talent</span>`);
+      if (cards.length) flags.push(`<span class="flag linked">${esc(cards.map(id => media(id).roll || mediaKind(media(id))).join(', '))}</span>`);
+      if (lost) flags.push(`<span class="flag problem">${lost} min lost</span>`);
+      if (!m) flags.push('<span class="flag changed">No hours yet</span>');
+      return `<li class="row" data-id="${esc(r.id)}"><span class="kd">${esc(dateOf(r) ? fmtDate(dateOf(r)) : 'No date')}</span>
+        <button type="button" class="what" data-edit="${esc(r.id)}"><span class="nm">${esc((d && d.title) || (d ? 'Shoot day' : 'Unknown shoot day'))}</span>${r.shot ? `<span class="tt">${esc(r.shot)}</span>` : ''}</button>
+        <span class="rt">${m ? `${fmtHours(m)} h total` : ''}</span><div class="flags">${flags.join('')}</div></li>`;
+    }).join('');
+    const t = today();
+    const missing = days().filter(d => d.kind === 'shoot' && d.date <= t && !all.some(r => r.shootDayId === d.id));
+    $('missCount').textContent = missing.length ? String(missing.length) : '';
+    $('missing').innerHTML = missing.length ? missing.map(d => `<li><span>${esc(fmtDate(d.date))}<span class="sub">${esc(d.title || (place(d.locationId) || {}).name || '')}${sheetFor(d) ? ' · starts from the call sheet' : ''}</span></span><button type="button" class="btn small" data-day="${esc(d.id)}">Start a report</button></li>`).join('')
+      : '<li class="empty-line">Every shoot day so far has a report.</li>';
+    if (!all.some(r => r.id === printKey)) printKey = all.length ? all[all.length - 1].id : '';
+    $('printSel').innerHTML = all.map(r => `<option value="${esc(r.id)}"${r.id === printKey ? ' selected' : ''}>${esc([dateOf(r) && fmtDate(dateOf(r)), (dayOf(r) || {}).title].filter(Boolean).join(': ') || 'Daily report')}</option>`).join('') || '<option value="">Start a report first</option>';
+    $('printSel').disabled = $('printBtn').disabled = !all.length;
+  }
+
+  // ---------- Editor ----------
+  function eligibleDays() {
+    const used = new Set(reports().filter(r => !editing || r.id !== editing.id).map(r => r.shootDayId));
+    return days().filter(d => d.kind === 'shoot' && !used.has(d.id));
+  }
+  function fillForm() {
+    const r = editing;
+    const vals = { 'f-call': r.callTime, 'f-wrap': r.wrapTime, 'f-lunch1': r.lunchStart, 'f-lunch2': r.lunchEnd, 'f-shot': r.shot, 'f-notes': r.notes };
+    for (const [k, v] of Object.entries(vals)) $(k).value = v == null ? '' : String(v);
+  }
+  function showDay() {
+    const d = days().find(x => x.id === $('f-day').value), s = d && sheetFor(d);
+    $('sheetNote').textContent = !d ? '' : s ? `${isNew && !touched ? 'Started from' : 'Linked to'} the call sheet for ${fmtDate(s.date)}${s.dayLabel ? `, ${s.dayLabel}` : ''}.` : 'No call sheet for this day, so this report starts blank.';
+    drawCards();
+  }
+  function drawCards() {
+    const d = days().find(x => x.id === $('f-day').value), on = new Set(arr(editing.mediaReportIds));
+    const list = [...(d ? cardsFor(d) : []), ...mediaReports().filter(m => on.has(m.id) && !(d && cardsFor(d).includes(m)))];
+    $('cards').innerHTML = list.length ? list.map(m => `<label class="check"><input type="checkbox" value="${esc(m.id)}"${on.has(m.id) ? ' checked' : ''}><span class="who">${esc(mediaKind(m))} ${esc(m.roll || '')}<span class="sub">${esc([mediaRange(m), m.device].filter(Boolean).join(' · '))}</span></span></label>`).join('')
+      : '<p class="hint">No camera or sound reports for this day yet.</p>';
+  }
+  function updateTotals() {
+    $('totals').textContent = `Total hours: ${fmtHours(totalMinutes(editing))} · Minutes lost: ${minutesLost(editing)}`;
+  }
+  function openEditor(id, opts = {}) {
+    const existing = id && reports().find(r => r.id === id);
+    isNew = !existing; touched = false;
+    if (existing) editing = structuredClone(existing);
+    else {
+      editing = { id: newId('dailyreport') };
+      const open = eligibleDays();
+      const day = (opts.day && open.find(d => d.id === opts.day)) || open.filter(d => d.date <= today()).pop() || open[0];
+      if (day) { editing.shootDayId = day.id; prefill(editing, day); editing.mediaReportIds = cardsFor(day).map(m => m.id); }
+    }
+    editing.crew = arr(editing.crew).map(c => Object.assign({}, c));
+    editing.incidents = arr(editing.incidents).map(c => Object.assign({}, c));
+    editing.mediaReportIds = [...arr(editing.mediaReportIds)];
+    const choices = eligibleDays();
+    if (existing && !choices.some(d => d.id === existing.shootDayId)) { const own = days().find(d => d.id === existing.shootDayId); choices.push(own || { id: existing.shootDayId || '', date: '', title: 'Shoot day not found' }); }
+    $('f-day').innerHTML = (isNew && !editing.shootDayId ? '<option value="">Choose a shoot day</option>' : '') + choices.map(d => `<option value="${esc(d.id)}">${esc([d.date && fmtDate(d.date), d.title].filter(Boolean).join(': '))}</option>`).join('');
+    $('f-day').value = editing.shootDayId || '';
+    fillForm(); drawLists(); showDay(); updateTotals();
+    $('editorTitle').textContent = isNew ? 'Start a daily report' : `Daily report: ${dateOf(editing) ? fmtDate(dateOf(editing)) : 'shoot day'}`;
+    $('deleteBtn').hidden = isNew;
+    $('editor').showModal();
+    $('f-day').focus();
+  }
+  function onDayChange() {
+    const d = days().find(x => x.id === $('f-day').value);
+    if (isNew && !touched && d) {
+      editing.shootDayId = d.id; prefill(editing, d); editing.mediaReportIds = cardsFor(d).map(m => m.id);
+      fillForm(); drawLists();
+    }
+    showDay(); updateTotals();
+  }
+  const TIMES = { callTime: 'f-call', wrapTime: 'f-wrap', lunchStart: 'f-lunch1', lunchEnd: 'f-lunch2' };
+  function saveEditor() {
+    const r = editing, form = $('editorForm');
+    const dayId = $('f-day').value;
+    if (!dayId) { $('f-day').setCustomValidity('Choose the shoot day.'); $('f-day').reportValidity(); return; }
+    if (reports().some(x => x.id !== r.id && x.shootDayId === dayId)) { $('f-day').setCustomValidity('That shoot day already has a report. Open it from the list.'); $('f-day').reportValidity(); return; }
+    for (const el of form.querySelectorAll('[data-time]')) {
+      if (el.value.trim() && normTime(el.value) == null) { el.setCustomValidity('Use a 24-hour time such as 07:30.'); el.reportValidity(); return; }
+    }
+    const nameless = r.crew.findIndex(c => !c.personId && !str(c.name).trim() && Object.keys(c).some(k => k !== 'id'));
+    if (nameless >= 0) { const el = $(`crew-${nameless}-name`); el.setCustomValidity('Pick a person or type a name.'); el.reportValidity(); return; }
+    r.shootDayId = dayId;
+    const day = days().find(d => d.id === dayId), sheet = day && sheetFor(day);
+    if (sheet) r.callSheetId = sheet.id; else delete r.callSheetId;
+    for (const [k, id] of Object.entries(TIMES)) { const v = normTime($(id).value); if (v) r[k] = v; else delete r[k]; }
+    for (const [k, id] of Object.entries({ shot: 'f-shot', notes: 'f-notes' })) { const v = $(id).value.trim(); if (v) r[k] = v; else delete r[k]; }
+    const fix = (o, keys) => { for (const k of keys) if (o[k] != null) { const v = normTime(o[k]); if (v) o[k] = v; } return o; };
+    const crew = cleanList(r.crew).map(c => { if (!c.id) c.id = newId('dr-crew'); return fix(c, ['call', 'wrap']); }).filter(c => c.personId || c.name);
+    if (crew.length) r.crew = crew; else delete r.crew;
+    const incidents = cleanList(r.incidents, ['kind']).map(c => { if (!c.id) c.id = newId('dr-inc'); if (!c.kind) c.kind = 'other'; return fix(c, ['time']); });
+    if (incidents.length) r.incidents = incidents; else delete r.incidents;
+    if (arr(r.mediaReportIds).length) r.mediaReportIds = [...new Set(r.mediaReportIds)]; else delete r.mediaReportIds;
+    if (isNew) reports().push(r); else reports()[reports().findIndex(x => x.id === r.id)] = r;
+    printKey = r.id;
+    $('editor').close();
+    changed();
+  }
+  function removeEditing() {
+    if (!confirm(`Remove the daily report for ${dateOf(editing) ? fmtDate(dateOf(editing)) : 'this day'}? The shoot day and the camera and sound reports aren't touched.`)) return;
+    doc.dailyReports = reports().filter(r => r.id !== editing.id);
+    $('editor').close();
+    changed();
+    toast('Removed the daily report.');
+  }
+
+  // ---------- CSV and print ----------
+  const CSV_HEAD = ['Date', 'Shoot day', 'Name', 'Role', 'Call', 'Wrap', 'Meal break (minutes)', 'Hours', 'Note'];
+  function exportCsv() {
+    const rows = [];
+    for (const r of [...reports()].sort((a, b) => dateOf(a).localeCompare(dateOf(b)))) {
+      for (const c of arr(r.crew)) {
+        const m = crewMinutes(c);
+        rows.push([dateOf(r), (dayOf(r) || {}).title, crewName(c), c.role, c.call, c.wrap, c.mealMinutes, m == null ? '' : fmtHours(m), c.note]);
+      }
+    }
+    const csv = '﻿' + [CSV_HEAD, ...rows].map(row => row.map(csvCell).join(',')).join('\r\n') + '\r\n';
+    const name = `${slug()}-crew-hours.csv`;
+    download(csv, name, 'text/csv;charset=utf-8');
+    toast(`Exported ${rows.length} row${rows.length === 1 ? '' : 's'} to ${name}`);
+  }
+  function reportHtml(r) {
+    const d = dayOf(r), l = d && place(d.locationId), s = sheetOf(r);
+    const lunch = r.lunchStart || r.lunchEnd ? `${showTime(r.lunchStart || '?')} to ${showTime(r.lunchEnd || '?')}` : '';
+    const lost = minutesLost(r), total = totalMinutes(r);
+    const facts = [['Date', dateOf(r) && fmtDate(dateOf(r))], ['Shoot day', d && d.title], ['Location', l && l.name], ['Call sheet', s && (s.dayLabel || fmtDate(s.date))],
+      ['Call', r.callTime && showTime(r.callTime)], ['Lunch', lunch], ['Wrap', r.wrapTime && showTime(r.wrapTime)], ['Total hours', arr(r.crew).length ? fmtHours(total) : ''], ['Minutes lost', lost ? String(lost) : '']].filter(x => x[1]);
+    const cards = arr(r.mediaReportIds).map(media).filter(Boolean);
+    return `<section class="r-report">
+      <table class="r-facts"><tbody>${facts.map(([k, v]) => `<tr><th>${esc(k)}</th><td>${esc(v)}</td></tr>`).join('')}</tbody></table>
+      ${arr(r.crew).length ? `<h2>Crew and talent</h2><table><thead><tr><th>Name</th><th>Role</th><th class="r-num">Call</th><th class="r-num">Wrap</th><th class="r-num">Meal (min)</th><th class="r-num">Hours</th></tr></thead><tbody>
+        ${arr(r.crew).map(c => { const m = crewMinutes(c); return `<tr><td>${esc(crewName(c))}${c.note ? `<span class="r-sub">${esc(c.note)}</span>` : ''}</td><td>${esc(c.role || '')}</td><td class="r-num">${esc(c.call ? showTime(c.call) : '')}</td><td class="r-num">${esc(c.wrap ? showTime(c.wrap) : '')}${overnight(c) ? ' (next day)' : ''}</td><td class="r-num">${esc(c.mealMinutes ?? '')}</td><td class="r-num">${m == null ? '' : esc(fmtHours(m))}</td></tr>`; }).join('')}
+        <tr class="r-total"><td colspan="5">Total hours</td><td class="r-num">${esc(fmtHours(total))}</td></tr></tbody></table>` : ''}
+      ${r.shot ? `<h2>What was shot</h2><p class="r-text">${esc(r.shot)}</p>` : ''}
+      ${cards.length ? `<h2>Cards</h2><table><thead><tr><th>Report</th><th>Card or roll</th><th>Clips or files</th><th>Camera or recorder</th></tr></thead><tbody>${cards.map(m => `<tr><td>${esc(mediaKind(m))}</td><td>${esc(m.roll || '')}</td><td>${esc(mediaRange(m))}</td><td>${esc(m.device || '')}</td></tr>`).join('')}</tbody></table>` : ''}
+      ${arr(r.incidents).length ? `<h2>Incidents and delays</h2><table><thead><tr><th>Kind</th><th class="r-num">Time</th><th class="r-num">Minutes lost</th><th>What happened</th></tr></thead><tbody>${arr(r.incidents).map(i => `<tr><td>${esc(INCIDENT[i.kind] || 'Other')}</td><td class="r-num">${esc(i.time ? showTime(i.time) : '')}</td><td class="r-num">${esc(i.minutesLost ?? '')}</td><td>${esc(i.text || '')}</td></tr>`).join('')}</tbody></table>` : ''}
+      ${r.notes ? `<h2>Notes</h2><p class="r-text">${esc(r.notes)}</p>` : ''}</section>`;
+  }
+  function renderReport() {
+    const r = reports().find(x => x.id === printKey);
+    if (!r) { $('report').innerHTML = ''; return; }
+    $('report').innerHTML = `<h1>Daily production report</h1>
+      <p class="r-meta">${esc([doc.project.title, dateOf(r) && fmtDate(dateOf(r)), `Printed ${fmtDate(today())}`].filter(Boolean).join(' · '))}</p>
+      ${reportHtml(r)}`;
+  }
+
+  // ---------- Project CSV ----------
+  function csvCell(v) {
+    let s = v == null ? '' : String(v);
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+    return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }
+  const csvCollections = {
+    project: 'project details', people: 'people', locations: 'locations', thirdPartyElements: 'third-party elements',
+    contracts: 'contracts', assets: 'assets', musicCueSheet: 'music cue sheet details', callSheets: 'call sheets'
+  };
+  function exportProjectCsv() {
+    const collection = $('projectCsvCollection').value;
+    const value = doc[collection];
+    const rows = Array.isArray(value) ? value : value && typeof value === 'object' ? [value] : [];
+    if (rows.some(row => !row || typeof row !== 'object' || Array.isArray(row))) {
+      toast(`Couldn't export ${csvCollections[collection]}: the project contains an invalid record.`, true);
+      return;
+    }
+    const headers = [...new Set(rows.flatMap(row => Object.keys(row)))];
+    if (!headers.length) headers.push('id');
+    const csvRows = rows.map(row => headers.map(key => { const cell = row[key]; return cell && typeof cell === 'object' ? JSON.stringify(cell) : cell; }));
+    const csv = '﻿' + [headers, ...csvRows].map(row => row.map(csvCell).join(',')).join('\r\n') + '\r\n';
+    const name = suggestedName().replace(/\.oft\.json$/i, `-${collection}.csv`);
+    download(csv, name, 'text/csv;charset=utf-8');
+    toast(`Exported ${rows.length} ${csvCollections[collection]} to ${name}`);
+  }
+
+  // ---------- Film details ----------
+  function openProjectDialog() {
+    for (const k of PROJECT_TEXT) $(`p-${k}`).value = doc.project[k] || '';
+    $('projectDialog').showModal();
+    $('p-title').focus();
+  }
+  function saveProjectDialog() {
+    for (const k of PROJECT_TEXT) doc.project[k] = $(`p-${k}`).value.trim();
+    $('projectDialog').close();
+    changed();
+  }
+
+  // ---------- Dirty state & recovery draft ----------
+  function changed() { dirty = true; saveDraft(); render(); }
+  function saveDraft() {
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ doc, fileName, baselineText, at: new Date().toISOString() })); } catch { /* the file on disk is the real copy */ }
+  }
+  function clearDraft() {
+    try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+    $('recovery').hidden = true;
+  }
+  function checkDraft() {
+    let draft = null;
+    try { draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); } catch { draft = null; }
+    if (!draft || !draft.doc || draft.doc.format !== FORMAT) return;
+    const n = Array.isArray(draft.doc.dailyReports) ? draft.doc.dailyReports.length : 0;
+    if (!n && !(draft.doc.project && draft.doc.project.title)) { clearDraft(); return; }
+    const when = draft.at ? new Date(draft.at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'earlier';
+    const title = draft.doc.project && draft.doc.project.title ? `"${draft.doc.project.title}"` : 'an untitled project';
+    $('recoveryText').textContent = `You have unsaved changes to ${title} from ${when} (${n} daily report${n === 1 ? '' : 's'}). Restore them, or discard them and start fresh.`;
+    $('recovery').hidden = false;
+    $('restoreBtn').onclick = () => {
+      doc = normalize(draft.doc); fileName = draft.fileName || null; fileHandle = null;
+      baselineText = typeof draft.baselineText === 'string' ? draft.baselineText : null; dirty = true;
+      $('recovery').hidden = true; render();
+      toast(fileName ? `Restored. Save to write the changes back to ${fileName}.` : 'Restored. Save to keep it as a file.');
+    };
+    $('discardBtn').onclick = () => { clearDraft(); toast('Discarded the unsaved changes.'); };
+  }
+
+  // ---------- Files ----------
+  const pickerTypes = [{ description: 'Film project file', accept: { 'application/json': ['.json'] } }];
+  function slug() {
+    return (doc.project.title || 'untitled-film').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'untitled-film';
+  }
+  const suggestedName = () => `${slug()}.oft.json`;
+  function serialize() {
+    doc.savedAt = new Date().toISOString();
+    doc.savedBy = TOOL;
+    return JSON.stringify(doc, null, 2) + '\n';
+  }
+  function download(text, name, type) {
+    const url = URL.createObjectURL(new Blob([text], { type }));
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  function afterSave(name, downloaded, content) {
+    fileName = name;
+    if (downloaded) fileHandle = null;
+    baselineText = content;
+    dirty = false; clearDraft(); render();
+    toast(downloaded ? `Downloaded ${name}. Keep it with your project files and open it here next time.` : `Saved to ${name}`);
+  }
+  async function writeProjectFile(handle, content) {
+    try {
+      const writable = await handle.createWritable();
+      await writable.write(content);
+      await writable.close();
+    } catch (err) {
+      if (err.name !== 'AbortError') toast(`Couldn't save the file: ${err.message}`, true);
+      return;
+    }
+    fileHandle = handle;
+    afterSave(handle.name, false, content);
+  }
+  function saveCopy(content) {
+    const base = (fileName || suggestedName()).replace(/\.oft\.json$/i, '');
+    const name = `${base}-copy.oft.json`;
+    download(content, name, 'application/json');
+    afterSave(name, true, content);
+  }
+  async function reloadLatest(handle) {
+    try {
+      const file = await handle.getFile();
+      loadText(await file.text(), handle.name, handle);
+    } catch (err) {
+      toast(`Couldn't reload the file: ${err.message}`, true);
+    }
+  }
+  function showConflictDialog(content, observedText, unknownBaseline = false) {
+    const handle = fileHandle;
+    dirty = true;
+    saveDraft();
+    render();
+    $('conflictText').textContent = unknownBaseline
+      ? `The tool can't verify whether ${handle.name} changed since your recovery copy was made. Your edits are not saved.`
+      : `${handle.name} changed after you opened it. Your edits are not saved. Overwriting replaces the newer file.`;
+    $('conflictDialog').showModal();
+    $('conflictReloadBtn').onclick = () => { $('conflictDialog').close(); reloadLatest(handle); };
+    $('conflictCopyBtn').onclick = () => { $('conflictDialog').close(); saveCopy(content); };
+    $('conflictOverwriteBtn').onclick = async () => {
+      $('conflictDialog').close();
+      let latestText;
+      try { latestText = await (await handle.getFile()).text(); }
+      catch (err) { toast(`Couldn't check the file before overwriting: ${err.message}`, true); return; }
+      if (latestText !== observedText) {
+        toast('The file changed again. Review the updated conflict warning before overwriting.', true);
+        showConflictDialog(content, latestText);
+        return;
+      }
+      await writeProjectFile(handle, content);
+    };
+    $('conflictCancelBtn').onclick = () => $('conflictDialog').close();
+  }
+  async function saveFile() {
+    const out = serialize();
+    if (fileHandle) {
+      let currentText;
+      try { currentText = await (await fileHandle.getFile()).text(); }
+      catch (err) { toast(`Couldn't check the file before saving: ${err.message}`, true); return; }
+      if (baselineText === null || currentText !== baselineText) { showConflictDialog(out, currentText, baselineText === null); return; }
+      await writeProjectFile(fileHandle, out);
+      return;
+    }
+    if (window.showSaveFilePicker && window.self === window.top) {
+      try {
+        const h = await window.showSaveFilePicker({ suggestedName: fileName || suggestedName(), types: pickerTypes });
+        if (h.name === fileName) {
+          const currentText = await (await h.getFile()).text();
+          if (baselineText === null || currentText !== baselineText) { fileHandle = h; showConflictDialog(out, currentText, baselineText === null); return; }
+        }
+        await writeProjectFile(h, out);
+      } catch (err) { if (err.name !== 'AbortError') toast(`Couldn't save the file: ${err.message}`, true); }
+      return;
+    }
+    const name = fileName || suggestedName();
+    download(out, name, 'application/json');
+    afterSave(name, true, out);
+  }
+  function loadText(text, name, handle) {
+    let data;
+    try { data = JSON.parse(text); } catch { toast(`Couldn't open ${name}: it isn't a project file.`, true); return; }
+    if (!data || data.format !== FORMAT) { toast(`Couldn't open ${name}: it isn't an Open Filmmaker Toolkit project file.`, true); return; }
+    if (Number(data.formatVersion) > FORMAT_VERSION) { toast(`Couldn't open ${name}: it was saved by a newer version of the toolkit. Get the latest version of this tool.`, true); return; }
+    doc = normalize(data); fileHandle = handle; baselineText = text; fileName = name; dirty = false;
+    clearDraft(); render();
+    const n = reports().length;
+    toast(`Opened ${name}: ${n ? `${n} daily report${n === 1 ? '' : 's'}` : 'no daily reports yet'}`);
+  }
+  async function openFile() {
+    if (dirty && !confirm('You have unsaved changes. Open another file and lose them?')) return;
+    if (window.showOpenFilePicker && window.self === window.top) {
+      try { const [h] = await window.showOpenFilePicker({ types: pickerTypes }); const f = await h.getFile(); loadText(await f.text(), f.name, h); }
+      catch (err) { if (err.name !== 'AbortError') toast(`Couldn't open the file: ${err.message}`, true); }
+      return;
+    }
+    $('fileInput').click();
+  }
+  function newProject() {
+    if (dirty && !confirm('You have unsaved changes. Start a new project and lose them?')) return;
+    doc = normalize(blankDoc()); fileHandle = null; baselineText = null; fileName = null; dirty = false;
+    clearDraft(); render(); openProjectDialog();
+  }
+
+  let toastTimer = null;
+  function toast(msg, isError) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.classList.toggle('error', !!isError);
+    t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.hidden = true; }, isError ? 7000 : 4200);
+  }
+
+  // ---------- Wiring ----------
+  function init() {
+    doc = normalize(doc);
+    $('newBtn').onclick = newProject;
+    $('openBtn').onclick = openFile;
+    $('saveBtn').onclick = saveFile;
+    $('editProjectBtn').onclick = openProjectDialog;
+    $('filmTitle').onclick = openProjectDialog;
+    $('printBtn').onclick = () => { renderReport(); window.print(); };
+    window.addEventListener('beforeprint', renderReport);
+    $('projectCsvBtn').onclick = () => $('projectCsvDialog').showModal();
+    $('projectCsvCancel').onclick = () => $('projectCsvDialog').close();
+    $('projectCsvForm').addEventListener('submit', ev => { ev.preventDefault(); exportProjectCsv(); $('projectCsvDialog').close(); });
+    $('fileInput').addEventListener('change', async () => {
+      const f = $('fileInput').files[0];
+      if (f) loadText(await f.text(), f.name, null);
+      $('fileInput').value = '';
+    });
+    $('projectForm').addEventListener('submit', ev => { ev.preventDefault(); saveProjectDialog(); });
+    $('projectCancel').onclick = () => $('projectDialog').close();
+    $('addBtn').onclick = () => openEditor(null);
+    $('emptyAddBtn').onclick = () => openEditor(null);
+    $('emptyOpenBtn').onclick = openFile;
+    $('csvBtn').onclick = exportCsv;
+    $('rows').addEventListener('click', ev => { const b = ev.target.closest('[data-edit]'); if (b) openEditor(b.dataset.edit); });
+    $('missing').addEventListener('click', ev => { const b = ev.target.closest('[data-day]'); if (b) openEditor(null, { day: b.dataset.day }); });
+    $('printSel').addEventListener('change', () => { printKey = $('printSel').value; });
+    const form = $('editorForm');
+    wireLists(form);
+    form.addEventListener('input', ev => {
+      if (ev.target.setCustomValidity) ev.target.setCustomValidity('');
+      if (ev.target.id !== 'f-day') touched = true;
+      updateTotals();
+    });
+    form.addEventListener('change', ev => {
+      if (ev.target.closest('#cards')) {
+        const shown = new Set([...$('cards').querySelectorAll('input')].map(i => i.value));
+        editing.mediaReportIds = [...arr(editing.mediaReportIds).filter(id => !shown.has(id)), ...[...$('cards').querySelectorAll('input:checked')].map(i => i.value)];
+      }
+      updateTotals();
+    });
+    form.addEventListener('click', ev => { if (ev.target.closest('[data-add], [data-remove]')) { touched = true; updateTotals(); } });
+    $('f-day').addEventListener('change', onDayChange);
+    form.addEventListener('submit', ev => { ev.preventDefault(); saveEditor(); });
+    $('editorCancel').onclick = () => $('editor').close();
+    $('deleteBtn').onclick = removeEditing;
+
+    document.addEventListener('keydown', ev => {
+      const mod = ev.metaKey || ev.ctrlKey;
+      if (mod && ev.key.toLowerCase() === 's') { ev.preventDefault(); saveFile(); }
+      else if (mod && ev.key.toLowerCase() === 'o') { ev.preventDefault(); openFile(); }
+    });
+    window.addEventListener('beforeunload', ev => { if (dirty) { ev.preventDefault(); ev.returnValue = ''; } });
+    render();
+    checkDraft();
+  }
+
+  if (typeof HTMLDialogElement !== 'function' || typeof HTMLDialogElement.prototype.showModal !== 'function' || typeof structuredClone !== 'function') {
+    $('cantRunTitle').textContent = 'This browser is too old to run this tool';
+    $('cantRunText').textContent = 'Update to a current version of Chrome, Edge, Firefox or Safari, then open this file again.';
+    $('cantRunHow').hidden = true;
+    return;
+  }
+  document.documentElement.classList.remove('no-js');
+  window.addEventListener('error', ev => toast(`Something went wrong: ${ev.message}. Save your work, then reload the page.`, true));
+  window.addEventListener('unhandledrejection', ev => toast(`Something went wrong: ${ev.reason && ev.reason.message ? ev.reason.message : ev.reason}. Save your work, then reload the page.`, true));
+  init();
+})();
+</script>
+</body>
+</html>

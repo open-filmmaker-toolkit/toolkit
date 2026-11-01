@@ -1,6 +1,6 @@
 # Tools
 
-The tools we build, by production phase. Each one is a single page that runs in your browser on the shared project file, with nothing to install and nothing sent anywhere. 30 are ready to use and 32 are planned.
+The tools we build, by production phase. Each one is a single page that runs in your browser on the shared project file, with nothing to install and nothing sent anywhere. 33 are ready to use and 29 are planned.
 
 - **Ready to use:** linked tools. Each has a README with what it does.
 - **Planned:** each has an issue. Comment there if you need the tool or want to help build it. Order of work is in [ROADMAP.md](ROADMAP.md).
@@ -51,9 +51,9 @@ Looking for other free, open-source software for filmmaking, such as editing, so
 | [Call sheet](tools/call-sheet/) | Building shoot-day call sheets from the people and locations in your project; weather lookup is optional and off until you click it | First version |
 | [Camera and sound reports](tools/camera-sound-reports/) | Logging what was shot on each card: camera reports with clips, codec, frame rate and lens notes, and sound reports with each file and its tracks, linked to the shoot day | First version |
 | [Interview log](tools/interview-log/) | Logging each interview: who, when, where, which cards, and timestamped moments with favorites marked, linked to the release and transcript, and exported for the paper edit | First version |
-| Daily production report | Record what happened each shoot day: times, who worked, what was shot, problems and costs. | Planned, [#64](https://github.com/open-filmmaker-toolkit/toolkit/issues/64) |
+| [Daily production report](tools/daily-production-report/) | Recording each shoot day: call, meal and wrap times and hours for crew and talent, what was shot, and incidents and delays | First version |
 | [Release tracker](tools/release-tracker/) | Tracking who signed what: appearance, location and materials releases, with the signed copies, and flagging anyone on camera with no release on file | First version |
-| Expense log | Log receipts as you go and keep them tied to budget lines. | Planned, [#65](https://github.com/open-filmmaker-toolkit/toolkit/issues/65) |
+| [Expense log](tools/expense-log/) | Logging production expenses against budget accounts while keeping receipt files on your computer | First version |
 | [Field journal](tools/field-journal/) | Keeping a dated journal of the production: what happened, what you learned and story ideas, tagged with people and places and linked to shoot days | First version |
 
 ## Post-Production
@@ -84,7 +84,7 @@ Looking for other free, open-source software for filmmaking, such as editing, so
 | Tool | Use it for | Status |
 | --- | --- | --- |
 | Festival strategy map | Plan a festival run: premiere rules, tiers, deadlines and fees, in an order that protects your premiere. | Planned, [#77](https://github.com/open-filmmaker-toolkit/toolkit/issues/77) |
-| Festival submission tracker | Track every submission: deadline, fee, platform, status and result. | Planned, [#78](https://github.com/open-filmmaker-toolkit/toolkit/issues/78) |
+| [Festival submission tracker](tools/festival-submissions/) | Tracking festival submissions, with deadlines, fees, results and screening dates | First version |
 | EPK and press notes builder | Build press notes and an electronic press kit: synopsis, director's statement, bios, credits, stills and contacts. | Planned, [#79](https://github.com/open-filmmaker-toolkit/toolkit/issues/79) |
 | Stills library | Organize production stills and key art, with captions, photo credits and approvals. | Planned, [#80](https://github.com/open-filmmaker-toolkit/toolkit/issues/80) |
 | Press list | Keep press and critic contacts, what you've sent them, and the coverage that comes back. | Planned, [#81](https://github.com/open-filmmaker-toolkit/toolkit/issues/81) |

@@ -19,10 +19,10 @@ from playwright.sync_api import sync_playwright
 
 root = pathlib.Path(__file__).resolve().parents[1]
 sample = (root / 'samples/the-river-keeps.oft.json').read_text()
-TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan', 'funder-crm', 'cash-flow', 'shooting-calendar', 'interview-prep', 'field-journal', 'location-scout', 'deal-memos', 'gear-list', 'coi-permit-tracker', 'travel-sheet', 'risk-plan', 'security-checklist', 'camera-sound-reports', 'interview-log']
+TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan', 'funder-crm', 'cash-flow', 'shooting-calendar', 'interview-prep', 'field-journal', 'location-scout', 'deal-memos', 'gear-list', 'coi-permit-tracker', 'travel-sheet', 'risk-plan', 'security-checklist', 'camera-sound-reports', 'interview-log', 'daily-production-report', 'expense-log', 'festival-submissions']
 COLLECTIONS = ['project', 'people', 'locations', 'thirdPartyElements', 'contracts', 'assets', 'musicCueSheet', 'callSheets']
 PRINT_BTN = {'clearance-log': '#printBtn', 'music-cue-sheet': '#printBtn', 'call-sheet': '#printAllBtn', 'release-tracker': '#printBtn',
-             'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn', 'treatment-builder': '#printBtn', 'pitch-deck': '#printBtn', 'grant-calendar': '#printBtn', 'narrative-library': '#printBtn', 'budget': '#printBtn', 'budget-converter': '#printBtn', 'finance-plan': '#printBtn', 'funder-crm': '#printBtn', 'cash-flow': '#printBtn', 'shooting-calendar': '#printBtn', 'interview-prep': '#printBtn', 'field-journal': '#printBtn', 'location-scout': '#printBtn', 'deal-memos': '#printBtn', 'gear-list': '#printBtn', 'coi-permit-tracker': '#printBtn', 'travel-sheet': '#printBtn', 'risk-plan': '#printBtn', 'security-checklist': '#printBtn', 'camera-sound-reports': '#printBtn', 'interview-log': '#printBtn'}
+             'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn', 'treatment-builder': '#printBtn', 'pitch-deck': '#printBtn', 'grant-calendar': '#printBtn', 'narrative-library': '#printBtn', 'budget': '#printBtn', 'budget-converter': '#printBtn', 'finance-plan': '#printBtn', 'funder-crm': '#printBtn', 'cash-flow': '#printBtn', 'shooting-calendar': '#printBtn', 'interview-prep': '#printBtn', 'field-journal': '#printBtn', 'location-scout': '#printBtn', 'deal-memos': '#printBtn', 'gear-list': '#printBtn', 'coi-permit-tracker': '#printBtn', 'travel-sheet': '#printBtn', 'risk-plan': '#printBtn', 'security-checklist': '#printBtn', 'camera-sound-reports': '#printBtn', 'interview-log': '#printBtn', 'daily-production-report': '#printBtn', 'expense-log': '#printBtn', 'festival-submissions': '#printBtn'}
 PHONE = {'width': 390, 'height': 844}
 # The button that opens each tool's main dialog, for the phone-width check. Most tools use #addBtn.
 DIALOG_BTN = {'treatment-builder': '[data-compare]', 'cash-flow': '#settingsBtn'}
@@ -1650,6 +1650,191 @@ def test_deal_memos(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
+def test_daily_report(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'daily-production-report', fake, fixed_today('2026-11-01'))
+    pg.on('dialog', lambda d: d.accept())
+    open_sample(pg, fake)
+    check(pg.locator('#rows .row').count() == 1 and '23.5 h total' in pg.inner_text('#rows') and '20 min lost' in pg.inner_text('#rows') and pg.inner_text('#missCount') == '1' and 'May 13' in pg.inner_text('#missing'),
+          'lists reports with total hours and minutes lost, and shoot days with none')
+    pg.click('#missing [data-day="shootday-may-2"]')
+    check(pg.input_value('#f-day') == 'shootday-may-2' and pg.input_value('#f-call') == '' and pg.input_value('#f-wrap') == '' and pg.locator('#crew .item').count() == 0 and 'No call sheet' in pg.inner_text('#sheetNote'),
+          'a day with no call sheet starts blank')
+    pg.fill('#f-call', '07:30'); pg.fill('#f-wrap', '18:00'); pg.fill('#f-lunch1', '12:30'); pg.fill('#f-lunch2', '13:00')
+    pg.click('[data-add="crew"]')
+    check(pg.input_value('#crew-0-call') == '07:30' and pg.input_value('#crew-0-wrap') == '18:00' and pg.input_value('#crew-0-mealMinutes') == '30', 'a new person starts with the day\'s call, wrap and lunch')
+    pg.select_option('#crew-0-personId', 'person-lena-ward'); pg.fill('#crew-0-role', 'Camera')
+    pg.click('[data-add="crew"]')
+    pg.fill('#crew-1-name', '=Temp sound'); pg.fill('#crew-1-call', '22:00'); pg.fill('#crew-1-wrap', '02:00'); pg.fill('#crew-1-mealMinutes', '0')
+    check('Lena Ward' in pg.inner_text('#crew') and 'wraps next day' in pg.inner_text('#crew') and pg.inner_text('#totals') == 'Total hours: 14 · Minutes lost: 0', 'hours are worked out, less the meal break, and a wrap past midnight counts as the next day')
+    pg.fill('#f-shot', 'Pickup shots at the diner')
+    pg.click('[data-add="incidents"]'); pg.select_option('#incidents-0-kind', 'equipment'); pg.fill('#incidents-0-time', '10:15'); pg.fill('#incidents-0-minutesLost', '15'); pg.fill('#incidents-0-text', 'Battery failed on the A camera')
+    check(pg.inner_text('#totals') == 'Total hours: 14 · Minutes lost: 15', 'minutes lost are totalled')
+    pg.fill('#f-call', '25:00'); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check(pg.is_visible('#editor') and pg.locator('#editor').evaluate('d => d.open'), 'a badly formed time is refused')
+    pg.fill('#f-call', '7:30'); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check(not pg.is_visible('#editor') and pg.locator('#rows .row').count() == 2 and 'Every shoot day so far has a report' in pg.inner_text('#missing'), 'saving the report adds it and clears the shoot day from the list')
+    pg.click('[data-edit="dailyreport-may-1"]')
+    check(pg.input_value('#f-call') == '07:00' and pg.locator('#crew .item').count() == 3 and pg.locator('#cards input:checked').count() == 2 and pg.inner_text('#totals') == 'Total hours: 23.5 · Minutes lost: 20',
+          'opens the existing report with its crew, cards and totals')
+    pg.click('[data-add="incidents"]'); pg.fill('#incidents-1-minutesLost', '10'); pg.fill('#incidents-1-text', 'Generator trouble')
+    pg.fill('#crew-2-wrap', '13:00')
+    check(pg.inner_text('#totals') == 'Total hours: 24.5 · Minutes lost: 30', 'editing a wrap time and adding an incident updates the totals')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    pg.select_option('#printSel', 'dailyreport-may-1')
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    r = pg.inner_text('#report')
+    check('Daily production report' in r and 'Daniel Okafor' in r and 'Interview subject' in r and '24.5' in r and 'Wind gusts' in r and 'Generator trouble' in r and 'Camera' in r and 'A001' in r and 'S001' in r and 'Battery failed' not in r,
+          "prints the chosen day's report with crew, cards and incidents")
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    by = {x[2]: x for x in rows[1:]}
+    check(rows[0][:3] == ['Date', 'Shoot day', 'Name'] and len(rows) == 6 and by['Ana Reyes'][7] == '9.75' and by['Daniel Okafor'][7] == '5' and by["'=Temp sound"][7] == '4' and by['Lena Ward'][4] in ('07:00', '07:30'),
+          'CSV has crew hours, one row for each person each day, with a guard against formulas')
+    data = saved_project(pg, fake)
+    rs = {x['id']: x for x in data['dailyReports']}
+    new = next(x for x in data['dailyReports'] if x['shootDayId'] == 'shootday-may-2')
+    may1 = rs['dailyreport-may-1']
+    check(new['callTime'] == '07:30' and new['wrapTime'] == '18:00' and new['lunchStart'] == '12:30' and new['shot'] == 'Pickup shots at the diner' and 'callSheetId' not in new and 'mediaReportIds' not in new
+          and new['crew'][0]['personId'] == 'person-lena-ward' and new['crew'][1]['name'] == '=Temp sound' and new['crew'][1]['wrap'] == '02:00' and new['incidents'][0]['kind'] == 'equipment' and new['incidents'][0]['minutesLost'] == 15,
+          'the new report is saved')
+    check(may1['callSheetId'] == 'callsheet-day-1' and may1['mediaReportIds'] == ['report-a001', 'report-s001'] and len(may1['incidents']) == 2 and may1['crew'][2]['wrap'] == '13:00' and may1['crew'][2]['note'] == 'Morning only' and may1['notes'] == 'Fictional sample report.'
+          and 'hours' not in json.dumps(data['dailyReports']).lower(), 'the edited report keeps its other fields and never stores hours')
+    check(data['callSheets'] == original['callSheets'] and data['mediaReports'] == original['mediaReports'] and data['people'] == original['people'] and data['shootDays'] == original['shootDays'], 'other data is unchanged')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+    ctx, pg, errs = new_page(browser, 'daily-production-report', fake, fixed_today('2026-11-01'))
+    pg.on('dialog', lambda d: d.accept())
+    open_sample(pg, fake)
+    pg.click('[data-edit="dailyreport-may-1"]'); pg.click('#deleteBtn'); pg.wait_for_timeout(200)
+    check(pg.locator('#rows .row').count() == 0 and pg.inner_text('#missCount') == '2' and 'starts from the call sheet' in pg.inner_text('#missing'), 'removing a report puts its day back in the list, which says it starts from the call sheet')
+    pg.click('#missing [data-day="shootday-may-1"]')
+    check(pg.input_value('#f-call') == '07:00' and pg.input_value('#f-wrap') == '17:00' and pg.input_value('#f-lunch1') == '12:00' and pg.input_value('#f-lunch2') == '13:00' and 'Day 1 of 2' in pg.inner_text('#sheetNote'),
+          "a new report starts from the day's call sheet: call, wrap and lunch")
+    check(pg.locator('#crew .item').count() == 2 and pg.input_value('#crew-0-personId') == 'person-ana-reyes' and pg.input_value('#crew-0-role') == 'Producer' and pg.input_value('#crew-1-call') == '08:00' and pg.input_value('#crew-0-mealMinutes') == '60'
+          and pg.locator('#cards input:checked').count() == 2, 'the call sheet crew and the day\'s cards come across')
+    pg.select_option('#f-day', 'shootday-may-2')
+    check(pg.input_value('#f-call') == '' and pg.locator('#crew .item').count() == 0, 'choosing another day starts over while nothing is typed')
+    pg.select_option('#f-day', 'shootday-may-1')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    data = saved_project(pg, fake)
+    r = data['dailyReports'][0]
+    check(len(data['dailyReports']) == 1 and r['shootDayId'] == 'shootday-may-1' and r['callSheetId'] == 'callsheet-day-1' and r['callTime'] == '07:00' and r['lunchEnd'] == '13:00' and [c['personId'] for c in r['crew']] == ['person-ana-reyes', 'person-daniel-okafor']
+          and r['mediaReportIds'] == ['report-a001', 'report-s001'] and data['callSheets'] == original['callSheets'], 'the report started from the call sheet is saved and the call sheet is unchanged')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+def test_expense_log(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'expense-log', fake, fixed_today('2026-11-01'))
+    open_sample(pg, fake)
+    check(pg.locator('#rows tr').count() == 3 and '$195.55' in pg.inner_text('#grandTotal'), 'lists expenses and the grand total')
+    pg.select_option('#kindFilter', 'perdiem')
+    check(pg.locator('#rows tr').count() == 1, 'filters by type')
+    pg.select_option('#kindFilter', '')
+    pg.fill('#search', 'diner'); check(pg.locator('#rows tr').count() == 1, 'searches expenses'); pg.fill('#search', '')
+    pg.click('#addBtn')
+    pg.fill('#f-date', '2026-05-13'); pg.fill('#f-amount', '12.50'); pg.select_option('#f-account', 'account-2400')
+    pg.fill('#f-description', 'Batteries'); pg.fill('#f-payee', 'Corner Shop (fictional)')
+    pg.set_input_files('#f-receipt', {'name': 'Batteries Receipt.jpg', 'mimeType': 'image/jpeg', 'buffer': b'fake'})
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check(not pg.is_visible('#editor') and pg.locator('#rows tr').count() == 4 and 'Batteries Receipt.jpg' in pg.inner_text('#rows'), 'adds an expense with a receipt name')
+    pg.click('#addBtn'); pg.select_option('#f-kind', 'perdiem'); pg.fill('#f-amount', '45'); pg.select_option('#f-account', 'account-2400')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check(pg.is_visible('#editor'), 'a per diem needs a person')
+    pg.select_option('#f-person', 'person-daniel-okafor'); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check(pg.locator('#rows tr').count() == 5 and '$253.05' in pg.inner_text('#grandTotal'), 'adds a per diem and updates totals')
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    check(rows[0][:4] == ['Date', 'Amount', 'Kind', 'Budget account'] and len(rows) == 6 and any('Batteries' in r[6] for r in rows), 'CSV lists every expense')
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    check('Batteries' in pg.inner_text('#report'), 'prints the expense report')
+    data = saved_project(pg, fake)
+    ex = next(e for e in data['expenses'] if e.get('description') == 'Batteries')
+    a = next(x for x in data['assets'] if x['id'] == ex['receiptAssetId'])
+    check(a['type'] == 'receipt' and a['relativePath'].startswith('receipts/2026-05-13-') and ex['amount'] == 12.5 and ex['accountId'] == 'account-2400', 'saves the expense and the receipt asset')
+    check(data['callSheets'] == original['callSheets'] and data['budget'] == original['budget'], 'other data is unchanged')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+def test_festivals(browser, fake):
+    ctx, pg, errs = new_page(browser, 'festival-submissions', fake, fixed_today('2026-11-01'))
+    open_sample(pg, fake)
+    names = [t.split('\n')[0] for t in pg.locator('#rows .row .nm').all_inner_texts()]
+    check(names == ['Riverbend Documentary Festival', 'Northern Light Film Festival', 'Prairie Docs', 'Eastgate Shorts'], 'planned first, then submitted, accepted, declined last %s' % names)
+    check('Next screening Mar 12, 2027 · 19:00 · Prairie Theater (fictional)' in pg.inner_text('[data-id="festival-prairie"]') and 'Waiver code RIVER-WAIVE' in pg.inner_text('[data-id="festival-riverbend"]'), 'rows show the next screening and waiver codes')
+    check('Mar 12, 2027' in pg.inner_text('#screenList') and pg.locator('#screenList li').count() == 1, 'lists upcoming screenings beside the list')
+    check('$60' in pg.inner_text('#stats') and '$45' in pg.inner_text('#stats'), 'adds up planned and submitted fees')
+    pg.click('[data-filter="accepted"]')
+    check(pg.locator('#rows .row').count() == 1 and 'Accepted 1' in pg.inner_text('#filters'), 'filters by status, with counts')
+    pg.click('[data-filter="all"]')
+    pg.fill('#search', 'river-waive')
+    check(pg.locator('#rows .row').count() == 1, 'searches waiver codes')
+    pg.fill('#search', 'theater')
+    check(pg.locator('#rows .row').count() == 1 and 'Prairie' in pg.inner_text('#rows'), 'searches screening venues')
+    pg.fill('#search', '')
+
+    pg.click('#addBtn')
+    check(pg.is_visible('#editor') and not pg.is_visible('#scRows'), 'add opens the editor, with no screenings until accepted')
+    pg.fill('#f-name', 'Test Fest'); pg.fill('#f-deadline', '2026-11-10'); pg.fill('#f-fee', '30'); pg.fill('#f-url', 'javascript:alert(1)')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    pg.click('#addBtn')
+    pg.fill('#f-name', 'Old Fest'); pg.fill('#f-deadline', '2026-10-25'); pg.fill('#f-url', 'https://example.org/old')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    names = [t.split('\n')[0] for t in pg.locator('#rows .row .nm').all_inner_texts()]
+    check(names[:4] == ['Test Fest', 'Riverbend Documentary Festival', 'Old Fest', 'Northern Light Film Festival'], 'upcoming planned deadlines come first, passed ones after %s' % names)
+    check('Deadline soon' in pg.inner_text('[data-id]:has-text("Test Fest")') and 'In 9 days' in pg.inner_text('#rows .row >> nth=0'), 'flags a deadline within 14 days')
+    old = pg.locator('#rows .row', has_text='Old Fest')
+    check('Deadline passed' in old.inner_text() and 'Passed 7 days ago' in old.inner_text() and '2 due' not in pg.inner_text('#count'), 'flags a passed deadline')
+    check(old.locator('a[href="https://example.org/old"][rel="noopener noreferrer"]').count() == 1 and pg.locator('#rows a').count() == 2, 'only http and https links are made clickable')
+    check('1 due in the next two weeks' in pg.inner_text('#count') and '1 planned deadline passed' in pg.inner_text('#count'), 'counts due and passed deadlines')
+
+    pg.click('#rows .row >> nth=0 >> .what')
+    pg.select_option('#f-status', 'submitted')
+    check(pg.input_value('#f-submitted') == '2026-11-01', 'submitting defaults the date to today')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    pg.click('[data-edit="festival-northern-light"]')
+    pg.select_option('#f-status', 'accepted')
+    check(pg.is_visible('#scRows') or pg.is_visible('#addScreeningBtn'), 'accepted shows the screening dates')
+    pg.click('#addScreeningBtn')
+    row = pg.locator('#scRows .sc-row').last
+    row.locator('.sc-date').fill('2026-12-05'); row.locator('.sc-time').fill('7:30 pm'); row.locator('.sc-venue').fill('Main Hall (fictional)')
+    pg.click('#addScreeningBtn')
+    pg.locator('#scRows .sc-row').last.locator('.sc-date').fill('2026-12-06')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    names = [t.split('\n')[0] for t in pg.locator('#rows .row .nm').all_inner_texts()]
+    check(names[-3:] == ['Northern Light Film Festival', 'Prairie Docs', 'Eastgate Shorts'] and 'Next screening Dec 5, 2026' in pg.inner_text('[data-id="festival-northern-light"]') and '2 screenings' in pg.inner_text('[data-id="festival-northern-light"]'), 'accepted festivals sort by next screening')
+    check(pg.locator('#screenList li').count() == 3 and 'Northern Light' in pg.locator('#screenList li').first.inner_text(), 'the screenings list is in date order')
+    pg.click('[data-edit="festival-northern-light"]')
+    pg.locator('#scRows .sc-row').nth(1).locator('[data-delsc]').click()
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check(pg.locator('#screenList li').count() == 2, 'removes a screening')
+
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    nl = next(r for r in rows if r[0] == 'Northern Light Film Festival')
+    check(rows[0] == ['Festival', 'Status', 'Deadline', 'Platform', 'Fee', 'Waiver code', 'Submitted', 'Screenings', 'Link', 'Notes'] and len(rows) == 7
+          and nl[1] == 'Accepted' and nl[4] == '45' and nl[7] == '2026-12-05 7:30 pm Main Hall (fictional)' and next(r for r in rows if r[0] == 'Test Fest')[6] == '2026-11-01'
+          and next(r for r in rows if r[0] == 'Riverbend Documentary Festival')[5] == 'RIVER-WAIVE', 'CSV lists every festival with fees, waiver codes and screenings')
+
+    pg.click('[data-edit="festival-eastgate"]'); pg.click('#deleteBtn'); pg.wait_for_timeout(200)
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    rep = pg.inner_text('#report')
+    check('Test Fest' in rep and 'Main Hall' in rep and 'Eastgate' not in rep and 'The River Keeps' in rep, 'prints the list')
+    data = saved_project(pg, fake)
+    f = {x['id']: x for x in data['festivals']}
+    check(len(data['festivals']) == 5 and f['festival-northern-light']['status'] == 'accepted' and f['festival-northern-light']['fee'] == 45 and len(f['festival-northern-light']['screenings']) == 1
+          and f['festival-prairie']['screenings'][0]['note'] == 'Q&A after' and data['festivals'][-1]['url'] == 'https://example.org/old', 'festivals are saved')
+    check(any(x.get('url') == 'javascript:alert(1)' for x in data['festivals']), 'a link that is not http or https is kept as text')
+    original = json.loads(sample)
+    check(data['people'] == original['people'] and data['grants'] == original['grants'] and data['treatment'] == original['treatment'], "other tools' data is unchanged")
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
 def test_template_columns(browser, fake):
     for name, template in TEMPLATE_EXPORTS:
         ctx, pg, errs = new_page(browser, name, fake)
@@ -1737,6 +1922,12 @@ def main():
         test_camera_sound(browser, fake)
         print('== interview-log / moments, releases and the paper edit')
         test_interview_log(browser, fake)
+        print('== daily-production-report / hours, call sheet start, incidents and CSV')
+        test_daily_report(browser, fake)
+        print('== expense-log / totals, receipts, per diems and CSV')
+        test_expense_log(browser, fake)
+        print('== festival-submissions / ordering, flags, screenings and CSV')
+        test_festivals(browser, fake)
         print('== templates / columns match the tools\' exports')
         test_template_columns(browser, fake)
         browser.close()
