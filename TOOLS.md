@@ -1,6 +1,6 @@
 # Tools
 
-The tools we build, by production phase. Each one is a single page that runs in your browser on the shared project file, with nothing to install and nothing sent anywhere. 28 are ready to use and 34 are planned.
+The tools we build, by production phase. Each one is a single page that runs in your browser on the shared project file, with nothing to install and nothing sent anywhere. 30 are ready to use and 32 are planned.
 
 - **Ready to use:** linked tools. Each has a README with what it does.
 - **Planned:** each has an issue. Comment there if you need the tool or want to help build it. Order of work is in [ROADMAP.md](ROADMAP.md).
@@ -49,8 +49,8 @@ Looking for other free, open-source software for filmmaking, such as editing, so
 | Tool | Use it for | Status |
 | --- | --- | --- |
 | [Call sheet](tools/call-sheet/) | Building shoot-day call sheets from the people and locations in your project; weather lookup is optional and off until you click it | First version |
-| Camera and sound reports | Log what was shot: cards or rolls, clips, subjects, settings and notes, for camera and sound. | Planned, [#62](https://github.com/open-filmmaker-toolkit/toolkit/issues/62) |
-| Interview log | Log each interview: who, when, where, which cards, and the moments you'll want to find later. | Planned, [#63](https://github.com/open-filmmaker-toolkit/toolkit/issues/63) |
+| [Camera and sound reports](tools/camera-sound-reports/) | Logging what was shot on each card: camera reports with clips, codec, frame rate and lens notes, and sound reports with each file and its tracks, linked to the shoot day | First version |
+| [Interview log](tools/interview-log/) | Logging each interview: who, when, where, which cards, and timestamped moments with favorites marked, linked to the release and transcript, and exported for the paper edit | First version |
 | Daily production report | Record what happened each shoot day: times, who worked, what was shot, problems and costs. | Planned, [#64](https://github.com/open-filmmaker-toolkit/toolkit/issues/64) |
 | [Release tracker](tools/release-tracker/) | Tracking who signed what: appearance, location and materials releases, with the signed copies, and flagging anyone on camera with no release on file | First version |
 | Expense log | Log receipts as you go and keep them tied to budget lines. | Planned, [#65](https://github.com/open-filmmaker-toolkit/toolkit/issues/65) |

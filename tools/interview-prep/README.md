@@ -50,7 +50,7 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-An `interviews` list. Each interview has an `id` and a `status` (`planned` or `done`), and optional `personId` (or `name` for someone not in the project), `date`, `shootDayId`, `minutes`, `goal`, `research`, `beats` (each with `id` and `text`) and `questions` (each with `id`, `text`, and optional `must`, `beatId` and `asked`), in the order they're asked. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
+An `interviews` list. Each interview has an `id` and a `status` (`planned` or `done`), and optional `personId` (or `name` for someone not in the project), `date`, `shootDayId`, `minutes`, `goal`, `research`, `beats` (each with `id` and `text`) and `questions` (each with `id`, `text`, and optional `must`, `beatId` and `asked`), in the order they're asked. The [interview log](../interview-log/) adds what happened on the day to the same interviews. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 

@@ -1,0 +1,990 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Camera and sound reports · Open Filmmaker Toolkit</title>
+<meta name="description" content="Log what was shot on each card: camera reports with clips, codec, frame rate and lens notes, and sound reports with each file and its tracks, linked to the shoot day and call sheet. Print for the shoot and export CSV for the edit. Runs in your browser; your data stays on your computer.">
+<style>
+:root {
+  --paper: #f1f3f2; --sheet: #ffffff; --ink: #1a2130; --ink-2: #4b556a; --ink-3: #6d778a;
+  --rule: #d4dad8; --rule-soft: #e6eae8; --hover: #f6f8f7; --focus: #2f6fdb;
+  --good: #2b7a57; --good-bg: #dff1e8; --warn: #8a5a00; --warn-bg: #fbf0d9; --bad: #b3392d; --bad-bg: #f8e1de;
+  --screen: #050506; --screen-ink: #f4f1ea; --screen-dim: #a7a29a;
+  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #141922; --sheet: #1b212b; --ink: #e6e9ee; --ink-2: #a6afbd; --ink-3: #8790a0;
+    --rule: #2f3744; --rule-soft: #262d38; --hover: #212834; --focus: #7aa7ff;
+    --good: #4fb386; --good-bg: #1a3329; --warn: #e2a531; --warn-bg: #3a2f17; --bad: #e26657; --bad-bg: #3b2220;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans); }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+[hidden] { display: none !important; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.foot { margin-top: 28px; font-size: 13px; color: var(--ink-3); }
+.cant-run { display: none; max-width: 640px; margin: 64px auto; padding: 0 24px; }
+.cant-run h1 { margin: 0 0 8px; font: 600 26px/1.2 var(--serif); }
+.cant-run p { margin: 0 0 10px; color: var(--ink-2); }
+.no-js .cant-run { display: block; }
+.no-js .page { display: none; }
+.page { max-width: 1240px; margin: 0 auto; padding: 0 24px 48px; }
+
+.masthead { display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: flex-end; justify-content: space-between; padding: 28px 0 20px; }
+.tool-name { margin: 0 0 2px; font-size: 14px; font-weight: 600; color: var(--ink-2); }
+.film-title { margin: 0; font: 600 32px/1.15 var(--serif); letter-spacing: -0.01em; overflow-wrap: anywhere; cursor: pointer; }
+.film-title.is-empty { color: var(--ink-3); font-style: italic; font-weight: 400; }
+.film-meta { margin: 4px 0 0; color: var(--ink-2); font-size: 14px; }
+.file { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.file-state { margin: 0; font-size: 13px; color: var(--ink-2); text-align: right; }
+.file-state .dirty { color: var(--warn); font-weight: 600; }
+.file-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; }
+.btn:hover { border-color: var(--ink-3); }
+.btn.primary { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.btn.primary:hover { opacity: 0.88; }
+.btn.danger { color: var(--bad); }
+.btn.small { padding: 4px 10px; font-size: 13px; }
+.link-btn { padding: 0; border: 0; background: none; cursor: pointer; color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; font-size: 14px; }
+.link-btn:hover { color: var(--ink); }
+
+.banner { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 0 0 16px; padding: 12px 16px; border-radius: 8px; background: var(--warn-bg); border: 1px solid color-mix(in srgb, var(--warn) 40%, transparent); }
+.banner p { margin: 0; flex: 1 1 280px; }
+.banner .actions { display: flex; gap: 8px; }
+
+.workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr); gap: 24px; align-items: start; }
+.col { display: grid; gap: 18px; min-width: 0; }
+.card { background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 18px; min-width: 0; }
+.card-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; margin: 0 0 6px; }
+.card-head h2 { margin: 0; font: 600 18px/1.3 var(--serif); }
+.card-head .count { font-size: 13px; color: var(--ink-2); }
+.card-head .spacer { flex: 1; }
+.card p.lead { margin: 0 0 8px; font-size: 14px; color: var(--ink-2); }
+
+/* Side cards */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 2px; padding: 0; list-style: none; }
+.chip { display: inline-flex; border: 1px solid var(--rule); border-radius: 999px; overflow: hidden; background: var(--paper); }
+.chip button { padding: 4px 10px; border: 0; background: none; cursor: pointer; font-size: 13px; font-weight: 600; }
+.chip button:hover { background: var(--hover); }
+.chip .sub { font-weight: 400; color: var(--ink-3); margin-left: 4px; }
+.empty-line { margin: 4px 0; color: var(--ink-2); font-size: 14px; }
+.changes { margin: 0; padding-left: 18px; font-size: 14px; }
+.changes li + li { margin-top: 2px; }
+
+/* The supers list */
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 10px; }
+.toolbar h2 { margin: 0 8px 0 0; font: 600 20px/1.2 var(--serif); }
+.toolbar .count { font-size: 13px; color: var(--ink-2); }
+.toolbar .spacer { flex: 1; }
+.rows { list-style: none; margin: 0; padding: 0; background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; }
+.row { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 2px 14px; align-items: start; padding: 10px 14px; }
+.row + .row { border-top: 1px solid var(--rule-soft); }
+.row:hover { background: var(--hover); }
+.row.is-selected { background: var(--hover); box-shadow: inset 3px 0 0 var(--ink); }
+.row .tc { font-variant-numeric: tabular-nums; font-size: 14px; color: var(--ink-2); padding-top: 1px; }
+.row .what { min-width: 0; padding: 0; border: 0; background: none; text-align: left; cursor: pointer; overflow-wrap: anywhere; }
+.row .what:hover .nm { text-decoration: underline; text-underline-offset: 2px; }
+.row .nm { display: block; font-weight: 600; }
+.row .tt { display: block; font-size: 14px; color: var(--ink-2); }
+.flags { grid-column: 2; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.flag { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 999px; font-size: 12.5px; font-weight: 600; }
+.flag.new { background: var(--good-bg); color: var(--good); }
+.flag.changed { background: var(--warn-bg); color: var(--warn); }
+.flag.problem { background: var(--bad-bg); color: var(--bad); }
+.flag.linked { background: var(--paper); color: var(--ink-3); font-weight: 500; border: 1px solid var(--rule); }
+.flag button { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+
+.empty { padding: 36px 24px; text-align: center; background: var(--sheet); border: 1px dashed var(--rule); border-radius: 8px; }
+.empty h2 { margin: 0 0 6px; font: 600 20px/1.3 var(--serif); }
+.empty p { margin: 0 auto 16px; max-width: 52ch; color: var(--ink-2); }
+.empty .actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+
+
+.workspace > * { min-width: 0; }
+.side { position: sticky; top: 16px; display: grid; gap: 18px; }
+.day { margin: 16px 2px 6px; font: 600 17px/1.2 var(--serif); }
+.day .sub { font: 400 14px/1.3 var(--sans, inherit); color: var(--ink-3); }
+.row { grid-template-columns: 90px minmax(0, 1fr) auto; }
+.row .kd { font-size: 13px; color: var(--ink-2); padding-top: 2px; }
+.row .rt { font-size: 13px; color: var(--ink-2); white-space: nowrap; padding-top: 2px; text-align: right; }
+.flags { grid-column: 2 / -1; }
+.todo { list-style: none; margin: 4px 0 0; padding: 0; }
+.todo li { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 6px 0; font-size: 14px; }
+.todo li + li { border-top: 1px solid var(--rule-soft); }
+.todo .sub { display: block; color: var(--ink-3); font-size: 13px; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.three { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.print-row { display: grid; gap: 8px; }
+.toolbar .btn { white-space: nowrap; }
+@media (max-width: 720px) {
+  .two, .three { grid-template-columns: 1fr; }
+  .row { grid-template-columns: minmax(0, 1fr) auto; }
+  .row .kd { grid-column: 1 / -1; }
+  .flags { grid-column: 1 / -1; }
+}
+
+.items { display: grid; gap: 10px; }
+.item { margin: 0; padding: 10px 12px 12px; border: 1px solid var(--rule); border-radius: 8px; background: var(--sheet); min-width: 0; }
+.item legend { padding: 0 4px; font-size: 13px; font-weight: 600; color: var(--ink-2); }
+.item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px 10px; }
+.item-grid .wide { grid-column: 1 / -1; }
+.item-grid .check-field { align-self: end; padding-bottom: 8px; }
+.item-foot { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; margin-top: 8px; }
+.item-foot .spacer { flex: 1; }
+.who { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 13.5px; }
+.who label { display: inline-flex; gap: 5px; align-items: center; }
+.who input { width: 15px; height: 15px; margin: 0; }
+.who .sub { color: var(--ink-3); }
+.list-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+.list-head h3 { margin: 0; }
+.picks { display: flex; flex-wrap: wrap; gap: 4px 14px; padding: 2px; }
+.picks label { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; }
+.picks input { width: 16px; height: 16px; margin: 0; flex: none; }
+
+dialog { border: 0; padding: 0; color: var(--ink); background: var(--sheet); box-shadow: 0 10px 40px rgba(10, 14, 22, 0.25); }
+dialog::backdrop { background: rgba(16, 20, 28, 0.42); }
+dialog.drawer { margin: 0 0 0 auto; width: min(600px, 100vw); height: 100dvh; max-height: 100dvh; max-width: 100vw; border-left: 1px solid var(--rule); }
+dialog.modal { width: min(560px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); border-radius: 10px; }
+dialog form { display: flex; flex-direction: column; height: 100%; max-height: inherit; }
+.dlg-head { padding: 20px 24px 12px; border-bottom: 1px solid var(--rule-soft); }
+.dlg-head h2 { margin: 0; font: 600 22px/1.25 var(--serif); }
+.dlg-body { flex: 1; overflow-y: auto; padding: 16px 24px 24px; display: grid; gap: 14px; align-content: start; }
+.dlg-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 14px 24px; border-top: 1px solid var(--rule-soft); }
+.dlg-foot .spacer { flex: 1; }
+.field { display: grid; gap: 4px; }
+.field > label, .field > .label, .group h3 { font-size: 14px; font-weight: 600; margin: 0; }
+.hint { margin: 0; font-size: 13px; color: var(--ink-3); }
+.field input, .field select, .field textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); }
+.group { display: grid; gap: 8px; padding-top: 10px; border-top: 1px solid var(--rule-soft); }
+.checks { display: grid; gap: 2px; max-height: 260px; overflow-y: auto; padding: 2px; }
+.check { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; align-items: start; padding: 5px 4px; border-radius: 6px; cursor: pointer; }
+.check:hover { background: var(--hover); }
+.check input { width: 18px; height: 18px; margin: 2px 0 0; }
+.check .who { overflow-wrap: anywhere; }
+.check .sub { margin-left: 4px; font-size: 13px; color: var(--ink-3); }
+.check .lines { display: block; font-size: 13px; color: var(--ink-3); white-space: pre-line; }
+#songList, #sourceList { max-height: none; }
+.radio-row { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.radio-row label { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; cursor: pointer; }
+pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); font-size: 13px; white-space: pre-wrap; }
+
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); max-width: calc(100vw - 32px); padding: 10px 16px; border-radius: 8px; background: var(--ink); color: var(--paper); font-size: 14px; box-shadow: 0 6px 24px rgba(10, 14, 22, 0.25); z-index: 10; }
+.toast.error { background: var(--bad); color: #ffffff; }
+.report { display: none; }
+
+@media (max-width: 900px) {
+  .workspace { grid-template-columns: 1fr; }
+  .side { position: static; }
+}
+@media (max-width: 720px) {
+  .page { padding: 0 16px 40px; }
+  .film-title { font-size: 26px; }
+  .file { align-items: flex-start; }
+  .file-state { text-align: left; }
+  .toolbar h2 { flex-basis: 100%; order: -2; }
+  .toolbar #addBtn { flex: 1 1 100%; justify-content: center; order: -1; }
+  .row { grid-template-columns: minmax(0, 1fr); }
+  .flags { grid-column: 1; }
+}
+@media print {
+  @page { size: portrait; margin: 16mm; }
+  :root { color-scheme: light; }
+  body { background: #ffffff; color: #000000; font-size: 10pt; }
+  .page, dialog, .toast { display: none !important; }
+  .report { display: block; }
+  .report h1 { margin: 0; font: 700 18pt/1.2 var(--serif); }
+  .report h2 { margin: 14pt 0 4pt; font: 700 12pt/1.2 var(--serif); break-after: avoid; page-break-after: avoid; }
+  .report .r-meta { margin: 2pt 0 10pt; }
+  .report table { width: 100%; border-collapse: collapse; }
+  .report th, .report td { padding: 4pt 5pt; border-bottom: 0.75pt solid #999999; text-align: left; vertical-align: top; }
+  .report th { font-size: 9pt; border-bottom: 1pt solid #000000; }
+  .report tr { break-inside: avoid; page-break-inside: avoid; }
+  .report .r-sub { display: block; font-size: 8.5pt; color: #333333; }
+  .report .r-note { margin-top: 14pt; font-size: 8pt; color: #333333; }
+  .report .r-report + .r-report { break-before: page; }
+  .report .r-facts th { width: 24%; font-size: 9.5pt; }
+  .report .r-c { text-align: center; width: 40pt; }
+  .report .r-notes { white-space: pre-wrap; }
+}
+</style>
+</head>
+<body>
+<div class="cant-run" id="cantRun">
+  <h1 id="cantRunTitle">Open this file in a web browser</h1>
+  <p id="cantRunText">This tool runs in Chrome, Edge, Firefox or Safari. You're seeing a preview that doesn't run it, so none of the buttons would work.</p>
+  <p id="cantRunHow">In your browser, choose File, then Open File, and pick this file. Or right-click the file and open it with your browser.</p>
+</div>
+<div class="page">
+  <header class="masthead">
+    <div>
+      <p class="tool-name">Camera and sound reports</p>
+      <h1 class="film-title" id="filmTitle">Untitled film</h1>
+      <p class="film-meta"><span id="filmMeta"></span> <button type="button" class="link-btn" id="editProjectBtn">Edit film details</button></p>
+    </div>
+    <div class="file">
+      <p class="file-state" id="fileState">Not saved to a file yet</p>
+      <div class="file-actions">
+        <button type="button" class="btn" id="newBtn">New project</button>
+        <button type="button" class="btn" id="openBtn">Open file</button>
+        <button type="button" class="btn" id="projectCsvBtn">Export project data (CSV)</button>
+        <button type="button" class="btn primary" id="saveBtn">Save file</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="banner" id="recovery" role="region" aria-label="Unsaved work" hidden>
+    <p id="recoveryText"></p>
+    <div class="actions">
+      <button type="button" class="btn primary" id="restoreBtn">Restore it</button>
+      <button type="button" class="btn" id="discardBtn">Discard it</button>
+    </div>
+  </div>
+
+  <main class="workspace">
+    <section aria-labelledby="listHead">
+      <div class="toolbar">
+        <h2 id="listHead">Camera and sound reports</h2>
+        <span class="count" id="count"></span>
+        <span class="spacer"></span>
+        <button type="button" class="btn primary" id="addBtn">Add a camera report</button>
+        <button type="button" class="btn" id="addSoundBtn">Add a sound report</button>
+        <button type="button" class="btn" id="csvBtn">Export CSV for the edit</button>
+      </div>
+      <div id="days"></div>
+      <div class="empty" id="empty" hidden>
+        <h2>No reports yet</h2>
+        <p>Log what was shot on each card: a camera report with the clips, codec, frame rate and lens notes, and a sound report with each file, its tracks and notes. Link them to the shoot day and its call sheet, print them for the shoot, and export a CSV for the edit.</p>
+        <div class="actions">
+          <button type="button" class="btn primary" id="emptyAddBtn">Add a camera report</button>
+          <button type="button" class="btn" id="emptySoundBtn">Add a sound report</button>
+          <button type="button" class="btn" id="emptyOpenBtn">Open file</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="side">
+      <section class="card" aria-labelledby="printHead">
+        <div class="card-head"><h2 id="printHead">Print</h2></div>
+        <div class="print-row">
+          <div class="field"><label for="printSel">Reports for</label><select id="printSel"></select></div>
+          <div><button type="button" class="btn" id="printBtn">Print the reports</button></div>
+        </div>
+      </section>
+      <section class="card" aria-labelledby="missHead">
+        <div class="card-head"><h2 id="missHead">Shoot days with no reports</h2><span class="count" id="missCount"></span></div>
+        <p class="lead">Days in the shooting calendar up to today.</p>
+        <ul class="todo" id="missing"></ul>
+      </section>
+    </div>
+  </main>
+
+  <footer class="foot">
+    <p>Part of the Open Filmmaker Toolkit. This page makes no network requests: everything stays on this computer until you save or export it. Uses the same project file as the other toolkit tools.</p>
+  </footer>
+</div>
+
+<dialog class="drawer" id="editor" aria-labelledby="editorTitle">
+  <form id="editorForm" method="dialog" novalidate>
+    <div class="dlg-head"><h2 id="editorTitle">Report</h2></div>
+    <div class="dlg-body">
+      <div class="three">
+        <div class="field"><label for="f-kind">Report</label><select id="f-kind"><option value="camera">Camera</option><option value="sound">Sound</option></select></div>
+        <div class="field"><label for="f-day">Shoot day</label><select id="f-day"></select></div>
+        <div class="field"><label for="f-date">Date</label><input id="f-date" type="date"></div>
+      </div>
+      <p class="hint" id="sheetNote" hidden></p>
+      <div class="three">
+        <div class="field"><label for="f-roll" id="rollLabel">Card or roll</label><input id="f-roll" type="text" placeholder="A001" autocomplete="off" required></div>
+        <div class="field"><label for="f-device" id="deviceLabel">Camera</label><input id="f-device" type="text" list="deviceList" placeholder="A camera" autocomplete="off"><datalist id="deviceList"></datalist></div>
+        <div class="field"><label for="f-operator" id="operatorLabel">Operator</label><select id="f-operator"></select></div>
+      </div>
+      <div class="three" data-for="camera">
+        <div class="field"><label for="f-codec">Codec</label><input id="f-codec" type="text" list="codecList" placeholder="ProRes 422 HQ" autocomplete="off"><datalist id="codecList"></datalist></div>
+        <div class="field"><label for="f-res">Resolution</label><input id="f-res" type="text" placeholder="3840 × 2160" autocomplete="off"></div>
+        <div class="field"><label for="f-fps">Frame rate</label><input id="f-fps" type="text" list="fpsList" placeholder="23.976" autocomplete="off"><datalist id="fpsList"><option value="23.976"><option value="24"><option value="25"><option value="29.97"><option value="30"><option value="50"><option value="59.94"></datalist></div>
+      </div>
+      <div class="field" data-for="camera"><label for="f-lens">Lens notes</label><input id="f-lens" type="text" placeholder="24–70 zoom all day; 85 for the close-ups; ND 0.9 outside" autocomplete="off"></div>
+      <div class="three" data-for="sound">
+        <div class="field"><label for="f-format">File format</label><input id="f-format" type="text" placeholder="Polyphonic WAV" autocomplete="off"></div>
+        <div class="field"><label for="f-rate">Sample rate and bit depth</label><input id="f-rate" type="text" placeholder="48 kHz, 24-bit" autocomplete="off"></div>
+        <div class="field"><label for="f-tc">Timecode and frame rate</label><input id="f-tc" type="text" placeholder="Free run, 23.976" autocomplete="off"></div>
+      </div>
+      <div class="field" data-for="sound"><label for="f-layout">Track layout</label><input id="f-layout" type="text" placeholder="1 mix, 2 boom, 3 lav (Daniel)" autocomplete="off"><p class="hint">New files start with this; change it on any file that's different.</p></div>
+      <div class="group">
+        <div class="list-head"><h3 id="clipsHead">Clips</h3><button type="button" class="btn small" data-add="clips" id="addClipBtn">Add a clip</button></div>
+        <div class="two">
+          <div class="field"><label for="f-first">First clip</label><input id="f-first" type="text" autocomplete="off"></div>
+          <div class="field"><label for="f-last">Last clip</label><input id="f-last" type="text" autocomplete="off"></div>
+        </div>
+        <p class="hint">Fill these in when you don't log every clip; otherwise they come from the list.</p>
+        <div class="items" id="clips"></div>
+      </div>
+      <div class="group">
+        <h3>Offload</h3>
+        <div class="field"><label for="f-path">Copied to</label><input id="f-path" type="text" placeholder="footage/2026-05-12/A001" autocomplete="off"><p class="hint">Where the card's files are, relative to your project file. Saving records the card in the project's files.</p></div>
+        <label class="check"><input type="checkbox" id="f-backed"> Backed up to a second drive</label>
+      </div>
+      <div class="field"><label for="f-notes">Notes</label><textarea id="f-notes" rows="2" placeholder="Problems, card errors, anything the edit should know"></textarea></div>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn danger" id="deleteBtn">Remove report</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="editorCancel">Cancel</button>
+      <button type="submit" class="btn primary" id="editorSubmit">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="projectDialog" aria-labelledby="projectDialogTitle">
+  <form id="projectForm" method="dialog">
+    <div class="dlg-head"><h2 id="projectDialogTitle">Film details</h2></div>
+    <div class="dlg-body">
+      <div class="field"><label for="p-title">Film title</label><input id="p-title" type="text" placeholder="Working title is fine"></div>
+      <div class="field"><label for="p-company">Production company</label><input id="p-company" type="text"></div>
+      <div class="field"><label for="p-producer">Producer</label><input id="p-producer" type="text"></div>
+    </div>
+    <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn" id="projectCancel">Cancel</button><button type="submit" class="btn primary">Save details</button></div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="projectCsvDialog" aria-labelledby="projectCsvTitle">
+  <form id="projectCsvForm" method="dialog">
+    <div class="dlg-head"><h2 id="projectCsvTitle">Export project data</h2></div>
+    <div class="dlg-body">
+      <div class="field">
+        <label for="projectCsvCollection">Data to export</label>
+        <select id="projectCsvCollection">
+          <option value="project">Project details</option>
+          <option value="people">People</option>
+          <option value="locations">Locations</option>
+          <option value="thirdPartyElements">Third-party elements</option>
+          <option value="contracts">Contracts</option>
+          <option value="assets">Assets</option>
+          <option value="musicCueSheet">Music cue sheet details</option>
+          <option value="callSheets">Call sheets</option>
+        </select>
+      </div>
+      <p class="hint">Exports one CSV file for the selected collection. Nested values are kept as JSON in their cell.</p>
+    </div>
+    <div class="dlg-foot">
+      <button type="submit" class="btn primary">Export CSV</button>
+      <button type="button" class="btn" id="projectCsvCancel">Cancel</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="conflictDialog" aria-labelledby="conflictTitle">
+  <form method="dialog">
+    <div class="dlg-head"><h2 id="conflictTitle">Project file changed</h2></div>
+    <div class="dlg-body">
+      <p id="conflictText">This project file changed after you opened it. Saving will replace those changes.</p>
+      <p class="hint">Your edits are still here. Choose whether to overwrite the changed file, save a separate copy, or load its latest contents. Save in one tool at a time; simultaneous saves can still race.</p>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn" id="conflictReloadBtn">Reload latest</button>
+      <button type="button" class="btn" id="conflictCopyBtn">Save a copy</button>
+      <button type="button" class="btn danger" id="conflictOverwriteBtn">Overwrite file</button>
+      <button type="button" class="btn" id="conflictCancelBtn">Keep editing</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="report" id="report" aria-hidden="true"></div>
+<input type="file" id="fileInput" accept=".json,application/json" hidden>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+(() => {
+  'use strict';
+
+  const FORMAT = 'open-filmmaker-toolkit/project';
+  const FORMAT_VERSION = 1;
+  const TOOL = 'camera-sound-reports 0.1.0';
+  const DRAFT_KEY = 'oft.camera-sound-reports.draft';
+  const PROJECT_TEXT = ['title', 'company', 'producer'];
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const str = v => (v == null ? '' : String(v));
+  const arr = v => (Array.isArray(v) ? v : []);
+  const norm = s => str(s).toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+
+  let doc = blankDoc();
+  let fileHandle = null;
+  let baselineText = null;
+  let fileName = null;
+  let dirty = false;
+
+  function blankDoc() {
+    return { format: FORMAT, formatVersion: FORMAT_VERSION, project: { title: '', company: '', producer: '', frameRate: 24, currency: 'USD' }, people: [], mediaReports: [], assets: [] };
+  }
+  function newId(prefix) {
+    if (window.crypto && crypto.randomUUID) return `${prefix}-${crypto.randomUUID()}`;
+    return `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+  }
+  function today() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  function fmtDate(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str(iso));
+    if (!m) return str(iso);
+    return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+  function daysUntil(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str(iso));
+    if (!m) return null;
+    const t = new Date(); const a = Date.UTC(t.getFullYear(), t.getMonth(), t.getDate());
+    return Math.round((Date.UTC(+m[1], +m[2] - 1, +m[3]) - a) / 86400000);
+  }
+
+
+  // ---------- Lists inside the editor ----------
+  const LISTS = {};
+  function listField(name, i, f, r) {
+    const id = `${name}-${i}-${f.k}`, v = r[f.k] == null ? '' : String(r[f.k]);
+    const attrs = `id="${id}" data-k="${f.k}"${f.placeholder ? ` placeholder="${esc(f.placeholder)}"` : ''}`;
+    if (f.type === 'checkbox') return `<div class="field check-field${f.wide ? ' wide' : ''}"><label class="check"><input ${attrs} type="checkbox"${r[f.k] ? ' checked' : ''}> ${esc(f.label)}</label></div>`;
+    const input = f.type === 'select' ? `<select ${attrs}>${(typeof f.options === 'function' ? f.options() : f.options).map(o => `<option value="${esc(o.id)}"${String(o.id) === v ? ' selected' : ''}>${esc(o.label)}</option>`).join('')}</select>`
+      : f.type === 'textarea' ? `<textarea ${attrs} rows="2">${esc(v)}</textarea>`
+      : `<input ${attrs} type="${f.type || 'text'}"${f.type === 'number' ? ' min="0" step="any" inputmode="decimal"' : ''} value="${esc(v)}" autocomplete="off"${f.list ? ` list="${f.list}"` : ''}>`;
+    return `<div class="field${f.wide ? ' wide' : ''}"><label for="${id}">${esc(f.label)}</label>${input}</div>`;
+  }
+  function drawList(name) {
+    const L = LISTS[name], rows = arr(editing[name]);
+    const people = L.who ? L.who() : [];
+    $(L.box).innerHTML = rows.map((r, i) => `<fieldset class="item" data-list="${name}" data-i="${i}"><legend>${esc(L.title(r, i))}</legend>
+      <div class="item-grid">${L.fields.map(f => listField(name, i, f, r)).join('')}</div>
+      <div class="item-foot">${L.who ? `<div class="who" role="group" aria-label="Who">${people.length ? people.map(p => `<label><input type="checkbox" data-who value="${esc(p.id)}"${arr(r.personIds).includes(p.id) ? ' checked' : ''}>${esc(p.name)}</label>`).join('') + '<span class="sub">None ticked means everyone.</span>' : '<span class="sub">Pick people above to say who this is for.</span>'}</div>` : ''}
+        <span class="spacer"></span><button type="button" class="btn small" data-remove aria-label="Remove ${esc(L.title(r, i))}">Remove</button></div></fieldset>`).join('')
+      || `<p class="hint">${esc(L.empty)}</p>`;
+  }
+  function drawLists() { for (const n of Object.keys(LISTS)) drawList(n); }
+  function wireLists(form) {
+    form.addEventListener('input', ev => listInput(ev.target));
+    form.addEventListener('change', ev => listInput(ev.target));
+    form.addEventListener('click', ev => {
+      const add = ev.target.closest('[data-add]');
+      if (add) { const n = add.dataset.add; editing[n] = [...arr(editing[n]), LISTS[n].blank()]; drawList(n); const rows = $(LISTS[n].box).querySelectorAll('.item'); const last = rows[rows.length - 1]; if (last) { const el = last.querySelector('input, select, textarea'); if (el) el.focus(); } return; }
+      const rm = ev.target.closest('[data-remove]');
+      if (rm) { const fs = rm.closest('[data-list]'); editing[fs.dataset.list].splice(Number(fs.dataset.i), 1); drawList(fs.dataset.list); }
+    });
+  }
+  function listInput(el) {
+    const fs = el.closest && el.closest('[data-list]');
+    if (!fs) return;
+    const r = editing[fs.dataset.list][Number(fs.dataset.i)];
+    if (el.hasAttribute('data-who')) { r.personIds = [...fs.querySelectorAll('[data-who]:checked')].map(x => x.value); if (!r.personIds.length) delete r.personIds; return; }
+    const k = el.dataset.k; if (!k) return;
+    if (el.type === 'checkbox') { if (el.checked) r[k] = true; else delete r[k]; }
+    else if (el.type === 'number') { if (el.value === '') delete r[k]; else r[k] = Number(el.value); }
+    else if (el.value.trim()) r[k] = el.tagName === 'SELECT' && /^\d+$/.test(el.value) && LISTS[fs.dataset.list].fields.find(f => f.k === k).numeric ? Number(el.value) : el.value; else delete r[k];
+    const lg = fs.querySelector('legend'); if (lg) lg.textContent = LISTS[fs.dataset.list].title(r, Number(fs.dataset.i));
+  }
+  // Rows with nothing typed in them are dropped on save; text is trimmed.
+  function cleanList(rows, keep) {
+    return arr(rows).map(r => { const o = {}; for (const [k, v] of Object.entries(r)) { if (typeof v === 'string') { if (v.trim()) o[k] = v.trim(); } else if (v != null) o[k] = v; } return o; })
+      .filter(r => Object.keys(r).some(k => !['id', ...(keep || [])].includes(k)));
+  }
+  // Ticks for picking people or places in the editor.
+  function picks(box, list, on, label) {
+    const set = new Set(arr(on));
+    $(box).innerHTML = list.length ? list.map(x => `<label><input type="checkbox" value="${esc(x.id)}"${set.has(x.id) ? ' checked' : ''}>${esc(label(x))}</label>`).join('') : '<span class="hint">None in the project yet.</span>';
+  }
+  const picked = box => [...$(box).querySelectorAll('input:checked')].map(i => i.value);
+
+  const KIND = { camera: 'Camera', sound: 'Sound' };
+  const CODECS = ['ProRes 422 HQ', 'ProRes 422', 'ProRes 4444', 'ProRes RAW', 'Blackmagic RAW', 'ARRIRAW', 'REDCODE RAW', 'XAVC S-I', 'XAVC HS', 'H.264', 'H.265'];
+  let editing = null, isNew = false;
+  let printKey = '';
+
+  // Fills in only what this tool needs; everything else in the file is left as it was.
+  function normalize(d) {
+    if (!d.project || typeof d.project !== 'object') d.project = {};
+    for (const k of PROJECT_TEXT) if (typeof d.project[k] !== 'string') d.project[k] = str(d.project[k]);
+    for (const k of ['people', 'mediaReports', 'assets']) if (!Array.isArray(d[k])) d[k] = [];
+    d.mediaReports = d.mediaReports.filter(r => r && typeof r === 'object');
+    for (const r of d.mediaReports) { if (!r.id) r.id = newId('report'); if (!KIND[r.kind]) r.kind = 'camera'; if (r.clips !== undefined && !Array.isArray(r.clips)) delete r.clips; }
+    d.format = FORMAT;
+    d.formatVersion = FORMAT_VERSION;
+    return d;
+  }
+  const reports = () => doc.mediaReports;
+  const entries = reports;
+  const person = id => doc.people.find(p => p && p.id === id);
+  const place = id => arr(doc.locations).find(l => l && l.id === id);
+  const asset = id => doc.assets.find(a => a && a.id === id);
+  const isDate = s => /^\d{4}-\d{2}-\d{2}$/.test(str(s));
+  const days = () => arr(doc.shootDays).filter(d => d && d.id && isDate(d.date) && d.kind !== 'travel').sort((a, b) => a.date.localeCompare(b.date));
+  const dayOf = r => (r.shootDayId ? days().find(d => d.id === r.shootDayId) : null);
+  const sheetOf = r => (r.callSheetId ? arr(doc.callSheets).find(s => s && s.id === r.callSheetId) : null);
+  const dateOf = r => (dayOf(r) ? dayOf(r).date : r.date || (sheetOf(r) || {}).date || '');
+  // Reports group by shoot day, or by date when they aren't tied to one.
+  const groupKey = r => (dayOf(r) ? `day:${r.shootDayId}` : `date:${dateOf(r) || 'none'}`);
+  function groupLabel(key) {
+    const [t, v] = [key.slice(0, key.indexOf(':')), key.slice(key.indexOf(':') + 1)];
+    if (t === 'day') { const d = days().find(x => x.id === v); return d ? `${fmtDate(d.date)}${d.title ? `: ${d.title}` : ''}` : 'Shoot day'; }
+    return v === 'none' ? 'No date' : fmtDate(v);
+  }
+  function range(r) {
+    const cs = arr(r.clips).map(c => c.clip).filter(Boolean);
+    const first = r.firstClip || cs[0], last = r.lastClip || cs[cs.length - 1];
+    return first && last && first !== last ? `${first} to ${last}` : first || last || '';
+  }
+  const unit = r => (r.kind === 'sound' ? 'file' : 'clip');
+  const settings = r => (r.kind === 'sound' ? [r.fileFormat, r.sampleRate, r.timecode] : [r.codec, r.resolution, r.frameRate && `${r.frameRate} fps`]).filter(Boolean).join(', ');
+  function nextRoll(kind, device) {
+    const same = reports().filter(r => r.kind === kind && (!device || r.device === device)).map(r => str(r.roll));
+    const last = same.filter(x => /\d+$/.test(x)).sort().pop();
+    if (!last) return kind === 'sound' ? 'S001' : 'A001';
+    const m = last.match(/^(.*?)(\d+)$/);
+    return m[1] + String(Number(m[2]) + 1).padStart(m[2].length, '0');
+  }
+
+  LISTS.clips = { box: 'clips', empty: 'Nothing logged yet.', blank: () => ($('f-kind').value === 'sound' && $('f-layout').value.trim() ? { lens: $('f-layout').value.trim() } : {}),
+    title: (r, i) => `${editing.kind === 'sound' ? 'File' : 'Clip'} ${r.clip || i + 1}${r.subject ? `: ${r.subject}` : ''}`,
+    fields: [{ k: 'clip', label: 'Clip or file name', placeholder: 'A001C001' }, { k: 'subject', label: 'What or who', placeholder: 'Daniel interview' }, { k: 'tc', label: 'Timecode', placeholder: '08:12:30:00' },
+      { k: 'lens', label: 'Lens or tracks' }, { k: 'good', label: 'Circled', type: 'checkbox' }, { k: 'notes', label: 'Notes', wide: true }] };
+
+  // ---------- Render ----------
+  function render() {
+    $('filmTitle').textContent = doc.project.title || 'Untitled film';
+    $('filmTitle').classList.toggle('is-empty', !doc.project.title);
+    $('filmMeta').textContent = [doc.project.company, doc.project.producer && `Producer: ${doc.project.producer}`].filter(Boolean).join(' · ');
+    $('fileState').innerHTML = (fileName ? esc(fileName) : 'Not saved to a file yet') + (dirty ? ' · <span class="dirty">Unsaved changes</span>' : '');
+    document.title = `${doc.project.title ? doc.project.title + ' · ' : ''}Camera and sound reports · Open Filmmaker Toolkit`;
+
+    const all = reports();
+    const cam = all.filter(r => r.kind === 'camera').length, snd = all.length - cam;
+    $('count').textContent = all.length ? `${cam} camera · ${snd} sound` : '';
+    $('empty').hidden = !!all.length;
+    $('days').hidden = !all.length;
+    $('csvBtn').hidden = $('addSoundBtn').hidden = !all.length;
+    const groups = [...new Set(all.map(groupKey))].sort((a, b) => str(dateOf(all.find(r => groupKey(r) === a)) || '9999').localeCompare(str(dateOf(all.find(r => groupKey(r) === b)) || '9999')));
+    $('days').innerHTML = groups.map(g => {
+      const rs = all.filter(r => groupKey(r) === g).sort((a, b) => a.kind.localeCompare(b.kind) || str(a.roll).localeCompare(str(b.roll)));
+      const d = dayOf(rs[0]), l = d && place(d.locationId);
+      return `<h3 class="day">${esc(groupLabel(g))}${l ? ` <span class="sub">${esc(l.name)}</span>` : ''}</h3><ol class="rows">${rs.map(r => {
+        const n = arr(r.clips).length, flags = [];
+        if (range(r)) flags.push(`<span class="flag linked">${esc(range(r))}</span>`);
+        if (settings(r)) flags.push(`<span class="flag linked">${esc(settings(r))}</span>`);
+        if (r.operatorId && person(r.operatorId)) flags.push(`<span class="flag linked">${esc(person(r.operatorId).name)}</span>`);
+        if (sheetOf(r)) flags.push('<span class="flag linked">On the call sheet’s day</span>');
+        if (!r.assetId) flags.push('<span class="flag changed">Not offloaded</span>');
+        else if (!r.backedUp) flags.push('<span class="flag changed">No backup yet</span>');
+        const good = arr(r.clips).filter(c => c.good).length;
+        return `<li class="row" data-id="${esc(r.id)}"><span class="kd">${esc(KIND[r.kind])}</span>
+          <button type="button" class="what" data-edit="${esc(r.id)}"><span class="nm">${esc(r.roll || 'Unnamed card')}${r.device ? ` · ${esc(r.device)}` : ''}</span>${r.notes ? `<span class="tt">${esc(r.notes)}</span>` : ''}</button>
+          <span class="rt">${n ? `${n} ${unit(r)}${n === 1 ? '' : 's'}${good ? `, ${good} circled` : ''}` : ''}</span>
+          <div class="flags">${flags.join('')}</div></li>`;
+      }).join('')}</ol>`;
+    }).join('');
+    const t = today();
+    const missing = days().filter(d => d.kind === 'shoot' && d.date <= t && !all.some(r => r.shootDayId === d.id));
+    $('missCount').textContent = missing.length ? String(missing.length) : '';
+    $('missing').innerHTML = missing.length ? missing.map(d => `<li><span>${esc(fmtDate(d.date))}<span class="sub">${esc(d.title || (place(d.locationId) || {}).name || '')}</span></span><button type="button" class="btn small" data-day="${esc(d.id)}">Add a report</button></li>`).join('')
+      : '<li class="empty-line">Every shoot day so far has a report.</li>';
+    if (!groups.includes(printKey) && !all.some(r => `one:${r.id}` === printKey)) printKey = groups[groups.length - 1] || '';
+    $('printSel').innerHTML = groups.map(g => `<option value="${esc(g)}"${g === printKey ? ' selected' : ''}>Every report, ${esc(groupLabel(g))}</option>` + all.filter(r => groupKey(r) === g).map(r => `<option value="one:${esc(r.id)}"${`one:${r.id}` === printKey ? ' selected' : ''}>· ${esc(KIND[r.kind])} ${esc(r.roll || '')}</option>`).join('')).join('')
+      || '<option value="">Add a report first</option>';
+    $('printSel').disabled = $('printBtn').disabled = !all.length;
+  }
+
+  // ---------- Editor ----------
+  function showKind() {
+    const k = $('f-kind').value;
+    editing.kind = k;
+    for (const el of $('editorForm').querySelectorAll('[data-for]')) el.hidden = el.dataset.for !== k;
+    $('rollLabel').textContent = k === 'sound' ? 'Card or sound roll' : 'Card or roll';
+    $('deviceLabel').textContent = k === 'sound' ? 'Recorder' : 'Camera';
+    $('f-device').placeholder = k === 'sound' ? 'Sound Devices MixPre-6' : 'A camera';
+    $('operatorLabel').textContent = k === 'sound' ? 'Sound recordist' : 'Operator';
+    $('clipsHead').textContent = k === 'sound' ? 'Files' : 'Clips';
+    $('addClipBtn').textContent = k === 'sound' ? 'Add a file' : 'Add a clip';
+    LISTS.clips.fields.find(f => f.k === 'lens').label = k === 'sound' ? 'Tracks' : 'Lens';
+    LISTS.clips.fields.find(f => f.k === 'clip').placeholder = k === 'sound' ? 'S001T03' : 'A001C001';
+    $('deviceList').innerHTML = [...new Set(reports().filter(r => r.kind === k).map(r => r.device).filter(Boolean))].map(v => `<option value="${esc(v)}">`).join('');
+    drawList('clips');
+  }
+  function showDay() {
+    const d = days().find(x => x.id === $('f-day').value);
+    if (d) $('f-date').value = d.date;
+    const s = d && d.callSheetId ? arr(doc.callSheets).find(x => x && x.id === d.callSheetId) : null;
+    $('sheetNote').hidden = !s;
+    if (s) $('sheetNote').textContent = `Linked to the call sheet for ${fmtDate(s.date)}${s.dayLabel ? `, ${s.dayLabel}` : ''}.`;
+  }
+  function openEditor(id, opts = {}) {
+    const existing = id && reports().find(r => r.id === id);
+    isNew = !existing;
+    if (existing) editing = structuredClone(existing);
+    else {
+      const last = reports().filter(r => r.kind === (opts.kind || 'camera')).slice(-1)[0] || {};
+      editing = { id: newId('report'), kind: opts.kind || 'camera' };
+      // A new report picks up the settings of the last one of its kind.
+      for (const k of ['device', 'operatorId', 'codec', 'resolution', 'frameRate', 'fileFormat', 'sampleRate', 'timecode', 'trackLayout']) if (last[k]) editing[k] = last[k];
+      editing.roll = nextRoll(editing.kind, editing.device);
+      const day = opts.day ? days().find(d => d.id === opts.day) : days().filter(d => d.date <= today()).pop();
+      if (day) { editing.shootDayId = day.id; editing.date = day.date; }
+    }
+    editing.clips = arr(editing.clips).map(c => Object.assign({}, c));
+    $('f-kind').value = editing.kind;
+    $('f-day').innerHTML = '<option value="">Not tied to a shoot day</option>' + days().map(d => `<option value="${esc(d.id)}">${esc(fmtDate(d.date))}${d.title ? `: ${esc(d.title)}` : ''}</option>`).join('');
+    $('f-operator').innerHTML = '<option value="">Not set</option>' + doc.people.filter(p => p && p.id && p.onCamera !== true).map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('');
+    $('codecList').innerHTML = CODECS.map(c => `<option value="${esc(c)}">`).join('');
+    const a = editing.assetId && asset(editing.assetId);
+    const vals = { 'f-day': dayOf(editing) ? editing.shootDayId : '', 'f-date': dateOf(editing), 'f-roll': editing.roll, 'f-device': editing.device, 'f-operator': editing.operatorId && person(editing.operatorId) ? editing.operatorId : '',
+      'f-codec': editing.codec, 'f-res': editing.resolution, 'f-fps': editing.frameRate, 'f-lens': editing.lensNotes, 'f-format': editing.fileFormat, 'f-rate': editing.sampleRate, 'f-tc': editing.timecode,
+      'f-layout': editing.trackLayout, 'f-first': editing.firstClip, 'f-last': editing.lastClip, 'f-path': a ? a.relativePath : '', 'f-notes': editing.notes };
+    for (const [k, v] of Object.entries(vals)) $(k).value = v == null ? '' : String(v);
+    $('f-backed').checked = !!editing.backedUp;
+    showKind(); showDay();
+    $('editorTitle').textContent = isNew ? `Add a ${editing.kind} report` : `${KIND[editing.kind]} report: ${editing.roll || ''}`;
+    $('deleteBtn').hidden = isNew;
+    $('editor').showModal();
+    $('f-roll').focus();
+  }
+  function saveEditor() {
+    if (!$('f-roll').value.trim()) { $('f-roll').setCustomValidity('Name the card or roll.'); $('f-roll').reportValidity(); return; }
+    const r = editing;
+    r.kind = $('f-kind').value;
+    const day = $('f-day').value;
+    if (day) { r.shootDayId = day; const d = days().find(x => x.id === day); if (d && d.callSheetId) r.callSheetId = d.callSheetId; else delete r.callSheetId; }
+    else { delete r.shootDayId; if (r.callSheetId && !(sheetOf(r) && sheetOf(r).date === $('f-date').value)) delete r.callSheetId; }
+    const camera = { codec: 'f-codec', resolution: 'f-res', frameRate: 'f-fps', lensNotes: 'f-lens' }, sound = { fileFormat: 'f-format', sampleRate: 'f-rate', timecode: 'f-tc', trackLayout: 'f-layout' };
+    const text = Object.assign({ date: 'f-date', roll: 'f-roll', device: 'f-device', operatorId: 'f-operator', firstClip: 'f-first', lastClip: 'f-last', notes: 'f-notes' }, r.kind === 'sound' ? sound : camera);
+    for (const k of Object.keys(r.kind === 'sound' ? camera : sound)) delete r[k];
+    for (const [k, id] of Object.entries(text)) { const v = $(id).value.trim(); if (v) r[k] = v; else delete r[k]; }
+    if ($('f-backed').checked) r.backedUp = true; else delete r.backedUp;
+    const clips = cleanList(r.clips).map(c => { if (!c.id) c.id = newId('clip'); return c; });
+    if (clips.length) r.clips = clips; else delete r.clips;
+    // The card itself, recorded in the project's files when you say where it was copied.
+    const path = $('f-path').value.trim();
+    const a = r.assetId && asset(r.assetId);
+    if (path) {
+      if (a) { a.relativePath = path; a.name = r.roll; }
+      else { const na = { id: newId('asset'), name: r.roll, type: r.kind === 'sound' ? 'sound card' : 'camera card', relativePath: path }; doc.assets.push(na); r.assetId = na.id; }
+    } else if (a) { if (/card$/.test(str(a.type))) doc.assets = doc.assets.filter(x => x.id !== a.id); delete r.assetId; }
+    if (isNew) reports().push(r); else reports()[reports().findIndex(x => x.id === r.id)] = r;
+    printKey = groupKey(r);
+    $('editor').close();
+    changed();
+  }
+  function removeEditing() {
+    if (!confirm(`Remove the ${editing.kind} report for ${editing.roll || 'this card'}? The files themselves aren't touched.`)) return;
+    doc.mediaReports = reports().filter(r => r.id !== editing.id);
+    const a = editing.assetId && asset(editing.assetId);
+    if (a && /card$/.test(str(a.type)) && !reports().some(r => r.assetId === a.id)) doc.assets = doc.assets.filter(x => x.id !== a.id);
+    $('editor').close();
+    changed();
+    toast(`Removed the report for ${editing.roll || 'the card'}.`);
+  }
+
+  // ---------- CSV and print ----------
+  const CSV_HEAD = ['Date', 'Shoot day', 'Report', 'Card or roll', 'Camera or recorder', 'Operator', 'Codec or format', 'Frame rate', 'Clip or file', 'What or who', 'Timecode', 'Lens or tracks', 'Circled', 'Notes', 'Copied to'];
+  function exportCsv() {
+    const rows = [];
+    for (const r of [...reports()].sort((a, b) => str(dateOf(a)).localeCompare(str(dateOf(b))) || str(a.roll).localeCompare(str(b.roll)))) {
+      const base = [dateOf(r), (dayOf(r) || {}).title, KIND[r.kind], r.roll, r.device, (person(r.operatorId) || {}).name, r.kind === 'sound' ? r.fileFormat : r.codec, r.kind === 'sound' ? r.timecode : r.frameRate];
+      const path = (asset(r.assetId) || {}).relativePath;
+      const cs = arr(r.clips);
+      if (!cs.length) rows.push([...base, range(r), '', '', r.kind === 'sound' ? r.trackLayout : r.lensNotes, '', r.notes, path]);
+      for (const c of cs) rows.push([...base, c.clip, c.subject, c.tc, c.lens, c.good ? 'Yes' : '', c.notes, path]);
+    }
+    const csv = '﻿' + [CSV_HEAD, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
+    const name = `${slug()}-camera-and-sound-reports.csv`;
+    download(csv, name, 'text/csv;charset=utf-8');
+    toast(`Exported ${rows.length} row${rows.length === 1 ? '' : 's'} to ${name}`);
+  }
+  function reportHtml(r) {
+    const d = dayOf(r), l = d && place(d.locationId), s = sheetOf(r), a = asset(r.assetId);
+    const facts = [['Date', dateOf(r) && fmtDate(dateOf(r))], ['Shoot day', d && d.title], ['Location', l && l.name], ['Call sheet', s && (s.dayLabel || fmtDate(s.date))],
+      [r.kind === 'sound' ? 'Recorder' : 'Camera', r.device], [r.kind === 'sound' ? 'Sound recordist' : 'Operator', (person(r.operatorId) || {}).name],
+      ...(r.kind === 'sound' ? [['Format', r.fileFormat], ['Sample rate', r.sampleRate], ['Timecode', r.timecode], ['Tracks', r.trackLayout]] : [['Codec', r.codec], ['Resolution', r.resolution], ['Frame rate', r.frameRate], ['Lenses', r.lensNotes]]),
+      ['Clips', range(r)], ['Copied to', a && a.relativePath], ['Backed up', r.backedUp ? 'Yes' : '']].filter(x => x[1]);
+    return `<section class="r-report"><h2>${esc(KIND[r.kind])} report: ${esc(r.roll || '')}</h2>
+      <table class="r-facts"><tbody>${facts.map(([k, v]) => `<tr><th>${esc(k)}</th><td>${esc(v)}</td></tr>`).join('')}</tbody></table>
+      ${arr(r.clips).length ? `<table><thead><tr><th>${r.kind === 'sound' ? 'File' : 'Clip'}</th><th>What or who</th><th>Timecode</th><th>${r.kind === 'sound' ? 'Tracks' : 'Lens'}</th><th class="r-c">Circled</th><th>Notes</th></tr></thead><tbody>
+        ${arr(r.clips).map(c => `<tr><td>${esc(c.clip || '')}</td><td>${esc(c.subject || '')}</td><td>${esc(c.tc || '')}</td><td>${esc(c.lens || '')}</td><td class="r-c">${c.good ? '●' : ''}</td><td>${esc(c.notes || '')}</td></tr>`).join('')}</tbody></table>` : ''}
+      ${r.notes ? `<p class="r-notes"><b>Notes:</b> ${esc(r.notes)}</p>` : ''}</section>`;
+  }
+  function renderReport() {
+    const one = printKey.startsWith('one:') && reports().find(r => `one:${r.id}` === printKey);
+    const list = one ? [one] : reports().filter(r => groupKey(r) === printKey).sort((a, b) => a.kind.localeCompare(b.kind) || str(a.roll).localeCompare(str(b.roll)));
+    if (!list.length) { $('report').innerHTML = ''; return; }
+    $('report').innerHTML = `<h1>Camera and sound reports</h1>
+      <p class="r-meta">${esc([doc.project.title, groupLabel(groupKey(list[0])), `Printed ${fmtDate(today())}`].filter(Boolean).join(' · '))}</p>
+      ${list.map(reportHtml).join('')}`;
+  }
+
+  // ---------- Project CSV ----------
+  function csvCell(v) {
+    let s = v == null ? '' : String(v);
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+    return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }
+  const csvCollections = {
+    project: 'project details', people: 'people', locations: 'locations', thirdPartyElements: 'third-party elements',
+    contracts: 'contracts', assets: 'assets', musicCueSheet: 'music cue sheet details', callSheets: 'call sheets'
+  };
+  function exportProjectCsv() {
+    const collection = $('projectCsvCollection').value;
+    const value = doc[collection];
+    const rows = Array.isArray(value) ? value : value && typeof value === 'object' ? [value] : [];
+    if (rows.some(row => !row || typeof row !== 'object' || Array.isArray(row))) {
+      toast(`Couldn't export ${csvCollections[collection]}: the project contains an invalid record.`, true);
+      return;
+    }
+    const headers = [...new Set(rows.flatMap(row => Object.keys(row)))];
+    if (!headers.length) headers.push('id');
+    const csvRows = rows.map(row => headers.map(key => { const cell = row[key]; return cell && typeof cell === 'object' ? JSON.stringify(cell) : cell; }));
+    const csv = '﻿' + [headers, ...csvRows].map(row => row.map(csvCell).join(',')).join('\r\n') + '\r\n';
+    const name = suggestedName().replace(/\.oft\.json$/i, `-${collection}.csv`);
+    download(csv, name, 'text/csv;charset=utf-8');
+    toast(`Exported ${rows.length} ${csvCollections[collection]} to ${name}`);
+  }
+
+  // ---------- Film details ----------
+  function openProjectDialog() {
+    for (const k of PROJECT_TEXT) $(`p-${k}`).value = doc.project[k] || '';
+    $('projectDialog').showModal();
+    $('p-title').focus();
+  }
+  function saveProjectDialog() {
+    for (const k of PROJECT_TEXT) doc.project[k] = $(`p-${k}`).value.trim();
+    $('projectDialog').close();
+    changed();
+  }
+
+  // ---------- Dirty state & recovery draft ----------
+  function changed() { dirty = true; saveDraft(); render(); }
+  function saveDraft() {
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ doc, fileName, baselineText, at: new Date().toISOString() })); } catch { /* the file on disk is the real copy */ }
+  }
+  function clearDraft() {
+    try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+    $('recovery').hidden = true;
+  }
+  function checkDraft() {
+    let draft = null;
+    try { draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); } catch { draft = null; }
+    if (!draft || !draft.doc || draft.doc.format !== FORMAT) return;
+    const n = Array.isArray(draft.doc.mediaReports) ? draft.doc.mediaReports.length : 0;
+    if (!n && !(draft.doc.project && draft.doc.project.title)) { clearDraft(); return; }
+    const when = draft.at ? new Date(draft.at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'earlier';
+    const title = draft.doc.project && draft.doc.project.title ? `"${draft.doc.project.title}"` : 'an untitled project';
+    $('recoveryText').textContent = `You have unsaved changes to ${title} from ${when} (${n} report${n === 1 ? '' : 's'}). Restore them, or discard them and start fresh.`;
+    $('recovery').hidden = false;
+    $('restoreBtn').onclick = () => {
+      doc = normalize(draft.doc); fileName = draft.fileName || null; fileHandle = null;
+      baselineText = typeof draft.baselineText === 'string' ? draft.baselineText : null; dirty = true;
+      $('recovery').hidden = true; render();
+      toast(fileName ? `Restored. Save to write the changes back to ${fileName}.` : 'Restored. Save to keep it as a file.');
+    };
+    $('discardBtn').onclick = () => { clearDraft(); toast('Discarded the unsaved changes.'); };
+  }
+
+  // ---------- Files ----------
+  const pickerTypes = [{ description: 'Film project file', accept: { 'application/json': ['.json'] } }];
+  function slug() {
+    return (doc.project.title || 'untitled-film').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'untitled-film';
+  }
+  const suggestedName = () => `${slug()}.oft.json`;
+  function serialize() {
+    doc.savedAt = new Date().toISOString();
+    doc.savedBy = TOOL;
+    return JSON.stringify(doc, null, 2) + '\n';
+  }
+  function download(text, name, type) {
+    const url = URL.createObjectURL(new Blob([text], { type }));
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  function afterSave(name, downloaded, content) {
+    fileName = name;
+    if (downloaded) fileHandle = null;
+    baselineText = content;
+    dirty = false; clearDraft(); render();
+    toast(downloaded ? `Downloaded ${name}. Keep it with your project files and open it here next time.` : `Saved to ${name}`);
+  }
+  async function writeProjectFile(handle, content) {
+    try {
+      const writable = await handle.createWritable();
+      await writable.write(content);
+      await writable.close();
+    } catch (err) {
+      if (err.name !== 'AbortError') toast(`Couldn't save the file: ${err.message}`, true);
+      return;
+    }
+    fileHandle = handle;
+    afterSave(handle.name, false, content);
+  }
+  function saveCopy(content) {
+    const base = (fileName || suggestedName()).replace(/\.oft\.json$/i, '');
+    const name = `${base}-copy.oft.json`;
+    download(content, name, 'application/json');
+    afterSave(name, true, content);
+  }
+  async function reloadLatest(handle) {
+    try {
+      const file = await handle.getFile();
+      loadText(await file.text(), handle.name, handle);
+    } catch (err) {
+      toast(`Couldn't reload the file: ${err.message}`, true);
+    }
+  }
+  function showConflictDialog(content, observedText, unknownBaseline = false) {
+    const handle = fileHandle;
+    dirty = true;
+    saveDraft();
+    render();
+    $('conflictText').textContent = unknownBaseline
+      ? `The tool can't verify whether ${handle.name} changed since your recovery copy was made. Your edits are not saved.`
+      : `${handle.name} changed after you opened it. Your edits are not saved. Overwriting replaces the newer file.`;
+    $('conflictDialog').showModal();
+    $('conflictReloadBtn').onclick = () => { $('conflictDialog').close(); reloadLatest(handle); };
+    $('conflictCopyBtn').onclick = () => { $('conflictDialog').close(); saveCopy(content); };
+    $('conflictOverwriteBtn').onclick = async () => {
+      $('conflictDialog').close();
+      let latestText;
+      try { latestText = await (await handle.getFile()).text(); }
+      catch (err) { toast(`Couldn't check the file before overwriting: ${err.message}`, true); return; }
+      if (latestText !== observedText) {
+        toast('The file changed again. Review the updated conflict warning before overwriting.', true);
+        showConflictDialog(content, latestText);
+        return;
+      }
+      await writeProjectFile(handle, content);
+    };
+    $('conflictCancelBtn').onclick = () => $('conflictDialog').close();
+  }
+  async function saveFile() {
+    const out = serialize();
+    if (fileHandle) {
+      let currentText;
+      try { currentText = await (await fileHandle.getFile()).text(); }
+      catch (err) { toast(`Couldn't check the file before saving: ${err.message}`, true); return; }
+      if (baselineText === null || currentText !== baselineText) { showConflictDialog(out, currentText, baselineText === null); return; }
+      await writeProjectFile(fileHandle, out);
+      return;
+    }
+    if (window.showSaveFilePicker && window.self === window.top) {
+      try {
+        const h = await window.showSaveFilePicker({ suggestedName: fileName || suggestedName(), types: pickerTypes });
+        if (h.name === fileName) {
+          const currentText = await (await h.getFile()).text();
+          if (baselineText === null || currentText !== baselineText) { fileHandle = h; showConflictDialog(out, currentText, baselineText === null); return; }
+        }
+        await writeProjectFile(h, out);
+      } catch (err) { if (err.name !== 'AbortError') toast(`Couldn't save the file: ${err.message}`, true); }
+      return;
+    }
+    const name = fileName || suggestedName();
+    download(out, name, 'application/json');
+    afterSave(name, true, out);
+  }
+  function loadText(text, name, handle) {
+    let data;
+    try { data = JSON.parse(text); } catch { toast(`Couldn't open ${name}: it isn't a project file.`, true); return; }
+    if (!data || data.format !== FORMAT) { toast(`Couldn't open ${name}: it isn't an Open Filmmaker Toolkit project file.`, true); return; }
+    if (Number(data.formatVersion) > FORMAT_VERSION) { toast(`Couldn't open ${name}: it was saved by a newer version of the toolkit. Get the latest version of this tool.`, true); return; }
+    doc = normalize(data); fileHandle = handle; baselineText = text; fileName = name; dirty = false;
+    clearDraft(); render();
+    const n = entries().length;
+    toast(`Opened ${name}: ${n ? `${n} report${n === 1 ? '' : 's'}` : 'no reports yet'}`);
+  }
+  async function openFile() {
+    if (dirty && !confirm('You have unsaved changes. Open another file and lose them?')) return;
+    if (window.showOpenFilePicker && window.self === window.top) {
+      try { const [h] = await window.showOpenFilePicker({ types: pickerTypes }); const f = await h.getFile(); loadText(await f.text(), f.name, h); }
+      catch (err) { if (err.name !== 'AbortError') toast(`Couldn't open the file: ${err.message}`, true); }
+      return;
+    }
+    $('fileInput').click();
+  }
+  function newProject() {
+    if (dirty && !confirm('You have unsaved changes. Start a new project and lose them?')) return;
+    doc = normalize(blankDoc()); fileHandle = null; baselineText = null; fileName = null; dirty = false;
+    clearDraft(); render(); openProjectDialog();
+  }
+
+  let toastTimer = null;
+  function toast(msg, isError) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.classList.toggle('error', !!isError);
+    t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.hidden = true; }, isError ? 7000 : 4200);
+  }
+
+  // ---------- Wiring ----------
+  function init() {
+    doc = normalize(doc);
+    $('newBtn').onclick = newProject;
+    $('openBtn').onclick = openFile;
+    $('saveBtn').onclick = saveFile;
+    $('editProjectBtn').onclick = openProjectDialog;
+    $('filmTitle').onclick = openProjectDialog;
+    $('printBtn').onclick = () => { renderReport(); window.print(); };
+    window.addEventListener('beforeprint', renderReport);
+    $('projectCsvBtn').onclick = () => $('projectCsvDialog').showModal();
+    $('projectCsvCancel').onclick = () => $('projectCsvDialog').close();
+    $('projectCsvForm').addEventListener('submit', ev => { ev.preventDefault(); exportProjectCsv(); $('projectCsvDialog').close(); });
+    $('fileInput').addEventListener('change', async () => {
+      const f = $('fileInput').files[0];
+      if (f) loadText(await f.text(), f.name, null);
+      $('fileInput').value = '';
+    });
+    $('projectForm').addEventListener('submit', ev => { ev.preventDefault(); saveProjectDialog(); });
+    $('projectCancel').onclick = () => $('projectDialog').close();
+    $('addBtn').onclick = () => openEditor(null);
+    $('addSoundBtn').onclick = () => openEditor(null, { kind: 'sound' });
+    $('emptyAddBtn').onclick = () => openEditor(null);
+    $('emptySoundBtn').onclick = () => openEditor(null, { kind: 'sound' });
+    $('emptyOpenBtn').onclick = openFile;
+    $('csvBtn').onclick = exportCsv;
+    $('days').addEventListener('click', ev => { const b = ev.target.closest('[data-edit]'); if (b) openEditor(b.dataset.edit); });
+    $('missing').addEventListener('click', ev => { const b = ev.target.closest('[data-day]'); if (b) openEditor(null, { day: b.dataset.day }); });
+    $('printSel').addEventListener('change', () => { printKey = $('printSel').value; });
+    wireLists($('editorForm'));
+    $('f-kind').addEventListener('change', showKind);
+    $('f-day').addEventListener('change', showDay);
+    $('editorForm').addEventListener('submit', ev => { ev.preventDefault(); saveEditor(); });
+    $('editorForm').addEventListener('input', ev => { if (ev.target.setCustomValidity) ev.target.setCustomValidity(''); });
+    $('editorCancel').onclick = () => $('editor').close();
+    $('deleteBtn').onclick = removeEditing;
+
+    document.addEventListener('keydown', ev => {
+      const mod = ev.metaKey || ev.ctrlKey;
+      if (mod && ev.key.toLowerCase() === 's') { ev.preventDefault(); saveFile(); }
+      else if (mod && ev.key.toLowerCase() === 'o') { ev.preventDefault(); openFile(); }
+    });
+    window.addEventListener('beforeunload', ev => { if (dirty) { ev.preventDefault(); ev.returnValue = ''; } });
+    render();
+    checkDraft();
+  }
+
+  if (typeof HTMLDialogElement !== 'function' || typeof HTMLDialogElement.prototype.showModal !== 'function' || typeof structuredClone !== 'function') {
+    $('cantRunTitle').textContent = 'This browser is too old to run this tool';
+    $('cantRunText').textContent = 'Update to a current version of Chrome, Edge, Firefox or Safari, then open this file again.';
+    $('cantRunHow').hidden = true;
+    return;
+  }
+  document.documentElement.classList.remove('no-js');
+  window.addEventListener('error', ev => toast(`Something went wrong: ${ev.message}. Save your work, then reload the page.`, true));
+  window.addEventListener('unhandledrejection', ev => toast(`Something went wrong: ${ev.reason && ev.reason.message ? ev.reason.message : ev.reason}. Save your work, then reload the page.`, true));
+  init();
+})();
+</script>
+</body>
+</html>
