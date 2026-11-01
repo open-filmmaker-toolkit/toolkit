@@ -1,6 +1,6 @@
 # Tools
 
-The tools we build, by production phase. Each one is a single page that runs in your browser on the shared project file, with nothing to install and nothing sent anywhere. 23 are ready to use and 39 are planned.
+The tools we build, by production phase. Each one is a single page that runs in your browser on the shared project file, with nothing to install and nothing sent anywhere. 25 are ready to use and 37 are planned.
 
 - **Ready to use:** linked tools. Each has a README with what it does.
 - **Planned:** each has an issue. Comment there if you need the tool or want to help build it. Order of work is in [ROADMAP.md](ROADMAP.md).
@@ -38,8 +38,8 @@ Looking for other free, open-source software for filmmaking, such as editing, so
 | [Interview prep](tools/interview-prep/) | Preparing each interview: research, the story beats to cover, questions in order with must-asks marked, and a one-page guide to print | First version |
 | [Location scout sheet](tools/location-scout/) | Recording what you learn on a scout, with your photos, linked to the place and its release, and printing a scout report for the crew | First version |
 | [Deal memos](tools/deal-memos/) | Filling in crew deal memos from the project, printing them to sign, keeping the signed copy and sending the rates to the budget | First version |
-| Gear list | List the gear for a shoot: what you own, what you're renting and from whom, and what it costs. | Planned, [#57](https://github.com/open-filmmaker-toolkit/toolkit/issues/57) |
-| COI and permit tracker | Track certificates of insurance and filming permits: who needs one, who issued it, and when it expires. | Planned, [#58](https://github.com/open-filmmaker-toolkit/toolkit/issues/58) |
+| [Gear list](tools/gear-list/) | List the gear for a shoot by department: what you own, borrow and rent, with rates, values and serial numbers, packed by shoot day. | First version |
+| [COI and permit tracker](tools/coi-permit-tracker/) | Track certificates of insurance and filming permits: who issued them, who's named on them, when they expire, and what's missing before each shoot day. | First version |
 | Travel sheet | Give everyone on a trip one sheet with flights, hotels, ground transport and contacts. | Planned, [#59](https://github.com/open-filmmaker-toolkit/toolkit/issues/59) |
 | Risk and hostile-environment plans | Plan for risk on a shoot, especially in hostile environments: hazards, how you'll reduce them, emergency contacts and check-ins. | Planned, [#60](https://github.com/open-filmmaker-toolkit/toolkit/issues/60) |
 | Security checklist | Protect footage, sources and devices on sensitive productions, with a checklist for digital and physical security. | Planned, [#61](https://github.com/open-filmmaker-toolkit/toolkit/issues/61) |

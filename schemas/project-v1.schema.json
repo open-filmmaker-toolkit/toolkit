@@ -220,6 +220,10 @@
         "$ref": "#/$defs/scout"
       },
       "description": "Location scouts, kept by the location scout sheet."
+    },
+    "gear": {
+      "$ref": "#/$defs/gear",
+      "description": "Gear by department and the packages for each shoot day, kept by the gear list. A record rather than a collection."
     }
   },
   "additionalProperties": true,
@@ -637,6 +641,48 @@
             "$ref": "#/$defs/id"
           },
           "description": "Deal memos: the budget lines this memo keeps up to date, rate first, then kit fee."
+        },
+        "vendor": {
+          "type": "string",
+          "description": "Certificates of insurance: the vendor or location the certificate is for."
+        },
+        "insurer": {
+          "type": "string",
+          "description": "Certificates of insurance: the insurer or broker."
+        },
+        "namedOn": {
+          "type": "string",
+          "description": "Certificates of insurance: who is named on it, such as the certificate holder and additional insured."
+        },
+        "issuer": {
+          "type": "string",
+          "description": "Permits: the issuing office."
+        },
+        "reference": {
+          "type": "string",
+          "description": "Permits: the permit number."
+        },
+        "conditions": {
+          "type": "string",
+          "description": "Permits: the conditions attached."
+        },
+        "requestedDate": {
+          "type": "string",
+          "format": "date",
+          "description": "Certificates: requested on. Permits: applied for on."
+        },
+        "receivedDate": {
+          "type": "string",
+          "format": "date",
+          "description": "Certificates: received on. Permits: issued on."
+        },
+        "shootDayIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true,
+          "description": "Certificates and permits: the shoot days in shootDays they cover."
         }
       },
       "additionalProperties": true
@@ -2282,6 +2328,118 @@
           },
           "uniqueItems": true,
           "description": "Scout photos in assets."
+        }
+      },
+      "additionalProperties": true
+    },
+    "gear": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/gearItem"
+          }
+        },
+        "packages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/gearPackage"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "gearItem": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string"
+        },
+        "department": {
+          "type": "string",
+          "enum": [
+            "camera",
+            "lenses",
+            "sound",
+            "lighting",
+            "grip",
+            "data",
+            "other"
+          ]
+        },
+        "quantity": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "How many; 1 when unset."
+        },
+        "source": {
+          "type": "string",
+          "enum": [
+            "owned",
+            "borrowed",
+            "rental"
+          ]
+        },
+        "from": {
+          "type": "string",
+          "description": "The owner, who lent it, or the rental house."
+        },
+        "dayRate": {
+          "type": "number",
+          "minimum": 0
+        },
+        "weekRate": {
+          "type": "number",
+          "minimum": 0
+        },
+        "value": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Replacement value of one unit, for the insurance schedule."
+        },
+        "serial": {
+          "type": "string",
+          "description": "Serial numbers, separated by commas."
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "gearPackage": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "shootDayId": {
+          "$ref": "#/$defs/id",
+          "description": "The shoot day in shootDays."
+        },
+        "name": {
+          "type": "string"
+        },
+        "itemIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true,
+          "description": "Gear items going that day."
+        },
+        "notes": {
+          "type": "string"
         }
       },
       "additionalProperties": true

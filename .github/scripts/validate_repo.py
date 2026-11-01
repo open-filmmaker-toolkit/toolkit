@@ -191,12 +191,24 @@ for sample in sorted((ROOT / "samples").glob("*.oft.json")):
         if set(scout.get("photoIds", [])) - asset_ids:
             fail(f"{name}: scout {scout.get('id')} photoIds points to missing assets")
     budget_line_ids = {l.get("id") for l in (data.get("budget") or {}).get("lines", []) if isinstance(l, dict)}
+    day_ids = {d.get("id") for d in data.get("shootDays", []) if isinstance(d, dict)}
+    gear = data.get("gear") if isinstance(data.get("gear"), dict) else {}
+    gear_ids = [i.get("id") for i in gear.get("items", []) if isinstance(i, dict)]
+    if len(gear_ids) != len(set(gear_ids)):
+        fail(f"{name}: duplicate IDs in gear items")
+    for package in gear.get("packages", []):
+        if package.get("shootDayId") and package["shootDayId"] not in day_ids:
+            fail(f"{name}: gear package {package.get('id')} shootDayId points to a missing shoot day")
+        if set(package.get("itemIds", [])) - set(gear_ids):
+            fail(f"{name}: gear package {package.get('id')} itemIds points to missing gear")
     for contract in data.get("contracts", []):
         if contract.get("type") == "deal memo":
             if len(contract.get("personIds", [])) != 1:
                 fail(f"{name}: deal memo {contract.get('id')} should name one person")
             if set(contract.get("budgetLineIds", [])) - budget_line_ids:
                 fail(f"{name}: deal memo {contract.get('id')} budgetLineIds points to missing budget lines")
+        if set(contract.get("shootDayIds", [])) - day_ids:
+            fail(f"{name}: contract {contract.get('id')} shootDayIds points to missing shoot days")
     treatment = data.get("treatment") if isinstance(data.get("treatment"), dict) else {}
     version_ids = [v.get("id") for v in treatment.get("versions", []) if isinstance(v, dict)]
     if len(version_ids) != len(set(version_ids)):
