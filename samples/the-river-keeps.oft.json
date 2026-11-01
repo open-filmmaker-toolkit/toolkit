@@ -3434,5 +3434,132 @@
         }
       ]
     }
+  ],
+  "screenings": [
+    {
+      "id": "screening-grain-elevator",
+      "title": "Community preview",
+      "date": "2026-11-14",
+      "place": "Grain elevator, Hammond",
+      "locationId": "location-grain-elevator",
+      "notes": "Free, with a conversation afterward."
+    },
+    {
+      "id": "screening-library",
+      "title": "Library premiere",
+      "date": "2027-02-06",
+      "place": "Hammond Public Library"
+    }
+  ],
+  "pressOutlets": [
+    {
+      "id": "outlet-gazette",
+      "name": "Hammond Gazette",
+      "type": "news",
+      "website": "https://gazette.example.org",
+      "notes": "Weekly paper. Covers the river and local history.",
+      "contacts": [
+        {
+          "id": "contact-gazette-lee",
+          "name": "Marguerite Lee",
+          "beat": "Local history",
+          "email": "mlee@gazette.example.org"
+        }
+      ],
+      "screeners": [
+        {
+          "id": "screener-gazette-1",
+          "date": "2026-10-20",
+          "contactId": "contact-gazette-lee",
+          "url": "https://screeners.example.org/river-keeps"
+        }
+      ],
+      "rsvps": [
+        {
+          "id": "rsvp-gazette-1",
+          "screeningId": "screening-grain-elevator",
+          "contactId": "contact-gazette-lee",
+          "status": "yes"
+        }
+      ],
+      "coverage": [
+        {
+          "id": "coverage-gazette-1",
+          "contactId": "contact-gazette-lee",
+          "date": "2026-11-02",
+          "kind": "article",
+          "headline": "A film about the river that floods every spring",
+          "url": "https://gazette.example.org/river-film"
+        }
+      ]
+    },
+    {
+      "id": "outlet-river-pod",
+      "name": "Rivers Remembered podcast",
+      "type": "podcast",
+      "notes": "Interviews filmmakers about water stories.",
+      "contacts": [
+        {
+          "id": "contact-pod-host",
+          "name": "Dev Anand",
+          "beat": "Environment and water",
+          "email": "dev@riverspod.example.org"
+        }
+      ]
+    }
+  ],
+  "partners": [
+    {
+      "id": "partner-library",
+      "name": "Hammond Public Library",
+      "type": "culture",
+      "stage": "partnering",
+      "website": "https://library.example.org",
+      "notes": "Hosting the library premiere and a discussion guide display.",
+      "contacts": [
+        {
+          "id": "contact-library-1",
+          "name": "Priya Nair",
+          "title": "Program coordinator",
+          "email": "pnair@library.example.org"
+        }
+      ],
+      "commitments": [
+        {
+          "id": "commitment-library-1",
+          "text": "Send the screening kit and poster",
+          "due": "2026-12-15",
+          "by": "us"
+        },
+        {
+          "id": "commitment-library-2",
+          "text": "Book the community room",
+          "due": "2026-12-01",
+          "done": true,
+          "by": "them"
+        }
+      ],
+      "screeningIds": [
+        "screening-library"
+      ]
+    },
+    {
+      "id": "partner-river-trust",
+      "name": "River Valley Trust",
+      "type": "nonprofit",
+      "stage": "talking",
+      "notes": "Interested in a joint panel about flood planning.",
+      "commitments": [
+        {
+          "id": "commitment-trust-1",
+          "text": "Share the panel outline",
+          "due": "2026-11-20",
+          "by": "us"
+        }
+      ],
+      "screeningIds": [
+        "screening-grain-elevator"
+      ]
+    }
   ]
 }

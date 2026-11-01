@@ -82,6 +82,8 @@ Everything else in [TOOLS.md](TOOLS.md), prioritized by what contributors ask fo
 - [x] Interview log: who, when, where and which cards, timestamped moments with favorites and story beats, the person's release status and the transcript, on the same interview records as interview prep, with print and CSV for the paper edit ([#63](https://github.com/open-filmmaker-toolkit/toolkit/issues/63))
 - [x] Name supers list: names from the project, near-miss spellings flagged, changes since the last export to graphics, CSV export ([#71](https://github.com/open-filmmaker-toolkit/toolkit/issues/71))
 - [x] Field journal: dated entries of what happened, what you learned and story ideas, tagged with people and locations, searchable, linked to a shoot day's call sheet, with Markdown export and print ([#66](https://github.com/open-filmmaker-toolkit/toolkit/issues/66))
+- [x] Press list: outlets and the people who cover them by beat, screener links sent, screening RSVPs, coverage with links and dates, and CSV, on a screenings list shared with the partner CRM ([#81](https://github.com/open-filmmaker-toolkit/toolkit/issues/81))
+- [x] Partner CRM: organizations and their contacts, commitments and next steps with due dates and who owes them, links to screenings, print and CSV ([#90](https://github.com/open-filmmaker-toolkit/toolkit/issues/90))
 
 Finding a third maintainer is on hold. Basil and Alex maintain the project for now ([#8](https://github.com/open-filmmaker-toolkit/toolkit/issues/8), closed).
 

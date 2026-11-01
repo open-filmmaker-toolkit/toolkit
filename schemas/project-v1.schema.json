@@ -214,6 +214,27 @@
       },
       "description": "Dated journal entries tagged with people and locations and linked to call sheets, kept by the field journal."
     },
+    "screenings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/screening"
+      },
+      "description": "Screenings and events, shared by the press list and the partner CRM, which add and link them; they can name a location."
+    },
+    "pressOutlets": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/pressOutlet"
+      },
+      "description": "Press outlets with contacts by beat, screeners sent, screening RSVPs and coverage, kept by the press list."
+    },
+    "partners": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/partner"
+      },
+      "description": "Outreach partners with contacts, commitments and the screenings they are part of, kept by the partner CRM."
+    },
     "scouts": {
       "type": "array",
       "items": {
@@ -2052,6 +2073,300 @@
           },
           "uniqueItems": true,
           "description": "Applications in grants."
+        }
+      },
+      "additionalProperties": true
+    },
+    "screening": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "title": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string",
+          "format": "date"
+        },
+        "place": {
+          "type": "string",
+          "description": "Venue or city, as text."
+        },
+        "locationId": {
+          "$ref": "#/$defs/id"
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "pressOutlet": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "news",
+            "online",
+            "broadcast",
+            "podcast",
+            "newsletter",
+            "trade",
+            "freelance",
+            "other"
+          ]
+        },
+        "website": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        },
+        "contacts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "name": {
+                "type": "string"
+              },
+              "beat": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string"
+              },
+              "phone": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "screeners": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "date": {
+                "type": "string",
+                "format": "date"
+              },
+              "contactId": {
+                "$ref": "#/$defs/id"
+              },
+              "url": {
+                "type": "string"
+              },
+              "note": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "rsvps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "screeningId": {
+                "$ref": "#/$defs/id"
+              },
+              "contactId": {
+                "$ref": "#/$defs/id"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "invited",
+                  "yes",
+                  "no",
+                  "attended"
+                ]
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "coverage": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "contactId": {
+                "$ref": "#/$defs/id"
+              },
+              "date": {
+                "type": "string",
+                "format": "date"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "review",
+                  "article",
+                  "interview",
+                  "mention",
+                  "other"
+                ]
+              },
+              "headline": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "partner": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "community",
+            "nonprofit",
+            "education",
+            "culture",
+            "government",
+            "faith",
+            "company",
+            "other"
+          ]
+        },
+        "stage": {
+          "type": "string",
+          "enum": [
+            "prospect",
+            "talking",
+            "partnering",
+            "past"
+          ]
+        },
+        "website": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        },
+        "contacts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "name": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string"
+              },
+              "phone": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "commitments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "text": {
+                "type": "string"
+              },
+              "due": {
+                "type": "string",
+                "format": "date"
+              },
+              "done": {
+                "type": "boolean"
+              },
+              "by": {
+                "type": "string",
+                "enum": [
+                  "us",
+                  "them"
+                ]
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "screeningIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          }
         }
       },
       "additionalProperties": true

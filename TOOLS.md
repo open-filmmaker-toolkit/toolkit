@@ -1,6 +1,6 @@
 # Tools
 
-The tools we build, by production phase. Each one is a single page that runs in your browser on the shared project file, with nothing to install and nothing sent anywhere. 30 are ready to use and 32 are planned.
+The tools we build, by production phase. Each one is a single page that runs in your browser on the shared project file, with nothing to install and nothing sent anywhere. 32 are ready to use and 30 are planned.
 
 - **Ready to use:** linked tools. Each has a README with what it does.
 - **Planned:** each has an issue. Comment there if you need the tool or want to help build it. Order of work is in [ROADMAP.md](ROADMAP.md).
@@ -87,7 +87,7 @@ Looking for other free, open-source software for filmmaking, such as editing, so
 | Festival submission tracker | Track every submission: deadline, fee, platform, status and result. | Planned, [#78](https://github.com/open-filmmaker-toolkit/toolkit/issues/78) |
 | EPK and press notes builder | Build press notes and an electronic press kit: synopsis, director's statement, bios, credits, stills and contacts. | Planned, [#79](https://github.com/open-filmmaker-toolkit/toolkit/issues/79) |
 | Stills library | Organize production stills and key art, with captions, photo credits and approvals. | Planned, [#80](https://github.com/open-filmmaker-toolkit/toolkit/issues/80) |
-| Press list | Keep press and critic contacts, what you've sent them, and the coverage that comes back. | Planned, [#81](https://github.com/open-filmmaker-toolkit/toolkit/issues/81) |
+| [Press list](tools/press-list/) | Keeping a press list: outlets and the people who cover them by beat, screener links sent, screening RSVPs and the coverage that comes back, with CSV export | First version |
 | Awards and social calendars | Plan awards campaigns and social posts around festival and release dates. | Planned, [#82](https://github.com/open-filmmaker-toolkit/toolkit/issues/82) |
 
 ## Release & Distribution
@@ -106,7 +106,7 @@ Looking for other free, open-source software for filmmaking, such as editing, so
 | Tool | Use it for | Status |
 | --- | --- | --- |
 | Theory of change builder | Map how the film's campaign leads to change: audiences, activities, outcomes, and how you'll measure them. | Planned, [#89](https://github.com/open-filmmaker-toolkit/toolkit/issues/89) |
-| Partner CRM | Track impact partners: organizations, contacts, commitments and the screenings you've done together. | Planned, [#90](https://github.com/open-filmmaker-toolkit/toolkit/issues/90) |
+| [Partner CRM](tools/partner-crm/) | Tracking impact partners: organizations and their contacts, commitments and next steps with due dates, and the screenings you've done together, with CSV export | First version |
 | Discussion guide builder | Write a discussion guide for screenings: synopsis, themes, questions and resources. | Planned, [#91](https://github.com/open-filmmaker-toolkit/toolkit/issues/91) |
 | Screening kit builder | Put together a kit for screening hosts: how to screen the film, tech specs, promotional materials and the discussion guide. | Planned, [#92](https://github.com/open-filmmaker-toolkit/toolkit/issues/92) |
 | Impact report | Report on the campaign: screenings, audiences, partners and outcomes against the theory of change. | Planned, [#93](https://github.com/open-filmmaker-toolkit/toolkit/issues/93) |
