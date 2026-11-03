@@ -208,6 +208,31 @@ for sample in sorted((ROOT / "samples").glob("*.oft.json")):
             fail(f"{name}: expense {exp.get('id')} personId points to a missing person")
         if exp.get("receiptAssetId") and exp["receiptAssetId"] not in asset_ids_all:
             fail(f"{name}: expense {exp.get('id')} receiptAssetId points to a missing asset")
+    screening_list = [x for x in data.get("screenings", []) if isinstance(x, dict)]
+    screening_ids = {x.get("id") for x in screening_list}
+    if len(screening_ids) != len(screening_list):
+        fail(f"{name}: duplicate IDs in screenings")
+    for item in screening_list:
+        if item.get("locationId") and item["locationId"] not in ids["locations"]:
+            fail(f"{name}: screening {item.get('id')} locationId points to a missing location")
+    outlet_list = [x for x in data.get("pressOutlets", []) if isinstance(x, dict)]
+    if len({x.get("id") for x in outlet_list}) != len(outlet_list):
+        fail(f"{name}: duplicate IDs in pressOutlets")
+    for outlet in outlet_list:
+        contact_ids = {c.get("id") for c in outlet.get("contacts", []) if isinstance(c, dict)}
+        for key in ("screeners", "rsvps", "coverage"):
+            for rec in outlet.get(key, []):
+                if rec.get("contactId") and rec["contactId"] not in contact_ids:
+                    fail(f"{name}: outlet {outlet.get('id')} {key} record {rec.get('id')} contactId points to a missing contact")
+        for rec in outlet.get("rsvps", []):
+            if rec.get("screeningId") not in screening_ids:
+                fail(f"{name}: outlet {outlet.get('id')} rsvp {rec.get('id')} screeningId points to a missing screening")
+    partner_list = [x for x in data.get("partners", []) if isinstance(x, dict)]
+    if len({x.get("id") for x in partner_list}) != len(partner_list):
+        fail(f"{name}: duplicate IDs in partners")
+    for partner in partner_list:
+        if set(partner.get("screeningIds", [])) - screening_ids:
+            fail(f"{name}: partner {partner.get('id')} screeningIds points to missing screenings")
     asset_ids = {a.get("id") for a in data.get("assets", []) if isinstance(a, dict)}
     scout_ids = [x.get("id") for x in data.get("scouts", []) if isinstance(x, dict)]
     if len(scout_ids) != len(set(scout_ids)):

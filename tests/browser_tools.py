@@ -19,10 +19,10 @@ from playwright.sync_api import sync_playwright
 
 root = pathlib.Path(__file__).resolve().parents[1]
 sample = (root / 'samples/the-river-keeps.oft.json').read_text()
-TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan', 'funder-crm', 'cash-flow', 'shooting-calendar', 'interview-prep', 'field-journal', 'location-scout', 'deal-memos', 'gear-list', 'coi-permit-tracker', 'travel-sheet', 'risk-plan', 'security-checklist', 'camera-sound-reports', 'interview-log', 'daily-production-report', 'expense-log', 'festival-submissions']
+TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan', 'funder-crm', 'cash-flow', 'shooting-calendar', 'interview-prep', 'field-journal', 'location-scout', 'deal-memos', 'gear-list', 'coi-permit-tracker', 'travel-sheet', 'risk-plan', 'security-checklist', 'camera-sound-reports', 'interview-log', 'daily-production-report', 'expense-log', 'festival-submissions', 'press-list', 'partner-crm']
 COLLECTIONS = ['project', 'people', 'locations', 'thirdPartyElements', 'contracts', 'assets', 'musicCueSheet', 'callSheets']
 PRINT_BTN = {'clearance-log': '#printBtn', 'music-cue-sheet': '#printBtn', 'call-sheet': '#printAllBtn', 'release-tracker': '#printBtn',
-             'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn', 'treatment-builder': '#printBtn', 'pitch-deck': '#printBtn', 'grant-calendar': '#printBtn', 'narrative-library': '#printBtn', 'budget': '#printBtn', 'budget-converter': '#printBtn', 'finance-plan': '#printBtn', 'funder-crm': '#printBtn', 'cash-flow': '#printBtn', 'shooting-calendar': '#printBtn', 'interview-prep': '#printBtn', 'field-journal': '#printBtn', 'location-scout': '#printBtn', 'deal-memos': '#printBtn', 'gear-list': '#printBtn', 'coi-permit-tracker': '#printBtn', 'travel-sheet': '#printBtn', 'risk-plan': '#printBtn', 'security-checklist': '#printBtn', 'camera-sound-reports': '#printBtn', 'interview-log': '#printBtn', 'daily-production-report': '#printBtn', 'expense-log': '#printBtn', 'festival-submissions': '#printBtn'}
+             'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn', 'treatment-builder': '#printBtn', 'pitch-deck': '#printBtn', 'grant-calendar': '#printBtn', 'narrative-library': '#printBtn', 'budget': '#printBtn', 'budget-converter': '#printBtn', 'finance-plan': '#printBtn', 'funder-crm': '#printBtn', 'cash-flow': '#printBtn', 'shooting-calendar': '#printBtn', 'interview-prep': '#printBtn', 'field-journal': '#printBtn', 'location-scout': '#printBtn', 'deal-memos': '#printBtn', 'gear-list': '#printBtn', 'coi-permit-tracker': '#printBtn', 'travel-sheet': '#printBtn', 'risk-plan': '#printBtn', 'security-checklist': '#printBtn', 'camera-sound-reports': '#printBtn', 'interview-log': '#printBtn', 'daily-production-report': '#printBtn', 'expense-log': '#printBtn', 'festival-submissions': '#printBtn', 'press-list': '#printBtn', 'partner-crm': '#printBtn'}
 PHONE = {'width': 390, 'height': 844}
 # The button that opens each tool's main dialog, for the phone-width check. Most tools use #addBtn.
 DIALOG_BTN = {'treatment-builder': '[data-compare]', 'cash-flow': '#settingsBtn'}
@@ -385,7 +385,7 @@ def test_credits_builder(browser, fake):
     ctx.close()
 
 # Each spreadsheet template's columns must appear in its tool's CSV export, in the same order.
-TEMPLATE_EXPORTS = [('camera-sound-reports', 'camera-and-sound-reports-template.csv'), ('interview-log', 'interview-moments-template.csv'), ('travel-sheet', 'travel-sheet-template.csv'), ('risk-plan', 'risk-assessment-template.csv'), ('security-checklist', 'security-checklist-template.csv'), ('gear-list', 'gear-list-template.csv'), ('coi-permit-tracker', 'certificates-and-permits-template.csv'), ('location-scout', 'location-scout-template.csv'), ('deal-memos', 'deal-memos-template.csv'), ('shooting-calendar', 'shooting-calendar-template.csv'), ('interview-prep', 'interview-questions-template.csv'), ('funder-crm', 'funder-crm-template.csv'), ('cash-flow', 'cash-flow-template.csv'), ('budget', 'budget-template.csv'), ('finance-plan', 'finance-plan-template.csv'), ('grant-calendar', 'grant-calendar-template.csv'), ('clearance-log', 'clearance-log-template.csv'), ('release-tracker', 'release-log-template.csv'),
+TEMPLATE_EXPORTS = [('press-list', 'press-list-template.csv'), ('partner-crm', 'partner-crm-template.csv'), ('camera-sound-reports', 'camera-and-sound-reports-template.csv'), ('interview-log', 'interview-moments-template.csv'), ('travel-sheet', 'travel-sheet-template.csv'), ('risk-plan', 'risk-assessment-template.csv'), ('security-checklist', 'security-checklist-template.csv'), ('gear-list', 'gear-list-template.csv'), ('coi-permit-tracker', 'certificates-and-permits-template.csv'), ('location-scout', 'location-scout-template.csv'), ('deal-memos', 'deal-memos-template.csv'), ('shooting-calendar', 'shooting-calendar-template.csv'), ('interview-prep', 'interview-questions-template.csv'), ('funder-crm', 'funder-crm-template.csv'), ('cash-flow', 'cash-flow-template.csv'), ('budget', 'budget-template.csv'), ('finance-plan', 'finance-plan-template.csv'), ('grant-calendar', 'grant-calendar-template.csv'), ('clearance-log', 'clearance-log-template.csv'), ('release-tracker', 'release-log-template.csv'),
                     ('music-cue-sheet', 'music-cue-sheet-template.csv'), ('name-supers', 'name-supers-template.csv'),
                     ('subject-tracker', 'subject-tracker-template.csv'), ('research-log', 'research-log-template.csv'),
                     ('comps-tracker', 'comps-tracker-template.csv')]
@@ -1832,6 +1832,90 @@ def test_festivals(browser, fake):
     check(any(x.get('url') == 'javascript:alert(1)' for x in data['festivals']), 'a link that is not http or https is kept as text')
     original = json.loads(sample)
     check(data['people'] == original['people'] and data['grants'] == original['grants'] and data['treatment'] == original['treatment'], "other tools' data is unchanged")
+def test_press_list(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'press-list', fake, fixed_today('2026-11-01'))
+    open_sample(pg, fake)
+    names = [t.split('\n')[0] for t in pg.locator('#rows .row .nm').all_inner_texts()]
+    check(names == ['Hammond Gazette', 'Rivers Remembered podcast'] and 'Covered the film' in pg.inner_text('[data-id="outlet-gazette"]'), 'lists outlets with where each stands %s' % names)
+    pg.click('[data-filter="none"]')
+    check(pg.locator('#rows .row').count() == 1, 'filters outlets with no screener sent')
+    pg.click('[data-filter="all"]'); pg.select_option('#beatFilter', 'Local history')
+    check(pg.locator('#rows .row').count() == 1 and 'Hammond Gazette' in pg.inner_text('#rows'), 'filters by beat')
+    pg.select_option('#beatFilter', ''); pg.fill('#search', 'flood')
+    check(pg.locator('#rows .row').count() == 1, 'searches coverage headlines')
+    pg.fill('#search', '')
+    pg.click('[data-edit="outlet-river-pod"]')
+    pg.fill('#shDate', '2026-10-30'); pg.select_option('#shWho', label='Dev Anand'); pg.fill('#shUrl', 'https://screeners.example.org/podcast')
+    pg.click('#shAddBtn')
+    check('screeners.example.org/podcast' in pg.inner_text('#shLog') and 'To Dev Anand' in pg.inner_text('#shLog'), 'logs a screener sent to a person')
+    pg.fill('#scrTitle', 'Press night'); pg.fill('#scrDate', '2027-01-20'); pg.fill('#scrPlace', 'Riverside Cinema'); pg.click('#scrAddBtn')
+    check(pg.input_value('#rvScr') != '' and 'Press night' in pg.inner_text('#rvScr'), 'adds a screening and offers it for RSVPs')
+    pg.select_option('#rvStatus', 'yes'); pg.select_option('#rvWho', label='Dev Anand'); pg.click('#rvAddBtn')
+    check('Press night' in pg.inner_text('#rvLog') and 'Coming' in pg.inner_text('#rvLog'), 'records an RSVP')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check('Coming to a screening' in pg.inner_text('[data-id="outlet-river-pod"]'), 'an RSVP moves the outlet along')
+    pg.click('[data-edit="outlet-river-pod"]')
+    pg.fill('#cvDate', '2027-01-25'); pg.select_option('#cvKind', 'review'); pg.fill('#cvHeadline', 'A quiet film about a loud river'); pg.fill('#cvUrl', 'javascript:alert(1)')
+    pg.click('#cvAddBtn')
+    check(pg.locator('#cvLog a').count() == 0 and 'A quiet film' in pg.inner_text('#cvLog'), 'only web links are made clickable')
+    pg.fill('#cvHeadline', 'A quiet film about a loud river'); pg.fill('#cvUrl', 'https://riverspod.example.org/episodes/12')
+    pg.click('#cvAddBtn')
+    check(pg.locator('#cvLog a').count() == 1, 'a web link is clickable')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check('Covered the film' in pg.inner_text('[data-id="outlet-river-pod"]') and 'riverspod' not in pg.inner_text('#steps') and 'A quiet film' in pg.inner_text('#steps'), 'logged coverage shows in the list and the sidebar')
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    pod = next(r for r in rows if r[0] == 'Rivers Remembered podcast')
+    check(rows[0][:3] == ['Outlet', 'Kind', 'Status'] and pod[4] == 'Environment and water' and pod[5] == '1' and 'Press night: Coming (Dev Anand)' in pod[7] and pod[9] == '2027-01-25', 'CSV lists outlets with beats, screeners, RSVPs and coverage')
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    check('Hammond Gazette' in pg.inner_text('#report') and 'Local history' in pg.inner_text('#report'), 'prints the list')
+    data = saved_project(pg, fake)
+    o = {x['id']: x for x in data['pressOutlets']}['outlet-river-pod']
+    new = next(s for s in data['screenings'] if s['title'] == 'Press night')
+    check(o['screeners'][0]['contactId'] == 'contact-pod-host' and o['rsvps'][0]['screeningId'] == new['id'] and o['rsvps'][0]['status'] == 'yes' and len(o['coverage']) == 2 and o['coverage'][1]['url'].startswith('https://') and new['place'] == 'Riverside Cinema' and len(data['screenings']) == 3, 'the outlet and its screening are saved')
+    check(data['pressOutlets'][0] == original['pressOutlets'][0] and data['funders'] == original['funders'] and data['callSheets'] == original['callSheets'], 'other data is unchanged')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+def test_partner_crm(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'partner-crm', fake, fixed_today('2026-11-01'))
+    open_sample(pg, fake)
+    names = [t.split('\n')[0] for t in pg.locator('#rows .row .nm').all_inner_texts()]
+    check(names == ['River Valley Trust', 'Hammond Public Library'] and 'Library premiere' in pg.inner_text('[data-id="partner-library"]'), 'lists partners, soonest next step first, with their screenings %s' % names)
+    check(pg.locator('#scrList li').count() == 2 and '1 partner' in pg.inner_text('#scrList'), 'lists screenings with how many partners are in each')
+    pg.click('[data-filter="talking"]')
+    check(pg.locator('#rows .row').count() == 1, 'filters by stage')
+    pg.click('[data-filter="all"]'); pg.fill('#search', 'priya')
+    check(pg.locator('#rows .row').count() == 1, 'searches the people at each partner')
+    pg.fill('#search', '')
+    pg.click('[data-edit="partner-river-trust"]')
+    pg.click('#addContactBtn'); row = pg.locator('#cRows .c-row').last
+    row.locator('.c-name').fill('Sam Whitaker'); row.locator('.c-title').fill('Outreach lead')
+    pg.click('#addStepBtn'); step = pg.locator('#nRows .n-row').last
+    step.locator('.n-due').fill('2026-11-10'); step.locator('.n-by').select_option('them'); step.locator('.n-text').fill('Confirm the panelists')
+    pg.check('#scrChecks input[value="screening-library"]')
+    pg.fill('#scrTitle', 'Spring panel'); pg.fill('#scrDate', '2027-03-01'); pg.fill('#scrPlace', 'Riverside'); pg.click('#scrAddBtn')
+    check('Spring panel' in pg.inner_text('#scrChecks') and pg.is_checked('#scrChecks input:last-of-type'), 'adds a screening and links it')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    t = pg.inner_text('[data-id="partner-river-trust"]')
+    check('Next: Confirm the panelists, due Nov 10, 2026' in t and 'Spring panel' in t and 'Library premiere' in t, 'saves people, commitments and screenings')
+    pg.click('[data-done="partner-river-trust|commitment-trust-1"]'); pg.wait_for_timeout(200)
+    check(pg.locator('#steps li').count() == 2, 'ticking a commitment marks it done')
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    trust = next(r for r in rows if r[0] == 'River Valley Trust')
+    check(rows[0][:3] == ['Organization', 'Kind', 'Stage'] and 'Sam Whitaker, Outreach lead' in trust[3] and 'Spring panel' in trust[4] and trust[5] == 'Confirm the panelists' and trust[6] == '2026-11-10', 'CSV lists partners with people, screenings and the next step')
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    check('Hammond Public Library' in pg.inner_text('#report') and 'Priya Nair' in pg.inner_text('#report'), 'prints the list')
+    data = saved_project(pg, fake)
+    p = {x['id']: x for x in data['partners']}['partner-river-trust']
+    spring = next(s for s in data['screenings'] if s['title'] == 'Spring panel')
+    check(set(p['screeningIds']) == {'screening-grain-elevator', 'screening-library', spring['id']} and p['commitments'][0]['done'] is True and p['commitments'][1]['by'] == 'them' and len(data['screenings']) == 3, 'the partner and its screening are saved')
+    check(data['partners'][0] == original['partners'][0] and data['pressOutlets'] == original['pressOutlets'] and data['funders'] == original['funders'], 'other data is unchanged')
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
@@ -1918,6 +2002,10 @@ def main():
         test_risk_plan(browser, fake)
         print('== security-checklist / items, people and high-risk shoots')
         test_security_checklist(browser, fake)
+        print('== press-list / outlets, beats, screeners, RSVPs and coverage')
+        test_press_list(browser, fake)
+        print('== partner-crm / partners, commitments and screenings')
+        test_partner_crm(browser, fake)
         print('== camera-sound-reports / cards, clips, call sheets and CSV')
         test_camera_sound(browser, fake)
         print('== interview-log / moments, releases and the paper edit')

@@ -85,6 +85,8 @@ Everything else in [TOOLS.md](TOOLS.md), prioritized by what contributors ask fo
 - [x] Daily production report: recording each shoot day: call, meal and wrap times and hours for crew and talent, what was shot, and incidents and delays ([#64](https://github.com/open-filmmaker-toolkit/toolkit/issues/64))
 - [x] Expense log: logging production expenses against budget accounts while keeping receipt files on your computer ([#65](https://github.com/open-filmmaker-toolkit/toolkit/issues/65))
 - [x] Festival submission tracker: tracking festival submissions, with deadlines, fees, results and screening dates ([#78](https://github.com/open-filmmaker-toolkit/toolkit/issues/78))
+- [x] Press list: outlets and the people who cover them by beat, screener links sent, screening RSVPs, coverage with links and dates, and CSV, on a screenings list shared with the partner CRM ([#81](https://github.com/open-filmmaker-toolkit/toolkit/issues/81))
+- [x] Partner CRM: organizations and their contacts, commitments and next steps with due dates and who owes them, links to screenings, print and CSV ([#90](https://github.com/open-filmmaker-toolkit/toolkit/issues/90))
 
 Finding a third maintainer is on hold. Basil and Alex maintain the project for now ([#8](https://github.com/open-filmmaker-toolkit/toolkit/issues/8), closed).
 
