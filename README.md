@@ -99,8 +99,10 @@ The toolkit has two halves:
 | [Music cue sheet](tools/music-cue-sheet/) | Post-production | Building the music cue sheet your distributor or broadcaster needs, from the music already in your clearance log |
 | [Credits builder](tools/credits-builder/) | Post-production | Building end credits from the people, music and archival material in your project, checking that every credit your contracts require is there, and exporting the crawl as text |
 | [Clearance log](tools/clearance-log/) | Legal and clearances | Tracking every piece of third-party material until it's cleared, then printing a report for your E&O attorney |
+| [Press list](tools/press-list/) | Marketing and festivals | Keeping a press list: outlets and the people who cover them by beat, screener links sent, screening RSVPs and the coverage that comes back, with CSV export |
+| [Partner CRM](tools/partner-crm/) | Impact and outreach | Tracking impact partners: organizations and their contacts, commitments and next steps with due dates, and the screenings you've done together, with CSV export |
 
-All 30 are first versions: they work, and they're still changing. Everything else we plan to build is listed by production phase in [TOOLS.md](TOOLS.md).
+All 32 are first versions: they work, and they're still changing. Everything else we plan to build is listed by production phase in [TOOLS.md](TOOLS.md).
 
 ## How our tools work
 
