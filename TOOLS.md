@@ -117,5 +117,5 @@ Looking for other free, open-source software for filmmaking, such as editing, so
 | --- | --- | --- |
 | Final cost report | Close out the budget with final costs, for funders and your records. | Planned, [#94](https://github.com/open-filmmaker-toolkit/toolkit/issues/94) |
 | Grant final reports | Write the final report for each grant: narrative, budget, outcomes and deliverables, before it's due. | Planned, [#95](https://github.com/open-filmmaker-toolkit/toolkit/issues/95) |
-| Archive log | Record what's archived where: masters, project files and footage, and the drives or services that hold them. | Planned, [#96](https://github.com/open-filmmaker-toolkit/toolkit/issues/96) |
+| [Archive log](tools/archive-log/) | Log each project asset's copies, storage locations and dates, hash manifests, and manual read-back checks, with CSV export | First version |
 | Contract and release archive | Gather every signed contract and release into one indexed archive for the long term. | Planned, [#97](https://github.com/open-filmmaker-toolkit/toolkit/issues/97) |

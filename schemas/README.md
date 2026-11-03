@@ -16,7 +16,7 @@ The file is a JSON object with a `project` record and collections for reusable e
 | `thirdPartyElements` | Archival material, music, artwork, logos and other clearances |
 | `contracts` | Releases, licenses and other agreements; references the people, locations, elements and assets they cover. See [Releases](#releases) |
 | `callSheets` | Shoot days: date, call and wrap times, a location, weather, schedule, and crew with call times; references `locations` and `people`. `locations` may also carry `latitude` and `longitude` |
-| `assets` | Project materials such as footage, scans and documents; `relativePath`, when present, is relative to the project file |
+| `assets` | Project materials such as footage, scans and documents; `relativePath`, when present, is relative to the project file. The [Archive log](../tools/archive-log/README.md#what-it-adds-to-the-project-file) adds `archiveCopies` to an asset for storage locations, copy dates, hash manifests and manually recorded read-back checks |
 | `treatment` | The film's treatment: text by section, word targets and saved versions. A record rather than a collection; see the [treatment builder](../tools/treatment-builder/README.md#what-it-adds-to-the-project-file) |
 | `grants` | Grants and funds, kept by the [grant calendar](../tools/grant-calendar/README.md#what-it-adds-to-the-project-file): deadline, amounts, materials and status |
 | `narratives` | Grant application answers in versions by length, kept by the [grant narrative library](../tools/narrative-library/README.md#what-it-adds-to-the-project-file). Each version's `uses` records who got it and when, pointing to `grants` by `grantId` or naming the `funder` |
