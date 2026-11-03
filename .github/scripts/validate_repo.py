@@ -181,6 +181,33 @@ for sample in sorted((ROOT / "samples").glob("*.oft.json")):
             fail(f"{name}: journal entry {entry.get('id')} locationIds points to missing locations")
         if entry.get("callSheetId") and entry["callSheetId"] not in sheet_ids:
             fail(f"{name}: journal entry {entry.get('id')} callSheetId points to a missing call sheet")
+    report_day_ids = {d.get("id") for d in data.get("shootDays", []) if isinstance(d, dict)}
+    for coll in ("dailyReports", "expenses", "festivals"):
+        listed = [x.get("id") for x in data.get(coll, []) if isinstance(x, dict)]
+        if len(listed) != len(set(listed)):
+            fail(f"{name}: duplicate IDs in {coll}")
+    media_ids = {r.get("id") for r in data.get("mediaReports", []) if isinstance(r, dict)}
+    for rep in data.get("dailyReports", []):
+        if rep.get("shootDayId") not in report_day_ids:
+            fail(f"{name}: daily report {rep.get('id')} shootDayId points to a missing shoot day")
+        if rep.get("callSheetId") and rep["callSheetId"] not in sheet_ids:
+            fail(f"{name}: daily report {rep.get('id')} callSheetId points to a missing call sheet")
+        if set(rep.get("mediaReportIds", [])) - media_ids:
+            fail(f"{name}: daily report {rep.get('id')} mediaReportIds points to missing reports")
+        for member in rep.get("crew", []):
+            if member.get("personId") and member["personId"] not in ids["people"]:
+                fail(f"{name}: daily report {rep.get('id')} crew points to a missing person")
+    account_ids = {a.get("id") for a in data.get("budget", {}).get("accounts", []) if isinstance(a, dict)}
+    asset_ids_all = {a.get("id") for a in data.get("assets", []) if isinstance(a, dict)}
+    for exp in data.get("expenses", []):
+        if exp.get("accountId") and exp["accountId"] not in account_ids:
+            fail(f"{name}: expense {exp.get('id')} accountId points to a missing budget account")
+        if exp.get("shootDayId") and exp["shootDayId"] not in report_day_ids:
+            fail(f"{name}: expense {exp.get('id')} shootDayId points to a missing shoot day")
+        if exp.get("personId") and exp["personId"] not in ids["people"]:
+            fail(f"{name}: expense {exp.get('id')} personId points to a missing person")
+        if exp.get("receiptAssetId") and exp["receiptAssetId"] not in asset_ids_all:
+            fail(f"{name}: expense {exp.get('id')} receiptAssetId points to a missing asset")
     screening_list = [x for x in data.get("screenings", []) if isinstance(x, dict)]
     screening_ids = {x.get("id") for x in screening_list}
     if len(screening_ids) != len(screening_list):

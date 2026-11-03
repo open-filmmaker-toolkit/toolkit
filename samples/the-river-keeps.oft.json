@@ -720,6 +720,14 @@
       "name": "Transcript: Daniel Okafor",
       "type": "transcript",
       "relativePath": "transcripts/daniel-okafor.docx"
+    },
+    {
+      "id": "asset-receipt-lunch",
+      "name": "Crew lunch receipt",
+      "type": "receipt",
+      "relativePath": "receipts/2026-05-12-crew-lunch.jpg",
+      "mimeType": "image/jpeg",
+      "notes": "Fictional reference only; the file is not included."
     }
   ],
   "musicCueSheet": {
@@ -3433,6 +3441,144 @@
           "notes": "Two minutes of room tone at the levee"
         }
       ]
+    }
+  ],
+  "dailyReports": [
+    {
+      "id": "dailyreport-may-1",
+      "shootDayId": "shootday-may-1",
+      "callSheetId": "callsheet-day-1",
+      "callTime": "07:00",
+      "lunchStart": "12:00",
+      "lunchEnd": "12:45",
+      "wrapTime": "17:30",
+      "crew": [
+        {
+          "id": "dr-crew-1",
+          "personId": "person-ana-reyes",
+          "role": "Producer",
+          "call": "07:00",
+          "wrap": "17:30",
+          "mealMinutes": 45
+        },
+        {
+          "id": "dr-crew-2",
+          "personId": "person-lena-ward",
+          "role": "Camera",
+          "call": "07:00",
+          "wrap": "17:30",
+          "mealMinutes": 45
+        },
+        {
+          "id": "dr-crew-3",
+          "personId": "person-daniel-okafor",
+          "role": "Interview subject",
+          "call": "08:00",
+          "wrap": "12:00",
+          "mealMinutes": 0,
+          "note": "Morning only"
+        }
+      ],
+      "shot": "Interview with Daniel Okafor on the levee, then river b-roll.",
+      "mediaReportIds": [
+        "report-a001",
+        "report-s001"
+      ],
+      "incidents": [
+        {
+          "id": "dr-inc-1",
+          "kind": "weather",
+          "time": "14:10",
+          "minutesLost": 20,
+          "text": "Wind gusts stopped the boom for twenty minutes."
+        }
+      ],
+      "notes": "Fictional sample report."
+    }
+  ],
+  "expenses": [
+    {
+      "id": "expense-gas",
+      "date": "2026-05-11",
+      "amount": 62.4,
+      "description": "Fuel for the drive to Riverside",
+      "payee": "Roadside Fuel (fictional)",
+      "accountId": "account-2200",
+      "kind": "expense",
+      "method": "card",
+      "shootDayId": "shootday-may-travel-out"
+    },
+    {
+      "id": "expense-perdiem-ana",
+      "date": "2026-05-12",
+      "amount": 45,
+      "description": "Per diem, Day 1",
+      "kind": "perdiem",
+      "method": "cash",
+      "personId": "person-ana-reyes",
+      "accountId": "account-2400",
+      "shootDayId": "shootday-may-1"
+    },
+    {
+      "id": "expense-lunch",
+      "date": "2026-05-12",
+      "amount": 88.15,
+      "description": "Crew lunch",
+      "payee": "Levee Diner (fictional)",
+      "accountId": "account-2400",
+      "kind": "pettycash",
+      "method": "cash",
+      "shootDayId": "shootday-may-1",
+      "receiptAssetId": "asset-receipt-lunch",
+      "notes": "Fictional receipt reference."
+    }
+  ],
+  "festivals": [
+    {
+      "id": "festival-riverbend",
+      "name": "Riverbend Documentary Festival",
+      "platform": "Submission platform (fictional)",
+      "url": "https://example.org/riverbend-festival",
+      "deadline": "2027-01-15",
+      "fee": 60,
+      "waiverCode": "RIVER-WAIVE",
+      "status": "planned",
+      "notes": "Fictional sample festival."
+    },
+    {
+      "id": "festival-northern-light",
+      "name": "Northern Light Film Festival",
+      "platform": "Direct to festival (fictional)",
+      "deadline": "2026-12-01",
+      "fee": 45,
+      "status": "submitted",
+      "submittedOn": "2026-10-20"
+    },
+    {
+      "id": "festival-prairie",
+      "name": "Prairie Docs",
+      "platform": "Submission platform (fictional)",
+      "deadline": "2026-09-01",
+      "fee": 35,
+      "status": "accepted",
+      "submittedOn": "2026-08-20",
+      "screenings": [
+        {
+          "id": "fs-prairie-1",
+          "date": "2027-03-12",
+          "time": "19:00",
+          "venue": "Prairie Theater (fictional)",
+          "note": "Q&A after"
+        }
+      ]
+    },
+    {
+      "id": "festival-eastgate",
+      "name": "Eastgate Shorts",
+      "deadline": "2026-08-15",
+      "fee": 25,
+      "status": "declined",
+      "submittedOn": "2026-08-01"
     }
   ],
   "screenings": [

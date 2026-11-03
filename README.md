@@ -93,6 +93,9 @@ The toolkit has two halves:
 | [Call sheet](tools/call-sheet/) | Production | Building shoot-day call sheets from the people and locations in your project; weather lookup is optional and off until you click it |
 | [Camera and sound reports](tools/camera-sound-reports/) | Production | Logging what was shot on each card: camera reports with clips, codec, frame rate and lens notes, and sound reports with each file and its tracks, linked to the shoot day |
 | [Interview log](tools/interview-log/) | Production | Logging each interview: who, when, where, which cards, and timestamped moments with favorites marked, linked to the release and transcript, and exported for the paper edit |
+| [Daily production report](tools/daily-production-report/) | Production | Recording each shoot day: call, meal and wrap times and hours for crew and talent, what was shot, and incidents and delays |
+| [Expense log](tools/expense-log/) | Production | Logging production expenses against budget accounts while keeping receipt files on your computer |
+| [Festival submission tracker](tools/festival-submissions/) | Launch | Tracking festival submissions, with deadlines, fees, results and screening dates |
 | [Release tracker](tools/release-tracker/) | Production | Tracking who signed what: appearance, location and materials releases, with the signed copies, and flagging anyone on camera with no release on file |
 | [Field journal](tools/field-journal/) | Production | Keeping a dated journal of the production: what happened, what you learned and story ideas, tagged with people and places and linked to shoot days |
 | [Name supers list](tools/name-supers/) | Post-production | Keeping on-screen names and titles spelled the way the rest of your project spells them, and showing graphics what changed since their last list |
@@ -102,7 +105,7 @@ The toolkit has two halves:
 | [Press list](tools/press-list/) | Marketing and festivals | Keeping a press list: outlets and the people who cover them by beat, screener links sent, screening RSVPs and the coverage that comes back, with CSV export |
 | [Partner CRM](tools/partner-crm/) | Impact and outreach | Tracking impact partners: organizations and their contacts, commitments and next steps with due dates, and the screenings you've done together, with CSV export |
 
-All 32 are first versions: they work, and they're still changing. Everything else we plan to build is listed by production phase in [TOOLS.md](TOOLS.md).
+All 35 are first versions: they work, and they're still changing. Everything else we plan to build is listed by production phase in [TOOLS.md](TOOLS.md).
 
 ## How our tools work
 
