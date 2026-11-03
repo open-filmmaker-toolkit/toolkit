@@ -291,6 +291,10 @@
         "$ref": "#/$defs/partner"
       },
       "description": "Outreach partners with contacts, commitments and the screenings they are part of, kept by the partner CRM."
+    },
+    "discussionGuide": {
+      "$ref": "#/$defs/discussionGuide",
+      "description": "Screening-specific synopsis, themes, questions and resources, kept by the discussion guide builder."
     }
   },
   "additionalProperties": true,
@@ -907,6 +911,36 @@
         },
         "notes": {
           "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "discussionGuide": {
+      "type": "object",
+      "description": "A screening discussion guide, kept by the discussion guide builder.",
+      "properties": {
+        "synopsis": {
+          "type": "string"
+        },
+        "themes": {
+          "type": "string",
+          "description": "Themes to explore, one per line."
+        },
+        "questions": {
+          "type": "string",
+          "description": "Discussion questions, one per line."
+        },
+        "resourceNotes": {
+          "type": "string",
+          "description": "Audience-facing resources or links, one per line."
+        },
+        "partnerIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true,
+          "description": "Selected outreach partners to include in the guide."
         }
       },
       "additionalProperties": true

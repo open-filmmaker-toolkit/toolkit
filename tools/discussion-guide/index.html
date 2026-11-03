@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Discussion guide · Open Filmmaker Toolkit</title>
+<meta name="description" content="Build and print a screening discussion guide with your film synopsis, themes, questions, resources, partners and credits. Runs in your browser; your data stays on your computer.">
+<style>
+:root {
+  --paper: #f1f3f2; --sheet: #ffffff; --ink: #1a2130; --ink-2: #4b556a; --ink-3: #6d778a;
+  --rule: #d4dad8; --rule-soft: #e6eae8; --hover: #f6f8f7; --focus: #2f6fdb;
+  --warn: #8a5a00; --warn-bg: #fbf0d9; --bad: #b3392d;
+  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --paper: #141922; --sheet: #1b212b; --ink: #e6e9ee; --ink-2: #a6afbd; --ink-3: #8790a0; --rule: #2f3744; --rule-soft: #262d38; --hover: #212834; --focus: #7aa7ff; --warn: #e2a531; --warn-bg: #3a2f17; --bad: #e26657; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans); }
+button, input, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+[hidden] { display: none !important; }
+.page { max-width: 1120px; margin: auto; padding: 0 24px 48px; }
+.masthead { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px; padding: 26px 0 20px; }
+.tool-name { margin: 0; font-size: 14px; color: var(--ink-2); }
+h1 { margin: 2px 0 4px; font: 600 32px/1.15 var(--serif); overflow-wrap: anywhere; }
+.meta, .file-state { margin: 0; color: var(--ink-2); font-size: 13px; }
+.file { display: grid; justify-items: end; gap: 8px; }
+.file-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn { display: inline-flex; align-items: center; padding: 7px 12px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); cursor: pointer; font-size: 14px; }
+.btn:hover { border-color: var(--ink-3); }
+.btn.primary { color: var(--paper); background: var(--ink); border-color: var(--ink); }
+.dirty { color: var(--warn); font-weight: 600; }
+.intro { margin: 0 0 18px; color: var(--ink-2); }
+.guide { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, .75fr); gap: 16px; align-items: start; }
+.column { display: grid; gap: 16px; min-width: 0; }
+.card { min-width: 0; padding: 16px 18px; background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; }
+.card h2 { margin: 0 0 6px; font: 600 20px/1.25 var(--serif); }
+.card p { margin: 0 0 8px; color: var(--ink-2); font-size: 14px; }
+.field { display: grid; gap: 5px; }
+.field label, .group-label { font-weight: 600; font-size: 14px; }
+textarea { display: block; width: 100%; min-height: 112px; padding: 9px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); resize: vertical; }
+#synopsis { min-height: 148px; }
+#resourceNotes { min-height: 88px; }
+.partners { display: grid; gap: 6px; margin-top: 12px; }
+.partner { display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 8px; padding: 8px; background: var(--paper); border: 1px solid var(--rule-soft); border-radius: 6px; }
+.partner input { width: 17px; height: 17px; margin: 2px 0 0; }
+.partner strong { display: block; }
+.partner small { display: block; color: var(--ink-2); overflow-wrap: anywhere; }
+.empty { color: var(--ink-2); font-size: 14px; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+footer { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--rule); color: var(--ink-3); font-size: 13px; }
+.report { display: none; }
+.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); max-width: calc(100vw - 32px); padding: 9px 14px; background: var(--ink); color: var(--paper); border-radius: 7px; z-index: 4; }
+.toast.error { background: var(--bad); color: #fff; }
+dialog { padding: 18px; border: 0; border-radius: 9px; color: var(--ink); background: var(--sheet); box-shadow: 0 10px 40px #0004; max-width: min(560px, calc(100vw - 32px)); }
+dialog::backdrop { background: #10141c6b; }
+dialog h2 { margin: 0 0 10px; font: 600 22px var(--serif); }
+dialog p { color: var(--ink-2); }
+dialog .actions { justify-content: flex-end; }
+@media(max-width: 760px) {
+  .page { padding: 0 16px 36px; }
+  .guide { grid-template-columns: 1fr; }
+  .masthead { align-items: flex-start; }
+  .file { justify-items: start; }
+}
+@media print {
+  @page { margin: 16mm; }
+  :root { color-scheme: light; }
+  body { background: white; color: black; font: 10pt/1.45 var(--sans); }
+  .page, dialog, .toast { display: none !important; }
+  .report { display: block; }
+  .report h1 { margin: 0 0 2pt; font: 700 22pt/1.15 var(--serif); }
+  .report .byline { margin: 0 0 18pt; color: #333; }
+  .report h2 { margin: 16pt 0 5pt; font: 700 14pt/1.2 var(--serif); break-after: avoid; }
+  .report p { margin: 0; white-space: pre-wrap; }
+  .report ol, .report ul { margin: 0; padding-left: 20pt; }
+  .report li { margin: 0 0 4pt; break-inside: avoid; }
+  .report .credits { white-space: pre-wrap; }
+  .report a { color: #000; text-decoration: none; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="masthead">
+    <div><p class="tool-name">Discussion guide builder</p><h1 id="filmTitle">Untitled film</h1><p class="meta" id="filmMeta"></p></div>
+    <div class="file">
+      <p class="file-state" id="fileState">Not saved to a file yet</p>
+      <div class="file-actions">
+        <button type="button" class="btn" id="newBtn">New project</button>
+        <button type="button" class="btn" id="openBtn">Open file</button>
+        <button type="button" class="btn" id="projectCsvBtn">Export project data (CSV)</button>
+        <button type="button" class="btn primary" id="saveBtn">Save file</button>
+      </div>
+    </div>
+  </header>
+  <p class="intro">Shape a conversation for your screening. Synopsis and credits come from the project; themes, questions and resources are yours to adapt. Select outreach partners to include their organization and website.</p>
+  <main class="guide">
+    <div class="column">
+      <section class="card">
+        <h2>1. Film and synopsis</h2>
+        <p>Starts with your treatment's short synopsis, then long synopsis or logline. Edit it for this audience.</p>
+        <div class="field"><label for="synopsis">Screening synopsis</label><textarea id="synopsis" placeholder="Summarize the film for this audience"></textarea></div>
+      </section>
+      <section class="card">
+        <h2>2. Themes to explore</h2>
+        <p>One theme per line. Use these as a starting point, not a script.</p>
+        <div class="field"><label for="themes">Themes</label><textarea id="themes" placeholder="Memory and who gets to tell a town's history&#10;How communities prepare for floods"></textarea></div>
+      </section>
+      <section class="card">
+        <h2>3. Discussion questions</h2>
+        <p>One question per line. The guide numbers them for the printed handout.</p>
+        <div class="field"><label for="questions">Questions</label><textarea id="questions" placeholder="What moment stayed with you?&#10;What responsibilities do communities have to people who stay?"></textarea></div>
+      </section>
+    </div>
+    <div class="column">
+      <section class="card">
+        <h2>4. Resources and organizations</h2>
+        <p>Add audience-facing links or resources here, one per line. Select any relevant organizations from the Partner CRM below.</p>
+        <div class="field"><label for="resourceNotes">Resources and links</label><textarea id="resourceNotes" placeholder="Local organizations, websites, books, or next steps"></textarea></div>
+        <div class="partners"><span class="group-label">Partner organizations</span><div id="partnerList" class="empty">Open a project with partners to choose organizations.</div></div>
+      </section>
+      <section class="card">
+        <h2>5. Credits</h2>
+        <p>End credits are pulled from the project's credits builder. Update them there if they need changes.</p>
+        <div id="creditsPreview" class="empty">No project credits yet.</div>
+      </section>
+      <section class="card">
+        <h2>Print or save</h2>
+        <p>Print the guide or choose Save file to keep your guide with the rest of the project.</p>
+        <div class="actions"><button type="button" class="btn primary" id="printBtn">Print to PDF</button></div>
+      </section>
+    </div>
+  </main>
+  <footer><p>Part of the Open Filmmaker Toolkit. Everything stays on this computer until you save or export it. This page makes no network requests.</p></footer>
+</div>
+<div class="report" id="report" aria-hidden="true"></div>
+<input type="file" id="fileInput" accept=".json,application/json" hidden>
+<dialog id="projectCsvDialog" aria-labelledby="projectCsvTitle">
+  <form id="projectCsvForm" method="dialog">
+    <h2 id="projectCsvTitle">Export project data</h2>
+    <label for="projectCsvCollection">Data to export</label>
+    <select id="projectCsvCollection">
+      <option value="project">Project details</option><option value="people">People</option><option value="locations">Locations</option>
+      <option value="thirdPartyElements">Third-party elements</option><option value="contracts">Contracts</option><option value="assets">Assets</option>
+      <option value="musicCueSheet">Music cue sheet details</option><option value="callSheets">Call sheets</option>
+    </select>
+    <p>Exports the selected collection as a CSV file. Nested values stay as JSON in their cell.</p>
+    <div class="actions"><button class="btn" type="button" id="projectCsvCancel">Cancel</button><button class="btn primary" type="submit">Export CSV</button></div>
+  </form>
+</dialog>
+<dialog id="conflictDialog" aria-labelledby="conflictTitle">
+  <h2 id="conflictTitle">Project file changed</h2>
+  <p id="conflictText">This project file changed after you opened it.</p>
+  <p>Your edits are still here. Reload the latest version, save a copy, or explicitly overwrite the changed file.</p>
+  <div class="actions">
+    <button type="button" class="btn" id="conflictReloadBtn">Reload latest</button>
+    <button type="button" class="btn" id="conflictCopyBtn">Save a copy</button>
+    <button type="button" class="btn" id="conflictOverwriteBtn">Overwrite file</button>
+    <button type="button" class="btn" id="conflictCancelBtn">Keep editing</button>
+  </div>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<script>
+(() => {
+  'use strict';
+  const FORMAT = 'open-filmmaker-toolkit/project', VERSION = 1, TOOL = 'discussion-guide 0.1.0';
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const str = v => v == null ? '' : String(v);
+  const arr = v => Array.isArray(v) ? v : [];
+  let doc = blankDoc(), fileHandle = null, baselineText = null, fileName = null, dirty = false, toastTimer;
+  function blankDoc() { return { format: FORMAT, formatVersion: VERSION, project: { title: '', company: '', producer: '', frameRate: 24, currency: 'USD' }, thirdPartyElements: [] }; }
+  function guide() {
+    if (!doc.discussionGuide || typeof doc.discussionGuide !== 'object' || Array.isArray(doc.discussionGuide)) doc.discussionGuide = {};
+    const g = doc.discussionGuide;
+    for (const k of ['synopsis', 'themes', 'questions', 'resourceNotes']) if (typeof g[k] !== 'string') g[k] = '';
+    if (!Array.isArray(g.partnerIds)) g.partnerIds = [];
+    return g;
+  }
+  function notify(message, error = false) {
+    $('toast').textContent = message; $('toast').classList.toggle('error', error); $('toast').hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => { $('toast').hidden = true; }, 3500);
+  }
+  const norm = s => String(s ?? '').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+  function creditsLines() {
+    const people = arr(doc.people), elements = arr(doc.thirdPartyElements), credits = arr(doc.credits && doc.credits.entries), out = [];
+    const nameFor = id => (people.find(p => p && p.id === id) || {}).name;
+    for (const e of credits) {
+      if (!e || typeof e !== 'object') continue;
+      if (e.kind === 'heading' || e.kind === 'text') { if (e.text) out.push(e.text); }
+      else if (e.kind === 'credit') {
+        const names = [...arr(e.personIds).map(nameFor), ...arr(e.names)].filter(Boolean);
+        const line = [e.role, names.join(', ')].filter(Boolean).join(': ');
+        if (line) out.push(line);
+      } else if (e.kind === 'music') {
+        const skip = new Set(arr(e.excluded));
+        if (str(e.heading).trim()) out.push(e.heading);
+        for (const item of elements.filter(x => x && x.type === 'Music' && x.status !== 'replace')) {
+          const music = item.music && typeof item.music === 'object' ? item.music : {};
+          const title = str(music.title).trim() || str(item.description).trim();
+          if (!title || skip.has(norm(title))) continue;
+          out.push(`“${title}”`);
+          const writers = arr(music.writers).map(w => w && w.name).filter(Boolean);
+          if (writers.length) out.push(`Written by ${writers.join(', ')}`);
+          if (music.artist) out.push(`Performed by ${music.artist}`);
+          const publishers = arr(music.publishers).map(p => p && p.name).filter(Boolean);
+          if (publishers.length) out.push(`Published by ${publishers.join(', ')}`);
+        }
+      } else if (e.kind === 'archival') {
+        const skip = new Set(arr(e.excluded)), holders = new Set();
+        for (const item of elements.filter(x => x && ['Archival footage', 'Archival still', 'Artwork', 'Text or quote'].includes(x.type)
+          && ['licensed', 'fair-use', 'public-domain'].includes(x.status))) {
+          const holder = str(item.rightsHolder).trim(), name = holder && !/^public domain/i.test(holder) ? holder : str(item.source).trim();
+          if (name && !skip.has(norm(name))) holders.add(name);
+        }
+        const names = [...holders];
+        if (names.length) out.push(`${str(e.heading).trim() || 'Archival material courtesy of'}: ${names.join(', ')}`);
+      }
+    }
+    return out;
+  }
+  function slug() { return (doc.project.title || 'untitled-film').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'untitled-film'; }
+  const suggestedName = () => `${slug()}.oft.json`;
+  const pickerTypes = [{ description: 'Film project file', accept: { 'application/json': ['.json'] } }];
+  function render() {
+    const g = guide();
+    $('filmTitle').textContent = doc.project.title || 'Untitled film';
+    $('filmMeta').textContent = [doc.project.company, doc.project.producer && `Producer: ${doc.project.producer}`].filter(Boolean).join(' · ');
+    $('fileState').innerHTML = `${esc(fileName || 'Not saved to a file yet')}${dirty ? ' · <span class="dirty">Unsaved changes</span>' : ''}`;
+    document.title = `${doc.project.title ? `${doc.project.title} · ` : ''}Discussion guide · Open Filmmaker Toolkit`;
+    for (const k of ['synopsis', 'themes', 'questions', 'resourceNotes']) $(k).value = g[k];
+    const partners = arr(doc.partners).filter(p => p && typeof p === 'object' && p.id && p.name);
+    $('partnerList').className = partners.length ? '' : 'empty';
+    $('partnerList').innerHTML = partners.length ? partners.map(p => `<label class="partner"><input type="checkbox" data-partner="${esc(p.id)}"${g.partnerIds.includes(p.id) ? ' checked' : ''}><span><strong>${esc(p.name)}</strong>${p.website ? `<small>${esc(p.website)}</small>` : ''}${p.notes ? `<small>${esc(p.notes)}</small>` : ''}</span></label>`).join('') : 'Open a project with partners to choose organizations.';
+    const creditLines = creditsLines();
+    $('creditsPreview').className = creditLines.length ? 'credits' : 'empty';
+    $('creditsPreview').textContent = creditLines.join('\n') || 'No project credits yet.';
+  }
+  function sync() {
+    const g = guide();
+    for (const k of ['synopsis', 'themes', 'questions', 'resourceNotes']) g[k] = $(k).value;
+    g.partnerIds = [...document.querySelectorAll('[data-partner]:checked')].map(e => e.dataset.partner);
+    dirty = true; renderHeader();
+  }
+  function renderHeader() {
+    $('filmTitle').textContent = doc.project.title || 'Untitled film';
+    $('filmMeta').textContent = [doc.project.company, doc.project.producer && `Producer: ${doc.project.producer}`].filter(Boolean).join(' · ');
+    $('fileState').innerHTML = `${esc(fileName || 'Not saved to a file yet')}${dirty ? ' · <span class="dirty">Unsaved changes</span>' : ''}`;
+  }
+  function seedSynopsis() {
+    const sections = doc.treatment && doc.treatment.sections || {};
+    return sections.shortSynopsis || sections.longSynopsis || sections.logline || '';
+  }
+  function loadText(text, name, handle) {
+    let data;
+    try { data = JSON.parse(text); } catch { notify(`Couldn't open ${name}: it isn't a project file.`, true); return; }
+    if (!data || data.format !== FORMAT) { notify(`Couldn't open ${name}: it isn't an Open Filmmaker Toolkit project file.`, true); return; }
+    if (Number(data.formatVersion) > VERSION) { notify(`Couldn't open ${name}: it was saved by a newer version of the toolkit.`, true); return; }
+    doc = data; if (!doc.project || typeof doc.project !== 'object') doc.project = {};
+    if (!doc.discussionGuide) doc.discussionGuide = { synopsis: seedSynopsis(), themes: '', questions: '', resourceNotes: '', partnerIds: [] };
+    else if (!doc.discussionGuide.synopsis) doc.discussionGuide.synopsis = seedSynopsis();
+    fileHandle = handle || null; baselineText = text; fileName = name; dirty = false; render();
+    notify(`Opened ${name}.`);
+  }
+  async function openFile() {
+    if (dirty && !confirm('You have unsaved changes. Open another file and lose them?')) return;
+    if (window.showOpenFilePicker && window.self === window.top) {
+      try { const [h] = await window.showOpenFilePicker({ types: pickerTypes }); const f = await h.getFile(); loadText(await f.text(), f.name, h); }
+      catch (err) { if (err.name !== 'AbortError') notify(`Couldn't open the file: ${err.message}`, true); }
+    } else $('fileInput').click();
+  }
+  function download(text, name, type) {
+    const url = URL.createObjectURL(new Blob([text], { type })), a = document.createElement('a');
+    a.href = url; a.download = name; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  function serialize() { doc.savedAt = new Date().toISOString(); doc.savedBy = TOOL; return JSON.stringify(doc, null, 2) + '\n'; }
+  function afterSave(name, downloaded, text) {
+    fileName = name; if (downloaded) fileHandle = null; baselineText = text; dirty = false; renderHeader();
+    notify(downloaded ? `Downloaded ${name}. Keep it with your project files.` : `Saved to ${name}.`);
+  }
+  async function writeFile(handle, content) {
+    try { const writable = await handle.createWritable(); await writable.write(content); await writable.close(); }
+    catch (err) { if (err.name !== 'AbortError') notify(`Couldn't save the file: ${err.message}`, true); return; }
+    fileHandle = handle; afterSave(handle.name, false, content);
+  }
+  function saveCopy(content) {
+    const name = `${(fileName || suggestedName()).replace(/\.oft\.json$/i, '')}-copy.oft.json`;
+    download(content, name, 'application/json'); afterSave(name, true, content);
+  }
+  function conflict(content, observed, unknown = false) {
+    const handle = fileHandle;
+    $('conflictText').textContent = unknown ? `The tool can't verify whether ${handle.name} changed since it was opened.` : `${handle.name} changed after you opened it. Your edits are not saved.`;
+    $('conflictDialog').showModal();
+    $('conflictReloadBtn').onclick = async () => {
+      $('conflictDialog').close();
+      try { const f = await handle.getFile(); loadText(await f.text(), handle.name, handle); }
+      catch (err) { notify(`Couldn't reload the file: ${err.message}`, true); }
+    };
+    $('conflictCopyBtn').onclick = () => { $('conflictDialog').close(); saveCopy(content); };
+    $('conflictCancelBtn').onclick = () => $('conflictDialog').close();
+    $('conflictOverwriteBtn').onclick = async () => {
+      $('conflictDialog').close();
+      try {
+        const latest = await (await handle.getFile()).text();
+        if (latest !== observed) { conflict(content, latest); return; }
+        await writeFile(handle, content);
+      } catch (err) { notify(`Couldn't check the file before overwriting: ${err.message}`, true); }
+    };
+  }
+  async function saveFile() {
+    const content = serialize();
+    if (fileHandle) {
+      try {
+        const current = await (await fileHandle.getFile()).text();
+        if (baselineText === null || current !== baselineText) { conflict(content, current, baselineText === null); return; }
+        await writeFile(fileHandle, content);
+      } catch (err) { notify(`Couldn't check the file before saving: ${err.message}`, true); }
+      return;
+    }
+    if (window.showSaveFilePicker && window.self === window.top) {
+      try {
+        const h = await window.showSaveFilePicker({ suggestedName: fileName || suggestedName(), types: pickerTypes });
+        if (h.name === fileName) {
+          const current = await (await h.getFile()).text();
+          if (baselineText === null || current !== baselineText) { fileHandle = h; conflict(content, current, baselineText === null); return; }
+        }
+        await writeFile(h, content);
+      } catch (err) { if (err.name !== 'AbortError') notify(`Couldn't save the file: ${err.message}`, true); }
+      return;
+    }
+    const name = fileName || suggestedName(); download(content, name, 'application/json'); afterSave(name, true, content);
+  }
+  function csvCell(v) {
+    let s = v == null ? '' : String(v); if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+    return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }
+  function exportProjectCsv() {
+    const key = $('projectCsvCollection').value, value = doc[key], rows = Array.isArray(value) ? value : value && typeof value === 'object' ? [value] : [];
+    if (rows.some(row => !row || typeof row !== 'object' || Array.isArray(row))) { notify(`Couldn't export ${key}: the project contains an invalid record.`, true); return; }
+    const headers = [...new Set(rows.flatMap(row => Object.keys(row)))]; if (!headers.length) headers.push('id');
+    const csvRows = rows.map(row => headers.map(k => row[k] && typeof row[k] === 'object' ? JSON.stringify(row[k]) : row[k]));
+    download('\ufeff' + [headers, ...csvRows].map(row => row.map(csvCell).join(',')).join('\r\n') + '\r\n', `${slug()}-${key}.csv`, 'text/csv;charset=utf-8');
+    $('projectCsvDialog').close(); notify(`Exported ${rows.length} ${key}.`);
+  }
+  function renderReport() {
+    const g = guide(), lines = (key) => g[key].split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+    const partners = arr(doc.partners).filter(p => p && g.partnerIds.includes(p.id));
+    const credits = creditsLines();
+    const resourceLines = lines('resourceNotes');
+    $('report').innerHTML = `<h1>${esc(doc.project.title || 'Discussion guide')}</h1>
+      <p class="byline">Screening discussion guide${doc.project.company ? ` · ${esc(doc.project.company)}` : ''}</p>
+      ${g.synopsis.trim() ? `<h2>1. About the film</h2><p>${esc(g.synopsis.trim())}</p>` : ''}
+      ${lines('themes').length ? `<h2>2. Themes to explore</h2><ul>${lines('themes').map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
+      ${lines('questions').length ? `<h2>3. Discussion questions</h2><ol>${lines('questions').map(x => `<li>${esc(x)}</li>`).join('')}</ol>` : ''}
+      ${resourceLines.length || partners.length ? `<h2>4. Resources and organizations</h2>${resourceLines.length ? `<ul>${resourceLines.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}${partners.length ? `<ul>${partners.map(p => `<li><b>${esc(p.name)}</b>${p.website ? ` · ${esc(p.website)}` : ''}</li>`).join('')}</ul>` : ''}` : ''}
+      ${credits.length ? `<h2>5. Credits</h2><p>${credits.map(esc).join('<br>')}</p>` : ''}`;
+  }
+  function newProject() {
+    if (dirty && !confirm('You have unsaved changes. Start a new project and lose them?')) return;
+    doc = blankDoc(); fileHandle = null; baselineText = null; fileName = null; dirty = false; render();
+  }
+  for (const id of ['synopsis', 'themes', 'questions', 'resourceNotes']) $(id).addEventListener('input', sync);
+  $('partnerList').addEventListener('change', sync);
+  $('openBtn').addEventListener('click', openFile);
+  $('saveBtn').addEventListener('click', saveFile);
+  $('newBtn').addEventListener('click', newProject);
+  $('fileInput').addEventListener('change', async e => { const f = e.target.files[0]; if (f) loadText(await f.text(), f.name, null); e.target.value = ''; });
+  $('projectCsvBtn').addEventListener('click', () => $('projectCsvDialog').showModal());
+  $('projectCsvCancel').addEventListener('click', () => $('projectCsvDialog').close());
+  $('projectCsvForm').addEventListener('submit', e => { e.preventDefault(); exportProjectCsv(); });
+  $('printBtn').addEventListener('click', () => { sync(); renderReport(); window.print(); });
+  render();
+})();
+</script>
+</body>
+</html>

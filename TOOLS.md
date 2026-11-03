@@ -1,6 +1,6 @@
 # Tools
 
-The tools we build, by production phase. Each one is a single page that runs in your browser on the shared project file, with nothing to install and nothing sent anywhere. 35 are ready to use and 27 are planned.
+The tools we build, by production phase. Each one is a single page that runs in your browser on the shared project file, with nothing to install and nothing sent anywhere. 36 are ready to use and 26 are planned.
 
 - **Ready to use:** linked tools. Each has a README with what it does.
 - **Planned:** each has an issue. Comment there if you need the tool or want to help build it. Order of work is in [ROADMAP.md](ROADMAP.md).
@@ -107,7 +107,7 @@ Looking for other free, open-source software for filmmaking, such as editing, so
 | --- | --- | --- |
 | Theory of change builder | Map how the film's campaign leads to change: audiences, activities, outcomes, and how you'll measure them. | Planned, [#89](https://github.com/open-filmmaker-toolkit/toolkit/issues/89) |
 | [Partner CRM](tools/partner-crm/) | Tracking impact partners: organizations and their contacts, commitments and next steps with due dates, and the screenings you've done together, with CSV export | First version |
-| Discussion guide builder | Write a discussion guide for screenings: synopsis, themes, questions and resources. | Planned, [#91](https://github.com/open-filmmaker-toolkit/toolkit/issues/91) |
+| [Discussion guide builder](tools/discussion-guide/) | Preparing a screening handout with a project synopsis and credits, editable themes and questions, audience resources and partner organizations, and print to PDF | First version |
 | Screening kit builder | Put together a kit for screening hosts: how to screen the film, tech specs, promotional materials and the discussion guide. | Planned, [#92](https://github.com/open-filmmaker-toolkit/toolkit/issues/92) |
 | Impact report | Report on the campaign: screenings, audiences, partners and outcomes against the theory of change. | Planned, [#93](https://github.com/open-filmmaker-toolkit/toolkit/issues/93) |
 

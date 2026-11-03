@@ -19,13 +19,13 @@ from playwright.sync_api import sync_playwright
 
 root = pathlib.Path(__file__).resolve().parents[1]
 sample = (root / 'samples/the-river-keeps.oft.json').read_text()
-TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan', 'funder-crm', 'cash-flow', 'shooting-calendar', 'interview-prep', 'field-journal', 'location-scout', 'deal-memos', 'gear-list', 'coi-permit-tracker', 'travel-sheet', 'risk-plan', 'security-checklist', 'camera-sound-reports', 'interview-log', 'daily-production-report', 'expense-log', 'festival-submissions', 'press-list', 'partner-crm']
+TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan', 'funder-crm', 'cash-flow', 'shooting-calendar', 'interview-prep', 'field-journal', 'location-scout', 'deal-memos', 'gear-list', 'coi-permit-tracker', 'travel-sheet', 'risk-plan', 'security-checklist', 'camera-sound-reports', 'interview-log', 'daily-production-report', 'expense-log', 'festival-submissions', 'press-list', 'partner-crm', 'discussion-guide']
 COLLECTIONS = ['project', 'people', 'locations', 'thirdPartyElements', 'contracts', 'assets', 'musicCueSheet', 'callSheets']
 PRINT_BTN = {'clearance-log': '#printBtn', 'music-cue-sheet': '#printBtn', 'call-sheet': '#printAllBtn', 'release-tracker': '#printBtn',
-             'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn', 'treatment-builder': '#printBtn', 'pitch-deck': '#printBtn', 'grant-calendar': '#printBtn', 'narrative-library': '#printBtn', 'budget': '#printBtn', 'budget-converter': '#printBtn', 'finance-plan': '#printBtn', 'funder-crm': '#printBtn', 'cash-flow': '#printBtn', 'shooting-calendar': '#printBtn', 'interview-prep': '#printBtn', 'field-journal': '#printBtn', 'location-scout': '#printBtn', 'deal-memos': '#printBtn', 'gear-list': '#printBtn', 'coi-permit-tracker': '#printBtn', 'travel-sheet': '#printBtn', 'risk-plan': '#printBtn', 'security-checklist': '#printBtn', 'camera-sound-reports': '#printBtn', 'interview-log': '#printBtn', 'daily-production-report': '#printBtn', 'expense-log': '#printBtn', 'festival-submissions': '#printBtn', 'press-list': '#printBtn', 'partner-crm': '#printBtn'}
+             'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn', 'treatment-builder': '#printBtn', 'pitch-deck': '#printBtn', 'grant-calendar': '#printBtn', 'narrative-library': '#printBtn', 'budget': '#printBtn', 'budget-converter': '#printBtn', 'finance-plan': '#printBtn', 'funder-crm': '#printBtn', 'cash-flow': '#printBtn', 'shooting-calendar': '#printBtn', 'interview-prep': '#printBtn', 'field-journal': '#printBtn', 'location-scout': '#printBtn', 'deal-memos': '#printBtn', 'gear-list': '#printBtn', 'coi-permit-tracker': '#printBtn', 'travel-sheet': '#printBtn', 'risk-plan': '#printBtn', 'security-checklist': '#printBtn', 'camera-sound-reports': '#printBtn', 'interview-log': '#printBtn', 'daily-production-report': '#printBtn', 'expense-log': '#printBtn', 'festival-submissions': '#printBtn', 'press-list': '#printBtn', 'partner-crm': '#printBtn', 'discussion-guide': '#printBtn'}
 PHONE = {'width': 390, 'height': 844}
 # The button that opens each tool's main dialog, for the phone-width check. Most tools use #addBtn.
-DIALOG_BTN = {'treatment-builder': '[data-compare]', 'cash-flow': '#settingsBtn'}
+DIALOG_BTN = {'treatment-builder': '[data-compare]', 'cash-flow': '#settingsBtn', 'discussion-guide': '#projectCsvBtn'}
 
 STUB_PRINT = 'window.print = () => { window.__printed = true; };'
 NO_PICKERS = 'delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker;'
@@ -1919,6 +1919,37 @@ def test_partner_crm(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
+def test_discussion_guide(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'discussion-guide', fake)
+    open_sample(pg, fake)
+    check('Riverside has flooded three times' in pg.input_value('#synopsis'), 'starts from the treatment synopsis')
+    credit_preview = pg.inner_text('#creditsPreview')
+    check('Hammond Public Library' in pg.inner_text('#partnerList') and 'Directed by' in credit_preview
+          and 'Shall We Gather at the River' in credit_preview and 'Riverbed Ambience 04' in credit_preview
+          and 'The River Keeps (Main Title)' not in credit_preview and 'Riverside Courier (defunct)' not in credit_preview,
+          'shows project credits, including current music and archival credits')
+    pg.fill('#synopsis', 'A screening-specific synopsis for this audience.')
+    pg.fill('#themes', 'Memory and history\nCommunity preparedness')
+    pg.fill('#questions', 'What moment stayed with you?\nWhat should a town owe its neighbors?')
+    pg.fill('#resourceNotes', 'Flood readiness: https://example.org/prepare')
+    pg.check('[data-partner="partner-library"]')
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    report = pg.inner_text('#report')
+    check('A screening-specific synopsis' in report and 'Community preparedness' in report and 'What moment stayed with you?' in report
+          and 'Flood readiness' in report and 'Hammond Public Library' in report and 'library.example.org' in report
+          and 'Shall We Gather at the River' in report and 'Riverside County Historical Society' in report,
+          'prints the synopsis, themes, questions, resources and selected organization')
+    data = saved_project(pg, fake)
+    guide = data['discussionGuide']
+    check(guide['synopsis'] == 'A screening-specific synopsis for this audience.' and guide['themes'] == 'Memory and history\nCommunity preparedness'
+          and guide['questions'].startswith('What moment stayed with you?') and guide['resourceNotes'].startswith('Flood readiness')
+          and guide['partnerIds'] == ['partner-library'], 'saves the guide content and partner selection')
+    check(data['project'] == original['project'] and data['partners'] == original['partners'] and data['credits'] == original['credits']
+          and data['treatment'] == original['treatment'], 'source project, partner and credit records stay unchanged')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
 def test_template_columns(browser, fake):
     for name, template in TEMPLATE_EXPORTS:
         ctx, pg, errs = new_page(browser, name, fake)
@@ -2006,6 +2037,8 @@ def main():
         test_press_list(browser, fake)
         print('== partner-crm / partners, commitments and screenings')
         test_partner_crm(browser, fake)
+        print('== discussion-guide / synopsis, questions, resources and print')
+        test_discussion_guide(browser, fake)
         print('== camera-sound-reports / cards, clips, call sheets and CSV')
         test_camera_sound(browser, fake)
         print('== interview-log / moments, releases and the paper edit')

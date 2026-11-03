@@ -104,8 +104,9 @@ The toolkit has two halves:
 | [Clearance log](tools/clearance-log/) | Legal and clearances | Tracking every piece of third-party material until it's cleared, then printing a report for your E&O attorney |
 | [Press list](tools/press-list/) | Marketing and festivals | Keeping a press list: outlets and the people who cover them by beat, screener links sent, screening RSVPs and the coverage that comes back, with CSV export |
 | [Partner CRM](tools/partner-crm/) | Impact and outreach | Tracking impact partners: organizations and their contacts, commitments and next steps with due dates, and the screenings you've done together, with CSV export |
+| [Discussion guide builder](tools/discussion-guide/) | Impact and outreach | Preparing a screening handout with a project synopsis and credits, editable themes and questions, audience resources and partner organizations, and print to PDF |
 
-All 35 are first versions: they work, and they're still changing. Everything else we plan to build is listed by production phase in [TOOLS.md](TOOLS.md).
+All 36 are first versions: they work, and they're still changing. Everything else we plan to build is listed by production phase in [TOOLS.md](TOOLS.md).
 
 ## How our tools work
 
