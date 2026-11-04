@@ -1,0 +1,690 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Archive log · Open Filmmaker Toolkit</title>
+<meta name="description" content="Record where project assets are archived, keep hash manifests with each copy, and log read-back checks.">
+<!--
+THESIS: Keep every stored copy accountable to the project asset it protects; refuse an unconnected list of storage locations.
+OWN-WORLD: The toolkit's quiet, high-contrast paper-and-ink system, with restrained blue focus and status colors, a serif title, and compact sans-serif controls.
+STORY: See which assets have copies, where they live, and which read-back checks are due; open a copy to update its manifest or check history.
+FIRST VIEWPORT: Project title and file controls above a wide archive register; due and overdue checks sit in a narrow right column.
+FORM: Operational ledger, structure 7; grouped asset rows, filters, compact status summary, and one focused editor dialog.
+-->
+<style>
+:root {
+  color-scheme: light dark;
+  --paper: #f1f3f2; --sheet: #fff; --ink: #1a2130; --muted: #4b556a; --faint: #6d778a;
+  --rule: #d4dad8; --soft: #e6eae8; --hover: #f6f8f7; --focus: #2f6fdb;
+  --good: #2b7a57; --good-bg: #dff1e8; --warn: #8a5a00; --warn-bg: #fbf0d9;
+  --bad: #b3392d; --bad-bg: #f8e1de;
+  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #141922; --sheet: #1b212b; --ink: #e6e9ee; --muted: #a6afbd; --faint: #8790a0;
+    --rule: #2f3744; --soft: #262d38; --hover: #212834; --focus: #7aa7ff;
+    --good: #4fb386; --good-bg: #1a3329; --warn: #e2a531; --warn-bg: #3a2f17;
+    --bad: #e26657; --bad-bg: #3b2220;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans); }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+[hidden] { display: none !important; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.page { max-width: 1260px; margin: 0 auto; padding: 0 24px 48px; }
+.masthead { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px 32px; padding: 28px 0 20px; border-bottom: 1px solid var(--rule); }
+.tool-name { margin: 0 0 2px; color: var(--muted); font-size: 13px; font-weight: 600; }
+.film-title { margin: 0; font: 600 32px/1.15 var(--serif); letter-spacing: -.01em; overflow-wrap: anywhere; cursor: pointer; }
+.film-title.is-empty { color: var(--faint); font-style: italic; font-weight: 400; }
+.film-meta { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
+.link-btn { padding: 0; border: 0; background: none; color: var(--muted); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.file { display: grid; justify-items: end; gap: 8px; }
+.file-state { margin: 0; color: var(--muted); font-size: 13px; text-align: right; }
+.dirty { color: var(--warn); font-weight: 600; }
+.file-actions, .toolbar, .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px; padding: 7px 12px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); font-size: 14px; font-weight: 500; white-space: nowrap; }
+.btn:hover { border-color: var(--faint); }
+.btn.primary { border-color: var(--ink); background: var(--ink); color: var(--paper); }
+.btn.primary:hover { opacity: .88; }
+.btn.danger { color: var(--bad); }
+.banner { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 14px 0 0; padding: 12px 16px; border: 1px solid var(--warn); border-radius: 8px; background: var(--warn-bg); }
+.banner p { flex: 1 1 260px; margin: 0; }
+.hero { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px 24px; padding: 26px 0 16px; }
+.hero h2 { margin: 0; font: 600 25px/1.2 var(--serif); }
+.hero p { margin: 5px 0 0; max-width: 65ch; color: var(--muted); font-size: 14px; }
+.workspace { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(260px, .75fr); gap: 20px; align-items: start; }
+.left, .side { min-width: 0; }
+.side { display: grid; gap: 14px; }
+.card { min-width: 0; padding: 15px 17px; border: 1px solid var(--rule); border-radius: 8px; background: var(--sheet); }
+.section-title { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 12px; margin: 0 0 10px; }
+.section-title h2 { margin: 0; font: 600 18px/1.3 var(--serif); }
+.subtle, .hint { color: var(--muted); font-size: 13px; }
+.hint { margin: 4px 0 0; }
+.filters { display: grid; grid-template-columns: minmax(130px, .8fr) minmax(130px, .7fr) minmax(160px, 1fr); gap: 8px; margin: 0 0 12px; }
+.filters input, .filters select { min-width: 0; padding: 7px 9px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); }
+.table-wrap { overflow-x: auto; border: 1px solid var(--rule); border-radius: 7px; }
+.ledger { width: 100%; border-collapse: collapse; font-size: 14px; }
+.ledger th { padding: 9px 10px; background: var(--soft); color: var(--muted); font-size: 12px; font-weight: 600; text-align: left; }
+.ledger td { padding: 10px; border-top: 1px solid var(--rule); vertical-align: top; }
+.ledger tbody tr:hover { background: var(--hover); }
+.ledger .date { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ledger strong { font-weight: 600; }
+.detail { display: block; color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+.tag { display: inline-block; padding: 2px 8px; border-radius: 999px; background: var(--soft); color: var(--muted); font-size: 12px; font-weight: 600; white-space: nowrap; }
+.tag.good { background: var(--good-bg); color: var(--good); }
+.tag.due { background: var(--warn-bg); color: var(--warn); }
+.tag.bad { background: var(--bad-bg); color: var(--bad); }
+.row-action { padding: 2px 0; border: 0; background: none; color: var(--muted); text-decoration: underline; text-underline-offset: 2px; }
+.empty { padding: 32px 22px; border: 1px dashed var(--rule); border-radius: 7px; text-align: center; }
+.empty h3 { margin: 0 0 4px; font: 600 19px/1.3 var(--serif); }
+.empty p { margin: 0 auto 14px; max-width: 55ch; color: var(--muted); font-size: 14px; }
+.stat-list { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+.stat-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 8px 12px; padding: 8px 0; border-top: 1px solid var(--soft); }
+.stat-list li:first-child { border-top: 0; padding-top: 0; }
+.stat-list button { padding: 0; border: 0; background: none; color: var(--ink); text-align: left; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; overflow-wrap: anywhere; }
+.stat-list .when { color: var(--muted); font-size: 13px; text-align: right; white-space: nowrap; }
+.stat-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.stat { min-width: 0; padding: 9px 10px; border: 1px solid var(--soft); border-radius: 6px; }
+.stat b { display: block; font: 600 21px/1.2 var(--serif); font-variant-numeric: tabular-nums; }
+.stat span { color: var(--muted); font-size: 13px; }
+.foot { margin: 22px 0 0; color: var(--faint); font-size: 13px; }
+.foot p { margin: 0; }
+.report { display: none; }
+dialog { padding: 0; border: 0; background: var(--sheet); color: var(--ink); box-shadow: 0 10px 40px #0004; }
+dialog::backdrop { background: #10141c70; }
+dialog.modal { width: min(620px, calc(100vw - 28px)); max-height: calc(100dvh - 28px); border-radius: 9px; }
+dialog form { display: flex; flex-direction: column; max-height: inherit; }
+.dlg-head { padding: 18px 22px 12px; border-bottom: 1px solid var(--soft); }
+.dlg-head h2 { margin: 0; font: 600 22px/1.25 var(--serif); }
+.dlg-body { display: grid; gap: 13px; overflow-y: auto; padding: 16px 22px 20px; align-content: start; }
+.dlg-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 13px 22px; border-top: 1px solid var(--soft); }
+.spacer { flex: 1; }
+.field { display: grid; gap: 4px; min-width: 0; }
+.field label, .group h3 { margin: 0; font-size: 14px; font-weight: 600; }
+.field input, .field select, .field textarea { width: 100%; min-width: 0; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); }
+.field textarea { resize: vertical; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+.group { display: grid; gap: 8px; padding-top: 10px; border-top: 1px solid var(--soft); }
+.check-list { display: grid; gap: 7px; }
+.check-entry { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; padding: 9px; border: 1px solid var(--soft); border-radius: 6px; }
+.check-entry p { grid-column: 1 / -1; margin: 0; color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+.toast { position: fixed; left: 50%; bottom: 22px; z-index: 5; max-width: calc(100vw - 24px); padding: 10px 15px; transform: translateX(-50%); border-radius: 7px; background: var(--ink); color: var(--paper); font-size: 14px; box-shadow: 0 6px 24px #0004; }
+.toast.error { background: var(--bad); color: #fff; }
+.cant-run { display: none; max-width: 640px; margin: 64px auto; padding: 0 24px; }
+.no-js .page { display: none; }
+.no-js .cant-run { display: block; }
+@media (max-width: 900px) { .workspace { grid-template-columns: 1fr; } .side { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 720px) {
+  .page { padding: 0 16px 38px; }
+  .masthead { align-items: flex-start; }
+  .file { width: 100%; justify-items: start; }
+  .file-state { text-align: left; }
+  .film-title { font-size: 27px; }
+  .hero { align-items: flex-start; flex-direction: column; padding-top: 21px; }
+  .hero h2 { font-size: 23px; }
+  .toolbar { width: 100%; }
+  .toolbar #addBtn { flex: 1 1 100%; }
+  .filters { grid-template-columns: 1fr; }
+  .filters input, .filters select { width: 100%; }
+  .table-wrap { overflow: visible; border: 0; }
+  .ledger, .ledger tbody { display: block; width: 100%; }
+  .ledger thead { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+  .ledger tbody { display: grid; gap: 8px; }
+  .ledger tr { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; padding: 7px 10px; border: 1px solid var(--rule); border-radius: 7px; background: var(--sheet); }
+  .ledger td { min-width: 0; padding: 5px 0; border-top: 0; overflow-wrap: anywhere; }
+  .ledger td:first-child, .ledger td:nth-child(2) { grid-column: 1 / -1; }
+  .ledger td:first-child { padding-right: 42px; }
+  .ledger td:nth-child(3)::before, .ledger td:nth-child(4)::before { display: block; color: var(--muted); font-size: 11px; font-weight: 600; }
+  .ledger td:nth-child(3)::before { content: "Copied"; }
+  .ledger td:nth-child(4)::before { content: "Next read-back"; }
+  .ledger td:last-child { position: absolute; top: 5px; right: 10px; }
+  .side { grid-template-columns: 1fr; }
+  .two { grid-template-columns: 1fr; }
+  .dlg-head, .dlg-body, .dlg-foot { padding-left: 17px; padding-right: 17px; }
+}
+@media print {
+  @page { size: landscape; margin: 14mm; }
+  :root { color-scheme: light; }
+  body { background: #fff; color: #111; font-size: 10pt; }
+  .page, dialog, .toast { display: none !important; }
+  .report { display: block; }
+  .report h1 { margin: 0; font: 700 19pt/1.2 var(--serif); }
+  .report .meta { margin: 3pt 0 10pt; color: #444; }
+  .report table { width: 100%; border-collapse: collapse; font-size: 9pt; }
+  .report th, .report td { padding: 4pt 5pt; border-bottom: .6pt solid #999; text-align: left; vertical-align: top; }
+  .report th { background: #eee; }
+  .report tr { break-inside: avoid; page-break-inside: avoid; }
+  .report .sub { display: block; color: #444; font-size: 8.5pt; }
+}
+</style>
+</head>
+<body>
+<div class="cant-run"><h1>Open this file in a web browser</h1><p>This tool runs locally in Chrome, Edge, Firefox or Safari, with no network requests.</p></div>
+<div class="page">
+  <header class="masthead">
+    <div>
+      <p class="tool-name">Archive log</p>
+      <h1 class="film-title" id="filmTitle">Untitled film</h1>
+      <p class="film-meta"><span id="filmMeta"></span> <button type="button" class="link-btn" id="editProjectBtn">Edit film details</button></p>
+    </div>
+    <div class="file">
+      <p class="file-state" id="fileState">Not saved to a file yet</p>
+      <div class="file-actions">
+        <button type="button" class="btn" id="newBtn">New project</button>
+        <button type="button" class="btn" id="openBtn">Open file</button>
+        <button type="button" class="btn" id="projectCsvBtn">Export project data (CSV)</button>
+        <button type="button" class="btn primary" id="saveBtn">Save file</button>
+      </div>
+    </div>
+  </header>
+  <div class="banner" id="recovery" role="region" aria-label="Unsaved work" hidden>
+    <p id="recoveryText"></p>
+    <div class="actions"><button type="button" class="btn primary" id="restoreBtn">Restore it</button><button type="button" class="btn" id="discardBtn">Discard it</button></div>
+  </div>
+  <section class="hero">
+    <div><h2>Copies you can account for.</h2><p>Log where each project asset lives, keep its hash manifest with that copy, and record read-back checks when you make them. Due dates are shown when you open this tool; no background reminders are sent.</p></div>
+    <div class="toolbar"><button type="button" class="btn primary" id="addBtn">Add an archived copy</button><button type="button" class="btn" id="csvBtn">Export CSV</button><button type="button" class="btn" id="printBtn">Print report</button></div>
+  </section>
+  <main class="workspace">
+    <section class="left" aria-labelledby="registerTitle">
+      <div class="card">
+        <div class="section-title"><h2 id="registerTitle">Archive register</h2><span class="subtle" id="count"></span></div>
+        <div class="filters">
+          <label><span class="sr-only">Filter read-back checks</span><select id="statusFilter"><option value="">All copies</option><option value="overdue">Overdue checks</option><option value="due">Due within 30 days</option><option value="failed">Last check not passed</option></select></label>
+          <label><span class="sr-only">Filter by asset type</span><select id="typeFilter"><option value="">All asset types</option></select></label>
+          <label><span class="sr-only">Search archive copies</span><input id="search" type="search" placeholder="Search copies" autocomplete="off"></label>
+        </div>
+        <div class="table-wrap" id="tableWrap">
+          <table class="ledger">
+            <thead><tr><th>Project asset / copy</th><th>Storage location</th><th>Copied</th><th>Next read-back</th><th><span class="sr-only">Actions</span></th></tr></thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+        <div class="empty" id="empty" hidden><h3>No archived copies yet</h3><p>Add a copy for a project asset, or create a new asset as you log its first copy.</p><button type="button" class="btn primary" id="emptyAddBtn">Add an archived copy</button></div>
+        <p class="hint" id="noMatch" hidden>No copies match these filters. Clear the search or choose another filter.</p>
+      </div>
+    </section>
+    <aside class="side">
+      <section class="card" aria-labelledby="checksTitle">
+        <div class="section-title"><h2 id="checksTitle">Read-back checks</h2><span class="subtle" id="dueCount"></span></div>
+        <ul class="stat-list" id="dueList"></ul>
+        <p class="hint" id="noDue">No checks due in the next 30 days.</p>
+      </section>
+      <section class="card" aria-labelledby="summaryTitle">
+        <div class="section-title"><h2 id="summaryTitle">Archive at a glance</h2></div>
+        <div class="stat-grid" id="stats"></div>
+        <p class="hint">A read-back result is a manual record, not a live check of the stored media.</p>
+      </section>
+    </aside>
+  </main>
+  <footer class="foot"><p>Part of the Open Filmmaker Toolkit. The hash manifest is text supplied by you; this tool does not read media or calculate hashes. Everything stays on this computer until you save or export it.</p></footer>
+</div>
+<div class="report" id="report" aria-hidden="true"></div>
+<input type="file" id="fileInput" accept=".json,application/json" hidden>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<dialog class="modal" id="editor" aria-labelledby="editorTitle">
+  <form id="editorForm" method="dialog" novalidate>
+    <div class="dlg-head"><h2 id="editorTitle">Archived copy</h2></div>
+    <div class="dlg-body">
+      <div class="field"><label for="f-asset">Project asset</label><select id="f-asset" required></select></div>
+      <div id="newAssetFields" class="group" hidden>
+        <h3>New project asset</h3>
+        <div class="field"><label for="f-assetName">Asset name</label><input id="f-assetName" type="text" autocomplete="off"></div>
+        <div class="two">
+          <div class="field"><label for="f-assetType">Asset type</label><input id="f-assetType" type="text" placeholder="Master, project file, footage…"></div>
+          <div class="field"><label for="f-assetPath">Project-relative path</label><input id="f-assetPath" type="text" placeholder="Optional"></div>
+        </div>
+      </div>
+      <div class="two">
+        <div class="field"><label for="f-copyLabel">Copy label</label><input id="f-copyLabel" type="text" placeholder="Optional, e.g. LTO tape 17" autocomplete="off"></div>
+        <div class="field"><label for="f-copiedAt">Copy date</label><input id="f-copiedAt" type="date" required></div>
+      </div>
+      <div class="field"><label for="f-location">Storage location</label><input id="f-location" type="text" required placeholder="Drive, tape, storage service, or physical location" autocomplete="off"></div>
+      <div class="field"><label for="f-hashList">Hash manifest</label><textarea id="f-hashList" rows="5" spellcheck="false" placeholder="Paste the manifest text or a file reference"></textarea><p class="hint">Paste a manifest created by another tool, or enter its location. No media is read or hashed here.</p></div>
+      <div class="field"><label for="f-nextCheck">Next read-back check</label><input id="f-nextCheck" type="date"><p class="hint">A date is shown as due when you open this tool. It won't trigger a notification while the tool is closed.</p></div>
+      <div class="group">
+        <h3>Read-back check history</h3>
+        <div id="checkHistory" class="check-list"></div>
+        <div class="two">
+          <div class="field"><label for="f-checkDate">Check date</label><input id="f-checkDate" type="date"></div>
+          <div class="field"><label for="f-checkResult">Result</label><select id="f-checkResult"><option value="passed">Read back successfully</option><option value="partial">Partial or needs review</option><option value="failed">Could not read back</option></select></div>
+        </div>
+        <div class="field"><label for="f-checkNotes">Check notes</label><textarea id="f-checkNotes" rows="2" placeholder="Optional details about this manual check"></textarea></div>
+        <button type="button" class="btn" id="recordCheckBtn">Record read-back check</button>
+      </div>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn danger" id="removeCopyBtn" hidden>Remove copy</button>
+      <button type="button" class="btn" id="editorCancel">Cancel</button><span class="spacer"></span><button type="submit" class="btn primary" id="editorSubmit">Add copy</button>
+    </div>
+  </form>
+</dialog>
+<dialog class="modal" id="projectDialog" aria-labelledby="projectTitle">
+  <form id="projectForm" method="dialog"><div class="dlg-head"><h2 id="projectTitle">Film details</h2></div>
+    <div class="dlg-body"><div class="field"><label for="p-title">Film title</label><input id="p-title" type="text"></div><div class="field"><label for="p-company">Production company</label><input id="p-company" type="text"></div><div class="field"><label for="p-producer">Producer</label><input id="p-producer" type="text"></div></div>
+    <div class="dlg-foot"><button type="button" class="btn" id="projectCancel">Cancel</button><span class="spacer"></span><button type="submit" class="btn primary">Save details</button></div>
+  </form>
+</dialog>
+<dialog class="modal" id="projectCsvDialog" aria-labelledby="projectCsvTitle">
+  <form id="projectCsvForm" method="dialog"><div class="dlg-head"><h2 id="projectCsvTitle">Export project data</h2></div>
+    <div class="dlg-body"><div class="field"><label for="projectCsvCollection">Data to export</label><select id="projectCsvCollection"><option value="project">Project details</option><option value="people">People</option><option value="locations">Locations</option><option value="thirdPartyElements">Third-party elements</option><option value="contracts">Contracts</option><option value="assets">Assets</option><option value="musicCueSheet">Music cue sheet details</option><option value="callSheets">Call sheets</option></select></div><p class="hint">Nested values are kept as JSON in their cell. Exports every record, including fields this tool doesn't edit.</p></div>
+    <div class="dlg-foot"><button type="button" class="btn" id="projectCsvCancel">Cancel</button><span class="spacer"></span><button type="submit" class="btn primary">Export CSV</button></div>
+  </form>
+</dialog>
+<dialog class="modal" id="conflictDialog" aria-labelledby="conflictTitle">
+  <form method="dialog"><div class="dlg-head"><h2 id="conflictTitle">Project file changed</h2></div>
+    <div class="dlg-body"><p id="conflictText">This project file changed after you opened it. Saving will replace those changes.</p><p class="hint">Your edits are still here. Reload the latest file, save a separate copy, or explicitly overwrite the changed file.</p></div>
+    <div class="dlg-foot"><button type="button" class="btn" id="conflictReloadBtn">Reload latest</button><button type="button" class="btn" id="conflictCopyBtn">Save a copy</button><button type="button" class="btn danger" id="conflictOverwriteBtn">Overwrite file</button><button type="button" class="btn" id="conflictCancelBtn">Keep editing</button></div>
+  </form>
+</dialog>
+<script>
+(() => {
+  'use strict';
+  const FORMAT = 'open-filmmaker-toolkit/project', VERSION = 1, TOOL = 'archive-log 0.1.0';
+  const DRAFT_KEY = 'oft.archive-log.draft';
+  const $ = id => document.getElementById(id);
+  const arr = value => Array.isArray(value) ? value : [];
+  const str = value => value == null ? '' : String(value);
+  const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const today = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
+  const makeId = prefix => `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  const slug = value => str(value).toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'untitled-film';
+  let doc = {format: FORMAT, formatVersion: VERSION, project: {title: '', company: '', producer: ''}, thirdPartyElements: [], assets: []};
+  let fileName = null, fileHandle = null, baselineText = null, dirty = false, query = '', filterStatus = '', filterType = '', toastTimer = null;
+  let editingAssetId = null, editingCopyId = null, stagedChecks = [];
+
+  function normalize(data) {
+    if (!data.project || typeof data.project !== 'object') data.project = {};
+    for (const key of ['title', 'company', 'producer']) if (typeof data.project[key] !== 'string') data.project[key] = str(data.project[key]);
+    if (!Array.isArray(data.assets)) data.assets = [];
+    return data;
+  }
+  const assets = () => arr(doc.assets).filter(asset => asset && typeof asset === 'object' && !Array.isArray(asset));
+  const copies = asset => arr(asset.archiveCopies).filter(copy => copy && typeof copy === 'object' && !Array.isArray(copy));
+  const assetById = id => assets().find(asset => asset.id === id);
+  const copyByIds = (assetId, copyId) => copies(assetById(assetId)).find(copy => copy.id === copyId);
+  const copyRows = () => assets().flatMap(asset => copies(asset).map(copy => ({asset, copy})));
+  const resultLabel = result => ({passed: 'Read back successfully', partial: 'Partial or needs review', failed: 'Could not read back'}[result] || 'Result not recorded');
+  const safeDate = value => /^\d{4}-\d{2}-\d{2}$/.test(str(value)) ? value : '';
+  function fmtDate(value) {
+    const date = safeDate(value);
+    if (!date) return value ? str(value) : 'Not set';
+    return new Intl.DateTimeFormat(undefined, {year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC'}).format(new Date(`${date}T12:00:00Z`));
+  }
+  function dateDelta(value) {
+    const date = safeDate(value);
+    if (!date) return null;
+    const now = today().split('-').map(Number), then = date.split('-').map(Number);
+    return Math.round((Date.UTC(then[0], then[1] - 1, then[2]) - Date.UTC(now[0], now[1] - 1, now[2])) / 86400000);
+  }
+  function checkStatus(copy) {
+    const delta = dateDelta(copy.nextCheckDate);
+    if (delta === null) return {key: 'none', label: 'Not scheduled', delta};
+    if (delta < 0) return {key: 'overdue', label: `Overdue by ${Math.abs(delta)} day${delta === -1 ? '' : 's'}`, delta};
+    if (delta === 0) return {key: 'due', label: 'Due today', delta};
+    if (delta <= 30) return {key: 'due', label: `Due in ${delta} day${delta === 1 ? '' : 's'}`, delta};
+    return {key: 'scheduled', label: `Due ${fmtDate(copy.nextCheckDate)}`, delta};
+  }
+  function latestCheck(copy) {
+    return arr(copy.checks).filter(check => check && typeof check === 'object')
+      .sort((a, b) => str(b.checkedAt).localeCompare(str(a.checkedAt)))[0] || null;
+  }
+  function filteredRows() {
+    const needle = query.trim().toLowerCase();
+    return copyRows().filter(({asset, copy}) => {
+      const state = checkStatus(copy), latest = latestCheck(copy);
+      if (filterStatus === 'overdue' && state.key !== 'overdue') return false;
+      if (filterStatus === 'due' && state.key !== 'due' && state.key !== 'overdue') return false;
+      if (filterStatus === 'failed' && (!latest || latest.result === 'passed')) return false;
+      if (filterType && str(asset.type) !== filterType) return false;
+      return !needle || [asset.name, asset.type, asset.relativePath, copy.copyLabel, copy.storageLocation, copy.copiedAt, copy.nextCheckDate, copy.hashList,
+        ...arr(copy.checks).flatMap(check => [check.checkedAt, check.result, check.notes])].join(' ').toLowerCase().includes(needle);
+    }).sort((a, b) => {
+      const sa = checkStatus(a.copy), sb = checkStatus(b.copy);
+      const rank = s => s.key === 'overdue' ? 0 : s.key === 'due' ? 1 : s.key === 'scheduled' ? 2 : 3;
+      return rank(sa) - rank(sb) || str(a.copy.nextCheckDate).localeCompare(str(b.copy.nextCheckDate))
+        || str(a.asset.name).localeCompare(str(b.asset.name)) || str(a.copy.storageLocation).localeCompare(str(b.copy.storageLocation));
+    });
+  }
+  function render() {
+    const title = doc.project.title || 'Untitled film';
+    $('filmTitle').textContent = title;
+    $('filmTitle').classList.toggle('is-empty', !doc.project.title);
+    $('filmMeta').textContent = [doc.project.company, doc.project.producer && `Producer: ${doc.project.producer}`].filter(Boolean).join(' · ');
+    $('fileState').innerHTML = `${fileName ? esc(fileName) : 'Not saved to a file yet'}${dirty ? ' · <span class="dirty">Unsaved changes</span>' : ''}`;
+    document.title = `${doc.project.title ? `${doc.project.title} · ` : ''}Archive log · Open Filmmaker Toolkit`;
+
+    const types = [...new Set(assets().map(asset => str(asset.type).trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+    const oldType = $('typeFilter').value;
+    $('typeFilter').innerHTML = '<option value="">All asset types</option>' + types.map(type => `<option value="${esc(type)}">${esc(type)}</option>`).join('');
+    $('typeFilter').value = types.includes(oldType) ? oldType : '';
+    filterType = $('typeFilter').value;
+
+    const allRows = copyRows(), shown = filteredRows();
+    $('count').textContent = `${shown.length} of ${allRows.length} cop${allRows.length === 1 ? 'y' : 'ies'} · ${assets().length} project assets`;
+    $('rows').innerHTML = shown.map(({asset, copy}) => {
+      const state = checkStatus(copy), last = latestCheck(copy), statusClass = state.key === 'overdue' ? 'bad' : state.key === 'due' ? 'due' : state.key === 'scheduled' ? 'good' : '';
+      const lastLine = last ? `Last check: ${fmtDate(last.checkedAt)} · ${resultLabel(last.result)}` : 'No read-back recorded';
+      return `<tr data-asset-id="${esc(asset.id)}" data-copy-id="${esc(copy.id)}">
+        <td><strong>${esc(asset.name || 'Unnamed asset')}</strong><span class="detail">${esc([asset.type, copy.copyLabel].filter(Boolean).join(' · ') || 'Project asset')}</span></td>
+        <td>${esc(copy.storageLocation || 'Location not set')}<span class="detail">${esc(lastLine)}</span></td>
+        <td class="date">${esc(fmtDate(copy.copiedAt))}</td>
+        <td><span class="tag ${statusClass}">${esc(state.label)}</span>${copy.hashList ? '<span class="detail">Hash manifest recorded</span>' : '<span class="detail">No hash manifest</span>'}</td>
+        <td><button type="button" class="row-action" data-edit-copy="${esc(copy.id)}" data-asset="${esc(asset.id)}">Edit</button></td>
+      </tr>`;
+    }).join('');
+    $('tableWrap').hidden = shown.length === 0;
+    $('empty').hidden = allRows.length > 0;
+    $('noMatch').hidden = allRows.length === 0 || shown.length > 0;
+    $('csvBtn').textContent = `Export CSV (${shown.length})`;
+
+    const actionable = allRows.map(row => ({...row, state: checkStatus(row.copy)}))
+      .filter(row => row.state.delta !== null && row.state.delta <= 30)
+      .sort((a, b) => a.state.delta - b.state.delta || str(a.asset.name).localeCompare(str(b.asset.name)));
+    $('dueCount').textContent = actionable.length ? `${actionable.length} due` : 'None due';
+    $('dueList').innerHTML = actionable.map(({asset, copy, state}) =>
+      `<li><span><button type="button" data-edit-copy="${esc(copy.id)}" data-asset="${esc(asset.id)}">${esc(asset.name || 'Unnamed asset')}</button><span class="detail">${esc(copy.storageLocation || 'Location not set')}</span></span><span class="when">${esc(state.label)}</span></li>`
+    ).join('');
+    $('noDue').hidden = actionable.length > 0;
+
+    const overdue = allRows.filter(({copy}) => checkStatus(copy).key === 'overdue').length;
+    const scheduled = allRows.filter(({copy}) => safeDate(copy.nextCheckDate)).length;
+    const withManifest = allRows.filter(({copy}) => str(copy.hashList).trim()).length;
+    $('stats').innerHTML = [
+      [allRows.length, 'archived copies'], [assets().length, 'project assets'],
+      [overdue, 'overdue checks'], [`${withManifest}/${allRows.length}`, 'with a hash manifest']
+    ].map(([value, label]) => `<div class="stat"><b>${esc(value)}</b><span>${esc(label)}</span></div>`).join('');
+    $('stats').setAttribute('aria-label', `${overdue} overdue read-back checks; ${scheduled} copies have a next check date`);
+  }
+  function changed() { dirty = true; saveDraft(); render(); }
+  function csvCell(value) {
+    let text = value == null ? '' : String(value);
+    if (/^[=+\-@\t\r]/.test(text)) text = `'${text}`;
+    return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+  }
+  function csvText(headers, rows) {
+    return '\ufeff' + [headers, ...rows].map(row => row.map(csvCell).join(',')).join('\r\n') + '\r\n';
+  }
+  function download(text, name, type) {
+    const url = URL.createObjectURL(new Blob([text], {type})), link = document.createElement('a');
+    link.href = url; link.download = name; document.body.appendChild(link); link.click(); link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  function suggestedName() { return `${slug(doc.project.title)}.oft.json`; }
+  function exportCsv() {
+    const headers = ['Asset', 'Asset type', 'Project-relative path', 'Copy label', 'Storage location', 'Copied date', 'Next read-back date', 'Check status', 'Last check date', 'Last check result', 'Hash manifest', 'Read-back checks'];
+    const rows = filteredRows().map(({asset, copy}) => {
+      const last = latestCheck(copy);
+      return [asset.name, asset.type, asset.relativePath, copy.copyLabel, copy.storageLocation, copy.copiedAt, copy.nextCheckDate,
+        checkStatus(copy).label, last?.checkedAt, last ? resultLabel(last.result) : '', copy.hashList,
+        JSON.stringify(arr(copy.checks))];
+    });
+    download(csvText(headers, rows), `${slug(doc.project.title)}-archive-log.csv`, 'text/csv;charset=utf-8');
+    toast(`Exported ${rows.length} archived cop${rows.length === 1 ? 'y' : 'ies'} to CSV`);
+  }
+  const csvNames = {project: 'project details', people: 'people', locations: 'locations', thirdPartyElements: 'third-party elements', contracts: 'contracts', assets: 'assets', musicCueSheet: 'music cue sheet details', callSheets: 'call sheets'};
+  function exportProjectCsv() {
+    const collection = $('projectCsvCollection').value, value = doc[collection];
+    const records = Array.isArray(value) ? value : value && typeof value === 'object' ? [value] : [];
+    if (records.some(record => !record || typeof record !== 'object' || Array.isArray(record))) {
+      toast(`Couldn't export ${csvNames[collection]}: the project contains an invalid record.`, true); return;
+    }
+    const headers = [...new Set(records.flatMap(record => Object.keys(record)))];
+    if (!headers.length) headers.push('id');
+    const rows = records.map(record => headers.map(key => record[key] && typeof record[key] === 'object' ? JSON.stringify(record[key]) : record[key]));
+    download(csvText(headers, rows), suggestedName().replace(/\.oft\.json$/i, `-${collection}.csv`), 'text/csv;charset=utf-8');
+    toast(`Exported ${records.length} ${csvNames[collection]}`);
+  }
+  function renderReport() {
+    const rows = copyRows().sort((a, b) => str(a.asset.name).localeCompare(str(b.asset.name)) || str(a.copy.storageLocation).localeCompare(str(b.copy.storageLocation)));
+    $('report').innerHTML = `<h1>Archive log${doc.project.title ? ` · ${esc(doc.project.title)}` : ''}</h1>
+      <p class="meta">${esc([doc.project.company, `Printed ${fmtDate(today())}`, `${rows.length} archived cop${rows.length === 1 ? 'y' : 'ies'}`].filter(Boolean).join(' · '))}</p>
+      <table><thead><tr><th>Project asset</th><th>Copy / storage location</th><th>Copied</th><th>Next read-back</th><th>Latest check</th><th>Hash manifest</th></tr></thead><tbody>
+      ${rows.map(({asset, copy}) => { const last = latestCheck(copy); return `<tr><td><strong>${esc(asset.name || 'Unnamed asset')}</strong><span class="sub">${esc([asset.type, asset.relativePath].filter(Boolean).join(' · '))}</span></td><td>${esc(copy.copyLabel ? `${copy.copyLabel} · ` : '')}${esc(copy.storageLocation || 'Location not set')}</td><td>${esc(fmtDate(copy.copiedAt))}</td><td>${esc(checkStatus(copy).label)}</td><td>${last ? `${esc(fmtDate(last.checkedAt))} · ${esc(resultLabel(last.result))}` : 'None recorded'}</td><td>${copy.hashList ? 'Recorded; see CSV for full manifest' : 'None recorded'}</td></tr>`; }).join('')}
+      </tbody></table><p class="meta">Read-back results are manually recorded. This report does not verify media or send reminders.</p>`;
+  }
+  function openEditor(assetId = '', copyId = '') {
+    editingAssetId = assetId || null; editingCopyId = copyId || null; stagedChecks = [];
+    const asset = assetId ? assetById(assetId) : null, copy = asset && copyId ? copyByIds(asset.id, copyId) : null;
+    $('editorForm').reset();
+    const options = assets().map(item => `<option value="${esc(item.id)}">${esc(item.name || 'Unnamed asset')}${item.type ? ` · ${esc(item.type)}` : ''}</option>`).join('');
+    $('f-asset').innerHTML = `<option value="">Choose a project asset</option>${options}<option value="__new__">Add a new project asset…</option>`;
+    $('f-asset').value = asset ? str(asset.id) : '';
+    $('newAssetFields').hidden = true;
+    $('f-assetName').required = false;
+    $('f-copiedAt').value = copy?.copiedAt || today();
+    $('f-location').value = copy?.storageLocation || '';
+    $('f-copyLabel').value = copy?.copyLabel || '';
+    $('f-hashList').value = copy?.hashList || '';
+    $('f-nextCheck').value = safeDate(copy?.nextCheckDate);
+    $('f-checkDate').value = today();
+    $('f-checkResult').value = 'passed';
+    $('f-checkNotes').value = '';
+    $('f-assetName').value = '';
+    $('f-assetType').value = '';
+    $('f-assetPath').value = '';
+    stagedChecks = arr(copy?.checks).filter(check => check && typeof check === 'object').map(check => ({...check}));
+    $('editorTitle').textContent = copy ? `Edit copy · ${asset.name || 'Unnamed asset'}` : 'Add an archived copy';
+    $('editorSubmit').textContent = copy ? 'Save changes' : 'Add copy';
+    $('removeCopyBtn').hidden = !copy;
+    renderCheckHistory();
+    $('editor').showModal();
+    (copy ? $('f-location') : $('f-asset')).focus();
+  }
+  function renderCheckHistory() {
+    $('checkHistory').innerHTML = stagedChecks.length ? [...stagedChecks].sort((a, b) => str(b.checkedAt).localeCompare(str(a.checkedAt))).map(check =>
+      `<div class="check-entry"><strong>${esc(fmtDate(check.checkedAt))}</strong><span class="tag ${check.result === 'passed' ? 'good' : check.result === 'failed' ? 'bad' : 'due'}">${esc(resultLabel(check.result))}</span>${check.notes ? `<p>${esc(check.notes)}</p>` : ''}</div>`
+    ).join('') : '<p class="hint">No checks recorded yet.</p>';
+  }
+  function updateNewAssetFields() {
+    const isNew = $('f-asset').value === '__new__';
+    $('newAssetFields').hidden = !isNew;
+    $('f-assetName').required = isNew;
+  }
+  function recordCheck() {
+    const checkedAt = safeDate($('f-checkDate').value), result = $('f-checkResult').value;
+    if (!checkedAt) { toast('Enter the date you checked this copy.', true); $('f-checkDate').focus(); return; }
+    const check = {id: makeId('archive-check'), checkedAt, result};
+    if ($('f-checkNotes').value.trim()) check.notes = $('f-checkNotes').value.trim();
+    stagedChecks.push(check);
+    $('f-checkNotes').value = '';
+    renderCheckHistory();
+    toast('Read-back check added to this copy. Save the copy to keep it.');
+  }
+  function submitCopy(event) {
+    event.preventDefault();
+    const selected = $('f-asset').value, copiedAt = safeDate($('f-copiedAt').value), location = $('f-location').value.trim();
+    if ((!selected && !editingAssetId) || !copiedAt || !location) {
+      toast('Choose an asset, enter a copy date and add a storage location.', true); return;
+    }
+    let asset = editingAssetId ? assetById(editingAssetId) : assetById(selected);
+    if (selected === '__new__' && !editingAssetId) {
+      const name = $('f-assetName').value.trim();
+      if (!name) { toast('Enter a name for the new project asset.', true); $('f-assetName').focus(); return; }
+      asset = {id: makeId('asset'), name};
+      const type = $('f-assetType').value.trim(), path = $('f-assetPath').value.trim();
+      if (type) asset.type = type;
+      if (path) asset.relativePath = path;
+      if (!Array.isArray(doc.assets)) doc.assets = [];
+      doc.assets.push(asset);
+    }
+    if (!asset) { toast('That project asset is no longer available. Choose another asset.', true); return; }
+    if (!Array.isArray(asset.archiveCopies)) asset.archiveCopies = [];
+    let copy = editingCopyId ? copies(asset).find(item => item.id === editingCopyId) : null;
+    if (!copy) { copy = {id: makeId('archive-copy')}; asset.archiveCopies.push(copy); }
+    copy.copiedAt = copiedAt;
+    copy.storageLocation = location;
+    const label = $('f-copyLabel').value.trim(), manifest = $('f-hashList').value, nextCheck = safeDate($('f-nextCheck').value);
+    if (label) copy.copyLabel = label; else delete copy.copyLabel;
+    if (manifest.trim()) copy.hashList = manifest; else delete copy.hashList;
+    if (nextCheck) copy.nextCheckDate = nextCheck; else delete copy.nextCheckDate;
+    if (stagedChecks.length) copy.checks = stagedChecks; else delete copy.checks;
+    $('editor').close();
+    changed();
+    toast(editingCopyId ? 'Archived copy updated.' : 'Archived copy added.');
+  }
+  function removeCopy() {
+    if (!editingAssetId || !editingCopyId || !confirm('Remove this archive-copy record? The project asset and its other copies will stay in the project.')) return;
+    const asset = assetById(editingAssetId);
+    if (asset && Array.isArray(asset.archiveCopies)) {
+      asset.archiveCopies = asset.archiveCopies.filter(copy => !copy || copy.id !== editingCopyId);
+      if (!asset.archiveCopies.length) delete asset.archiveCopies;
+      $('editor').close(); changed(); toast('Archive-copy record removed.');
+    }
+  }
+  function openProjectDialog() {
+    for (const key of ['title', 'company', 'producer']) $(`p-${key}`).value = doc.project[key] || '';
+    $('projectDialog').showModal();
+  }
+  function saveProjectDialog() {
+    for (const key of ['title', 'company', 'producer']) doc.project[key] = $(`p-${key}`).value.trim();
+    $('projectDialog').close(); changed();
+  }
+  function saveDraft() {
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify({doc, fileName, baselineText, at: new Date().toISOString()})); } catch {}
+  }
+  function clearDraft() { try { localStorage.removeItem(DRAFT_KEY); } catch {} $('recovery').hidden = true; }
+  function checkDraft() {
+    let draft;
+    try { draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); } catch {}
+    if (!draft?.doc || draft.doc.format !== FORMAT || !arr(draft.doc.assets).some(asset => copies(asset).length)) return;
+    const count = arr(draft.doc.assets).reduce((sum, asset) => sum + copies(asset).length, 0);
+    $('recoveryText').textContent = `Unsaved archive-log changes from ${draft.at ? new Date(draft.at).toLocaleString() : 'earlier'} (${count} archived cop${count === 1 ? 'y' : 'ies'}). Restore or discard them.`;
+    $('recovery').hidden = false;
+    $('restoreBtn').onclick = () => {
+      doc = normalize(draft.doc); fileName = draft.fileName || null; fileHandle = null;
+      baselineText = typeof draft.baselineText === 'string' ? draft.baselineText : null;
+      dirty = true; clearDraft(); render(); toast('Restored. Save to keep the changes.');
+    };
+    $('discardBtn').onclick = () => { clearDraft(); toast('Discarded the unsaved changes.'); };
+  }
+  const pickerTypes = [{description: 'Film project file', accept: {'application/json': ['.json']}}];
+  function serialize() { doc.savedAt = new Date().toISOString(); doc.savedBy = TOOL; return JSON.stringify(doc, null, 2) + '\n'; }
+  function afterSave(name, downloaded, text) {
+    fileName = name; if (downloaded) fileHandle = null; baselineText = text; dirty = false; clearDraft(); render();
+    toast(downloaded ? `Downloaded ${name}. Keep it with your project file.` : `Saved to ${name}`);
+  }
+  function saveCopy(content) {
+    const name = (fileName || suggestedName()).replace(/\.oft\.json$/i, '') + '-copy.oft.json';
+    download(content, name, 'application/json'); afterSave(name, true, content);
+  }
+  async function writeProjectFile(handle, content) {
+    try { const writable = await handle.createWritable(); await writable.write(content); await writable.close(); }
+    catch (error) { if (error.name !== 'AbortError') toast(`Couldn't save the file: ${error.message}`, true); return; }
+    fileHandle = handle; afterSave(handle.name, false, content);
+  }
+  async function reloadLatest(handle) {
+    try { const file = await handle.getFile(); loadText(await file.text(), handle.name, handle); }
+    catch (error) { toast(`Couldn't reload the file: ${error.message}`, true); }
+  }
+  function showConflict(content, observed, unknown = false) {
+    const handle = fileHandle; dirty = true; saveDraft(); render();
+    $('conflictText').textContent = unknown ? `The tool can't verify whether ${handle.name} changed since the recovery copy was made.` : `${handle.name} changed after you opened it. Your edits are not saved.`;
+    $('conflictDialog').showModal();
+    $('conflictReloadBtn').onclick = () => { $('conflictDialog').close(); reloadLatest(handle); };
+    $('conflictCopyBtn').onclick = () => { $('conflictDialog').close(); saveCopy(content); };
+    $('conflictOverwriteBtn').onclick = async () => {
+      $('conflictDialog').close();
+      let latest;
+      try { latest = await (await handle.getFile()).text(); } catch (error) { toast(`Couldn't check the file before overwriting: ${error.message}`, true); return; }
+      if (latest !== observed) { toast('The file changed again. Review the updated warning before overwriting.', true); showConflict(content, latest); return; }
+      await writeProjectFile(handle, content);
+    };
+    $('conflictCancelBtn').onclick = () => $('conflictDialog').close();
+  }
+  async function saveFile() {
+    const output = serialize();
+    if (fileHandle) {
+      let current;
+      try { current = await (await fileHandle.getFile()).text(); } catch (error) { toast(`Couldn't check the file before saving: ${error.message}`, true); return; }
+      if (baselineText === null || current !== baselineText) { showConflict(output, current, baselineText === null); return; }
+      await writeProjectFile(fileHandle, output); return;
+    }
+    if (window.showSaveFilePicker && window.self === window.top) {
+      try {
+        const handle = await window.showSaveFilePicker({suggestedName: fileName || suggestedName(), types: pickerTypes});
+        if (handle.name === fileName) {
+          const current = await (await handle.getFile()).text();
+          if (baselineText === null || current !== baselineText) { fileHandle = handle; showConflict(output, current, baselineText === null); return; }
+        }
+        await writeProjectFile(handle, output);
+      } catch (error) { if (error.name !== 'AbortError') toast(`Couldn't save the file: ${error.message}`, true); }
+      return;
+    }
+    const name = fileName || suggestedName(); download(output, name, 'application/json'); afterSave(name, true, output);
+  }
+  function loadText(text, name, handle) {
+    let data;
+    try { data = JSON.parse(text); } catch { toast(`Couldn't open ${name}: it isn't a project file.`, true); return; }
+    if (!data || data.format !== FORMAT) { toast(`Couldn't open ${name}: it isn't an Open Filmmaker Toolkit project file.`, true); return; }
+    if (Number(data.formatVersion) > VERSION) { toast(`Couldn't open ${name}: it was saved by a newer version of the toolkit.`, true); return; }
+    doc = normalize(data); fileHandle = handle; baselineText = text; fileName = name; dirty = false; clearDraft(); render();
+    toast(`Opened ${name}: ${copyRows().length} archived cop${copyRows().length === 1 ? 'y' : 'ies'}`);
+  }
+  async function openFile() {
+    if (dirty && !confirm('You have unsaved changes. Open another file and lose them?')) return;
+    if (window.showOpenFilePicker && window.self === window.top) {
+      try { const [handle] = await window.showOpenFilePicker({types: pickerTypes}); const file = await handle.getFile(); loadText(await file.text(), file.name, handle); }
+      catch (error) { if (error.name !== 'AbortError') toast(`Couldn't open the file: ${error.message}`, true); }
+      return;
+    }
+    $('fileInput').click();
+  }
+  function newProject() {
+    if (dirty && !confirm('You have unsaved changes. Start a new project and lose them?')) return;
+    doc = {format: FORMAT, formatVersion: VERSION, project: {title: '', company: '', producer: ''}, thirdPartyElements: [], assets: []};
+    fileName = null; fileHandle = null; baselineText = null; dirty = false; clearDraft(); render(); toast('New project started.');
+  }
+  function toast(message, error = false) {
+    const node = $('toast'); node.textContent = message; node.classList.toggle('error', error); node.hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => { node.hidden = true; }, error ? 7000 : 4200);
+  }
+  function init() {
+    doc = normalize(doc); render(); checkDraft();
+    $('openBtn').onclick = openFile; $('saveBtn').onclick = saveFile; $('newBtn').onclick = newProject;
+    $('fileInput').addEventListener('change', async () => {
+      const file = $('fileInput').files[0];
+      if (file) loadText(await file.text(), file.name, null);
+      $('fileInput').value = '';
+    });
+    $('filmTitle').onclick = $('editProjectBtn').onclick = openProjectDialog;
+    $('projectForm').addEventListener('submit', event => { event.preventDefault(); saveProjectDialog(); });
+    $('projectCancel').onclick = () => $('projectDialog').close();
+    $('projectCsvBtn').onclick = () => $('projectCsvDialog').showModal();
+    $('projectCsvCancel').onclick = () => $('projectCsvDialog').close();
+    $('projectCsvForm').addEventListener('submit', event => { event.preventDefault(); exportProjectCsv(); $('projectCsvDialog').close(); });
+    $('addBtn').onclick = $('emptyAddBtn').onclick = () => openEditor();
+    $('editorCancel').onclick = () => $('editor').close();
+    $('editorForm').addEventListener('submit', submitCopy);
+    $('f-asset').addEventListener('change', updateNewAssetFields);
+    $('recordCheckBtn').onclick = recordCheck;
+    $('removeCopyBtn').onclick = removeCopy;
+    $('statusFilter').addEventListener('change', () => { filterStatus = $('statusFilter').value; render(); });
+    $('typeFilter').addEventListener('change', () => { filterType = $('typeFilter').value; render(); });
+    $('search').addEventListener('input', () => { query = $('search').value; render(); });
+    $('rows').addEventListener('click', event => {
+      const button = event.target.closest('[data-edit-copy]');
+      if (button) openEditor(button.dataset.asset, button.dataset.editCopy);
+    });
+    $('dueList').addEventListener('click', event => {
+      const button = event.target.closest('[data-edit-copy]');
+      if (button) openEditor(button.dataset.asset, button.dataset.editCopy);
+    });
+    $('csvBtn').onclick = exportCsv;
+    $('printBtn').onclick = () => { renderReport(); window.print(); };
+    window.addEventListener('beforeprint', renderReport);
+  }
+  init();
+  document.documentElement.classList.remove('no-js');
+})();
+</script>
+</body>
+</html>

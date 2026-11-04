@@ -798,6 +798,80 @@
         },
         "caption": {
           "type": "string"
+        },
+        "archiveCopies": {
+          "type": "array",
+          "description": "Copies of this project asset held in long-term storage, including their locations, hash manifests and manual read-back checks.",
+          "items": {
+            "$ref": "#/$defs/archiveCopy"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "archiveCopy": {
+      "type": "object",
+      "required": [
+        "id",
+        "storageLocation",
+        "copiedAt"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "copyLabel": {
+          "type": "string"
+        },
+        "storageLocation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "copiedAt": {
+          "type": "string",
+          "format": "date"
+        },
+        "hashList": {
+          "type": "string",
+          "description": "Hash manifest text or a reference to a manifest produced by another tool."
+        },
+        "nextCheckDate": {
+          "type": "string",
+          "format": "date"
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/archiveCheck"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "archiveCheck": {
+      "type": "object",
+      "required": [
+        "id",
+        "checkedAt",
+        "result"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "checkedAt": {
+          "type": "string",
+          "format": "date"
+        },
+        "result": {
+          "enum": [
+            "passed",
+            "partial",
+            "failed"
+          ]
+        },
+        "notes": {
+          "type": "string"
         }
       },
       "additionalProperties": true

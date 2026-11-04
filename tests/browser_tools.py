@@ -11,7 +11,7 @@ Checks, per tool: opening the sample, saving, all CSV exports, phone width, dark
 mode and print layout. Chromium also covers the save-conflict warning (it has the
 file picker API; its handles are faked in memory) and renders a real PDF.
 chromium-fallback, Firefox and WebKit (Safari's engine) use the download/upload fallback instead.
-The call sheet, release tracker, credits builder, name supers list, subject tracker, research and archival log, comps tracker, treatment builder and pitch deck builder also get end-to-end checks
+The call sheet, release tracker, credits builder, name supers list, subject tracker, research and archival log, comps tracker, treatment builder, pitch deck builder and archive log also get end-to-end checks
 of their own, and the spreadsheet templates are checked against the tools' exports.
 """
 import base64, datetime, csv, io, json, os, pathlib, sys
@@ -19,10 +19,10 @@ from playwright.sync_api import sync_playwright
 
 root = pathlib.Path(__file__).resolve().parents[1]
 sample = (root / 'samples/the-river-keeps.oft.json').read_text()
-TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan', 'funder-crm', 'cash-flow', 'shooting-calendar', 'interview-prep', 'field-journal', 'location-scout', 'deal-memos', 'gear-list', 'coi-permit-tracker', 'travel-sheet', 'risk-plan', 'security-checklist', 'camera-sound-reports', 'interview-log', 'daily-production-report', 'expense-log', 'festival-submissions', 'press-list', 'partner-crm', 'discussion-guide']
+TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan', 'funder-crm', 'cash-flow', 'shooting-calendar', 'interview-prep', 'field-journal', 'location-scout', 'deal-memos', 'gear-list', 'coi-permit-tracker', 'travel-sheet', 'risk-plan', 'security-checklist', 'camera-sound-reports', 'interview-log', 'daily-production-report', 'expense-log', 'festival-submissions', 'press-list', 'partner-crm', 'discussion-guide', 'archive-log']
 COLLECTIONS = ['project', 'people', 'locations', 'thirdPartyElements', 'contracts', 'assets', 'musicCueSheet', 'callSheets']
 PRINT_BTN = {'clearance-log': '#printBtn', 'music-cue-sheet': '#printBtn', 'call-sheet': '#printAllBtn', 'release-tracker': '#printBtn',
-             'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn', 'treatment-builder': '#printBtn', 'pitch-deck': '#printBtn', 'grant-calendar': '#printBtn', 'narrative-library': '#printBtn', 'budget': '#printBtn', 'budget-converter': '#printBtn', 'finance-plan': '#printBtn', 'funder-crm': '#printBtn', 'cash-flow': '#printBtn', 'shooting-calendar': '#printBtn', 'interview-prep': '#printBtn', 'field-journal': '#printBtn', 'location-scout': '#printBtn', 'deal-memos': '#printBtn', 'gear-list': '#printBtn', 'coi-permit-tracker': '#printBtn', 'travel-sheet': '#printBtn', 'risk-plan': '#printBtn', 'security-checklist': '#printBtn', 'camera-sound-reports': '#printBtn', 'interview-log': '#printBtn', 'daily-production-report': '#printBtn', 'expense-log': '#printBtn', 'festival-submissions': '#printBtn', 'press-list': '#printBtn', 'partner-crm': '#printBtn', 'discussion-guide': '#printBtn'}
+             'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn', 'treatment-builder': '#printBtn', 'pitch-deck': '#printBtn', 'grant-calendar': '#printBtn', 'narrative-library': '#printBtn', 'budget': '#printBtn', 'budget-converter': '#printBtn', 'finance-plan': '#printBtn', 'funder-crm': '#printBtn', 'cash-flow': '#printBtn', 'shooting-calendar': '#printBtn', 'interview-prep': '#printBtn', 'field-journal': '#printBtn', 'location-scout': '#printBtn', 'deal-memos': '#printBtn', 'gear-list': '#printBtn', 'coi-permit-tracker': '#printBtn', 'travel-sheet': '#printBtn', 'risk-plan': '#printBtn', 'security-checklist': '#printBtn', 'camera-sound-reports': '#printBtn', 'interview-log': '#printBtn', 'daily-production-report': '#printBtn', 'expense-log': '#printBtn', 'festival-submissions': '#printBtn', 'press-list': '#printBtn', 'partner-crm': '#printBtn', 'discussion-guide': '#printBtn', 'archive-log': '#printBtn'}
 PHONE = {'width': 390, 'height': 844}
 # The button that opens each tool's main dialog, for the phone-width check. Most tools use #addBtn.
 DIALOG_BTN = {'treatment-builder': '[data-compare]', 'cash-flow': '#settingsBtn', 'discussion-guide': '#projectCsvBtn'}
@@ -1950,6 +1950,80 @@ def test_discussion_guide(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
+def test_archive_log(browser, fake):
+    original = json.loads(sample)
+    original_asset = next(a for a in original['assets'] if a['id'] == 'asset-card-a001')
+    ctx, pg, errs = new_page(browser, 'archive-log', fake)
+    open_sample(pg, fake)
+
+    pg.click('#addBtn')
+    pg.select_option('#f-asset', 'asset-card-a001')
+    pg.fill('#f-copyLabel', 'Off-site drive 1')
+    pg.fill('#f-copiedAt', '2026-05-13')
+    pg.fill('#f-location', 'Locked cabinet, second location')
+    pg.fill('#f-hashList', 'SHA256 A001/clip001.mov abc123')
+    pg.fill('#f-nextCheck', '2001-01-01')
+    pg.fill('#f-checkDate', '2026-05-14')
+    pg.select_option('#f-checkResult', 'partial')
+    pg.fill('#f-checkNotes', 'One folder needs another look.')
+    pg.click('#recordCheckBtn')
+    check('Partial or needs review' in pg.inner_text('#checkHistory'), 'read-back result appears in check history before saving')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check(pg.locator('#rows tr').count() == 1 and 'Overdue by' in pg.inner_text('#rows'), 'copy is listed and its overdue check is flagged')
+    check('A001' in pg.inner_text('#dueList')
+          and pg.locator('#stats .stat').all_inner_texts() == ['1\narchived copies', '8\nproject assets', '1\noverdue checks', '1/1\nwith a hash manifest'],
+          'summary shows the due copy and project totals')
+    pg.select_option('#statusFilter', 'overdue')
+    check(pg.locator('#rows tr').count() == 1, 'overdue filter shows the matching copy')
+    pg.select_option('#statusFilter', '')
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    archive_csv = open(d.value.path(), encoding='utf-8-sig').read()
+    check('SHA256 A001/clip001.mov abc123' in archive_csv and 'One folder needs another look.' in archive_csv,
+          'archive CSV includes the full hash manifest and read-back history')
+
+    pg.click('#addBtn')
+    pg.select_option('#f-asset', '__new__')
+    check(not pg.is_hidden('#newAssetFields'), 'new project asset fields appear when selected')
+    pg.fill('#f-assetName', 'Festival master')
+    pg.fill('#f-assetType', 'master')
+    pg.fill('#f-assetPath', 'masters/festival-master.mov')
+    pg.fill('#f-copiedAt', '2026-05-15')
+    pg.fill('#f-location', 'Off-site storage')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check(pg.locator('#rows tr').count() == 2 and 'Festival master' in pg.inner_text('#rows'), 'new asset and first copy are added together')
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    pg.emulate_media(media='print')
+    check('Festival master' in pg.inner_text('#report') and 'Locked cabinet, second location' in pg.inner_text('#report'),
+          'print report includes the assets, storage locations and checks')
+    pg.emulate_media(media='screen')
+
+    with pg.expect_download() as d:
+        pg.click('#projectCsvBtn')
+        pg.locator('#projectCsvCollection').select_option('assets')
+        pg.click('#projectCsvForm button[type=submit]')
+    assets_csv = open(d.value.path(), encoding='utf-8-sig').read()
+    check('archiveCopies' in assets_csv and 'SHA256 A001/clip001.mov abc123' in assets_csv,
+          'project asset CSV includes the nested archive records')
+
+    if fake:
+        pg.click('#saveBtn'); pg.wait_for_timeout(300)
+        data = json.loads(pg.evaluate('window.__file.text'))
+    else:
+        with pg.expect_download() as d:
+            pg.click('#saveBtn')
+        data = json.loads(open(d.value.path(), encoding='utf-8').read())
+    asset = next(a for a in data['assets'] if a['id'] == 'asset-card-a001')
+    copy = asset['archiveCopies'][0]
+    check(copy['storageLocation'] == 'Locked cabinet, second location' and copy['hashList'].startswith('SHA256')
+          and copy['checks'][0]['result'] == 'partial' and copy['nextCheckDate'] == '2001-01-01',
+          'saves copy location, manifest, next-check date and manual check history')
+    check({k: v for k, v in asset.items() if k != 'archiveCopies'} == original_asset
+          and data['callSheets'] == original['callSheets'] and data['musicCueSheet'] == original['musicCueSheet'],
+          "other asset fields and project collections stay unchanged")
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
 def test_template_columns(browser, fake):
     for name, template in TEMPLATE_EXPORTS:
         ctx, pg, errs = new_page(browser, name, fake)
@@ -2039,6 +2113,8 @@ def main():
         test_partner_crm(browser, fake)
         print('== discussion-guide / synopsis, questions, resources and print')
         test_discussion_guide(browser, fake)
+        print('== archive-log / copies, manifests, read-back checks and export')
+        test_archive_log(browser, fake)
         print('== camera-sound-reports / cards, clips, call sheets and CSV')
         test_camera_sound(browser, fake)
         print('== interview-log / moments, releases and the paper edit')

@@ -88,6 +88,7 @@ Everything else in [TOOLS.md](TOOLS.md), prioritized by what contributors ask fo
 - [x] Press list: outlets and the people who cover them by beat, screener links sent, screening RSVPs, coverage with links and dates, and CSV, on a screenings list shared with the partner CRM ([#81](https://github.com/open-filmmaker-toolkit/toolkit/issues/81))
 - [x] Partner CRM: organizations and their contacts, commitments and next steps with due dates and who owes them, links to screenings, print and CSV ([#90](https://github.com/open-filmmaker-toolkit/toolkit/issues/90))
 - [x] Discussion guide builder: screening-specific synopsis from the treatment, editable themes and questions, audience resources and selected partner organizations, credits from the project, and print to PDF ([#91](https://github.com/open-filmmaker-toolkit/toolkit/issues/91))
+- [x] Archive log: copies of project assets with storage locations, copy dates, hash manifests, manually recorded read-back checks and CSV export ([#96](https://github.com/open-filmmaker-toolkit/toolkit/issues/96))
 
 Finding a third maintainer is on hold. Basil and Alex maintain the project for now ([#8](https://github.com/open-filmmaker-toolkit/toolkit/issues/8), closed).
 
