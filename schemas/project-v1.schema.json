@@ -299,6 +299,21 @@
     "paperEdit": {
       "$ref": "#/$defs/paperEdit",
       "description": "Transcripts and the scenes of bites picked from them, kept by the paper edit. A record rather than a collection."
+    },
+    "costReport": {
+      "$ref": "#/$defs/costReport",
+      "description": "Estimates to complete and the report date, kept by budget-to-actuals. A record rather than a collection."
+    },
+    "structure": {
+      "$ref": "#/$defs/structure",
+      "description": "Acts, sequences, scene cards and story threads, kept by the structure board. A record rather than a collection."
+    },
+    "cuts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/cut"
+      },
+      "description": "Cuts with their screenings and notes, kept by the cut version tracker."
     }
   },
   "additionalProperties": true,
@@ -2438,6 +2453,10 @@
         },
         "notes": {
           "type": "string"
+        },
+        "budgetLineId": {
+          "$ref": "#/$defs/id",
+          "description": "Budget-to-actuals: the line in the expense's account it counts against, in budget.lines."
         }
       },
       "additionalProperties": true
@@ -4021,6 +4040,287 @@
                   },
                   "additionalProperties": true
                 }
+              }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "costReport": {
+      "type": "object",
+      "properties": {
+        "asOf": {
+          "type": "string",
+          "format": "date",
+          "description": "Counts expenses up to this date."
+        },
+        "estimates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "lineId": {
+                "$ref": "#/$defs/id",
+                "description": "A line in budget.lines."
+              },
+              "markupId": {
+                "$ref": "#/$defs/id",
+                "description": "A percentage in budget.markups."
+              },
+              "toComplete": {
+                "type": "number",
+                "minimum": 0
+              },
+              "note": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "structure": {
+      "type": "object",
+      "properties": {
+        "acts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "title": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          },
+          "description": "In order."
+        },
+        "sequences": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "actId": {
+                "$ref": "#/$defs/id"
+              },
+              "title": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          },
+          "description": "In order within each act."
+        },
+        "cards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "title": {
+                "type": "string"
+              },
+              "summary": {
+                "type": "string"
+              },
+              "seconds": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Running time."
+              },
+              "timeFromPaperEdit": {
+                "type": "boolean"
+              },
+              "actId": {
+                "$ref": "#/$defs/id",
+                "description": "An act, for a card outside a sequence."
+              },
+              "sequenceId": {
+                "$ref": "#/$defs/id"
+              },
+              "threadIds": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/id"
+                },
+                "uniqueItems": true
+              },
+              "paperEditSceneId": {
+                "$ref": "#/$defs/id",
+                "description": "A scene in paperEdit.scenes."
+              },
+              "notes": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          },
+          "description": "In order. A card with neither an actId nor a sequenceId is not on the board yet."
+        },
+        "threads": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "name": {
+                "type": "string"
+              },
+              "color": {
+                "type": "string",
+                "enum": [
+                  "blue",
+                  "orange",
+                  "green",
+                  "purple",
+                  "red",
+                  "teal",
+                  "yellow",
+                  "pink",
+                  "gray"
+                ]
+              },
+              "personId": {
+                "$ref": "#/$defs/id"
+              }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "cut": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string",
+          "format": "date"
+        },
+        "runningTime": {
+          "type": "string"
+        },
+        "changes": {
+          "type": "string"
+        },
+        "locked": {
+          "type": "boolean",
+          "description": "The locked cut; only one. Locking it sets project.cutVersion and project.runningTime."
+        },
+        "screenings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "date": {
+                "type": "string",
+                "format": "date"
+              },
+              "audience": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "open",
+                  "done",
+                  "deferred",
+                  "carried"
+                ]
+              },
+              "screeningId": {
+                "$ref": "#/$defs/id"
+              },
+              "tc": {
+                "type": "string",
+                "description": "Time in the cut, H:MM:SS."
+              },
+              "tcOut": {
+                "type": "string"
+              },
+              "cardId": {
+                "$ref": "#/$defs/id",
+                "description": "A scene card in structure.cards."
+              },
+              "shot": {
+                "type": "string"
+              },
+              "from": {
+                "type": "string"
+              },
+              "text": {
+                "type": "string"
+              },
+              "carriedToCutId": {
+                "$ref": "#/$defs/id"
+              },
+              "carriedFromCutId": {
+                "$ref": "#/$defs/id"
+              },
+              "carriedFromNoteId": {
+                "$ref": "#/$defs/id"
               }
             },
             "additionalProperties": true

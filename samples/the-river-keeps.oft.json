@@ -3593,7 +3593,8 @@
       "accountId": "account-2200",
       "kind": "expense",
       "method": "card",
-      "shootDayId": "shootday-may-travel-out"
+      "shootDayId": "shootday-may-travel-out",
+      "budgetLineId": "line-2200-12"
     },
     {
       "id": "expense-perdiem-ana",
@@ -3618,6 +3619,48 @@
       "shootDayId": "shootday-may-1",
       "receiptAssetId": "asset-receipt-lunch",
       "notes": "Fictional receipt reference."
+    },
+    {
+      "id": "expense-camera-rental",
+      "date": "2026-05-14",
+      "amount": 4800,
+      "description": "Camera package, May shoot",
+      "payee": "Northside Camera Rental",
+      "accountId": "account-2100",
+      "budgetLineId": "line-2100-7",
+      "kind": "expense",
+      "method": "transfer"
+    },
+    {
+      "id": "expense-drone",
+      "date": "2026-05-13",
+      "amount": 3000,
+      "description": "Drone and operator, levee aerials",
+      "payee": "Sky Lens Aerials (fictional)",
+      "accountId": "account-2100",
+      "budgetLineId": "line-2100-9",
+      "kind": "expense",
+      "method": "check"
+    },
+    {
+      "id": "expense-motel",
+      "date": "2026-05-14",
+      "amount": 1080,
+      "description": "River Bend Motel, three rooms, three nights",
+      "payee": "River Bend Motel (fictional)",
+      "accountId": "account-2200",
+      "kind": "expense",
+      "method": "card"
+    },
+    {
+      "id": "expense-postage",
+      "date": "2026-06-02",
+      "amount": 42.5,
+      "description": "Postage for a festival screener",
+      "payee": "Post office",
+      "kind": "expense",
+      "method": "card",
+      "accountId": "account-4200"
     }
   ],
   "festivals": [
@@ -3919,5 +3962,237 @@
         ]
       }
     ]
-  }
+  },
+  "costReport": {
+    "estimates": [
+      {
+        "id": "estimate-drone",
+        "lineId": "line-2100-9",
+        "toComplete": 0,
+        "note": "The only drone day is done; it ran over by one setup."
+      }
+    ]
+  },
+  "structure": {
+    "threads": [
+      {
+        "id": "thread-daniel",
+        "name": "Daniel and the photographs",
+        "color": "blue",
+        "personId": "person-daniel-okafor"
+      },
+      {
+        "id": "thread-ruth",
+        "name": "Ruth and the diary",
+        "color": "orange",
+        "personId": "person-ruth-hammond"
+      },
+      {
+        "id": "thread-levee",
+        "name": "The new levee",
+        "color": "green"
+      }
+    ],
+    "acts": [
+      {
+        "id": "act-1",
+        "title": "Act one: the water"
+      },
+      {
+        "id": "act-2",
+        "title": "Act two: what was kept"
+      },
+      {
+        "id": "act-3",
+        "title": "Act three: the new levee"
+      }
+    ],
+    "sequences": [
+      {
+        "id": "sequence-1965",
+        "actId": "act-1",
+        "title": "1965"
+      },
+      {
+        "id": "sequence-boxes",
+        "actId": "act-2",
+        "title": "Boxes and closets"
+      }
+    ],
+    "cards": [
+      {
+        "id": "card-open",
+        "title": "River at dawn",
+        "summary": "The river high against the levee; sandbags in the half light",
+        "seconds": 75,
+        "threadIds": [
+          "thread-levee"
+        ],
+        "actId": "act-1"
+      },
+      {
+        "id": "card-roof",
+        "title": "The roof",
+        "summary": "Daniel: his grandmother photographs the flood from the roof",
+        "seconds": 28,
+        "timeFromPaperEdit": true,
+        "paperEditSceneId": "scene-roof",
+        "threadIds": [
+          "thread-daniel"
+        ],
+        "sequenceId": "sequence-1965"
+      },
+      {
+        "id": "card-diary-night",
+        "title": "The night the levee broke",
+        "summary": "Ruth reads the diary entry from the night of the flood",
+        "seconds": 150,
+        "threadIds": [
+          "thread-ruth"
+        ],
+        "sequenceId": "sequence-1965"
+      },
+      {
+        "id": "card-shoebox",
+        "title": "The shoebox",
+        "summary": "Sixty years in a closet",
+        "seconds": 33,
+        "timeFromPaperEdit": true,
+        "paperEditSceneId": "scene-shoebox",
+        "threadIds": [
+          "thread-daniel"
+        ],
+        "sequenceId": "sequence-boxes"
+      },
+      {
+        "id": "card-secret",
+        "title": "Why she kept it secret",
+        "summary": "Ruth on sixty years of silence",
+        "seconds": 120,
+        "threadIds": [
+          "thread-ruth"
+        ],
+        "sequenceId": "sequence-boxes"
+      },
+      {
+        "id": "card-crew",
+        "title": "Levee crew at work",
+        "summary": "Marcus and the crew raise the levee",
+        "seconds": 95,
+        "threadIds": [
+          "thread-levee"
+        ],
+        "actId": "act-3"
+      },
+      {
+        "id": "card-leon",
+        "title": "Leon at the grain elevator",
+        "summary": "The 1988 flood from the levee board’s side",
+        "threadIds": [
+          "thread-levee"
+        ]
+      }
+    ]
+  },
+  "cuts": [
+    {
+      "id": "cut-rough-1",
+      "name": "Rough cut 1",
+      "date": "2026-08-14",
+      "runningTime": "1:52:40",
+      "changes": "First assembly of the interviews and the May footage.",
+      "screenings": [
+        {
+          "id": "screening-rough-1",
+          "date": "2026-08-20",
+          "audience": "Ana, Lena and Priya"
+        }
+      ],
+      "notes": [
+        {
+          "id": "note-r1-1",
+          "screeningId": "screening-rough-1",
+          "tc": "0:00:00",
+          "tcOut": "0:06:30",
+          "cardId": "card-open",
+          "from": "Ana",
+          "text": "The opening takes too long to get to the water.",
+          "status": "done"
+        },
+        {
+          "id": "note-r1-2",
+          "screeningId": "screening-rough-1",
+          "tc": "0:24:10",
+          "cardId": "card-roof",
+          "shot": "A001C002 close",
+          "from": "Lena",
+          "text": "Use the close-up for the roof story; the wide loses his face.",
+          "status": "done"
+        },
+        {
+          "id": "note-r1-3",
+          "screeningId": "screening-rough-1",
+          "tc": "1:10:00",
+          "tcOut": "1:18:45",
+          "cardId": "card-crew",
+          "from": "Priya",
+          "text": "The levee crew scene needs a character to follow.",
+          "status": "carried",
+          "carriedToCutId": "cut-fine-3"
+        }
+      ]
+    },
+    {
+      "id": "cut-fine-3",
+      "name": "Fine cut 3",
+      "date": "2026-09-22",
+      "runningTime": "1:31:05",
+      "changes": "Ruth’s diary moved into act one; new opening on the river at dawn.",
+      "screenings": [
+        {
+          "id": "screening-fine-3",
+          "date": "2026-09-29",
+          "audience": "Two friends of the film and our fiscal sponsor"
+        }
+      ],
+      "notes": [
+        {
+          "id": "note-f3-1",
+          "tc": "1:02:15",
+          "tcOut": "1:08:00",
+          "cardId": "card-crew",
+          "from": "Priya",
+          "text": "The levee crew scene needs a character to follow.",
+          "status": "done",
+          "carriedFromCutId": "cut-rough-1",
+          "carriedFromNoteId": "note-r1-3"
+        },
+        {
+          "id": "note-f3-2",
+          "screeningId": "screening-fine-3",
+          "tc": "0:41:30",
+          "cardId": "card-secret",
+          "from": "Fiscal sponsor",
+          "text": "Hard to follow who Ruth is talking to here.",
+          "status": "done"
+        },
+        {
+          "id": "note-f3-3",
+          "screeningId": "screening-fine-3",
+          "tc": "1:20:00",
+          "from": "Friend of the film",
+          "text": "Would love one more beat with Daniel after the shoebox.",
+          "status": "deferred"
+        }
+      ]
+    },
+    {
+      "id": "cut-locked-12",
+      "name": "Locked cut v12",
+      "date": "2026-10-18",
+      "runningTime": "1:24:30",
+      "changes": "Picture lock.",
+      "locked": true
+    }
+  ]
 }

@@ -48,7 +48,7 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-An `expenses` list. Each expense has an `id` and can include `date`, `amount`, `description`, `payee`, `accountId` (a budget account ID), `kind` (`expense`, `perdiem` or `pettycash`), `method` (`card`, `cash`, `check`, `transfer` or `other`), `personId` (for a per diem), `shootDayId`, `receiptAssetId` and `notes`. A selected receipt adds an `assets` entry with `type: "receipt"`, its name, MIME type and suggested relative path; the file itself is not part of the project. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
+An `expenses` list. Each expense has an `id` and can include `date`, `amount`, `description`, `payee`, `accountId` (a budget account ID), `kind` (`expense`, `perdiem` or `pettycash`), `method` (`card`, `cash`, `check`, `transfer` or `other`), `personId` (for a per diem), `shootDayId`, `receiptAssetId` and `notes`. A selected receipt adds an `assets` entry with `type: "receipt"`, its name, MIME type and suggested relative path; the file itself is not part of the project. [Budget-to-actuals](../budget-to-actuals/) can add `budgetLineId` to an expense, for the budget line it counts against. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
