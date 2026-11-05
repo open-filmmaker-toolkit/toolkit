@@ -295,6 +295,10 @@
     "discussionGuide": {
       "$ref": "#/$defs/discussionGuide",
       "description": "Screening-specific synopsis, themes, questions and resources, kept by the discussion guide builder."
+    },
+    "paperEdit": {
+      "$ref": "#/$defs/paperEdit",
+      "description": "Transcripts and the scenes of bites picked from them, kept by the paper edit. A record rather than a collection."
     }
   },
   "additionalProperties": true,
@@ -805,6 +809,63 @@
           "items": {
             "$ref": "#/$defs/archiveCopy"
           }
+        },
+        "description": {
+          "type": "string",
+          "description": "Footage log clips: what's in it."
+        },
+        "date": {
+          "type": "string",
+          "format": "date",
+          "description": "Footage log clips: when it was shot."
+        },
+        "personIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true,
+          "description": "Footage log clips: who's in it."
+        },
+        "locationIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true,
+          "description": "Footage log clips: where it was shot."
+        },
+        "topics": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Footage log clips: topics."
+        },
+        "rating": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5,
+          "description": "Footage log clips: rating from 1 to 5."
+        },
+        "timecode": {
+          "type": "string",
+          "description": "Footage log clips: the starting timecode."
+        },
+        "duration": {
+          "type": "string"
+        },
+        "card": {
+          "type": "string",
+          "description": "Footage log clips: the card or roll."
+        },
+        "mediaReportId": {
+          "$ref": "#/$defs/id",
+          "description": "Footage log clips: the camera report it came from, in mediaReports."
+        },
+        "clipId": {
+          "type": "string",
+          "description": "Footage log clips: the clip in that report."
         }
       },
       "additionalProperties": true
@@ -3785,6 +3846,185 @@
         },
         "notes": {
           "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "paperEdit": {
+      "type": "object",
+      "properties": {
+        "frameRate": {
+          "type": "string",
+          "enum": [
+            "23.976",
+            "24",
+            "25",
+            "29.97",
+            "30",
+            "50",
+            "59.94",
+            "60"
+          ]
+        },
+        "recordStart": {
+          "type": "string",
+          "description": "Where the sequence starts, HH:MM:SS:FF."
+        },
+        "transcripts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "name": {
+                "type": "string"
+              },
+              "format": {
+                "type": "string",
+                "enum": [
+                  "srt",
+                  "vtt",
+                  "text"
+                ]
+              },
+              "interviewId": {
+                "$ref": "#/$defs/id",
+                "description": "The interview, in interviews."
+              },
+              "personId": {
+                "$ref": "#/$defs/id",
+                "description": "Speaker when a line names none, in people."
+              },
+              "clipId": {
+                "$ref": "#/$defs/id",
+                "description": "The clip in the footage log, in assets."
+              },
+              "clipName": {
+                "type": "string",
+                "description": "The clip name editing apps match the media by."
+              },
+              "reel": {
+                "type": "string",
+                "maxLength": 8
+              },
+              "startTc": {
+                "type": "string",
+                "description": "The clip's starting timecode, HH:MM:SS:FF."
+              },
+              "segments": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "id"
+                  ],
+                  "properties": {
+                    "id": {
+                      "$ref": "#/$defs/id"
+                    },
+                    "start": {
+                      "type": "number",
+                      "minimum": 0,
+                      "description": "Seconds from the start of the clip."
+                    },
+                    "end": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "speaker": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "scenes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "title": {
+                "type": "string"
+              },
+              "bites": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "id"
+                  ],
+                  "properties": {
+                    "id": {
+                      "$ref": "#/$defs/id"
+                    },
+                    "transcriptId": {
+                      "$ref": "#/$defs/id"
+                    },
+                    "segmentIds": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/$defs/id"
+                      }
+                    },
+                    "in": {
+                      "type": "number",
+                      "minimum": 0,
+                      "description": "Seconds from the start of the clip."
+                    },
+                    "out": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "text": {
+                      "type": "string"
+                    },
+                    "speaker": {
+                      "type": "string"
+                    },
+                    "note": {
+                      "type": "string"
+                    },
+                    "clipName": {
+                      "type": "string"
+                    },
+                    "reel": {
+                      "type": "string"
+                    },
+                    "sourceName": {
+                      "type": "string"
+                    },
+                    "tcIn": {
+                      "type": "string",
+                      "description": "Source in, kept so the bite keeps its timecode if its transcript is removed."
+                    },
+                    "tcOut": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              }
+            },
+            "additionalProperties": true
+          }
         }
       },
       "additionalProperties": true

@@ -1,0 +1,1119 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Paper edit · Open Filmmaker Toolkit</title>
+<meta name="description" content="Build a paper edit from transcripts: import SRT, VTT or timestamped text, pick bites and arrange them into scenes with their source timecodes, print it, and export an EDL for Premiere, Resolve or Avid. Runs in your browser; your data stays on your computer.">
+<style>
+:root {
+  --paper: #f1f3f2; --sheet: #ffffff; --ink: #1a2130; --ink-2: #4b556a; --ink-3: #6d778a;
+  --rule: #d4dad8; --rule-soft: #e6eae8; --hover: #f6f8f7; --focus: #2f6fdb;
+  --good: #2b7a57; --good-bg: #dff1e8; --warn: #8a5a00; --warn-bg: #fbf0d9; --bad: #b3392d; --bad-bg: #f8e1de;
+  --screen: #050506; --screen-ink: #f4f1ea; --screen-dim: #a7a29a;
+  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #141922; --sheet: #1b212b; --ink: #e6e9ee; --ink-2: #a6afbd; --ink-3: #8790a0;
+    --rule: #2f3744; --rule-soft: #262d38; --hover: #212834; --focus: #7aa7ff;
+    --good: #4fb386; --good-bg: #1a3329; --warn: #e2a531; --warn-bg: #3a2f17; --bad: #e26657; --bad-bg: #3b2220;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans); }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+[hidden] { display: none !important; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.foot { margin-top: 28px; font-size: 13px; color: var(--ink-3); }
+.cant-run { display: none; max-width: 640px; margin: 64px auto; padding: 0 24px; }
+.cant-run h1 { margin: 0 0 8px; font: 600 26px/1.2 var(--serif); }
+.cant-run p { margin: 0 0 10px; color: var(--ink-2); }
+.no-js .cant-run { display: block; }
+.no-js .page { display: none; }
+.page { max-width: 1240px; margin: 0 auto; padding: 0 24px 48px; }
+
+.masthead { display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: flex-end; justify-content: space-between; padding: 28px 0 20px; }
+.tool-name { margin: 0 0 2px; font-size: 14px; font-weight: 600; color: var(--ink-2); }
+.film-title { margin: 0; font: 600 32px/1.15 var(--serif); letter-spacing: -0.01em; overflow-wrap: anywhere; cursor: pointer; }
+.film-title.is-empty { color: var(--ink-3); font-style: italic; font-weight: 400; }
+.film-meta { margin: 4px 0 0; color: var(--ink-2); font-size: 14px; }
+.file { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.file-state { margin: 0; font-size: 13px; color: var(--ink-2); text-align: right; }
+.file-state .dirty { color: var(--warn); font-weight: 600; }
+.file-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; }
+.btn:hover { border-color: var(--ink-3); }
+.btn.primary { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.btn.primary:hover { opacity: 0.88; }
+.btn.danger { color: var(--bad); }
+.btn.small { padding: 4px 10px; font-size: 13px; }
+.link-btn { padding: 0; border: 0; background: none; cursor: pointer; color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; font-size: 14px; }
+.link-btn:hover { color: var(--ink); }
+
+.banner { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 0 0 16px; padding: 12px 16px; border-radius: 8px; background: var(--warn-bg); border: 1px solid color-mix(in srgb, var(--warn) 40%, transparent); }
+.banner p { margin: 0; flex: 1 1 280px; }
+.banner .actions { display: flex; gap: 8px; }
+
+.workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr); gap: 24px; align-items: start; }
+.col { display: grid; gap: 18px; min-width: 0; }
+.card { background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 18px; min-width: 0; }
+.card-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; margin: 0 0 6px; }
+.card-head h2 { margin: 0; font: 600 18px/1.3 var(--serif); }
+.card-head .count { font-size: 13px; color: var(--ink-2); }
+.card-head .spacer { flex: 1; }
+.card p.lead { margin: 0 0 8px; font-size: 14px; color: var(--ink-2); }
+
+/* Side cards */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 2px; padding: 0; list-style: none; }
+.chip { display: inline-flex; border: 1px solid var(--rule); border-radius: 999px; overflow: hidden; background: var(--paper); }
+.chip button { padding: 4px 10px; border: 0; background: none; cursor: pointer; font-size: 13px; font-weight: 600; }
+.chip button:hover { background: var(--hover); }
+.chip .sub { font-weight: 400; color: var(--ink-3); margin-left: 4px; }
+.empty-line { margin: 4px 0; color: var(--ink-2); font-size: 14px; }
+.changes { margin: 0; padding-left: 18px; font-size: 14px; }
+.changes li + li { margin-top: 2px; }
+
+/* The supers list */
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 10px; }
+.toolbar h2 { margin: 0 8px 0 0; font: 600 20px/1.2 var(--serif); }
+.toolbar .count { font-size: 13px; color: var(--ink-2); }
+.toolbar .spacer { flex: 1; }
+.rows { list-style: none; margin: 0; padding: 0; background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; }
+.row { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 2px 14px; align-items: start; padding: 10px 14px; }
+.row + .row { border-top: 1px solid var(--rule-soft); }
+.row:hover { background: var(--hover); }
+.row.is-selected { background: var(--hover); box-shadow: inset 3px 0 0 var(--ink); }
+.row .tc { font-variant-numeric: tabular-nums; font-size: 14px; color: var(--ink-2); padding-top: 1px; }
+.row .what { min-width: 0; padding: 0; border: 0; background: none; text-align: left; cursor: pointer; overflow-wrap: anywhere; }
+.row .what:hover .nm { text-decoration: underline; text-underline-offset: 2px; }
+.row .nm { display: block; font-weight: 600; }
+.row .tt { display: block; font-size: 14px; color: var(--ink-2); }
+.flags { grid-column: 2; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.flag { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 999px; font-size: 12.5px; font-weight: 600; }
+.flag.new { background: var(--good-bg); color: var(--good); }
+.flag.changed { background: var(--warn-bg); color: var(--warn); }
+.flag.problem { background: var(--bad-bg); color: var(--bad); }
+.flag.linked { background: var(--paper); color: var(--ink-3); font-weight: 500; border: 1px solid var(--rule); }
+.flag button { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+
+.empty { padding: 36px 24px; text-align: center; background: var(--sheet); border: 1px dashed var(--rule); border-radius: 8px; }
+.empty h2 { margin: 0 0 6px; font: 600 20px/1.3 var(--serif); }
+.empty p { margin: 0 auto 16px; max-width: 52ch; color: var(--ink-2); }
+.empty .actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+
+
+.workspace { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); }
+.workspace > * { min-width: 0; }
+.side { position: static; display: grid; gap: 18px; align-content: start; }
+.tbar { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) auto; gap: 8px; align-items: end; margin: 0 0 8px; }
+.tbar .field { margin: 0; }
+.tmeta { margin: 0 0 8px; font-size: 13.5px; color: var(--ink-2); }
+.segs { list-style: none; margin: 0; padding: 0; background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; max-height: 70vh; overflow: auto; }
+.segs li + li { border-top: 1px solid var(--rule-soft); }
+.seg { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 2px 10px; width: 100%; padding: 8px 12px; border: 0; background: none; text-align: left; font: inherit; color: inherit; cursor: pointer; }
+.seg:hover { background: var(--hover); }
+.seg[aria-pressed="true"] { background: var(--warn-bg); box-shadow: inset 3px 0 0 var(--warn); }
+.seg .tc { font-variant-numeric: tabular-nums; font-size: 12.5px; color: var(--ink-3); padding-top: 2px; }
+.seg .who { display: block; font-size: 12.5px; font-weight: 600; color: var(--ink-2); }
+.seg .used { display: inline-block; margin-left: 6px; padding: 0 7px; border-radius: 999px; background: var(--good-bg); color: var(--good); font-size: 11.5px; font-weight: 600; }
+.seg mark { background: var(--warn-bg); color: inherit; }
+.addbar { position: sticky; bottom: 0; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; padding: 8px 10px; border-radius: 8px; background: var(--sheet); border: 1px solid var(--rule); box-shadow: 0 -2px 8px rgba(0,0,0,.06); font-size: 14px; }
+.addbar select { max-width: 200px; }
+.scenes-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.scenes-head h2 { margin: 0; }
+.scene { background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 10px 12px; }
+.scene-top { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+.scene-top input { font-weight: 600; }
+.scene-tools { display: flex; gap: 4px; }
+.scene .dur { font-size: 12.5px; color: var(--ink-3); margin: 4px 0 6px; }
+.bites { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.bite { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 8px; padding: 7px 9px; border: 1px solid var(--rule-soft); border-radius: 6px; font-size: 14px; }
+.bite .src { grid-column: 1 / -1; font-size: 12px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.bite .txt { cursor: pointer; padding: 0; border: 0; background: none; text-align: left; font: inherit; color: inherit; }
+.bite .txt b { font-weight: 600; }
+.bite .ctl { display: flex; gap: 2px; align-items: start; }
+.bite .ctl button { min-width: 30px; }
+.bite.untimed .src { color: var(--warn); }
+.addbar .spacer, .scenes-head .spacer { flex: 1; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.iconbtn { padding: 2px 7px; border: 1px solid var(--rule); border-radius: 5px; background: var(--paper); font-size: 13px; cursor: pointer; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.three { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.note { margin: 0; padding: 8px 10px; border-radius: 6px; font-size: 14px; background: var(--hover); color: var(--ink-2); }
+.note.warn { background: var(--warn-bg); color: var(--warn); }
+@media (max-width: 900px) { .workspace { grid-template-columns: 1fr; } }
+@media (max-width: 720px) {
+  .two, .three, .tbar { grid-template-columns: 1fr; }
+  .seg { grid-template-columns: minmax(0, 1fr); }
+  .segs { max-height: 60vh; }
+}
+
+dialog { border: 0; padding: 0; color: var(--ink); background: var(--sheet); box-shadow: 0 10px 40px rgba(10, 14, 22, 0.25); }
+dialog::backdrop { background: rgba(16, 20, 28, 0.42); }
+dialog.drawer { margin: 0 0 0 auto; width: min(600px, 100vw); height: 100dvh; max-height: 100dvh; max-width: 100vw; border-left: 1px solid var(--rule); }
+dialog.modal { width: min(560px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); border-radius: 10px; }
+dialog form { display: flex; flex-direction: column; height: 100%; max-height: inherit; }
+.dlg-head { padding: 20px 24px 12px; border-bottom: 1px solid var(--rule-soft); }
+.dlg-head h2 { margin: 0; font: 600 22px/1.25 var(--serif); }
+.dlg-body { flex: 1; overflow-y: auto; padding: 16px 24px 24px; display: grid; gap: 14px; align-content: start; }
+.dlg-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 14px 24px; border-top: 1px solid var(--rule-soft); }
+.dlg-foot .spacer { flex: 1; }
+.field { display: grid; gap: 4px; }
+.field > label, .field > .label, .group h3 { font-size: 14px; font-weight: 600; margin: 0; }
+.hint { margin: 0; font-size: 13px; color: var(--ink-3); }
+.field input, .field select, .field textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); }
+.group { display: grid; gap: 8px; padding-top: 10px; border-top: 1px solid var(--rule-soft); }
+.checks { display: grid; gap: 2px; max-height: 260px; overflow-y: auto; padding: 2px; }
+.check { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; align-items: start; padding: 5px 4px; border-radius: 6px; cursor: pointer; }
+.check:hover { background: var(--hover); }
+.check input { width: 18px; height: 18px; margin: 2px 0 0; }
+.check .who { overflow-wrap: anywhere; }
+.check .sub { margin-left: 4px; font-size: 13px; color: var(--ink-3); }
+.check .lines { display: block; font-size: 13px; color: var(--ink-3); white-space: pre-line; }
+#songList, #sourceList { max-height: none; }
+.radio-row { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.radio-row label { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; cursor: pointer; }
+pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); font-size: 13px; white-space: pre-wrap; }
+
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); max-width: calc(100vw - 32px); padding: 10px 16px; border-radius: 8px; background: var(--ink); color: var(--paper); font-size: 14px; box-shadow: 0 6px 24px rgba(10, 14, 22, 0.25); z-index: 10; }
+.toast.error { background: var(--bad); color: #ffffff; }
+.report { display: none; }
+
+@media (max-width: 900px) {
+  .workspace { grid-template-columns: 1fr; }
+  .side { position: static; }
+}
+@media (max-width: 720px) {
+  .page { padding: 0 16px 40px; }
+  .film-title { font-size: 26px; }
+  .file { align-items: flex-start; }
+  .file-state { text-align: left; }
+  .toolbar h2 { flex-basis: 100%; order: -2; }
+  .toolbar #addBtn { flex: 1 1 100%; justify-content: center; order: -1; }
+  .row { grid-template-columns: minmax(0, 1fr); }
+  .flags { grid-column: 1; }
+}
+@media print {
+  @page { size: portrait; margin: 16mm; }
+  :root { color-scheme: light; }
+  body { background: #ffffff; color: #000000; font-size: 10pt; }
+  .page, dialog, .toast { display: none !important; }
+  .report { display: block; }
+  .report h1 { margin: 0; font: 700 18pt/1.2 var(--serif); }
+  .report h2 { margin: 14pt 0 4pt; font: 700 12pt/1.2 var(--serif); break-after: avoid; page-break-after: avoid; }
+  .report .r-meta { margin: 2pt 0 10pt; }
+  .report table { width: 100%; border-collapse: collapse; }
+  .report th, .report td { padding: 4pt 5pt; border-bottom: 0.75pt solid #999999; text-align: left; vertical-align: top; }
+  .report th { font-size: 9pt; border-bottom: 1pt solid #000000; }
+  .report tr { break-inside: avoid; page-break-inside: avoid; }
+  .report .r-sub { display: block; font-size: 8.5pt; color: #333333; }
+  .report .r-note { margin-top: 14pt; font-size: 8pt; color: #333333; }
+  .report .r-tc { width: 92pt; white-space: nowrap; font-variant-numeric: tabular-nums; font-size: 8.5pt; vertical-align: top; }
+  .report .r-sub { font-size: 8pt; font-weight: 400; color: #333333; }
+}
+</style>
+</head>
+<body>
+<div class="cant-run" id="cantRun">
+  <h1 id="cantRunTitle">Open this file in a web browser</h1>
+  <p id="cantRunText">This tool runs in Chrome, Edge, Firefox or Safari. You're seeing a preview that doesn't run it, so none of the buttons would work.</p>
+  <p id="cantRunHow">In your browser, choose File, then Open File, and pick this file. Or right-click the file and open it with your browser.</p>
+</div>
+<div class="page">
+  <header class="masthead">
+    <div>
+      <p class="tool-name">Paper edit</p>
+      <h1 class="film-title" id="filmTitle">Untitled film</h1>
+      <p class="film-meta"><span id="filmMeta"></span> <button type="button" class="link-btn" id="editProjectBtn">Edit film details</button></p>
+    </div>
+    <div class="file">
+      <p class="file-state" id="fileState">Not saved to a file yet</p>
+      <div class="file-actions">
+        <button type="button" class="btn" id="newBtn">New project</button>
+        <button type="button" class="btn" id="openBtn">Open file</button>
+        <button type="button" class="btn" id="projectCsvBtn">Export project data (CSV)</button>
+        <button type="button" class="btn primary" id="saveBtn">Save file</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="banner" id="recovery" role="region" aria-label="Unsaved work" hidden>
+    <p id="recoveryText"></p>
+    <div class="actions">
+      <button type="button" class="btn primary" id="restoreBtn">Restore it</button>
+      <button type="button" class="btn" id="discardBtn">Discard it</button>
+    </div>
+  </div>
+
+  <main class="workspace">
+    <section aria-labelledby="listHead">
+      <div class="toolbar">
+        <h2 id="listHead">Transcripts</h2>
+        <span class="count" id="count"></span>
+        <span class="spacer"></span>
+        <button type="button" class="btn primary" id="addBtn">Import a transcript</button>
+      </div>
+      <div id="work">
+        <div class="tbar">
+          <div class="field"><label for="tSel">Transcript</label><select id="tSel"></select></div>
+          <div class="field"><label for="q">Find</label><input id="q" type="search" placeholder="Words in this transcript" autocomplete="off"></div>
+          <div><button type="button" class="btn" id="tEditBtn">Transcript details</button></div>
+        </div>
+        <p class="tmeta" id="tMeta"></p>
+        <p class="note warn" id="untimedNote" hidden>This transcript has no timecodes, so its bites can be printed but not put in the edit list. Import an SRT or VTT file, or text with a timestamp on each paragraph, to get timecodes.</p>
+        <ol class="segs" id="segs" aria-label="Transcript"></ol>
+        <div class="addbar">
+          <span id="selCount">Click lines to pick a bite; shift-click to pick a run of lines.</span>
+          <span class="spacer"></span>
+          <label for="sceneSel" class="sr-only">Scene</label><select id="sceneSel"></select>
+          <button type="button" class="btn small primary" id="addBiteBtn" disabled>Add to scene</button>
+          <button type="button" class="btn small" id="clearSelBtn" hidden>Clear</button>
+        </div>
+      </div>
+      <div class="empty" id="empty" hidden>
+        <h2>No transcripts yet</h2>
+        <p>Import your interview transcripts with their timecodes: SRT or VTT files, or text from Buzz, noScribe or another transcription app. Pick the bites you want, arrange them into scenes, print the paper edit, and export an edit list for Premiere, Resolve or Avid.</p>
+        <div class="actions">
+          <button type="button" class="btn primary" id="emptyAddBtn">Import a transcript</button>
+          <button type="button" class="btn" id="emptyOpenBtn">Open file</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="side">
+      <section class="card" aria-labelledby="scenesHead">
+        <div class="card-head scenes-head"><h2 id="scenesHead">Scenes</h2><span class="count" id="runTime"></span><span class="spacer"></span><button type="button" class="btn small" id="addSceneBtn">Add a scene</button></div>
+        <div id="scenes" style="display:grid; gap:10px; margin-top:10px"></div>
+      </section>
+      <section class="card" aria-labelledby="exportHead">
+        <div class="card-head"><h2 id="exportHead">Print and export</h2></div>
+        <div class="two">
+          <div class="field"><label for="fps">Frame rate</label><select id="fps"><option>23.976</option><option>24</option><option>25</option><option>29.97</option><option>30</option><option>50</option><option>59.94</option><option>60</option></select></div>
+          <div class="field"><label for="recStart">Sequence starts at</label><input id="recStart" type="text" value="01:00:00:00" autocomplete="off"></div>
+        </div>
+        <p class="hint">Non-drop-frame timecode. Use the frame rate of your footage and sequence.</p>
+        <div style="display:flex; flex-wrap:wrap; gap:8px">
+          <button type="button" class="btn" id="printBtn">Print the paper edit</button>
+          <button type="button" class="btn" id="edlBtn">Export the edit list (EDL)</button>
+          <button type="button" class="btn" id="csvBtn">Export CSV</button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="foot">
+    <p>Part of the Open Filmmaker Toolkit. This page makes no network requests: everything stays on this computer until you save or export it. Uses the same project file as the other toolkit tools.</p>
+  </footer>
+</div>
+
+<dialog class="drawer" id="editor" aria-labelledby="editorTitle">
+  <form id="editorForm" method="dialog" novalidate>
+    <div class="dlg-head"><h2 id="editorTitle">Import a transcript</h2></div>
+    <div class="dlg-body">
+      <div class="field" id="fileField"><label for="f-file">Transcript file</label><input id="f-file" type="file" accept=".srt,.vtt,.txt,.text,.md,text/plain,text/vtt"><p class="hint">SRT, VTT, or text with timestamps such as [00:01:23] at the start of each paragraph, as Buzz and noScribe can write them.</p></div>
+      <p class="note" id="parseNote" hidden></p>
+      <div class="field"><label for="f-name">Name</label><input id="f-name" type="text" placeholder="Daniel Okafor, May 12" autocomplete="off" required></div>
+      <div class="two">
+        <div class="field"><label for="f-interview">Interview</label><select id="f-interview"></select></div>
+        <div class="field"><label for="f-person">Speaker, when the transcript doesn't name one</label><select id="f-person"></select></div>
+      </div>
+      <div class="group">
+        <h3>The clip it's from</h3>
+        <div class="field"><label for="f-clip">From the footage log</label><select id="f-clip"></select></div>
+        <div class="three">
+          <div class="field"><label for="f-clipname">Clip name</label><input id="f-clipname" type="text" placeholder="A001C001.mov" autocomplete="off"></div>
+          <div class="field"><label for="f-reel">Reel</label><input id="f-reel" type="text" placeholder="A001" maxlength="8" autocomplete="off"></div>
+          <div class="field"><label for="f-start">Clip starts at timecode</label><input id="f-start" type="text" placeholder="00:00:00:00" autocomplete="off"></div>
+        </div>
+        <p class="hint">The clip name is how Premiere and Resolve find the media when you import the edit list. The transcript's times are counted from the start of the clip.</p>
+      </div>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn danger" id="deleteBtn">Remove transcript</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="editorCancel">Cancel</button>
+      <button type="submit" class="btn primary" id="editorSubmit">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="drawer" id="biteDialog" aria-labelledby="biteTitle">
+  <form id="biteForm" method="dialog" novalidate>
+    <div class="dlg-head"><h2 id="biteTitle">Bite</h2></div>
+    <div class="dlg-body">
+      <p class="hint" id="biteSource"></p>
+      <div class="two">
+        <div class="field"><label for="b-in">Source in</label><input id="b-in" type="text" autocomplete="off"></div>
+        <div class="field"><label for="b-out">Source out</label><input id="b-out" type="text" autocomplete="off"></div>
+      </div>
+      <div class="field"><label for="b-text">Words</label><textarea id="b-text" rows="5"></textarea><p class="hint">Trim the words to match a tighter in and out. The transcript itself isn't changed.</p></div>
+      <div class="field"><label for="b-note">Note for the editor</label><input id="b-note" type="text" placeholder="Lose the first sentence; cutaway to the river" autocomplete="off"></div>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn danger" id="biteDelete">Remove bite</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="biteCancel">Cancel</button>
+      <button type="submit" class="btn primary">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="projectDialog" aria-labelledby="projectDialogTitle">
+  <form id="projectForm" method="dialog">
+    <div class="dlg-head"><h2 id="projectDialogTitle">Film details</h2></div>
+    <div class="dlg-body">
+      <div class="field"><label for="p-title">Film title</label><input id="p-title" type="text" placeholder="Working title is fine"></div>
+      <div class="field"><label for="p-company">Production company</label><input id="p-company" type="text"></div>
+      <div class="field"><label for="p-producer">Producer</label><input id="p-producer" type="text"></div>
+    </div>
+    <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn" id="projectCancel">Cancel</button><button type="submit" class="btn primary">Save details</button></div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="projectCsvDialog" aria-labelledby="projectCsvTitle">
+  <form id="projectCsvForm" method="dialog">
+    <div class="dlg-head"><h2 id="projectCsvTitle">Export project data</h2></div>
+    <div class="dlg-body">
+      <div class="field">
+        <label for="projectCsvCollection">Data to export</label>
+        <select id="projectCsvCollection">
+          <option value="project">Project details</option>
+          <option value="people">People</option>
+          <option value="locations">Locations</option>
+          <option value="thirdPartyElements">Third-party elements</option>
+          <option value="contracts">Contracts</option>
+          <option value="assets">Assets</option>
+          <option value="musicCueSheet">Music cue sheet details</option>
+          <option value="callSheets">Call sheets</option>
+        </select>
+      </div>
+      <p class="hint">Exports one CSV file for the selected collection. Nested values are kept as JSON in their cell.</p>
+    </div>
+    <div class="dlg-foot">
+      <button type="submit" class="btn primary">Export CSV</button>
+      <button type="button" class="btn" id="projectCsvCancel">Cancel</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="conflictDialog" aria-labelledby="conflictTitle">
+  <form method="dialog">
+    <div class="dlg-head"><h2 id="conflictTitle">Project file changed</h2></div>
+    <div class="dlg-body">
+      <p id="conflictText">This project file changed after you opened it. Saving will replace those changes.</p>
+      <p class="hint">Your edits are still here. Choose whether to overwrite the changed file, save a separate copy, or load its latest contents. Save in one tool at a time; simultaneous saves can still race.</p>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn" id="conflictReloadBtn">Reload latest</button>
+      <button type="button" class="btn" id="conflictCopyBtn">Save a copy</button>
+      <button type="button" class="btn danger" id="conflictOverwriteBtn">Overwrite file</button>
+      <button type="button" class="btn" id="conflictCancelBtn">Keep editing</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="report" id="report" aria-hidden="true"></div>
+<input type="file" id="fileInput" accept=".json,application/json" hidden>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+(() => {
+  'use strict';
+
+  const FORMAT = 'open-filmmaker-toolkit/project';
+  const FORMAT_VERSION = 1;
+  const TOOL = 'paper-edit 0.1.0';
+  const DRAFT_KEY = 'oft.paper-edit.draft';
+  const PROJECT_TEXT = ['title', 'company', 'producer'];
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const str = v => (v == null ? '' : String(v));
+  const arr = v => (Array.isArray(v) ? v : []);
+  const norm = s => str(s).toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+
+  let doc = blankDoc();
+  let fileHandle = null;
+  let baselineText = null;
+  let fileName = null;
+  let dirty = false;
+
+  function blankDoc() {
+    return { format: FORMAT, formatVersion: FORMAT_VERSION, project: { title: '', company: '', producer: '', frameRate: 24, currency: 'USD' }, people: [], paperEdit: { frameRate: '23.976', transcripts: [], scenes: [] } };
+  }
+  function newId(prefix) {
+    if (window.crypto && crypto.randomUUID) return `${prefix}-${crypto.randomUUID()}`;
+    return `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+  }
+  function today() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  function fmtDate(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str(iso));
+    if (!m) return str(iso);
+    return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+  function daysUntil(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str(iso));
+    if (!m) return null;
+    const t = new Date(); const a = Date.UTC(t.getFullYear(), t.getMonth(), t.getDate());
+    return Math.round((Date.UTC(+m[1], +m[2] - 1, +m[3]) - a) / 86400000);
+  }
+
+
+  const RATES = { '23.976': 24000 / 1001, '24': 24, '25': 25, '29.97': 30000 / 1001, '30': 30, '50': 50, '59.94': 60000 / 1001, '60': 60 };
+  let editing = null, isNew = false, parsed = null;
+  let current = '';            // the transcript shown
+  let sel = new Set(), lastClick = null;
+  let q = '';
+  let biteRef = null;          // { scene, index } of the bite being edited
+
+  // Fills in only what this tool needs; everything else in the file is left as it was.
+  function normalize(d) {
+    if (!d.project || typeof d.project !== 'object') d.project = {};
+    for (const k of PROJECT_TEXT) if (typeof d.project[k] !== 'string') d.project[k] = str(d.project[k]);
+    for (const k of ['people', 'assets']) if (!Array.isArray(d[k])) d[k] = [];
+    if (!d.paperEdit || typeof d.paperEdit !== 'object' || Array.isArray(d.paperEdit)) d.paperEdit = {};
+    const e = d.paperEdit;
+    for (const k of ['transcripts', 'scenes']) e[k] = arr(e[k]).filter(x => x && typeof x === 'object');
+    for (const t of e.transcripts) { if (!t.id) t.id = newId('transcript'); t.segments = arr(t.segments).filter(s => s && typeof s === 'object'); for (const s of t.segments) if (!s.id) s.id = newId('seg'); }
+    for (const s of e.scenes) { if (!s.id) s.id = newId('scene'); s.bites = arr(s.bites).filter(b => b && typeof b === 'object'); for (const b of s.bites) if (!b.id) b.id = newId('bite'); }
+    if (!RATES[e.frameRate]) e.frameRate = '23.976';
+    d.format = FORMAT;
+    d.formatVersion = FORMAT_VERSION;
+    return d;
+  }
+  const E = () => doc.paperEdit;
+  const transcripts = () => E().transcripts;
+  const scenes = () => E().scenes;
+  const bites = () => scenes().flatMap(s => s.bites);
+  const entries = bites;
+  const person = id => doc.people.find(p => p && p.id === id);
+  const tr = id => transcripts().find(t => t.id === id);
+  const isNum = n => typeof n === 'number' && isFinite(n);
+
+  // ---------- Timecode ----------
+  const rate = () => RATES[E().frameRate] || RATES['23.976'];
+  const base = () => Math.round(rate());
+  function tcFrames(tc) {
+    const m = str(tc).trim().match(/^(\d{1,2})[:;.](\d{2})[:;.](\d{2})[:;.](\d{2})$/);
+    if (!m) return null;
+    const b = base();
+    if (Number(m[2]) > 59 || Number(m[3]) > 59 || Number(m[4]) >= b) return null;
+    return ((Number(m[1]) * 60 + Number(m[2])) * 60 + Number(m[3])) * b + Number(m[4]);
+  }
+  function framesTc(f) {
+    const b = base(); f = Math.max(0, Math.round(f));
+    const ff = f % b, s = Math.floor(f / b);
+    return [Math.floor(s / 3600) % 24, Math.floor(s / 60) % 60, s % 60, ff].map(n => String(n).padStart(2, '0')).join(':');
+  }
+  const startFrames = t => (t && tcFrames(t.startTc)) || 0;
+  const secFrames = s => Math.round(s * rate());
+  const srcTc = (t, s) => framesTc(startFrames(t) + secFrames(s));
+  const len = s => { s = Math.max(0, Math.round(s)); const h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60, x = s % 60; return h ? `${h}:${String(m).padStart(2, '0')}:${String(x).padStart(2, '0')}` : `${m}:${String(x).padStart(2, '0')}`; };
+  const biteLen = b => (isNum(b.in) && isNum(b.out) ? Math.max(0, b.out - b.in) : 0);
+  const timed = b => isNum(b.in) && isNum(b.out) && b.out > b.in;
+
+  // ---------- Reading transcripts ----------
+  // A time such as 01:02:03,456, 01:02:03.4, 02:03.456 or 01:02:03, in seconds.
+  function secs(s) {
+    const m = str(s).trim().match(/^(?:(\d{1,2}):)?(\d{1,2}):(\d{2})(?:[.,](\d{1,3}))?$/);
+    if (!m) return null;
+    return (Number(m[1] || 0) * 3600) + Number(m[2]) * 60 + Number(m[3]) + (m[4] ? Number(`0.${m[4]}`) : 0);
+  }
+  const clean = s => str(s).replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+  // A speaker at the start of a line: "Ruth Hammond: ...", "SPEAKER_01: ...", "S01: ...".
+  function speakerOf(text) {
+    const m = text.match(/^((?:[A-Z][\w'.-]*)(?: [A-Z][\w'.-]*){0,3}|SPEAKER[_ ]?\d+|S\d{1,2}):\s+(.*)$/);
+    return m && m[1].length <= 30 ? { speaker: m[1], text: m[2] } : { text };
+  }
+  function parseCues(text) {
+    const segs = [];
+    for (const block of text.replace(/\r/g, '').split(/\n\s*\n/)) {
+      const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+      const i = lines.findIndex(l => l.includes('-->'));
+      if (i < 0) continue;
+      const [a, b] = lines[i].split('-->').map(x => x.trim().split(/\s+/)[0]);
+      const start = secs(a), end = secs(b);
+      if (start == null) continue;
+      let raw = lines.slice(i + 1).join(' ');
+      let speaker = '';
+      const v = raw.match(/<v(?:\.[^ >]*)?\s+([^>]+)>/);
+      if (v) speaker = v[1].trim();
+      raw = clean(raw);
+      if (!raw) continue;
+      const sp = speaker ? { speaker, text: raw } : speakerOf(raw);
+      segs.push(Object.assign({ start, end: end != null && end > start ? end : start + 2 }, sp));
+    }
+    return segs;
+  }
+  // Text with a timestamp at the start of each paragraph, or no timestamps at all.
+  function parseText(text) {
+    const TS = /^\s*[\[(]?((?:\d{1,2}:)?\d{1,2}:\d{2}(?:[.,]\d{1,3})?)[\])]?(?:\s*(?:-->|–|-)\s*[\[(]?((?:\d{1,2}:)?\d{1,2}:\d{2}(?:[.,]\d{1,3})?)[\])]?)?\s*(.*)$/;
+    const lines = text.replace(/\r/g, '').split('\n');
+    const segs = [];
+    let cur = null, any = false;
+    for (const line of lines) {
+      const m = line.match(TS);
+      if (m && secs(m[1]) != null) {
+        any = true;
+        if (cur) segs.push(cur);
+        cur = { start: secs(m[1]), end: m[2] ? secs(m[2]) : null, text: m[3] || '' };
+      } else if (line.trim()) {
+        if (!cur || (!any && cur.text)) { if (cur) segs.push(cur); cur = { start: null, end: null, text: '' }; }
+        cur.text = `${cur.text} ${line.trim()}`.trim();
+      } else if (cur && !any && cur.text) { segs.push(cur); cur = null; }
+    }
+    if (cur) segs.push(cur);
+    const out = segs.map(s => Object.assign(s, speakerOf(clean(s.text)))).filter(s => s.text);
+    // Paragraphs without an end run to the start of the next one.
+    out.forEach((s, i) => { if (isNum(s.start) && !isNum(s.end)) { const n = out[i + 1]; s.end = n && isNum(n.start) && n.start > s.start ? n.start : s.start + Math.max(2, s.text.split(/\s+/).length / 2.5); } });
+    return out;
+  }
+  function parseTranscript(text, name) {
+    const isCue = /-->/.test(text) && (/^﻿?WEBVTT/.test(text) || /\.(srt|vtt)$/i.test(name) || /^\s*\d+\s*\n\s*[\d:,.]+\s*-->/m.test(text));
+    const segs = (isCue ? parseCues(text) : parseText(text)).map(s => { const o = { id: newId('seg'), text: s.text }; if (isNum(s.start)) { o.start = Math.round(s.start * 1000) / 1000; o.end = Math.round(s.end * 1000) / 1000; } if (s.speaker) o.speaker = s.speaker; return o; });
+    return { segments: segs, format: isCue ? (/WEBVTT/.test(text) ? 'vtt' : 'srt') : 'text', timed: segs.some(s => isNum(s.start)) };
+  }
+  const speakerName = (t, s) => s.speaker || (person(t.personId) || {}).name || '';
+
+  // ---------- Render ----------
+  function render() {
+    $('filmTitle').textContent = doc.project.title || 'Untitled film';
+    $('filmTitle').classList.toggle('is-empty', !doc.project.title);
+    $('filmMeta').textContent = [doc.project.company, doc.project.producer && `Producer: ${doc.project.producer}`].filter(Boolean).join(' · ');
+    $('fileState').innerHTML = (fileName ? esc(fileName) : 'Not saved to a file yet') + (dirty ? ' · <span class="dirty">Unsaved changes</span>' : '');
+    document.title = `${doc.project.title ? doc.project.title + ' · ' : ''}Paper edit · Open Filmmaker Toolkit`;
+    const ts = transcripts();
+    if (!ts.some(t => t.id === current)) { current = (ts[0] || {}).id || ''; sel.clear(); }
+    $('count').textContent = ts.length ? `${ts.length} transcript${ts.length === 1 ? '' : 's'} · ${bites().length} bite${bites().length === 1 ? '' : 's'}` : '';
+    $('empty').hidden = !!ts.length;
+    $('work').hidden = !ts.length;
+    $('tSel').innerHTML = ts.map(t => `<option value="${esc(t.id)}"${t.id === current ? ' selected' : ''}>${esc(t.name || 'Untitled transcript')}</option>`).join('');
+    drawSegments();
+    drawScenes();
+    $('fps').value = E().frameRate;
+    if (document.activeElement !== $('recStart')) $('recStart').value = E().recordStart || '01:00:00:00';
+    const any = bites().length;
+    $('printBtn').disabled = $('csvBtn').disabled = $('edlBtn').disabled = !any;
+  }
+  function usedIn(t) {
+    const m = new Map();
+    scenes().forEach((s, si) => s.bites.forEach(b => { if (b.transcriptId !== t.id) return; for (const g of arr(b.segmentIds)) m.set(g, s.title || `Scene ${si + 1}`); }));
+    return m;
+  }
+  function drawSegments() {
+    const t = tr(current);
+    if (!t) { $('segs').innerHTML = ''; return; }
+    const used = usedIn(t);
+    const words = q ? q.split(/\s+/).filter(Boolean) : [];
+    const hit = s => !words.length || words.every(w => `${speakerName(t, s)} ${s.text}`.toLowerCase().includes(w));
+    const mark = s => { let h = esc(s); for (const w of words) h = h.replace(new RegExp(`(${w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'ig'), '<mark>$1</mark>'); return h; };
+    const shown = t.segments.filter(hit);
+    $('tMeta').textContent = [t.clipName && `Clip ${t.clipName}`, t.reel && `reel ${t.reel}`, t.startTc && `starts at ${t.startTc}`, (person(t.personId) || {}).name, `${t.segments.length} lines`, q && `${shown.length} match`].filter(Boolean).join(' · ');
+    $('untimedNote').hidden = t.segments.some(s => isNum(s.start));
+    $('segs').innerHTML = shown.map(s => `<li><button type="button" class="seg" data-seg="${esc(s.id)}" aria-pressed="${sel.has(s.id)}"><span class="tc">${isNum(s.start) ? esc(srcTc(t, s.start)) : ''}</span><span>${speakerName(t, s) ? `<span class="who">${esc(speakerName(t, s))}</span>` : ''}${mark(s.text)}${used.has(s.id) ? `<span class="used">${esc(used.get(s.id))}</span>` : ''}</span></button></li>`).join('')
+      || '<li class="empty-line" style="padding:10px 12px">No lines match.</li>';
+    drawAddBar();
+  }
+  function drawAddBar() {
+    $('sceneSel').innerHTML = scenes().map((s, i) => `<option value="${esc(s.id)}">${esc(s.title || `Scene ${i + 1}`)}</option>`).join('') + '<option value="__new">New scene</option>';
+    if (scenes().length) $('sceneSel').value = $('sceneSel').dataset.last && scenes().some(s => s.id === $('sceneSel').dataset.last) ? $('sceneSel').dataset.last : scenes()[scenes().length - 1].id;
+    $('addBiteBtn').disabled = !sel.size;
+    $('clearSelBtn').hidden = !sel.size;
+    $('selCount').textContent = sel.size ? `${sel.size} line${sel.size === 1 ? '' : 's'} picked` : 'Click lines to pick a bite; shift-click to pick a run of lines.';
+  }
+  function drawScenes() {
+    let total = 0;
+    $('scenes').innerHTML = scenes().map((s, si) => {
+      const d = s.bites.reduce((a, b) => a + biteLen(b), 0); total += d;
+      return `<div class="scene" data-scene="${esc(s.id)}"><div class="scene-top"><label class="sr-only" for="st-${esc(s.id)}">Scene name</label><input id="st-${esc(s.id)}" type="text" data-title="${esc(s.id)}" value="${esc(s.title || `Scene ${si + 1}`)}">
+        <span class="scene-tools"><button type="button" class="iconbtn" data-smove="-1" aria-label="Move scene up"${si === 0 ? ' disabled' : ''}>↑</button><button type="button" class="iconbtn" data-smove="1" aria-label="Move scene down"${si === scenes().length - 1 ? ' disabled' : ''}>↓</button><button type="button" class="iconbtn" data-sremove aria-label="Remove scene">✕</button></span></div>
+        <p class="dur">${s.bites.length} bite${s.bites.length === 1 ? '' : 's'} · ${len(d)}</p>
+        <ol class="bites">${s.bites.map((b, bi) => {
+          const t = tr(b.transcriptId);
+          return `<li class="bite${timed(b) ? '' : ' untimed'}" data-bi="${bi}"><button type="button" class="txt" data-bite>${b.speaker ? `<b>${esc(b.speaker)}:</b> ` : ''}${esc(b.text || '')}${b.note ? ` <i>(${esc(b.note)})</i>` : ''}</button>
+            <span class="ctl"><button type="button" class="iconbtn" data-bmove="-1" aria-label="Move bite up">↑</button><button type="button" class="iconbtn" data-bmove="1" aria-label="Move bite down">↓</button></span>
+            <span class="src">${timed(b) ? `${esc(b.tcIn || '')} to ${esc(b.tcOut || '')} · ${len(biteLen(b))}` : 'No timecode'} · ${esc(b.clipName || (t && t.name) || b.sourceName || 'Source unknown')}</span></li>`;
+        }).join('') || '<li class="empty-line">Pick lines in a transcript and add them here.</li>'}</ol></div>`;
+    }).join('') || '<p class="empty-line">No scenes yet. Add one, or pick lines and add them to a new scene.</p>';
+    $('runTime').textContent = bites().length ? `Running time ${len(total)}` : '';
+  }
+
+  // ---------- Picking and arranging bites ----------
+  function pick(id, shift) {
+    const t = tr(current); if (!t) return;
+    if (shift && lastClick) {
+      const ids = t.segments.map(s => s.id), a = ids.indexOf(lastClick), b = ids.indexOf(id);
+      if (a >= 0 && b >= 0) for (let i = Math.min(a, b); i <= Math.max(a, b); i++) sel.add(ids[i]);
+    } else if (sel.has(id)) sel.delete(id); else sel.add(id);
+    lastClick = id;
+    drawSegments();
+  }
+  // Refreshes a bite's source details from its transcript, so they stay right if the clip's start or the frame rate changes.
+  function stamp(b) {
+    const t = tr(b.transcriptId);
+    if (t) { if (t.clipName) b.clipName = t.clipName; else delete b.clipName; if (t.reel) b.reel = t.reel; else delete b.reel; b.sourceName = t.name; }
+    if (timed(b)) { b.tcIn = srcTc(t, b.in); b.tcOut = srcTc(t, b.out); } else { delete b.tcIn; delete b.tcOut; }
+    return b;
+  }
+  function addBites() {
+    const t = tr(current); if (!t || !sel.size) return;
+    let sid = $('sceneSel').value;
+    if (sid === '__new' || !scenes().some(s => s.id === sid)) { const s = { id: newId('scene'), title: `Scene ${scenes().length + 1}`, bites: [] }; scenes().push(s); sid = s.id; }
+    const scene = scenes().find(s => s.id === sid);
+    // Each run of picked lines that follow one another becomes one bite.
+    const runs = [];
+    let run = null;
+    t.segments.forEach(s => { if (sel.has(s.id)) { if (!run) runs.push(run = []); run.push(s); } else run = null; });
+    for (const r of runs) {
+      const first = r[0], last = r[r.length - 1];
+      const b = { id: newId('bite'), transcriptId: t.id, segmentIds: r.map(s => s.id), text: r.map(s => s.text).join(' ') };
+      const sp = [...new Set(r.map(s => speakerName(t, s)).filter(Boolean))]; if (sp.length) b.speaker = sp.join(', ');
+      if (isNum(first.start) && isNum(last.end)) { b.in = first.start; b.out = last.end; }
+      scene.bites.push(stamp(b));
+    }
+    sel.clear();
+    $('sceneSel').dataset.last = sid;
+    changed();
+    toast(`Added ${runs.length} bite${runs.length === 1 ? '' : 's'} to ${scene.title}.`);
+  }
+  function sceneClick(ev) {
+    const sEl = ev.target.closest('[data-scene]'); if (!sEl) return;
+    const si = scenes().findIndex(s => s.id === sEl.dataset.scene), s = scenes()[si];
+    const b = ev.target.closest('button'); if (!b) return;
+    if (b.dataset.smove) { const j = si + Number(b.dataset.smove); if (j < 0 || j >= scenes().length) return; scenes().splice(j, 0, scenes().splice(si, 1)[0]); changed(); return; }
+    if (b.hasAttribute('data-sremove')) { if (s.bites.length && !confirm(`Remove ${s.title || 'this scene'} and its ${s.bites.length} bite${s.bites.length === 1 ? '' : 's'}? The transcripts aren't changed.`)) return; scenes().splice(si, 1); changed(); return; }
+    const li = b.closest('[data-bi]'); if (!li) return;
+    const bi = Number(li.dataset.bi);
+    if (b.dataset.bmove) {
+      const j = bi + Number(b.dataset.bmove);
+      if (j >= 0 && j < s.bites.length) s.bites.splice(j, 0, s.bites.splice(bi, 1)[0]);
+      else { const ns = scenes()[si + Number(b.dataset.bmove)]; if (!ns) return; const [x] = s.bites.splice(bi, 1); if (j < 0) ns.bites.push(x); else ns.bites.unshift(x); }
+      changed(); return;
+    }
+    if (b.hasAttribute('data-bite')) openBite(si, bi);
+  }
+  function openBite(si, bi) {
+    biteRef = { si, bi };
+    const b = scenes()[si].bites[bi], t = tr(b.transcriptId);
+    $('biteSource').textContent = [b.speaker, b.clipName || (t && t.name) || b.sourceName, t ? '' : 'Its transcript is no longer in the project.'].filter(Boolean).join(' · ');
+    $('b-in').value = str(b.tcIn); $('b-out').value = str(b.tcOut); $('b-text').value = str(b.text); $('b-note').value = str(b.note);
+    $('b-in').disabled = $('b-out').disabled = !t || !timed(b);
+    $('biteDialog').showModal();
+  }
+  function saveBite() {
+    const s = scenes()[biteRef.si], b = s.bites[biteRef.bi], t = tr(b.transcriptId);
+    if (t && timed(b)) {
+      const fi = tcFrames($('b-in').value), fo = tcFrames($('b-out').value);
+      if (fi == null) { $('b-in').setCustomValidity(`Use HH:MM:SS:FF, with frames below ${base()}.`); $('b-in').reportValidity(); return; }
+      if (fo == null || fo <= fi) { $('b-out').setCustomValidity('Use HH:MM:SS:FF, after the source in.'); $('b-out').reportValidity(); return; }
+      // Only a changed timecode moves the bite, so re-saving doesn't round its times.
+      const toSec = f => Math.round((f - startFrames(t)) / rate() * 1000) / 1000;
+      if ($('b-in').value.trim() !== b.tcIn) b.in = toSec(fi);
+      if ($('b-out').value.trim() !== b.tcOut) b.out = toSec(fo);
+      if (b.in < 0) { $('b-in').setCustomValidity(`The clip starts at ${t.startTc || '00:00:00:00'}.`); $('b-in').reportValidity(); return; }
+    }
+    for (const [k, id] of [['text', 'b-text'], ['note', 'b-note']]) { const v = $(id).value.trim(); if (v) b[k] = v; else delete b[k]; }
+    stamp(b);
+    $('biteDialog').close();
+    changed();
+  }
+  function removeBite() {
+    scenes()[biteRef.si].bites.splice(biteRef.bi, 1);
+    $('biteDialog').close();
+    changed();
+  }
+
+  // ---------- Transcript editor ----------
+  function clipAssets() { return doc.assets.filter(a => a && a.type === 'clip' && a.name); }
+  function openEditor(id) {
+    const existing = id && tr(id);
+    isNew = !existing; parsed = null;
+    editing = existing ? structuredClone(existing) : { id: newId('transcript') };
+    $('fileField').hidden = !isNew;
+    $('f-file').value = '';
+    $('parseNote').hidden = true;
+    $('f-interview').innerHTML = '<option value="">None</option>' + arr(doc.interviews).filter(i => i && i.id).map(i => `<option value="${esc(i.id)}">${esc((person(i.personId) || {}).name || i.name || 'Interview')}${i.date ? `, ${esc(fmtDate(i.date))}` : ''}</option>`).join('');
+    $('f-person').innerHTML = '<option value="">Nobody</option>' + doc.people.filter(p => p && p.id).map(p => `<option value="${esc(p.id)}">${esc(p.name || 'Unnamed')}</option>`).join('');
+    $('f-clip').innerHTML = '<option value="">Not in the footage log</option>' + clipAssets().map(c => `<option value="${esc(c.id)}">${esc(c.name)}${c.description ? ` · ${esc(c.description.slice(0, 40))}` : ''}</option>`).join('');
+    const vals = { 'f-name': editing.name, 'f-interview': editing.interviewId || '', 'f-person': editing.personId || '', 'f-clip': editing.clipId || '', 'f-clipname': editing.clipName, 'f-reel': editing.reel, 'f-start': editing.startTc };
+    for (const [k, v] of Object.entries(vals)) $(k).value = v == null ? '' : String(v);
+    $('editorTitle').textContent = isNew ? 'Import a transcript' : `Transcript: ${editing.name || ''}`;
+    $('deleteBtn').hidden = isNew;
+    $('editor').showModal();
+    $(isNew ? 'f-file' : 'f-name').focus();
+  }
+  async function readFile() {
+    const f = $('f-file').files[0]; if (!f) return;
+    parsed = parseTranscript(await f.text(), f.name);
+    const n = parsed.segments.length;
+    $('parseNote').hidden = false;
+    $('parseNote').className = `note${!n || !parsed.timed ? ' warn' : ''}`;
+    $('parseNote').textContent = !n ? `Couldn't find any lines in ${f.name}.` : `${n} line${n === 1 ? '' : 's'} read from ${f.name}${parsed.timed ? ', with timecodes' : '. It has no timecodes, so bites from it can be printed but not put in the edit list'}.`;
+    if (!$('f-name').value.trim()) $('f-name').value = f.name.replace(/\.[^.]+$/, '');
+  }
+  function useInterview() {
+    const i = arr(doc.interviews).find(x => x && x.id === $('f-interview').value);
+    if (i && i.personId && !$('f-person').value) $('f-person').value = i.personId;
+  }
+  function useClip() {
+    const c = clipAssets().find(x => x.id === $('f-clip').value); if (!c) return;
+    $('f-clipname').value = c.name; if (c.timecode && tcFrames(c.timecode) != null) $('f-start').value = c.timecode; if (c.card) $('f-reel').value = c.card.slice(0, 8);
+  }
+  function saveEditor() {
+    if (isNew && (!parsed || !parsed.segments.length)) { $('f-file').setCustomValidity('Choose a transcript file with some lines in it.'); $('f-file').reportValidity(); return; }
+    if (!$('f-name').value.trim()) { $('f-name').setCustomValidity('Name the transcript.'); $('f-name').reportValidity(); return; }
+    if ($('f-start').value.trim() && tcFrames($('f-start').value) == null) { $('f-start').setCustomValidity(`Use HH:MM:SS:FF, with frames below ${base()}.`); $('f-start').reportValidity(); return; }
+    const t = editing;
+    if (isNew) { t.segments = parsed.segments; t.format = parsed.format; }
+    for (const [k, id] of [['name', 'f-name'], ['interviewId', 'f-interview'], ['personId', 'f-person'], ['clipId', 'f-clip'], ['clipName', 'f-clipname'], ['startTc', 'f-start']]) { const v = $(id).value.trim(); if (v) t[k] = v; else delete t[k]; }
+    const reel = $('f-reel').value.trim().replace(/[^A-Za-z0-9_]/g, '').slice(0, 8); if (reel) t.reel = reel; else delete t.reel;
+    if (isNew) transcripts().push(t); else transcripts()[transcripts().findIndex(x => x.id === t.id)] = t;
+    for (const b of bites()) if (b.transcriptId === t.id) stamp(b);
+    current = t.id; sel.clear();
+    $('editor').close();
+    changed();
+  }
+  function removeEditing() {
+    const n = bites().filter(b => b.transcriptId === editing.id).length;
+    if (!confirm(`Remove the transcript ${editing.name || ''}?${n ? ` Its ${n} bite${n === 1 ? '' : 's'} stay in the scenes with their timecodes.` : ''}`)) return;
+    E().transcripts = transcripts().filter(t => t.id !== editing.id);
+    $('editor').close();
+    changed();
+  }
+
+  // ---------- Print and export ----------
+  // Each bite in order, with where it falls in the sequence.
+  function events() {
+    let rec = tcFrames(E().recordStart) ?? tcFrames('01:00:00:00');
+    const out = [];
+    scenes().forEach((s, si) => s.bites.forEach((b, bi) => {
+      const e = { scene: s.title || `Scene ${si + 1}`, n: bi + 1, b };
+      const t = tr(b.transcriptId);
+      if (timed(b)) {
+        const fi = t ? startFrames(t) + secFrames(b.in) : tcFrames(b.tcIn), fo = t ? startFrames(t) + secFrames(b.out) : tcFrames(b.tcOut);
+        if (fi != null && fo != null && fo > fi) { Object.assign(e, { srcIn: fi, srcOut: fo, recIn: rec, recOut: rec + (fo - fi) }); rec += fo - fi; }
+      }
+      out.push(e);
+    }));
+    return out;
+  }
+  function exportEdl() {
+    const ev = events().filter(e => e.srcIn != null);
+    const skipped = bites().length - ev.length;
+    const title = str(doc.project.title || 'Paper edit').replace(/[^\x20-\x7e]/g, '').slice(0, 60) || 'Paper edit';
+    const lines = [`TITLE: ${title} paper edit`, 'FCM: NON-DROP FRAME', ''];
+    ev.forEach((e, i) => {
+      const reel = (e.b.reel || 'AX').replace(/[^A-Za-z0-9_]/g, '').slice(0, 8) || 'AX';
+      lines.push(`${String(i + 1).padStart(3, '0')}  ${reel.padEnd(8)} AA/V  C        ${framesTc(e.srcIn)} ${framesTc(e.srcOut)} ${framesTc(e.recIn)} ${framesTc(e.recOut)}`);
+      if (e.b.clipName) lines.push(`* FROM CLIP NAME: ${e.b.clipName}`);
+      lines.push(`* COMMENT: ${[e.scene, e.b.speaker, e.b.note].filter(Boolean).join(' - ').replace(/[^\x20-\x7e]/g, '').slice(0, 70)}`);
+      lines.push('');
+    });
+    const name = `${slug()}-paper-edit.edl`;
+    download(lines.join('\r\n'), name, 'text/plain;charset=utf-8');
+    toast(`Exported ${ev.length} event${ev.length === 1 ? '' : 's'} to ${name}${skipped ? `. ${skipped} bite${skipped === 1 ? ' has' : 's have'} no timecode and ${skipped === 1 ? 'was' : 'were'} left out` : ''}.`);
+  }
+  const CSV_HEAD = ['Scene', 'Order', 'Speaker', 'Words', 'Note', 'Transcript', 'Clip name', 'Reel', 'Source in', 'Source out', 'Duration', 'Record in', 'Record out'];
+  function exportCsv() {
+    const rows = events().map(e => [e.scene, e.n, e.b.speaker, e.b.text, e.b.note, (tr(e.b.transcriptId) || {}).name || e.b.sourceName, e.b.clipName, e.b.reel,
+      e.srcIn != null ? framesTc(e.srcIn) : '', e.srcOut != null ? framesTc(e.srcOut) : '', e.srcIn != null ? framesTc(e.srcOut - e.srcIn) : '', e.recIn != null ? framesTc(e.recIn) : '', e.recOut != null ? framesTc(e.recOut) : '']);
+    const csv = '﻿' + [CSV_HEAD, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
+    const name = `${slug()}-paper-edit.csv`;
+    download(csv, name, 'text/csv;charset=utf-8');
+    toast(`Exported ${rows.length} bite${rows.length === 1 ? '' : 's'} to ${name}`);
+  }
+  function renderReport() {
+    const ev = events();
+    const total = scenes().reduce((a, s) => a + s.bites.reduce((x, b) => x + biteLen(b), 0), 0);
+    $('report').innerHTML = `<h1>Paper edit</h1>
+      <p class="r-meta">${esc([doc.project.title, `${scenes().length} scene${scenes().length === 1 ? '' : 's'}`, `running time ${len(total)}`, `${E().frameRate} fps`, `Printed ${fmtDate(today())}`].filter(Boolean).join(' · '))}</p>
+      ${scenes().map((s, si) => `<h2>${esc(s.title || `Scene ${si + 1}`)} <span class="r-sub">${esc(len(s.bites.reduce((x, b) => x + biteLen(b), 0)))}</span></h2>
+        <table><tbody>${ev.filter(e => e.b && s.bites.includes(e.b)).map(e => `<tr><td class="r-tc">${e.srcIn != null ? `${esc(framesTc(e.srcIn))}<br>${esc(framesTc(e.srcOut))}` : 'No timecode'}<br><span class="r-sub">${esc(e.b.clipName || (tr(e.b.transcriptId) || {}).name || e.b.sourceName || '')}</span></td>
+          <td>${e.b.speaker ? `<b>${esc(e.b.speaker)}:</b> ` : ''}${esc(e.b.text || '')}${e.b.note ? `<br><i>${esc(e.b.note)}</i>` : ''}</td></tr>`).join('') || '<tr><td>No bites yet.</td></tr>'}</tbody></table>`).join('')}`;
+  }
+
+  // ---------- Project CSV ----------
+  function csvCell(v) {
+    let s = v == null ? '' : String(v);
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+    return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }
+  const csvCollections = {
+    project: 'project details', people: 'people', locations: 'locations', thirdPartyElements: 'third-party elements',
+    contracts: 'contracts', assets: 'assets', musicCueSheet: 'music cue sheet details', callSheets: 'call sheets'
+  };
+  function exportProjectCsv() {
+    const collection = $('projectCsvCollection').value;
+    const value = doc[collection];
+    const rows = Array.isArray(value) ? value : value && typeof value === 'object' ? [value] : [];
+    if (rows.some(row => !row || typeof row !== 'object' || Array.isArray(row))) {
+      toast(`Couldn't export ${csvCollections[collection]}: the project contains an invalid record.`, true);
+      return;
+    }
+    const headers = [...new Set(rows.flatMap(row => Object.keys(row)))];
+    if (!headers.length) headers.push('id');
+    const csvRows = rows.map(row => headers.map(key => { const cell = row[key]; return cell && typeof cell === 'object' ? JSON.stringify(cell) : cell; }));
+    const csv = '﻿' + [headers, ...csvRows].map(row => row.map(csvCell).join(',')).join('\r\n') + '\r\n';
+    const name = suggestedName().replace(/\.oft\.json$/i, `-${collection}.csv`);
+    download(csv, name, 'text/csv;charset=utf-8');
+    toast(`Exported ${rows.length} ${csvCollections[collection]} to ${name}`);
+  }
+
+  // ---------- Film details ----------
+  function openProjectDialog() {
+    for (const k of PROJECT_TEXT) $(`p-${k}`).value = doc.project[k] || '';
+    $('projectDialog').showModal();
+    $('p-title').focus();
+  }
+  function saveProjectDialog() {
+    for (const k of PROJECT_TEXT) doc.project[k] = $(`p-${k}`).value.trim();
+    $('projectDialog').close();
+    changed();
+  }
+
+  // ---------- Dirty state & recovery draft ----------
+  function changed() { dirty = true; saveDraft(); render(); }
+  function saveDraft() {
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ doc, fileName, baselineText, at: new Date().toISOString() })); } catch { /* the file on disk is the real copy */ }
+  }
+  function clearDraft() {
+    try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+    $('recovery').hidden = true;
+  }
+  function checkDraft() {
+    let draft = null;
+    try { draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); } catch { draft = null; }
+    if (!draft || !draft.doc || draft.doc.format !== FORMAT) return;
+    const n = draft.doc.paperEdit && Array.isArray(draft.doc.paperEdit.scenes) ? draft.doc.paperEdit.scenes.reduce((n, s) => n + (s && Array.isArray(s.bites) ? s.bites.length : 0), 0) : 0;
+    if (!n && !(draft.doc.project && draft.doc.project.title)) { clearDraft(); return; }
+    const when = draft.at ? new Date(draft.at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'earlier';
+    const title = draft.doc.project && draft.doc.project.title ? `"${draft.doc.project.title}"` : 'an untitled project';
+    $('recoveryText').textContent = `You have unsaved changes to ${title} from ${when} (${n} bite${n === 1 ? '' : 's'}). Restore them, or discard them and start fresh.`;
+    $('recovery').hidden = false;
+    $('restoreBtn').onclick = () => {
+      doc = normalize(draft.doc); fileName = draft.fileName || null; fileHandle = null;
+      baselineText = typeof draft.baselineText === 'string' ? draft.baselineText : null; dirty = true;
+      $('recovery').hidden = true; render();
+      toast(fileName ? `Restored. Save to write the changes back to ${fileName}.` : 'Restored. Save to keep it as a file.');
+    };
+    $('discardBtn').onclick = () => { clearDraft(); toast('Discarded the unsaved changes.'); };
+  }
+
+  // ---------- Files ----------
+  const pickerTypes = [{ description: 'Film project file', accept: { 'application/json': ['.json'] } }];
+  function slug() {
+    return (doc.project.title || 'untitled-film').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'untitled-film';
+  }
+  const suggestedName = () => `${slug()}.oft.json`;
+  function serialize() {
+    doc.savedAt = new Date().toISOString();
+    doc.savedBy = TOOL;
+    return JSON.stringify(doc, null, 2) + '\n';
+  }
+  function download(text, name, type) {
+    const url = URL.createObjectURL(new Blob([text], { type }));
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  function afterSave(name, downloaded, content) {
+    fileName = name;
+    if (downloaded) fileHandle = null;
+    baselineText = content;
+    dirty = false; clearDraft(); render();
+    toast(downloaded ? `Downloaded ${name}. Keep it with your project files and open it here next time.` : `Saved to ${name}`);
+  }
+  async function writeProjectFile(handle, content) {
+    try {
+      const writable = await handle.createWritable();
+      await writable.write(content);
+      await writable.close();
+    } catch (err) {
+      if (err.name !== 'AbortError') toast(`Couldn't save the file: ${err.message}`, true);
+      return;
+    }
+    fileHandle = handle;
+    afterSave(handle.name, false, content);
+  }
+  function saveCopy(content) {
+    const base = (fileName || suggestedName()).replace(/\.oft\.json$/i, '');
+    const name = `${base}-copy.oft.json`;
+    download(content, name, 'application/json');
+    afterSave(name, true, content);
+  }
+  async function reloadLatest(handle) {
+    try {
+      const file = await handle.getFile();
+      loadText(await file.text(), handle.name, handle);
+    } catch (err) {
+      toast(`Couldn't reload the file: ${err.message}`, true);
+    }
+  }
+  function showConflictDialog(content, observedText, unknownBaseline = false) {
+    const handle = fileHandle;
+    dirty = true;
+    saveDraft();
+    render();
+    $('conflictText').textContent = unknownBaseline
+      ? `The tool can't verify whether ${handle.name} changed since your recovery copy was made. Your edits are not saved.`
+      : `${handle.name} changed after you opened it. Your edits are not saved. Overwriting replaces the newer file.`;
+    $('conflictDialog').showModal();
+    $('conflictReloadBtn').onclick = () => { $('conflictDialog').close(); reloadLatest(handle); };
+    $('conflictCopyBtn').onclick = () => { $('conflictDialog').close(); saveCopy(content); };
+    $('conflictOverwriteBtn').onclick = async () => {
+      $('conflictDialog').close();
+      let latestText;
+      try { latestText = await (await handle.getFile()).text(); }
+      catch (err) { toast(`Couldn't check the file before overwriting: ${err.message}`, true); return; }
+      if (latestText !== observedText) {
+        toast('The file changed again. Review the updated conflict warning before overwriting.', true);
+        showConflictDialog(content, latestText);
+        return;
+      }
+      await writeProjectFile(handle, content);
+    };
+    $('conflictCancelBtn').onclick = () => $('conflictDialog').close();
+  }
+  async function saveFile() {
+    const out = serialize();
+    if (fileHandle) {
+      let currentText;
+      try { currentText = await (await fileHandle.getFile()).text(); }
+      catch (err) { toast(`Couldn't check the file before saving: ${err.message}`, true); return; }
+      if (baselineText === null || currentText !== baselineText) { showConflictDialog(out, currentText, baselineText === null); return; }
+      await writeProjectFile(fileHandle, out);
+      return;
+    }
+    if (window.showSaveFilePicker && window.self === window.top) {
+      try {
+        const h = await window.showSaveFilePicker({ suggestedName: fileName || suggestedName(), types: pickerTypes });
+        if (h.name === fileName) {
+          const currentText = await (await h.getFile()).text();
+          if (baselineText === null || currentText !== baselineText) { fileHandle = h; showConflictDialog(out, currentText, baselineText === null); return; }
+        }
+        await writeProjectFile(h, out);
+      } catch (err) { if (err.name !== 'AbortError') toast(`Couldn't save the file: ${err.message}`, true); }
+      return;
+    }
+    const name = fileName || suggestedName();
+    download(out, name, 'application/json');
+    afterSave(name, true, out);
+  }
+  function loadText(text, name, handle) {
+    let data;
+    try { data = JSON.parse(text); } catch { toast(`Couldn't open ${name}: it isn't a project file.`, true); return; }
+    if (!data || data.format !== FORMAT) { toast(`Couldn't open ${name}: it isn't an Open Filmmaker Toolkit project file.`, true); return; }
+    if (Number(data.formatVersion) > FORMAT_VERSION) { toast(`Couldn't open ${name}: it was saved by a newer version of the toolkit. Get the latest version of this tool.`, true); return; }
+    doc = normalize(data); fileHandle = handle; baselineText = text; fileName = name; dirty = false;
+    clearDraft(); render();
+    const n = entries().length;
+    toast(`Opened ${name}: ${n ? `${n} bite${n === 1 ? '' : 's'}` : 'no bites yet'}`);
+  }
+  async function openFile() {
+    if (dirty && !confirm('You have unsaved changes. Open another file and lose them?')) return;
+    if (window.showOpenFilePicker && window.self === window.top) {
+      try { const [h] = await window.showOpenFilePicker({ types: pickerTypes }); const f = await h.getFile(); loadText(await f.text(), f.name, h); }
+      catch (err) { if (err.name !== 'AbortError') toast(`Couldn't open the file: ${err.message}`, true); }
+      return;
+    }
+    $('fileInput').click();
+  }
+  function newProject() {
+    if (dirty && !confirm('You have unsaved changes. Start a new project and lose them?')) return;
+    doc = normalize(blankDoc()); fileHandle = null; baselineText = null; fileName = null; dirty = false;
+    clearDraft(); render(); openProjectDialog();
+  }
+
+  let toastTimer = null;
+  function toast(msg, isError) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.classList.toggle('error', !!isError);
+    t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.hidden = true; }, isError ? 7000 : 4200);
+  }
+
+  // ---------- Wiring ----------
+  function init() {
+    doc = normalize(doc);
+    $('newBtn').onclick = newProject;
+    $('openBtn').onclick = openFile;
+    $('saveBtn').onclick = saveFile;
+    $('editProjectBtn').onclick = openProjectDialog;
+    $('filmTitle').onclick = openProjectDialog;
+    $('printBtn').onclick = () => { renderReport(); window.print(); };
+    window.addEventListener('beforeprint', renderReport);
+    $('projectCsvBtn').onclick = () => $('projectCsvDialog').showModal();
+    $('projectCsvCancel').onclick = () => $('projectCsvDialog').close();
+    $('projectCsvForm').addEventListener('submit', ev => { ev.preventDefault(); exportProjectCsv(); $('projectCsvDialog').close(); });
+    $('fileInput').addEventListener('change', async () => {
+      const f = $('fileInput').files[0];
+      if (f) loadText(await f.text(), f.name, null);
+      $('fileInput').value = '';
+    });
+    $('projectForm').addEventListener('submit', ev => { ev.preventDefault(); saveProjectDialog(); });
+    $('projectCancel').onclick = () => $('projectDialog').close();
+    $('addBtn').onclick = () => openEditor(null);
+    $('emptyAddBtn').onclick = () => openEditor(null);
+    $('emptyOpenBtn').onclick = openFile;
+    $('tSel').addEventListener('change', () => { current = $('tSel').value; sel.clear(); lastClick = null; drawSegments(); });
+    $('tEditBtn').onclick = () => openEditor(current);
+    $('q').addEventListener('input', () => { q = $('q').value.trim().toLowerCase(); drawSegments(); });
+    $('segs').addEventListener('click', ev => { const b = ev.target.closest('[data-seg]'); if (b) pick(b.dataset.seg, ev.shiftKey); });
+    $('addBiteBtn').onclick = addBites;
+    $('clearSelBtn').onclick = () => { sel.clear(); drawSegments(); };
+    $('sceneSel').addEventListener('change', () => { $('sceneSel').dataset.last = $('sceneSel').value; });
+    $('addSceneBtn').onclick = () => { scenes().push({ id: newId('scene'), title: `Scene ${scenes().length + 1}`, bites: [] }); changed(); };
+    $('scenes').addEventListener('click', sceneClick);
+    $('scenes').addEventListener('change', ev => { const i = ev.target.closest('[data-title]'); if (!i) return; const s = scenes().find(x => x.id === i.dataset.title); if (s) { s.title = i.value.trim() || s.title; changed(); } });
+    $('fps').addEventListener('change', () => { E().frameRate = $('fps').value; for (const b of bites()) stamp(b); changed(); });
+    $('recStart').addEventListener('change', () => { if (tcFrames($('recStart').value) == null) { $('recStart').value = E().recordStart || '01:00:00:00'; toast('Use HH:MM:SS:FF for where the sequence starts.', true); return; } E().recordStart = $('recStart').value.trim(); changed(); });
+    $('edlBtn').onclick = exportEdl;
+    $('csvBtn').onclick = exportCsv;
+    $('f-file').addEventListener('change', () => { $('f-file').setCustomValidity(''); readFile(); });
+    $('f-interview').addEventListener('change', useInterview);
+    $('f-clip').addEventListener('change', useClip);
+    $('editorForm').addEventListener('submit', ev => { ev.preventDefault(); saveEditor(); });
+    $('editorForm').addEventListener('input', ev => { if (ev.target.setCustomValidity) ev.target.setCustomValidity(''); });
+    $('editorCancel').onclick = () => $('editor').close();
+    $('deleteBtn').onclick = removeEditing;
+    $('biteForm').addEventListener('submit', ev => { ev.preventDefault(); saveBite(); });
+    $('biteForm').addEventListener('input', ev => { if (ev.target.setCustomValidity) ev.target.setCustomValidity(''); });
+    $('biteCancel').onclick = () => $('biteDialog').close();
+    $('biteDelete').onclick = removeBite;
+
+    document.addEventListener('keydown', ev => {
+      const mod = ev.metaKey || ev.ctrlKey;
+      if (mod && ev.key.toLowerCase() === 's') { ev.preventDefault(); saveFile(); }
+      else if (mod && ev.key.toLowerCase() === 'o') { ev.preventDefault(); openFile(); }
+    });
+    window.addEventListener('beforeunload', ev => { if (dirty) { ev.preventDefault(); ev.returnValue = ''; } });
+    render();
+    checkDraft();
+  }
+
+  if (typeof HTMLDialogElement !== 'function' || typeof HTMLDialogElement.prototype.showModal !== 'function' || typeof structuredClone !== 'function') {
+    $('cantRunTitle').textContent = 'This browser is too old to run this tool';
+    $('cantRunText').textContent = 'Update to a current version of Chrome, Edge, Firefox or Safari, then open this file again.';
+    $('cantRunHow').hidden = true;
+    return;
+  }
+  document.documentElement.classList.remove('no-js');
+  window.addEventListener('error', ev => toast(`Something went wrong: ${ev.message}. Save your work, then reload the page.`, true));
+  window.addEventListener('unhandledrejection', ev => toast(`Something went wrong: ${ev.reason && ev.reason.message ? ev.reason.message : ev.reason}. Save your work, then reload the page.`, true));
+  init();
+})();
+</script>
+</body>
+</html>

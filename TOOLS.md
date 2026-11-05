@@ -1,6 +1,6 @@
 # Tools
 
-The tools we build, by production phase. Each one is a single page that runs in your browser on the shared project file, with nothing to install and nothing sent anywhere. 36 are ready to use and 26 are planned.
+The tools we build, by production phase. Each one is a single page that runs in your browser on the shared project file, with nothing to install and nothing sent anywhere. 39 are ready to use and 23 are planned.
 
 - **Ready to use:** linked tools. Each has a README with what it does.
 - **Planned:** each has an issue. Comment there if you need the tool or want to help build it. Order of work is in [ROADMAP.md](ROADMAP.md).
@@ -60,8 +60,8 @@ Looking for other free, open-source software for filmmaking, such as editing, so
 
 | Tool | Use it for | Status |
 | --- | --- | --- |
-| Footage log | Catalog every clip: what's in it, who's in it, where and when, so the editor can find it. | Planned, [#67](https://github.com/open-filmmaker-toolkit/toolkit/issues/67) |
-| Paper edit (transcripts in, edit list out to Premiere, Resolve or Avid) | Build a paper edit from transcripts, then send it to Premiere, Resolve or Avid. | Planned, [#68](https://github.com/open-filmmaker-toolkit/toolkit/issues/68) |
+| [Footage log](tools/footage-log/) | Cataloging every clip so the editor can find it: what's in it, who's in it, where and when, with topics, notes and ratings, imported from a folder, a CSV or your camera reports | First version |
+| [Paper edit](tools/paper-edit/) | Building a paper edit from transcripts: picking bites with their source timecodes, arranging them into scenes, printing it, and exporting an edit list for Premiere, Resolve or Avid | First version |
 | Structure board | Lay out the film's structure on cards you can move around: scenes, sequences and acts. | Planned, [#69](https://github.com/open-filmmaker-toolkit/toolkit/issues/69) |
 | Cut version tracker | Track every cut: what changed, who saw it, and the notes from each screening. | Planned, [#70](https://github.com/open-filmmaker-toolkit/toolkit/issues/70) |
 | [Name supers list](tools/name-supers/) | Keeping on-screen names and titles spelled the way the rest of your project spells them, and showing graphics what changed since their last list | First version |
