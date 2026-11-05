@@ -287,6 +287,24 @@ for sample in sorted((ROOT / "samples").glob("*.oft.json")):
         beats = {b.get("id") for b in interview.get("beats", [])}
         if {m.get("beatId") for m in interview.get("moments", []) if m.get("beatId")} - beats:
             fail(f"{name}: interview {interview.get('id')} has a moment pointing to a missing beat")
+    for clip in [a for a in data.get("assets", []) if isinstance(a, dict) and a.get("type") == "clip"]:
+        if set(clip.get("personIds", [])) - ids["people"] or set(clip.get("locationIds", [])) - ids["locations"]:
+            fail(f"{name}: clip {clip.get('id')} points to missing people or locations")
+        if clip.get("mediaReportId") and clip["mediaReportId"] not in {r.get("id") for r in data.get("mediaReports", []) if isinstance(r, dict)}:
+            fail(f"{name}: clip {clip.get('id')} mediaReportId points to a missing report")
+    paper = data.get("paperEdit") if isinstance(data.get("paperEdit"), dict) else {}
+    interview_ids = {i.get("id") for i in data.get("interviews", []) if isinstance(i, dict)}
+    for t in paper.get("transcripts", []):
+        if t.get("interviewId") and t["interviewId"] not in interview_ids:
+            fail(f"{name}: transcript {t.get('id')} interviewId points to a missing interview")
+        if t.get("personId") and t["personId"] not in ids["people"]:
+            fail(f"{name}: transcript {t.get('id')} personId points to a missing person")
+        if t.get("clipId") and t["clipId"] not in asset_ids:
+            fail(f"{name}: transcript {t.get('id')} clipId points to a missing asset")
+    for scene in paper.get("scenes", []):
+        for bite in scene.get("bites", []):
+            if bite.get("out") is not None and bite.get("in") is not None and bite["out"] <= bite["in"]:
+                fail(f"{name}: bite {bite.get('id')} ends before it starts")
     security = data.get("security") if isinstance(data.get("security"), dict) else {}
     if set(security.get("personIds", [])) - ids["people"]:
         fail(f"{name}: security personIds points to missing people")

@@ -14,15 +14,15 @@ chromium-fallback, Firefox and WebKit (Safari's engine) use the download/upload 
 The call sheet, release tracker, credits builder, name supers list, subject tracker, research and archival log, comps tracker, treatment builder, pitch deck builder and archive log also get end-to-end checks
 of their own, and the spreadsheet templates are checked against the tools' exports.
 """
-import base64, datetime, csv, io, json, os, pathlib, sys
+import base64, datetime, csv, io, json, os, pathlib, re, sys, tempfile
 from playwright.sync_api import sync_playwright
 
 root = pathlib.Path(__file__).resolve().parents[1]
 sample = (root / 'samples/the-river-keeps.oft.json').read_text()
-TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan', 'funder-crm', 'cash-flow', 'shooting-calendar', 'interview-prep', 'field-journal', 'location-scout', 'deal-memos', 'gear-list', 'coi-permit-tracker', 'travel-sheet', 'risk-plan', 'security-checklist', 'camera-sound-reports', 'interview-log', 'daily-production-report', 'expense-log', 'festival-submissions', 'press-list', 'partner-crm', 'discussion-guide', 'archive-log']
+TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan', 'funder-crm', 'cash-flow', 'shooting-calendar', 'interview-prep', 'field-journal', 'location-scout', 'deal-memos', 'gear-list', 'coi-permit-tracker', 'travel-sheet', 'risk-plan', 'security-checklist', 'camera-sound-reports', 'interview-log', 'daily-production-report', 'expense-log', 'festival-submissions', 'press-list', 'partner-crm', 'discussion-guide', 'archive-log', 'footage-log', 'paper-edit']
 COLLECTIONS = ['project', 'people', 'locations', 'thirdPartyElements', 'contracts', 'assets', 'musicCueSheet', 'callSheets']
 PRINT_BTN = {'clearance-log': '#printBtn', 'music-cue-sheet': '#printBtn', 'call-sheet': '#printAllBtn', 'release-tracker': '#printBtn',
-             'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn', 'treatment-builder': '#printBtn', 'pitch-deck': '#printBtn', 'grant-calendar': '#printBtn', 'narrative-library': '#printBtn', 'budget': '#printBtn', 'budget-converter': '#printBtn', 'finance-plan': '#printBtn', 'funder-crm': '#printBtn', 'cash-flow': '#printBtn', 'shooting-calendar': '#printBtn', 'interview-prep': '#printBtn', 'field-journal': '#printBtn', 'location-scout': '#printBtn', 'deal-memos': '#printBtn', 'gear-list': '#printBtn', 'coi-permit-tracker': '#printBtn', 'travel-sheet': '#printBtn', 'risk-plan': '#printBtn', 'security-checklist': '#printBtn', 'camera-sound-reports': '#printBtn', 'interview-log': '#printBtn', 'daily-production-report': '#printBtn', 'expense-log': '#printBtn', 'festival-submissions': '#printBtn', 'press-list': '#printBtn', 'partner-crm': '#printBtn', 'discussion-guide': '#printBtn', 'archive-log': '#printBtn'}
+             'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn', 'treatment-builder': '#printBtn', 'pitch-deck': '#printBtn', 'grant-calendar': '#printBtn', 'narrative-library': '#printBtn', 'budget': '#printBtn', 'budget-converter': '#printBtn', 'finance-plan': '#printBtn', 'funder-crm': '#printBtn', 'cash-flow': '#printBtn', 'shooting-calendar': '#printBtn', 'interview-prep': '#printBtn', 'field-journal': '#printBtn', 'location-scout': '#printBtn', 'deal-memos': '#printBtn', 'gear-list': '#printBtn', 'coi-permit-tracker': '#printBtn', 'travel-sheet': '#printBtn', 'risk-plan': '#printBtn', 'security-checklist': '#printBtn', 'camera-sound-reports': '#printBtn', 'interview-log': '#printBtn', 'daily-production-report': '#printBtn', 'expense-log': '#printBtn', 'festival-submissions': '#printBtn', 'press-list': '#printBtn', 'partner-crm': '#printBtn', 'discussion-guide': '#printBtn', 'archive-log': '#printBtn', 'footage-log': '#printBtn', 'paper-edit': '#printBtn'}
 PHONE = {'width': 390, 'height': 844}
 # The button that opens each tool's main dialog, for the phone-width check. Most tools use #addBtn.
 DIALOG_BTN = {'treatment-builder': '[data-compare]', 'cash-flow': '#settingsBtn', 'discussion-guide': '#projectCsvBtn'}
@@ -385,7 +385,7 @@ def test_credits_builder(browser, fake):
     ctx.close()
 
 # Each spreadsheet template's columns must appear in its tool's CSV export, in the same order.
-TEMPLATE_EXPORTS = [('press-list', 'press-list-template.csv'), ('partner-crm', 'partner-crm-template.csv'), ('camera-sound-reports', 'camera-and-sound-reports-template.csv'), ('interview-log', 'interview-moments-template.csv'), ('travel-sheet', 'travel-sheet-template.csv'), ('risk-plan', 'risk-assessment-template.csv'), ('security-checklist', 'security-checklist-template.csv'), ('gear-list', 'gear-list-template.csv'), ('coi-permit-tracker', 'certificates-and-permits-template.csv'), ('location-scout', 'location-scout-template.csv'), ('deal-memos', 'deal-memos-template.csv'), ('shooting-calendar', 'shooting-calendar-template.csv'), ('interview-prep', 'interview-questions-template.csv'), ('funder-crm', 'funder-crm-template.csv'), ('cash-flow', 'cash-flow-template.csv'), ('budget', 'budget-template.csv'), ('finance-plan', 'finance-plan-template.csv'), ('grant-calendar', 'grant-calendar-template.csv'), ('clearance-log', 'clearance-log-template.csv'), ('release-tracker', 'release-log-template.csv'),
+TEMPLATE_EXPORTS = [('footage-log', 'footage-log-template.csv'), ('paper-edit', 'paper-edit-template.csv'), ('press-list', 'press-list-template.csv'), ('partner-crm', 'partner-crm-template.csv'), ('camera-sound-reports', 'camera-and-sound-reports-template.csv'), ('interview-log', 'interview-moments-template.csv'), ('travel-sheet', 'travel-sheet-template.csv'), ('risk-plan', 'risk-assessment-template.csv'), ('security-checklist', 'security-checklist-template.csv'), ('gear-list', 'gear-list-template.csv'), ('coi-permit-tracker', 'certificates-and-permits-template.csv'), ('location-scout', 'location-scout-template.csv'), ('deal-memos', 'deal-memos-template.csv'), ('shooting-calendar', 'shooting-calendar-template.csv'), ('interview-prep', 'interview-questions-template.csv'), ('funder-crm', 'funder-crm-template.csv'), ('cash-flow', 'cash-flow-template.csv'), ('budget', 'budget-template.csv'), ('finance-plan', 'finance-plan-template.csv'), ('grant-calendar', 'grant-calendar-template.csv'), ('clearance-log', 'clearance-log-template.csv'), ('release-tracker', 'release-log-template.csv'),
                     ('music-cue-sheet', 'music-cue-sheet-template.csv'), ('name-supers', 'name-supers-template.csv'),
                     ('subject-tracker', 'subject-tracker-template.csv'), ('research-log', 'research-log-template.csv'),
                     ('comps-tracker', 'comps-tracker-template.csv')]
@@ -1587,6 +1587,116 @@ def test_interview_log(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
+def test_footage_log(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'footage-log', fake)
+    pg.on('dialog', lambda d: d.accept())
+    open_sample(pg, fake)
+    check(pg.locator('#rows .row').count() == 4, 'lists the clips')
+    pg.select_option('#fPerson', 'person-daniel-okafor')
+    check(pg.locator('#rows .row').count() == 2, 'finds clips by who is in them')
+    pg.select_option('#fPerson', ''); pg.fill('#q', 'sandbags')
+    check(pg.locator('#rows .row').count() == 1 and 'A002C001' in pg.inner_text('#rows'), 'finds clips by words')
+    pg.fill('#q', '')
+    pg.click('#importBtn'); pg.click('#reportsBtn'); pg.wait_for_timeout(200)
+    row = pg.locator('#rows .row:has-text("A001C004")')
+    check(pg.locator('#rows .row').count() == 5 and row.count() == 1 and '★★★★☆' in row.inner_text() and 'Sandbags at the levee gate' in row.inner_text(), 'imports the clips from camera reports that are not in the log')
+    pg.click('#importBtn'); pg.fill('#folderPrefix', 'footage/day3')
+    folder = pathlib.Path(tempfile.mkdtemp()) / 'B001'
+    folder.mkdir()
+    (folder / 'B001C001.MOV').write_bytes(b'x'); (folder / 'notes.txt').write_bytes(b'x')
+    pg.set_input_files('#folderInput', str(folder))
+    pg.wait_for_timeout(200)
+    check(pg.locator('#rows .row').count() == 6 and pg.locator('#rows .row:has-text("notes.txt")').count() == 0, 'imports the video files in a folder and skips the rest')
+    csv_in = 'File Name,Clip Directory,Description,People,Keywords,Rating\r\nB001C002.MOV,footage/day3,Ruth at the window,"Ruth Hammond, Jo Nobody",diary,3\r\nA001C001.mov,footage/2026-05-12/A001,,,,\r\n'
+    pg.click('#importBtn'); pg.set_input_files('#csvInput', files=[{'name': 'clips.csv', 'mimeType': 'text/csv', 'buffer': csv_in.encode()}]); pg.wait_for_timeout(300)
+    b2 = pg.locator('#rows .row:has-text("B001C002")')
+    check(pg.locator('#rows .row').count() == 7 and 'Ruth Hammond' in b2.inner_text() and 'diary' in b2.inner_text() and '★★★☆☆' in b2.inner_text(), 'imports a CSV, matching people by name and skipping clips already logged')
+    for name in ['B001C001', 'B001C002']:
+        pg.check('#rows .row:has-text("%s") [data-sel]' % name)
+    check(pg.is_visible('#selbar') and '2 selected' in pg.inner_text('#selCount'), 'selects several clips')
+    pg.click('#tagSelBtn'); pg.select_option('#t-place', 'location-hammond-house'); pg.fill('#t-topics', 'day three'); pg.select_option('#t-rating', '2'); pg.click('#tagSubmit'); pg.wait_for_timeout(200)
+    check('Hammond house' in pg.inner_text('#rows .row:has-text("B001C001")') and 'day three' in pg.inner_text('#rows .row:has-text("B001C002")'), 'tags several clips at once')
+    pg.click('[data-edit="clip-a001c003"]'); pg.check('#rating input[value="4"]'); pg.fill('#f-topics', 'river, b-roll, high water'); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    pg.select_option('#fRating', '4')
+    check(pg.locator('#rows .row').count() == 4, 'filters by rating')
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    check('Footage log' in pg.inner_text('#report') and '★★★★ and up' in pg.inner_text('#report') and 'A001C003.mov' in pg.inner_text('#report'), 'prints the clips shown')
+    pg.select_option('#fRating', '0')
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    check(rows[0][:3] == ['File Name', 'Clip Directory', 'Date'] and len(rows) == 8 and ['A001C001.mov', 'footage/2026-05-12/A001'] == rows[1][:2], 'CSV has a row for each clip, with its folder')
+    data = saved_project(pg, fake)
+    cl = {a['name']: a for a in data['assets'] if a.get('type') == 'clip'}
+    check(cl['B001C001.MOV']['relativePath'] == 'footage/day3/B001/B001C001.MOV' and cl['B001C001.MOV']['locationIds'] == ['location-hammond-house'] and cl['B001C001.MOV']['rating'] == 2
+          and cl['B001C002.MOV']['personIds'] == ['person-ruth-hammond'] and 'Jo Nobody' in cl['B001C002.MOV']['notes'] and cl['A001C003.mov']['rating'] == 4 and cl['A001C004']['mediaReportId'] == 'report-a001',
+          'the clips are saved as assets')
+    check([a for a in data['assets'] if a.get('type') != 'clip'] == [a for a in original['assets'] if a.get('type') != 'clip'] and data['mediaReports'] == original['mediaReports'], 'other assets and data are unchanged')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+VTT_SAMPLE = 'WEBVTT\n\n00:00:01.000 --> 00:00:04.500\n<v Ruth Hammond>I kept it under the floorboards.\n\n00:00:05.000 --> 00:00:09.000\n<v Ruth Hammond>Nobody asked, so I never said.\n\n00:00:10.000 --> 00:00:12.000\n<v Lena Ward>Will you read it?\n'
+
+def test_paper_edit(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'paper-edit', fake)
+    pg.on('dialog', lambda d: d.accept())
+    open_sample(pg, fake)
+    check(pg.locator('#segs .seg').count() == 6 and pg.locator('#scenes .scene').count() == 2 and 'Running time 1:01' in pg.inner_text('#runTime'), 'shows the transcript and the scenes')
+    pg.click('#addBtn')
+    pg.set_input_files('#f-file', files=[{'name': 'ruth.vtt', 'mimeType': 'text/vtt', 'buffer': VTT_SAMPLE.encode()}]); pg.wait_for_timeout(200)
+    check('3 lines read from ruth.vtt, with timecodes' in pg.inner_text('#parseNote') and pg.input_value('#f-name') == 'ruth', 'reads a VTT transcript')
+    pg.select_option('#f-interview', 'interview-ruth')
+    check(pg.input_value('#f-person') == 'person-ruth-hammond', "the interview fills in the speaker")
+    pg.fill('#f-clipname', 'B001C002.mov'); pg.fill('#f-reel', 'B001'); pg.fill('#f-start', '10:00:00:00')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    segs = pg.locator('#segs .seg')
+    check(segs.count() == 3 and segs.first.inner_text().startswith('10:00:01:00') and 'Ruth Hammond' in segs.first.inner_text(), 'shows source timecodes from the clip start')
+    segs.nth(0).click(); segs.nth(1).click(modifiers=['Shift'])
+    check('2 lines picked' in pg.inner_text('#selCount'), 'shift-click picks a run of lines')
+    pg.select_option('#sceneSel', '__new'); pg.click('#addBiteBtn'); pg.wait_for_timeout(200)
+    s3 = pg.locator('#scenes .scene').nth(2)
+    check(pg.locator('#scenes .scene').count() == 3 and '10:00:01:00 to 10:00:09:00' in s3.inner_text() and 'Scene 3' in s3.locator('input').input_value(), 'adds the bite to a new scene with its source in and out')
+    check('Scene 3' in segs.first.inner_text(), 'marks lines already in a scene')
+    s3.locator('[data-bite]').click()
+    pg.fill('#b-in', '10:00:01:30'); pg.click('#biteForm button[type="submit"]')
+    check(pg.is_visible('#biteDialog'), 'refuses a timecode with too many frames')
+    pg.fill('#b-in', '10:00:01:00'); pg.fill('#b-out', '10:00:08:12'); pg.fill('#b-note', 'Hold on her hands')
+    pg.click('#biteForm button[type="submit"]'); pg.wait_for_timeout(200)
+    s3.locator('input').fill('The floorboards'); s3.locator('input').dispatch_event('change'); pg.wait_for_timeout(100)
+    pg.locator('#scenes .scene').nth(2).locator('[data-smove="-1"]').click(); pg.wait_for_timeout(100)
+    check(pg.locator('#scenes .scene').nth(1).locator('input').input_value() == 'The floorboards', 'moves a scene up')
+    pg.click('#addBtn')
+    pg.set_input_files('#f-file', files=[{'name': 'notes.txt', 'mimeType': 'text/plain', 'buffer': b'Some words without times.\n\nAnother paragraph.\n'}]); pg.wait_for_timeout(200)
+    check('no timecodes' in pg.inner_text('#parseNote'), 'warns about a transcript with no timecodes')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check(pg.is_visible('#untimedNote') and pg.locator('#segs .seg').count() == 2, 'imports it as paragraphs')
+    pg.locator('#segs .seg').first.click(); pg.select_option('#sceneSel', 'scene-shoebox'); pg.click('#addBiteBtn'); pg.wait_for_timeout(200)
+    with pg.expect_download() as d:
+        pg.click('#edlBtn')
+    edl = open(d.value.path(), encoding='utf-8', newline='').read().split('\r\n')
+    events = [l for l in edl if re.match(r'^\d{3}  ', l)]
+    check(edl[0] == 'TITLE: The River Keeps paper edit' and edl[1] == 'FCM: NON-DROP FRAME' and len(events) == 4, 'the edit list has a title and one event for each timed bite')
+    check(events[0] == '001  A001     AA/V  C        08:04:20:05 08:04:47:23 01:00:00:00 01:00:27:18' and '* FROM CLIP NAME: A001C001.mov' in edl, 'events keep the source timecodes and the clip name')
+    check(events[1] == '002  B001     AA/V  C        10:00:01:00 10:00:08:12 01:00:27:18 01:00:35:06', 'a trimmed bite keeps its new in and out, and record times follow on')
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    check(rows[0][:3] == ['Scene', 'Order', 'Speaker'] and len(rows) == 6 and rows[-1][8] == '', 'CSV lists every bite; one without timecode has none')
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    r = pg.inner_text('#report')
+    check('The floorboards' in r and '10:00:08:12' in r and 'Hold on her hands' in r and 'No timecode' in r, 'prints the paper edit')
+    data = saved_project(pg, fake)
+    pe = data['paperEdit']
+    ruth = next(t for t in pe['transcripts'] if t.get('interviewId') == 'interview-ruth')
+    b = next(s for s in pe['scenes'] if s['title'] == 'The floorboards')['bites'][0]
+    check(len(pe['transcripts']) == 3 and ruth['segments'][0]['speaker'] == 'Ruth Hammond' and ruth['startTc'] == '10:00:00:00' and ruth['format'] == 'vtt', 'the transcript is saved')
+    check(b['in'] == 1 and abs(b['out'] - 8.509) < 0.002 and b['tcOut'] == '10:00:08:12' and b['reel'] == 'B001' and b['note'] == 'Hold on her hands', 'the bite is saved with its source in and out')
+    check(data['interviews'] == original['interviews'] and data['assets'] == original['assets'], 'other data is unchanged')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
 def test_deal_memos(browser, fake):
     original = json.loads(sample)
     ctx, pg, errs = new_page(browser, 'deal-memos', fake)
@@ -1971,7 +2081,7 @@ def test_archive_log(browser, fake):
     pg.click('#editorSubmit'); pg.wait_for_timeout(200)
     check(pg.locator('#rows tr').count() == 1 and 'Overdue by' in pg.inner_text('#rows'), 'copy is listed and its overdue check is flagged')
     check('A001' in pg.inner_text('#dueList')
-          and pg.locator('#stats .stat').all_inner_texts() == ['1\narchived copies', '8\nproject assets', '1\noverdue checks', '1/1\nwith a hash manifest'],
+          and pg.locator('#stats .stat').all_inner_texts() == ['1\narchived copies', '%d\nproject assets' % len(json.loads(sample)['assets']), '1\noverdue checks', '1/1\nwith a hash manifest'],
           'summary shows the due copy and project totals')
     pg.select_option('#statusFilter', 'overdue')
     check(pg.locator('#rows tr').count() == 1, 'overdue filter shows the matching copy')
@@ -2125,6 +2235,10 @@ def main():
         test_expense_log(browser, fake)
         print('== festival-submissions / ordering, flags, screenings and CSV')
         test_festivals(browser, fake)
+        print('== footage-log / imports, tags, filters and CSV')
+        test_footage_log(browser, fake)
+        print('== paper-edit / transcripts, bites, scenes and the edit list')
+        test_paper_edit(browser, fake)
         print('== templates / columns match the tools\' exports')
         test_template_columns(browser, fake)
         browser.close()

@@ -728,6 +728,93 @@
       "relativePath": "receipts/2026-05-12-crew-lunch.jpg",
       "mimeType": "image/jpeg",
       "notes": "Fictional reference only; the file is not included."
+    },
+    {
+      "id": "clip-a001c001",
+      "type": "clip",
+      "name": "A001C001.mov",
+      "relativePath": "footage/2026-05-12/A001/A001C001.mov",
+      "card": "A001",
+      "date": "2026-05-12",
+      "timecode": "08:04:10:00",
+      "duration": "00:26:40",
+      "description": "Daniel interview, wide, on the levee",
+      "personIds": [
+        "person-daniel-okafor"
+      ],
+      "locationIds": [
+        "location-riverside-levee"
+      ],
+      "topics": [
+        "1965 flood",
+        "family photographs"
+      ],
+      "rating": 5,
+      "mediaReportId": "report-a001",
+      "clipId": "clip-a001-1"
+    },
+    {
+      "id": "clip-a001c002",
+      "type": "clip",
+      "name": "A001C002.mov",
+      "relativePath": "footage/2026-05-12/A001/A001C002.mov",
+      "card": "A001",
+      "date": "2026-05-12",
+      "timecode": "08:31:52:12",
+      "duration": "00:17:48",
+      "description": "Daniel interview, close",
+      "personIds": [
+        "person-daniel-okafor"
+      ],
+      "locationIds": [
+        "location-riverside-levee"
+      ],
+      "topics": [
+        "1965 flood"
+      ],
+      "rating": 4,
+      "notes": "Plane overhead at 08:40",
+      "mediaReportId": "report-a001",
+      "clipId": "clip-a001-2"
+    },
+    {
+      "id": "clip-a001c003",
+      "type": "clip",
+      "name": "A001C003.mov",
+      "relativePath": "footage/2026-05-12/A001/A001C003.mov",
+      "card": "A001",
+      "date": "2026-05-12",
+      "timecode": "13:12:00:00",
+      "description": "River b-roll, high water",
+      "locationIds": [
+        "location-riverside-levee"
+      ],
+      "topics": [
+        "river",
+        "b-roll"
+      ],
+      "mediaReportId": "report-a001",
+      "clipId": "clip-a001-3"
+    },
+    {
+      "id": "clip-a002c001",
+      "type": "clip",
+      "name": "A002C001.mov",
+      "relativePath": "footage/2026-05-13/A002/A002C001.mov",
+      "card": "A002",
+      "date": "2026-05-13",
+      "description": "Levee crew stacking sandbags",
+      "personIds": [
+        "person-marcus-bell"
+      ],
+      "locationIds": [
+        "location-riverside-levee"
+      ],
+      "topics": [
+        "levee",
+        "sandbags"
+      ],
+      "rating": 3
     }
   ],
   "musicCueSheet": {
@@ -3707,5 +3794,130 @@
         "screening-grain-elevator"
       ]
     }
-  ]
+  ],
+  "paperEdit": {
+    "frameRate": "23.976",
+    "recordStart": "01:00:00:00",
+    "transcripts": [
+      {
+        "id": "transcript-daniel",
+        "name": "Daniel Okafor, May 12",
+        "interviewId": "interview-daniel",
+        "personId": "person-daniel-okafor",
+        "clipId": "clip-a001c001",
+        "clipName": "A001C001.mov",
+        "reel": "A001",
+        "startTc": "08:04:10:00",
+        "format": "vtt",
+        "segments": [
+          {
+            "id": "seg-daniel-1",
+            "start": 0.0,
+            "end": 9.5,
+            "speaker": "Lena Ward",
+            "text": "Tell me about the photographs."
+          },
+          {
+            "id": "seg-daniel-2",
+            "start": 10.2,
+            "end": 24.8,
+            "speaker": "Daniel Okafor",
+            "text": "My grandmother climbed onto the roof with a box camera. Everyone else was carrying things out of the house, and she was taking pictures of the water."
+          },
+          {
+            "id": "seg-daniel-3",
+            "start": 25.1,
+            "end": 38.0,
+            "speaker": "Daniel Okafor",
+            "text": "She said if nobody saw it, nobody would believe how high it came."
+          },
+          {
+            "id": "seg-daniel-4",
+            "start": 38.6,
+            "end": 52.3,
+            "speaker": "Lena Ward",
+            "text": "Where were the photographs all this time?"
+          },
+          {
+            "id": "seg-daniel-5",
+            "start": 53.0,
+            "end": 71.4,
+            "speaker": "Daniel Okafor",
+            "text": "In a shoebox in the closet. Sixty years. I found them when we cleared out her house."
+          },
+          {
+            "id": "seg-daniel-6",
+            "start": 72.0,
+            "end": 86.9,
+            "speaker": "Daniel Okafor",
+            "text": "You don’t forget the sound of water coming under the door. She told me that the first time I asked her about it."
+          }
+        ]
+      }
+    ],
+    "scenes": [
+      {
+        "id": "scene-roof",
+        "title": "The roof",
+        "bites": [
+          {
+            "id": "bite-roof-1",
+            "transcriptId": "transcript-daniel",
+            "segmentIds": [
+              "seg-daniel-2",
+              "seg-daniel-3"
+            ],
+            "text": "My grandmother climbed onto the roof with a box camera. Everyone else was carrying things out of the house, and she was taking pictures of the water. She said if nobody saw it, nobody would believe how high it came.",
+            "speaker": "Daniel Okafor",
+            "in": 10.2,
+            "out": 38.0,
+            "clipName": "A001C001.mov",
+            "reel": "A001",
+            "sourceName": "Daniel Okafor, May 12",
+            "tcIn": "08:04:20:05",
+            "tcOut": "08:04:47:23"
+          }
+        ]
+      },
+      {
+        "id": "scene-shoebox",
+        "title": "The shoebox",
+        "bites": [
+          {
+            "id": "bite-shoebox-1",
+            "transcriptId": "transcript-daniel",
+            "segmentIds": [
+              "seg-daniel-5"
+            ],
+            "text": "In a shoebox in the closet. Sixty years. I found them when we cleared out her house.",
+            "speaker": "Daniel Okafor",
+            "in": 53.0,
+            "out": 71.4,
+            "clipName": "A001C001.mov",
+            "reel": "A001",
+            "sourceName": "Daniel Okafor, May 12",
+            "tcIn": "08:05:02:23",
+            "tcOut": "08:05:21:08"
+          },
+          {
+            "id": "bite-shoebox-2",
+            "transcriptId": "transcript-daniel",
+            "segmentIds": [
+              "seg-daniel-6"
+            ],
+            "text": "You don’t forget the sound of water coming under the door. She told me that the first time I asked her about it.",
+            "speaker": "Daniel Okafor",
+            "in": 72.0,
+            "out": 86.9,
+            "clipName": "A001C001.mov",
+            "reel": "A001",
+            "sourceName": "Daniel Okafor, May 12",
+            "tcIn": "08:05:21:22",
+            "tcOut": "08:05:36:20",
+            "note": "End the scene here; hold on the door."
+          }
+        ]
+      }
+    ]
+  }
 }
