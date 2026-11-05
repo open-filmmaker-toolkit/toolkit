@@ -305,6 +305,32 @@ for sample in sorted((ROOT / "samples").glob("*.oft.json")):
         for bite in scene.get("bites", []):
             if bite.get("out") is not None and bite.get("in") is not None and bite["out"] <= bite["in"]:
                 fail(f"{name}: bite {bite.get('id')} ends before it starts")
+    line_ids = {l.get("id") for l in (data.get("budget") or {}).get("lines", []) if isinstance(l, dict)}
+    for expense in data.get("expenses", []):
+        if expense.get("budgetLineId") and expense["budgetLineId"] not in line_ids:
+            fail(f"{name}: expense {expense.get('id')} budgetLineId points to a missing budget line")
+    for estimate in (data.get("costReport") or {}).get("estimates", []):
+        if estimate.get("lineId") and estimate["lineId"] not in line_ids:
+            fail(f"{name}: cost report estimate {estimate.get('id')} lineId points to a missing budget line")
+    structure = data.get("structure") if isinstance(data.get("structure"), dict) else {}
+    act_ids = {a.get("id") for a in structure.get("acts", [])}
+    seq_ids = {q.get("id") for q in structure.get("sequences", [])}
+    thread_ids = {t.get("id") for t in structure.get("threads", [])}
+    card_ids = {c.get("id") for c in structure.get("cards", [])}
+    for q in structure.get("sequences", []):
+        if q.get("actId") not in act_ids:
+            fail(f"{name}: sequence {q.get('id')} actId points to a missing act")
+    for c in structure.get("cards", []):
+        if (c.get("actId") and c["actId"] not in act_ids) or (c.get("sequenceId") and c["sequenceId"] not in seq_ids) or set(c.get("threadIds", [])) - thread_ids:
+            fail(f"{name}: card {c.get('id')} points to a missing act, sequence or thread")
+    cut_ids = {c.get("id") for c in data.get("cuts", []) if isinstance(c, dict)}
+    if sum(1 for c in data.get("cuts", []) if c.get("locked")) > 1:
+        fail(f"{name}: more than one cut is locked")
+    for cut in data.get("cuts", []):
+        screens = {x.get("id") for x in cut.get("screenings", [])}
+        for n in cut.get("notes", []):
+            if (n.get("screeningId") and n["screeningId"] not in screens) or (n.get("cardId") and n["cardId"] not in card_ids) or (n.get("carriedToCutId") and n["carriedToCutId"] not in cut_ids):
+                fail(f"{name}: cut {cut.get('id')} note {n.get('id')} points to a missing screening, card or cut")
     security = data.get("security") if isinstance(data.get("security"), dict) else {}
     if set(security.get("personIds", [])) - ids["people"]:
         fail(f"{name}: security personIds points to missing people")

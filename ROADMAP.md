@@ -91,6 +91,9 @@ Everything else in [TOOLS.md](TOOLS.md), prioritized by what contributors ask fo
 - [x] Archive log: copies of project assets with storage locations, copy dates, hash manifests, manually recorded read-back checks and CSV export ([#96](https://github.com/open-filmmaker-toolkit/toolkit/issues/96))
 - [x] Footage log: clips imported from a folder, a CSV or the camera reports, tagged with people, locations and topics from the project, with notes, ratings, tagging several clips at once, print, and CSV for your editing app ([#67](https://github.com/open-filmmaker-toolkit/toolkit/issues/67))
 - [x] Paper edit: SRT, VTT and timestamped text transcripts, bites picked and arranged into scenes with their source in and out timecodes, print, CSV, and a CMX 3600 edit list (EDL) for Premiere, Resolve or Avid ([#68](https://github.com/open-filmmaker-toolkit/toolkit/issues/68))
+- [x] Structure board: scene cards with summaries and running times, dragged (or moved with buttons) into sequences and acts, colored by story thread or character, cards from the paper edit's scenes, print and CSV ([#69](https://github.com/open-filmmaker-toolkit/toolkit/issues/69))
+- [x] Cut version tracker: cuts with date, running time and what changed, feedback screenings, notes tied to a time or range and a scene or shot, done, deferred or carried to a later cut, and the locked cut setting the project's cut version and running time ([#70](https://github.com/open-filmmaker-toolkit/toolkit/issues/70))
+- [x] Budget-to-actuals: the budget against the expense log line by line, expenses assigned to lines, variance, estimate to complete and estimated final cost, a report date, print and CSV ([#72](https://github.com/open-filmmaker-toolkit/toolkit/issues/72))
 
 Finding a third maintainer is on hold. Basil and Alex maintain the project for now ([#8](https://github.com/open-filmmaker-toolkit/toolkit/issues/8), closed).
 

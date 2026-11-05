@@ -1,0 +1,982 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Structure board · Open Filmmaker Toolkit</title>
+<meta name="description" content="Lay out the film's structure on cards you can move around: a card for each scene with a summary and running time, dragged into sequences and acts and colored by story thread or character. Print the board. Runs in your browser; your data stays on your computer.">
+<style>
+:root {
+  --paper: #f1f3f2; --sheet: #ffffff; --ink: #1a2130; --ink-2: #4b556a; --ink-3: #6d778a;
+  --rule: #d4dad8; --rule-soft: #e6eae8; --hover: #f6f8f7; --focus: #2f6fdb;
+  --good: #2b7a57; --good-bg: #dff1e8; --warn: #8a5a00; --warn-bg: #fbf0d9; --bad: #b3392d; --bad-bg: #f8e1de;
+  --screen: #050506; --screen-ink: #f4f1ea; --screen-dim: #a7a29a;
+  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #141922; --sheet: #1b212b; --ink: #e6e9ee; --ink-2: #a6afbd; --ink-3: #8790a0;
+    --rule: #2f3744; --rule-soft: #262d38; --hover: #212834; --focus: #7aa7ff;
+    --good: #4fb386; --good-bg: #1a3329; --warn: #e2a531; --warn-bg: #3a2f17; --bad: #e26657; --bad-bg: #3b2220;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans); }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+[hidden] { display: none !important; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.foot { margin-top: 28px; font-size: 13px; color: var(--ink-3); }
+.cant-run { display: none; max-width: 640px; margin: 64px auto; padding: 0 24px; }
+.cant-run h1 { margin: 0 0 8px; font: 600 26px/1.2 var(--serif); }
+.cant-run p { margin: 0 0 10px; color: var(--ink-2); }
+.no-js .cant-run { display: block; }
+.no-js .page { display: none; }
+.page { max-width: 1240px; margin: 0 auto; padding: 0 24px 48px; }
+
+.masthead { display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: flex-end; justify-content: space-between; padding: 28px 0 20px; }
+.tool-name { margin: 0 0 2px; font-size: 14px; font-weight: 600; color: var(--ink-2); }
+.film-title { margin: 0; font: 600 32px/1.15 var(--serif); letter-spacing: -0.01em; overflow-wrap: anywhere; cursor: pointer; }
+.film-title.is-empty { color: var(--ink-3); font-style: italic; font-weight: 400; }
+.film-meta { margin: 4px 0 0; color: var(--ink-2); font-size: 14px; }
+.file { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.file-state { margin: 0; font-size: 13px; color: var(--ink-2); text-align: right; }
+.file-state .dirty { color: var(--warn); font-weight: 600; }
+.file-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; }
+.btn:hover { border-color: var(--ink-3); }
+.btn.primary { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.btn.primary:hover { opacity: 0.88; }
+.btn.danger { color: var(--bad); }
+.btn.small { padding: 4px 10px; font-size: 13px; }
+.link-btn { padding: 0; border: 0; background: none; cursor: pointer; color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; font-size: 14px; }
+.link-btn:hover { color: var(--ink); }
+
+.banner { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 0 0 16px; padding: 12px 16px; border-radius: 8px; background: var(--warn-bg); border: 1px solid color-mix(in srgb, var(--warn) 40%, transparent); }
+.banner p { margin: 0; flex: 1 1 280px; }
+.banner .actions { display: flex; gap: 8px; }
+
+.workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr); gap: 24px; align-items: start; }
+.col { display: grid; gap: 18px; min-width: 0; }
+.card { background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 18px; min-width: 0; }
+.card-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; margin: 0 0 6px; }
+.card-head h2 { margin: 0; font: 600 18px/1.3 var(--serif); }
+.card-head .count { font-size: 13px; color: var(--ink-2); }
+.card-head .spacer { flex: 1; }
+.card p.lead { margin: 0 0 8px; font-size: 14px; color: var(--ink-2); }
+
+/* Side cards */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 2px; padding: 0; list-style: none; }
+.chip { display: inline-flex; border: 1px solid var(--rule); border-radius: 999px; overflow: hidden; background: var(--paper); }
+.chip button { padding: 4px 10px; border: 0; background: none; cursor: pointer; font-size: 13px; font-weight: 600; }
+.chip button:hover { background: var(--hover); }
+.chip .sub { font-weight: 400; color: var(--ink-3); margin-left: 4px; }
+.empty-line { margin: 4px 0; color: var(--ink-2); font-size: 14px; }
+.changes { margin: 0; padding-left: 18px; font-size: 14px; }
+.changes li + li { margin-top: 2px; }
+
+/* The supers list */
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 10px; }
+.toolbar h2 { margin: 0 8px 0 0; font: 600 20px/1.2 var(--serif); }
+.toolbar .count { font-size: 13px; color: var(--ink-2); }
+.toolbar .spacer { flex: 1; }
+.rows { list-style: none; margin: 0; padding: 0; background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; }
+.row { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 2px 14px; align-items: start; padding: 10px 14px; }
+.row + .row { border-top: 1px solid var(--rule-soft); }
+.row:hover { background: var(--hover); }
+.row.is-selected { background: var(--hover); box-shadow: inset 3px 0 0 var(--ink); }
+.row .tc { font-variant-numeric: tabular-nums; font-size: 14px; color: var(--ink-2); padding-top: 1px; }
+.row .what { min-width: 0; padding: 0; border: 0; background: none; text-align: left; cursor: pointer; overflow-wrap: anywhere; }
+.row .what:hover .nm { text-decoration: underline; text-underline-offset: 2px; }
+.row .nm { display: block; font-weight: 600; }
+.row .tt { display: block; font-size: 14px; color: var(--ink-2); }
+.flags { grid-column: 2; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.flag { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 999px; font-size: 12.5px; font-weight: 600; }
+.flag.new { background: var(--good-bg); color: var(--good); }
+.flag.changed { background: var(--warn-bg); color: var(--warn); }
+.flag.problem { background: var(--bad-bg); color: var(--bad); }
+.flag.linked { background: var(--paper); color: var(--ink-3); font-weight: 500; border: 1px solid var(--rule); }
+.flag button { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+
+.empty { padding: 36px 24px; text-align: center; background: var(--sheet); border: 1px dashed var(--rule); border-radius: 8px; }
+.empty h2 { margin: 0 0 6px; font: 600 20px/1.3 var(--serif); }
+.empty p { margin: 0 auto 16px; max-width: 52ch; color: var(--ink-2); }
+.empty .actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+
+
+.workspace { grid-template-columns: minmax(0, 1fr); }
+.workspace > * { min-width: 0; }
+.boardbar { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: end; margin: 0 0 10px; }
+.boardbar .field { margin: 0; min-width: 180px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13.5px; color: var(--ink-2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; flex: none; }
+.tray { margin: 0 0 14px; padding: 10px 12px; border: 1px dashed var(--rule); border-radius: 8px; }
+.tray h3 { margin: 0 0 6px; font-size: 14px; }
+.board { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(250px, 1fr); gap: 12px; overflow-x: auto; padding-bottom: 6px; align-items: start; }
+.act { background: var(--hover); border-radius: 10px; padding: 10px; display: grid; gap: 10px; }
+.act-top, .seq-top { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; align-items: center; }
+.act-top input, .seq-top input { width: 100%; min-width: 0; padding: 4px 6px; border: 1px solid transparent; border-radius: 5px; background: transparent; color: var(--ink); }
+.act-top input:hover, .seq-top input:hover, .act-top input:focus, .seq-top input:focus { border-color: var(--rule); background: var(--sheet); }
+.act-top input { font: 600 17px/1.2 var(--serif); }
+.seq { background: var(--paper); border: 1px solid var(--rule); border-radius: 8px; padding: 8px; display: grid; gap: 6px; }
+.seq-top input { font-weight: 600; font-size: 14px; }
+.time { font-size: 12.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.tools-row { display: flex; gap: 3px; }
+.iconbtn { padding: 2px 7px; border: 1px solid var(--rule); border-radius: 5px; background: var(--paper); font-size: 13px; cursor: pointer; color: var(--ink); }
+.iconbtn:disabled { opacity: .4; cursor: default; }
+.drop { list-style: none; margin: 0; padding: 2px; min-height: 34px; display: grid; gap: 6px; border-radius: 6px; }
+.drop.over { outline: 2px dashed var(--warn); outline-offset: 1px; }
+.drop:empty::before { content: attr(data-empty); font-size: 12.5px; color: var(--ink-3); padding: 6px; }
+.card-s { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 6px; padding: 7px 8px 7px 14px; background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; cursor: grab; font-size: 14px; }
+.card-s.dragging { opacity: .45; }
+.card-s.dim { opacity: .35; }
+.card-s .bar { position: absolute; left: 0; top: 0; bottom: 0; width: 6px; border-radius: 6px 0 0 6px; display: flex; flex-direction: column; overflow: hidden; }
+.card-s .bar i { flex: 1; }
+.card-s .t { padding: 0; border: 0; background: none; text-align: left; font: inherit; font-weight: 600; color: inherit; cursor: pointer; }
+.card-s .t:hover { text-decoration: underline; text-underline-offset: 2px; }
+.card-s .s { grid-column: 1 / -1; font-size: 13px; color: var(--ink-2); }
+.card-s .m { grid-column: 1 / -1; font-size: 12px; color: var(--ink-3); }
+.card-s .mv { display: flex; gap: 2px; }
+.card-s .mv button { padding: 0 5px; font-size: 12px; }
+.add-seq { justify-self: start; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.picks { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.picks label { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; }
+.picks input { width: 16px; height: 16px; margin: 0; }
+.threads { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.threads li { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr) auto; gap: 8px; align-items: end; }
+.threads .field { margin: 0; }
+.sumline { margin: 0 0 10px; font-size: 14px; color: var(--ink-2); }
+@media (max-width: 720px) {
+  .board { grid-auto-flow: row; grid-auto-columns: auto; overflow-x: visible; }
+  .two, .threads li { grid-template-columns: 1fr; }
+}
+
+dialog { border: 0; padding: 0; color: var(--ink); background: var(--sheet); box-shadow: 0 10px 40px rgba(10, 14, 22, 0.25); }
+dialog::backdrop { background: rgba(16, 20, 28, 0.42); }
+dialog.drawer { margin: 0 0 0 auto; width: min(600px, 100vw); height: 100dvh; max-height: 100dvh; max-width: 100vw; border-left: 1px solid var(--rule); }
+dialog.modal { width: min(560px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); border-radius: 10px; }
+dialog form { display: flex; flex-direction: column; height: 100%; max-height: inherit; }
+.dlg-head { padding: 20px 24px 12px; border-bottom: 1px solid var(--rule-soft); }
+.dlg-head h2 { margin: 0; font: 600 22px/1.25 var(--serif); }
+.dlg-body { flex: 1; overflow-y: auto; padding: 16px 24px 24px; display: grid; gap: 14px; align-content: start; }
+.dlg-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 14px 24px; border-top: 1px solid var(--rule-soft); }
+.dlg-foot .spacer { flex: 1; }
+.field { display: grid; gap: 4px; }
+.field > label, .field > .label, .group h3 { font-size: 14px; font-weight: 600; margin: 0; }
+.hint { margin: 0; font-size: 13px; color: var(--ink-3); }
+.field input, .field select, .field textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); }
+.group { display: grid; gap: 8px; padding-top: 10px; border-top: 1px solid var(--rule-soft); }
+.checks { display: grid; gap: 2px; max-height: 260px; overflow-y: auto; padding: 2px; }
+.check { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; align-items: start; padding: 5px 4px; border-radius: 6px; cursor: pointer; }
+.check:hover { background: var(--hover); }
+.check input { width: 18px; height: 18px; margin: 2px 0 0; }
+.check .who { overflow-wrap: anywhere; }
+.check .sub { margin-left: 4px; font-size: 13px; color: var(--ink-3); }
+.check .lines { display: block; font-size: 13px; color: var(--ink-3); white-space: pre-line; }
+#songList, #sourceList { max-height: none; }
+.radio-row { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.radio-row label { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; cursor: pointer; }
+pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); font-size: 13px; white-space: pre-wrap; }
+
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); max-width: calc(100vw - 32px); padding: 10px 16px; border-radius: 8px; background: var(--ink); color: var(--paper); font-size: 14px; box-shadow: 0 6px 24px rgba(10, 14, 22, 0.25); z-index: 10; }
+.toast.error { background: var(--bad); color: #ffffff; }
+.report { display: none; }
+
+@media (max-width: 900px) {
+  .workspace { grid-template-columns: 1fr; }
+  .side { position: static; }
+}
+@media (max-width: 720px) {
+  .page { padding: 0 16px 40px; }
+  .film-title { font-size: 26px; }
+  .file { align-items: flex-start; }
+  .file-state { text-align: left; }
+  .toolbar h2 { flex-basis: 100%; order: -2; }
+  .toolbar #addBtn { flex: 1 1 100%; justify-content: center; order: -1; }
+  .row { grid-template-columns: minmax(0, 1fr); }
+  .flags { grid-column: 1; }
+}
+@media print {
+  @page { size: portrait; margin: 16mm; }
+  :root { color-scheme: light; }
+  body { background: #ffffff; color: #000000; font-size: 10pt; }
+  .page, dialog, .toast { display: none !important; }
+  .report { display: block; }
+  .report h1 { margin: 0; font: 700 18pt/1.2 var(--serif); }
+  .report h2 { margin: 14pt 0 4pt; font: 700 12pt/1.2 var(--serif); break-after: avoid; page-break-after: avoid; }
+  .report .r-meta { margin: 2pt 0 10pt; }
+  .report table { width: 100%; border-collapse: collapse; }
+  .report th, .report td { padding: 4pt 5pt; border-bottom: 0.75pt solid #999999; text-align: left; vertical-align: top; }
+  .report th { font-size: 9pt; border-bottom: 1pt solid #000000; }
+  .report tr { break-inside: avoid; page-break-inside: avoid; }
+  .report .r-sub { display: block; font-size: 8.5pt; color: #333333; }
+  .report .r-note { margin-top: 14pt; font-size: 8pt; color: #333333; }
+  .report h3 { margin: 8pt 0 3pt; font-size: 10.5pt; }
+  .report .r-sub { font-size: 8.5pt; font-weight: 400; color: #333333; }
+  .report .r-t { width: 44pt; text-align: right; white-space: nowrap; }
+  .report .r-sw { width: 14pt; }
+  .report .r-sw i, .report .r-legend i { display: inline-block; width: 8pt; height: 8pt; margin-right: 2pt; border: 0.5pt solid #000000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .report .r-legend span { margin-right: 10pt; font-size: 9pt; }
+}
+</style>
+</head>
+<body>
+<div class="cant-run" id="cantRun">
+  <h1 id="cantRunTitle">Open this file in a web browser</h1>
+  <p id="cantRunText">This tool runs in Chrome, Edge, Firefox or Safari. You're seeing a preview that doesn't run it, so none of the buttons would work.</p>
+  <p id="cantRunHow">In your browser, choose File, then Open File, and pick this file. Or right-click the file and open it with your browser.</p>
+</div>
+<div class="page">
+  <header class="masthead">
+    <div>
+      <p class="tool-name">Structure board</p>
+      <h1 class="film-title" id="filmTitle">Untitled film</h1>
+      <p class="film-meta"><span id="filmMeta"></span> <button type="button" class="link-btn" id="editProjectBtn">Edit film details</button></p>
+    </div>
+    <div class="file">
+      <p class="file-state" id="fileState">Not saved to a file yet</p>
+      <div class="file-actions">
+        <button type="button" class="btn" id="newBtn">New project</button>
+        <button type="button" class="btn" id="openBtn">Open file</button>
+        <button type="button" class="btn" id="projectCsvBtn">Export project data (CSV)</button>
+        <button type="button" class="btn primary" id="saveBtn">Save file</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="banner" id="recovery" role="region" aria-label="Unsaved work" hidden>
+    <p id="recoveryText"></p>
+    <div class="actions">
+      <button type="button" class="btn primary" id="restoreBtn">Restore it</button>
+      <button type="button" class="btn" id="discardBtn">Discard it</button>
+    </div>
+  </div>
+
+  <main class="workspace">
+    <section aria-labelledby="listHead">
+      <div class="toolbar">
+        <h2 id="listHead">Structure board</h2>
+        <span class="count" id="count"></span>
+        <span class="spacer"></span>
+        <button type="button" class="btn primary" id="addBtn">Add a card</button>
+        <button type="button" class="btn" id="addActBtn">Add an act</button>
+        <button type="button" class="btn" id="threadsBtn">Story threads</button>
+        <button type="button" class="btn" id="fromPeBtn">Cards from the paper edit</button>
+        <button type="button" class="btn" id="csvBtn">Export CSV</button>
+        <button type="button" class="btn" id="printBtn">Print the board</button>
+      </div>
+      <div id="work">
+        <p class="sumline" id="sumline"></p>
+        <div class="boardbar">
+          <div class="field"><label for="hl">Highlight</label><select id="hl"></select></div>
+          <div class="legend" id="legend"></div>
+        </div>
+        <p class="hint">Drag cards to move them, or use the arrows on a card. Opening a card lets you pick its act and sequence too.</p>
+        <div class="tray" id="tray"><h3>Not on the board yet</h3><ol class="drop" id="drop-tray" data-act="" data-seq="" data-empty="Drag a card here to take it off the board."></ol></div>
+        <div class="board" id="board"></div>
+      </div>
+      <div class="empty" id="empty" hidden>
+        <h2>No cards yet</h2>
+        <p>Lay out the film's structure on cards you can move around: a card for each scene with a summary and running time, grouped into sequences and acts, colored by story thread or character. Start from the scenes in your paper edit, or add cards by hand.</p>
+        <div class="actions">
+          <button type="button" class="btn primary" id="emptyAddBtn">Add a card</button>
+          <button type="button" class="btn" id="emptyPeBtn">Cards from the paper edit</button>
+          <button type="button" class="btn" id="emptyOpenBtn">Open file</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <p>Part of the Open Filmmaker Toolkit. This page makes no network requests: everything stays on this computer until you save or export it. Uses the same project file as the other toolkit tools.</p>
+  </footer>
+</div>
+
+<dialog class="drawer" id="editor" aria-labelledby="editorTitle">
+  <form id="editorForm" method="dialog" novalidate>
+    <div class="dlg-head"><h2 id="editorTitle">Card</h2></div>
+    <div class="dlg-body">
+      <div class="field"><label for="f-title">Scene</label><input id="f-title" type="text" placeholder="The roof" autocomplete="off" required></div>
+      <div class="field"><label for="f-summary">Summary</label><textarea id="f-summary" rows="3" placeholder="Daniel describes his grandmother photographing the flood from the roof"></textarea></div>
+      <div class="two">
+        <div class="field"><label for="f-time">Running time</label><input id="f-time" type="text" placeholder="2:30" autocomplete="off"><p class="hint" id="timeHint">Minutes and seconds, such as 2:30, or hours too, such as 1:02:30.</p></div>
+        <div class="field"><label for="f-pe">Paper edit scene</label><select id="f-pe"></select></div>
+      </div>
+      <div class="two">
+        <div class="field"><label for="f-act">Act</label><select id="f-act"></select></div>
+        <div class="field"><label for="f-seq">Sequence</label><select id="f-seq"></select></div>
+      </div>
+      <div class="group"><h3 id="thHead">Story threads and characters</h3><div class="picks" id="thPicks" role="group" aria-labelledby="thHead"></div></div>
+      <div class="field"><label for="f-notes">Notes</label><textarea id="f-notes" rows="2"></textarea></div>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn danger" id="deleteBtn">Remove card</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="editorCancel">Cancel</button>
+      <button type="submit" class="btn primary" id="editorSubmit">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="drawer" id="threadDialog" aria-labelledby="threadTitle">
+  <form id="threadForm" method="dialog" novalidate>
+    <div class="dlg-head"><h2 id="threadTitle">Story threads and characters</h2></div>
+    <div class="dlg-body">
+      <p class="hint">Each thread has a color. A card shows the color of every thread it's in. Link a thread to a person to follow a character.</p>
+      <ul class="threads" id="threadList"></ul>
+      <div><button type="button" class="btn small" id="addThreadBtn">Add a thread</button></div>
+    </div>
+    <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn" id="threadCancel">Cancel</button><button type="submit" class="btn primary">Save</button></div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="projectDialog" aria-labelledby="projectDialogTitle">
+  <form id="projectForm" method="dialog">
+    <div class="dlg-head"><h2 id="projectDialogTitle">Film details</h2></div>
+    <div class="dlg-body">
+      <div class="field"><label for="p-title">Film title</label><input id="p-title" type="text" placeholder="Working title is fine"></div>
+      <div class="field"><label for="p-company">Production company</label><input id="p-company" type="text"></div>
+      <div class="field"><label for="p-producer">Producer</label><input id="p-producer" type="text"></div>
+    </div>
+    <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn" id="projectCancel">Cancel</button><button type="submit" class="btn primary">Save details</button></div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="projectCsvDialog" aria-labelledby="projectCsvTitle">
+  <form id="projectCsvForm" method="dialog">
+    <div class="dlg-head"><h2 id="projectCsvTitle">Export project data</h2></div>
+    <div class="dlg-body">
+      <div class="field">
+        <label for="projectCsvCollection">Data to export</label>
+        <select id="projectCsvCollection">
+          <option value="project">Project details</option>
+          <option value="people">People</option>
+          <option value="locations">Locations</option>
+          <option value="thirdPartyElements">Third-party elements</option>
+          <option value="contracts">Contracts</option>
+          <option value="assets">Assets</option>
+          <option value="musicCueSheet">Music cue sheet details</option>
+          <option value="callSheets">Call sheets</option>
+        </select>
+      </div>
+      <p class="hint">Exports one CSV file for the selected collection. Nested values are kept as JSON in their cell.</p>
+    </div>
+    <div class="dlg-foot">
+      <button type="submit" class="btn primary">Export CSV</button>
+      <button type="button" class="btn" id="projectCsvCancel">Cancel</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="conflictDialog" aria-labelledby="conflictTitle">
+  <form method="dialog">
+    <div class="dlg-head"><h2 id="conflictTitle">Project file changed</h2></div>
+    <div class="dlg-body">
+      <p id="conflictText">This project file changed after you opened it. Saving will replace those changes.</p>
+      <p class="hint">Your edits are still here. Choose whether to overwrite the changed file, save a separate copy, or load its latest contents. Save in one tool at a time; simultaneous saves can still race.</p>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn" id="conflictReloadBtn">Reload latest</button>
+      <button type="button" class="btn" id="conflictCopyBtn">Save a copy</button>
+      <button type="button" class="btn danger" id="conflictOverwriteBtn">Overwrite file</button>
+      <button type="button" class="btn" id="conflictCancelBtn">Keep editing</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="report" id="report" aria-hidden="true"></div>
+<input type="file" id="fileInput" accept=".json,application/json" hidden>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+(() => {
+  'use strict';
+
+  const FORMAT = 'open-filmmaker-toolkit/project';
+  const FORMAT_VERSION = 1;
+  const TOOL = 'structure-board 0.1.0';
+  const DRAFT_KEY = 'oft.structure-board.draft';
+  const PROJECT_TEXT = ['title', 'company', 'producer'];
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const str = v => (v == null ? '' : String(v));
+  const arr = v => (Array.isArray(v) ? v : []);
+  const norm = s => str(s).toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+
+  let doc = blankDoc();
+  let fileHandle = null;
+  let baselineText = null;
+  let fileName = null;
+  let dirty = false;
+
+  function blankDoc() {
+    return { format: FORMAT, formatVersion: FORMAT_VERSION, project: { title: '', company: '', producer: '', frameRate: 24, currency: 'USD' }, people: [], structure: {} };
+  }
+  function newId(prefix) {
+    if (window.crypto && crypto.randomUUID) return `${prefix}-${crypto.randomUUID()}`;
+    return `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+  }
+  function today() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  function fmtDate(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str(iso));
+    if (!m) return str(iso);
+    return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+  function daysUntil(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str(iso));
+    if (!m) return null;
+    const t = new Date(); const a = Date.UTC(t.getFullYear(), t.getMonth(), t.getDate());
+    return Math.round((Date.UTC(+m[1], +m[2] - 1, +m[3]) - a) / 86400000);
+  }
+
+
+  // Colors that read on light and dark backgrounds, with names for people who can't tell them apart.
+  const COLORS = [{ id: 'blue', label: 'Blue', hex: '#3b82c4' }, { id: 'orange', label: 'Orange', hex: '#e07b1f' }, { id: 'green', label: 'Green', hex: '#2f9e5b' }, { id: 'purple', label: 'Purple', hex: '#8a5cc2' },
+    { id: 'red', label: 'Red', hex: '#d0473f' }, { id: 'teal', label: 'Teal', hex: '#1f9e9e' }, { id: 'yellow', label: 'Yellow', hex: '#c9a21a' }, { id: 'pink', label: 'Pink', hex: '#cf5c9b' }, { id: 'gray', label: 'Gray', hex: '#7d8590' }];
+  const hex = id => (COLORS.find(c => c.id === id) || COLORS[COLORS.length - 1]).hex;
+  let editing = null, isNew = false, threadDraft = [];
+  let highlight = '';
+  let dragId = null;
+
+  // Fills in only what this tool needs; everything else in the file is left as it was.
+  function normalize(d) {
+    if (!d.project || typeof d.project !== 'object') d.project = {};
+    for (const k of PROJECT_TEXT) if (typeof d.project[k] !== 'string') d.project[k] = str(d.project[k]);
+    if (!Array.isArray(d.people)) d.people = [];
+    if (!d.structure || typeof d.structure !== 'object' || Array.isArray(d.structure)) d.structure = {};
+    const s = d.structure;
+    for (const k of ['acts', 'sequences', 'cards', 'threads']) s[k] = arr(s[k]).filter(x => x && typeof x === 'object');
+    for (const [k, p] of [['acts', 'act'], ['sequences', 'sequence'], ['cards', 'card'], ['threads', 'thread']]) for (const x of s[k]) if (!x.id) x.id = newId(p);
+    d.format = FORMAT;
+    d.formatVersion = FORMAT_VERSION;
+    return d;
+  }
+  const S = () => doc.structure;
+  const cards = () => S().cards;
+  const entries = cards;
+  const acts = () => S().acts;
+  const seqs = actId => S().sequences.filter(q => q.actId === actId);
+  const seqOf = c => (c.sequenceId ? S().sequences.find(q => q.id === c.sequenceId) : null);
+  // Where a card sits: in a sequence, straight in an act, or not on the board.
+  const actOf = c => { const q = seqOf(c); const a = q ? q.actId : c.actId; return acts().some(x => x.id === a) ? a : ''; };
+  const inList = (actId, seqId) => cards().filter(c => actOf(c) === actId && (seqId ? c.sequenceId === seqId : !seqOf(c) || !actId));
+  const thread = id => S().threads.find(t => t.id === id);
+  const person = id => doc.people.find(p => p && p.id === id);
+  const peScenes = () => arr(doc.paperEdit && doc.paperEdit.scenes).filter(x => x && x.id);
+  const peSecs = sc => arr(sc.bites).reduce((t, b) => t + (typeof b.in === 'number' && typeof b.out === 'number' && b.out > b.in ? b.out - b.in : 0), 0);
+  function parseTime(s) {
+    const m = str(s).trim().match(/^(?:(\d+):)?(\d{1,2}):(\d{2})$/);
+    if (!m) return /^\d+$/.test(str(s).trim()) ? Number(s) * 60 : null;
+    return Number(m[1] || 0) * 3600 + Number(m[2]) * 60 + Number(m[3]);
+  }
+  const fmt = n => { n = Math.round(n || 0); const h = Math.floor(n / 3600), m = Math.floor(n / 60) % 60, s = n % 60; return h ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}` : `${m}:${String(s).padStart(2, '0')}`; };
+  const secsOf = c => (typeof c.seconds === 'number' ? c.seconds : 0);
+  const total = list => list.reduce((t, c) => t + secsOf(c), 0);
+  const actLabel = (a, i) => a.title || `Act ${i + 1}`;
+  const seqLabel = (q, i) => q.title || `Sequence ${i + 1}`;
+
+  // ---------- Render ----------
+  function cardHtml(c) {
+    const ths = arr(c.threadIds).map(thread).filter(Boolean);
+    const dim = highlight && !arr(c.threadIds).includes(highlight);
+    return `<li class="card-s${dim ? ' dim' : ''}" draggable="true" data-card="${esc(c.id)}">
+      <span class="bar" aria-hidden="true">${ths.length ? ths.map(t => `<i style="background:${hex(t.color)}"></i>`).join('') : '<i style="background:var(--rule)"></i>'}</span>
+      <button type="button" class="t" data-edit="${esc(c.id)}">${esc(c.title || 'Untitled scene')}</button>
+      <span class="mv"><button type="button" class="iconbtn" data-move="-1" aria-label="Move ${esc(c.title || 'card')} up">↑</button><button type="button" class="iconbtn" data-move="1" aria-label="Move ${esc(c.title || 'card')} down">↓</button></span>
+      ${c.summary ? `<span class="s">${esc(c.summary)}</span>` : ''}
+      <span class="m">${esc([secsOf(c) ? fmt(secsOf(c)) : '', ths.map(t => t.name).join(', ')].filter(Boolean).join(' · '))}</span></li>`;
+  }
+  function render() {
+    $('filmTitle').textContent = doc.project.title || 'Untitled film';
+    $('filmTitle').classList.toggle('is-empty', !doc.project.title);
+    $('filmMeta').textContent = [doc.project.company, doc.project.producer && `Producer: ${doc.project.producer}`].filter(Boolean).join(' · ');
+    $('fileState').innerHTML = (fileName ? esc(fileName) : 'Not saved to a file yet') + (dirty ? ' · <span class="dirty">Unsaved changes</span>' : '');
+    document.title = `${doc.project.title ? doc.project.title + ' · ' : ''}Structure board · Open Filmmaker Toolkit`;
+    const all = cards();
+    const any = all.length || acts().length;
+    $('empty').hidden = !!any;
+    $('work').hidden = !any;
+    for (const id of ['csvBtn', 'printBtn']) $(id).hidden = !all.length;
+    $('fromPeBtn').hidden = !peScenes().some(sc => !all.some(c => c.paperEditSceneId === sc.id));
+    $('emptyPeBtn').hidden = !peScenes().length;
+    const placed = all.filter(c => actOf(c));
+    $('count').textContent = all.length ? `${all.length} card${all.length === 1 ? '' : 's'}` : '';
+    $('sumline').textContent = all.length ? `${placed.length} of ${all.length} on the board · running time ${fmt(total(placed))}${total(all) > total(placed) ? ` (${fmt(total(all))} with the cards not on it)` : ''}` : 'Add a card, or start an act and add cards to it.';
+    if (highlight && !thread(highlight)) highlight = '';
+    $('hl').innerHTML = '<option value="">Nothing</option>' + S().threads.map(t => `<option value="${esc(t.id)}"${t.id === highlight ? ' selected' : ''}>${esc(t.name || 'Unnamed thread')}</option>`).join('');
+    $('legend').innerHTML = S().threads.map(t => `<span><i class="sw" style="background:${hex(t.color)}"></i>${esc(t.name || 'Unnamed thread')}${t.personId && person(t.personId) && person(t.personId).name !== t.name ? ` (${esc(person(t.personId).name)})` : ''}</span>`).join('');
+    $('drop-tray').innerHTML = inList('', '').map(cardHtml).join('');
+    $('board').innerHTML = acts().map((a, ai) => {
+      const qs = seqs(a.id), loose = inList(a.id, '');
+      return `<section class="act" data-actbox="${esc(a.id)}" aria-label="${esc(actLabel(a, ai))}">
+        <div class="act-top"><label class="sr-only" for="at-${esc(a.id)}">Act name</label><input id="at-${esc(a.id)}" type="text" data-acttitle="${esc(a.id)}" value="${esc(actLabel(a, ai))}">
+          <span class="tools-row"><button type="button" class="iconbtn" data-actmove="-1" aria-label="Move act earlier"${ai === 0 ? ' disabled' : ''}>←</button><button type="button" class="iconbtn" data-actmove="1" aria-label="Move act later"${ai === acts().length - 1 ? ' disabled' : ''}>→</button><button type="button" class="iconbtn" data-actremove aria-label="Remove act">✕</button></span></div>
+        <span class="time">${esc(fmt(total(cards().filter(c => actOf(c) === a.id))))}</span>
+        <ol class="drop" data-act="${esc(a.id)}" data-seq="" data-empty="${qs.length ? 'Cards in this act, outside a sequence' : 'Drag cards here'}">${loose.map(cardHtml).join('')}</ol>
+        ${qs.map((q, qi) => `<div class="seq" data-seqbox="${esc(q.id)}"><div class="seq-top"><label class="sr-only" for="qt-${esc(q.id)}">Sequence name</label><input id="qt-${esc(q.id)}" type="text" data-seqtitle="${esc(q.id)}" value="${esc(seqLabel(q, qi))}">
+            <span class="tools-row"><button type="button" class="iconbtn" data-seqmove="-1" aria-label="Move sequence up"${qi === 0 ? ' disabled' : ''}>↑</button><button type="button" class="iconbtn" data-seqmove="1" aria-label="Move sequence down"${qi === qs.length - 1 ? ' disabled' : ''}>↓</button><button type="button" class="iconbtn" data-seqremove aria-label="Remove sequence">✕</button></span></div>
+          <span class="time">${esc(fmt(total(inList(a.id, q.id))))}</span>
+          <ol class="drop" data-act="${esc(a.id)}" data-seq="${esc(q.id)}" data-empty="Drag cards here">${inList(a.id, q.id).map(cardHtml).join('')}</ol></div>`).join('')}
+        <button type="button" class="btn small add-seq" data-addseq>Add a sequence</button></section>`;
+    }).join('');
+  }
+
+  // ---------- Moving cards ----------
+  // Puts a card in a list, before another card or at the end, keeping one order for the whole board.
+  function place(id, actId, seqId, beforeId) {
+    const list = cards(), i = list.findIndex(c => c.id === id); if (i < 0) return;
+    const [c] = list.splice(i, 1);
+    if (seqId) { c.sequenceId = seqId; delete c.actId; } else { delete c.sequenceId; if (actId) c.actId = actId; else delete c.actId; }
+    let at = beforeId ? list.findIndex(x => x.id === beforeId) : -1;
+    if (at < 0) { const peers = list.filter(x => actOf(x) === actId && (seqId ? x.sequenceId === seqId : !seqOf(x) || !actId)); at = peers.length ? list.indexOf(peers[peers.length - 1]) + 1 : list.length; }
+    list.splice(at, 0, c);
+    changed();
+  }
+  function step(id, dir) {
+    const c = cards().find(x => x.id === id); if (!c) return;
+    const a = actOf(c), q = seqOf(c) && a ? c.sequenceId : '';
+    const peers = inList(a, q), i = peers.indexOf(c), j = i + dir;
+    if (j < 0 || j >= peers.length) return;
+    place(id, a, q, dir < 0 ? peers[j].id : peers[j + 1] ? peers[j + 1].id : null);
+    const el = document.querySelector(`[data-card="${CSS.escape(id)}"] [data-move="${dir}"]`); if (el) el.focus();
+  }
+  function wireDrag() {
+    const root = $('work');
+    root.addEventListener('dragstart', ev => { const c = ev.target.closest && ev.target.closest('[data-card]'); if (!c) return; dragId = c.dataset.card; c.classList.add('dragging'); ev.dataTransfer.effectAllowed = 'move'; try { ev.dataTransfer.setData('text/plain', dragId); } catch (e) {} });
+    root.addEventListener('dragend', () => { dragId = null; for (const el of root.querySelectorAll('.dragging, .over')) el.classList.remove('dragging', 'over'); });
+    root.addEventListener('dragover', ev => { const d = ev.target.closest && ev.target.closest('.drop'); if (!d || !dragId) return; ev.preventDefault(); for (const el of root.querySelectorAll('.drop.over')) if (el !== d) el.classList.remove('over'); d.classList.add('over'); });
+    root.addEventListener('drop', ev => {
+      const d = ev.target.closest && ev.target.closest('.drop'); if (!d || !dragId) return;
+      ev.preventDefault();
+      // Drop before the first card whose middle is below the pointer.
+      const before = [...d.querySelectorAll(':scope > [data-card]')].find(el => el.dataset.card !== dragId && ev.clientY < el.getBoundingClientRect().top + el.getBoundingClientRect().height / 2);
+      const id = dragId; dragId = null;
+      place(id, d.dataset.act, d.dataset.seq, before ? before.dataset.card : null);
+    });
+  }
+
+  // ---------- Acts and sequences ----------
+  function boardClick(ev) {
+    const b = ev.target.closest('button'); if (!b) return;
+    const cardEl = b.closest('[data-card]');
+    if (b.dataset.edit) return openEditor(b.dataset.edit);
+    if (b.dataset.move && cardEl) return step(cardEl.dataset.card, Number(b.dataset.move));
+    const actEl = b.closest('[data-actbox]'); if (!actEl) return;
+    const aid = actEl.dataset.actbox, ai = acts().findIndex(a => a.id === aid);
+    if (b.dataset.actmove) { const j = ai + Number(b.dataset.actmove); if (j < 0 || j >= acts().length) return; acts().splice(j, 0, acts().splice(ai, 1)[0]); return changed(); }
+    if (b.hasAttribute('data-actremove')) {
+      const n = cards().filter(c => actOf(c) === aid).length;
+      if (n && !confirm(`Remove ${actLabel(acts()[ai], ai)}? Its ${n} card${n === 1 ? '' : 's'} go back to “Not on the board yet”.`)) return;
+      for (const c of cards()) if (actOf(c) === aid) { delete c.actId; delete c.sequenceId; }
+      S().sequences = S().sequences.filter(q => q.actId !== aid); acts().splice(ai, 1); return changed();
+    }
+    if (b.hasAttribute('data-addseq')) { S().sequences.push({ id: newId('sequence'), actId: aid, title: `Sequence ${seqs(aid).length + 1}` }); return changed(); }
+    const seqEl = b.closest('[data-seqbox]'); if (!seqEl) return;
+    const qid = seqEl.dataset.seqbox, list = S().sequences, qs = seqs(aid), qi = qs.findIndex(q => q.id === qid);
+    if (b.dataset.seqmove) { const other = qs[qi + Number(b.dataset.seqmove)]; if (!other) return; const x = list.indexOf(qs[qi]), y = list.indexOf(other); [list[x], list[y]] = [list[y], list[x]]; return changed(); }
+    if (b.hasAttribute('data-seqremove')) { for (const c of cards()) if (c.sequenceId === qid) { delete c.sequenceId; c.actId = aid; } S().sequences = list.filter(q => q.id !== qid); return changed(); }
+  }
+  function boardRename(ev) {
+    const a = ev.target.dataset.acttitle, q = ev.target.dataset.seqtitle;
+    const x = a ? acts().find(y => y.id === a) : q ? S().sequences.find(y => y.id === q) : null;
+    if (x && ev.target.value.trim()) { x.title = ev.target.value.trim(); changed(); }
+  }
+
+  // ---------- Card editor ----------
+  function fillSeqs(actId, seqId) {
+    $('f-seq').innerHTML = '<option value="">None</option>' + seqs(actId).map((q, i) => `<option value="${esc(q.id)}"${q.id === seqId ? ' selected' : ''}>${esc(seqLabel(q, i))}</option>`).join('');
+    $('f-seq').disabled = !actId || !seqs(actId).length;
+  }
+  function showPe() {
+    const sc = peScenes().find(x => x.id === $('f-pe').value);
+    $('timeHint').textContent = sc && peSecs(sc) ? `The paper edit scene runs ${fmt(peSecs(sc))}; leave this empty to use that.` : 'Minutes and seconds, such as 2:30, or hours too, such as 1:02:30.';
+  }
+  function openEditor(id, actId) {
+    const existing = id && cards().find(c => c.id === id);
+    isNew = !existing;
+    editing = existing ? structuredClone(existing) : { id: newId('card') };
+    if (isNew && actId) editing.actId = actId;
+    $('f-act').innerHTML = '<option value="">Not on the board yet</option>' + acts().map((a, i) => `<option value="${esc(a.id)}">${esc(actLabel(a, i))}</option>`).join('');
+    $('f-act').value = isNew ? (actId || '') : actOf(editing);
+    fillSeqs($('f-act').value, seqOf(editing) ? editing.sequenceId : '');
+    $('f-pe').innerHTML = '<option value="">None</option>' + peScenes().map((sc, i) => `<option value="${esc(sc.id)}">${esc(sc.title || `Scene ${i + 1}`)}${peSecs(sc) ? `, ${esc(fmt(peSecs(sc)))}` : ''}</option>`).join('');
+    $('f-pe').value = peScenes().some(x => x.id === editing.paperEditSceneId) ? editing.paperEditSceneId : '';
+    $('f-title').value = str(editing.title); $('f-summary').value = str(editing.summary); $('f-notes').value = str(editing.notes);
+    $('f-time').value = typeof editing.seconds === 'number' && !editing.timeFromPaperEdit ? fmt(editing.seconds) : '';
+    const on = new Set(arr(editing.threadIds));
+    $('thPicks').innerHTML = S().threads.length ? S().threads.map(t => `<label><input type="checkbox" value="${esc(t.id)}"${on.has(t.id) ? ' checked' : ''}><i class="sw" style="background:${hex(t.color)}"></i>${esc(t.name || 'Unnamed thread')}</label>`).join('') : '<span class="hint">No threads yet. Add them with Story threads.</span>';
+    showPe();
+    $('editorTitle').textContent = isNew ? 'Add a card' : editing.title || 'Card';
+    $('deleteBtn').hidden = isNew;
+    $('editor').showModal();
+    $('f-title').focus();
+  }
+  function saveEditor() {
+    if (!$('f-title').value.trim()) { $('f-title').setCustomValidity('Name the scene.'); $('f-title').reportValidity(); return; }
+    const tv = $('f-time').value.trim();
+    if (tv && parseTime(tv) == null) { $('f-time').setCustomValidity('Use minutes and seconds, such as 2:30.'); $('f-time').reportValidity(); return; }
+    const c = editing;
+    for (const [k, id] of [['title', 'f-title'], ['summary', 'f-summary'], ['notes', 'f-notes'], ['paperEditSceneId', 'f-pe']]) { const v = $(id).value.trim(); if (v) c[k] = v; else delete c[k]; }
+    const sc = peScenes().find(x => x.id === c.paperEditSceneId);
+    if (tv) { c.seconds = parseTime(tv); delete c.timeFromPaperEdit; }
+    else if (sc && peSecs(sc)) { c.seconds = Math.round(peSecs(sc)); c.timeFromPaperEdit = true; }
+    else { delete c.seconds; delete c.timeFromPaperEdit; }
+    const ths = [...$('thPicks').querySelectorAll('input:checked')].map(i => i.value); if (ths.length) c.threadIds = ths; else delete c.threadIds;
+    const actId = $('f-act').value, seqId = $('f-seq').value;
+    if (isNew) cards().push(c); else cards()[cards().findIndex(x => x.id === c.id)] = c;
+    // Moving to another act or sequence puts the card at the end there.
+    const moved = isNew || actId !== actOf(c) || (seqId || '') !== (seqOf(c) ? c.sequenceId : '');
+    $('editor').close();
+    if (moved) place(c.id, actId, actId ? seqId : '', null); else changed();
+  }
+  function removeEditing() {
+    if (!confirm(`Remove the card ${editing.title || ''}?`)) return;
+    S().cards = cards().filter(c => c.id !== editing.id);
+    $('editor').close();
+    changed();
+  }
+  // Cards for the paper edit's scenes that don't have one yet, with their running times.
+  function fromPaperEdit() {
+    const have = new Set(cards().map(c => c.paperEditSceneId).filter(Boolean));
+    const add = peScenes().filter(sc => !have.has(sc.id));
+    for (const sc of add) {
+      const c = { id: newId('card'), title: sc.title || 'Scene', paperEditSceneId: sc.id };
+      const n = arr(sc.bites).length; if (n) c.summary = `${n} bite${n === 1 ? '' : 's'}: ${arr(sc.bites).map(b => b.speaker).filter(Boolean).filter((v, i, a) => a.indexOf(v) === i).join(', ') || 'from the paper edit'}`;
+      if (peSecs(sc)) { c.seconds = Math.round(peSecs(sc)); c.timeFromPaperEdit = true; }
+      cards().push(c);
+    }
+    changed();
+    toast(add.length ? `Added ${add.length} card${add.length === 1 ? '' : 's'} from the paper edit, not on the board yet.` : 'Every paper edit scene has a card.');
+  }
+
+  // ---------- Threads ----------
+  function drawThreads() {
+    $('threadList').innerHTML = threadDraft.map((t, i) => `<li data-ti="${i}">
+      <div class="field"><label for="tn-${i}">Thread or character</label><input id="tn-${i}" type="text" data-k="name" value="${esc(t.name || '')}" autocomplete="off"></div>
+      <div class="field"><label for="tc-${i}">Color</label><select id="tc-${i}" data-k="color">${COLORS.map(c => `<option value="${c.id}"${c.id === t.color ? ' selected' : ''}>${esc(c.label)}</option>`).join('')}</select></div>
+      <div class="field"><label for="tp-${i}">Person</label><select id="tp-${i}" data-k="personId"><option value="">None</option>${doc.people.filter(p => p && p.id).map(p => `<option value="${esc(p.id)}"${p.id === t.personId ? ' selected' : ''}>${esc(p.name || 'Unnamed')}</option>`).join('')}</select></div>
+      <button type="button" class="btn small" data-tremove aria-label="Remove ${esc(t.name || 'thread')}">Remove</button></li>`).join('') || '<li class="empty-line">No threads yet.</li>';
+  }
+  function openThreads() { threadDraft = S().threads.map(t => Object.assign({}, t)); drawThreads(); $('threadDialog').showModal(); }
+  function saveThreads() {
+    const kept = threadDraft.filter(t => str(t.name).trim() || t.personId).map(t => { if (!t.name && t.personId) t.name = (person(t.personId) || {}).name || 'Character'; t.name = str(t.name).trim(); if (!t.personId) delete t.personId; return t; });
+    const ids = new Set(kept.map(t => t.id));
+    for (const c of cards()) if (c.threadIds) { c.threadIds = c.threadIds.filter(id => ids.has(id)); if (!c.threadIds.length) delete c.threadIds; }
+    S().threads = kept;
+    $('threadDialog').close();
+    changed();
+  }
+
+  // ---------- CSV and print ----------
+  function ordered() {
+    const out = [];
+    acts().forEach((a, ai) => {
+      for (const c of inList(a.id, '')) out.push({ act: actLabel(a, ai), seq: '', c });
+      seqs(a.id).forEach((q, qi) => { for (const c of inList(a.id, q.id)) out.push({ act: actLabel(a, ai), seq: seqLabel(q, qi), c }); });
+    });
+    for (const c of inList('', '')) out.push({ act: 'Not on the board yet', seq: '', c });
+    return out;
+  }
+  const CSV_HEAD = ['Act', 'Sequence', 'Order', 'Scene', 'Summary', 'Running time', 'Threads', 'Notes'];
+  function exportCsv() {
+    const rows = ordered().map((x, i) => [x.act, x.seq, i + 1, x.c.title, x.c.summary, secsOf(x.c) ? fmt(secsOf(x.c)) : '', arr(x.c.threadIds).map(thread).filter(Boolean).map(t => t.name).join(', '), x.c.notes]);
+    const csv = '﻿' + [CSV_HEAD, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
+    const name = `${slug()}-structure.csv`;
+    download(csv, name, 'text/csv;charset=utf-8');
+    toast(`Exported ${rows.length} card${rows.length === 1 ? '' : 's'} to ${name}`);
+  }
+  function renderReport() {
+    const c2 = c => `<tr><td class="r-sw">${arr(c.threadIds).map(thread).filter(Boolean).map(t => `<i style="background:${hex(t.color)}"></i>`).join('')}</td><td><b>${esc(c.title || '')}</b>${c.summary ? `<br>${esc(c.summary)}` : ''}${arr(c.threadIds).length ? `<br><span class="r-sub">${esc(arr(c.threadIds).map(thread).filter(Boolean).map(t => t.name).join(', '))}</span>` : ''}</td><td class="r-t">${secsOf(c) ? esc(fmt(secsOf(c))) : ''}</td></tr>`;
+    const placed = cards().filter(c => actOf(c));
+    $('report').innerHTML = `<h1>Structure</h1>
+      <p class="r-meta">${esc([doc.project.title, `${placed.length} scene${placed.length === 1 ? '' : 's'}`, `running time ${fmt(total(placed))}`, `Printed ${fmt0()}`].filter(Boolean).join(' · '))}</p>
+      ${S().threads.length ? `<p class="r-legend">${S().threads.map(t => `<span><i style="background:${hex(t.color)}"></i>${esc(t.name)}</span>`).join('')}</p>` : ''}
+      ${acts().map((a, ai) => `<h2>${esc(actLabel(a, ai))} <span class="r-sub">${esc(fmt(total(cards().filter(c => actOf(c) === a.id))))}</span></h2>
+        ${inList(a.id, '').length ? `<table><tbody>${inList(a.id, '').map(c2).join('')}</tbody></table>` : ''}
+        ${seqs(a.id).map((q, qi) => `<h3>${esc(seqLabel(q, qi))} <span class="r-sub">${esc(fmt(total(inList(a.id, q.id))))}</span></h3><table><tbody>${inList(a.id, q.id).map(c2).join('') || '<tr><td>No cards.</td></tr>'}</tbody></table>`).join('')}`).join('')}
+      ${inList('', '').length ? `<h2>Not on the board yet</h2><table><tbody>${inList('', '').map(c2).join('')}</tbody></table>` : ''}`;
+  }
+  const fmt0 = () => fmtDate(today());
+
+  // ---------- Project CSV ----------
+  function csvCell(v) {
+    let s = v == null ? '' : String(v);
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+    return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }
+  const csvCollections = {
+    project: 'project details', people: 'people', locations: 'locations', thirdPartyElements: 'third-party elements',
+    contracts: 'contracts', assets: 'assets', musicCueSheet: 'music cue sheet details', callSheets: 'call sheets'
+  };
+  function exportProjectCsv() {
+    const collection = $('projectCsvCollection').value;
+    const value = doc[collection];
+    const rows = Array.isArray(value) ? value : value && typeof value === 'object' ? [value] : [];
+    if (rows.some(row => !row || typeof row !== 'object' || Array.isArray(row))) {
+      toast(`Couldn't export ${csvCollections[collection]}: the project contains an invalid record.`, true);
+      return;
+    }
+    const headers = [...new Set(rows.flatMap(row => Object.keys(row)))];
+    if (!headers.length) headers.push('id');
+    const csvRows = rows.map(row => headers.map(key => { const cell = row[key]; return cell && typeof cell === 'object' ? JSON.stringify(cell) : cell; }));
+    const csv = '﻿' + [headers, ...csvRows].map(row => row.map(csvCell).join(',')).join('\r\n') + '\r\n';
+    const name = suggestedName().replace(/\.oft\.json$/i, `-${collection}.csv`);
+    download(csv, name, 'text/csv;charset=utf-8');
+    toast(`Exported ${rows.length} ${csvCollections[collection]} to ${name}`);
+  }
+
+  // ---------- Film details ----------
+  function openProjectDialog() {
+    for (const k of PROJECT_TEXT) $(`p-${k}`).value = doc.project[k] || '';
+    $('projectDialog').showModal();
+    $('p-title').focus();
+  }
+  function saveProjectDialog() {
+    for (const k of PROJECT_TEXT) doc.project[k] = $(`p-${k}`).value.trim();
+    $('projectDialog').close();
+    changed();
+  }
+
+  // ---------- Dirty state & recovery draft ----------
+  function changed() { dirty = true; saveDraft(); render(); }
+  function saveDraft() {
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ doc, fileName, baselineText, at: new Date().toISOString() })); } catch { /* the file on disk is the real copy */ }
+  }
+  function clearDraft() {
+    try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+    $('recovery').hidden = true;
+  }
+  function checkDraft() {
+    let draft = null;
+    try { draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); } catch { draft = null; }
+    if (!draft || !draft.doc || draft.doc.format !== FORMAT) return;
+    const n = draft.doc.structure && Array.isArray(draft.doc.structure.cards) ? draft.doc.structure.cards.length : 0;
+    if (!n && !(draft.doc.project && draft.doc.project.title)) { clearDraft(); return; }
+    const when = draft.at ? new Date(draft.at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'earlier';
+    const title = draft.doc.project && draft.doc.project.title ? `"${draft.doc.project.title}"` : 'an untitled project';
+    $('recoveryText').textContent = `You have unsaved changes to ${title} from ${when} (${n} card${n === 1 ? '' : 's'}). Restore them, or discard them and start fresh.`;
+    $('recovery').hidden = false;
+    $('restoreBtn').onclick = () => {
+      doc = normalize(draft.doc); fileName = draft.fileName || null; fileHandle = null;
+      baselineText = typeof draft.baselineText === 'string' ? draft.baselineText : null; dirty = true;
+      $('recovery').hidden = true; render();
+      toast(fileName ? `Restored. Save to write the changes back to ${fileName}.` : 'Restored. Save to keep it as a file.');
+    };
+    $('discardBtn').onclick = () => { clearDraft(); toast('Discarded the unsaved changes.'); };
+  }
+
+  // ---------- Files ----------
+  const pickerTypes = [{ description: 'Film project file', accept: { 'application/json': ['.json'] } }];
+  function slug() {
+    return (doc.project.title || 'untitled-film').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'untitled-film';
+  }
+  const suggestedName = () => `${slug()}.oft.json`;
+  function serialize() {
+    doc.savedAt = new Date().toISOString();
+    doc.savedBy = TOOL;
+    return JSON.stringify(doc, null, 2) + '\n';
+  }
+  function download(text, name, type) {
+    const url = URL.createObjectURL(new Blob([text], { type }));
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  function afterSave(name, downloaded, content) {
+    fileName = name;
+    if (downloaded) fileHandle = null;
+    baselineText = content;
+    dirty = false; clearDraft(); render();
+    toast(downloaded ? `Downloaded ${name}. Keep it with your project files and open it here next time.` : `Saved to ${name}`);
+  }
+  async function writeProjectFile(handle, content) {
+    try {
+      const writable = await handle.createWritable();
+      await writable.write(content);
+      await writable.close();
+    } catch (err) {
+      if (err.name !== 'AbortError') toast(`Couldn't save the file: ${err.message}`, true);
+      return;
+    }
+    fileHandle = handle;
+    afterSave(handle.name, false, content);
+  }
+  function saveCopy(content) {
+    const base = (fileName || suggestedName()).replace(/\.oft\.json$/i, '');
+    const name = `${base}-copy.oft.json`;
+    download(content, name, 'application/json');
+    afterSave(name, true, content);
+  }
+  async function reloadLatest(handle) {
+    try {
+      const file = await handle.getFile();
+      loadText(await file.text(), handle.name, handle);
+    } catch (err) {
+      toast(`Couldn't reload the file: ${err.message}`, true);
+    }
+  }
+  function showConflictDialog(content, observedText, unknownBaseline = false) {
+    const handle = fileHandle;
+    dirty = true;
+    saveDraft();
+    render();
+    $('conflictText').textContent = unknownBaseline
+      ? `The tool can't verify whether ${handle.name} changed since your recovery copy was made. Your edits are not saved.`
+      : `${handle.name} changed after you opened it. Your edits are not saved. Overwriting replaces the newer file.`;
+    $('conflictDialog').showModal();
+    $('conflictReloadBtn').onclick = () => { $('conflictDialog').close(); reloadLatest(handle); };
+    $('conflictCopyBtn').onclick = () => { $('conflictDialog').close(); saveCopy(content); };
+    $('conflictOverwriteBtn').onclick = async () => {
+      $('conflictDialog').close();
+      let latestText;
+      try { latestText = await (await handle.getFile()).text(); }
+      catch (err) { toast(`Couldn't check the file before overwriting: ${err.message}`, true); return; }
+      if (latestText !== observedText) {
+        toast('The file changed again. Review the updated conflict warning before overwriting.', true);
+        showConflictDialog(content, latestText);
+        return;
+      }
+      await writeProjectFile(handle, content);
+    };
+    $('conflictCancelBtn').onclick = () => $('conflictDialog').close();
+  }
+  async function saveFile() {
+    const out = serialize();
+    if (fileHandle) {
+      let currentText;
+      try { currentText = await (await fileHandle.getFile()).text(); }
+      catch (err) { toast(`Couldn't check the file before saving: ${err.message}`, true); return; }
+      if (baselineText === null || currentText !== baselineText) { showConflictDialog(out, currentText, baselineText === null); return; }
+      await writeProjectFile(fileHandle, out);
+      return;
+    }
+    if (window.showSaveFilePicker && window.self === window.top) {
+      try {
+        const h = await window.showSaveFilePicker({ suggestedName: fileName || suggestedName(), types: pickerTypes });
+        if (h.name === fileName) {
+          const currentText = await (await h.getFile()).text();
+          if (baselineText === null || currentText !== baselineText) { fileHandle = h; showConflictDialog(out, currentText, baselineText === null); return; }
+        }
+        await writeProjectFile(h, out);
+      } catch (err) { if (err.name !== 'AbortError') toast(`Couldn't save the file: ${err.message}`, true); }
+      return;
+    }
+    const name = fileName || suggestedName();
+    download(out, name, 'application/json');
+    afterSave(name, true, out);
+  }
+  function loadText(text, name, handle) {
+    let data;
+    try { data = JSON.parse(text); } catch { toast(`Couldn't open ${name}: it isn't a project file.`, true); return; }
+    if (!data || data.format !== FORMAT) { toast(`Couldn't open ${name}: it isn't an Open Filmmaker Toolkit project file.`, true); return; }
+    if (Number(data.formatVersion) > FORMAT_VERSION) { toast(`Couldn't open ${name}: it was saved by a newer version of the toolkit. Get the latest version of this tool.`, true); return; }
+    doc = normalize(data); fileHandle = handle; baselineText = text; fileName = name; dirty = false;
+    clearDraft(); render();
+    const n = entries().length;
+    toast(`Opened ${name}: ${n ? `${n} card${n === 1 ? '' : 's'}` : 'no cards yet'}`);
+  }
+  async function openFile() {
+    if (dirty && !confirm('You have unsaved changes. Open another file and lose them?')) return;
+    if (window.showOpenFilePicker && window.self === window.top) {
+      try { const [h] = await window.showOpenFilePicker({ types: pickerTypes }); const f = await h.getFile(); loadText(await f.text(), f.name, h); }
+      catch (err) { if (err.name !== 'AbortError') toast(`Couldn't open the file: ${err.message}`, true); }
+      return;
+    }
+    $('fileInput').click();
+  }
+  function newProject() {
+    if (dirty && !confirm('You have unsaved changes. Start a new project and lose them?')) return;
+    doc = normalize(blankDoc()); fileHandle = null; baselineText = null; fileName = null; dirty = false;
+    clearDraft(); render(); openProjectDialog();
+  }
+
+  let toastTimer = null;
+  function toast(msg, isError) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.classList.toggle('error', !!isError);
+    t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.hidden = true; }, isError ? 7000 : 4200);
+  }
+
+  // ---------- Wiring ----------
+  function init() {
+    doc = normalize(doc);
+    $('newBtn').onclick = newProject;
+    $('openBtn').onclick = openFile;
+    $('saveBtn').onclick = saveFile;
+    $('editProjectBtn').onclick = openProjectDialog;
+    $('filmTitle').onclick = openProjectDialog;
+    $('printBtn').onclick = () => { renderReport(); window.print(); };
+    window.addEventListener('beforeprint', renderReport);
+    $('projectCsvBtn').onclick = () => $('projectCsvDialog').showModal();
+    $('projectCsvCancel').onclick = () => $('projectCsvDialog').close();
+    $('projectCsvForm').addEventListener('submit', ev => { ev.preventDefault(); exportProjectCsv(); $('projectCsvDialog').close(); });
+    $('fileInput').addEventListener('change', async () => {
+      const f = $('fileInput').files[0];
+      if (f) loadText(await f.text(), f.name, null);
+      $('fileInput').value = '';
+    });
+    $('projectForm').addEventListener('submit', ev => { ev.preventDefault(); saveProjectDialog(); });
+    $('projectCancel').onclick = () => $('projectDialog').close();
+    $('addBtn').onclick = () => openEditor(null);
+    $('emptyAddBtn').onclick = () => openEditor(null);
+    $('emptyOpenBtn').onclick = openFile;
+    $('addActBtn').onclick = () => { acts().push({ id: newId('act'), title: `Act ${acts().length + 1}` }); changed(); };
+    $('fromPeBtn').onclick = fromPaperEdit;
+    $('emptyPeBtn').onclick = fromPaperEdit;
+    $('csvBtn').onclick = exportCsv;
+    $('hl').addEventListener('change', () => { highlight = $('hl').value; render(); });
+    $('work').addEventListener('click', boardClick);
+    $('work').addEventListener('change', ev => { if (ev.target.dataset && (ev.target.dataset.acttitle || ev.target.dataset.seqtitle)) boardRename(ev); });
+    wireDrag();
+    $('f-act').addEventListener('change', () => fillSeqs($('f-act').value, ''));
+    $('f-pe').addEventListener('change', showPe);
+    $('threadsBtn').onclick = openThreads;
+    $('addThreadBtn').onclick = () => { threadDraft.push({ id: newId('thread'), color: COLORS[threadDraft.length % (COLORS.length - 1)].id }); drawThreads(); const ins = $('threadList').querySelectorAll('input'); if (ins.length) ins[ins.length - 1].focus(); };
+    $('threadList').addEventListener('input', ev => { const li = ev.target.closest('[data-ti]'); if (li && ev.target.dataset.k) threadDraft[Number(li.dataset.ti)][ev.target.dataset.k] = ev.target.value; });
+    $('threadList').addEventListener('change', ev => { const li = ev.target.closest('[data-ti]'); if (li && ev.target.dataset.k) threadDraft[Number(li.dataset.ti)][ev.target.dataset.k] = ev.target.value; });
+    $('threadList').addEventListener('click', ev => { const b = ev.target.closest('[data-tremove]'); if (b) { threadDraft.splice(Number(b.closest('[data-ti]').dataset.ti), 1); drawThreads(); } });
+    $('threadForm').addEventListener('submit', ev => { ev.preventDefault(); saveThreads(); });
+    $('threadCancel').onclick = () => $('threadDialog').close();
+    $('editorForm').addEventListener('submit', ev => { ev.preventDefault(); saveEditor(); });
+    $('editorForm').addEventListener('input', ev => { if (ev.target.setCustomValidity) ev.target.setCustomValidity(''); });
+    $('editorCancel').onclick = () => $('editor').close();
+    $('deleteBtn').onclick = removeEditing;
+
+    document.addEventListener('keydown', ev => {
+      const mod = ev.metaKey || ev.ctrlKey;
+      if (mod && ev.key.toLowerCase() === 's') { ev.preventDefault(); saveFile(); }
+      else if (mod && ev.key.toLowerCase() === 'o') { ev.preventDefault(); openFile(); }
+    });
+    window.addEventListener('beforeunload', ev => { if (dirty) { ev.preventDefault(); ev.returnValue = ''; } });
+    render();
+    checkDraft();
+  }
+
+  if (typeof HTMLDialogElement !== 'function' || typeof HTMLDialogElement.prototype.showModal !== 'function' || typeof structuredClone !== 'function') {
+    $('cantRunTitle').textContent = 'This browser is too old to run this tool';
+    $('cantRunText').textContent = 'Update to a current version of Chrome, Edge, Firefox or Safari, then open this file again.';
+    $('cantRunHow').hidden = true;
+    return;
+  }
+  document.documentElement.classList.remove('no-js');
+  window.addEventListener('error', ev => toast(`Something went wrong: ${ev.message}. Save your work, then reload the page.`, true));
+  window.addEventListener('unhandledrejection', ev => toast(`Something went wrong: ${ev.reason && ev.reason.message ? ev.reason.message : ev.reason}. Save your work, then reload the page.`, true));
+  init();
+})();
+</script>
+</body>
+</html>

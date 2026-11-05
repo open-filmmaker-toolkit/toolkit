@@ -19,10 +19,10 @@ from playwright.sync_api import sync_playwright
 
 root = pathlib.Path(__file__).resolve().parents[1]
 sample = (root / 'samples/the-river-keeps.oft.json').read_text()
-TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan', 'funder-crm', 'cash-flow', 'shooting-calendar', 'interview-prep', 'field-journal', 'location-scout', 'deal-memos', 'gear-list', 'coi-permit-tracker', 'travel-sheet', 'risk-plan', 'security-checklist', 'camera-sound-reports', 'interview-log', 'daily-production-report', 'expense-log', 'festival-submissions', 'press-list', 'partner-crm', 'discussion-guide', 'archive-log', 'footage-log', 'paper-edit']
+TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan', 'funder-crm', 'cash-flow', 'shooting-calendar', 'interview-prep', 'field-journal', 'location-scout', 'deal-memos', 'gear-list', 'coi-permit-tracker', 'travel-sheet', 'risk-plan', 'security-checklist', 'camera-sound-reports', 'interview-log', 'daily-production-report', 'expense-log', 'festival-submissions', 'press-list', 'partner-crm', 'discussion-guide', 'archive-log', 'footage-log', 'paper-edit', 'structure-board', 'cut-tracker', 'budget-to-actuals']
 COLLECTIONS = ['project', 'people', 'locations', 'thirdPartyElements', 'contracts', 'assets', 'musicCueSheet', 'callSheets']
 PRINT_BTN = {'clearance-log': '#printBtn', 'music-cue-sheet': '#printBtn', 'call-sheet': '#printAllBtn', 'release-tracker': '#printBtn',
-             'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn', 'treatment-builder': '#printBtn', 'pitch-deck': '#printBtn', 'grant-calendar': '#printBtn', 'narrative-library': '#printBtn', 'budget': '#printBtn', 'budget-converter': '#printBtn', 'finance-plan': '#printBtn', 'funder-crm': '#printBtn', 'cash-flow': '#printBtn', 'shooting-calendar': '#printBtn', 'interview-prep': '#printBtn', 'field-journal': '#printBtn', 'location-scout': '#printBtn', 'deal-memos': '#printBtn', 'gear-list': '#printBtn', 'coi-permit-tracker': '#printBtn', 'travel-sheet': '#printBtn', 'risk-plan': '#printBtn', 'security-checklist': '#printBtn', 'camera-sound-reports': '#printBtn', 'interview-log': '#printBtn', 'daily-production-report': '#printBtn', 'expense-log': '#printBtn', 'festival-submissions': '#printBtn', 'press-list': '#printBtn', 'partner-crm': '#printBtn', 'discussion-guide': '#printBtn', 'archive-log': '#printBtn', 'footage-log': '#printBtn', 'paper-edit': '#printBtn'}
+             'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn', 'treatment-builder': '#printBtn', 'pitch-deck': '#printBtn', 'grant-calendar': '#printBtn', 'narrative-library': '#printBtn', 'budget': '#printBtn', 'budget-converter': '#printBtn', 'finance-plan': '#printBtn', 'funder-crm': '#printBtn', 'cash-flow': '#printBtn', 'shooting-calendar': '#printBtn', 'interview-prep': '#printBtn', 'field-journal': '#printBtn', 'location-scout': '#printBtn', 'deal-memos': '#printBtn', 'gear-list': '#printBtn', 'coi-permit-tracker': '#printBtn', 'travel-sheet': '#printBtn', 'risk-plan': '#printBtn', 'security-checklist': '#printBtn', 'camera-sound-reports': '#printBtn', 'interview-log': '#printBtn', 'daily-production-report': '#printBtn', 'expense-log': '#printBtn', 'festival-submissions': '#printBtn', 'press-list': '#printBtn', 'partner-crm': '#printBtn', 'discussion-guide': '#printBtn', 'archive-log': '#printBtn', 'footage-log': '#printBtn', 'paper-edit': '#printBtn', 'structure-board': '#printBtn', 'cut-tracker': '#printBtn', 'budget-to-actuals': '#printBtn'}
 PHONE = {'width': 390, 'height': 844}
 # The button that opens each tool's main dialog, for the phone-width check. Most tools use #addBtn.
 DIALOG_BTN = {'treatment-builder': '[data-compare]', 'cash-flow': '#settingsBtn', 'discussion-guide': '#projectCsvBtn'}
@@ -385,7 +385,7 @@ def test_credits_builder(browser, fake):
     ctx.close()
 
 # Each spreadsheet template's columns must appear in its tool's CSV export, in the same order.
-TEMPLATE_EXPORTS = [('footage-log', 'footage-log-template.csv'), ('paper-edit', 'paper-edit-template.csv'), ('press-list', 'press-list-template.csv'), ('partner-crm', 'partner-crm-template.csv'), ('camera-sound-reports', 'camera-and-sound-reports-template.csv'), ('interview-log', 'interview-moments-template.csv'), ('travel-sheet', 'travel-sheet-template.csv'), ('risk-plan', 'risk-assessment-template.csv'), ('security-checklist', 'security-checklist-template.csv'), ('gear-list', 'gear-list-template.csv'), ('coi-permit-tracker', 'certificates-and-permits-template.csv'), ('location-scout', 'location-scout-template.csv'), ('deal-memos', 'deal-memos-template.csv'), ('shooting-calendar', 'shooting-calendar-template.csv'), ('interview-prep', 'interview-questions-template.csv'), ('funder-crm', 'funder-crm-template.csv'), ('cash-flow', 'cash-flow-template.csv'), ('budget', 'budget-template.csv'), ('finance-plan', 'finance-plan-template.csv'), ('grant-calendar', 'grant-calendar-template.csv'), ('clearance-log', 'clearance-log-template.csv'), ('release-tracker', 'release-log-template.csv'),
+TEMPLATE_EXPORTS = [('structure-board', 'structure-board-template.csv'), ('cut-tracker', 'cut-notes-template.csv'), ('budget-to-actuals', 'cost-report-template.csv'), ('footage-log', 'footage-log-template.csv'), ('paper-edit', 'paper-edit-template.csv'), ('press-list', 'press-list-template.csv'), ('partner-crm', 'partner-crm-template.csv'), ('camera-sound-reports', 'camera-and-sound-reports-template.csv'), ('interview-log', 'interview-moments-template.csv'), ('travel-sheet', 'travel-sheet-template.csv'), ('risk-plan', 'risk-assessment-template.csv'), ('security-checklist', 'security-checklist-template.csv'), ('gear-list', 'gear-list-template.csv'), ('coi-permit-tracker', 'certificates-and-permits-template.csv'), ('location-scout', 'location-scout-template.csv'), ('deal-memos', 'deal-memos-template.csv'), ('shooting-calendar', 'shooting-calendar-template.csv'), ('interview-prep', 'interview-questions-template.csv'), ('funder-crm', 'funder-crm-template.csv'), ('cash-flow', 'cash-flow-template.csv'), ('budget', 'budget-template.csv'), ('finance-plan', 'finance-plan-template.csv'), ('grant-calendar', 'grant-calendar-template.csv'), ('clearance-log', 'clearance-log-template.csv'), ('release-tracker', 'release-log-template.csv'),
                     ('music-cue-sheet', 'music-cue-sheet-template.csv'), ('name-supers', 'name-supers-template.csv'),
                     ('subject-tracker', 'subject-tracker-template.csv'), ('research-log', 'research-log-template.csv'),
                     ('comps-tracker', 'comps-tracker-template.csv')]
@@ -1697,6 +1697,135 @@ def test_paper_edit(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
+def test_structure_board(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'structure-board', fake)
+    pg.on('dialog', lambda d: d.accept())
+    open_sample(pg, fake)
+    order = lambda sel: [x.get_attribute('data-card') for x in pg.locator(sel + ' > [data-card]').all()]
+    check(pg.locator('[data-card]').count() == 7 and order('#drop-tray') == ['card-leon'] and '4:13' in pg.inner_text('[data-actbox="act-1"] .time'), 'shows acts, sequences, cards and running times')
+    pg.click('[data-card="card-diary-night"] [data-move="-1"]'); pg.wait_for_timeout(100)
+    check(order('.drop[data-seq="sequence-1965"]') == ['card-diary-night', 'card-roof'], 'moves a card with its arrows')
+    pg.drag_and_drop('[data-card="card-leon"]', '.drop[data-act="act-3"][data-seq=""]'); pg.wait_for_timeout(200)
+    check(sorted(order('.drop[data-act="act-3"][data-seq=""]')) == ['card-crew', 'card-leon'] and order('#drop-tray') == [], 'drags a card into an act')
+    pg.drag_and_drop('[data-card="card-leon"]', '[data-card="card-crew"]', target_position={'x': 20, 'y': 4}); pg.wait_for_timeout(200)
+    check(order('.drop[data-act="act-3"][data-seq=""]') == ['card-leon', 'card-crew'], 'drops a card before another')
+    pg.drag_and_drop('[data-card="card-leon"]', '[data-card="card-crew"]', target_position={'x': 20, 'y': 60}); pg.wait_for_timeout(200)
+    check(order('.drop[data-act="act-3"][data-seq=""]') == ['card-crew', 'card-leon'], 'drops a card after another')
+    pg.click('#threadsBtn'); pg.click('#addThreadBtn')
+    pg.fill('#tn-3', 'Marcus'); pg.select_option('#tc-3', 'red'); pg.select_option('#tp-3', 'person-marcus-bell')
+    pg.click('#threadForm button[type="submit"]'); pg.wait_for_timeout(100)
+    check('Marcus' in pg.inner_text('#legend'), 'adds a story thread linked to a person')
+    pg.click('#addBtn'); pg.fill('#f-title', 'Ruth at the window'); pg.fill('#f-time', '1:45')
+    pg.select_option('#f-act', 'act-2'); pg.select_option('#f-seq', 'sequence-boxes'); pg.check('#thPicks input[value="thread-ruth"]')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    new_id = pg.locator('.drop[data-seq="sequence-boxes"] > [data-card]').last.get_attribute('data-card')
+    check(len(order('.drop[data-seq="sequence-boxes"]')) == 3 and 'Ruth at the window' in pg.inner_text('[data-card="%s"]' % new_id), 'adds a card to a sequence')
+    pg.select_option('#hl', 'thread-ruth')
+    check(pg.locator('.card-s.dim').count() == 5, 'highlights one thread')
+    pg.select_option('#hl', '')
+    pg.click('[data-actbox="act-3"] [data-addseq]'); pg.wait_for_timeout(100)
+    check(pg.locator('[data-actbox="act-3"] .seq').count() == 1, 'adds a sequence to an act')
+    pg.click('[data-actbox="act-3"] [data-seqremove]'); pg.wait_for_timeout(100)
+    check(not pg.is_visible('#fromPeBtn'), 'offers paper edit scenes only when some have no card')
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    check(rows[0][:4] == ['Act', 'Sequence', 'Order', 'Scene'] and len(rows) == 9 and rows[1][0] == 'Act one: the water' and rows[-1][3] == 'Leon at the grain elevator', 'CSV lists the cards in board order')
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    r = pg.inner_text('#report')
+    check('Act two: what was kept' in r and 'Boxes and closets' in r and 'Ruth at the window' in r and 'Not on the board yet' not in r, 'prints the board')
+    data = saved_project(pg, fake)
+    st = data['structure']
+    ids = [c['id'] for c in st['cards']]
+    new = next(c for c in st['cards'] if c['title'] == 'Ruth at the window')
+    leon = next(c for c in st['cards'] if c['id'] == 'card-leon')
+    check(ids.index('card-diary-night') < ids.index('card-roof') and leon['actId'] == 'act-3' and ids.index('card-crew') < ids.index('card-leon') and new['sequenceId'] == 'sequence-boxes' and new['seconds'] == 105
+          and new['threadIds'] == ['thread-ruth'] and len(st['threads']) == 4 and st['threads'][3]['personId'] == 'person-marcus-bell' and len(st['sequences']) == 2, 'the board is saved')
+    check(data['paperEdit'] == original['paperEdit'] and data['people'] == original['people'], 'other data is unchanged')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+def test_cut_tracker(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'cut-tracker', fake)
+    pg.on('dialog', lambda d: d.accept())
+    open_sample(pg, fake)
+    check(pg.locator('#rows .row').count() == 3 and 'Locked cut v12' in pg.inner_text('#lockedBox') and '1 deferred' in pg.inner_text('[data-id="cut-fine-3"]'), 'lists the cuts and the locked cut')
+    pg.click('#addBtn')
+    check(pg.input_value('#f-name') == 'Locked cut v13', 'a new cut takes the next number')
+    pg.fill('#f-name', 'Fine cut 4'); pg.fill('#f-date', '2026-10-01'); pg.locator('#f-date').dispatch_event('change')
+    check(pg.is_visible('#carryNote') and '1 note' in pg.inner_text('#carryText'), 'offers to carry notes still open in earlier cuts')
+    pg.click('#carryBtn')
+    check(pg.locator('#notes .item').count() == 1 and 'from Fine cut 3' in pg.inner_text('#notes legend'), 'carries the note in')
+    pg.click('[data-add="screenings"]'); pg.fill('#screenings-0-date', '2026-10-05'); pg.fill('#screenings-0-audience', 'Lena and Priya')
+    pg.locator('#screenings-0-audience').dispatch_event('change')
+    pg.click('[data-add="notes"]'); pg.fill('#notes-1-tc', '45 min'); pg.select_option('#notes-1-cardId', 'card-secret'); pg.fill('#notes-1-text', 'Trim the pause before she answers'); pg.fill('#notes-1-from', 'Lena')
+    check(pg.locator('#notes-1-screeningId option').count() == 2, 'a note can name the screening it came from')
+    pg.fill('#f-rt', '1:25:10')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(100)
+    check(pg.is_visible('#editor'), 'refuses a badly formed time in the cut')
+    pg.fill('#notes-1-tc', '0:45:00')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    new = pg.locator('#rows .row:has-text("Fine cut 4")')
+    check('2 to do' in new.inner_text() and '1 carried' in pg.inner_text('[data-id="cut-fine-3"]'), 'the original note is marked carried')
+    new.locator('[data-edit]').click(); pg.check('#f-locked'); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check('Fine cut 4' in pg.inner_text('#lockedBox') and 'Fine cut 4, Oct 1, 2026' in pg.inner_text('#lockedBox') and pg.locator('#rows .st-locked').count() == 1, 'locking a cut sets the project cut version')
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    r = pg.inner_text('#report')
+    check('Fine cut 4: notes' in r and 'From Fine cut 3' in r and 'Trim the pause' in r and 'Why she kept it secret' in r, "prints a cut's notes")
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    check(rows[0][:3] == ['Cut', 'Cut date', 'Running time'] and len(rows) == 9, 'CSV lists every note')
+    data = saved_project(pg, fake)
+    cs = {c['id']: c for c in data['cuts']}
+    f4 = next(c for c in data['cuts'] if c['name'] == 'Fine cut 4')
+    old = next(n for n in cs['cut-fine-3']['notes'] if n['id'] == 'note-f3-3')
+    check(old['status'] == 'carried' and old['carriedToCutId'] == f4['id'] and f4['notes'][0]['carriedFromNoteId'] == 'note-f3-3' and f4['notes'][1]['cardId'] == 'card-secret' and f4['notes'][1]['screeningId'] == f4['screenings'][0]['id'],
+          'the notes and screening are saved')
+    check(f4['locked'] is True and 'locked' not in cs['cut-locked-12'] and data['project']['cutVersion'] == 'Fine cut 4, Oct 1, 2026' and data['project']['runningTime'] == '1:25:10', 'the locked cut and project are saved')
+    check(data['structure'] == original['structure'] and data['contracts'] == original['contracts'], 'other data is unchanged')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+def test_budget_actuals(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'budget-to-actuals', fake)
+    open_sample(pg, fake)
+    check('(4)' in pg.inner_text('#addBtn') and 'Drone with operator' in pg.inner_text('#over') and '$600' in pg.inner_text('#over'), 'flags expenses to assign and lines over budget')
+    check('$9,118 spent of $452,260' in pg.inner_text('#meterText'), 'totals what is spent against the budget')
+    pg.click('#addBtn'); pg.select_option('#as-expense-motel', 'line-2200-10'); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check('(3)' in pg.inner_text('#addBtn') and '$1,080.00' in pg.inner_text('tr:has([data-line="line-2200-10"])'), 'assigns an expense to its line')
+    pg.click('[data-line="line-3000-16"]'); pg.fill('#l-etc', '80000'); pg.fill('#l-note', 'Two more weeks of editing'); pg.click('#lineForm button[type="submit"]'); pg.wait_for_timeout(200)
+    check('$6,080 over' in pg.inner_text('tr:has([data-line="line-3000-16"])') and pg.inner_text('#overCount') == '2', 'an estimate to complete changes the variance')
+    pg.fill('#asOf', '2026-05-13'); pg.locator('#asOf').dispatch_event('change'); pg.wait_for_timeout(100)
+    check('$3,196 spent' in pg.inner_text('#meterText'), 'reports as of a date')
+    pg.fill('#asOf', ''); pg.locator('#asOf').dispatch_event('change'); pg.wait_for_timeout(100)
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    drone = next(r for r in rows if r[2] == 'Drone with operator')
+    check(rows[0][:4] == ['Section', 'Account', 'Line', 'Budget'] and drone[4] == '3000.00' and drone[7] == '-600.00' and rows[-1][0] == 'Total', 'CSV has every line and the total')
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    r = pg.inner_text('#report')
+    check('Cost report' in r and 'Summary' in r and 'Two more weeks of editing' in r and 'Contingency 10%' in r, 'prints the cost report')
+    data = saved_project(pg, fake)
+    ex = {e['id']: e for e in data['expenses']}
+    check(ex['expense-motel']['budgetLineId'] == 'line-2200-10' and 'budgetLineId' not in ex['expense-lunch'] and any(e.get('lineId') == 'line-3000-16' and e['toComplete'] == 80000 for e in data['costReport']['estimates']) and 'asOf' not in data['costReport'],
+          'the assignment and estimate are saved')
+    check(data['budget'] == original['budget'] and [e for e in data['expenses'] if e['id'] != 'expense-motel'] == [e for e in original['expenses'] if e['id'] != 'expense-motel'], 'the budget and other expenses are unchanged')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+    # An expense with no budget account counts in the total, outside the budget.
+    loose = json.loads(sample); loose['expenses'].append({'id': 'expense-loose', 'date': '2026-06-01', 'amount': 10, 'description': 'Parking'})
+    ctx, pg, errs = new_page(browser, 'budget-to-actuals', False)
+    pg.set_input_files('#fileInput', files=[{'name': 'p.oft.json', 'mimeType': 'application/json', 'buffer': json.dumps(loose).encode()}])
+    pg.wait_for_function("document.getElementById('filmMeta').textContent.trim() !== ''")
+    check(pg.is_visible('#looseCard') and 'Parking' in pg.inner_text('#loose') and '$9,128 spent' in pg.inner_text('#meterText'), 'expenses outside the budget are listed and counted')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
 def test_deal_memos(browser, fake):
     original = json.loads(sample)
     ctx, pg, errs = new_page(browser, 'deal-memos', fake)
@@ -1840,7 +1969,8 @@ def test_expense_log(browser, fake):
     original = json.loads(sample)
     ctx, pg, errs = new_page(browser, 'expense-log', fake, fixed_today('2026-11-01'))
     open_sample(pg, fake)
-    check(pg.locator('#rows tr').count() == 3 and '$195.55' in pg.inner_text('#grandTotal'), 'lists expenses and the grand total')
+    n0 = len(original['expenses']); t0 = sum(e['amount'] for e in original['expenses'])
+    check(pg.locator('#rows tr').count() == n0 and '${:,.2f}'.format(t0) in pg.inner_text('#grandTotal'), 'lists expenses and the grand total')
     pg.select_option('#kindFilter', 'perdiem')
     check(pg.locator('#rows tr').count() == 1, 'filters by type')
     pg.select_option('#kindFilter', '')
@@ -1850,16 +1980,16 @@ def test_expense_log(browser, fake):
     pg.fill('#f-description', 'Batteries'); pg.fill('#f-payee', 'Corner Shop (fictional)')
     pg.set_input_files('#f-receipt', {'name': 'Batteries Receipt.jpg', 'mimeType': 'image/jpeg', 'buffer': b'fake'})
     pg.click('#editorSubmit'); pg.wait_for_timeout(200)
-    check(not pg.is_visible('#editor') and pg.locator('#rows tr').count() == 4 and 'Batteries Receipt.jpg' in pg.inner_text('#rows'), 'adds an expense with a receipt name')
+    check(not pg.is_visible('#editor') and pg.locator('#rows tr').count() == n0 + 1 and 'Batteries Receipt.jpg' in pg.inner_text('#rows'), 'adds an expense with a receipt name')
     pg.click('#addBtn'); pg.select_option('#f-kind', 'perdiem'); pg.fill('#f-amount', '45'); pg.select_option('#f-account', 'account-2400')
     pg.click('#editorSubmit'); pg.wait_for_timeout(200)
     check(pg.is_visible('#editor'), 'a per diem needs a person')
     pg.select_option('#f-person', 'person-daniel-okafor'); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
-    check(pg.locator('#rows tr').count() == 5 and '$253.05' in pg.inner_text('#grandTotal'), 'adds a per diem and updates totals')
+    check(pg.locator('#rows tr').count() == n0 + 2 and '${:,.2f}'.format(t0 + 57.5) in pg.inner_text('#grandTotal'), 'adds a per diem and updates totals')
     with pg.expect_download() as d:
         pg.click('#csvBtn')
     rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
-    check(rows[0][:4] == ['Date', 'Amount', 'Kind', 'Budget account'] and len(rows) == 6 and any('Batteries' in r[6] for r in rows), 'CSV lists every expense')
+    check(rows[0][:4] == ['Date', 'Amount', 'Kind', 'Budget account'] and len(rows) == n0 + 3 and any('Batteries' in r[6] for r in rows), 'CSV lists every expense')
     pg.click('#printBtn'); pg.wait_for_timeout(200)
     check('Batteries' in pg.inner_text('#report'), 'prints the expense report')
     data = saved_project(pg, fake)
@@ -2239,6 +2369,12 @@ def main():
         test_footage_log(browser, fake)
         print('== paper-edit / transcripts, bites, scenes and the edit list')
         test_paper_edit(browser, fake)
+        print('== structure-board / cards, drag, threads and print')
+        test_structure_board(browser, fake)
+        print('== cut-tracker / notes, carrying and the locked cut')
+        test_cut_tracker(browser, fake)
+        print('== budget-to-actuals / lines, estimates and the cost report')
+        test_budget_actuals(browser, fake)
         print('== templates / columns match the tools\' exports')
         test_template_columns(browser, fake)
         browser.close()

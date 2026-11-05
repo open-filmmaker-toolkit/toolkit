@@ -37,6 +37,9 @@ Part of the [Open Filmmaker Toolkit](../README.md).
 | End credits | [end-credits-template.csv](end-credits-template.csv) | [end-credits-template.docx](end-credits-template.docx) | [Credits builder](../tools/credits-builder/) |
 | Footage log | [footage-log-template.csv](footage-log-template.csv) | | [Footage log](../tools/footage-log/) |
 | Paper edit | [paper-edit-template.csv](paper-edit-template.csv) | | [Paper edit](../tools/paper-edit/) |
+| Structure board | [structure-board-template.csv](structure-board-template.csv) | | [Structure board](../tools/structure-board/) |
+| Cut notes | [cut-notes-template.csv](cut-notes-template.csv) | | [Cut version tracker](../tools/cut-tracker/) |
+| Cost report | [cost-report-template.csv](cost-report-template.csv) | | [Budget-to-actuals](../tools/budget-to-actuals/) |
 | Name supers | [name-supers-template.csv](name-supers-template.csv) | | [Name supers list](../tools/name-supers/) |
 
 ## What's in each one
@@ -70,6 +73,9 @@ Part of the [Open Filmmaker Toolkit](../README.md).
 - **Music cue sheet.** One row for each cue, in the order it plays, with timings, usage and the composers, authors and publishers with their society and share. The document adds the production details distributors ask for and a key to the usage and role codes.
 - **Footage log.** One row for each clip: file name and folder, date, what's in it, who's in it, where, keywords, a rating from 1 to 5, comments, starting timecode, length and card. The column names are ones DaVinci Resolve's metadata import uses.
 - **Paper edit.** One row for each bite, in the order of the edit: the scene, speaker, words, a note, the transcript and clip it's from, and its source and record timecodes.
+- **Structure board.** One row for each scene card, in order: act, sequence, scene, summary, running time, story threads and notes.
+- **Cut notes.** One row for each note on a cut: the cut, its date and running time, the screening and who saw it, the time or range in the cut, scene, shot, who gave the note, the note and its status.
+- **Cost report.** One row for each budget line: section, account, budget, spent, estimate to complete, estimated final cost, variance and a note.
 - **Name supers.** One row for each on-screen name and title, in the order they appear, with the timecode where each first appears.
 - **End credits.** Credits in the usual order, with placeholders to replace, and music, archival, thanks and copyright lines. The document adds a table of the credits your contracts require, to tick off before you lock, and a checklist.
 
@@ -77,7 +83,7 @@ Part of the [Open Filmmaker Toolkit](../README.md).
 
 - **Spreadsheets** (`.csv`) open in Excel, Numbers, Google Sheets (**File > Import**) and LibreOffice. Save a copy as `.xlsx` from there if you need that format.
 - **Documents** (`.docx`) open in Word, Google Docs, Pages and LibreOffice. They're US Letter; switch to A4 in your page setup if you need to. To add a row to a table, put the cursor in the last cell and press Tab. To fill them in by hand, print them; the logs repeat their column headings on every page.
-- **Same columns as the tools.** The subject tracker, research and archival log, comps tracker, grant calendar, budget, finance plan, funder CRM, cash flow, shooting calendar, interview questions, location scout sheet, deal memos, gear list, certificates and permits, travel sheet, risk assessment, security checklist, camera and sound reports, interview moments, press list, partner CRM, footage log, paper edit, clearance log, release log, music cue sheet and name supers spreadsheets have the same columns, in the same order, as each tool's CSV export, and the call sheet matches the call sheet's spreadsheet export. Some exports add columns the tool works out for you, such as a cue's duration in seconds or what's still missing.
+- **Same columns as the tools.** The subject tracker, research and archival log, comps tracker, grant calendar, budget, finance plan, funder CRM, cash flow, shooting calendar, interview questions, location scout sheet, deal memos, gear list, certificates and permits, travel sheet, risk assessment, security checklist, camera and sound reports, interview moments, press list, partner CRM, footage log, paper edit, structure board, cut notes, cost report, clearance log, release log, music cue sheet and name supers spreadsheets have the same columns, in the same order, as each tool's CSV export, and the call sheet matches the call sheet's spreadsheet export. Some exports add columns the tool works out for you, such as a cue's duration in seconds or what's still missing.
 
 These templates are working records, not legal advice, and you use them at your own risk: see [Not legal advice](../README.md#not-legal-advice). Check what your distributor, broadcaster and E&O insurer need.
 

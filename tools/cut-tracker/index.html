@@ -1,0 +1,937 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cut version tracker · Open Filmmaker Toolkit</title>
+<meta name="description" content="Track every cut: date, running time and what changed, the notes from each feedback screening tied to a time in the cut and its scene, which notes are done, deferred or carried, and the locked cut. Runs in your browser; your data stays on your computer.">
+<style>
+:root {
+  --paper: #f1f3f2; --sheet: #ffffff; --ink: #1a2130; --ink-2: #4b556a; --ink-3: #6d778a;
+  --rule: #d4dad8; --rule-soft: #e6eae8; --hover: #f6f8f7; --focus: #2f6fdb;
+  --good: #2b7a57; --good-bg: #dff1e8; --warn: #8a5a00; --warn-bg: #fbf0d9; --bad: #b3392d; --bad-bg: #f8e1de;
+  --screen: #050506; --screen-ink: #f4f1ea; --screen-dim: #a7a29a;
+  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #141922; --sheet: #1b212b; --ink: #e6e9ee; --ink-2: #a6afbd; --ink-3: #8790a0;
+    --rule: #2f3744; --rule-soft: #262d38; --hover: #212834; --focus: #7aa7ff;
+    --good: #4fb386; --good-bg: #1a3329; --warn: #e2a531; --warn-bg: #3a2f17; --bad: #e26657; --bad-bg: #3b2220;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans); }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+[hidden] { display: none !important; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.foot { margin-top: 28px; font-size: 13px; color: var(--ink-3); }
+.cant-run { display: none; max-width: 640px; margin: 64px auto; padding: 0 24px; }
+.cant-run h1 { margin: 0 0 8px; font: 600 26px/1.2 var(--serif); }
+.cant-run p { margin: 0 0 10px; color: var(--ink-2); }
+.no-js .cant-run { display: block; }
+.no-js .page { display: none; }
+.page { max-width: 1240px; margin: 0 auto; padding: 0 24px 48px; }
+
+.masthead { display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: flex-end; justify-content: space-between; padding: 28px 0 20px; }
+.tool-name { margin: 0 0 2px; font-size: 14px; font-weight: 600; color: var(--ink-2); }
+.film-title { margin: 0; font: 600 32px/1.15 var(--serif); letter-spacing: -0.01em; overflow-wrap: anywhere; cursor: pointer; }
+.film-title.is-empty { color: var(--ink-3); font-style: italic; font-weight: 400; }
+.film-meta { margin: 4px 0 0; color: var(--ink-2); font-size: 14px; }
+.file { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.file-state { margin: 0; font-size: 13px; color: var(--ink-2); text-align: right; }
+.file-state .dirty { color: var(--warn); font-weight: 600; }
+.file-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; }
+.btn:hover { border-color: var(--ink-3); }
+.btn.primary { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.btn.primary:hover { opacity: 0.88; }
+.btn.danger { color: var(--bad); }
+.btn.small { padding: 4px 10px; font-size: 13px; }
+.link-btn { padding: 0; border: 0; background: none; cursor: pointer; color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; font-size: 14px; }
+.link-btn:hover { color: var(--ink); }
+
+.banner { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 0 0 16px; padding: 12px 16px; border-radius: 8px; background: var(--warn-bg); border: 1px solid color-mix(in srgb, var(--warn) 40%, transparent); }
+.banner p { margin: 0; flex: 1 1 280px; }
+.banner .actions { display: flex; gap: 8px; }
+
+.workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr); gap: 24px; align-items: start; }
+.col { display: grid; gap: 18px; min-width: 0; }
+.card { background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 18px; min-width: 0; }
+.card-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; margin: 0 0 6px; }
+.card-head h2 { margin: 0; font: 600 18px/1.3 var(--serif); }
+.card-head .count { font-size: 13px; color: var(--ink-2); }
+.card-head .spacer { flex: 1; }
+.card p.lead { margin: 0 0 8px; font-size: 14px; color: var(--ink-2); }
+
+/* Side cards */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 2px; padding: 0; list-style: none; }
+.chip { display: inline-flex; border: 1px solid var(--rule); border-radius: 999px; overflow: hidden; background: var(--paper); }
+.chip button { padding: 4px 10px; border: 0; background: none; cursor: pointer; font-size: 13px; font-weight: 600; }
+.chip button:hover { background: var(--hover); }
+.chip .sub { font-weight: 400; color: var(--ink-3); margin-left: 4px; }
+.empty-line { margin: 4px 0; color: var(--ink-2); font-size: 14px; }
+.changes { margin: 0; padding-left: 18px; font-size: 14px; }
+.changes li + li { margin-top: 2px; }
+
+/* The supers list */
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 10px; }
+.toolbar h2 { margin: 0 8px 0 0; font: 600 20px/1.2 var(--serif); }
+.toolbar .count { font-size: 13px; color: var(--ink-2); }
+.toolbar .spacer { flex: 1; }
+.rows { list-style: none; margin: 0; padding: 0; background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; }
+.row { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 2px 14px; align-items: start; padding: 10px 14px; }
+.row + .row { border-top: 1px solid var(--rule-soft); }
+.row:hover { background: var(--hover); }
+.row.is-selected { background: var(--hover); box-shadow: inset 3px 0 0 var(--ink); }
+.row .tc { font-variant-numeric: tabular-nums; font-size: 14px; color: var(--ink-2); padding-top: 1px; }
+.row .what { min-width: 0; padding: 0; border: 0; background: none; text-align: left; cursor: pointer; overflow-wrap: anywhere; }
+.row .what:hover .nm { text-decoration: underline; text-underline-offset: 2px; }
+.row .nm { display: block; font-weight: 600; }
+.row .tt { display: block; font-size: 14px; color: var(--ink-2); }
+.flags { grid-column: 2; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.flag { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 999px; font-size: 12.5px; font-weight: 600; }
+.flag.new { background: var(--good-bg); color: var(--good); }
+.flag.changed { background: var(--warn-bg); color: var(--warn); }
+.flag.problem { background: var(--bad-bg); color: var(--bad); }
+.flag.linked { background: var(--paper); color: var(--ink-3); font-weight: 500; border: 1px solid var(--rule); }
+.flag button { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+
+.empty { padding: 36px 24px; text-align: center; background: var(--sheet); border: 1px dashed var(--rule); border-radius: 8px; }
+.empty h2 { margin: 0 0 6px; font: 600 20px/1.3 var(--serif); }
+.empty p { margin: 0 auto 16px; max-width: 52ch; color: var(--ink-2); }
+.empty .actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+
+
+.workspace > * { min-width: 0; }
+.side { position: sticky; top: 16px; display: grid; gap: 18px; }
+.row { grid-template-columns: 120px minmax(0, 1fr) auto; }
+.row .rt { font-size: 14px; color: var(--ink-2); padding-top: 2px; }
+.row .st { font-size: 13px; font-weight: 600; padding-top: 2px; white-space: nowrap; }
+.st-locked { color: var(--good); }
+.flags { grid-column: 2 / -1; }
+.todo { list-style: none; margin: 4px 0 0; padding: 0; }
+.todo li { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 6px 0; font-size: 14px; }
+.todo li + li { border-top: 1px solid var(--rule-soft); }
+.todo .sub { display: block; color: var(--ink-3); font-size: 13px; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.three { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 12px; }
+.note { margin: 0; padding: 8px 10px; border-radius: 6px; font-size: 14px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; background: var(--hover); color: var(--ink-2); }
+.note.ok { background: var(--good-bg); color: var(--good); }
+.locked-box { font-size: 14px; }
+.locked-box b { display: block; font-size: 15px; }
+.print-row { display: grid; gap: 8px; }
+.item.st-done { opacity: .75; }
+.item .carried { font-size: 12.5px; color: var(--ink-3); }
+@media (max-width: 720px) {
+  .two, .three { grid-template-columns: 1fr; }
+  .row { grid-template-columns: minmax(0, 1fr) auto; }
+  .row .rt { grid-column: 1 / -1; }
+  .flags { grid-column: 1 / -1; }
+}
+
+.items { display: grid; gap: 10px; }
+.item { margin: 0; padding: 10px 12px 12px; border: 1px solid var(--rule); border-radius: 8px; background: var(--sheet); min-width: 0; }
+.item legend { padding: 0 4px; font-size: 13px; font-weight: 600; color: var(--ink-2); }
+.item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px 10px; }
+.item-grid .wide { grid-column: 1 / -1; }
+.item-grid .check-field { align-self: end; padding-bottom: 8px; }
+.item-foot { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; margin-top: 8px; }
+.item-foot .spacer { flex: 1; }
+.who { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 13.5px; }
+.who label { display: inline-flex; gap: 5px; align-items: center; }
+.who input { width: 15px; height: 15px; margin: 0; }
+.who .sub { color: var(--ink-3); }
+.list-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+.list-head h3 { margin: 0; }
+.picks { display: flex; flex-wrap: wrap; gap: 4px 14px; padding: 2px; }
+.picks label { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; }
+.picks input { width: 16px; height: 16px; margin: 0; flex: none; }
+
+dialog { border: 0; padding: 0; color: var(--ink); background: var(--sheet); box-shadow: 0 10px 40px rgba(10, 14, 22, 0.25); }
+dialog::backdrop { background: rgba(16, 20, 28, 0.42); }
+dialog.drawer { margin: 0 0 0 auto; width: min(600px, 100vw); height: 100dvh; max-height: 100dvh; max-width: 100vw; border-left: 1px solid var(--rule); }
+dialog.modal { width: min(560px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); border-radius: 10px; }
+dialog form { display: flex; flex-direction: column; height: 100%; max-height: inherit; }
+.dlg-head { padding: 20px 24px 12px; border-bottom: 1px solid var(--rule-soft); }
+.dlg-head h2 { margin: 0; font: 600 22px/1.25 var(--serif); }
+.dlg-body { flex: 1; overflow-y: auto; padding: 16px 24px 24px; display: grid; gap: 14px; align-content: start; }
+.dlg-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 14px 24px; border-top: 1px solid var(--rule-soft); }
+.dlg-foot .spacer { flex: 1; }
+.field { display: grid; gap: 4px; }
+.field > label, .field > .label, .group h3 { font-size: 14px; font-weight: 600; margin: 0; }
+.hint { margin: 0; font-size: 13px; color: var(--ink-3); }
+.field input, .field select, .field textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); }
+.group { display: grid; gap: 8px; padding-top: 10px; border-top: 1px solid var(--rule-soft); }
+.checks { display: grid; gap: 2px; max-height: 260px; overflow-y: auto; padding: 2px; }
+.check { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; align-items: start; padding: 5px 4px; border-radius: 6px; cursor: pointer; }
+.check:hover { background: var(--hover); }
+.check input { width: 18px; height: 18px; margin: 2px 0 0; }
+.check .who { overflow-wrap: anywhere; }
+.check .sub { margin-left: 4px; font-size: 13px; color: var(--ink-3); }
+.check .lines { display: block; font-size: 13px; color: var(--ink-3); white-space: pre-line; }
+#songList, #sourceList { max-height: none; }
+.radio-row { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.radio-row label { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; cursor: pointer; }
+pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); font-size: 13px; white-space: pre-wrap; }
+
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); max-width: calc(100vw - 32px); padding: 10px 16px; border-radius: 8px; background: var(--ink); color: var(--paper); font-size: 14px; box-shadow: 0 6px 24px rgba(10, 14, 22, 0.25); z-index: 10; }
+.toast.error { background: var(--bad); color: #ffffff; }
+.report { display: none; }
+
+@media (max-width: 900px) {
+  .workspace { grid-template-columns: 1fr; }
+  .side { position: static; }
+}
+@media (max-width: 720px) {
+  .page { padding: 0 16px 40px; }
+  .film-title { font-size: 26px; }
+  .file { align-items: flex-start; }
+  .file-state { text-align: left; }
+  .toolbar h2 { flex-basis: 100%; order: -2; }
+  .toolbar #addBtn { flex: 1 1 100%; justify-content: center; order: -1; }
+  .row { grid-template-columns: minmax(0, 1fr); }
+  .flags { grid-column: 1; }
+}
+@media print {
+  @page { size: portrait; margin: 16mm; }
+  :root { color-scheme: light; }
+  body { background: #ffffff; color: #000000; font-size: 10pt; }
+  .page, dialog, .toast { display: none !important; }
+  .report { display: block; }
+  .report h1 { margin: 0; font: 700 18pt/1.2 var(--serif); }
+  .report h2 { margin: 14pt 0 4pt; font: 700 12pt/1.2 var(--serif); break-after: avoid; page-break-after: avoid; }
+  .report .r-meta { margin: 2pt 0 10pt; }
+  .report table { width: 100%; border-collapse: collapse; }
+  .report th, .report td { padding: 4pt 5pt; border-bottom: 0.75pt solid #999999; text-align: left; vertical-align: top; }
+  .report th { font-size: 9pt; border-bottom: 1pt solid #000000; }
+  .report tr { break-inside: avoid; page-break-inside: avoid; }
+  .report .r-sub { display: block; font-size: 8.5pt; color: #333333; }
+  .report .r-note { margin-top: 14pt; font-size: 8pt; color: #333333; }
+  .report .r-w { width: 26%; font-size: 9pt; }
+  .report .r-notes { white-space: pre-wrap; }
+}
+</style>
+</head>
+<body>
+<div class="cant-run" id="cantRun">
+  <h1 id="cantRunTitle">Open this file in a web browser</h1>
+  <p id="cantRunText">This tool runs in Chrome, Edge, Firefox or Safari. You're seeing a preview that doesn't run it, so none of the buttons would work.</p>
+  <p id="cantRunHow">In your browser, choose File, then Open File, and pick this file. Or right-click the file and open it with your browser.</p>
+</div>
+<div class="page">
+  <header class="masthead">
+    <div>
+      <p class="tool-name">Cut version tracker</p>
+      <h1 class="film-title" id="filmTitle">Untitled film</h1>
+      <p class="film-meta"><span id="filmMeta"></span> <button type="button" class="link-btn" id="editProjectBtn">Edit film details</button></p>
+    </div>
+    <div class="file">
+      <p class="file-state" id="fileState">Not saved to a file yet</p>
+      <div class="file-actions">
+        <button type="button" class="btn" id="newBtn">New project</button>
+        <button type="button" class="btn" id="openBtn">Open file</button>
+        <button type="button" class="btn" id="projectCsvBtn">Export project data (CSV)</button>
+        <button type="button" class="btn primary" id="saveBtn">Save file</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="banner" id="recovery" role="region" aria-label="Unsaved work" hidden>
+    <p id="recoveryText"></p>
+    <div class="actions">
+      <button type="button" class="btn primary" id="restoreBtn">Restore it</button>
+      <button type="button" class="btn" id="discardBtn">Discard it</button>
+    </div>
+  </div>
+
+  <main class="workspace">
+    <section aria-labelledby="listHead">
+      <div class="toolbar">
+        <h2 id="listHead">Cuts</h2>
+        <span class="count" id="count"></span>
+        <span class="spacer"></span>
+        <button type="button" class="btn primary" id="addBtn">Add a cut</button>
+        <button type="button" class="btn" id="csvBtn">Export notes CSV</button>
+      </div>
+      <ol class="rows" id="rows" aria-labelledby="listHead"></ol>
+      <div class="empty" id="empty" hidden>
+        <h2>No cuts yet</h2>
+        <p>Track every cut: when it was made, how long it runs and what changed, who saw it at each feedback screening, and the notes they gave, each tied to a time in the cut and its scene. Keep track of which notes are done, deferred or carried to the next cut, and mark the locked cut.</p>
+        <div class="actions">
+          <button type="button" class="btn primary" id="emptyAddBtn">Add a cut</button>
+          <button type="button" class="btn" id="emptyOpenBtn">Open file</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="side">
+      <section class="card" aria-labelledby="lockHead">
+        <div class="card-head"><h2 id="lockHead">Locked cut</h2></div>
+        <div class="locked-box" id="lockedBox"></div>
+      </section>
+      <section class="card" aria-labelledby="openHead">
+        <div class="card-head"><h2 id="openHead">Notes still to do</h2><span class="count" id="openCount"></span></div>
+        <ul class="todo" id="open"></ul>
+      </section>
+      <section class="card" aria-labelledby="printHead">
+        <div class="card-head"><h2 id="printHead">Print</h2></div>
+        <div class="print-row">
+          <div class="field"><label for="printSel">Notes for</label><select id="printSel"></select></div>
+          <div><button type="button" class="btn" id="printBtn">Print the notes</button></div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="foot">
+    <p>Part of the Open Filmmaker Toolkit. This page makes no network requests: everything stays on this computer until you save or export it. Uses the same project file as the other toolkit tools.</p>
+  </footer>
+</div>
+
+<dialog class="drawer" id="editor" aria-labelledby="editorTitle">
+  <form id="editorForm" method="dialog" novalidate>
+    <div class="dlg-head"><h2 id="editorTitle">Cut</h2></div>
+    <div class="dlg-body">
+      <div class="three">
+        <div class="field"><label for="f-name">Cut</label><input id="f-name" type="text" placeholder="Rough cut 2" autocomplete="off" required></div>
+        <div class="field"><label for="f-date">Date</label><input id="f-date" type="date"></div>
+        <div class="field"><label for="f-rt">Running time</label><input id="f-rt" type="text" placeholder="1:32:10" autocomplete="off"></div>
+      </div>
+      <div class="field"><label for="f-changes">What changed</label><textarea id="f-changes" rows="3" placeholder="New opening; Ruth's diary moved into act one; the levee board scene cut"></textarea></div>
+      <label class="check"><input type="checkbox" id="f-locked"> This is the locked cut</label>
+      <p class="hint" id="lockHint">Locking it sets the project's cut version and running time, which the clearance log and the music cue sheet use. Only one cut is locked at a time.</p>
+      <div class="group">
+        <div class="list-head"><h3>Feedback screenings</h3><button type="button" class="btn small" data-add="screenings">Add a screening</button></div>
+        <div class="items" id="screenings"></div>
+      </div>
+      <div class="group">
+        <div class="list-head"><h3>Notes</h3><button type="button" class="btn small" data-add="notes">Add a note</button></div>
+        <p class="note" id="carryNote" hidden><span id="carryText"></span><button type="button" class="btn small" id="carryBtn">Carry them here</button></p>
+        <p class="hint">Time in the cut as hours, minutes and seconds, such as 0:12:30. Add an end time for a range.</p>
+        <div class="items" id="notes"></div>
+      </div>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn danger" id="deleteBtn">Remove cut</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="editorCancel">Cancel</button>
+      <button type="submit" class="btn primary" id="editorSubmit">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="projectDialog" aria-labelledby="projectDialogTitle">
+  <form id="projectForm" method="dialog">
+    <div class="dlg-head"><h2 id="projectDialogTitle">Film details</h2></div>
+    <div class="dlg-body">
+      <div class="field"><label for="p-title">Film title</label><input id="p-title" type="text" placeholder="Working title is fine"></div>
+      <div class="field"><label for="p-company">Production company</label><input id="p-company" type="text"></div>
+      <div class="field"><label for="p-producer">Producer</label><input id="p-producer" type="text"></div>
+    </div>
+    <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn" id="projectCancel">Cancel</button><button type="submit" class="btn primary">Save details</button></div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="projectCsvDialog" aria-labelledby="projectCsvTitle">
+  <form id="projectCsvForm" method="dialog">
+    <div class="dlg-head"><h2 id="projectCsvTitle">Export project data</h2></div>
+    <div class="dlg-body">
+      <div class="field">
+        <label for="projectCsvCollection">Data to export</label>
+        <select id="projectCsvCollection">
+          <option value="project">Project details</option>
+          <option value="people">People</option>
+          <option value="locations">Locations</option>
+          <option value="thirdPartyElements">Third-party elements</option>
+          <option value="contracts">Contracts</option>
+          <option value="assets">Assets</option>
+          <option value="musicCueSheet">Music cue sheet details</option>
+          <option value="callSheets">Call sheets</option>
+        </select>
+      </div>
+      <p class="hint">Exports one CSV file for the selected collection. Nested values are kept as JSON in their cell.</p>
+    </div>
+    <div class="dlg-foot">
+      <button type="submit" class="btn primary">Export CSV</button>
+      <button type="button" class="btn" id="projectCsvCancel">Cancel</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="conflictDialog" aria-labelledby="conflictTitle">
+  <form method="dialog">
+    <div class="dlg-head"><h2 id="conflictTitle">Project file changed</h2></div>
+    <div class="dlg-body">
+      <p id="conflictText">This project file changed after you opened it. Saving will replace those changes.</p>
+      <p class="hint">Your edits are still here. Choose whether to overwrite the changed file, save a separate copy, or load its latest contents. Save in one tool at a time; simultaneous saves can still race.</p>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn" id="conflictReloadBtn">Reload latest</button>
+      <button type="button" class="btn" id="conflictCopyBtn">Save a copy</button>
+      <button type="button" class="btn danger" id="conflictOverwriteBtn">Overwrite file</button>
+      <button type="button" class="btn" id="conflictCancelBtn">Keep editing</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="report" id="report" aria-hidden="true"></div>
+<input type="file" id="fileInput" accept=".json,application/json" hidden>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+(() => {
+  'use strict';
+
+  const FORMAT = 'open-filmmaker-toolkit/project';
+  const FORMAT_VERSION = 1;
+  const TOOL = 'cut-tracker 0.1.0';
+  const DRAFT_KEY = 'oft.cut-tracker.draft';
+  const PROJECT_TEXT = ['title', 'company', 'producer'];
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const str = v => (v == null ? '' : String(v));
+  const arr = v => (Array.isArray(v) ? v : []);
+  const norm = s => str(s).toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+
+  let doc = blankDoc();
+  let fileHandle = null;
+  let baselineText = null;
+  let fileName = null;
+  let dirty = false;
+
+  function blankDoc() {
+    return { format: FORMAT, formatVersion: FORMAT_VERSION, project: { title: '', company: '', producer: '', frameRate: 24, currency: 'USD' }, people: [], cuts: [] };
+  }
+  function newId(prefix) {
+    if (window.crypto && crypto.randomUUID) return `${prefix}-${crypto.randomUUID()}`;
+    return `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+  }
+  function today() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  function fmtDate(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str(iso));
+    if (!m) return str(iso);
+    return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+  function daysUntil(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str(iso));
+    if (!m) return null;
+    const t = new Date(); const a = Date.UTC(t.getFullYear(), t.getMonth(), t.getDate());
+    return Math.round((Date.UTC(+m[1], +m[2] - 1, +m[3]) - a) / 86400000);
+  }
+
+
+  // ---------- Lists inside the editor ----------
+  const LISTS = {};
+  function listField(name, i, f, r) {
+    const id = `${name}-${i}-${f.k}`, v = r[f.k] == null ? '' : String(r[f.k]);
+    const attrs = `id="${id}" data-k="${f.k}"${f.placeholder ? ` placeholder="${esc(f.placeholder)}"` : ''}`;
+    if (f.type === 'checkbox') return `<div class="field check-field${f.wide ? ' wide' : ''}"><label class="check"><input ${attrs} type="checkbox"${r[f.k] ? ' checked' : ''}> ${esc(f.label)}</label></div>`;
+    const input = f.type === 'select' ? `<select ${attrs}>${(typeof f.options === 'function' ? f.options() : f.options).map(o => `<option value="${esc(o.id)}"${String(o.id) === v ? ' selected' : ''}>${esc(o.label)}</option>`).join('')}</select>`
+      : f.type === 'textarea' ? `<textarea ${attrs} rows="2">${esc(v)}</textarea>`
+      : `<input ${attrs} type="${f.type || 'text'}"${f.type === 'number' ? ' min="0" step="any" inputmode="decimal"' : ''} value="${esc(v)}" autocomplete="off"${f.list ? ` list="${f.list}"` : ''}>`;
+    return `<div class="field${f.wide ? ' wide' : ''}"><label for="${id}">${esc(f.label)}</label>${input}</div>`;
+  }
+  function drawList(name) {
+    const L = LISTS[name], rows = arr(editing[name]);
+    const people = L.who ? L.who() : [];
+    $(L.box).innerHTML = rows.map((r, i) => `<fieldset class="item" data-list="${name}" data-i="${i}"><legend>${esc(L.title(r, i))}</legend>
+      <div class="item-grid">${L.fields.map(f => listField(name, i, f, r)).join('')}</div>
+      <div class="item-foot">${L.who ? `<div class="who" role="group" aria-label="Who">${people.length ? people.map(p => `<label><input type="checkbox" data-who value="${esc(p.id)}"${arr(r.personIds).includes(p.id) ? ' checked' : ''}>${esc(p.name)}</label>`).join('') + '<span class="sub">None ticked means everyone.</span>' : '<span class="sub">Pick people above to say who this is for.</span>'}</div>` : ''}
+        <span class="spacer"></span><button type="button" class="btn small" data-remove aria-label="Remove ${esc(L.title(r, i))}">Remove</button></div></fieldset>`).join('')
+      || `<p class="hint">${esc(L.empty)}</p>`;
+  }
+  function drawLists() { for (const n of Object.keys(LISTS)) drawList(n); }
+  function wireLists(form) {
+    form.addEventListener('input', ev => listInput(ev.target));
+    form.addEventListener('change', ev => listInput(ev.target));
+    form.addEventListener('click', ev => {
+      const add = ev.target.closest('[data-add]');
+      if (add) { const n = add.dataset.add; editing[n] = [...arr(editing[n]), LISTS[n].blank()]; drawList(n); const rows = $(LISTS[n].box).querySelectorAll('.item'); const last = rows[rows.length - 1]; if (last) { const el = last.querySelector('input, select, textarea'); if (el) el.focus(); } return; }
+      const rm = ev.target.closest('[data-remove]');
+      if (rm) { const fs = rm.closest('[data-list]'); editing[fs.dataset.list].splice(Number(fs.dataset.i), 1); drawList(fs.dataset.list); }
+    });
+  }
+  function listInput(el) {
+    const fs = el.closest && el.closest('[data-list]');
+    if (!fs) return;
+    const r = editing[fs.dataset.list][Number(fs.dataset.i)];
+    if (el.hasAttribute('data-who')) { r.personIds = [...fs.querySelectorAll('[data-who]:checked')].map(x => x.value); if (!r.personIds.length) delete r.personIds; return; }
+    const k = el.dataset.k; if (!k) return;
+    if (el.type === 'checkbox') { if (el.checked) r[k] = true; else delete r[k]; }
+    else if (el.type === 'number') { if (el.value === '') delete r[k]; else r[k] = Number(el.value); }
+    else if (el.value.trim()) r[k] = el.tagName === 'SELECT' && /^\d+$/.test(el.value) && LISTS[fs.dataset.list].fields.find(f => f.k === k).numeric ? Number(el.value) : el.value; else delete r[k];
+    const lg = fs.querySelector('legend'); if (lg) lg.textContent = LISTS[fs.dataset.list].title(r, Number(fs.dataset.i));
+  }
+  // Rows with nothing typed in them are dropped on save; text is trimmed.
+  function cleanList(rows, keep) {
+    return arr(rows).map(r => { const o = {}; for (const [k, v] of Object.entries(r)) { if (typeof v === 'string') { if (v.trim()) o[k] = v.trim(); } else if (v != null) o[k] = v; } return o; })
+      .filter(r => Object.keys(r).some(k => !['id', ...(keep || [])].includes(k)));
+  }
+  // Ticks for picking people or places in the editor.
+  function picks(box, list, on, label) {
+    const set = new Set(arr(on));
+    $(box).innerHTML = list.length ? list.map(x => `<label><input type="checkbox" value="${esc(x.id)}"${set.has(x.id) ? ' checked' : ''}>${esc(label(x))}</label>`).join('') : '<span class="hint">None in the project yet.</span>';
+  }
+  const picked = box => [...$(box).querySelectorAll('input:checked')].map(i => i.value);
+
+  const STATUS = [{ id: 'open', label: 'To do' }, { id: 'done', label: 'Done' }, { id: 'deferred', label: 'Deferred' }, { id: 'carried', label: 'Carried to a later cut' }];
+  const statusLabel = id => (STATUS.find(s => s.id === id) || STATUS[0]).label;
+  let editing = null, isNew = false, carry = [];
+  let printId = '';
+
+  // Fills in only what this tool needs; everything else in the file is left as it was.
+  function normalize(d) {
+    if (!d.project || typeof d.project !== 'object') d.project = {};
+    for (const k of PROJECT_TEXT) if (typeof d.project[k] !== 'string') d.project[k] = str(d.project[k]);
+    if (!Array.isArray(d.people)) d.people = [];
+    if (!Array.isArray(d.cuts)) d.cuts = [];
+    d.cuts = d.cuts.filter(c => c && typeof c === 'object');
+    for (const c of d.cuts) {
+      if (!c.id) c.id = newId('cut');
+      for (const k of ['screenings', 'notes']) if (c[k] !== undefined && !Array.isArray(c[k])) delete c[k];
+      for (const n of arr(c.notes)) if (!STATUS.some(s => s.id === n.status)) n.status = 'open';
+    }
+    d.format = FORMAT;
+    d.formatVersion = FORMAT_VERSION;
+    return d;
+  }
+  const cuts = () => doc.cuts;
+  const entries = cuts;
+  const isDate = s => /^\d{4}-\d{2}-\d{2}$/.test(str(s));
+  const ordered = () => [...cuts()].sort((a, b) => str(a.date || '0000').localeCompare(str(b.date || '0000')));
+  const cardsList = () => arr(doc.structure && doc.structure.cards).filter(c => c && c.id);
+  const card = id => cardsList().find(c => c.id === id);
+  const cutOf = id => cuts().find(c => c.id === id);
+  // A time in the cut, in seconds: 1:02:03, 12:30 or 0:12:30.
+  function secs(tc) {
+    const m = str(tc).trim().match(/^(?:(\d{1,2}):)?(\d{1,2}):(\d{2})(?:[:;.]\d{1,2})?$/);
+    return m ? Number(m[1] || 0) * 3600 + Number(m[2]) * 60 + Number(m[3]) : null;
+  }
+  const where = n => [n.tc && (n.tcOut ? `${n.tc} to ${n.tcOut}` : n.tc), card(n.cardId) && card(n.cardId).title, n.shot && `shot: ${n.shot}`].filter(Boolean).join(' · ');
+  const screening = (c, id) => arr(c.screenings).find(s => s.id === id);
+  const counts = c => Object.fromEntries(STATUS.map(s => [s.id, arr(c.notes).filter(n => n.status === s.id).length]));
+  // Notes from earlier cuts that are still to do or deferred, and not carried yet.
+  function carriable(c) {
+    const i = ordered().findIndex(x => x.id === c.id);
+    const before = (i < 0 ? ordered() : ordered().slice(0, i)).filter(x => x.id !== c.id && (!c.date || !x.date || x.date <= c.date));
+    return before.flatMap(x => arr(x.notes).filter(n => n.status === 'open' || n.status === 'deferred').map(n => ({ cut: x, note: n })));
+  }
+
+  LISTS.screenings = { box: 'screenings', empty: 'No screenings yet.', blank: () => ({ id: newId('screening') }),
+    title: (r, i) => `Screening ${i + 1}${r.date ? `: ${fmtDate(r.date)}` : ''}`,
+    fields: [{ k: 'date', label: 'Date', type: 'date' }, { k: 'audience', label: 'Who saw it', placeholder: 'Producers and two friends of the film', wide: true }] };
+  LISTS.notes = { box: 'notes', empty: 'No notes yet.', blank: () => ({ id: newId('note'), status: 'open', screeningId: (arr(editing.screenings).slice(-1)[0] || {}).id }),
+    title: (r, i) => `${statusLabel(r.status)}${r.tc ? ` · ${r.tc}` : ''}${r.carriedFromCutId && cutOf(r.carriedFromCutId) ? ` · from ${cutOf(r.carriedFromCutId).name || 'an earlier cut'}` : ''}`,
+    fields: [{ k: 'status', label: 'Status', type: 'select', options: () => STATUS },
+      { k: 'screeningId', label: 'Screening', type: 'select', options: () => [{ id: '', label: 'None' }, ...arr(editing.screenings).map((s, i) => ({ id: s.id, label: `${i + 1}${s.date ? `: ${fmtDate(s.date)}` : ''}${s.audience ? `, ${s.audience.slice(0, 30)}` : ''}` }))] },
+      { k: 'tc', label: 'Time in the cut', placeholder: '0:12:30' }, { k: 'tcOut', label: 'To', placeholder: '0:13:10' },
+      { k: 'cardId', label: 'Scene', type: 'select', options: () => [{ id: '', label: cardsList().length ? 'Not set' : 'No structure board yet' }, ...cardsList().map(c => ({ id: c.id, label: c.title || 'Untitled scene' }))] },
+      { k: 'shot', label: 'Shot' }, { k: 'from', label: 'From', placeholder: 'Who gave it' },
+      { k: 'text', label: 'Note', type: 'textarea', wide: true }] };
+
+  // ---------- Render ----------
+  function render() {
+    $('filmTitle').textContent = doc.project.title || 'Untitled film';
+    $('filmTitle').classList.toggle('is-empty', !doc.project.title);
+    $('filmMeta').textContent = [doc.project.company, doc.project.producer && `Producer: ${doc.project.producer}`].filter(Boolean).join(' · ');
+    $('fileState').innerHTML = (fileName ? esc(fileName) : 'Not saved to a file yet') + (dirty ? ' · <span class="dirty">Unsaved changes</span>' : '');
+    document.title = `${doc.project.title ? doc.project.title + ' · ' : ''}Cut version tracker · Open Filmmaker Toolkit`;
+    const all = [...ordered()].reverse();
+    const open = all.reduce((t, c) => t + counts(c).open, 0);
+    $('count').textContent = all.length ? `${all.length} cut${all.length === 1 ? '' : 's'}${open ? ` · ${open} note${open === 1 ? '' : 's'} to do` : ''}` : '';
+    $('empty').hidden = !!all.length;
+    $('rows').hidden = !all.length;
+    $('csvBtn').hidden = !all.length;
+    $('rows').innerHTML = all.map(c => {
+      const n = counts(c), flags = [];
+      if (c.runningTime) flags.push(`<span class="flag linked">${esc(c.runningTime)}</span>`);
+      const sc = arr(c.screenings).length;
+      if (sc) flags.push(`<span class="flag linked">${sc} screening${sc === 1 ? '' : 's'}</span>`);
+      if (n.open) flags.push(`<span class="flag changed">${n.open} to do</span>`);
+      if (n.done) flags.push(`<span class="flag new">${n.done} done</span>`);
+      if (n.deferred) flags.push(`<span class="flag linked">${n.deferred} deferred</span>`);
+      if (n.carried) flags.push(`<span class="flag linked">${n.carried} carried</span>`);
+      return `<li class="row" data-id="${esc(c.id)}"><span class="rt">${esc(c.date ? fmtDate(c.date) : 'No date')}</span>
+        <button type="button" class="what" data-edit="${esc(c.id)}"><span class="nm">${esc(c.name || 'Unnamed cut')}</span>${c.changes ? `<span class="tt">${esc(c.changes)}</span>` : ''}</button>
+        <span class="st${c.locked ? ' st-locked' : ''}">${c.locked ? 'Locked' : ''}</span>
+        ${flags.length ? `<div class="flags">${flags.join('')}</div>` : ''}</li>`;
+    }).join('');
+    const lk = cuts().find(c => c.locked);
+    $('lockedBox').innerHTML = lk ? `<b>${esc(lk.name || 'Locked cut')}</b>${esc([lk.date && fmtDate(lk.date), lk.runningTime].filter(Boolean).join(' · '))}<p class="hint">The project's cut version reads “${esc(doc.project.cutVersion || '')}”${doc.project.runningTime ? `, running ${esc(doc.project.runningTime)}` : ''}.</p>`
+      : `<p class="empty-line">No cut is locked yet.${doc.project.cutVersion ? ` The project's cut version reads “${esc(doc.project.cutVersion)}”.` : ''}</p>`;
+    const openNotes = all.flatMap(c => arr(c.notes).filter(x => x.status === 'open').map(x => ({ c, x }))).slice(0, 8);
+    $('openCount').textContent = open ? String(open) : '';
+    $('open').innerHTML = openNotes.length ? openNotes.map(({ c, x }) => `<li><span>${esc((x.text || 'Note').slice(0, 80))}<span class="sub">${esc([c.name, where(x)].filter(Boolean).join(' · '))}</span></span><button type="button" class="btn small" data-edit="${esc(c.id)}">Open</button></li>`).join('')
+      + (open > openNotes.length ? `<li class="empty-line">And ${open - openNotes.length} more.</li>` : '') : '<li class="empty-line">Nothing to do.</li>';
+    if (!all.some(c => c.id === printId)) printId = (all.find(c => arr(c.notes).length) || all[0] || {}).id || '';
+    $('printSel').innerHTML = all.map(c => `<option value="${esc(c.id)}"${c.id === printId ? ' selected' : ''}>${esc(c.name || 'Unnamed cut')}</option>`).join('') || '<option value="">Add a cut first</option>';
+    $('printSel').disabled = $('printBtn').disabled = !all.length;
+  }
+
+  // ---------- Editor ----------
+  function showCarry() {
+    const list = carriable(editing).filter(x => !carry.some(y => y.note.id === x.note.id));
+    $('carryNote').hidden = !list.length;
+    if (list.length) $('carryText').textContent = `${list.length} note${list.length === 1 ? '' : 's'} from earlier cuts ${list.length === 1 ? 'is' : 'are'} still to do or deferred.`;
+  }
+  function openEditor(id) {
+    const existing = id && cutOf(id);
+    isNew = !existing; carry = [];
+    if (existing) editing = structuredClone(existing);
+    else {
+      const last = ordered().slice(-1)[0];
+      const m = last && str(last.name).match(/^(.*?)(\d+)$/);
+      editing = { id: newId('cut'), date: today(), name: m ? `${m[1]}${Number(m[2]) + 1}` : '' };
+    }
+    for (const k of ['screenings', 'notes']) editing[k] = arr(editing[k]).map(x => Object.assign({}, x));
+    for (const [k, id] of [['name', 'f-name'], ['date', 'f-date'], ['runningTime', 'f-rt'], ['changes', 'f-changes']]) $(id).value = str(editing[k]);
+    $('f-locked').checked = !!editing.locked;
+    drawLists(); showCarry();
+    $('editorTitle').textContent = isNew ? 'Add a cut' : editing.name || 'Cut';
+    $('deleteBtn').hidden = isNew;
+    $('editor').showModal();
+    $(isNew ? 'f-name' : 'f-changes').focus();
+  }
+  // Copies earlier notes into this cut. The originals are marked carried when you save.
+  function carryNotes() {
+    const list = carriable(editing).filter(x => !carry.some(y => y.note.id === x.note.id));
+    for (const x of list) {
+      carry.push(x);
+      const n = { id: newId('note'), status: 'open', carriedFromCutId: x.cut.id, carriedFromNoteId: x.note.id };
+      for (const k of ['tc', 'tcOut', 'cardId', 'shot', 'from', 'text']) if (x.note[k]) n[k] = x.note[k];
+      editing.notes.push(n);
+    }
+    drawList('notes'); showCarry();
+    toast(`Carried ${list.length} note${list.length === 1 ? '' : 's'}. Times may have moved in this cut; check them.`);
+  }
+  function saveEditor() {
+    if (!$('f-name').value.trim()) { $('f-name').setCustomValidity('Name the cut.'); $('f-name').reportValidity(); return; }
+    const rt = $('f-rt').value.trim();
+    if (rt && secs(rt) == null) { $('f-rt').setCustomValidity('Use hours, minutes and seconds, such as 1:32:10.'); $('f-rt').reportValidity(); return; }
+    const bad = [...$('notes').querySelectorAll('[data-k="tc"], [data-k="tcOut"]')].find(el => el.value.trim() && secs(el.value) == null);
+    if (bad) { bad.setCustomValidity('Use hours, minutes and seconds, such as 0:12:30.'); bad.reportValidity(); return; }
+    const c = editing;
+    for (const [k, id] of [['name', 'f-name'], ['date', 'f-date'], ['runningTime', 'f-rt'], ['changes', 'f-changes']]) { const v = $(id).value.trim(); if (v) c[k] = v; else delete c[k]; }
+    const sc = cleanList(c.screenings); if (sc.length) c.screenings = sc; else delete c.screenings;
+    const ids = new Set(arr(c.screenings).map(s => s.id));
+    const ns = cleanList(c.notes, ['status', 'screeningId', 'carriedFromCutId', 'carriedFromNoteId']).map(n => { if (n.screeningId && !ids.has(n.screeningId)) delete n.screeningId; return n; });
+    if (ns.length) c.notes = ns; else delete c.notes;
+    const wasLocked = !!(cutOf(c.id) || {}).locked;
+    if ($('f-locked').checked) c.locked = true; else delete c.locked;
+    if (isNew) cuts().push(c); else cuts()[cuts().findIndex(x => x.id === c.id)] = c;
+    // The originals of carried notes point to this cut.
+    const kept = new Set(arr(c.notes).map(n => n.carriedFromNoteId).filter(Boolean));
+    for (const x of carry) if (kept.has(x.note.id)) { const n = arr((cutOf(x.cut.id) || {}).notes).find(y => y.id === x.note.id); if (n) { n.status = 'carried'; n.carriedToCutId = c.id; } }
+    // One locked cut, and the project follows it.
+    if (c.locked) {
+      for (const x of cuts()) if (x.id !== c.id) delete x.locked;
+      doc.project.cutVersion = [c.name, c.date && fmtDate(c.date)].filter(Boolean).join(', ');
+      if (c.runningTime) doc.project.runningTime = c.runningTime;
+      if (!wasLocked) toast(`Locked ${c.name}. The project's cut version now reads “${doc.project.cutVersion}”.`);
+    }
+    printId = c.id;
+    $('editor').close();
+    changed();
+  }
+  function removeEditing() {
+    if (!confirm(`Remove ${editing.name || 'this cut'} and its notes?`)) return;
+    doc.cuts = cuts().filter(c => c.id !== editing.id);
+    for (const c of cuts()) for (const n of arr(c.notes)) if (n.carriedToCutId === editing.id) { n.status = 'open'; delete n.carriedToCutId; }
+    $('editor').close();
+    changed();
+  }
+
+  // ---------- CSV and print ----------
+  const CSV_HEAD = ['Cut', 'Cut date', 'Running time', 'Screening', 'Who saw it', 'Time in the cut', 'To', 'Scene', 'Shot', 'From', 'Note', 'Status', 'Carried to'];
+  function exportCsv() {
+    const rows = ordered().flatMap(c => [...arr(c.notes)].sort((a, b) => (secs(a.tc) ?? 1e9) - (secs(b.tc) ?? 1e9)).map(n => { const s = screening(c, n.screeningId) || {};
+      return [c.name, c.date, c.runningTime, s.date, s.audience, n.tc, n.tcOut, (card(n.cardId) || {}).title, n.shot, n.from, n.text, statusLabel(n.status), (cutOf(n.carriedToCutId) || {}).name]; }));
+    const csv = '﻿' + [CSV_HEAD, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
+    const name = `${slug()}-cut-notes.csv`;
+    download(csv, name, 'text/csv;charset=utf-8');
+    toast(`Exported ${rows.length} note${rows.length === 1 ? '' : 's'} to ${name}`);
+  }
+  function renderReport() {
+    const c = cutOf(printId);
+    if (!c) { $('report').innerHTML = ''; return; }
+    const ns = [...arr(c.notes)].sort((a, b) => STATUS.findIndex(s => s.id === a.status) - STATUS.findIndex(s => s.id === b.status) || (secs(a.tc) ?? 1e9) - (secs(b.tc) ?? 1e9));
+    $('report').innerHTML = `<h1>${esc(c.name || 'Cut')}: notes</h1>
+      <p class="r-meta">${esc([doc.project.title, c.date && fmtDate(c.date), c.runningTime && `runs ${c.runningTime}`, c.locked && 'Locked cut', `Printed ${fmtDate(today())}`].filter(Boolean).join(' · '))}</p>
+      ${c.changes ? `<h2>What changed</h2><p class="r-notes">${esc(c.changes)}</p>` : ''}
+      ${arr(c.screenings).length ? `<h2>Screenings</h2><table><tbody>${c.screenings.map((s, i) => `<tr><td class="r-w">${i + 1}. ${esc(s.date ? fmtDate(s.date) : '')}</td><td>${esc(s.audience || '')}</td></tr>`).join('')}</tbody></table>` : ''}
+      ${STATUS.filter(s => ns.some(n => n.status === s.id)).map(s => `<h2>${esc(s.label)}</h2><table><thead><tr><th class="r-w">Where</th><th>Note</th><th class="r-w">From</th></tr></thead><tbody>
+        ${ns.filter(n => n.status === s.id).map(n => `<tr><td class="r-w">${esc(where(n))}</td><td class="r-notes">${esc(n.text || '')}${n.status === 'carried' && cutOf(n.carriedToCutId) ? `<br><i>Carried to ${esc(cutOf(n.carriedToCutId).name)}</i>` : ''}${n.carriedFromCutId && cutOf(n.carriedFromCutId) ? `<br><i>From ${esc(cutOf(n.carriedFromCutId).name)}</i>` : ''}</td><td class="r-w">${esc(n.from || '')}</td></tr>`).join('')}</tbody></table>`).join('') || '<p>No notes.</p>'}`;
+  }
+
+  // ---------- Project CSV ----------
+  function csvCell(v) {
+    let s = v == null ? '' : String(v);
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+    return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }
+  const csvCollections = {
+    project: 'project details', people: 'people', locations: 'locations', thirdPartyElements: 'third-party elements',
+    contracts: 'contracts', assets: 'assets', musicCueSheet: 'music cue sheet details', callSheets: 'call sheets'
+  };
+  function exportProjectCsv() {
+    const collection = $('projectCsvCollection').value;
+    const value = doc[collection];
+    const rows = Array.isArray(value) ? value : value && typeof value === 'object' ? [value] : [];
+    if (rows.some(row => !row || typeof row !== 'object' || Array.isArray(row))) {
+      toast(`Couldn't export ${csvCollections[collection]}: the project contains an invalid record.`, true);
+      return;
+    }
+    const headers = [...new Set(rows.flatMap(row => Object.keys(row)))];
+    if (!headers.length) headers.push('id');
+    const csvRows = rows.map(row => headers.map(key => { const cell = row[key]; return cell && typeof cell === 'object' ? JSON.stringify(cell) : cell; }));
+    const csv = '﻿' + [headers, ...csvRows].map(row => row.map(csvCell).join(',')).join('\r\n') + '\r\n';
+    const name = suggestedName().replace(/\.oft\.json$/i, `-${collection}.csv`);
+    download(csv, name, 'text/csv;charset=utf-8');
+    toast(`Exported ${rows.length} ${csvCollections[collection]} to ${name}`);
+  }
+
+  // ---------- Film details ----------
+  function openProjectDialog() {
+    for (const k of PROJECT_TEXT) $(`p-${k}`).value = doc.project[k] || '';
+    $('projectDialog').showModal();
+    $('p-title').focus();
+  }
+  function saveProjectDialog() {
+    for (const k of PROJECT_TEXT) doc.project[k] = $(`p-${k}`).value.trim();
+    $('projectDialog').close();
+    changed();
+  }
+
+  // ---------- Dirty state & recovery draft ----------
+  function changed() { dirty = true; saveDraft(); render(); }
+  function saveDraft() {
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ doc, fileName, baselineText, at: new Date().toISOString() })); } catch { /* the file on disk is the real copy */ }
+  }
+  function clearDraft() {
+    try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+    $('recovery').hidden = true;
+  }
+  function checkDraft() {
+    let draft = null;
+    try { draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); } catch { draft = null; }
+    if (!draft || !draft.doc || draft.doc.format !== FORMAT) return;
+    const n = Array.isArray(draft.doc.cuts) ? draft.doc.cuts.length : 0;
+    if (!n && !(draft.doc.project && draft.doc.project.title)) { clearDraft(); return; }
+    const when = draft.at ? new Date(draft.at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'earlier';
+    const title = draft.doc.project && draft.doc.project.title ? `"${draft.doc.project.title}"` : 'an untitled project';
+    $('recoveryText').textContent = `You have unsaved changes to ${title} from ${when} (${n} cut${n === 1 ? '' : 's'}). Restore them, or discard them and start fresh.`;
+    $('recovery').hidden = false;
+    $('restoreBtn').onclick = () => {
+      doc = normalize(draft.doc); fileName = draft.fileName || null; fileHandle = null;
+      baselineText = typeof draft.baselineText === 'string' ? draft.baselineText : null; dirty = true;
+      $('recovery').hidden = true; render();
+      toast(fileName ? `Restored. Save to write the changes back to ${fileName}.` : 'Restored. Save to keep it as a file.');
+    };
+    $('discardBtn').onclick = () => { clearDraft(); toast('Discarded the unsaved changes.'); };
+  }
+
+  // ---------- Files ----------
+  const pickerTypes = [{ description: 'Film project file', accept: { 'application/json': ['.json'] } }];
+  function slug() {
+    return (doc.project.title || 'untitled-film').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'untitled-film';
+  }
+  const suggestedName = () => `${slug()}.oft.json`;
+  function serialize() {
+    doc.savedAt = new Date().toISOString();
+    doc.savedBy = TOOL;
+    return JSON.stringify(doc, null, 2) + '\n';
+  }
+  function download(text, name, type) {
+    const url = URL.createObjectURL(new Blob([text], { type }));
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  function afterSave(name, downloaded, content) {
+    fileName = name;
+    if (downloaded) fileHandle = null;
+    baselineText = content;
+    dirty = false; clearDraft(); render();
+    toast(downloaded ? `Downloaded ${name}. Keep it with your project files and open it here next time.` : `Saved to ${name}`);
+  }
+  async function writeProjectFile(handle, content) {
+    try {
+      const writable = await handle.createWritable();
+      await writable.write(content);
+      await writable.close();
+    } catch (err) {
+      if (err.name !== 'AbortError') toast(`Couldn't save the file: ${err.message}`, true);
+      return;
+    }
+    fileHandle = handle;
+    afterSave(handle.name, false, content);
+  }
+  function saveCopy(content) {
+    const base = (fileName || suggestedName()).replace(/\.oft\.json$/i, '');
+    const name = `${base}-copy.oft.json`;
+    download(content, name, 'application/json');
+    afterSave(name, true, content);
+  }
+  async function reloadLatest(handle) {
+    try {
+      const file = await handle.getFile();
+      loadText(await file.text(), handle.name, handle);
+    } catch (err) {
+      toast(`Couldn't reload the file: ${err.message}`, true);
+    }
+  }
+  function showConflictDialog(content, observedText, unknownBaseline = false) {
+    const handle = fileHandle;
+    dirty = true;
+    saveDraft();
+    render();
+    $('conflictText').textContent = unknownBaseline
+      ? `The tool can't verify whether ${handle.name} changed since your recovery copy was made. Your edits are not saved.`
+      : `${handle.name} changed after you opened it. Your edits are not saved. Overwriting replaces the newer file.`;
+    $('conflictDialog').showModal();
+    $('conflictReloadBtn').onclick = () => { $('conflictDialog').close(); reloadLatest(handle); };
+    $('conflictCopyBtn').onclick = () => { $('conflictDialog').close(); saveCopy(content); };
+    $('conflictOverwriteBtn').onclick = async () => {
+      $('conflictDialog').close();
+      let latestText;
+      try { latestText = await (await handle.getFile()).text(); }
+      catch (err) { toast(`Couldn't check the file before overwriting: ${err.message}`, true); return; }
+      if (latestText !== observedText) {
+        toast('The file changed again. Review the updated conflict warning before overwriting.', true);
+        showConflictDialog(content, latestText);
+        return;
+      }
+      await writeProjectFile(handle, content);
+    };
+    $('conflictCancelBtn').onclick = () => $('conflictDialog').close();
+  }
+  async function saveFile() {
+    const out = serialize();
+    if (fileHandle) {
+      let currentText;
+      try { currentText = await (await fileHandle.getFile()).text(); }
+      catch (err) { toast(`Couldn't check the file before saving: ${err.message}`, true); return; }
+      if (baselineText === null || currentText !== baselineText) { showConflictDialog(out, currentText, baselineText === null); return; }
+      await writeProjectFile(fileHandle, out);
+      return;
+    }
+    if (window.showSaveFilePicker && window.self === window.top) {
+      try {
+        const h = await window.showSaveFilePicker({ suggestedName: fileName || suggestedName(), types: pickerTypes });
+        if (h.name === fileName) {
+          const currentText = await (await h.getFile()).text();
+          if (baselineText === null || currentText !== baselineText) { fileHandle = h; showConflictDialog(out, currentText, baselineText === null); return; }
+        }
+        await writeProjectFile(h, out);
+      } catch (err) { if (err.name !== 'AbortError') toast(`Couldn't save the file: ${err.message}`, true); }
+      return;
+    }
+    const name = fileName || suggestedName();
+    download(out, name, 'application/json');
+    afterSave(name, true, out);
+  }
+  function loadText(text, name, handle) {
+    let data;
+    try { data = JSON.parse(text); } catch { toast(`Couldn't open ${name}: it isn't a project file.`, true); return; }
+    if (!data || data.format !== FORMAT) { toast(`Couldn't open ${name}: it isn't an Open Filmmaker Toolkit project file.`, true); return; }
+    if (Number(data.formatVersion) > FORMAT_VERSION) { toast(`Couldn't open ${name}: it was saved by a newer version of the toolkit. Get the latest version of this tool.`, true); return; }
+    doc = normalize(data); fileHandle = handle; baselineText = text; fileName = name; dirty = false;
+    clearDraft(); render();
+    const n = entries().length;
+    toast(`Opened ${name}: ${n ? `${n} cut${n === 1 ? '' : 's'}` : 'no cuts yet'}`);
+  }
+  async function openFile() {
+    if (dirty && !confirm('You have unsaved changes. Open another file and lose them?')) return;
+    if (window.showOpenFilePicker && window.self === window.top) {
+      try { const [h] = await window.showOpenFilePicker({ types: pickerTypes }); const f = await h.getFile(); loadText(await f.text(), f.name, h); }
+      catch (err) { if (err.name !== 'AbortError') toast(`Couldn't open the file: ${err.message}`, true); }
+      return;
+    }
+    $('fileInput').click();
+  }
+  function newProject() {
+    if (dirty && !confirm('You have unsaved changes. Start a new project and lose them?')) return;
+    doc = normalize(blankDoc()); fileHandle = null; baselineText = null; fileName = null; dirty = false;
+    clearDraft(); render(); openProjectDialog();
+  }
+
+  let toastTimer = null;
+  function toast(msg, isError) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.classList.toggle('error', !!isError);
+    t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.hidden = true; }, isError ? 7000 : 4200);
+  }
+
+  // ---------- Wiring ----------
+  function init() {
+    doc = normalize(doc);
+    $('newBtn').onclick = newProject;
+    $('openBtn').onclick = openFile;
+    $('saveBtn').onclick = saveFile;
+    $('editProjectBtn').onclick = openProjectDialog;
+    $('filmTitle').onclick = openProjectDialog;
+    $('printBtn').onclick = () => { renderReport(); window.print(); };
+    window.addEventListener('beforeprint', renderReport);
+    $('projectCsvBtn').onclick = () => $('projectCsvDialog').showModal();
+    $('projectCsvCancel').onclick = () => $('projectCsvDialog').close();
+    $('projectCsvForm').addEventListener('submit', ev => { ev.preventDefault(); exportProjectCsv(); $('projectCsvDialog').close(); });
+    $('fileInput').addEventListener('change', async () => {
+      const f = $('fileInput').files[0];
+      if (f) loadText(await f.text(), f.name, null);
+      $('fileInput').value = '';
+    });
+    $('projectForm').addEventListener('submit', ev => { ev.preventDefault(); saveProjectDialog(); });
+    $('projectCancel').onclick = () => $('projectDialog').close();
+    $('addBtn').onclick = () => openEditor(null);
+    $('emptyAddBtn').onclick = () => openEditor(null);
+    $('emptyOpenBtn').onclick = openFile;
+    $('csvBtn').onclick = exportCsv;
+    for (const id of ['rows', 'open']) $(id).addEventListener('click', ev => { const b = ev.target.closest('[data-edit]'); if (b) openEditor(b.dataset.edit); });
+    $('printSel').addEventListener('change', () => { printId = $('printSel').value; });
+    wireLists($('editorForm'));
+    $('screenings').addEventListener('change', () => drawList('notes'));
+    $('f-date').addEventListener('change', () => { editing.date = $('f-date').value; showCarry(); });
+    $('carryBtn').onclick = carryNotes;
+    $('editorForm').addEventListener('submit', ev => { ev.preventDefault(); saveEditor(); });
+    $('editorForm').addEventListener('input', ev => { if (ev.target.setCustomValidity) ev.target.setCustomValidity(''); });
+    $('editorCancel').onclick = () => $('editor').close();
+    $('deleteBtn').onclick = removeEditing;
+
+    document.addEventListener('keydown', ev => {
+      const mod = ev.metaKey || ev.ctrlKey;
+      if (mod && ev.key.toLowerCase() === 's') { ev.preventDefault(); saveFile(); }
+      else if (mod && ev.key.toLowerCase() === 'o') { ev.preventDefault(); openFile(); }
+    });
+    window.addEventListener('beforeunload', ev => { if (dirty) { ev.preventDefault(); ev.returnValue = ''; } });
+    render();
+    checkDraft();
+  }
+
+  if (typeof HTMLDialogElement !== 'function' || typeof HTMLDialogElement.prototype.showModal !== 'function' || typeof structuredClone !== 'function') {
+    $('cantRunTitle').textContent = 'This browser is too old to run this tool';
+    $('cantRunText').textContent = 'Update to a current version of Chrome, Edge, Firefox or Safari, then open this file again.';
+    $('cantRunHow').hidden = true;
+    return;
+  }
+  document.documentElement.classList.remove('no-js');
+  window.addEventListener('error', ev => toast(`Something went wrong: ${ev.message}. Save your work, then reload the page.`, true));
+  window.addEventListener('unhandledrejection', ev => toast(`Something went wrong: ${ev.reason && ev.reason.message ? ev.reason.message : ev.reason}. Save your work, then reload the page.`, true));
+  init();
+})();
+</script>
+</body>
+</html>
