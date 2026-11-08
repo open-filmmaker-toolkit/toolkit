@@ -35,6 +35,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **Gear by department:** camera, lenses, sound, lighting, grip and electric, data and media, and other. For each item: how many, whether it's owned, borrowed or rented, the owner or rental house, day and week rates, replacement value, serial numbers and notes.
 - **Packages for each shoot day.** Pick a day from the [shooting calendar](../shooting-calendar/), or name a package that isn't tied to one, and tick what's going. Start from another day's package to save ticking it all again.
 - **Costs and values.** The side panel totals the value of owned and borrowed gear, and what each rental house costs for the days its gear is packed, at the day rate or the week rate, whichever is cheaper. Gear that isn't owned and has no value is flagged, since the insurance schedule needs one.
+- **Sends rental costs to the budget:** choose **Send costs to the budget** under the file buttons and pick an account. Each rental packed for a shoot day gets a line there, at the day or week rate, whichever is cheaper, for the days it's packed. From then on the lines follow the gear list: change a rate or a package and the line changes too, and a rental that's gone takes its line with it. Names and accounts you change in the budget stay.
 - **Prints a load-out checklist** for a package, by department, with boxes to tick each item out at load-out and back at wrap, and its serial numbers.
 - **Prints an insurance schedule:** every item with its owner or rental house, serial numbers, quantity and value, with totals for owned, borrowed and rented gear.
 - **Exports CSV,** with the days each item is packed and what each rental costs. Also exports project data: project details, people, locations, third-party elements, contracts, assets, music cue sheet details or call sheets as separate CSV files.
@@ -57,11 +58,10 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 A `gear` record with `items` and `packages`. Each item has an `id`, `name`, `department` (`camera`, `lenses`, `sound`, `lighting`, `grip`, `data` or `other`), `source` (`owned`, `borrowed` or `rental`), and optional `quantity`, `from` (the owner, lender or rental house), `dayRate`, `weekRate`, `value` (the replacement value of one), `serial` and `notes`. Each package has an `id`, a `shootDayId` pointing to `shootDays` or a `name`, `itemIds` pointing to the items, and optional `notes`.
 
-Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
+Sending costs to the budget adds lines to `budget` with a `source` of `{ tool: "gear-list", id }` and keeps the account in `budgetLinks`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
-- Sending rental costs to the budget
 - Checking gear out to a person and back in
 - Purchase dates and receipts for the insurance schedule
 - Kits that bundle several items, such as a camera with its batteries and cards

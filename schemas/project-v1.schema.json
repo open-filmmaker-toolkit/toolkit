@@ -109,6 +109,19 @@
       "$ref": "#/$defs/budget",
       "description": "The production budget, kept by the budget tool. A record rather than a collection."
     },
+    "budgetLinks": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "$ref": "#/$defs/id"
+          }
+        },
+        "additionalProperties": true
+      },
+      "description": "For each tool that sends its costs to the budget (gear-list, travel-sheet, coi-permit-tracker), the account its lines go in."
+    },
     "budgetFormats": {
       "type": "array",
       "items": {
@@ -2058,7 +2071,7 @@
         "fee": {
           "type": "number",
           "minimum": 0,
-          "description": "Licenses: the agreed fee."
+          "description": "A permit's fee."
         },
         "payments": {
           "type": "array",
@@ -3357,6 +3370,21 @@
             "type": "string"
           },
           "description": "Every fringe on the line, when it has more than one. fringeId stays the first, for older tools."
+        },
+        "source": {
+          "type": "object",
+          "properties": {
+            "tool": {
+              "type": "string",
+              "description": "The tool that keeps the line up to date, such as gear-list."
+            },
+            "id": {
+              "type": "string",
+              "description": "The cost in that tool."
+            }
+          },
+          "additionalProperties": true,
+          "description": "Where the line comes from, when another tool keeps its numbers up to date."
         }
       },
       "additionalProperties": true
@@ -4920,6 +4948,10 @@
               },
               "notes": {
                 "type": "string"
+              },
+              "cost": {
+                "type": "number",
+                "minimum": 0
               }
             },
             "additionalProperties": true
@@ -4966,6 +4998,10 @@
               },
               "notes": {
                 "type": "string"
+              },
+              "cost": {
+                "type": "number",
+                "minimum": 0
               }
             },
             "additionalProperties": true
@@ -5018,6 +5054,11 @@
         },
         "notes": {
           "type": "string"
+        },
+        "perDiem": {
+          "type": "number",
+          "minimum": 0,
+          "description": "A day's per diem for each person on the trip."
         }
       },
       "additionalProperties": true
@@ -5626,6 +5667,49 @@
             },
             "additionalProperties": true
           }
+        },
+        "purchaseOrders": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "number": {
+                "type": "string"
+              },
+              "date": {
+                "type": "string",
+                "format": "date"
+              },
+              "vendor": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "amount": {
+                "type": "number",
+                "minimum": 0
+              },
+              "currency": {
+                "type": "string"
+              },
+              "lineId": {
+                "$ref": "#/$defs/id",
+                "description": "The budget line it's committed against."
+              },
+              "accountId": {
+                "$ref": "#/$defs/id"
+              }
+            },
+            "additionalProperties": true
+          },
+          "description": "Purchase orders, committed against budget lines."
         }
       },
       "additionalProperties": true

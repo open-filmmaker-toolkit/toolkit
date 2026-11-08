@@ -60,7 +60,7 @@ Started in a spreadsheet and want to move to the tool? Most tools can import a f
 - **Budget.** One row for each budget line: account, section, description, quantity, unit, multiplier, rate, fringe and total.
 - **Finance plan.** One row for each source of money: kind, status, amount, terms and when the payments arrive.
 - **Funder CRM.** One row for each funder, investor or broadcaster: kind, stage, the people there, the last contact, the next step and when it's due, and applications.
-- **Cash flow.** One row for each month or week: money out, money in, the net and the running balance, and whether it's short.
+- **Cash flow.** One row for each month or week: money out, money in, the net and the running balance, whether it's short, what was spent from the expense log, and how much that was over the plan.
 - **Script breakdown.** One row for each scene: its number and heading, length in eighths of a page, the cast, a column for each kind of element (extras, props, wardrobe and the rest, separated by semicolons), the location and what happens.
 - **Shot list.** One row for each shot: the scene number or a group such as b-roll, the shot number, size, angle, movement, lens, what we see, notes and whether it's done. Frames stay in the tool.
 - **Shooting calendar.** One row for each shoot day, travel day or hold: the trip, what you're filming, where, who's needed, and whether the call sheet is started.
@@ -85,7 +85,7 @@ Started in a spreadsheet and want to move to the tool? Most tools can import a f
 - **Paper edit.** One row for each bite, in the order of the edit: the scene, speaker, words, a note, the transcript and clip it's from, and its source and record timecodes.
 - **Structure board.** One row for each scene card, in order: act, sequence, scene, summary, running time, story threads and notes.
 - **Cut notes.** One row for each note on a cut: the cut, its date and running time, the screening and who saw it, the time or range in the cut, scene, shot, who gave the note, the note and its status.
-- **Cost report.** One row for each budget line: section, account, budget, spent, estimate to complete, estimated final cost, variance and a note.
+- **Cost report.** One row for each budget line: section, account, budget, spent, estimate to complete, estimated final cost, variance, a note, what's committed and what's remaining.
 - **Fair use.** One row for each element used under fair use: what it is and where it's from, where it's used in the film, the four factors (purpose, nature, amount and market effect), where the film will be shown, and the attorney's review. Not legal advice.
 - **Licenses.** One row for each archival or music license: licensor, elements, media, territory, term, dates, fee and what's paid, the next payment due, options not exercised and the next deadline, and the credit it requires.
 - **Annotated clearance report.** One row for each marked reference in the script: timecode, speaker, the line, the marked words, what kind of reference it is, and how it's cleared.

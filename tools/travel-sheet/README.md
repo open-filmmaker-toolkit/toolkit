@@ -38,6 +38,8 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **Places to stay,** with address, phone, check-in and check-out, confirmation and who's staying.
 - **Local contacts,** such as a fixer, driver or location contact.
 - **Emergencies:** the local emergency number and the nearest hospital. If a [call sheet](../call-sheet/) for the trip's locations or dates already lists a hospital, the tool offers it.
+- **Costs:** a per diem for each trip, a day for each person on it, and what each leg and place to stay costs.
+- **Sends them to the budget:** choose **Send costs to the budget** under the file buttons and pick an account. Each trip gets a line for its per diems (days × people × the per diem), one for its travel and one for its places to stay. From then on the lines follow the travel sheet.
 - **Prints a travel sheet** with the emergency details at the top, then the itinerary in order (travel, check-ins and check-outs, and the shoot days), places to stay, locations, and contacts with everyone's phone and email. Pick one person and the sheet shows only their travel. **Exports CSV.** Also exports project data: project details, people, locations, third-party elements, contracts, assets, music cue sheet details or call sheets as separate CSV files.
 
 For anyone who doesn't use the tool, there's a [spreadsheet template](../../templates/travel-sheet-template.csv) with the same columns as the export.
@@ -55,17 +57,16 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-`trips`: each has an `id`, `name`, and optional `block` (the trip in the shooting calendar, matched by `shootDays[].block`), `destination`, `startDate`, `endDate`, `personIds`, `locationIds`, `legs`, `stays`, `contacts`, `emergencyNumber`, `hospital` (`name`, `address`, `phone`) and `notes`.
+`trips`: each has an `id`, `name`, and optional `perDiem`, `block` (the trip in the shooting calendar, matched by `shootDays[].block`), `destination`, `startDate`, `endDate`, `personIds`, `locationIds`, `legs`, `stays`, `contacts`, `emergencyNumber`, `hospital` (`name`, `address`, `phone`) and `notes`.
 
-- Each leg has an `id`, a `kind` (`flight`, `train`, `drive`, `ground` or `other`), and optional `date`, `departs`, `arrives`, `from`, `to`, `carrier`, `number`, `confirmation`, `personIds` and `notes`.
-- Each stay has an `id` and optional `name`, `address`, `phone`, `checkIn`, `checkOut`, `confirmation`, `personIds` and `notes`.
+- Each leg has an `id`, a `kind` (`flight`, `train`, `drive`, `ground` or `other`), and optional `date`, `departs`, `arrives`, `from`, `to`, `carrier`, `number`, `confirmation`, `cost`, `personIds` and `notes`.
+- Each stay has an `id` and optional `name`, `address`, `phone`, `checkIn`, `checkOut`, `confirmation`, `cost`, `personIds` and `notes`.
 - Each contact has an `id` and optional `name`, `role`, `phone` and `notes`.
 
-A leg or stay with no `personIds` is for everyone on the trip. It reads `people`, `locations`, `shootDays` and the hospitals on `callSheets`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
+A leg or stay with no `personIds` is for everyone on the trip. It reads `people`, `locations`, `shootDays` and the hospitals on `callSheets`. Sending costs to the budget adds lines to `budget` with a `source` and keeps the account in `budgetLinks`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
-- Per diems and travel costs in the budget
 - Passport and visa details for each person
 - Time zones on travel that crosses them
 - Sending each person their own sheet

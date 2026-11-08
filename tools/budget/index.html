@@ -240,6 +240,7 @@ pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; b
 input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:focus, input[type="time"]:focus-within { outline: 2px solid var(--focus, #2f6fdb); outline-offset: 2px; }
 .home-link { color: inherit; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
 .home-link:hover { text-decoration-thickness: 2px; }
+.ln .src { grid-column: 1 / -1; font-size: 12.5px; color: var(--ink-2); }
 </style>
 </head>
 <body>
@@ -342,6 +343,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   <form id="lineForm" method="dialog" novalidate>
     <div class="dlg-head"><h2 id="lineTitle">This line</h2></div>
     <div class="dlg-body">
+      <p class="hint" id="l-source" hidden></p>
       <div class="field"><label for="l-currency">Currency of the rate</label><input id="l-currency" type="text" maxlength="3" list="l-curlist" autocomplete="off" style="max-width: 8em; text-transform: uppercase"><datalist id="l-curlist"></datalist>
         <p class="hint">Leave it blank for the project currency. Other currencies convert at the exchange rates you set, under the file buttons.</p></div>
       <fieldset class="field"><legend>Fringes on this line</legend><div id="l-fringes"></div></fieldset>
@@ -620,9 +622,18 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('fileState').innerHTML = (fileName ? esc(fileName) : 'Not saved to a file yet') + (dirty ? ' · <span class="dirty">Unsaved changes</span>' : '');
     document.title = `${doc.project.title ? doc.project.title + ' · ' : ''}Budget · Open Filmmaker Toolkit`;
   }
+  // Where a line came from, when another tool keeps it up to date: the gear list, travel sheet, permits or a deal memo.
+  const SOURCE_TOOLS = { 'gear-list': 'the gear list', 'travel-sheet': 'the travel sheet', 'coi-permit-tracker': 'the certificate and permit tracker' };
+  function sourceOf(l) {
+    if (l.source && SOURCE_TOOLS[l.source.tool]) return `From ${SOURCE_TOOLS[l.source.tool]}. Its numbers change when the cost changes there.`;
+    const c = arr(doc.contracts).find(x => x && (arr(x.budgetLineIds).includes(l.id) || arr(x.rates).some(r => r && r.budgetLineId === l.id)));
+    if (c) { const p = arr(doc.people).find(x => x && arr(c.personIds).includes(x.id)); return `From the deal memo for ${p ? p.name : 'a crew member'}. Its numbers change when the memo does.`; }
+    return '';
+  }
   function lineHtml(l) {
     const fr = B().fringes;
-    return `<li class="ln" data-line="${esc(l.id)}">
+    const src = sourceOf(l);
+    return `<li class="ln${src ? ' has-src' : ''}" data-line="${esc(l.id)}">
       <input class="desc" data-k="description" type="text" value="${esc(l.description)}" placeholder="Description" aria-label="Description" autocomplete="off">
       <input data-k="quantity" type="number" step="any" min="0" value="${esc(l.quantity ?? '')}" placeholder="Qty" aria-label="Quantity">
       <input data-k="unit" type="text" list="units" value="${esc(l.unit)}" placeholder="Unit" aria-label="Unit" autocomplete="off">
@@ -632,6 +643,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       <span class="tot" data-tot></span>
       <button type="button" class="icon-btn" data-moreline aria-label="More for this line: currency and fringes">⋯</button>
       <button type="button" class="icon-btn" data-delline aria-label="Remove this line">×</button>
+      ${src ? `<span class="src">${esc(src)}</span>` : ''}
     </li>`;
   }
   function render() {
@@ -774,6 +786,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('l-fringes').innerHTML = B().fringes.length ? B().fringes.map(f => `<label class="chk"><input type="checkbox" value="${esc(f.id)}"${ids.includes(f.id) ? ' checked' : ''}> <span>${esc(f.name || 'Fringe')} ${esc(num(f.percent))}%${num(f.cap) ? `, on wages up to ${esc(money(f.cap))} a person` : ''}</span></label>`).join('')
       : '<p class="hint">No fringes yet. Add them under Fringes and percentages.</p>';
     $('lineTitle').textContent = l.description ? `Line: ${l.description}` : 'This line';
+    $('l-source').textContent = sourceOf(l); $('l-source').hidden = !sourceOf(l);
     $('lineDialog').showModal();
   }
   function saveLine() {
@@ -1499,7 +1512,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const OFT_SLUG = (window.location.pathname.match(/tools\/([^/]+)\//) || [])[1] || '';
   const OFT_GUIDE = 'https://github.com/open-filmmaker-toolkit/toolkit/blob/main/docs/sharing-a-project.md';
   const OFT_HOURS = 4;
-  const OFT_KEYS = { project: 'Project details', people: 'People', locations: 'Locations', thirdPartyElements: 'Clearance log', contracts: 'Contracts and releases', assets: 'Files and stills', musicCueSheet: 'Music cue sheet', callSheets: 'Call sheets', credits: 'Credits', supers: 'Name supers', subjects: 'Subject tracker', sources: 'Research log', comps: 'Comps tracker', treatment: 'Treatment', pitchDeck: 'Pitch deck', grants: 'Grant calendar', narratives: 'Narrative library', budget: 'Budget', budgetFormats: 'Budget converter', financePlan: 'Finance plan', funders: 'Funder CRM', cashFlow: 'Cash flow', shootDays: 'Shooting calendar', script: 'Script', scenes: 'Script breakdown', characters: 'Cast', dayOutOfDays: 'Day-out-of-days', shots: 'Shot list', interviews: 'Interviews', journal: 'Field journal', scouts: 'Location scouts', gear: 'Gear list', trips: 'Travel sheet', riskPlans: 'Risk plans', security: 'Security checklist', mediaReports: 'Camera and sound reports', dailyReports: 'Daily reports', expenses: 'Expense log', festivals: 'Festival submissions', screenings: 'Screenings', pressOutlets: 'Press list', partners: 'Partner CRM', discussionGuide: 'Discussion guide', paperEdit: 'Paper edit', costReport: 'Budget-to-actuals', structure: 'Structure board', cuts: 'Cut tracker', clearanceReport: 'Clearance report', chainOfTitle: 'Chain of title', festivalStrategy: 'Festival strategy', pressNotes: 'Press notes', awards: 'Awards', socialPosts: 'Social posts', deliverables: 'Deliverables', qc: 'QC tracker', waterfall: 'Waterfall', revenueStatements: 'Revenue tracker', bookings: 'Bookings', theoryOfChange: 'Theory of change', screeningKit: 'Screening kit', impactReport: 'Impact report', finalCostReport: 'Final cost report', grantReports: 'Grant reports', contractArchive: 'Contract archive' };
+  const OFT_KEYS = { project: 'Project details', people: 'People', locations: 'Locations', thirdPartyElements: 'Clearance log', contracts: 'Contracts and releases', assets: 'Files and stills', musicCueSheet: 'Music cue sheet', callSheets: 'Call sheets', credits: 'Credits', supers: 'Name supers', subjects: 'Subject tracker', sources: 'Research log', comps: 'Comps tracker', treatment: 'Treatment', pitchDeck: 'Pitch deck', grants: 'Grant calendar', narratives: 'Narrative library', budget: 'Budget', budgetFormats: 'Budget converter', financePlan: 'Finance plan', funders: 'Funder CRM', cashFlow: 'Cash flow', shootDays: 'Shooting calendar', script: 'Script', scenes: 'Script breakdown', characters: 'Cast', dayOutOfDays: 'Day-out-of-days', budgetLinks: 'Budget', shots: 'Shot list', interviews: 'Interviews', journal: 'Field journal', scouts: 'Location scouts', gear: 'Gear list', trips: 'Travel sheet', riskPlans: 'Risk plans', security: 'Security checklist', mediaReports: 'Camera and sound reports', dailyReports: 'Daily reports', expenses: 'Expense log', festivals: 'Festival submissions', screenings: 'Screenings', pressOutlets: 'Press list', partners: 'Partner CRM', discussionGuide: 'Discussion guide', paperEdit: 'Paper edit', costReport: 'Budget-to-actuals', structure: 'Structure board', cuts: 'Cut tracker', clearanceReport: 'Clearance report', chainOfTitle: 'Chain of title', festivalStrategy: 'Festival strategy', pressNotes: 'Press notes', awards: 'Awards', socialPosts: 'Social posts', deliverables: 'Deliverables', qc: 'QC tracker', waterfall: 'Waterfall', revenueStatements: 'Revenue tracker', bookings: 'Bookings', theoryOfChange: 'Theory of change', screeningKit: 'Screening kit', impactReport: 'Impact report', finalCostReport: 'Final cost report', grantReports: 'Grant reports', contractArchive: 'Contract archive' };
   const oftStore = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch { /* storage off */ } } };
   const oftMe = () => (oftStore.get('oft-user-name') || '').trim();
   const oftEsc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -1975,6 +1988,12 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       imp.type = 'button'; imp.className = 'link-btn'; imp.id = 'oftImportBtn'; imp.textContent = 'Import from a spreadsheet';
       imp.onclick = () => oftImport.open(OFT_IMPORT);
       links.prepend(imp);
+    }
+    if (typeof oftCosts !== 'undefined' && typeof OFT_COSTS !== 'undefined') {
+      const cb = document.createElement('button');
+      cb.type = 'button'; cb.className = 'link-btn'; cb.id = 'oftCostsBtn'; cb.textContent = 'Send costs to the budget';
+      cb.onclick = () => oftCosts.open();
+      links.prepend(cb);
     }
     if (typeof oftMoney !== 'undefined') {
       const fx = document.createElement('button');
