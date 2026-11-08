@@ -1,0 +1,901 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Awards and social calendars · Open Filmmaker Toolkit</title>
+<meta name="description" content="Plan awards campaigns and social posts around your festival and release dates: eligibility rules and windows, entry deadlines, voting and ceremonies, a posting calendar with suggested posts, a calendar file and print. Runs in your browser; your data stays on your computer.">
+<style>
+:root {
+  --paper: #f1f3f2; --sheet: #ffffff; --ink: #1a2130; --ink-2: #4b556a; --ink-3: #6d778a;
+  --rule: #d4dad8; --rule-soft: #e6eae8; --hover: #f6f8f7; --focus: #2f6fdb;
+  --good: #2b7a57; --good-bg: #dff1e8; --warn: #8a5a00; --warn-bg: #fbf0d9; --bad: #b3392d; --bad-bg: #f8e1de;
+  --screen: #050506; --screen-ink: #f4f1ea; --screen-dim: #a7a29a;
+  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #141922; --sheet: #1b212b; --ink: #e6e9ee; --ink-2: #a6afbd; --ink-3: #8790a0;
+    --rule: #2f3744; --rule-soft: #262d38; --hover: #212834; --focus: #7aa7ff;
+    --good: #4fb386; --good-bg: #1a3329; --warn: #e2a531; --warn-bg: #3a2f17; --bad: #e26657; --bad-bg: #3b2220;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans); }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+[hidden] { display: none !important; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.foot { margin-top: 28px; font-size: 13px; color: var(--ink-3); }
+.cant-run { display: none; max-width: 640px; margin: 64px auto; padding: 0 24px; }
+.cant-run h1 { margin: 0 0 8px; font: 600 26px/1.2 var(--serif); }
+.cant-run p { margin: 0 0 10px; color: var(--ink-2); }
+.no-js .cant-run { display: block; }
+.no-js .page { display: none; }
+.page { max-width: 1240px; margin: 0 auto; padding: 0 24px 48px; }
+
+.masthead { display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: flex-end; justify-content: space-between; padding: 28px 0 20px; }
+.tool-name { margin: 0 0 2px; font-size: 14px; font-weight: 600; color: var(--ink-2); }
+.film-title { margin: 0; font: 600 32px/1.15 var(--serif); letter-spacing: -0.01em; overflow-wrap: anywhere; cursor: pointer; }
+.film-title.is-empty { color: var(--ink-3); font-style: italic; font-weight: 400; }
+.film-meta { margin: 4px 0 0; color: var(--ink-2); font-size: 14px; }
+.file { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.file-state { margin: 0; font-size: 13px; color: var(--ink-2); text-align: right; }
+.file-state .dirty { color: var(--warn); font-weight: 600; }
+.file-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; }
+.btn:hover { border-color: var(--ink-3); }
+.btn.primary { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.btn.primary:hover { opacity: 0.88; }
+.btn.danger { color: var(--bad); }
+.btn.small { padding: 4px 10px; font-size: 13px; }
+.link-btn { padding: 0; border: 0; background: none; cursor: pointer; color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; font-size: 14px; }
+.link-btn:hover { color: var(--ink); }
+
+.banner { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 0 0 16px; padding: 12px 16px; border-radius: 8px; background: var(--warn-bg); border: 1px solid color-mix(in srgb, var(--warn) 40%, transparent); }
+.banner p { margin: 0; flex: 1 1 280px; }
+.banner .actions { display: flex; gap: 8px; }
+
+.workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr); gap: 24px; align-items: start; }
+.col { display: grid; gap: 18px; min-width: 0; }
+.card { background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 18px; min-width: 0; }
+.card-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; margin: 0 0 6px; }
+.card-head h2 { margin: 0; font: 600 18px/1.3 var(--serif); }
+.card-head .count { font-size: 13px; color: var(--ink-2); }
+.card-head .spacer { flex: 1; }
+.card p.lead { margin: 0 0 8px; font-size: 14px; color: var(--ink-2); }
+
+/* Side cards */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 2px; padding: 0; list-style: none; }
+.chip { display: inline-flex; border: 1px solid var(--rule); border-radius: 999px; overflow: hidden; background: var(--paper); }
+.chip button { padding: 4px 10px; border: 0; background: none; cursor: pointer; font-size: 13px; font-weight: 600; }
+.chip button:hover { background: var(--hover); }
+.chip .sub { font-weight: 400; color: var(--ink-3); margin-left: 4px; }
+.empty-line { margin: 4px 0; color: var(--ink-2); font-size: 14px; }
+.changes { margin: 0; padding-left: 18px; font-size: 14px; }
+.changes li + li { margin-top: 2px; }
+
+/* The supers list */
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 10px; }
+.toolbar h2 { margin: 0 8px 0 0; font: 600 20px/1.2 var(--serif); }
+.toolbar .count { font-size: 13px; color: var(--ink-2); }
+.toolbar .spacer { flex: 1; }
+.rows { list-style: none; margin: 0; padding: 0; background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; }
+.row { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 2px 14px; align-items: start; padding: 10px 14px; }
+.row + .row { border-top: 1px solid var(--rule-soft); }
+.row:hover { background: var(--hover); }
+.row.is-selected { background: var(--hover); box-shadow: inset 3px 0 0 var(--ink); }
+.row .tc { font-variant-numeric: tabular-nums; font-size: 14px; color: var(--ink-2); padding-top: 1px; }
+.row .what { min-width: 0; padding: 0; border: 0; background: none; text-align: left; cursor: pointer; overflow-wrap: anywhere; }
+.row .what:hover .nm { text-decoration: underline; text-underline-offset: 2px; }
+.row .nm { display: block; font-weight: 600; }
+.row .tt { display: block; font-size: 14px; color: var(--ink-2); }
+.flags { grid-column: 2; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.flag { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 999px; font-size: 12.5px; font-weight: 600; }
+.flag.new { background: var(--good-bg); color: var(--good); }
+.flag.changed { background: var(--warn-bg); color: var(--warn); }
+.flag.problem { background: var(--bad-bg); color: var(--bad); }
+.flag.linked { background: var(--paper); color: var(--ink-3); font-weight: 500; border: 1px solid var(--rule); }
+.flag button { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+
+.empty { padding: 36px 24px; text-align: center; background: var(--sheet); border: 1px dashed var(--rule); border-radius: 8px; }
+.empty h2 { margin: 0 0 6px; font: 600 20px/1.3 var(--serif); }
+.empty p { margin: 0 auto 16px; max-width: 52ch; color: var(--ink-2); }
+.empty .actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+
+
+.workspace > * { min-width: 0; }
+.side { position: sticky; top: 16px; display: grid; gap: 18px; }
+.row .rt { font-size: 13px; color: var(--ink-2); font-variant-numeric: tabular-nums; padding-top: 2px; }
+.row .st { font-size: 13px; font-weight: 600; white-space: nowrap; padding-top: 2px; text-align: right; }
+.row .st .sub { display: block; font-weight: 400; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.st-good { color: var(--good); }
+.st-warn { color: var(--warn); }
+.st-bad { color: var(--bad); }
+.st-quiet { color: var(--ink-3); }
+.flags { grid-column: 2 / -1; }
+.todo { list-style: none; margin: 4px 0 0; padding: 0; }
+.todo li { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 6px 0; font-size: 14px; }
+.todo li + li { border-top: 1px solid var(--rule-soft); }
+.todo .sub { display: block; color: var(--ink-3); font-size: 13px; }
+.todo .num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.totals { margin: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; font-size: 14px; }
+.totals dt { color: var(--ink-2); }
+.totals dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+.totals .sum { font-weight: 700; color: var(--ink); border-top: 1px solid var(--rule); padding-top: 4px; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.three { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.checks { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 4px 12px; margin: 4px 0 0; }
+.checks label { display: flex; gap: 6px; align-items: baseline; font-size: 14px; font-weight: 400; }
+.tabs { display: flex; gap: 4px; flex-wrap: wrap; margin: 0 0 10px; }
+.tabs button { padding: 6px 12px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); color: var(--ink-2); font: inherit; font-size: 14px; cursor: pointer; }
+.tabs button[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+@media (max-width: 720px) {
+  .two, .three { grid-template-columns: 1fr; }
+  .row { grid-template-columns: minmax(0, 1fr) auto; }
+  .row .rt { grid-column: 1 / -1; }
+  .flags { grid-column: 1 / -1; }
+}
+
+.month { margin: 14px 0 4px; font-size: 13px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-3); }
+.row { grid-template-columns: 110px minmax(0, 1fr) auto; }
+.kind { font-size: 12px; font-weight: 600; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.04em; }
+.agenda { list-style: none; margin: 0; padding: 0; }
+
+dialog { border: 0; padding: 0; color: var(--ink); background: var(--sheet); box-shadow: 0 10px 40px rgba(10, 14, 22, 0.25); }
+dialog::backdrop { background: rgba(16, 20, 28, 0.42); }
+dialog.drawer { margin: 0 0 0 auto; width: min(600px, 100vw); height: 100dvh; max-height: 100dvh; max-width: 100vw; border-left: 1px solid var(--rule); }
+dialog.modal { width: min(560px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); border-radius: 10px; }
+dialog form { display: flex; flex-direction: column; height: 100%; max-height: inherit; }
+.dlg-head { padding: 20px 24px 12px; border-bottom: 1px solid var(--rule-soft); }
+.dlg-head h2 { margin: 0; font: 600 22px/1.25 var(--serif); }
+.dlg-body { flex: 1; overflow-y: auto; padding: 16px 24px 24px; display: grid; gap: 14px; align-content: start; }
+.dlg-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 14px 24px; border-top: 1px solid var(--rule-soft); }
+.dlg-foot .spacer { flex: 1; }
+.field { display: grid; gap: 4px; }
+.field > label, .field > .label, .group h3 { font-size: 14px; font-weight: 600; margin: 0; }
+.hint { margin: 0; font-size: 13px; color: var(--ink-3); }
+.field input, .field select, .field textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); }
+.group { display: grid; gap: 8px; padding-top: 10px; border-top: 1px solid var(--rule-soft); }
+.checks { display: grid; gap: 2px; max-height: 260px; overflow-y: auto; padding: 2px; }
+.check { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; align-items: start; padding: 5px 4px; border-radius: 6px; cursor: pointer; }
+.check:hover { background: var(--hover); }
+.check input { width: 18px; height: 18px; margin: 2px 0 0; }
+.check .who { overflow-wrap: anywhere; }
+.check .sub { margin-left: 4px; font-size: 13px; color: var(--ink-3); }
+.check .lines { display: block; font-size: 13px; color: var(--ink-3); white-space: pre-line; }
+#songList, #sourceList { max-height: none; }
+.radio-row { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.radio-row label { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; cursor: pointer; }
+pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); font-size: 13px; white-space: pre-wrap; }
+
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); max-width: calc(100vw - 32px); padding: 10px 16px; border-radius: 8px; background: var(--ink); color: var(--paper); font-size: 14px; box-shadow: 0 6px 24px rgba(10, 14, 22, 0.25); z-index: 10; }
+.toast.error { background: var(--bad); color: #ffffff; }
+.report { display: none; }
+
+@media (max-width: 900px) {
+  .workspace { grid-template-columns: 1fr; }
+  .side { position: static; }
+}
+@media (max-width: 720px) {
+  .page { padding: 0 16px 40px; }
+  .film-title { font-size: 26px; }
+  .file { align-items: flex-start; }
+  .file-state { text-align: left; }
+  .toolbar h2 { flex-basis: 100%; order: -2; }
+  .toolbar #addBtn { flex: 1 1 100%; justify-content: center; order: -1; }
+  .row { grid-template-columns: minmax(0, 1fr); }
+  .flags { grid-column: 1; }
+}
+@media print {
+  @page { size: portrait; margin: 16mm; }
+  :root { color-scheme: light; }
+  body { background: #ffffff; color: #000000; font-size: 10pt; }
+  .page, dialog, .toast { display: none !important; }
+  .report { display: block; }
+  .report h1 { margin: 0; font: 700 18pt/1.2 var(--serif); }
+  .report h2 { margin: 14pt 0 4pt; font: 700 12pt/1.2 var(--serif); break-after: avoid; page-break-after: avoid; }
+  .report .r-meta { margin: 2pt 0 10pt; }
+  .report table { width: 100%; border-collapse: collapse; }
+  .report th, .report td { padding: 4pt 5pt; border-bottom: 0.75pt solid #999999; text-align: left; vertical-align: top; }
+  .report th { font-size: 9pt; border-bottom: 1pt solid #000000; }
+  .report tr { break-inside: avoid; page-break-inside: avoid; }
+  .report .r-sub { display: block; font-size: 8.5pt; color: #333333; }
+  .report .r-note { margin-top: 14pt; font-size: 8pt; color: #333333; }
+
+}
+</style>
+</head>
+<body>
+<div class="cant-run" id="cantRun">
+  <h1 id="cantRunTitle">Open this file in a web browser</h1>
+  <p id="cantRunText">This tool runs in Chrome, Edge, Firefox or Safari. You're seeing a preview that doesn't run it, so none of the buttons would work.</p>
+  <p id="cantRunHow">In your browser, choose File, then Open File, and pick this file. Or right-click the file and open it with your browser.</p>
+</div>
+<div class="page">
+  <header class="masthead">
+    <div>
+      <p class="tool-name">Awards and social calendars</p>
+      <h1 class="film-title" id="filmTitle">Untitled film</h1>
+      <p class="film-meta"><span id="filmMeta"></span> <button type="button" class="link-btn" id="editProjectBtn">Edit film details</button></p>
+    </div>
+    <div class="file">
+      <p class="file-state" id="fileState">Not saved to a file yet</p>
+      <div class="file-actions">
+        <button type="button" class="btn" id="newBtn">New project</button>
+        <button type="button" class="btn" id="openBtn">Open file</button>
+        <button type="button" class="btn" id="projectCsvBtn">Export project data (CSV)</button>
+        <button type="button" class="btn primary" id="saveBtn">Save file</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="banner" id="recovery" role="region" aria-label="Unsaved work" hidden>
+    <p id="recoveryText"></p>
+    <div class="actions">
+      <button type="button" class="btn primary" id="restoreBtn">Restore it</button>
+      <button type="button" class="btn" id="discardBtn">Discard it</button>
+    </div>
+  </div>
+
+  <main class="workspace">
+    <section aria-labelledby="listHead">
+      <div class="toolbar">
+        <h2 id="listHead">Calendar</h2>
+        <span class="count" id="count"></span>
+        <span class="spacer"></span>
+        <button type="button" class="btn primary" id="addBtn">Add an award</button>
+        <button type="button" class="btn" id="postBtn">Add a post</button>
+        <button type="button" class="btn" id="icsBtn">Export calendar</button>
+        <button type="button" class="btn" id="printBtn">Print</button>
+      </div>
+      <div class="tabs" id="filters" role="group" aria-label="Show">
+        <button type="button" data-f="all" aria-pressed="true">Everything</button>
+        <button type="button" data-f="award" aria-pressed="false">Awards</button>
+        <button type="button" data-f="post" aria-pressed="false">Posts</button>
+        <button type="button" data-f="festival" aria-pressed="false">Festivals and release</button>
+      </div>
+      <div id="agenda"></div>
+      <div class="empty" id="empty" hidden>
+        <h2>Nothing on the calendar yet</h2>
+        <p>Add the awards you're thinking about, with their eligibility rules and dates, and plan social posts. Festival dates from the festival tools and the release date from the project details show up here too.</p>
+        <div class="actions">
+          <button type="button" class="btn primary" id="emptyAddBtn">Add an award</button>
+          <button type="button" class="btn" id="emptyOpenBtn">Open file</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="side">
+      <section class="card" aria-labelledby="awHead">
+        <div class="card-head"><h2 id="awHead">Awards</h2><span class="count" id="awCount"></span></div>
+        <ul class="todo" id="awards"></ul>
+      </section>
+      <section class="card" aria-labelledby="sugHead">
+        <div class="card-head"><h2 id="sugHead">Suggested posts</h2></div>
+        <p class="lead">Posts around each accepted festival and the release date: the announcement, a week before, the day, and a thank-you.</p>
+        <ul class="todo" id="suggest"></ul>
+        <div><button type="button" class="btn" id="suggestBtn">Add these as drafts</button></div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="foot">
+    <p>Part of the Open Filmmaker Toolkit. This page makes no network requests: everything stays on this computer until you save or export it. Uses the same project file as the other toolkit tools.</p>
+  </footer>
+</div>
+
+<dialog class="drawer" id="editor" aria-labelledby="editorTitle">
+  <form id="editorForm" method="dialog" novalidate>
+    <div class="dlg-head"><h2 id="editorTitle">Award</h2></div>
+    <div class="dlg-body">
+      <div class="two">
+        <div class="field"><label for="a-name">Award</label><input id="a-name" type="text" autocomplete="off" required></div>
+        <div class="field"><label for="a-category">Category</label><input id="a-category" type="text" autocomplete="off" placeholder="Documentary feature"></div>
+      </div>
+      <div class="field"><label for="a-rules">Eligibility rules</label><textarea id="a-rules" rows="3" placeholder="Must screen in a qualifying run between these dates; no broadcast before"></textarea></div>
+      <div class="two">
+        <div class="field"><label for="a-from">Eligible if first shown from</label><input id="a-from" type="date"></div>
+        <div class="field"><label for="a-to">to</label><input id="a-to" type="date"></div>
+      </div>
+      <div class="three">
+        <div class="field"><label for="a-deadline">Entry deadline</label><input id="a-deadline" type="date"></div>
+        <div class="field"><label for="a-fee">Fee</label><input id="a-fee" type="number" min="0" step="any" inputmode="decimal"></div>
+        <div class="field"><label for="a-status">Status</label><select id="a-status"><option value="considering">Considering</option><option value="entered">Entered</option><option value="shortlisted">Shortlisted</option><option value="nominated">Nominated</option><option value="won">Won</option><option value="not-selected">Not selected</option></select></div>
+      </div>
+      <div class="three">
+        <div class="field"><label for="a-voting">Voting starts</label><input id="a-voting" type="date"></div>
+        <div class="field"><label for="a-noms">Nominations</label><input id="a-noms" type="date"></div>
+        <div class="field"><label for="a-ceremony">Ceremony</label><input id="a-ceremony" type="date"></div>
+      </div>
+      <div class="field"><label for="a-notes">Notes</label><textarea id="a-notes" rows="2"></textarea></div>
+      <p class="hint" id="eligNote"></p>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn danger" id="awardDelete">Delete</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="editorCancel">Cancel</button>
+      <button type="submit" class="btn primary" id="editorSubmit">Save</button>
+    </div>
+  </form>
+</dialog>
+<dialog class="drawer" id="postEditor" aria-labelledby="postTitle">
+  <form id="postForm" method="dialog" novalidate>
+    <div class="dlg-head"><h2 id="postTitle">Post</h2></div>
+    <div class="dlg-body">
+      <div class="three">
+        <div class="field"><label for="p-date">Date</label><input id="p-date" type="date" required></div>
+        <div class="field"><label for="p-platform">Where</label><input id="p-platform" type="text" autocomplete="off" placeholder="Instagram, newsletter"></div>
+        <div class="field"><label for="p-status">Status</label><select id="p-status"><option value="idea">Idea</option><option value="draft">Draft</option><option value="scheduled">Scheduled</option><option value="posted">Posted</option></select></div>
+      </div>
+      <div class="field"><label for="p-text">Post</label><textarea id="p-text" rows="5"></textarea></div>
+      <div class="field"><label for="p-link">Link or asset</label><input id="p-link" type="text" autocomplete="off"></div>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn danger" id="postDelete">Delete</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="postCancel">Cancel</button>
+      <button type="submit" class="btn primary" id="postSubmit">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="projectDialog" aria-labelledby="projectDialogTitle">
+  <form id="projectForm" method="dialog">
+    <div class="dlg-head"><h2 id="projectDialogTitle">Film details</h2></div>
+    <div class="dlg-body">
+      <div class="field"><label for="p-title">Film title</label><input id="p-title" type="text" placeholder="Working title is fine"></div>
+      <div class="field"><label for="p-company">Production company</label><input id="p-company" type="text"></div>
+      <div class="field"><label for="p-producer">Producer</label><input id="p-producer" type="text"></div>
+    </div>
+    <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn" id="projectCancel">Cancel</button><button type="submit" class="btn primary">Save details</button></div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="projectCsvDialog" aria-labelledby="projectCsvTitle">
+  <form id="projectCsvForm" method="dialog">
+    <div class="dlg-head"><h2 id="projectCsvTitle">Export project data</h2></div>
+    <div class="dlg-body">
+      <div class="field">
+        <label for="projectCsvCollection">Data to export</label>
+        <select id="projectCsvCollection">
+          <option value="project">Project details</option>
+          <option value="people">People</option>
+          <option value="locations">Locations</option>
+          <option value="thirdPartyElements">Third-party elements</option>
+          <option value="contracts">Contracts</option>
+          <option value="assets">Assets</option>
+          <option value="musicCueSheet">Music cue sheet details</option>
+          <option value="callSheets">Call sheets</option>
+        </select>
+      </div>
+      <p class="hint">Exports one CSV file for the selected collection. Nested values are kept as JSON in their cell.</p>
+    </div>
+    <div class="dlg-foot">
+      <button type="submit" class="btn primary">Export CSV</button>
+      <button type="button" class="btn" id="projectCsvCancel">Cancel</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="conflictDialog" aria-labelledby="conflictTitle">
+  <form method="dialog">
+    <div class="dlg-head"><h2 id="conflictTitle">Project file changed</h2></div>
+    <div class="dlg-body">
+      <p id="conflictText">This project file changed after you opened it. Saving will replace those changes.</p>
+      <p class="hint">Your edits are still here. Choose whether to overwrite the changed file, save a separate copy, or load its latest contents. Save in one tool at a time; simultaneous saves can still race.</p>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn" id="conflictReloadBtn">Reload latest</button>
+      <button type="button" class="btn" id="conflictCopyBtn">Save a copy</button>
+      <button type="button" class="btn danger" id="conflictOverwriteBtn">Overwrite file</button>
+      <button type="button" class="btn" id="conflictCancelBtn">Keep editing</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="report" id="report" aria-hidden="true"></div>
+<input type="file" id="fileInput" accept=".json,application/json" hidden>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+(() => {
+  'use strict';
+
+  const FORMAT = 'open-filmmaker-toolkit/project';
+  const FORMAT_VERSION = 1;
+  const TOOL = 'awards-social 0.1.0';
+  const DRAFT_KEY = 'oft.awards-social.draft';
+  const PROJECT_TEXT = ['title', 'company', 'producer'];
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const str = v => (v == null ? '' : String(v));
+  const arr = v => (Array.isArray(v) ? v : []);
+  const norm = s => str(s).toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+
+  let doc = blankDoc();
+  let fileHandle = null;
+  let baselineText = null;
+  let fileName = null;
+  let dirty = false;
+
+  function blankDoc() {
+    return { format: FORMAT, formatVersion: FORMAT_VERSION, project: { title: '', company: '', producer: '', frameRate: 24, currency: 'USD' }, people: [], awards: [], socialPosts: [] };
+  }
+  function newId(prefix) {
+    if (window.crypto && crypto.randomUUID) return `${prefix}-${crypto.randomUUID()}`;
+    return `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+  }
+  function today() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  function fmtDate(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str(iso));
+    if (!m) return str(iso);
+    return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+  function daysUntil(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str(iso));
+    if (!m) return null;
+    const t = new Date(); const a = Date.UTC(t.getFullYear(), t.getMonth(), t.getDate());
+    return Math.round((Date.UTC(+m[1], +m[2] - 1, +m[3]) - a) / 86400000);
+  }
+
+
+  // ---------- Calendar file (.ics) ----------
+  function icsText(s) { return str(s).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n'); }
+  function fold(line) {
+    const out = [];
+    let cur = '', bytes = 0;
+    for (const ch of line) {
+      const n = new TextEncoder().encode(ch).length;
+      if (bytes + n > (out.length ? 74 : 75)) { out.push(cur); cur = ''; bytes = 0; }
+      cur += ch; bytes += n;
+    }
+    out.push(cur);
+    return out.join('\r\n ');
+  }
+  // events: [{ uid, date (YYYY-MM-DD), summary, description }], as all-day events.
+  function icsFile(calName, events) {
+    const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
+    const day = iso => iso.replace(/-/g, '');
+    const next = iso => { const d = new Date(Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10) + 1)); return d.toISOString().slice(0, 10).replace(/-/g, ''); };
+    const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', `PRODID:-//Open Filmmaker Toolkit//${TOOL}//EN`, 'CALSCALE:GREGORIAN', `X-WR-CALNAME:${icsText(calName)}`];
+    for (const ev of events) lines.push('BEGIN:VEVENT', `UID:${ev.uid}@open-filmmaker-toolkit`, `DTSTAMP:${stamp}`, `DTSTART;VALUE=DATE:${day(ev.date)}`, `DTEND;VALUE=DATE:${next(ev.date)}`,
+      `SUMMARY:${icsText(ev.summary)}`, ...(ev.description ? [`DESCRIPTION:${icsText(ev.description)}`] : []), 'END:VEVENT');
+    lines.push('END:VCALENDAR');
+    return lines.map(fold).join('\r\n') + '\r\n';
+  }
+
+  const money = n => { try { return new Intl.NumberFormat(undefined, { style: 'currency', currency: doc.project.currency || 'USD' }).format(n || 0); } catch (e) { return String(n || 0); } };
+  const num = v => (Number.isFinite(Number(v)) ? Number(v) : 0);
+  const csvRow = r => r.map(v => (typeof v === 'number' ? String(v) : csvCell(v))).join(',');
+  function exportRows(head, rows, suffix, noun) {
+    const csv = '\ufeff' + [head, ...rows].map(csvRow).join('\r\n') + '\r\n';
+    const name = `${slug()}-${suffix}.csv`;
+    download(csv, name, 'text/csv;charset=utf-8');
+    toast(`Exported ${rows.length} ${noun}${rows.length === 1 ? '' : 's'} to ${name}`);
+  }
+  // Fills in only what this tool needs; everything else in the file is left as it was.
+  function normalize(d) {
+    if (!d.project || typeof d.project !== 'object') d.project = {};
+    for (const k of PROJECT_TEXT) if (typeof d.project[k] !== 'string') d.project[k] = str(d.project[k]);
+    for (const k of ['people', 'festivals', 'awards', 'socialPosts']) d[k] = Array.isArray(d[k]) ? d[k].filter(x => x && typeof x === 'object') : [];
+    d.format = FORMAT;
+    d.formatVersion = FORMAT_VERSION;
+    return d;
+  }
+
+  const AWARD = { considering: 'Considering', entered: 'Entered', shortlisted: 'Shortlisted', nominated: 'Nominated', won: 'Won', 'not-selected': 'Not selected' };
+  const POST = { idea: 'Idea', draft: 'Draft', scheduled: 'Scheduled', posted: 'Posted' };
+  const isDay = s => /^\d{4}-\d{2}-\d{2}$/.test(str(s));
+  const entries = () => doc.awards;
+  let filter = 'all', editing = null, editingPost = null;
+  const addDays = (iso, n) => { const d = new Date(Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10) + n)); return d.toISOString().slice(0, 10); };
+  // The first time the film is shown: its earliest festival screening, festival start or release date.
+  function firstShown() {
+    const days = doc.festivals.filter(f => f.status === 'accepted').flatMap(f => [f.startDate, ...arr(f.screenings).map(s => s && s.date)]);
+    days.push(doc.project.releaseDate);
+    return days.filter(isDay).sort()[0] || '';
+  }
+  function eligibility(a) {
+    if (!isDay(a.windowStart) && !isDay(a.windowEnd)) return null;
+    const f = firstShown();
+    if (!f) return { ok: null, text: 'No festival screening or release date yet to check against the window' };
+    const ok = (!isDay(a.windowStart) || f >= a.windowStart) && (!isDay(a.windowEnd) || f <= a.windowEnd);
+    return { ok, text: `First shown ${fmtDate(f)}: ${ok ? 'inside' : 'outside'} the eligibility window` };
+  }
+  // Every dated item, from this tool and the rest of the project.
+  function events() {
+    const ev = [];
+    for (const a of doc.awards) {
+      const n = a.name || 'Award';
+      for (const [k, label] of [['deadline', 'Entry deadline'], ['votingStart', 'Voting starts'], ['nominationsDate', 'Nominations'], ['ceremonyDate', 'Ceremony']])
+        if (isDay(a[k])) ev.push({ date: a[k], kind: 'award', label: `${label}: ${n}`, sub: [a.category, AWARD[a.status] || 'Considering'].filter(Boolean).join(' · '), id: a.id, uid: `${a.id}-${k}` });
+    }
+    for (const p of doc.socialPosts) if (isDay(p.date)) ev.push({ date: p.date, kind: 'post', label: str(p.text).split('\n')[0].slice(0, 90) || 'Post', sub: [p.platform, POST[p.status] || 'Idea'].filter(Boolean).join(' · '), postId: p.id, uid: p.id });
+    for (const f of doc.festivals) {
+      if (f.status === 'declined') continue;
+      if (isDay(f.startDate)) ev.push({ date: f.startDate, kind: 'festival', label: `${f.name || 'Festival'} starts`, sub: f.status === 'accepted' ? 'Accepted' : 'Not confirmed', uid: `${f.id}-start` });
+      for (const s of arr(f.screenings)) if (s && isDay(s.date)) ev.push({ date: s.date, kind: 'festival', label: `Screening: ${f.name || 'Festival'}`, sub: [s.time, s.venue].filter(Boolean).join(' · '), uid: `${f.id}-${s.id}` });
+    }
+    if (isDay(doc.project.releaseDate)) ev.push({ date: doc.project.releaseDate, kind: 'festival', label: 'Release date', sub: doc.project.distributor || '', uid: 'release' });
+    return ev.sort((a, b) => a.date.localeCompare(b.date) || a.kind.localeCompare(b.kind));
+  }
+  // Posts the calendar suggests around accepted festivals and the release, that you haven't added yet.
+  function suggestions() {
+    const out = [], title = doc.project.title || 'the film';
+    const add = (key, date, text) => { if (isDay(date) && date >= today() && !doc.socialPosts.some(p => p.eventKey === key)) out.push({ key, date, text }); };
+    for (const f of doc.festivals.filter(x => x.status === 'accepted')) {
+      const first = [f.startDate, ...arr(f.screenings).map(s => s && s.date)].filter(isDay).sort()[0];
+      if (!first) continue;
+      add(`festival:${f.id}:announce`, addDays(first, -28), `${title} is screening at ${f.name}!`);
+      add(`festival:${f.id}:week`, addDays(first, -7), `One week until ${title} screens at ${f.name}.`);
+      add(`festival:${f.id}:day`, first, `Today: ${title} at ${f.name}.`);
+      add(`festival:${f.id}:thanks`, addDays(first, 1), `Thank you, ${f.name}, and everyone who came.`);
+    }
+    if (isDay(doc.project.releaseDate)) {
+      add('release:announce', addDays(doc.project.releaseDate, -28), `${title} comes out ${fmtDate(doc.project.releaseDate)}.`);
+      add('release:day', doc.project.releaseDate, `${title} is out today.`);
+    }
+    return out.sort((a, b) => a.date.localeCompare(b.date));
+  }
+
+  function render() {
+    $('filmTitle').textContent = doc.project.title || 'Untitled film';
+    $('filmTitle').classList.toggle('is-empty', !doc.project.title);
+    $('filmMeta').textContent = [doc.project.company, doc.project.producer && `Producer: ${doc.project.producer}`].filter(Boolean).join(' · ');
+    $('fileState').innerHTML = (fileName ? esc(fileName) : 'Not saved to a file yet') + (dirty ? ' · <span class="dirty">Unsaved changes</span>' : '');
+    document.title = `${doc.project.title ? doc.project.title + ' · ' : ''}Awards and social calendars · Open Filmmaker Toolkit`;
+    const ev = events();
+    for (const b of $('filters').querySelectorAll('button')) b.setAttribute('aria-pressed', String(b.dataset.f === filter));
+    const shown = ev.filter(e => filter === 'all' || e.kind === filter);
+    $('count').textContent = ev.length ? `${doc.awards.length} award${doc.awards.length === 1 ? '' : 's'} · ${doc.socialPosts.length} post${doc.socialPosts.length === 1 ? '' : 's'}` : '';
+    $('empty').hidden = !!(ev.length || doc.awards.length || doc.socialPosts.length);
+    $('agenda').hidden = $('filters').hidden = !$('empty').hidden;
+    let month = '', html = '';
+    for (const e of shown) {
+      const m = e.date.slice(0, 7);
+      if (m !== month) { html += `${month ? '</ol>' : ''}<h3 class="month">${esc(new Date(+m.slice(0, 4), +m.slice(5, 7) - 1, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }))}</h3><ol class="rows agenda">`; month = m; }
+      const past = e.date < today();
+      const act = e.kind === 'award' ? `data-edit="${esc(e.id)}"` : e.kind === 'post' ? `data-post="${esc(e.postId)}"` : '';
+      html += `<li class="row" data-kind="${e.kind}"><span class="rt">${esc(fmtDate(e.date))}</span>
+        ${act ? `<button type="button" class="what" ${act}>` : '<div class="what">'}<span class="nm">${esc(e.label)}</span>${e.sub ? `<span class="tt">${esc(e.sub)}</span>` : ''}${act ? '</button>' : '</div>'}
+        <span class="st ${past ? 'st-quiet' : ''}"><span class="kind">${e.kind === 'award' ? 'Award' : e.kind === 'post' ? 'Post' : 'Festival'}</span></span></li>`;
+    }
+    $('agenda').innerHTML = (html ? html + '</ol>' : '') || (ev.length ? '<p class="hint">Nothing of this kind on the calendar.</p>' : '<p class="hint">Add dates to an award or a post to see them here.</p>');
+    $('awCount').textContent = doc.awards.length ? String(doc.awards.length) : '';
+    $('awards').innerHTML = doc.awards.length ? doc.awards.map(a => { const el = eligibility(a); const next = [a.deadline, a.nominationsDate, a.ceremonyDate].filter(d => isDay(d) && d >= today()).sort()[0];
+      return `<li><span>${esc(a.name || 'Award')}<span class="sub">${esc([a.category, AWARD[a.status] || 'Considering'].filter(Boolean).join(' · '))}</span>${el ? `<span class="sub ${el.ok === false ? 'st-bad' : ''}">${esc(el.text)}</span>` : ''}</span><span class="num">${next ? esc(fmtDate(next)) : ''}</span></li>`; }).join('')
+      : '<li class="empty-line">No awards yet.</li>';
+    const sug = suggestions();
+    $('suggest').innerHTML = sug.length ? sug.map(s => `<li><span>${esc(s.text)}</span><span class="num">${esc(fmtDate(s.date))}</span></li>`).join('') : '<li class="empty-line">Nothing to suggest. Mark a festival accepted, or set the release date in the film details.</li>';
+    $('suggestBtn').hidden = !sug.length;
+  }
+
+  const AF = { name: 'a-name', category: 'a-category', rules: 'a-rules', windowStart: 'a-from', windowEnd: 'a-to', deadline: 'a-deadline', fee: 'a-fee', status: 'a-status', votingStart: 'a-voting', nominationsDate: 'a-noms', ceremonyDate: 'a-ceremony', notes: 'a-notes' };
+  function openEditor(id) {
+    editing = id ? doc.awards.find(a => a.id === id) || null : null;
+    const a = editing || { status: 'considering' };
+    for (const [k, el] of Object.entries(AF)) $(el).value = a[k] == null ? '' : String(a[k]);
+    const el = editing && eligibility(editing);
+    $('eligNote').textContent = el ? el.text : '';
+    $('awardDelete').hidden = !editing;
+    $('editorTitle').textContent = editing ? editing.name || 'Award' : 'Add an award';
+    $('editor').showModal();
+    $('a-name').focus();
+  }
+  function saveEditor() {
+    if (!$('a-name').value.trim()) { $('a-name').setCustomValidity('Name the award.'); $('a-name').reportValidity(); return; }
+    if ($('a-from').value && $('a-to').value && $('a-to').value < $('a-from').value) { $('a-to').setCustomValidity('The window ends before it starts.'); $('a-to').reportValidity(); return; }
+    const a = editing || { id: newId('award') };
+    for (const [k, el] of Object.entries(AF)) { const v = $(el).value.trim(); if (v) a[k] = k === 'fee' ? Number(v) : v; else delete a[k]; }
+    if (!editing) doc.awards.push(a);
+    $('editor').close(); changed();
+  }
+  const PF = { date: 'p-date', platform: 'p-platform', status: 'p-status', text: 'p-text', link: 'p-link' };
+  function openPost(id) {
+    editingPost = id ? doc.socialPosts.find(p => p.id === id) || null : null;
+    const p = editingPost || { status: 'idea', date: today() };
+    for (const [k, el] of Object.entries(PF)) $(el).value = p[k] == null ? '' : String(p[k]);
+    $('postDelete').hidden = !editingPost;
+    $('postTitle').textContent = editingPost ? 'Post' : 'Add a post';
+    $('postEditor').showModal();
+    $('p-text').focus();
+  }
+  function savePost() {
+    if (!$('p-date').value) { $('p-date').setCustomValidity('Pick a date.'); $('p-date').reportValidity(); return; }
+    const p = editingPost || { id: newId('post') };
+    for (const [k, el] of Object.entries(PF)) { const v = $(el).value.trim(); if (v) p[k] = v; else delete p[k]; }
+    if (!editingPost) doc.socialPosts.push(p);
+    $('postEditor').close(); changed();
+  }
+  function addSuggested() {
+    const sug = suggestions();
+    for (const s of sug) doc.socialPosts.push({ id: newId('post'), date: s.date, status: 'draft', text: s.text, eventKey: s.key });
+    toast(`Added ${sug.length} draft post${sug.length === 1 ? '' : 's'}`);
+    changed();
+  }
+  function exportIcs() {
+    const ev = events().filter(e => filter === 'all' || e.kind === filter);
+    if (!ev.length) { toast('Nothing dated to export yet.'); return; }
+    const name = `${slug()}-awards-and-posts.ics`;
+    download(icsFile(`${doc.project.title || 'Film'} awards and posts`, ev.map(e => ({ uid: e.uid, date: e.date, summary: e.label, description: e.sub }))), name, 'text/calendar;charset=utf-8');
+    toast(`Exported ${ev.length} date${ev.length === 1 ? '' : 's'} to ${name}. Open it with your calendar app.`);
+  }
+  function renderReport() {
+    const ev = events().filter(e => filter === 'all' || e.kind === filter);
+    $('report').innerHTML = `<h1>Awards and social calendar</h1><p class="r-meta">${esc([doc.project.title, `Printed ${fmtDate(today())}`].filter(Boolean).join(' · '))}</p>
+      <table><thead><tr><th>Date</th><th>What</th><th>Kind</th></tr></thead><tbody>${ev.map(e => `<tr><td>${esc(fmtDate(e.date))}</td><td>${esc(e.label)}${e.sub ? `<span class="r-sub">${esc(e.sub)}</span>` : ''}</td><td>${e.kind === 'award' ? 'Award' : e.kind === 'post' ? 'Post' : 'Festival'}</td></tr>`).join('')}</tbody></table>
+      ${doc.awards.length ? `<h2>Awards</h2><table><thead><tr><th>Award</th><th>Eligibility</th><th>Deadline</th><th>Fee</th><th>Status</th></tr></thead><tbody>${doc.awards.map(a => { const el = eligibility(a); return `<tr><td>${esc(a.name)}${a.category ? `<span class="r-sub">${esc(a.category)}</span>` : ''}</td><td>${esc(a.rules || '')}${el ? `<span class="r-sub">${esc(el.text)}</span>` : ''}</td><td>${esc(a.deadline ? fmtDate(a.deadline) : '')}</td><td>${a.fee ? esc(money(a.fee)) : ''}</td><td>${esc(AWARD[a.status] || 'Considering')}</td></tr>`; }).join('')}</tbody></table>` : ''}`;
+  }
+
+  // ---------- Project CSV ----------
+  function csvCell(v) {
+    let s = v == null ? '' : String(v);
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+    return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }
+  const csvCollections = {
+    project: 'project details', people: 'people', locations: 'locations', thirdPartyElements: 'third-party elements',
+    contracts: 'contracts', assets: 'assets', musicCueSheet: 'music cue sheet details', callSheets: 'call sheets'
+  };
+  function exportProjectCsv() {
+    const collection = $('projectCsvCollection').value;
+    const value = doc[collection];
+    const rows = Array.isArray(value) ? value : value && typeof value === 'object' ? [value] : [];
+    if (rows.some(row => !row || typeof row !== 'object' || Array.isArray(row))) {
+      toast(`Couldn't export ${csvCollections[collection]}: the project contains an invalid record.`, true);
+      return;
+    }
+    const headers = [...new Set(rows.flatMap(row => Object.keys(row)))];
+    if (!headers.length) headers.push('id');
+    const csvRows = rows.map(row => headers.map(key => { const cell = row[key]; return cell && typeof cell === 'object' ? JSON.stringify(cell) : cell; }));
+    const csv = '﻿' + [headers, ...csvRows].map(row => row.map(csvCell).join(',')).join('\r\n') + '\r\n';
+    const name = suggestedName().replace(/\.oft\.json$/i, `-${collection}.csv`);
+    download(csv, name, 'text/csv;charset=utf-8');
+    toast(`Exported ${rows.length} ${csvCollections[collection]} to ${name}`);
+  }
+
+  // ---------- Film details ----------
+  function openProjectDialog() {
+    for (const k of PROJECT_TEXT) $(`p-${k}`).value = doc.project[k] || '';
+    $('projectDialog').showModal();
+    $('p-title').focus();
+  }
+  function saveProjectDialog() {
+    for (const k of PROJECT_TEXT) doc.project[k] = $(`p-${k}`).value.trim();
+    $('projectDialog').close();
+    changed();
+  }
+
+  // ---------- Dirty state & recovery draft ----------
+  function changed() { dirty = true; saveDraft(); render(); }
+  function saveDraft() {
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ doc, fileName, baselineText, at: new Date().toISOString() })); } catch { /* the file on disk is the real copy */ }
+  }
+  function clearDraft() {
+    try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+    $('recovery').hidden = true;
+  }
+  function checkDraft() {
+    let draft = null;
+    try { draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); } catch { draft = null; }
+    if (!draft || !draft.doc || draft.doc.format !== FORMAT) return;
+    const n = (Array.isArray(draft.doc.awards) ? draft.doc.awards.length : 0) + (Array.isArray(draft.doc.socialPosts) ? draft.doc.socialPosts.length : 0);
+    if (!n && !(draft.doc.project && draft.doc.project.title)) { clearDraft(); return; }
+    const when = draft.at ? new Date(draft.at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'earlier';
+    const title = draft.doc.project && draft.doc.project.title ? `"${draft.doc.project.title}"` : 'an untitled project';
+    $('recoveryText').textContent = `You have unsaved changes to ${title} from ${when} (${n} award${n === 1 ? '' : 's'}). Restore them, or discard them and start fresh.`;
+    $('recovery').hidden = false;
+    $('restoreBtn').onclick = () => {
+      doc = normalize(draft.doc); fileName = draft.fileName || null; fileHandle = null;
+      baselineText = typeof draft.baselineText === 'string' ? draft.baselineText : null; dirty = true;
+      $('recovery').hidden = true; render();
+      toast(fileName ? `Restored. Save to write the changes back to ${fileName}.` : 'Restored. Save to keep it as a file.');
+    };
+    $('discardBtn').onclick = () => { clearDraft(); toast('Discarded the unsaved changes.'); };
+  }
+
+  // ---------- Files ----------
+  const pickerTypes = [{ description: 'Film project file', accept: { 'application/json': ['.json'] } }];
+  function slug() {
+    return (doc.project.title || 'untitled-film').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'untitled-film';
+  }
+  const suggestedName = () => `${slug()}.oft.json`;
+  function serialize() {
+    doc.savedAt = new Date().toISOString();
+    doc.savedBy = TOOL;
+    return JSON.stringify(doc, null, 2) + '\n';
+  }
+  function download(text, name, type) {
+    const url = URL.createObjectURL(new Blob([text], { type }));
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  function afterSave(name, downloaded, content) {
+    fileName = name;
+    if (downloaded) fileHandle = null;
+    baselineText = content;
+    dirty = false; clearDraft(); render();
+    toast(downloaded ? `Downloaded ${name}. Keep it with your project files and open it here next time.` : `Saved to ${name}`);
+  }
+  async function writeProjectFile(handle, content) {
+    try {
+      const writable = await handle.createWritable();
+      await writable.write(content);
+      await writable.close();
+    } catch (err) {
+      if (err.name !== 'AbortError') toast(`Couldn't save the file: ${err.message}`, true);
+      return;
+    }
+    fileHandle = handle;
+    afterSave(handle.name, false, content);
+  }
+  function saveCopy(content) {
+    const base = (fileName || suggestedName()).replace(/\.oft\.json$/i, '');
+    const name = `${base}-copy.oft.json`;
+    download(content, name, 'application/json');
+    afterSave(name, true, content);
+  }
+  async function reloadLatest(handle) {
+    try {
+      const file = await handle.getFile();
+      loadText(await file.text(), handle.name, handle);
+    } catch (err) {
+      toast(`Couldn't reload the file: ${err.message}`, true);
+    }
+  }
+  function showConflictDialog(content, observedText, unknownBaseline = false) {
+    const handle = fileHandle;
+    dirty = true;
+    saveDraft();
+    render();
+    $('conflictText').textContent = unknownBaseline
+      ? `The tool can't verify whether ${handle.name} changed since your recovery copy was made. Your edits are not saved.`
+      : `${handle.name} changed after you opened it. Your edits are not saved. Overwriting replaces the newer file.`;
+    $('conflictDialog').showModal();
+    $('conflictReloadBtn').onclick = () => { $('conflictDialog').close(); reloadLatest(handle); };
+    $('conflictCopyBtn').onclick = () => { $('conflictDialog').close(); saveCopy(content); };
+    $('conflictOverwriteBtn').onclick = async () => {
+      $('conflictDialog').close();
+      let latestText;
+      try { latestText = await (await handle.getFile()).text(); }
+      catch (err) { toast(`Couldn't check the file before overwriting: ${err.message}`, true); return; }
+      if (latestText !== observedText) {
+        toast('The file changed again. Review the updated conflict warning before overwriting.', true);
+        showConflictDialog(content, latestText);
+        return;
+      }
+      await writeProjectFile(handle, content);
+    };
+    $('conflictCancelBtn').onclick = () => $('conflictDialog').close();
+  }
+  async function saveFile() {
+    const out = serialize();
+    if (fileHandle) {
+      let currentText;
+      try { currentText = await (await fileHandle.getFile()).text(); }
+      catch (err) { toast(`Couldn't check the file before saving: ${err.message}`, true); return; }
+      if (baselineText === null || currentText !== baselineText) { showConflictDialog(out, currentText, baselineText === null); return; }
+      await writeProjectFile(fileHandle, out);
+      return;
+    }
+    if (window.showSaveFilePicker && window.self === window.top) {
+      try {
+        const h = await window.showSaveFilePicker({ suggestedName: fileName || suggestedName(), types: pickerTypes });
+        if (h.name === fileName) {
+          const currentText = await (await h.getFile()).text();
+          if (baselineText === null || currentText !== baselineText) { fileHandle = h; showConflictDialog(out, currentText, baselineText === null); return; }
+        }
+        await writeProjectFile(h, out);
+      } catch (err) { if (err.name !== 'AbortError') toast(`Couldn't save the file: ${err.message}`, true); }
+      return;
+    }
+    const name = fileName || suggestedName();
+    download(out, name, 'application/json');
+    afterSave(name, true, out);
+  }
+  function loadText(text, name, handle) {
+    let data;
+    try { data = JSON.parse(text); } catch { toast(`Couldn't open ${name}: it isn't a project file.`, true); return; }
+    if (!data || data.format !== FORMAT) { toast(`Couldn't open ${name}: it isn't an Open Filmmaker Toolkit project file.`, true); return; }
+    if (Number(data.formatVersion) > FORMAT_VERSION) { toast(`Couldn't open ${name}: it was saved by a newer version of the toolkit. Get the latest version of this tool.`, true); return; }
+    doc = normalize(data); fileHandle = handle; baselineText = text; fileName = name; dirty = false;
+    clearDraft(); render();
+    const n = entries().length;
+    toast(`Opened ${name}: ${n ? `${n} award${n === 1 ? '' : 's'}` : 'no awards yet'}`);
+  }
+  async function openFile() {
+    if (dirty && !confirm('You have unsaved changes. Open another file and lose them?')) return;
+    if (window.showOpenFilePicker && window.self === window.top) {
+      try { const [h] = await window.showOpenFilePicker({ types: pickerTypes }); const f = await h.getFile(); loadText(await f.text(), f.name, h); }
+      catch (err) { if (err.name !== 'AbortError') toast(`Couldn't open the file: ${err.message}`, true); }
+      return;
+    }
+    $('fileInput').click();
+  }
+  function newProject() {
+    if (dirty && !confirm('You have unsaved changes. Start a new project and lose them?')) return;
+    doc = normalize(blankDoc()); fileHandle = null; baselineText = null; fileName = null; dirty = false;
+    clearDraft(); render(); openProjectDialog();
+  }
+
+  let toastTimer = null;
+  function toast(msg, isError) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.classList.toggle('error', !!isError);
+    t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.hidden = true; }, isError ? 7000 : 4200);
+  }
+
+  // ---------- Wiring ----------
+  function init() {
+    doc = normalize(doc);
+    $('newBtn').onclick = newProject;
+    $('openBtn').onclick = openFile;
+    $('saveBtn').onclick = saveFile;
+    $('editProjectBtn').onclick = openProjectDialog;
+    $('filmTitle').onclick = openProjectDialog;
+    $('printBtn').onclick = () => { renderReport(); window.print(); };
+    window.addEventListener('beforeprint', renderReport);
+    $('projectCsvBtn').onclick = () => $('projectCsvDialog').showModal();
+    $('projectCsvCancel').onclick = () => $('projectCsvDialog').close();
+    $('projectCsvForm').addEventListener('submit', ev => { ev.preventDefault(); exportProjectCsv(); $('projectCsvDialog').close(); });
+    $('fileInput').addEventListener('change', async () => {
+      const f = $('fileInput').files[0];
+      if (f) loadText(await f.text(), f.name, null);
+      $('fileInput').value = '';
+    });
+    $('projectForm').addEventListener('submit', ev => { ev.preventDefault(); saveProjectDialog(); });
+    $('projectCancel').onclick = () => $('projectDialog').close();
+    $('addBtn').onclick = () => openEditor(null);
+    $('emptyAddBtn').onclick = () => openEditor(null);
+    $('emptyOpenBtn').onclick = openFile;
+    $('postBtn').onclick = () => openPost(null);
+    $('icsBtn').onclick = exportIcs;
+    $('suggestBtn').onclick = addSuggested;
+    $('filters').addEventListener('click', ev => { const b = ev.target.closest('[data-f]'); if (b) { filter = b.dataset.f; render(); } });
+    $('agenda').addEventListener('click', ev => { const a = ev.target.closest('[data-edit]'); if (a) return openEditor(a.dataset.edit); const p = ev.target.closest('[data-post]'); if (p) openPost(p.dataset.post); });
+    $('editorForm').addEventListener('submit', ev => { ev.preventDefault(); saveEditor(); });
+    $('postForm').addEventListener('submit', ev => { ev.preventDefault(); savePost(); });
+    for (const f of ['editorForm', 'postForm']) $(f).addEventListener('input', ev => { if (ev.target.setCustomValidity) ev.target.setCustomValidity(''); });
+    $('editorCancel').onclick = () => $('editor').close();
+    $('postCancel').onclick = () => $('postEditor').close();
+    $('awardDelete').onclick = () => { doc.awards = doc.awards.filter(a => a !== editing); $('editor').close(); changed(); };
+    $('postDelete').onclick = () => { doc.socialPosts = doc.socialPosts.filter(p => p !== editingPost); $('postEditor').close(); changed(); };
+
+    document.addEventListener('keydown', ev => {
+      const mod = ev.metaKey || ev.ctrlKey;
+      if (mod && ev.key.toLowerCase() === 's') { ev.preventDefault(); saveFile(); }
+      else if (mod && ev.key.toLowerCase() === 'o') { ev.preventDefault(); openFile(); }
+    });
+    window.addEventListener('beforeunload', ev => { if (dirty) { ev.preventDefault(); ev.returnValue = ''; } });
+    render();
+    checkDraft();
+  }
+
+  if (typeof HTMLDialogElement !== 'function' || typeof HTMLDialogElement.prototype.showModal !== 'function' || typeof structuredClone !== 'function') {
+    $('cantRunTitle').textContent = 'This browser is too old to run this tool';
+    $('cantRunText').textContent = 'Update to a current version of Chrome, Edge, Firefox or Safari, then open this file again.';
+    $('cantRunHow').hidden = true;
+    return;
+  }
+  document.documentElement.classList.remove('no-js');
+  window.addEventListener('error', ev => toast(`Something went wrong: ${ev.message}. Save your work, then reload the page.`, true));
+  window.addEventListener('unhandledrejection', ev => toast(`Something went wrong: ${ev.reason && ev.reason.message ? ev.reason.message : ev.reason}. Save your work, then reload the page.`, true));
+  init();
+})();
+</script>
+</body>
+</html>

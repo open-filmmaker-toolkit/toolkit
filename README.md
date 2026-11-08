@@ -114,11 +114,13 @@ The toolkit has two halves:
 | [Press list](tools/press-list/) | Marketing and festivals | Track press contacts, screeners and coverage. |
 | [Festival strategy map](tools/festival-strategy/) | Marketing and festivals | Plan a festival run that protects your premiere. |
 | [EPK and press notes builder](tools/press-notes/) | Marketing and festivals | Build press notes from your project and print them. |
+| [Stills library](tools/stills-library/) | Marketing and festivals | Caption, credit and approve your stills. |
+| [Awards and social calendars](tools/awards-social/) | Marketing and festivals | Plan awards and social posts around your festival dates. |
 | [Partner CRM](tools/partner-crm/) | Impact and outreach | Track impact partners and shared screenings. |
 | [Discussion guide builder](tools/discussion-guide/) | Impact and outreach | Make a screening handout with discussion questions. |
 | [Archive log](tools/archive-log/) | Close-out and archive | Track where each copy of your project lives. |
 
-All 48 are first versions: they work, and they're still changing. Everything else we plan to build is listed by production phase in [TOOLS.md](TOOLS.md).
+All 50 are first versions: they work, and they're still changing. Everything else we plan to build is listed by production phase in [TOOLS.md](TOOLS.md).
 
 ## How our tools work
 

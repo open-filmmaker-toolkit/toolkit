@@ -1,6 +1,6 @@
 # Tools
 
-The tools we build, by production phase. Each one is a single page that runs in your browser on the shared project file, with nothing to install and nothing sent anywhere. 48 are ready to use and 14 are planned.
+The tools we build, by production phase. Each one is a single page that runs in your browser on the shared project file, with nothing to install and nothing sent anywhere. 50 are ready to use and 12 are planned.
 
 - **Ready to use:** linked tools. Each has a README with what it does.
 - **Planned:** each has an issue. Comment there if you need the tool or want to help build it. Order of work is in [ROADMAP.md](ROADMAP.md).
@@ -86,9 +86,9 @@ Looking for other free, open-source software for filmmaking, such as editing, so
 | [Festival strategy map](tools/festival-strategy/) | Plan a festival run that protects your premiere. | First version |
 | [Festival submission tracker](tools/festival-submissions/) | Track festival deadlines, fees and results. | First version |
 | [EPK and press notes builder](tools/press-notes/) | Build press notes from your project and print them. | First version |
-| Stills library | Organize production stills and key art, with captions, photo credits and approvals. | Planned, [#80](https://github.com/open-filmmaker-toolkit/toolkit/issues/80) |
+| [Stills library](tools/stills-library/) | Caption, credit and approve your stills. | First version |
 | [Press list](tools/press-list/) | Track press contacts, screeners and coverage. | First version |
-| Awards and social calendars | Plan awards campaigns and social posts around festival and release dates. | Planned, [#82](https://github.com/open-filmmaker-toolkit/toolkit/issues/82) |
+| [Awards and social calendars](tools/awards-social/) | Plan awards and social posts around your festival dates. | First version |
 
 ## Release & Distribution
 
