@@ -174,11 +174,13 @@ dialog .actions { justify-content: flex-end; }
   const arr = v => Array.isArray(v) ? v : [];
   let doc = blankDoc(), fileHandle = null, baselineText = null, fileName = null, dirty = false, toastTimer;
   function blankDoc() { return { format: FORMAT, formatVersion: VERSION, project: { title: '', company: '', producer: '', frameRate: 24, currency: 'USD' }, thirdPartyElements: [] }; }
+  // The guide as shown: what's saved, with the treatment's synopsis to start from. Nothing is written to the file until you edit it.
   function guide() {
-    if (!doc.discussionGuide || typeof doc.discussionGuide !== 'object' || Array.isArray(doc.discussionGuide)) doc.discussionGuide = {};
-    const g = doc.discussionGuide;
-    for (const k of ['synopsis', 'themes', 'questions', 'resourceNotes']) if (typeof g[k] !== 'string') g[k] = '';
-    if (!Array.isArray(g.partnerIds)) g.partnerIds = [];
+    const saved = doc.discussionGuide && typeof doc.discussionGuide === 'object' && !Array.isArray(doc.discussionGuide) ? doc.discussionGuide : {};
+    const g = {};
+    for (const k of ['synopsis', 'themes', 'questions', 'resourceNotes']) g[k] = typeof saved[k] === 'string' ? saved[k] : '';
+    if (!g.synopsis) g.synopsis = seedSynopsis();
+    g.partnerIds = Array.isArray(saved.partnerIds) ? saved.partnerIds : [];
     return g;
   }
   function notify(message, error = false) {
@@ -241,7 +243,8 @@ dialog .actions { justify-content: flex-end; }
     $('creditsPreview').textContent = creditLines.join('\n') || 'No project credits yet.';
   }
   function sync() {
-    const g = guide();
+    if (!doc.discussionGuide || typeof doc.discussionGuide !== 'object' || Array.isArray(doc.discussionGuide)) doc.discussionGuide = {};
+    const g = doc.discussionGuide;
     for (const k of ['synopsis', 'themes', 'questions', 'resourceNotes']) g[k] = $(k).value;
     g.partnerIds = [...document.querySelectorAll('[data-partner]:checked')].map(e => e.dataset.partner);
     dirty = true; renderHeader();
@@ -261,8 +264,6 @@ dialog .actions { justify-content: flex-end; }
     if (!data || data.format !== FORMAT) { notify(`Couldn't open ${name}: it isn't an Open Filmmaker Toolkit project file.`, true); return; }
     if (Number(data.formatVersion) > VERSION) { notify(`Couldn't open ${name}: it was saved by a newer version of the toolkit.`, true); return; }
     doc = data; if (!doc.project || typeof doc.project !== 'object') doc.project = {};
-    if (!doc.discussionGuide) doc.discussionGuide = { synopsis: seedSynopsis(), themes: '', questions: '', resourceNotes: '', partnerIds: [] };
-    else if (!doc.discussionGuide.synopsis) doc.discussionGuide.synopsis = seedSynopsis();
     fileHandle = handle || null; baselineText = text; fileName = name; dirty = false; render();
     notify(`Opened ${name}.`);
   }

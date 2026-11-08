@@ -52,7 +52,6 @@ An `expenses` list. Each expense has an `id` and can include `date`, `amount`, `
 
 ## Not yet
 
-- Comparing expenses against budget lines and showing budget-to-actuals; that's a separate planned tool ([#72](https://github.com/open-filmmaker-toolkit/toolkit/issues/72)).
 - Reading, embedding or copying receipt files; put them in the project folder yourself.
 - Importing expenses from a bank or card statement.
 

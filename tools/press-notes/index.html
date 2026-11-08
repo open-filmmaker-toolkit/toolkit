@@ -133,6 +133,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .still .acts { display: flex; gap: 6px; flex-wrap: wrap; }
 .contact { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .preview { margin: 0; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 8px; font-size: 14px; white-space: pre-wrap; max-height: 300px; overflow: auto; }
+.sub-h { margin: 14px 0 6px; font-size: 15px; }
 .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .chkline { display: flex; gap: 8px; align-items: center; font-size: 14px; }
 @media (max-width: 720px) {
@@ -421,7 +422,7 @@ pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; b
     { key: 'credits', title: 'Credits', kind: 'credits', hint: 'From the credits builder. Change the credits there.' },
     { key: 'festivals', title: 'Festivals and screenings', kind: 'festivals', hint: 'Festivals marked accepted in the festival submission tracker, with their screenings.' },
     { key: 'specs', title: 'Technical details', kind: 'specs', hint: 'The running time comes from the project.' },
-    { key: 'stills', title: 'Stills', kind: 'stills', hint: 'Add production stills. Give each a caption and a photo credit. The first one goes on the title page.' },
+    { key: 'stills', title: 'Stills', kind: 'stills', hint: 'Pick stills from the stills library, or add them from your computer. Give each a caption and a photo credit. The first one goes on the title page. Taking a still out of the press notes leaves it in the stills library.' },
     { key: 'contacts', title: 'Press contacts', kind: 'contacts', hint: 'Publicists, sales agents and the production.' },
   ];
   const SPECS = [['year', 'Year'], ['country', 'Country'], ['language', 'Language'], ['subtitles', 'Subtitles'], ['format', 'Shooting format'], ['aspectRatio', 'Aspect ratio'], ['sound', 'Sound']];
@@ -529,7 +530,13 @@ pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; b
   function drawStills() {
     $('stillList').innerHTML = draftStills.length ? draftStills.map((a, i) => `<div class="pick still" data-still="${i}"><img src="${esc(a.data)}" alt="">
       <div>${field(`still-cap-${i}`, 'Caption', a.caption)}${field(`still-cred-${i}`, 'Photo credit', a.photoCredit)}
-      <div class="acts"><button type="button" class="btn" data-up="${i}"${i ? '' : ' disabled'}>Move up</button><button type="button" class="btn danger" data-del="${i}">Remove</button></div></div></div>`).join('') : '<p class="hint">No stills yet.</p>';
+      <div class="acts"><button type="button" class="btn" data-up="${i}"${i ? '' : ' disabled'}>Move up</button><button type="button" class="btn danger" data-del="${i}">Take out</button></div></div></div>`).join('') : '<p class="hint">No stills yet.</p>';
+  }
+  // Stills and key art in the stills library that aren't in the press notes yet. Rejected ones are left out.
+  const library = () => doc.assets.filter(a => (a.type === 'still' || a.type === 'key art') && /^data:image\//.test(str(a.data)) && a.approval !== 'rejected' && !draftStills.some(d => d.id === a.id));
+  function drawLib() {
+    const l = library();
+    $('libList').innerHTML = l.length ? l.map(a => `<div class="pick still"><img src="${esc(a.data)}" alt=""><div><p class="hint">${esc(a.caption || a.name || 'Untitled still')}${a.approval === 'approved' ? '' : ' (waiting for approval)'}</p><button type="button" class="btn" data-lib="${esc(a.id)}">Add to the press notes</button></div></div>`).join('') : '<p class="hint">Every still in the <a href="../stills-library/index.html">stills library</a> is already in the press notes.</p>';
   }
   function keepStillText() { draftStills.forEach((a, i) => { if ($(`still-cap-${i}`)) { a.caption = $(`still-cap-${i}`).value; a.photoCredit = $(`still-cred-${i}`).value; } }); }
   function drawContacts() {
@@ -563,14 +570,14 @@ pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; b
       body = `<p class="hint">Running time: ${esc(doc.project.runningTime || 'not set; set it in the project details')}</p><div class="two">${SPECS.map(([k, l]) => field(`spec-${k}`, l, v[k])).join('')}</div>`;
     } else if (s.kind === 'stills') {
       draftStills = stills().map(a => ({ id: a.id, data: a.data, caption: str(a.caption), photoCredit: str(a.photoCredit) }));
-      body = '<div id="stillList"></div><p><button type="button" class="btn" id="addStillBtn">Add stills</button></p>';
+      body = '<div id="stillList"></div><p><button type="button" class="btn" id="addStillBtn">Add stills from your computer</button></p><h3 class="sub-h">From the stills library</h3><div id="libList"></div>';
     } else if (s.kind === 'contacts') {
       draftContacts = arr(P().contacts).filter(Boolean).map(c => Object.assign({}, c));
       if (!draftContacts.length) draftContacts.push({ id: newId('press-contact') });
       body = '<div id="contactList"></div><p><button type="button" class="btn" id="addContactBtn">Add a contact</button></p>';
     }
     $('secBody').innerHTML = body;
-    if (s.kind === 'stills') drawStills();
+    if (s.kind === 'stills') { drawStills(); drawLib(); }
     if (s.kind === 'contacts') drawContacts();
     $('editor').showModal();
   }
@@ -593,9 +600,6 @@ pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; b
     if (s.kind === 'specs') { const v = specs(); for (const [k] of SPECS) { const x = $(`spec-${k}`).value.trim(); if (x) v[k] = x; else delete v[k]; } setP('specs', v); }
     if (s.kind === 'stills') {
       keepStillText();
-      const keep = new Set(draftStills.map(a => a.id));
-      const old = arr(P().stillIds);
-      doc.assets = doc.assets.filter(a => !(a && old.includes(a.id) && a.type === 'still' && !keep.has(a.id)));
       for (const d of draftStills) {
         let a = asset(d.id);
         if (!a) { a = { id: d.id, name: d.name, type: 'still', mimeType: d.mimeType, data: d.data, width: d.width, height: d.height }; doc.assets.push(a); }
@@ -890,7 +894,8 @@ pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; b
       if (t.id === 'useTreatment') { $('f-text').value = str(T()[editing.from]); return; }
       if (t.id === 'addStillBtn') { $('stillInput').click(); return; }
       if (t.id === 'addContactBtn') { keepContactText(); draftContacts.push({ id: newId('press-contact') }); drawContacts(); return; }
-      if (t.dataset.del != null) { keepStillText(); draftStills.splice(+t.dataset.del, 1); drawStills(); return; }
+      if (t.dataset.del != null) { keepStillText(); draftStills.splice(+t.dataset.del, 1); drawStills(); drawLib(); return; }
+      if (t.dataset.lib != null) { keepStillText(); const a = asset(t.dataset.lib); if (a) draftStills.push({ id: a.id, data: a.data, caption: str(a.caption), photoCredit: str(a.photoCredit) }); drawStills(); drawLib(); return; }
       if (t.dataset.up != null) { keepStillText(); const i = +t.dataset.up; if (i > 0) [draftStills[i - 1], draftStills[i]] = [draftStills[i], draftStills[i - 1]]; drawStills(); return; }
       if (t.dataset.cdel != null) { keepContactText(); draftContacts.splice(+t.dataset.cdel, 1); drawContacts(); }
     });

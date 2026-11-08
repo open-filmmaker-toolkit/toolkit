@@ -62,7 +62,7 @@ That's it. No install, no build step, no account. Each tool is one self-containe
 
 The toolkit has two halves:
 
-1. **Tools we build to fill the gaps,** especially the paperwork that runs on hand-built spreadsheets today: clearances, releases, rights, funding and impact. All of them, built and planned, are listed by production phase in [TOOLS.md](TOOLS.md).
+1. **Tools we build to fill the gaps,** especially the paperwork that runs on hand-built spreadsheets today: clearances, releases, rights, funding and impact. They are listed by production phase in [TOOLS.md](TOOLS.md).
 2. **A directory of other people's open-source tools,** sorted by production phase, so filmmakers don't pay for what's already free. See [Other open-source tools](docs/other-tools.md), also linked from the home page.
 
 ## The tools
@@ -132,7 +132,7 @@ The toolkit has two halves:
 | [Grant final reports](tools/grant-reports/) | Close-out and archive | Write each grant's final report before it's due. |
 | [Contract and release archive](tools/contract-archive/) | Close-out and archive | Index every signed contract and release for the long term. |
 
-All 62 are first versions: they work, and they're still changing. Everything else we plan to build is listed by production phase in [TOOLS.md](TOOLS.md).
+All 62 are first versions: they work, and they're still changing. To ask for another tool, use the [request form](https://github.com/open-filmmaker-toolkit/toolkit/issues/new?template=request-a-tool.yml).
 
 ## How our tools work
 

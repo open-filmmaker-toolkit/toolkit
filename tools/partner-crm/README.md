@@ -58,7 +58,6 @@ It also adds screenings to a shared `screenings` list, each with an `id` and opt
 ## Not yet
 
 - Editing or removing a screening once it's added (for now, edit the project file)
-- Audience numbers and outcomes for each screening, for an impact report
 - Reminders outside the tool, such as a calendar file of commitments
 - Importing contacts from a spreadsheet or an address book
 

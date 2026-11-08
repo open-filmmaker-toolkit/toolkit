@@ -3,7 +3,7 @@
 The tools we build, by production phase. Each one is a single page that runs in your browser on the shared project file, with nothing to install and nothing sent anywhere. 62 are ready to use.
 
 - **Ready to use:** linked tools. Each has a README with what it does.
-- **Planned:** each has an issue. Comment there if you need the tool or want to help build it. Order of work is in [ROADMAP.md](ROADMAP.md).
+- **Want another tool?** [Ask for it](https://github.com/open-filmmaker-toolkit/toolkit/issues/new?template=request-a-tool.yml). New tools get an issue and a line here before work starts. Order of work is in [ROADMAP.md](ROADMAP.md).
 - **Plain templates:** blank spreadsheet and Word versions of the tools are in [templates](templates/).
 
 Looking for other free, open-source software for filmmaking, such as editing, sound, transcription or making DCPs? See [Other open-source tools](docs/other-tools.md).

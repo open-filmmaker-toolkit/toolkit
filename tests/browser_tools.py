@@ -2467,6 +2467,10 @@ def test_press_notes(browser, fake):
     pg.fill('#still-cap-1', 'Ruth on her porch'); pg.fill('#still-cred-1', 'Lena Ward'); pg.click('[data-up="1"]')
     pg.click('#editorSubmit'); pg.wait_for_timeout(200)
     check(pg.locator('#thumbs img').count() == 2 and pg.get_attribute('#thumbs img >> nth=0', 'alt') == 'Ruth on her porch', 'adds and orders stills')
+    pg.click('[data-edit="stills"]')
+    check(pg.locator('#libList [data-lib="asset-still-porch"]').count() == 1, 'offers stills from the stills library')
+    pg.click('#libList [data-lib="asset-still-porch"]'); pg.click('[data-del="1"]'); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check(pg.locator('#thumbs img').count() == 2, 'adds a still from the library and takes one out')
     pg.click('[data-edit="contacts"]'); pg.click('#addContactBtn'); pg.fill('#c-role-1', 'Publicist'); pg.fill('#c-name-1', 'Jo Park'); pg.fill('#c-email-1', 'jo@example.com')
     pg.click('#editorSubmit'); pg.wait_for_timeout(200)
     pg.click('#printBtn'); pg.wait_for_timeout(200)
@@ -2475,6 +2479,7 @@ def test_press_notes(browser, fake):
     data = saved_project(pg, fake)
     pn = data['pressNotes']
     new = next(a for a in data['assets'] if a['id'] == pn['stillIds'][0])
+    check(pn['stillIds'][1] == 'asset-still-porch' and any(a['id'] == 'asset-still-levee' for a in data['assets']), 'a still taken out of the press notes stays in the stills library')
     check(len(pn['stillIds']) == 2 and new['type'] == 'still' and new['photoCredit'] == 'Lena Ward' and new['data'].startswith('data:image/jpeg') and pn['hidden'] == ['aboutProduction']
           and pn['shortSynopsis'] == 'A town remembers its floods.' and pn['contacts'][1]['name'] == 'Jo Park', 'saves the press notes and stills')
     priya = next(p for p in data['people'] if p['id'] == 'person-priya-nair')
@@ -2902,6 +2907,19 @@ def test_contract_archive(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
+def test_roundtrip(browser, fake):
+    original = json.loads(sample)
+    changed_by = []
+    for name in TOOLS:
+        ctx, pg, errs = new_page(browser, name, fake)
+        open_sample(pg, fake)
+        data = saved_project(pg, fake)
+        stamp = ('savedBy', 'savedAt')
+        if {k: v for k, v in data.items() if k not in stamp} != {k: v for k, v in original.items() if k not in stamp} or errs:
+            changed_by.append(name)
+        ctx.close()
+    check(not changed_by, 'opening and saving the sample without changes keeps it as it was, in every tool %s' % changed_by)
+
 def test_template_columns(browser, fake):
     for name, template in TEMPLATE_EXPORTS:
         ctx, pg, errs = new_page(browser, name, fake)
@@ -3053,6 +3071,8 @@ def main():
         test_grant_reports(browser, fake)
         print('== contract-archive / index, signed copies and the folder layout')
         test_contract_archive(browser, fake)
+        print('== every tool / saving without changes keeps the project as it was')
+        test_roundtrip(browser, fake)
         print('== templates / columns match the tools\' exports')
         test_template_columns(browser, fake)
         browser.close()

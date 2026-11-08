@@ -118,7 +118,6 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .st-submitted { color: var(--warn); }
 .st-accepted { color: var(--good); }
 .st-declined { color: var(--ink-3); }
-.flag.bad { color: var(--bad); border-color: currentColor; }
 .flags { grid-column: 2 / -1; }
 .tier { display: inline-block; min-width: 22px; margin-right: 6px; padding: 0 5px; border: 1px solid var(--rule); border-radius: 4px; font-size: 12px; text-align: center; color: var(--ink-2); }
 .todo { list-style: none; margin: 4px 0 0; padding: 0; }
@@ -513,8 +512,8 @@ pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; b
       const where = [f.city, f.country].filter(Boolean).join(', ');
       if (where) flags.push(`<span class="flag linked">${esc(where)}</span>`);
       if (live(f)) for (const c of cl) {
-        if (c.late === f) flags.push(`<span class="flag ${c.sure ? 'bad' : 'changed'}">${esc(clashText(c, 'late'))}</span>`);
-        if (c.early === f) flags.push(`<span class="flag ${c.sure ? 'bad' : 'changed'}">${esc(clashText(c, 'early'))}</span>`);
+        if (c.late === f) flags.push(`<span class="flag ${c.sure ? 'problem' : 'changed'}">${esc(clashText(c, 'late'))}</span>`);
+        if (c.early === f) flags.push(`<span class="flag ${c.sure ? 'problem' : 'changed'}">${esc(clashText(c, 'early'))}</span>`);
       }
       if (f.status === 'planned' && f.deadline) { const d = daysUntil(f.deadline); if (d != null && d < 0) flags.push('<span class="flag changed">Deadline passed</span>'); }
       if (f.notifyDate) flags.push(`<span class="flag linked">Hear back ${esc(fmtDate(f.notifyDate))}</span>`);

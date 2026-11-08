@@ -56,7 +56,6 @@ A `financePlan` record with `sources`, and an optional `budgetTotal` used when t
 ## Not yet
 
 - Linking investors and broadcasters to their organization in the funder CRM
-- Recoupment waterfalls for investors
 - Several currencies in one plan
 
 ## License
