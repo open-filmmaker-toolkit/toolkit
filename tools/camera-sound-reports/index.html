@@ -558,7 +558,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   LISTS.clips = { box: 'clips', empty: 'Nothing logged yet.', blank: () => ($('f-kind').value === 'sound' && $('f-layout').value.trim() ? { lens: $('f-layout').value.trim() } : {}),
     title: (r, i) => `${editing.kind === 'sound' ? 'File' : 'Clip'} ${r.clip || i + 1}${r.subject ? `: ${r.subject}` : ''}`,
     fields: [{ k: 'clip', label: 'Clip or file name', placeholder: 'A001C001' }, { k: 'subject', label: 'What or who', placeholder: 'Daniel interview' }, { k: 'tc', label: 'Timecode', placeholder: '08:12:30:00' },
-      { k: 'lens', label: 'Lens or tracks' }, { k: 'good', label: 'Circled', type: 'checkbox' }, { k: 'notes', label: 'Notes', wide: true }] };
+      { k: 'lens', label: 'Lens or tracks' }, { k: 'scene', label: 'Scene', placeholder: '12' }, { k: 'shot', label: 'Shot or setup', placeholder: '12A' }, { k: 'take', label: 'Take', placeholder: '3' },
+      { k: 'good', label: 'Circled', type: 'checkbox' }, { k: 'notes', label: 'Notes', wide: true }, { k: 'scriptNotes', label: "Script supervisor's notes", wide: true, placeholder: 'Line flub at "the levee"; prop diary in the left hand' }] };
 
   // ---------- Render ----------
   function render() {
@@ -587,6 +588,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         if (!r.assetId) flags.push('<span class="flag changed">Not offloaded</span>');
         else if (!r.backedUp) flags.push('<span class="flag changed">No backup yet</span>');
         const good = arr(r.clips).filter(c => c.good).length;
+        const sc = [...new Set(arr(r.clips).map(c => c.scene).filter(Boolean))];
+        if (sc.length) flags.push(`<span class="flag linked">${esc(`Scene${sc.length === 1 ? '' : 's'} ${sc.join(', ')}`)}</span>`);
         return `<li class="row" data-id="${esc(r.id)}"><span class="kd">${esc(KIND[r.kind])}</span>
           <button type="button" class="what" data-edit="${esc(r.id)}"><span class="nm">${esc(r.roll || 'Unnamed card')}${r.device ? ` · ${esc(r.device)}` : ''}</span>${r.notes ? `<span class="tt">${esc(r.notes)}</span>` : ''}</button>
           <span class="rt">${n ? `${n} ${unit(r)}${n === 1 ? '' : 's'}${good ? `, ${good} circled` : ''}` : ''}</span>
@@ -693,8 +696,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     toast(`Removed the report for ${editing.roll || 'the card'}.`);
   }
 
+  // Scene 12, setup 12A, take 3 reads "12A-3", the way a slate does.
+  const slate = c => [c.shot || c.scene, c.take].filter(Boolean).join('-') || '';
   // ---------- CSV and print ----------
-  const CSV_HEAD = ['Date', 'Shoot day', 'Report', 'Card or roll', 'Camera or recorder', 'Operator', 'Codec or format', 'Frame rate', 'Clip or file', 'What or who', 'Timecode', 'Lens or tracks', 'Circled', 'Notes', 'Copied to'];
+  const CSV_HEAD = ['Date', 'Shoot day', 'Report', 'Card or roll', 'Camera or recorder', 'Operator', 'Codec or format', 'Frame rate', 'Clip or file', 'What or who', 'Timecode', 'Lens or tracks', 'Circled', 'Notes', 'Copied to', 'Scene', 'Shot or setup', 'Take', "Script supervisor's notes"];
   function exportCsv() {
     const rows = [];
     for (const r of [...reports()].sort((a, b) => str(dateOf(a)).localeCompare(str(dateOf(b))) || str(a.roll).localeCompare(str(b.roll)))) {
@@ -702,7 +707,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       const path = (asset(r.assetId) || {}).relativePath;
       const cs = arr(r.clips);
       if (!cs.length) rows.push([...base, range(r), '', '', r.kind === 'sound' ? r.trackLayout : r.lensNotes, '', r.notes, path]);
-      for (const c of cs) rows.push([...base, c.clip, c.subject, c.tc, c.lens, c.good ? 'Yes' : '', c.notes, path]);
+      for (const c of cs) rows.push([...base, c.clip, c.subject, c.tc, c.lens, c.good ? 'Yes' : '', c.notes, path, c.scene, c.shot, c.take, c.scriptNotes]);
     }
     const csv = '﻿' + [CSV_HEAD, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
     const name = `${slug()}-camera-and-sound-reports.csv`;
@@ -717,8 +722,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       ['Clips', range(r)], ['Copied to', a && a.relativePath], ['Backed up', r.backedUp ? 'Yes' : '']].filter(x => x[1]);
     return `<section class="r-report"><h2>${esc(KIND[r.kind])} report: ${esc(r.roll || '')}</h2>
       <table class="r-facts"><tbody>${facts.map(([k, v]) => `<tr><th>${esc(k)}</th><td>${esc(v)}</td></tr>`).join('')}</tbody></table>
-      ${arr(r.clips).length ? `<table><thead><tr><th>${r.kind === 'sound' ? 'File' : 'Clip'}</th><th>What or who</th><th>Timecode</th><th>${r.kind === 'sound' ? 'Tracks' : 'Lens'}</th><th class="r-c">Circled</th><th>Notes</th></tr></thead><tbody>
-        ${arr(r.clips).map(c => `<tr><td>${esc(c.clip || '')}</td><td>${esc(c.subject || '')}</td><td>${esc(c.tc || '')}</td><td>${esc(c.lens || '')}</td><td class="r-c">${c.good ? '●' : ''}</td><td>${esc(c.notes || '')}</td></tr>`).join('')}</tbody></table>` : ''}
+      ${arr(r.clips).length ? `<table><thead><tr><th>${r.kind === 'sound' ? 'File' : 'Clip'}</th><th>What or who</th><th>Timecode</th><th>${r.kind === 'sound' ? 'Tracks' : 'Lens'}</th><th>Scene / take</th><th class="r-c">Circled</th><th>Notes</th></tr></thead><tbody>
+        ${arr(r.clips).map(c => `<tr><td>${esc(c.clip || '')}</td><td>${esc(c.subject || '')}</td><td>${esc(c.tc || '')}</td><td>${esc(c.lens || '')}</td><td>${esc(slate(c))}</td><td class="r-c">${c.good ? '●' : ''}</td><td>${esc(c.notes || '')}${c.scriptNotes ? `<span class="r-sub">Script: ${esc(c.scriptNotes)}</span>` : ''}</td></tr>`).join('')}</tbody></table>` : ''}
       ${r.notes ? `<p class="r-notes"><b>Notes:</b> ${esc(r.notes)}</p>` : ''}</section>`;
   }
   function renderReport() {
@@ -992,7 +997,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   // Columns for importing from a spreadsheet, named as in this tool's template.
   const OFT_IMPORT = { noun: 'clip', nouns: 'card rows', key: 'roll',
     fields: [['Date', 'date', 'date'], ['Shoot day', '', 'skip'], ['Report', 'kind', 'enum', { values: KIND }], ['Card or roll', 'roll'], ['Camera or recorder', 'device'], ['Operator', 'operator'], ['Codec or format', 'codec'], ['Frame rate', 'rate'],
-      ['Clip or file', 'clip'], ['What or who', 'subject'], ['Timecode', 'tc'], ['Lens or tracks', 'lens'], ['Circled', 'good', 'yes'], ['Notes', 'notes'], ['Copied to', '', 'skip']],
+      ['Clip or file', 'clip'], ['What or who', 'subject'], ['Timecode', 'tc'], ['Lens or tracks', 'lens'], ['Circled', 'good', 'yes'], ['Notes', 'notes'], ['Copied to', '', 'skip'], ['Scene', 'scene'], ['Shot or setup', 'shot'], ['Take', 'take'], ["Script supervisor's notes", 'scriptNotes']],
     put: (r, x) => {
       const kind = r.kind || 'camera';
       let rep = doc.mediaReports.find(y => y && y.roll === r.roll && y.kind === kind && (!r.date || !y.date || y.date === r.date));
@@ -1004,8 +1009,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         doc.mediaReports.push(rep);
       }
       rep.clips = arr(rep.clips);
-      if (!r.subject && !r.tc) { if (r.lens) rep[kind === 'sound' ? 'trackLayout' : 'lensNotes'] = rep[kind === 'sound' ? 'trackLayout' : 'lensNotes'] || r.lens; if (r.notes && !rep.notes) rep.notes = r.notes; return; }
-      const c = { id: r.id }; for (const k of ['clip', 'subject', 'tc', 'lens', 'notes']) if (r[k] != null && r[k] !== '') c[k] = r[k]; if (r.good) c.good = true;
+      if (!r.subject && !r.tc && !r.scene && !r.take) { if (r.lens) rep[kind === 'sound' ? 'trackLayout' : 'lensNotes'] = rep[kind === 'sound' ? 'trackLayout' : 'lensNotes'] || r.lens; if (r.notes && !rep.notes) rep.notes = r.notes; return; }
+      const c = { id: r.id }; for (const k of ['clip', 'subject', 'tc', 'lens', 'notes', 'scene', 'shot', 'take', 'scriptNotes']) if (r[k] != null && r[k] !== '') c[k] = r[k]; if (r.good) c.good = true;
       rep.clips.push(c);
     } };
   /* oft-shared:import begin. Copied from shared/import.js by .github/scripts/sync_shared.py; edit it there. */

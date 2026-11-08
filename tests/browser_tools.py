@@ -3145,6 +3145,50 @@ def test_shot_list(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
+def scene_take_sample():
+    d = json.loads(sample)
+    sheet = dict(d['callSheets'][0], id='callsheet-nov-10', date='2026-11-10', dayLabel='Day 3', weather='Rain, 45°F', locationId='location-hammond-house')
+    d['callSheets'].append(sheet)
+    d['mediaReports'].append({'id': 'report-a009', 'kind': 'camera', 'shootDayId': 'shootday-nov-1', 'date': '2026-11-10', 'roll': 'A009', 'clips': [
+        {'id': 'clip-a009-1', 'clip': 'A009C001', 'scene': '2', 'shot': '2A', 'take': '1'},
+        {'id': 'clip-a009-2', 'clip': 'A009C002', 'scene': '2', 'shot': '2A', 'take': '2', 'good': True, 'scriptNotes': 'Lamp flickers on the line'},
+        {'id': 'clip-a009-3', 'clip': 'A009C003', 'scene': '2', 'shot': '2B', 'take': '1'}]})
+    return json.dumps(d)
+
+def test_scene_takes(browser, fake):
+    text = scene_take_sample()
+    ctx, pg, errs = new_page(browser, 'call-sheet', fake)
+    open_text(pg, fake, text)
+    pg.click('tr[data-id="callsheet-nov-10"]'); pg.wait_for_timeout(150)
+    check(pg.is_visible('#scenesBox') and 'Shots 2A, 2B' in pg.inner_text('#sceneList') and '4. INT. HAMMOND HOUSE - ATTIC' in pg.inner_text('#sceneList'), 'the call sheet lists the day\'s scenes and shots')
+    pg.click('#printBtn'); pg.wait_for_timeout(150)
+    check('Scenes' in pg.inner_text('#report') and '2A, 2B' in pg.inner_text('#report'), 'the printed call sheet has the scenes')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+    ctx, pg, errs = new_page(browser, 'camera-sound-reports', fake)
+    open_text(pg, fake, text)
+    check('Scene 2' in pg.inner_text('[data-id="report-a009"]'), 'a camera report shows the scenes it covers')
+    rows = csv_rows(pg)
+    check(rows[0][-4:] == ['Scene', 'Shot or setup', 'Take', "Script supervisor's notes"] and any(r[8] == 'A009C002' and r[-4:] == ['2', '2A', '2', 'Lamp flickers on the line'] for r in rows), 'CSV has scene, setup, take and the script supervisor\'s notes')
+    pg.click('#printBtn'); pg.wait_for_timeout(150)
+    check('2A-2' in pg.inner_text('#report') and 'Script: Lamp flickers' in pg.inner_text('#report'), 'the printed report has slate numbers and notes')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+    ctx, pg, errs = new_page(browser, 'daily-production-report', fake)
+    open_text(pg, fake, text)
+    pg.click('#addBtn'); pg.select_option('#f-day', 'shootday-nov-1'); pg.wait_for_timeout(150)
+    check(pg.input_value('#f-weather') == 'Rain, 45°F', 'the weather comes from the call sheet')
+    check(pg.locator('#sceneChecks input').count() == 2 and '2 setups, 3 takes, 1 circled' in pg.inner_text('#slateCounts'), 'the day\'s scenes are listed, with setups and takes from the camera reports')
+    pg.check('#sceneChecks input[value="scene-2"]'); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    pg.click('#printBtn'); pg.wait_for_timeout(150)
+    rep = pg.inner_text('#report')
+    check('1 of 2' in rep and '3/8' in rep and "Script supervisor's report" in rep and 'Lamp flickers on the line' in rep and 'Rain, 45°F' in rep, 'the printed report counts scenes, pages, setups and takes, with the script supervisor\'s page and the weather')
+    data = saved_project(pg, fake)
+    r = next(x for x in data['dailyReports'] if x['shootDayId'] == 'shootday-nov-1')
+    check(r['completedSceneIds'] == ['scene-2'] and r['weather'] == 'Rain, 45°F', 'finished scenes and the weather are saved')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
 def csv_rows(pg, btn='#csvBtn'):
     with pg.expect_download() as d:
         pg.click(btn)
@@ -3765,6 +3809,8 @@ def main():
         test_sides(browser, fake)
         print('== shot-list / shots by scene, frames, storyboard and two prints')
         test_shot_list(browser, fake)
+        print('== scene and take numbers / call sheet, camera reports and the daily report')
+        test_scene_takes(browser, fake)
         print('== partner-crm / partners, commitments and screenings')
         test_partner_crm(browser, fake)
         print('== screenings / edit and remove a screening in the press list and partner CRM')

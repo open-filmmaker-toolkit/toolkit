@@ -3808,11 +3808,22 @@
           "type": "string",
           "description": "What was shot, as text."
         },
+        "weather": {
+          "type": "string"
+        },
         "mediaReportIds": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/id"
           }
+        },
+        "completedSceneIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true,
+          "description": "Scenes finished that day, in scenes."
         },
         "incidents": {
           "type": "array",
@@ -5366,6 +5377,21 @@
               },
               "notes": {
                 "type": "string"
+              },
+              "scene": {
+                "type": "string",
+                "description": "The scene number on the slate."
+              },
+              "shot": {
+                "type": "string",
+                "description": "The setup or shot on the slate, such as 12A."
+              },
+              "take": {
+                "type": "string"
+              },
+              "scriptNotes": {
+                "type": "string",
+                "description": "The script supervisor's notes on the take."
               }
             },
             "additionalProperties": true

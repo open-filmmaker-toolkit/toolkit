@@ -74,7 +74,7 @@ Started in a spreadsheet and want to move to the tool? Most tools can import a f
 - **Interview questions.** One row for each question, in order, for each interview: must-asks marked, the story beat it covers, and whether you asked it.
 - **Grant narrative library.** The answers applications usually ask for, from logline to bios, each in typical lengths with a place to note the count, and a table of which funder got which version.
 - **Pitch deck.** An outline with one heading per slide, from title and logline to contact, each with a note on what goes on it and a line for its images.
-- **Camera and sound reports.** One row for each clip or sound file: the date and shoot day, camera or sound, the card, camera or recorder, operator, codec or format, frame rate, what or who, timecode, lens or tracks, whether it's circled, and where the card was copied.
+- **Camera and sound reports.** One row for each clip or sound file: the date and shoot day, camera or sound, the card, camera or recorder, operator, codec or format, frame rate, what or who, timecode, lens or tracks, whether it's circled, where the card was copied, and for scripted scenes the scene, setup, take and the script supervisor's notes.
 - **Press list.** One row for each outlet: its kind and status, the people and their beats, screeners sent, RSVPs, coverage, website and notes.
 - **Partner CRM.** One row for each partner organization: its kind and stage, the people, the screenings it's part of, the next step and open commitments, website and notes.
 - **Interview moments.** One row for each moment in an interview, for the paper edit: who, when, where, which cards, the timecode, what they say, whether it's a favorite, the story beat, the release and the transcript.

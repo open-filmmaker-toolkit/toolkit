@@ -270,12 +270,19 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <div class="field"><label for="f-lunch2">Lunch ends</label><input id="f-lunch2" data-time type="text" inputmode="numeric" placeholder="12:45" autocomplete="off"></div>
       </div>
       <p class="hint">Times are 24-hour, like 07:30.</p>
+      <div class="field"><label for="f-weather">Weather</label><input id="f-weather" type="text" autocomplete="off" placeholder="Rain, 48°F, wind from the north"></div>
       <div class="group">
         <div class="list-head"><h3>Crew and talent</h3><button type="button" class="btn small" data-add="crew" id="addCrewBtn">Add a person</button></div>
         <p class="hint">Hours are wrap minus call, less the meal break. A wrap earlier than the call counts as the next day.</p>
         <div class="items" id="crew"></div>
       </div>
       <div class="field"><label for="f-shot">What was shot</label><textarea id="f-shot" rows="3" placeholder="Interview with Daniel on the levee, then river b-roll"></textarea></div>
+      <div class="group" id="scenesGroup">
+        <h3 id="scenesHead">Scenes</h3>
+        <p class="hint">The day's scenes from the stripboard. Tick the ones finished today.</p>
+        <div class="checks" id="sceneChecks" role="group" aria-labelledby="scenesHead"></div>
+        <p class="hint" id="slateCounts"></p>
+      </div>
       <div class="group">
         <h3>Cards</h3>
         <p class="hint">Tick the camera and sound reports for this day. Add the reports in camera and sound reports.</p>
@@ -471,7 +478,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     d.dailyReports = d.dailyReports.filter(r => r && typeof r === 'object');
     for (const r of d.dailyReports) {
       if (!r.id) r.id = newId('dailyreport');
-      for (const k of ['crew', 'incidents', 'mediaReportIds']) if (r[k] !== undefined && !Array.isArray(r[k])) delete r[k];
+      for (const k of ['crew', 'incidents', 'mediaReportIds', 'completedSceneIds']) if (r[k] !== undefined && !Array.isArray(r[k])) delete r[k];
       if (r.crew) r.crew = r.crew.filter(c => c && typeof c === 'object');
       if (r.incidents) r.incidents = r.incidents.filter(c => c && typeof c === 'object');
       for (const c of arr(r.crew)) if (!c.id) c.id = newId('dr-crew');
@@ -494,6 +501,21 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const crewName = c => (person(c.personId) || {}).name || str(c.name);
   const mediaReports = () => arr(doc.mediaReports).filter(m => m && m.id);
   const media = id => mediaReports().find(m => m.id === id);
+  const sceneOf = id => arr(doc.scenes).find(s => s && s.id === id);
+  const dayScenes = d => arr(d && d.sceneIds).map(sceneOf).filter(Boolean);
+  const sceneLabel = s => `${s.number ? `Scene ${s.number}: ` : ''}${s.heading || s.set || 'Untitled scene'}`;
+  const eighths = n => { n = Math.round(Number(n) || 0); if (n <= 0) return '0'; const w = Math.floor(n / 8), r = n % 8; return `${w || ''}${w && r ? ' ' : ''}${r ? `${r}/8` : ''}`; };
+  // Clips from the day's camera reports with scene and take numbers. A setup is a scene and shot; each clip is a take.
+  function slateClips(r) { return arr(r.mediaReportIds).map(media).filter(m => m && m.kind === 'camera').flatMap(m => arr(m.clips).filter(c => c && (c.scene || c.take)).map(c => Object.assign({ roll: m.roll }, c))); }
+  function slateCounts(r) {
+    const cl = slateClips(r);
+    return { takes: cl.length, setups: new Set(cl.map(c => `${c.scene || ''}|${c.shot || ''}`)).size, circled: cl.filter(c => c.good).length };
+  }
+  // Scenes finished and pages shot, from the scenes ticked in the report.
+  function sceneCounts(r) {
+    const day = dayOf(r), planned = dayScenes(day), done = arr(r.completedSceneIds).map(sceneOf).filter(Boolean);
+    return { planned: planned.length, done: done.length, pages: done.reduce((n, s) => n + (Number(s.eighths) || 0), 0), list: done };
+  }
   const mediaKind = m => (m.kind === 'sound' ? 'Sound' : 'Camera');
   function mediaRange(m) {
     const cs = arr(m.clips).map(c => c && c.clip).filter(Boolean);
@@ -505,11 +527,12 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
 
   // A new report starts from the call sheet: call and wrap, lunch from the schedule, and the crew with their calls.
   function prefill(r, day) {
-    for (const k of ['callSheetId', 'callTime', 'wrapTime', 'lunchStart', 'lunchEnd']) delete r[k];
+    for (const k of ['callSheetId', 'callTime', 'wrapTime', 'lunchStart', 'lunchEnd', 'weather']) delete r[k];
     r.crew = [];
     const s = day && sheetFor(day);
     if (!s) return;
     r.callSheetId = s.id;
+    if (str(s.weather).trim()) r.weather = str(s.weather).trim();
     if (mins(s.generalCall) != null) r.callTime = s.generalCall;
     if (mins(s.wrapTime) != null) r.wrapTime = s.wrapTime;
     const items = arr(s.schedule).filter(x => x && mins(x.time) != null).sort((a, b) => mins(a.time) - mins(b.time));
@@ -593,13 +616,26 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   }
   function fillForm() {
     const r = editing;
-    const vals = { 'f-call': r.callTime, 'f-wrap': r.wrapTime, 'f-lunch1': r.lunchStart, 'f-lunch2': r.lunchEnd, 'f-shot': r.shot, 'f-notes': r.notes };
+    const vals = { 'f-call': r.callTime, 'f-wrap': r.wrapTime, 'f-lunch1': r.lunchStart, 'f-lunch2': r.lunchEnd, 'f-shot': r.shot, 'f-notes': r.notes, 'f-weather': r.weather };
     for (const [k, v] of Object.entries(vals)) $(k).value = v == null ? '' : String(v);
   }
   function showDay() {
     const d = days().find(x => x.id === $('f-day').value), s = d && sheetFor(d);
     $('sheetNote').textContent = !d ? '' : s ? `${isNew && !touched ? 'Started from' : 'Linked to'} the call sheet for ${fmtDate(s.date)}${s.dayLabel ? `, ${s.dayLabel}` : ''}.` : 'No call sheet for this day, so this report starts blank.';
     drawCards();
+    drawScenes();
+  }
+  // The day's scenes from the stripboard, to tick off, and the slate counts from the camera reports.
+  function drawScenes() {
+    const d = days().find(x => x.id === $('f-day').value), list = d ? dayScenes(d) : [];
+    const on = new Set(arr(editing.completedSceneIds));
+    $('scenesGroup').hidden = !list.length && !on.size;
+    $('sceneChecks').innerHTML = list.map(s => `<label class="check"><input type="checkbox" value="${esc(s.id)}"${on.has(s.id) ? ' checked' : ''}><span class="who">${esc(sceneLabel(s))}<span class="sub">${esc(eighths(s.eighths))} pages</span></span></label>`).join('');
+    updateSlate();
+  }
+  function updateSlate() {
+    const c = slateCounts({ mediaReportIds: [...$('cards').querySelectorAll('input:checked')].map(i => i.value) });
+    $('slateCounts').textContent = c.takes ? `From the camera reports: ${c.setups} setup${c.setups === 1 ? '' : 's'}, ${c.takes} take${c.takes === 1 ? '' : 's'}, ${c.circled} circled.` : 'Setups and takes are counted from the scene and take numbers in the camera reports.';
   }
   function drawCards() {
     const d = days().find(x => x.id === $('f-day').value), on = new Set(arr(editing.mediaReportIds));
@@ -656,7 +692,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const day = days().find(d => d.id === dayId), sheet = day && sheetFor(day);
     if (sheet) r.callSheetId = sheet.id; else delete r.callSheetId;
     for (const [k, id] of Object.entries(TIMES)) { const v = normTime($(id).value); if (v) r[k] = v; else delete r[k]; }
-    for (const [k, id] of Object.entries({ shot: 'f-shot', notes: 'f-notes' })) { const v = $(id).value.trim(); if (v) r[k] = v; else delete r[k]; }
+    for (const [k, id] of Object.entries({ shot: 'f-shot', notes: 'f-notes', weather: 'f-weather' })) { const v = $(id).value.trim(); if (v) r[k] = v; else delete r[k]; }
+    const done = [...$('sceneChecks').querySelectorAll('input:checked')].map(i => i.value);
+    if (done.length) r.completedSceneIds = done; else delete r.completedSceneIds;
     const fix = (o, keys) => { for (const k of keys) if (o[k] != null) { const v = normTime(o[k]); if (v) o[k] = v; } return o; };
     const crew = cleanList(r.crew).map(c => { if (!c.id) c.id = newId('dr-crew'); return fix(c, ['call', 'wrap']); }).filter(c => c.personId || c.name);
     if (crew.length) r.crew = crew; else delete r.crew;
@@ -695,7 +733,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const d = dayOf(r), l = d && place(d.locationId), s = sheetOf(r);
     const lunch = r.lunchStart || r.lunchEnd ? `${showTime(r.lunchStart || '?')} to ${showTime(r.lunchEnd || '?')}` : '';
     const lost = minutesLost(r), total = totalMinutes(r);
-    const facts = [['Date', dateOf(r) && fmtDate(dateOf(r))], ['Shoot day', d && d.title], ['Location', l && l.name], ['Call sheet', s && (s.dayLabel || fmtDate(s.date))],
+    const facts = [['Date', dateOf(r) && fmtDate(dateOf(r))], ['Shoot day', d && d.title], ['Location', l && l.name], ['Call sheet', s && (s.dayLabel || fmtDate(s.date))], ['Weather', r.weather],
       ['Call', r.callTime && showTime(r.callTime)], ['Lunch', lunch], ['Wrap', r.wrapTime && showTime(r.wrapTime)], ['Total hours', arr(r.crew).length ? fmtHours(total) : ''], ['Minutes lost', lost ? String(lost) : '']].filter(x => x[1]);
     const cards = arr(r.mediaReportIds).map(media).filter(Boolean);
     return `<section class="r-report">
@@ -704,9 +742,19 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         ${arr(r.crew).map(c => { const m = crewMinutes(c); return `<tr><td>${esc(crewName(c))}${c.note ? `<span class="r-sub">${esc(c.note)}</span>` : ''}</td><td>${esc(c.role || '')}</td><td class="r-num">${esc(c.call ? showTime(c.call) : '')}</td><td class="r-num">${esc(c.wrap ? showTime(c.wrap) : '')}${overnight(c) ? ' (next day)' : ''}</td><td class="r-num">${esc(c.mealMinutes ?? '')}</td><td class="r-num">${m == null ? '' : esc(fmtHours(m))}</td></tr>`; }).join('')}
         <tr class="r-total"><td colspan="5">Total hours</td><td class="r-num">${esc(fmtHours(total))}</td></tr></tbody></table>` : ''}
       ${r.shot ? `<h2>What was shot</h2><p class="r-text">${esc(r.shot)}</p>` : ''}
+      ${scenePage(r)}
       ${cards.length ? `<h2>Cards</h2><table><thead><tr><th>Report</th><th>Card or roll</th><th>Clips or files</th><th>Camera or recorder</th></tr></thead><tbody>${cards.map(m => `<tr><td>${esc(mediaKind(m))}</td><td>${esc(m.roll || '')}</td><td>${esc(mediaRange(m))}</td><td>${esc(m.device || '')}</td></tr>`).join('')}</tbody></table>` : ''}
       ${arr(r.incidents).length ? `<h2>Incidents and delays</h2><table><thead><tr><th>Kind</th><th class="r-num">Time</th><th class="r-num">Minutes lost</th><th>What happened</th></tr></thead><tbody>${arr(r.incidents).map(i => `<tr><td>${esc(INCIDENT[i.kind] || 'Other')}</td><td class="r-num">${esc(i.time ? showTime(i.time) : '')}</td><td class="r-num">${esc(i.minutesLost ?? '')}</td><td>${esc(i.text || '')}</td></tr>`).join('')}</tbody></table>` : ''}
       ${r.notes ? `<h2>Notes</h2><p class="r-text">${esc(r.notes)}</p>` : ''}</section>`;
+  }
+  // The scenes, pages, setups and takes, and the script supervisor's page with every take.
+  function scenePage(r) {
+    const sc = sceneCounts(r), sl = slateCounts(r), takes = slateClips(r);
+    if (!sc.planned && !sc.done && !sl.takes) return '';
+    const counts = [['Scenes finished', sc.planned ? `${sc.done} of ${sc.planned}` : String(sc.done)], ['Pages shot', eighths(sc.pages)], ['Setups', String(sl.setups)], ['Takes', String(sl.takes)], ['Circled takes', String(sl.circled)]];
+    return `<h2>Scenes and takes</h2><table class="r-facts"><tbody>${counts.map(([k, v]) => `<tr><th>${esc(k)}</th><td>${esc(v)}</td></tr>`).join('')}</tbody></table>
+      ${sc.list.length ? `<p class="r-text">${esc(`Finished: ${sc.list.map(sceneLabel).join('; ')}`)}</p>` : ''}
+      ${takes.length ? `<section class="r-script"><h2>Script supervisor's report</h2><table><thead><tr><th>Scene</th><th>Shot or setup</th><th class="r-num">Take</th><th>Clip</th><th>Circled</th><th>Notes</th></tr></thead><tbody>${takes.map(c => `<tr><td>${esc(c.scene || '')}</td><td>${esc(c.shot || '')}</td><td class="r-num">${esc(c.take || '')}</td><td>${esc([c.roll, c.clip].filter(Boolean).join(' '))}</td><td>${c.good ? 'Yes' : ''}</td><td>${esc(c.scriptNotes || c.notes || '')}</td></tr>`).join('')}</tbody></table></section>` : ''}`;
   }
   function renderReport() {
     const r = reports().find(x => x.id === printKey);
@@ -957,7 +1005,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       if (ev.target.closest('#cards')) {
         const shown = new Set([...$('cards').querySelectorAll('input')].map(i => i.value));
         editing.mediaReportIds = [...arr(editing.mediaReportIds).filter(id => !shown.has(id)), ...[...$('cards').querySelectorAll('input:checked')].map(i => i.value)];
+        updateSlate();
       }
+      if (ev.target.closest('#sceneChecks')) editing.completedSceneIds = [...$('sceneChecks').querySelectorAll('input:checked')].map(i => i.value);
       updateTotals();
     });
     form.addEventListener('click', ev => { if (ev.target.closest('[data-add], [data-remove]')) { touched = true; updateTotals(); } });

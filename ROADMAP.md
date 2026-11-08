@@ -69,7 +69,7 @@ Each item has [its own issue](https://github.com/open-filmmaker-toolkit/toolkit/
 - [x] Day-out-of-days: each cast member's start, work, hold and finish days from the schedule ([#169](https://github.com/open-filmmaker-toolkit/toolkit/issues/169))
 - [x] Sides: the day's scenes from the script, printed small for cast and crew ([#170](https://github.com/open-filmmaker-toolkit/toolkit/issues/170))
 - [x] Shot list and storyboard for each scene, with your own frames kept in the project file ([#171](https://github.com/open-filmmaker-toolkit/toolkit/issues/171))
-- [ ] Scene and take numbers on the call sheet, daily production report and camera and sound reports ([#172](https://github.com/open-filmmaker-toolkit/toolkit/issues/172))
+- [x] Scene and take numbers on the call sheet, daily production report and camera and sound reports ([#172](https://github.com/open-filmmaker-toolkit/toolkit/issues/172))
 
 ### Tools that share their work
 
