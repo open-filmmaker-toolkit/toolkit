@@ -1,6 +1,6 @@
 # Tools
 
-The tools we build, by production phase. Each one is a single page that runs in your browser on the shared project file, with nothing to install and nothing sent anywhere. 56 are ready to use and 6 are planned.
+The tools we build, by production phase. Each one is a single page that runs in your browser on the shared project file, with nothing to install and nothing sent anywhere. 59 are ready to use and 3 are planned.
 
 - **Ready to use:** linked tools. Each has a README with what it does.
 - **Planned:** each has an issue. Comment there if you need the tool or want to help build it. Order of work is in [ROADMAP.md](ROADMAP.md).
@@ -105,11 +105,11 @@ Looking for other free, open-source software for filmmaking, such as editing, so
 
 | Tool | Use it for | Status |
 | --- | --- | --- |
-| Theory of change builder | Map how the film's campaign leads to change: audiences, activities, outcomes, and how you'll measure them. | Planned, [#89](https://github.com/open-filmmaker-toolkit/toolkit/issues/89) |
+| [Theory of change builder](tools/theory-of-change/) | Map how your campaign leads to change, and how you'll measure it. | First version |
 | [Partner CRM](tools/partner-crm/) | Track impact partners and shared screenings. | First version |
 | [Discussion guide builder](tools/discussion-guide/) | Make a screening handout with discussion questions. | First version |
-| Screening kit builder | Put together a kit for screening hosts: how to screen the film, tech specs, promotional materials and the discussion guide. | Planned, [#92](https://github.com/open-filmmaker-toolkit/toolkit/issues/92) |
-| Impact report | Report on the campaign: screenings, audiences, partners and outcomes against the theory of change. | Planned, [#93](https://github.com/open-filmmaker-toolkit/toolkit/issues/93) |
+| [Screening kit builder](tools/screening-kit/) | Put together a kit for the people hosting screenings. | First version |
+| [Impact report](tools/impact-report/) | Report on your campaign against your theory of change. | First version |
 
 ## Close-Out & Archive
 

@@ -3939,7 +3939,8 @@
       "date": "2026-11-14",
       "place": "Grain elevator, Hammond",
       "locationId": "location-grain-elevator",
-      "notes": "Free, with a conversation afterward."
+      "notes": "Free, with a conversation afterward.",
+      "attendance": 85
     },
     {
       "id": "screening-library",
@@ -4863,5 +4864,109 @@
       "license": "split",
       "splitPercent": 35
     }
-  ]
+  ],
+  "theoryOfChange": {
+    "goal": "Riverside residents have a say in how the new levee is planned.",
+    "audiences": [
+      {
+        "id": "audience-residents",
+        "name": "Riverside residents"
+      },
+      {
+        "id": "audience-planners",
+        "name": "County planners and the levee board"
+      }
+    ],
+    "activities": [
+      {
+        "id": "activity-screenings",
+        "text": "Community screenings with a conversation afterward",
+        "audienceIds": [
+          "audience-residents"
+        ],
+        "outcomeIds": [
+          "outcome-aware"
+        ]
+      },
+      {
+        "id": "activity-panel",
+        "text": "A panel with the levee board at the library premiere",
+        "audienceIds": [
+          "audience-planners",
+          "audience-residents"
+        ],
+        "outcomeIds": [
+          "outcome-meetings"
+        ]
+      }
+    ],
+    "outcomes": [
+      {
+        "id": "outcome-aware",
+        "text": "Residents know the levee plan is open for comment",
+        "term": "short",
+        "audienceIds": [
+          "audience-residents"
+        ]
+      },
+      {
+        "id": "outcome-meetings",
+        "text": "More residents speak at levee board meetings",
+        "term": "medium"
+      },
+      {
+        "id": "outcome-plan",
+        "text": "The levee plan reflects residents' comments",
+        "term": "long"
+      }
+    ],
+    "indicators": [
+      {
+        "id": "indicator-attendance",
+        "text": "People at community screenings",
+        "outcomeId": "outcome-aware",
+        "target": 500,
+        "unit": "people",
+        "source": "Sign-in sheets"
+      },
+      {
+        "id": "indicator-comments",
+        "text": "Public comments on the levee plan",
+        "outcomeId": "outcome-meetings",
+        "target": 200,
+        "unit": "comments",
+        "baseline": 35,
+        "source": "County comment records"
+      }
+    ]
+  },
+  "screeningKit": {
+    "hosting": "Thank you for hosting a screening of The River Keeps.\n\nPlan for about two hours: the film, then a conversation.",
+    "formats": [
+      "bluray",
+      "file"
+    ],
+    "tech": "84 minutes. Stereo sound is fine for most rooms."
+  },
+  "impactReport": {
+    "periodStart": "2026-09-01",
+    "periodEnd": "2027-03-31",
+    "summary": "The first community screenings reached residents along the river.",
+    "results": {
+      "indicator-attendance": {
+        "value": 140,
+        "note": "Two screenings so far"
+      }
+    },
+    "stories": [
+      {
+        "id": "story-levee-meeting",
+        "quote": "I never knew the plan was open for comment. I went to the next meeting.",
+        "who": "Audience member, community preview",
+        "date": "2026-11-14",
+        "outcomeId": "outcome-meetings",
+        "permission": true
+      }
+    ]
+  }
 }

@@ -1003,10 +1003,306 @@
           },
           "notes": {
             "type": "string"
+          },
+          "attendance": {
+            "type": "integer",
+            "minimum": 0
           }
         },
         "additionalProperties": true
       }
+    },
+    "theoryOfChange": {
+      "type": "object",
+      "description": "How the campaign leads to change, kept by the theory of change builder.",
+      "properties": {
+        "goal": {
+          "type": "string"
+        },
+        "audiences": {
+          "type": "array",
+          "description": "Who the campaign reaches.",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "name": {
+                "type": "string"
+              },
+              "notes": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "activities": {
+          "type": "array",
+          "description": "What the campaign does.",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "text": {
+                "type": "string"
+              },
+              "audienceIds": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/id"
+                },
+                "uniqueItems": true
+              },
+              "outcomeIds": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/id"
+                },
+                "uniqueItems": true
+              },
+              "notes": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "outcomes": {
+          "type": "array",
+          "description": "What changes.",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "text": {
+                "type": "string"
+              },
+              "term": {
+                "enum": [
+                  "short",
+                  "medium",
+                  "long"
+                ]
+              },
+              "audienceIds": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/id"
+                },
+                "uniqueItems": true
+              },
+              "notes": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "indicators": {
+          "type": "array",
+          "description": "How each outcome is measured.",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "text": {
+                "type": "string"
+              },
+              "outcomeId": {
+                "$ref": "#/$defs/id"
+              },
+              "target": {
+                "type": "number"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "baseline": {
+                "type": "number"
+              },
+              "source": {
+                "type": "string"
+              },
+              "notes": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "screeningKit": {
+      "type": "object",
+      "description": "The screening kit for hosts, kept by the screening kit builder.",
+      "properties": {
+        "hosting": {
+          "type": "string"
+        },
+        "tech": {
+          "type": "string"
+        },
+        "promotion": {
+          "type": "string"
+        },
+        "contact": {
+          "type": "string"
+        },
+        "formats": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "dcp",
+              "bluray",
+              "file",
+              "dvd"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "imageIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true,
+          "description": "Approved stills and key art in assets, for hosts to use."
+        },
+        "checklist": {
+          "type": "array",
+          "description": "Your own checklist items.",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "when": {
+                "enum": [
+                  "4w",
+                  "2w",
+                  "1w",
+                  "day",
+                  "after"
+                ]
+              },
+              "text": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "removed": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true,
+          "description": "Built-in checklist items taken out, by key."
+        },
+        "hidden": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": true
+    },
+    "impactReport": {
+      "type": "object",
+      "description": "The impact report, kept by the impact report tool.",
+      "properties": {
+        "periodStart": {
+          "type": "string",
+          "format": "date"
+        },
+        "periodEnd": {
+          "type": "string",
+          "format": "date"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "results": {
+          "type": "object",
+          "description": "Results by indicator id in theoryOfChange.",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "value": {
+                "type": "number"
+              },
+              "note": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "stories": {
+          "type": "array",
+          "description": "Stories and quotes.",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "quote": {
+                "type": "string"
+              },
+              "who": {
+                "type": "string"
+              },
+              "date": {
+                "type": "string",
+                "format": "date"
+              },
+              "context": {
+                "type": "string"
+              },
+              "outcomeId": {
+                "$ref": "#/$defs/id"
+              },
+              "permission": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
     }
   },
   "additionalProperties": true,
@@ -3502,6 +3798,11 @@
         },
         "notes": {
           "type": "string"
+        },
+        "attendance": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "How many people came, recorded in the impact report."
         }
       },
       "additionalProperties": true
