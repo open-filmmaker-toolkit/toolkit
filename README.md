@@ -69,52 +69,52 @@ The toolkit has two halves:
 
 | Tool | Phase | Use it for |
 | --- | --- | --- |
-| [Subject tracker](tools/subject-tracker/) | Development | Keep track of the people you might film, and when to follow up. |
-| [Research and archival log](tools/research-log/) | Development | Write down archival leads and sources as you find them. |
-| [Comps tracker](tools/comps-tracker/) | Development | Comparable films for your pitch, with where every number came from. |
-| [Treatment builder](tools/treatment-builder/) | Development | Write your treatment a section at a time, with word counts. |
-| [Pitch deck builder](tools/pitch-deck/) | Development | Make a pitch deck or lookbook from your project and your own stills. |
-| [Grant calendar](tools/grant-calendar/) | Funding | Every grant deadline in one place, and what each application needs. |
-| [Grant narrative library](tools/narrative-library/) | Funding | Your application answers, in every length funders ask for. |
-| [Budget converter](tools/budget-converter/) | Funding | Put your budget into the categories a funder wants. |
-| [Finance plan](tools/finance-plan/) | Funding | How the film gets paid for, and how much you still need to raise. |
-| [Funder CRM](tools/funder-crm/) | Funding | Who you know at each funder, and what you said you'd do next. |
-| [Budget](tools/budget/) | Pre-production | A real production budget, from detail lines up to the top sheet. |
-| [Cash flow](tools/cash-flow/) | Pre-production | When money goes out and comes in, and the months you'll run short. |
-| [Shooting calendar](tools/shooting-calendar/) | Pre-production | Shoot days, travel days and holds, with who's needed where. |
-| [Interview prep](tools/interview-prep/) | Pre-production | Research and questions for each interview, on one page you can print. |
-| [Location scout sheet](tools/location-scout/) | Pre-production | What you found on a scout, with photos, for the rest of the crew. |
-| [Deal memos](tools/deal-memos/) | Pre-production | Crew deal memos to print and sign, with the rates sent to the budget. |
-| [Gear list](tools/gear-list/) | Pre-production | What gear you're bringing, where it's from, and what goes out each day. |
-| [COI and permit tracker](tools/coi-permit-tracker/) | Pre-production | Insurance certificates and permits, and what's still missing before each shoot day. |
-| [Travel sheet](tools/travel-sheet/) | Pre-production | Flights, hotels and who to call, on one sheet for everyone on the trip. |
-| [Risk and hostile-environment plans](tools/risk-plan/) | Pre-production | What could go wrong on a shoot, and the plan if it does. |
-| [Security checklist](tools/security-checklist/) | Pre-production | Keep footage, sources and devices safe on a sensitive shoot. |
-| [Call sheet](tools/call-sheet/) | Production | Call sheets built from the people and places already in your project. |
-| [Camera and sound reports](tools/camera-sound-reports/) | Production | What's on every camera and sound card, for the shoot and the edit. |
-| [Interview log](tools/interview-log/) | Production | Who you interviewed, which cards it's on, and the moments worth finding again. |
-| [Daily production report](tools/daily-production-report/) | Production | What happened each shoot day: the hours, what you got, and what went wrong. |
-| [Expense log](tools/expense-log/) | Production | Log what you spend against the budget, and keep the receipts. |
-| [Festival submission tracker](tools/festival-submissions/) | Launch | Festival deadlines, fees, results and screenings. |
-| [Release tracker](tools/release-tracker/) | Production | Who's signed what, and who's on camera without a release. |
-| [Field journal](tools/field-journal/) | Production | A dated journal of the production, tied to the people and places in it. |
-| [Footage log](tools/footage-log/) | Post-production | Every clip, what's in it and who's in it, so the editor can find it. |
-| [Paper edit](tools/paper-edit/) | Post-production | Pick bites from transcripts, build scenes, and send an edit list to your editing app. |
-| [Structure board](tools/structure-board/) | Post-production | Scene cards you can move around until the structure works. |
-| [Cut version tracker](tools/cut-tracker/) | Post-production | Each cut, who saw it, and what happened to their notes. |
-| [Name supers list](tools/name-supers/) | Post-production | On-screen names and titles, spelled right and kept up to date. |
-| [Music cue sheet](tools/music-cue-sheet/) | Post-production | The cue sheet your distributor needs, built from your clearance log. |
-| [Credits builder](tools/credits-builder/) | Post-production | End credits from your project, with every credit your contracts require checked. |
-| [Budget-to-actuals](tools/budget-to-actuals/) | Post-production | What you've spent against the budget, line by line. |
-| [Clearance log](tools/clearance-log/) | Legal and clearances | Every bit of third-party material in the film, until it's cleared. |
-| [Fair use log](tools/fair-use-log/) | Legal and clearances | Your fair use reasoning, written down for your attorney. |
-| [License tracker](tools/license-tracker/) | Legal and clearances | What each license covers, what you still owe, and when it runs out. |
-| [Annotated-transcript clearance report](tools/clearance-report/) | Legal and clearances | The annotated script your E&O insurer asks for. |
-| [Chain-of-title binder](tools/chain-of-title/) | Legal and clearances | The rights documents a distributor wants, with the gaps showing. |
-| [Press list](tools/press-list/) | Marketing and festivals | Press contacts, the screeners you sent, and the coverage you got. |
-| [Partner CRM](tools/partner-crm/) | Impact and outreach | Impact partners, what they've committed to, and the screenings you've done together. |
-| [Discussion guide builder](tools/discussion-guide/) | Impact and outreach | A handout for screenings, with discussion questions and resources. |
-| [Archive log](tools/archive-log/) | Close-out and archive | Where every copy of your project lives, and when you last checked it. |
+| [Subject tracker](tools/subject-tracker/) | Development | Track people you might film and when to follow up. |
+| [Research and archival log](tools/research-log/) | Development | Log archival leads and sources. |
+| [Comps tracker](tools/comps-tracker/) | Development | Track comparable films and where each number came from. |
+| [Treatment builder](tools/treatment-builder/) | Development | Write your treatment section by section. |
+| [Pitch deck builder](tools/pitch-deck/) | Development | Build a pitch deck from your project and stills. |
+| [Grant calendar](tools/grant-calendar/) | Funding | Track grant deadlines and what each application needs. |
+| [Grant narrative library](tools/narrative-library/) | Funding | Keep your application answers in every length. |
+| [Budget converter](tools/budget-converter/) | Funding | Convert your budget to a funder's categories. |
+| [Finance plan](tools/finance-plan/) | Funding | See how the film gets paid for and what's left to raise. |
+| [Funder CRM](tools/funder-crm/) | Funding | Track funder contacts and next steps. |
+| [Budget](tools/budget/) | Pre-production | Build a budget from detail lines up to a top sheet. |
+| [Cash flow](tools/cash-flow/) | Pre-production | See when money comes and goes, and when you'll run short. |
+| [Shooting calendar](tools/shooting-calendar/) | Pre-production | Schedule shoot days, travel and holds. |
+| [Interview prep](tools/interview-prep/) | Pre-production | Prepare research and questions for each interview. |
+| [Location scout sheet](tools/location-scout/) | Pre-production | Record scouts with photos for the crew. |
+| [Deal memos](tools/deal-memos/) | Pre-production | Print crew deal memos and send rates to the budget. |
+| [Gear list](tools/gear-list/) | Pre-production | Track your gear and what goes out each day. |
+| [COI and permit tracker](tools/coi-permit-tracker/) | Pre-production | Track certificates and permits for each shoot day. |
+| [Travel sheet](tools/travel-sheet/) | Pre-production | Put flights, hotels and contacts on one sheet. |
+| [Risk and hostile-environment plans](tools/risk-plan/) | Pre-production | Plan for what could go wrong on a shoot. |
+| [Security checklist](tools/security-checklist/) | Pre-production | Protect footage, sources and devices. |
+| [Call sheet](tools/call-sheet/) | Production | Build call sheets from your project. |
+| [Camera and sound reports](tools/camera-sound-reports/) | Production | Log what's on each camera and sound card. |
+| [Interview log](tools/interview-log/) | Production | Log interviews and their best moments. |
+| [Daily production report](tools/daily-production-report/) | Production | Report each shoot day's hours, footage and problems. |
+| [Expense log](tools/expense-log/) | Production | Log spending against the budget, with receipts. |
+| [Festival submission tracker](tools/festival-submissions/) | Launch | Track festival deadlines, fees and results. |
+| [Release tracker](tools/release-tracker/) | Production | Track who's signed a release and who hasn't. |
+| [Field journal](tools/field-journal/) | Production | Keep a dated production journal. |
+| [Footage log](tools/footage-log/) | Post-production | Catalog every clip so the editor can find it. |
+| [Paper edit](tools/paper-edit/) | Post-production | Build scenes from transcripts and export an edit list. |
+| [Structure board](tools/structure-board/) | Post-production | Rearrange scene cards until the structure works. |
+| [Cut version tracker](tools/cut-tracker/) | Post-production | Track each cut, who saw it and their notes. |
+| [Name supers list](tools/name-supers/) | Post-production | Keep on-screen names and titles correct. |
+| [Music cue sheet](tools/music-cue-sheet/) | Post-production | Build the music cue sheet from your clearance log. |
+| [Credits builder](tools/credits-builder/) | Post-production | Build end credits and check what your contracts require. |
+| [Budget-to-actuals](tools/budget-to-actuals/) | Post-production | Compare spending to the budget, line by line. |
+| [Clearance log](tools/clearance-log/) | Legal and clearances | Track third-party material until it's cleared. |
+| [Fair use log](tools/fair-use-log/) | Legal and clearances | Write up your fair use reasoning for your attorney. |
+| [License tracker](tools/license-tracker/) | Legal and clearances | Track license terms, payments and expiry dates. |
+| [Annotated-transcript clearance report](tools/clearance-report/) | Legal and clearances | Annotate the script for your E&O insurer. |
+| [Chain-of-title binder](tools/chain-of-title/) | Legal and clearances | Gather the rights documents a distributor needs. |
+| [Press list](tools/press-list/) | Marketing and festivals | Track press contacts, screeners and coverage. |
+| [Partner CRM](tools/partner-crm/) | Impact and outreach | Track impact partners and shared screenings. |
+| [Discussion guide builder](tools/discussion-guide/) | Impact and outreach | Make a screening handout with discussion questions. |
+| [Archive log](tools/archive-log/) | Close-out and archive | Track where each copy of your project lives. |
 
 All 46 are first versions: they work, and they're still changing. Everything else we plan to build is listed by production phase in [TOOLS.md](TOOLS.md).
 
