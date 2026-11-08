@@ -43,6 +43,8 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 
 It reads the budget from the [budget tool](../budget/) and the money coming in from the finance plan, in the same project file, and changes neither. For anyone who doesn't use the tool, there's a blank [spreadsheet template](../../templates/cash-flow-template.csv) with the same columns.
 
+- **Other currencies.** Budget lines and finance plan sources in other currencies convert at the project's exchange rates, set under **Exchange rates**, and the page says which rates it used.
+
 ## Saving and file conflicts
 
 Chrome and Edge can save straight back to the file you opened. If it changed on disk since you opened it, the tool warns before saving. You can reload the latest version, save your edits as a separate copy, or explicitly overwrite the changed file. Safari and Firefox download a new copy instead.

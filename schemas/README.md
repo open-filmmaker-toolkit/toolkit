@@ -93,6 +93,12 @@ The credits builder keeps the end credits in a `credits` record: `entries` in th
 - A contract's `requiredCredit` is the on-screen credit it requires, word for word. The credits meet it when a line contains that wording, ignoring capitals and punctuation.
 - Credits aren't one of the CSV exports. The credits builder exports them as text for the crawl.
 
+## Money in several currencies
+
+`project.currency` is the project currency. Any money record can carry its own `currency` (a three-letter code): budget lines, finance plan sources, contracts such as licenses, and expenses. Totals convert to the project currency at `project.exchangeRates`, which the user types in and the tools never fetch: each has a `currency`, a `rate` (what one unit is worth in the project currency) and an optional `date` it applies from. An amount with no currency is in the project currency, so older files keep working. The conversion is shared code, copied from [`shared/money.js`](../shared/money.js).
+
+Budget lines can have several fringes in `fringeIds`; `fringeId` stays the first, for tools that read one. A fringe's optional `cap` limits it to wages up to that amount for each person on a line (the line's multiplier). A deal memo's other `rates`, such as prep or travel days, each keep their own budget line in `budgetLineId`. The budget math is shared code, copied from [`shared/budget.js`](../shared/budget.js).
+
 ## Concurrent edits
 
 When a browser supports direct file access, a tool compares the opened file with the last version it read or saved before writing. If the file changed, the user can reload the latest version, save their edits to a separate copy, or explicitly overwrite the newer file. The user can also merge: records are matched by `id`, changes to different records or fields are combined, and fields changed on both sides are shown for the user to choose. The check cannot lock the file against a simultaneous write, so teams should save in one tool at a time. See [Working on a shared file](../docs/sharing-a-project.md).

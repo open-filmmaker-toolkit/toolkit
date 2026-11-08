@@ -120,6 +120,8 @@ Every tool in [TOOLS.md](TOOLS.md), built in the order contributors asked for. E
 - [x] Final cost report: budget against final cost from budget-to-actuals, by account, line, top sheet or a funder's categories from the budget converter, the date costs run to, draft or final, variance notes with large variances flagged, print and CSV ([#94](https://github.com/open-filmmaker-toolkit/toolkit/issues/94))
 - [x] Grant final reports: a final report for each awarded grant in the grant calendar, with its due date and status, the narrative with answers from the grant narrative library, outcomes, deliverables, final costs in the funder's categories, the impact report, and print to PDF ([#95](https://github.com/open-filmmaker-toolkit/toolkit/issues/95))
 - [x] Contract and release archive: every contract and release in the project, in folders by kind with a tab number, its signed copy, anything signed without a copy flagged, where the archive is kept and when it was checked, the index as CSV, a suggested folder layout as a text file, and a printed index ([#97](https://github.com/open-filmmaker-toolkit/toolkit/issues/97))
+- [x] Money in several currencies, at exchange rates you type in ([#154](https://github.com/open-filmmaker-toolkit/toolkit/issues/154))
+- [x] Budget lines with several fringes and capped fringes, and deal memos with several rates ([#155](https://github.com/open-filmmaker-toolkit/toolkit/issues/155))
 
 Finding a third maintainer is on hold. Basil and Alex maintain the project for now ([#8](https://github.com/open-filmmaker-toolkit/toolkit/issues/8), closed).
 

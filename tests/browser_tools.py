@@ -18,6 +18,7 @@ merging in the save warning, who changed what, who has the file open, conflicted
 remembering the open file across tools (served over HTTP so the browser gives real file handles).
 The home page dashboard is checked with the sample: its flags against five tools, the calendar file and summaries.
 Every tool whose template lists records imports its template without matching, and imports its own export.
+Money in other currencies, several and capped fringes, and several rates in a deal memo are checked across the budget tools.
 """
 import base64, datetime, csv, io, json, os, pathlib, re, sys, tempfile
 from playwright.sync_api import sync_playwright
@@ -3212,6 +3213,95 @@ def test_imports(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
+def money_sample():
+    d = json.loads(sample)
+    d['project']['exchangeRates'] = [{'currency': 'EUR', 'rate': 1.1}, {'currency': 'EUR', 'rate': 1.2, 'date': '2026-05-01'}]
+    d['budget']['fringes'].append({'id': 'fringe-health', 'name': 'Health plan', 'percent': 10, 'cap': 1000})
+    for l in d['budget']['lines']:
+        if l['id'] == 'line-1000-0': l['currency'] = 'EUR'
+        if l['id'] == 'line-1000-1': l['fringeId'] = 'fringe-payroll'; l['fringeIds'] = ['fringe-payroll', 'fringe-health']
+    for e in d['expenses']:
+        if e['id'] == 'expense-gas': e['currency'] = 'EUR'
+    d['financePlan']['sources'].append({'id': 'source-coprod', 'name': 'Co-producer in Ireland', 'kind': 'equity', 'status': 'confirmed', 'amount': 10000, 'currency': 'EUR', 'payments': [{'date': '2026-06-01', 'amount': 10000}]})
+    return json.dumps(d, indent=2) + '\n'
+
+def open_text(pg, fake, text):
+    if fake:
+        pg.evaluate('t => window.__file.text = t', text); pg.click('#openBtn')
+    else:
+        pg.set_input_files('#fileInput', files=[{'name': 'proj.oft.json', 'mimeType': 'application/json', 'buffer': text.encode()}])
+    pg.wait_for_function("document.getElementById('filmMeta').textContent.trim() !== ''")
+
+def csv_of(pg, btn='#csvBtn'):
+    with pg.expect_download() as d:
+        pg.click(btn)
+    return list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+
+# money / several currencies, fringes with caps, several rates in a deal memo
+def test_money(browser, fake):
+    text = money_sample()
+    ctx, pg, errs = new_page(browser, 'budget', fake)
+    open_text(pg, fake, text)
+    tot = lambda lid: pg.inner_text('[data-line="%s"] [data-tot]' % lid)
+    check('$3,850.00' in tot('line-1000-0') and '3,500.00' in tot('line-1000-0'), 'a line in euros converts at the fixed rate and shows the euros')
+    check('$2,788.00' in tot('line-1000-1') and 'fringes' in tot('line-1000-1'), 'a line with two fringes, one capped, adds both')
+    check('1 EUR = 1.1 USD' in pg.inner_text('#oftRatesNote'), 'the page says which rates the totals use')
+    pg.click('[data-line="line-1100-2"] [data-moreline]')
+    pg.fill('#l-currency', 'gbp'); pg.click('#lineForm button[type=submit]'); pg.wait_for_timeout(150)
+    check("no exchange rate for GBP" in pg.inner_text('#oftRatesNote'), 'a currency with no rate is named, and counted as it is')
+    pg.click('#oftRatesBtn'); pg.click('#oftRateAdd')
+    pg.locator('#oftRateRows .oft-rate').last.locator('.oft-rate-cur').fill('GBP'); pg.locator('#oftRateRows .oft-rate').last.locator('.oft-rate-val').fill('1.25')
+    pg.click('#oftRatesForm button[type=submit]'); pg.wait_for_timeout(150)
+    check('1 GBP = 1.25 USD' in pg.inner_text('#oftRatesNote'), 'rates are typed in and used')
+    rows = csv_of(pg)
+    check(rows[0][-1] == 'Currency' and any(r[3] == 'Archive research' and r[-1] == 'EUR' for r in rows) and any('Payroll taxes 12%; Health plan 10%' in r for r in rows), 'the CSV has each line\'s currency and fringes')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+    ctx, pg, errs = new_page(browser, 'budget-to-actuals', fake)
+    open_text(pg, fake, text)
+    rows = csv_of(pg)
+    check(any(r[2] == 'Mileage' and r[4] in ('74.88', '74.88') for r in rows) and any(r[2] == 'Archive research' and r[3] == '3850.00' for r in rows) and any(r[2] == 'Research trips' and r[3] == '2788.00' for r in rows),
+          'budget-to-actuals converts expenses at the rate for their date, and counts both fringes')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+    ctx, pg, errs = new_page(browser, 'final-cost-report', fake)
+    open_text(pg, fake, text)
+    pg.select_option('#layout', 'line') if pg.locator('#layout').count() else None
+    check('1 EUR = 1.1 USD' in pg.inner_text('#oftRatesNote'), 'the final cost report says which rates it used')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+    ctx, pg, errs = new_page(browser, 'finance-plan', fake)
+    open_text(pg, fake, text)
+    row = pg.inner_text('[data-id="source-coprod"]')
+    check('$11,000' in row and '10,000' in row, 'a source in euros counts in dollars and shows the euros')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+    # Several rates in one deal memo, each on its own budget line
+    ctx, pg, errs = new_page(browser, 'deal-memos', fake)
+    open_sample(pg, fake)
+    pg.click('[data-edit="contract-deal-teo"]')
+    pg.click('#addRateBtn')
+    row = pg.locator('#rateRows .rate-row').last
+    row.locator('.r-label').fill('Prep days'); row.locator('.r-rate').fill('500'); row.locator('.r-qty').fill('3')
+    pg.wait_for_timeout(100)
+    check('$24,000' in pg.input_value('#f-total') or '24,000' in pg.input_value('#f-total'), 'the total adds the other rates')
+    if pg.locator('#f-account').count() and pg.locator('#f-account option[value="account-2000"]').count():
+        pg.select_option('#f-account', 'account-2000')
+    pg.click('#editorForm button[type=submit]'); pg.wait_for_timeout(300)
+    if fake:
+        pg.click('#saveBtn'); pg.wait_for_timeout(300); data = json.loads(pg.evaluate('window.__file.text'))
+    else:
+        with pg.expect_download() as d:
+            pg.click('#saveBtn')
+        data = json.loads(open(d.value.path(), encoding='utf-8').read())
+    teo = next(c for c in data['contracts'] if c['id'] == 'contract-deal-teo')
+    prep = next((l for l in data['budget']['lines'] if l['id'] == teo['rates'][0].get('budgetLineId')), None)
+    check(prep is not None and prep['rate'] == 500 and prep['quantity'] == 3 and 'Prep days' in prep['description'], 'another rate goes on its own budget line')
+    rows = csv_of(pg)
+    check(rows[0][-1] == 'Other rates' and any('Prep days: $500 a day × 3' in r[-1] for r in rows), 'the CSV lists the other rates')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
 def test_template_columns(browser, fake):
     for name, template in TEMPLATE_EXPORTS:
         ctx, pg, errs = new_page(browser, name, fake)
@@ -3376,6 +3466,8 @@ def main():
         test_tool_calendar(browser, fake)
         print('== every tool with a template / importing from a spreadsheet')
         test_imports(browser, fake)
+        print('== money / currencies, fringes with caps and several rates in a deal memo')
+        test_money(browser, fake)
         print('== templates / columns match the tools\' exports')
         test_template_columns(browser, fake)
         browser.close()

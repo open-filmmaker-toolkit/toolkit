@@ -38,6 +38,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **The impact report's** summary, screenings, audience, results and quotes, from the [impact report](../impact-report/).
 - **Prints** the report for the grant you pick.
 - **A calendar file of every date in the project**, gathered from every tool: choose **Calendar of every date** under the file buttons and pick which kinds of dates to include. Importing a newer file updates the same events instead of adding them twice.
+- **Other currencies.** Costs in other currencies convert at the project's exchange rates, as in the final cost report.
 
 ## Saving and file conflicts
 

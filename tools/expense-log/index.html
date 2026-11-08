@@ -38,6 +38,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
 
 <dialog class="modal" id="editor" aria-labelledby="editorTitle"><form id="editorForm" method="dialog" novalidate><div class="dlg-head"><h2 id="editorTitle">Add an expense</h2></div><div class="dlg-body">
 <div class="two"><div class="field"><label for="f-date">Date</label><input id="f-date" type="date" required></div><div class="field"><label for="f-amount">Amount</label><input id="f-amount" type="number" min="0" step="0.01" inputmode="decimal" placeholder="12.50" required></div></div>
+<div class="field"><label for="f-cur">Currency, if not the project's</label><input id="f-cur" type="text" maxlength="3" list="f-curlist" autocomplete="off" style="max-width:8em;text-transform:uppercase"><datalist id="f-curlist"></datalist></div>
 <div class="field"><label for="f-account">Budget account</label><select id="f-account" required></select></div>
 <div class="three"><div class="field"><label for="f-kind">Type</label><select id="f-kind"><option value="expense">Expense</option><option value="perdiem">Per diem</option><option value="pettycash">Petty cash</option></select></div><div class="field"><label for="f-method">Payment method</label><select id="f-method"><option value="card">Card</option><option value="cash">Cash</option><option value="check">Check</option><option value="transfer">Transfer</option><option value="other">Other</option></select></div><div class="field"><label for="f-person">Person (per diem)</label><select id="f-person"><option value="">Not applicable</option></select></div></div>
 <div class="field"><label for="f-description">Description</label><input id="f-description" type="text" autocomplete="off" placeholder="What was this for?"></div>
@@ -58,6 +59,8 @@ function normalize(d){if(!d.project||typeof d.project!=='object')d.project={};fo
 const accounts=()=>arr(doc.budget?.accounts).filter(x=>x&&typeof x==='object'&&x.id),people=()=>arr(doc.people).filter(x=>x&&typeof x==='object'&&x.id),days=()=>arr(doc.shootDays).filter(x=>x&&typeof x==='object'&&x.id),assets=()=>arr(doc.assets).filter(x=>x&&typeof x==='object');
 const accountById=id=>accounts().find(x=>x.id===id),personById=id=>people().find(x=>x.id===id),dayById=id=>days().find(x=>x.id===id),assetById=id=>assets().find(x=>x.id===id);
 const kindLabel=k=>({expense:'Expense',perdiem:'Per diem',pettycash:'Petty cash'}[k]||'Expense'),methodLabel=m=>({card:'Card',cash:'Cash',check:'Check',transfer:'Transfer',other:'Other'}[m]||str(m));
+// An expense in another currency counts at the exchange rate for its date.
+function expenseCents(e){return moneyCents(e.currency?oftMoney.convert(Number(e.amount)||0,e.currency,e.date):e.amount)}
 function moneyCents(v){const n=Number(v);return Number.isFinite(n)?Math.round((n+Number.EPSILON)*100):0}
 function currency(){const c=str(doc.project.currency||'USD');try{new Intl.NumberFormat(undefined,{style:'currency',currency:c});return c}catch{return'USD'}}
 function money(v){const cents=typeof v==='number'?v:moneyCents(v),c=currency();try{return new Intl.NumberFormat(undefined,{style:'currency',currency:c,minimumFractionDigits:2,maximumFractionDigits:2}).format(cents/100)}catch{return `${c} ${(cents/100).toFixed(2)}`}}
@@ -67,9 +70,9 @@ function render(){const title=doc.project.title||'Untitled film';$('filmTitle').
 const acctOptions=accounts().map(a=>`<option value="${esc(a.id)}">${esc(a.code||'')} · ${esc(a.name||'Unnamed account')}</option>`).join('');const prev=$('accountFilter').value;$('accountFilter').innerHTML='<option value="">All budget accounts</option>'+acctOptions;$('accountFilter').value=accounts().some(a=>a.id===prev)?prev:'';const editPrev=$('f-account').value;$('f-account').innerHTML='<option value="">Choose a budget account</option>'+acctOptions;$('f-account').value=accounts().some(a=>a.id===editPrev)?editPrev:'';
 const personPrev=$('f-person').value;$('f-person').innerHTML='<option value="">Choose a person</option>'+people().map(p=>`<option value="${esc(p.id)}">${esc(p.name||p.id)}</option>`).join('');$('f-person').value=personById(personPrev)?personPrev:'';const dayPrev=$('f-shootday').value;$('f-shootday').innerHTML='<option value="">Not linked to a shoot day</option>'+days().map(d=>`<option value="${esc(d.id)}">${esc(d.date||'')} · ${esc(d.title||d.id)}</option>`).join('');$('f-shootday').value=dayById(dayPrev)?dayPrev:'';
 const all=arr(doc.expenses).filter(e=>e&&typeof e==='object'),shown=visible();$('count').textContent=`${shown.length} of ${all.length} entr${all.length===1?'y':'ies'}`;$('empty').hidden=all.length>0;$('tableWrap').hidden=!shown.length;$('noMatch').hidden=all.length===0||shown.length>0;
-$('rows').innerHTML=shown.map(e=>{const a=accountById(e.accountId),p=personById(e.personId),d=dayById(e.shootDayId),asset=assetById(e.receiptAssetId);const description=e.description||kindLabel(e.kind);return `<tr data-id="${esc(e.id)}"><td class="date">${esc(fmtDate(e.date))}</td><td><strong>${esc(description)}</strong>${e.payee?`<span class="detail">${esc(e.payee)}</span>`:''}${p?`<span class="detail">For ${esc(p.name||'')}</span>`:''}${d?`<span class="detail">${esc(d.title||d.date||'')}</span>`:''}${asset?`<span class="detail">Receipt: ${esc(asset.name||asset.relativePath||'attached')}</span>`:''}</td><td>${a?`<span class="account-code">${esc(a.code||'')}</span>${esc(a.name||'')}`:'<span class="detail">Unlinked account</span>'}</td><td><span class="tag ${esc(e.kind||'expense')}">${esc(kindLabel(e.kind))}</span></td><td>${esc(methodLabel(e.method))}</td><td class="amount">${money(moneyCents(e.amount))}</td><td><button class="icon" type="button" data-remove="${esc(e.id)}" aria-label="Remove ${esc(description)}">×</button></td></tr>`}).join('');
-const byAcct=new Map();for(const e of shown){const a=accountById(e.accountId);if(!a)continue;byAcct.set(a.id,(byAcct.get(a.id)||0)+moneyCents(e.amount))}const accts=[...byAcct].sort((a,b)=>str(accountById(a[0])?.code).localeCompare(str(accountById(b[0])?.code)));$('accountTotals').innerHTML=accts.length?accts.map(([id,n])=>{const a=accountById(id);return `<div class="total-line"><span class="name"><span class="code">${esc(a.code||'')}</span>${esc(a.name||'Unnamed account')}</span><strong>${money(n)}</strong></div>`}).join(''):'<p class="hint">No account totals in this view.</p>';
-const grand=shown.reduce((sum,e)=>sum+moneyCents(e.amount),0);$('grandTotal').textContent=money(grand);$('kindTotals').innerHTML=[['expense','Expenses'],['perdiem','Per diems'],['pettycash','Petty cash']].map(([k,l])=>{const n=shown.filter(e=>e.kind===k).reduce((s,e)=>s+moneyCents(e.amount),0);return `<div class="kind-box"><b>${money(n)}</b><span>${l}</span></div>`}).join('');$('csvBtn').textContent=`Export CSV (${shown.length})`}
+$('rows').innerHTML=shown.map(e=>{const a=accountById(e.accountId),p=personById(e.personId),d=dayById(e.shootDayId),asset=assetById(e.receiptAssetId);const description=e.description||kindLabel(e.kind);return `<tr data-id="${esc(e.id)}"><td class="date">${esc(fmtDate(e.date))}</td><td><strong>${esc(description)}</strong>${e.payee?`<span class="detail">${esc(e.payee)}</span>`:''}${p?`<span class="detail">For ${esc(p.name||'')}</span>`:''}${d?`<span class="detail">${esc(d.title||d.date||'')}</span>`:''}${asset?`<span class="detail">Receipt: ${esc(asset.name||asset.relativePath||'attached')}</span>`:''}</td><td>${a?`<span class="account-code">${esc(a.code||'')}</span>${esc(a.name||'')}`:'<span class="detail">Unlinked account</span>'}</td><td><span class="tag ${esc(e.kind||'expense')}">${esc(kindLabel(e.kind))}</span></td><td>${esc(methodLabel(e.method))}</td><td class="amount">${money(expenseCents(e))}</td><td><button class="icon" type="button" data-remove="${esc(e.id)}" aria-label="Remove ${esc(description)}">×</button></td></tr>`}).join('');
+const byAcct=new Map();for(const e of shown){const a=accountById(e.accountId);if(!a)continue;byAcct.set(a.id,(byAcct.get(a.id)||0)+expenseCents(e))}const accts=[...byAcct].sort((a,b)=>str(accountById(a[0])?.code).localeCompare(str(accountById(b[0])?.code)));$('accountTotals').innerHTML=accts.length?accts.map(([id,n])=>{const a=accountById(id);return `<div class="total-line"><span class="name"><span class="code">${esc(a.code||'')}</span>${esc(a.name||'Unnamed account')}</span><strong>${money(n)}</strong></div>`}).join(''):'<p class="hint">No account totals in this view.</p>';
+const grand=shown.reduce((sum,e)=>sum+expenseCents(e),0);$('grandTotal').textContent=money(grand);$('kindTotals').innerHTML=[['expense','Expenses'],['perdiem','Per diems'],['pettycash','Petty cash']].map(([k,l])=>{const n=shown.filter(e=>e.kind===k).reduce((s,e)=>s+expenseCents(e),0);return `<div class="kind-box"><b>${money(n)}</b><span>${l}</span></div>`}).join('');$('csvBtn').textContent=`Export CSV (${shown.length})`}
 function changed(){dirty=true;saveDraft();render()}
 function csvCell(v){let s=v==null?'':String(v);if(/^[=+\-@\t\r]/.test(s))s="'"+s;return/[",\n\r]/.test(s)?`"${s.replace(/"/g,'""')}"`:s}
 function download(text,name,type){const url=URL.createObjectURL(new Blob([text],{type})),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)}
@@ -77,13 +80,13 @@ function suggestedName(){return `${slug(doc.project.title||'untitled-film')}.oft
 function exportCsv(){const headers=['Date','Amount','Kind','Budget account','Payment method','Payee','Description','Person','Shoot day','Receipt','Notes'];const rows=visible().map(e=>{const a=accountById(e.accountId),p=personById(e.personId),d=dayById(e.shootDayId),r=assetById(e.receiptAssetId);return[e.date,e.amount,kindLabel(e.kind),a?[a.code,a.name].filter(Boolean).join(' · '):'',methodLabel(e.method),e.payee,e.description,p?.name,d?[d.date,d.title].filter(Boolean).join(' · '):'',r?.name||r?.relativePath,e.notes]});const csv='\ufeff'+[headers,...rows].map(row=>row.map(csvCell).join(',')).join('\r\n')+'\r\n';download(csv,`${slug(doc.project.title||'untitled-film')}-expenses.csv`,'text/csv;charset=utf-8');toast(`Exported ${rows.length} expense${rows.length===1?'':'s'} to CSV`)}
 const csvNames={project:'project details',people:'people',locations:'locations',thirdPartyElements:'third-party elements',contracts:'contracts',assets:'assets',musicCueSheet:'music cue sheet details',callSheets:'call sheets'};
 function exportProjectCsv(){const c=$('projectCsvCollection').value,v=doc[c],records=Array.isArray(v)?v:v&&typeof v==='object'?[v]:[];if(records.some(x=>!x||typeof x!=='object'||Array.isArray(x))){toast(`Couldn't export ${csvNames[c]}: the project contains an invalid record.`,true);return}const headers=[...new Set(records.flatMap(x=>Object.keys(x)))];if(!headers.length)headers.push('id');const csv='\ufeff'+[headers,...records.map(r=>headers.map(k=>r[k]&&typeof r[k]==='object'?JSON.stringify(r[k]):r[k]))].map(row=>row.map(csvCell).join(',')).join('\r\n')+'\r\n';download(csv,suggestedName().replace(/\.oft\.json$/i,`-${c}.csv`),'text/csv;charset=utf-8');toast(`Exported ${records.length} ${csvNames[c]}`)}
-function renderReport(){const rows=visible(),sum=rows.reduce((s,e)=>s+moneyCents(e.amount),0),byAccount=new Map(),byKind=new Map();for(const e of rows){if(accountById(e.accountId))byAccount.set(e.accountId,(byAccount.get(e.accountId)||0)+moneyCents(e.amount));byKind.set(e.kind||'expense',(byKind.get(e.kind||'expense')||0)+moneyCents(e.amount))}const accountRows=[...byAccount].sort((a,b)=>str(accountById(a[0])?.code).localeCompare(str(accountById(b[0])?.code)));$('report').innerHTML=`<h1>Expense report${doc.project.title?` · ${esc(doc.project.title)}`:''}</h1><p class="meta">${esc([doc.project.company,`Printed ${fmtDate(today())}`,`${rows.length} entries`].filter(Boolean).join(' · '))}</p><table><thead><tr><th>Date</th><th>Description / payee</th><th>Budget account</th><th>Type</th><th>Payment method</th><th>Amount</th></tr></thead><tbody>${rows.map(e=>{const a=accountById(e.accountId);return `<tr><td>${esc(fmtDate(e.date))}</td><td><strong>${esc(e.description||kindLabel(e.kind))}</strong>${e.payee?`<br>${esc(e.payee)}`:''}${personById(e.personId)?`<br>${esc(personById(e.personId).name)}`:''}</td><td>${esc([a?.code,a?.name].filter(Boolean).join(' · '))}</td><td>${esc(kindLabel(e.kind))}</td><td>${esc(methodLabel(e.method))}</td><td>${money(moneyCents(e.amount))}</td></tr>`}).join('')}</tbody></table><h2>Totals by budget account</h2><table><thead><tr><th>Code</th><th>Budget account</th><th>Total</th></tr></thead><tbody>${accountRows.map(([id,n])=>{const a=accountById(id);return `<tr><td>${esc(a.code||'')}</td><td>${esc(a.name||'')}</td><td>${money(n)}</td></tr>`}).join('')}</tbody></table><h2>Totals by type</h2><table><thead><tr><th>Type</th><th>Total</th></tr></thead><tbody>${[['expense','Expenses'],['perdiem','Per diems'],['pettycash','Petty cash']].map(([k,label])=>`<tr><td>${label}</td><td>${money(byKind.get(k)||0)}</td></tr>`).join('')}</tbody></table><p class="sum">Grand total: ${money(sum)}</p><p class="footnote">Receipt files stay on your computer. The project file stores receipt names and paths only.</p>`}
-function openEditor(){if(!accounts().length){toast('This project has no budget accounts. Add accounts in the budget tool first.',true);return}$('editorForm').reset();$('f-date').value=today();$('f-kind').value='expense';$('f-method').value='card';$('f-person').value='';$('f-shootday').value='';$('f-receipt').value='';$('editorTitle').textContent='Add an expense';$('editorSubmit').textContent='Add expense';$('editor').showModal();$('f-date').focus()}
+function renderReport(){const rows=visible(),sum=rows.reduce((s,e)=>s+expenseCents(e),0),byAccount=new Map(),byKind=new Map();for(const e of rows){if(accountById(e.accountId))byAccount.set(e.accountId,(byAccount.get(e.accountId)||0)+expenseCents(e));byKind.set(e.kind||'expense',(byKind.get(e.kind||'expense')||0)+expenseCents(e))}const accountRows=[...byAccount].sort((a,b)=>str(accountById(a[0])?.code).localeCompare(str(accountById(b[0])?.code)));$('report').innerHTML=`<h1>Expense report${doc.project.title?` · ${esc(doc.project.title)}`:''}</h1><p class="meta">${esc([doc.project.company,`Printed ${fmtDate(today())}`,`${rows.length} entries`].filter(Boolean).join(' · '))}</p><table><thead><tr><th>Date</th><th>Description / payee</th><th>Budget account</th><th>Type</th><th>Payment method</th><th>Amount</th></tr></thead><tbody>${rows.map(e=>{const a=accountById(e.accountId);return `<tr><td>${esc(fmtDate(e.date))}</td><td><strong>${esc(e.description||kindLabel(e.kind))}</strong>${e.payee?`<br>${esc(e.payee)}`:''}${personById(e.personId)?`<br>${esc(personById(e.personId).name)}`:''}</td><td>${esc([a?.code,a?.name].filter(Boolean).join(' · '))}</td><td>${esc(kindLabel(e.kind))}</td><td>${esc(methodLabel(e.method))}</td><td>${money(expenseCents(e))}</td></tr>`}).join('')}</tbody></table><h2>Totals by budget account</h2><table><thead><tr><th>Code</th><th>Budget account</th><th>Total</th></tr></thead><tbody>${accountRows.map(([id,n])=>{const a=accountById(id);return `<tr><td>${esc(a.code||'')}</td><td>${esc(a.name||'')}</td><td>${money(n)}</td></tr>`}).join('')}</tbody></table><h2>Totals by type</h2><table><thead><tr><th>Type</th><th>Total</th></tr></thead><tbody>${[['expense','Expenses'],['perdiem','Per diems'],['pettycash','Petty cash']].map(([k,label])=>`<tr><td>${label}</td><td>${money(byKind.get(k)||0)}</td></tr>`).join('')}</tbody></table><p class="sum">Grand total: ${money(sum)}</p><p class="footnote">Receipt files stay on your computer. The project file stores receipt names and paths only.</p>`}
+function openEditor(){if(!accounts().length){toast('This project has no budget accounts. Add accounts in the budget tool first.',true);return}$('editorForm').reset();$('f-date').value=today();$('f-kind').value='expense';$('f-method').value='card';$('f-person').value='';$('f-shootday').value='';$('f-receipt').value='';$('f-cur').placeholder=oftMoney.home();$('f-curlist').innerHTML=oftMoney.currencies().map(c=>`<option value="${esc(c)}">`).join('');$('editorTitle').textContent='Add an expense';$('editorSubmit').textContent='Add expense';$('editor').showModal();$('f-date').focus()}
 function rememberPerDiem(){const last=arr(doc.expenses).filter(e=>e&&e.kind==='perdiem'&&Number.isFinite(Number(e.amount))).sort((a,b)=>str(b.date).localeCompare(str(a.date)))[0];let saved='';try{saved=localStorage.getItem(PERDIEM_KEY)||''}catch{}const value=last?String(last.amount):saved;if(value&&Number(value)>=0)$('f-amount').value=String(Number(value).toFixed(2))}
 function safeFileName(name){return str(name).replace(/[\\/\0-\x1f:*?"<>|]/g,'-').replace(/\s+/g,' ').trim().slice(0,150)||'receipt'}
 function addExpense(ev){ev.preventDefault();const amountValue=$('f-amount').value,amount=Number(amountValue),kind=$('f-kind').value,accountId=$('f-account').value,personId=$('f-person').value;if(!$('f-date').value||!amountValue||!Number.isFinite(amount)||amount<0||!accountById(accountId)){toast('Enter a date, a non-negative amount and choose a budget account.',true);return}if(kind==='perdiem'&&!personById(personId)){toast('Choose the person receiving this per diem.',true);return}const f=$('f-receipt').files[0]||null;let receiptAssetId;
 if(f){const name=safeFileName(f.name),ext=(name.match(/\.[a-z0-9]{1,10}$/i)||[''])[0],stem=ext?name.slice(0,-ext.length):name;const path=`receipts/${$('f-date').value||today()}-${slug(stem)}${ext.toLowerCase()}`;const asset={id:makeId('asset'),type:'receipt',name,relativePath:path,mimeType:str(f.type)};if(!Array.isArray(doc.assets))doc.assets=[];doc.assets.push(asset);receiptAssetId=asset.id}
-const expense={id:makeId('expense'),date:$('f-date').value,amount:moneyCents(amount)/100,description:$('f-description').value.trim(),payee:$('f-payee').value.trim(),accountId,kind,method:$('f-method').value};if(personId&&kind==='perdiem')expense.personId=personId;if($('f-shootday').value)expense.shootDayId=$('f-shootday').value;if(receiptAssetId)expense.receiptAssetId=receiptAssetId;if($('f-notes').value.trim())expense.notes=$('f-notes').value.trim();doc.expenses.push(expense);if(kind==='perdiem'){try{localStorage.setItem(PERDIEM_KEY,String(expense.amount))}catch{}}$('editor').close();changed();toast('Expense added.')}
+const expense={id:makeId('expense'),date:$('f-date').value,amount:moneyCents(amount)/100,description:$('f-description').value.trim(),payee:$('f-payee').value.trim(),accountId,kind,method:$('f-method').value};{const cur=$('f-cur').value.trim().toUpperCase();if(/^[A-Z]{3}$/.test(cur)&&cur!==oftMoney.home())expense.currency=cur}if(personId&&kind==='perdiem')expense.personId=personId;if($('f-shootday').value)expense.shootDayId=$('f-shootday').value;if(receiptAssetId)expense.receiptAssetId=receiptAssetId;if($('f-notes').value.trim())expense.notes=$('f-notes').value.trim();doc.expenses.push(expense);if(kind==='perdiem'){try{localStorage.setItem(PERDIEM_KEY,String(expense.amount))}catch{}}$('editor').close();changed();toast('Expense added.')}
 function removeExpense(id){const index=arr(doc.expenses).findIndex(e=>e&&e.id===id);if(index<0)return;const [removed]=doc.expenses.splice(index,1);const asset=assetById(removed.receiptAssetId);if(asset&&asset.type==='receipt'&&!doc.expenses.some(e=>e&&e.receiptAssetId===asset.id)&&Array.isArray(doc.assets)){const i=doc.assets.findIndex(a=>a&&a.id===asset.id&&a.type==='receipt');if(i>=0)doc.assets.splice(i,1)}changed();toast('Expense removed.')}
 function openProjectDialog(){for(const k of ['title','company','producer'])$(`p-${k}`).value=doc.project[k]||'';$('projectDialog').showModal()}
 function saveProjectDialog(){for(const k of ['title','company','producer'])doc.project[k]=$(`p-${k}`).value.trim();$('projectDialog').close();changed()}
@@ -99,6 +102,120 @@ function loadText(text,name,handle){let data;try{data=JSON.parse(text)}catch{toa
 async function openFile(){if(dirty&&!confirm('You have unsaved changes. Open another file and lose them?'))return;if(window.showOpenFilePicker&&window.self===window.top){try{const[h]=await window.showOpenFilePicker({types:pickerTypes});const f=await h.getFile();loadText(await f.text(),f.name,h)}catch(err){if(err.name!=='AbortError')toast(`Couldn't open the file: ${err.message}`,true)}return}$('fileInput').click()}
 function toast(msg,error=false){const t=$('toast');t.textContent=msg;t.classList.toggle('error',error);t.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.hidden=true,error?7000:4200)}
 function init(){doc=normalize(doc);render();$('openBtn').onclick=openFile;$('saveBtn').onclick=saveFile;$('fileInput').addEventListener('change',async()=>{const f=$('fileInput').files[0];if(f)loadText(await f.text(),f.name,null);$('fileInput').value=''});$('filmTitle').onclick=$('editProjectBtn').onclick=openProjectDialog;$('projectForm').addEventListener('submit',ev=>{ev.preventDefault();saveProjectDialog()});$('projectCancel').onclick=()=>$('projectDialog').close();$('projectCsvBtn').onclick=()=>$('projectCsvDialog').showModal();$('projectCsvCancel').onclick=()=>$('projectCsvDialog').close();$('projectCsvForm').addEventListener('submit',ev=>{ev.preventDefault();exportProjectCsv();$('projectCsvDialog').close()});$('addBtn').onclick=openEditor;$('editorCancel').onclick=()=>$('editor').close();$('editorForm').addEventListener('submit',addExpense);$('f-kind').addEventListener('change',()=>{if($('f-kind').value==='perdiem')rememberPerDiem()});$('accountFilter').addEventListener('change',()=>{filterAccount=$('accountFilter').value;render()});$('kindFilter').addEventListener('change',()=>{filterKind=$('kindFilter').value;render()});$('search').addEventListener('input',()=>{query=$('search').value;render()});$('rows').addEventListener('click',ev=>{const b=ev.target.closest('[data-remove]');if(b&&confirm('Remove this expense?'))removeExpense(b.dataset.remove)});$('csvBtn').onclick=exportCsv;$('printBtn').onclick=()=>{renderReport();window.print()};window.addEventListener('beforeprint',renderReport);checkDraft()}
+/* oft-shared:money begin. Copied from shared/money.js by .github/scripts/sync_shared.py; edit it there. */
+// Several currencies. Any amount can carry its own currency (a `currency` field on
+// its record); the project currency is the default. Exchange rates are typed in by
+// hand, never fetched: project.exchangeRates, each { currency, rate, date? }, where
+// rate is what one unit of that currency is worth in the project currency. A rate
+// with a date applies from that date; one without a date applies to everything else.
+const oftMoney = (() => {
+  const up = s => String(s == null ? '' : s).trim().toUpperCase();
+  const isDay = v => /^\d{4}-\d{2}-\d{2}$/.test(String(v || ''));
+  const list = v => (Array.isArray(v) ? v.filter(x => x && typeof x === 'object') : []);
+  const home = () => up(doc.project && doc.project.currency) || 'USD';
+  const rates = () => list(doc.project && doc.project.exchangeRates).filter(r => /^[A-Z]{3}$/.test(up(r.currency)) && Number(r.rate) > 0);
+  function rateFor(cur, date) {
+    cur = up(cur);
+    if (!cur || cur === home()) return { rate: 1 };
+    const all = rates().filter(r => up(r.currency) === cur);
+    const dated = all.filter(r => isDay(r.date)).sort((a, b) => a.date.localeCompare(b.date));
+    const fixed = all.find(r => !isDay(r.date));
+    const onDate = isDay(date) ? [...dated].reverse().find(r => r.date <= date) : null;
+    const hit = onDate || fixed || dated[dated.length - 1];
+    return hit ? { rate: Number(hit.rate), from: hit } : null;
+  }
+  // Converts an amount to the project currency. With no rate for its currency, the amount is counted as it is.
+  function convert(amount, cur, date) { const r = rateFor(cur, date); return r ? Number(amount) * r.rate : Number(amount); }
+  // A record's amount in the project currency, at the rate for its date.
+  const amountOf = (r, field = 'amount', dateField = 'date') => (r.currency ? convert(Number(r[field]) || 0, r.currency, r[dateField]) : Number(r[field]) || 0);
+  // Currencies other than the project's that money records use.
+  function inUse() {
+    const b = doc.budget || {}, f = doc.financePlan || {};
+    const recs = [...list(b.lines), ...list(f.sources), ...list(doc.contracts), ...list(doc.expenses)];
+    return [...new Set(recs.map(r => up(r.currency)).filter(c => c && c !== home()))].sort();
+  }
+  const show = n => Number(n).toLocaleString(undefined, { maximumFractionDigits: 6 });
+  function note() {
+    const cs = inUse();
+    if (!cs.length) return '';
+    const parts = cs.map(c => {
+      const all = rates().filter(r => up(r.currency) === c), dated = all.filter(r => isDay(r.date)), fixed = all.find(r => !isDay(r.date));
+      if (!all.length) return `there's no exchange rate for ${c} yet, so ${c} amounts are counted as ${home()}`;
+      if (!dated.length) return `1 ${c} = ${show(fixed.rate)} ${home()}`;
+      const last = dated.sort((a, b) => a.date.localeCompare(b.date))[dated.length - 1];
+      return `${c} at the rate for each date (latest: 1 ${c} = ${show(last.rate)} ${home()} from ${last.date})${fixed ? `, otherwise 1 ${c} = ${show(fixed.rate)} ${home()}` : ''}`;
+    });
+    return `Totals are in ${home()}: ${parts.join('; ')}.`;
+  }
+  function fmt(n, cur) {
+    try { return new Intl.NumberFormat(undefined, { style: 'currency', currency: up(cur) || home() }).format(Number(n)); }
+    catch { return `${up(cur) || home()} ${Number(n).toLocaleString()}`; }
+  }
+  // The rates dialog, opened from "Exchange rates" under the file buttons.
+  function rowHtml(r) {
+    const e = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+    return `<div class="oft-rate"><input type="text" class="oft-rate-cur" maxlength="3" value="${e(r.currency)}" placeholder="EUR" aria-label="Currency" autocomplete="off">
+      <input type="number" class="oft-rate-val" step="any" min="0" value="${e(r.rate)}" placeholder="Rate" aria-label="What 1 of it is worth in ${e(home())}">
+      <input type="date" class="oft-rate-date" value="${e(r.date)}" aria-label="From this date (leave blank for one rate)">
+      <button type="button" class="btn small" data-oft-del aria-label="Remove this rate">Remove</button></div>`;
+  }
+  function dialog() {
+    let dlg = document.getElementById('oftRatesDialog');
+    if (!dlg) {
+      dlg = document.createElement('dialog');
+      dlg.id = 'oftRatesDialog'; dlg.className = 'oft-dialog'; dlg.setAttribute('aria-labelledby', 'oftRatesTitle');
+      dlg.innerHTML = `<form method="dialog" id="oftRatesForm"><h2 id="oftRatesTitle">Exchange rates</h2>
+        <p id="oftRatesIntro"></p>
+        <div id="oftRateRows" role="group" aria-label="Rates"></div>
+        <p><button type="button" class="btn small" id="oftRateAdd">Add a rate</button></p>
+        <p id="oftRatesErr" class="oft-unmatched" aria-live="polite"></p>
+        <div class="oft-actions"><button type="button" class="btn" id="oftRatesCancel">Cancel</button><button type="submit" class="btn primary">Save rates</button></div></form>`;
+      document.body.append(dlg);
+      dlg.querySelector('#oftRateAdd').onclick = () => { dlg.querySelector('#oftRateRows').insertAdjacentHTML('beforeend', rowHtml({})); dlg.querySelector('#oftRateRows .oft-rate:last-child input').focus(); };
+      dlg.querySelector('#oftRateRows').addEventListener('click', ev => { const b = ev.target.closest('[data-oft-del]'); if (b) b.closest('.oft-rate').remove(); });
+      dlg.querySelector('#oftRatesCancel').onclick = () => dlg.close();
+      dlg.querySelector('#oftRatesForm').addEventListener('submit', ev => {
+        const out = [];
+        for (const row of dlg.querySelectorAll('.oft-rate')) {
+          const c = up(row.querySelector('.oft-rate-cur').value), v = row.querySelector('.oft-rate-val').value, d = row.querySelector('.oft-rate-date').value;
+          if (!c && !v) continue;
+          if (!/^[A-Z]{3}$/.test(c) || !(Number(v) > 0)) { ev.preventDefault(); dlg.querySelector('#oftRatesErr').textContent = 'Each rate needs a three-letter currency code, such as EUR, and a number above zero.'; return; }
+          out.push(Object.assign({ currency: c, rate: Number(v) }, d ? { date: d } : {}));
+        }
+        if (out.length) doc.project.exchangeRates = out; else delete doc.project.exchangeRates;
+        if (typeof changed === 'function') changed(); else { dirty = true; render(); }
+      });
+    }
+    dlg.querySelector('#oftRatesIntro').textContent = `Type in what one unit of each currency is worth in ${home()}, the project currency. Nothing is looked up online. Add a date to use a rate from that date on, or leave it blank for one rate throughout.`;
+    dlg.querySelector('#oftRatesErr').textContent = '';
+    const rs = list(doc.project && doc.project.exchangeRates);
+    dlg.querySelector('#oftRateRows').innerHTML = (rs.length ? rs : inUse().map(c => ({ currency: c }))).map(rowHtml).join('') || rowHtml({});
+    dlg.showModal();
+  }
+  // A field for an amount's currency, for the tools' editors.
+  function currencies() { return [...new Set([home(), ...rates().map(r => up(r.currency)), ...inUse()])]; }
+  return { home, rateFor, convert, amountOf, inUse, note, fmt, dialog, currencies, up };
+})();
+// Shows which rates the totals use, under the file buttons and on the printed report.
+const oftMoneyRender = render;
+render = function () {
+  const out = oftMoneyRender.apply(this, arguments);
+  let p = document.getElementById('oftRatesNote');
+  const text = oftMoney.note();
+  if (!p && text) { p = document.createElement('p'); p.id = 'oftRatesNote'; p.className = 'oft-rates-note'; const main = document.querySelector('main#main') || document.querySelector('main'); if (main) main.prepend(p); }
+  if (p) { p.textContent = text; p.hidden = !text; }
+  return out;
+};
+if (typeof renderReport === 'function') {
+  const oftMoneyReport = renderReport;
+  renderReport = function () {
+    const out = oftMoneyReport.apply(this, arguments);
+    const r = document.getElementById('report'), text = oftMoney.note();
+    if (r && text) { const p = document.createElement('p'); p.className = 'oft-rates-note'; p.textContent = text; r.append(p); }
+    return out;
+  };
+}
+/* oft-shared:money end */
 /* oft-shared:tool begin. Copied from shared/tool.js by .github/scripts/sync_shared.py; edit it there. */
 // Shared by every tool: your name, remembering the open file, who has it open,
 // who changed what, merging two copies and spotting conflicted copies.
@@ -550,6 +667,9 @@ function oftBuild() {
 .oft-map th, .oft-map td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--rule); vertical-align: middle; }
 .oft-map select { max-width: 100%; padding: 4px 6px; font: inherit; color: var(--ink); background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; }
 .oft-unmatched { color: var(--bad); font-weight: 600; }
+.oft-rate { display: grid; grid-template-columns: 70px minmax(0, 1fr) minmax(0, 1fr) auto; gap: 6px; align-items: center; margin: 0 0 6px; }
+.oft-rate input { min-width: 0; padding: 6px 8px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); color: var(--ink); font: inherit; }
+.oft-rates-note { margin: 0 0 12px; font-size: 13px; color: var(--ink-2); }
 .oft-conflict { margin: 8px 0; padding: 8px 12px; border: 1px solid var(--rule); border-radius: 8px; }
 .oft-conflict legend { font-weight: 600; padding: 0 4px; }
 .oft-conflict label { display: flex; gap: 8px; align-items: flex-start; padding: 4px 0; overflow-wrap: anywhere; }
@@ -575,6 +695,12 @@ function oftBuild() {
     imp.type = 'button'; imp.className = 'link-btn'; imp.id = 'oftImportBtn'; imp.textContent = 'Import from a spreadsheet';
     imp.onclick = () => oftImport.open(OFT_IMPORT);
     links.prepend(imp);
+  }
+  if (typeof oftMoney !== 'undefined') {
+    const fx = document.createElement('button');
+    fx.type = 'button'; fx.className = 'link-btn'; fx.id = 'oftRatesBtn'; fx.textContent = 'Exchange rates';
+    fx.onclick = () => oftMoney.dialog();
+    links.prepend(fx);
   }
   if (typeof oftProject !== 'undefined') {
     const cal = document.createElement('button');

@@ -221,6 +221,9 @@ pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; b
 input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:focus, input[type="time"]:focus-within { outline: 2px solid var(--focus, #2f6fdb); outline-offset: 2px; }
 .home-link { color: inherit; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
 .home-link:hover { text-decoration-thickness: 2px; }
+.rate-row { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) auto; gap: 6px; align-items: center; margin: 0 0 6px; }
+.rate-row input, .rate-row select { min-width: 0; padding: 6px 8px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); color: var(--ink); font: inherit; }
+@media (max-width: 600px) { .rate-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .rate-row .r-label { grid-column: 1 / -1; } }
 </style>
 </head>
 <body>
@@ -331,6 +334,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
           <div class="field"><label for="f-guarantee">Guaranteed</label><input id="f-guarantee" type="number" min="0" step="any" inputmode="decimal" placeholder="Days or weeks"></div>
           <div class="field"><label for="f-total">Total for the guarantee</label><input id="f-total" type="text" readonly tabindex="-1"></div>
         </div>
+        <div class="other-rates" id="rateRows" role="group" aria-label="Other rates"></div>
+        <p class="hint">Other rates in the same memo, such as prep, travel or overtime days. Each goes on its own budget line.</p>
+        <p><button type="button" class="btn small" id="addRateBtn">Add another rate</button></p>
         <div class="four">
           <div class="field"><label for="f-kit">Kit fee</label><input id="f-kit" type="number" min="0" step="any" inputmode="decimal"></div>
           <div class="field"><label for="f-kitper">Per</label><select id="f-kitper"></select></div>
@@ -480,6 +486,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   }
 
   // ---------- Budget arithmetic (the same in the budget, budget converter and finance plan) ----------
+  /* oft-shared:budget begin. Copied from shared/budget.js by .github/scripts/sync_shared.py; edit it there. */
+  // How the budget adds up, shared by every tool that reads it.
   const SECTIONS = [
     { id: 'atl', label: 'Above the line' },
     { id: 'production', label: 'Production' },
@@ -490,14 +498,27 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const num = v => (v === '' || v == null || !isFinite(Number(v)) ? 0 : Number(v));
   const cents = n => Math.round(n * 100) / 100;
   const objs = v => arr(v).filter(x => x && typeof x === 'object');
-  // A line costs quantity × multiplier × rate. The multiplier defaults to 1 (use it for people, units or episodes).
+  // How many people a line pays: its multiplier, which defaults to 1.
+  const linePeople = l => (l.multiplier === '' || l.multiplier == null ? 1 : num(l.multiplier));
+  // A line costs quantity × multiplier × rate, in the line's own currency.
+  const lineRaw = l => cents(num(l.quantity) * linePeople(l) * num(l.rate));
+  // The same, in the project currency (see the exchange rates).
   function lineSubtotal(l) {
-    const x = l.multiplier === '' || l.multiplier == null ? 1 : num(l.multiplier);
-    return cents(num(l.quantity) * x * num(l.rate));
+    const raw = lineRaw(l);
+    return l.currency && typeof oftMoney !== 'undefined' ? cents(oftMoney.convert(raw, l.currency)) : raw;
+  }
+  // A line can have several fringes. Older files have one, in fringeId.
+  const lineFringeIds = l => (Array.isArray(l.fringeIds) && l.fringeIds.length ? l.fringeIds : l.fringeId ? [l.fringeId] : []);
+  // A fringe is a percentage of the line. With a cap, such as a payroll tax that stops at a wage limit,
+  // it applies only to wages up to the cap for each person on the line.
+  function fringeOn(f, sub, l) {
+    const cap = num(f.cap);
+    const base = cap > 0 ? Math.min(sub, cap * Math.max(linePeople(l), 1)) : sub;
+    return cents(base * num(f.percent) / 100);
   }
   const accountOrder = (a, b) => SECTIONS.findIndex(s => s.id === a.section) - SECTIONS.findIndex(s => s.id === b.section) ||
     str(a.code).localeCompare(str(b.code), undefined, { numeric: true }) || str(a.name).localeCompare(str(b.name));
-  // Totals for a budget record: each line with its fringe, each account, each section, then fringes and percentages on the subtotal.
+  // Totals for a budget record: each line with its fringes, each account, each section, then fringes and percentages on the subtotal.
   function budgetTotals(b) {
     b = b && typeof b === 'object' ? b : {};
     const fringes = objs(b.fringes);
@@ -505,9 +526,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const accounts = objs(b.accounts).slice().sort(accountOrder);
     const lines = objs(b.lines).map(l => {
       const sub = lineSubtotal(l);
-      const f = l.fringeId ? fringes.find(x => x.id === l.fringeId) : null;
-      const fringe = f ? cents(sub * num(f.percent) / 100) : 0;
-      return { line: l, sub, fringe, total: cents(sub + fringe) };
+      const parts = lineFringeIds(l).map(id => fringes.find(x => x.id === id)).filter(Boolean).map(f => ({ fringe: f, amount: fringeOn(f, sub, l) }));
+      const fringe = cents(parts.reduce((t, p) => t + p.amount, 0));
+      return { line: l, sub, fringe, fringes: parts, total: cents(sub + fringe) };
     });
     const byAccount = accounts.map(a => {
       const ls = lines.filter(x => x.line.accountId === a.id);
@@ -523,9 +544,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const subtotal = cents(direct + fringeTotal);
     const marks = markups.map(m => ({ markup: m, amount: cents(subtotal * num(m.percent) / 100) }));
     const grand = cents(subtotal + marks.reduce((t, x) => t + x.amount, 0));
-    const fringeTotals = fringes.map(f => ({ fringe: f, amount: cents(lines.filter(x => x.line.fringeId === f.id).reduce((t, x) => t + x.fringe, 0)) }));
+    const fringeTotals = fringes.map(f => ({ fringe: f, amount: cents(lines.reduce((t, x) => t + x.fringes.filter(p => p.fringe === f).reduce((s, p) => s + p.amount, 0), 0)) }));
     return { lines, accounts: byAccount, loose, sections, direct, fringeTotal, fringeTotals, subtotal, markups: marks, grand };
   }
+  /* oft-shared:budget end */
   function money(n, withCents) {
     if (n == null || n === '' || !isFinite(Number(n))) return '';
     const opts = { style: 'currency', currency: (doc.project && doc.project.currency) || 'USD', minimumFractionDigits: withCents ? 2 : 0, maximumFractionDigits: withCents ? 2 : 0 };
@@ -572,7 +594,31 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const p = perOf(c.rateUnit);
     return p.id === 'flat' ? `${money(c.rate)} flat` : `${money(c.rate)} a ${p.id}`;
   }
-  const guaranteeTotal = c => (c.rate == null ? null : perOf(c.rateUnit).id === 'flat' ? num(c.rate) : num(c.rate) * (num(c.guarantee) || 0));
+  const oneRate = r => (r.rate == null ? null : perOf(r.rateUnit).id === 'flat' ? num(r.rate) : num(r.rate) * (num(r.guarantee) || 0));
+  // Other rates in the memo, such as prep, travel or overtime days, each with its own budget line.
+  const otherRates = c => arr(c.rates).filter(r => r && typeof r === 'object' && r.rate != null);
+  const guaranteeTotal = c => { const all = [c, ...otherRates(c)].map(oneRate).filter(v => v != null); return all.length ? all.reduce((t, v) => t + v, 0) : null; };
+  const rateText = r => `${r.label || 'Other rate'}: ${money(r.rate)} ${perOf(r.rateUnit).id === 'flat' ? 'flat' : `a ${perOf(r.rateUnit).id}`}${perOf(r.rateUnit).id !== 'flat' && r.guarantee ? ` × ${r.guarantee}` : ''}`;
+  function rateRow(r) {
+    return `<div class="rate-row" data-id="${esc(r.id || '')}" data-line="${esc(r.budgetLineId || '')}">
+      <input type="text" class="r-label" value="${esc(r.label)}" placeholder="Prep days" aria-label="What the rate is for" autocomplete="off">
+      <input type="number" class="r-rate" min="0" step="any" value="${esc(r.rate ?? '')}" placeholder="Rate" aria-label="Rate">
+      <select class="r-per" aria-label="Per">${options(PER, r.rateUnit || 'day')}</select>
+      <input type="number" class="r-qty" min="0" step="any" value="${esc(r.guarantee ?? '')}" placeholder="How many" aria-label="How many">
+      <button type="button" class="btn small" data-delrate aria-label="Remove this rate">Remove</button></div>`;
+  }
+  function readRates() {
+    return [...$('rateRows').querySelectorAll('.rate-row')].map(row => {
+      const v = k => row.querySelector(k).value.trim();
+      if (v('.r-rate') === '' && !v('.r-label')) return null;
+      const r = { id: row.dataset.id || newId('rate'), label: v('.r-label'), rateUnit: v('.r-per') };
+      if (v('.r-rate') !== '') r.rate = Number(v('.r-rate'));
+      if (v('.r-qty') !== '') r.guarantee = Number(v('.r-qty'));
+      if (row.dataset.line) r.budgetLineId = row.dataset.line;
+      if (!r.label) delete r.label;
+      return r;
+    }).filter(Boolean);
+  }
   const kitTotal = c => (c.kitFee == null ? 0 : perOf(c.kitFeeUnit).id === 'flat' ? num(c.kitFee) : num(c.kitFee) * (num(c.guarantee) || 0));
   const isCrew = p => p.onCamera !== true;
   // Crew needed for the shoot: on a call sheet or a shoot day, and not on camera.
@@ -593,7 +639,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     if (!main) return null;
     const p = perOf(c.rateUnit);
     const qty = p.id === 'flat' ? 1 : num(c.guarantee) || 1;
-    return num(main.rate) === num(c.rate) && num(main.quantity) === qty && str(main.unit) === p.unit;
+    const lineOk = (l, r) => { const q = perOf(r.rateUnit); return !!l && num(l.rate) === num(r.rate) && num(l.quantity) === (q.id === 'flat' ? 1 : num(r.guarantee) || 1) && str(l.unit) === q.unit; };
+    const lines = objs(doc.budget && doc.budget.lines);
+    return num(main.rate) === num(c.rate) && num(main.quantity) === qty && str(main.unit) === p.unit && otherRates(c).every(r => lineOk(lines.find(l => l.id === r.budgetLineId), r));
   }
 
   // ---------- Render ----------
@@ -662,7 +710,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     if (days.length) $('calText').textContent = `The shooting calendar has ${p.name} on ${days.length} day${days.length === 1 ? '' : 's'}, ${fmtDate(days[0])}${days.length > 1 ? ` to ${fmtDate(days[days.length - 1])}` : ''}.`;
   }
   function showTotal() {
-    const c = { rate: $('f-rate').value === '' ? null : Number($('f-rate').value), rateUnit: $('f-per').value, guarantee: $('f-guarantee').value };
+    const c = { rate: $('f-rate').value === '' ? null : Number($('f-rate').value), rateUnit: $('f-per').value, guarantee: $('f-guarantee').value, rates: readRates() };
     const g = guaranteeTotal(c);
     $('f-total').value = g ? money(g) : '';
   }
@@ -693,6 +741,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       'f-rate': editing.rate, 'f-guarantee': editing.guarantee, 'f-kit': editing.kitFee, 'f-overtime': editing.overtime, 'f-payment': editing.paymentTerms,
       'f-credit': editing.requiredCredit, 'f-other': editing.otherTerms, 'f-written': editing.writtenFor, 'f-notes': editing.notes, 'f-sent': editing.sentDate, 'f-signed': editing.signedDate, 'f-pname': '', 'f-pemail': '' };
     for (const [k, v] of Object.entries(vals)) $(k).value = v == null ? '' : String(v);
+    $('rateRows').innerHTML = arr(editing.rates).filter(r => r && typeof r === 'object').map(rateRow).join('');
     showPerson(); showTotal(); showBudget(); renderScans();
     $('editorTitle').textContent = isNew ? 'Add a deal memo' : `Deal memo: ${who(editing)}`;
     $('deleteBtn').hidden = isNew;
@@ -723,6 +772,14 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       else { const l = Object.assign({ id: newId('line') }, w); b.lines.push(l); out.push(l.id); }
     });
     if (out.length) c.budgetLineIds = out; else delete c.budgetLineIds;
+    // Other rates each keep their own line, in the account picked when the line is first made.
+    for (const r of otherRates(c)) {
+      const q = perOf(r.rateUnit), nums = { quantity: q.id === 'flat' ? 1 : num(r.guarantee) || 1, unit: q.unit, rate: num(r.rate) };
+      const existing = r.budgetLineId && b.lines.find(l => l.id === r.budgetLineId);
+      if (existing) { Object.assign(existing, nums); if (fringeId) existing.fringeId = fringeId; continue; }
+      const l = Object.assign({ id: newId('line'), accountId, description: `${name}, ${r.label || 'other rate'}` }, nums, fringeId ? { fringeId } : {});
+      b.lines.push(l); r.budgetLineId = l.id;
+    }
   }
   async function saveEditor() {
     let pid = $('f-person').value;
@@ -747,6 +804,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     if (c.status === 'signed' && !c.signedDate) c.signedDate = today();
     for (const [k, id] of [['rate', 'f-rate'], ['guarantee', 'f-guarantee'], ['kitFee', 'f-kit']]) { const v = $(id).value; if (v !== '') c[k] = Number(v); else delete c[k]; }
     c.rateUnit = $('f-per').value; c.kitFeeUnit = $('f-kitper').value;
+    const rates = readRates();
+    if (rates.length) c.rates = rates; else delete c.rates;
     c.title = `Deal memo: ${who(c)}${c.role ? `, ${c.role}` : ''}`;
     // A crew member who agrees to a role has that role in the project.
     const p = person(pid);
@@ -838,11 +897,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   }
 
   // ---------- CSV and print ----------
-  const CSV_HEAD = ['Name', 'Role', 'Status', 'Start', 'End', 'Rate', 'Per', 'Guaranteed', 'Kit fee', 'Kit fee per', 'Overtime and hours', 'Payment terms', 'Credit', 'Other terms', 'Written for', 'Sent on', 'Signed on', 'Signed copy', 'In the budget'];
+  const CSV_HEAD = ['Name', 'Role', 'Status', 'Start', 'End', 'Rate', 'Per', 'Guaranteed', 'Kit fee', 'Kit fee per', 'Overtime and hours', 'Payment terms', 'Credit', 'Other terms', 'Written for', 'Sent on', 'Signed on', 'Signed copy', 'In the budget', 'Other rates'];
   function exportCsv() {
     const rows = memos().map(c => [who(c), c.role, statusLabel(c.status), c.startDate, c.endDate, c.rate, perOf(c.rateUnit).label, c.guarantee, c.kitFee, c.kitFee != null ? perOf(c.kitFeeUnit).label : '',
       c.overtime, c.paymentTerms, c.requiredCredit, c.otherTerms, c.writtenFor, c.sentDate, c.signedDate, arr(c.assetIds).map(asset).filter(Boolean).map(a => a.relativePath || a.name).join('; '),
-      budgetMatch(c) == null ? '' : budgetMatch(c) ? 'Yes' : 'Differs']);
+      budgetMatch(c) == null ? '' : budgetMatch(c) ? 'Yes' : 'Differs', otherRates(c).map(rateText).join('; ')]);
     const csv = '﻿' + [CSV_HEAD, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
     const name = `${slug()}-deal-memos.csv`;
     download(csv, name, 'text/csv;charset=utf-8');
@@ -854,10 +913,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     if (!c) { $('report').innerHTML = ''; return; }
     const p = person(arr(c.personIds)[0]) || {};
     const pr = doc.project;
-    const g = guaranteeTotal(c);
+    const g = oneRate(c), all = guaranteeTotal(c);
     const rows = [['Production', [pr.title, pr.company].filter(Boolean).join(', ')], ['Crew member', [p.name, p.email, p.phone].filter(Boolean).join(' · ')], ['Role', c.role],
       ['Dates', [c.startDate && fmtDate(c.startDate), c.endDate && fmtDate(c.endDate)].filter(Boolean).join(' to ')],
       ['Rate', c.rate != null ? payLine(c) : ''], ['Guaranteed', c.guarantee ? `${c.guarantee} ${perOf(c.rateUnit).unit.toLowerCase()}${g ? `, ${money(g)}` : ''}` : ''],
+      ...otherRates(c).map(r => [r.label || 'Other rate', rateText(r).replace(/^[^:]*: /, '')]), ...(otherRates(c).length && all ? [['All rates together', money(all)]] : []),
       ['Kit fee', c.kitFee != null ? `${money(c.kitFee)}${perOf(c.kitFeeUnit).id === 'flat' ? ' flat' : ` a ${perOf(c.kitFeeUnit).id}`}` : ''],
       ['Overtime and hours', c.overtime], ['Payment terms', c.paymentTerms], ['Credit', c.requiredCredit], ['Other terms', c.otherTerms]].filter(r => str(r[1]).trim());
     $('report').innerHTML = `<p class="r-legal"><b>Not legal advice.</b> This deal memo is a general starting point${c.writtenFor ? `, written for ${esc(c.writtenFor)}` : ''}. Laws differ from place to place. Have a lawyer licensed where you work review it before anyone signs.</p>
@@ -1105,6 +1165,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('f-person').addEventListener('change', () => { $('f-person').setCustomValidity(''); showPerson(); });
     $('calBtn').onclick = useCalendar;
     for (const id of ['f-rate', 'f-per', 'f-guarantee']) $(id).addEventListener('input', showTotal);
+    $('rateRows').addEventListener('input', showTotal);
+    $('rateRows').addEventListener('click', ev => { const b = ev.target.closest('[data-delrate]'); if (b) { b.closest('.rate-row').remove(); showTotal(); } });
+    $('addRateBtn').onclick = () => { $('rateRows').insertAdjacentHTML('beforeend', rateRow({})); $('rateRows').lastElementChild.querySelector('input').focus(); };
     $('f-per').addEventListener('change', showTotal);
     $('attachBtn').onclick = () => $('scanInput').click();
     $('scanInput').addEventListener('change', () => { attachFiles([...$('scanInput').files]); $('scanInput').value = ''; });
@@ -1139,6 +1202,120 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   document.documentElement.classList.remove('no-js');
   window.addEventListener('error', ev => toast(`Something went wrong: ${ev.message}. Save your work, then reload the page.`, true));
   window.addEventListener('unhandledrejection', ev => toast(`Something went wrong: ${ev.reason && ev.reason.message ? ev.reason.message : ev.reason}. Save your work, then reload the page.`, true));
+  /* oft-shared:money begin. Copied from shared/money.js by .github/scripts/sync_shared.py; edit it there. */
+  // Several currencies. Any amount can carry its own currency (a `currency` field on
+  // its record); the project currency is the default. Exchange rates are typed in by
+  // hand, never fetched: project.exchangeRates, each { currency, rate, date? }, where
+  // rate is what one unit of that currency is worth in the project currency. A rate
+  // with a date applies from that date; one without a date applies to everything else.
+  const oftMoney = (() => {
+    const up = s => String(s == null ? '' : s).trim().toUpperCase();
+    const isDay = v => /^\d{4}-\d{2}-\d{2}$/.test(String(v || ''));
+    const list = v => (Array.isArray(v) ? v.filter(x => x && typeof x === 'object') : []);
+    const home = () => up(doc.project && doc.project.currency) || 'USD';
+    const rates = () => list(doc.project && doc.project.exchangeRates).filter(r => /^[A-Z]{3}$/.test(up(r.currency)) && Number(r.rate) > 0);
+    function rateFor(cur, date) {
+      cur = up(cur);
+      if (!cur || cur === home()) return { rate: 1 };
+      const all = rates().filter(r => up(r.currency) === cur);
+      const dated = all.filter(r => isDay(r.date)).sort((a, b) => a.date.localeCompare(b.date));
+      const fixed = all.find(r => !isDay(r.date));
+      const onDate = isDay(date) ? [...dated].reverse().find(r => r.date <= date) : null;
+      const hit = onDate || fixed || dated[dated.length - 1];
+      return hit ? { rate: Number(hit.rate), from: hit } : null;
+    }
+    // Converts an amount to the project currency. With no rate for its currency, the amount is counted as it is.
+    function convert(amount, cur, date) { const r = rateFor(cur, date); return r ? Number(amount) * r.rate : Number(amount); }
+    // A record's amount in the project currency, at the rate for its date.
+    const amountOf = (r, field = 'amount', dateField = 'date') => (r.currency ? convert(Number(r[field]) || 0, r.currency, r[dateField]) : Number(r[field]) || 0);
+    // Currencies other than the project's that money records use.
+    function inUse() {
+      const b = doc.budget || {}, f = doc.financePlan || {};
+      const recs = [...list(b.lines), ...list(f.sources), ...list(doc.contracts), ...list(doc.expenses)];
+      return [...new Set(recs.map(r => up(r.currency)).filter(c => c && c !== home()))].sort();
+    }
+    const show = n => Number(n).toLocaleString(undefined, { maximumFractionDigits: 6 });
+    function note() {
+      const cs = inUse();
+      if (!cs.length) return '';
+      const parts = cs.map(c => {
+        const all = rates().filter(r => up(r.currency) === c), dated = all.filter(r => isDay(r.date)), fixed = all.find(r => !isDay(r.date));
+        if (!all.length) return `there's no exchange rate for ${c} yet, so ${c} amounts are counted as ${home()}`;
+        if (!dated.length) return `1 ${c} = ${show(fixed.rate)} ${home()}`;
+        const last = dated.sort((a, b) => a.date.localeCompare(b.date))[dated.length - 1];
+        return `${c} at the rate for each date (latest: 1 ${c} = ${show(last.rate)} ${home()} from ${last.date})${fixed ? `, otherwise 1 ${c} = ${show(fixed.rate)} ${home()}` : ''}`;
+      });
+      return `Totals are in ${home()}: ${parts.join('; ')}.`;
+    }
+    function fmt(n, cur) {
+      try { return new Intl.NumberFormat(undefined, { style: 'currency', currency: up(cur) || home() }).format(Number(n)); }
+      catch { return `${up(cur) || home()} ${Number(n).toLocaleString()}`; }
+    }
+    // The rates dialog, opened from "Exchange rates" under the file buttons.
+    function rowHtml(r) {
+      const e = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+      return `<div class="oft-rate"><input type="text" class="oft-rate-cur" maxlength="3" value="${e(r.currency)}" placeholder="EUR" aria-label="Currency" autocomplete="off">
+        <input type="number" class="oft-rate-val" step="any" min="0" value="${e(r.rate)}" placeholder="Rate" aria-label="What 1 of it is worth in ${e(home())}">
+        <input type="date" class="oft-rate-date" value="${e(r.date)}" aria-label="From this date (leave blank for one rate)">
+        <button type="button" class="btn small" data-oft-del aria-label="Remove this rate">Remove</button></div>`;
+    }
+    function dialog() {
+      let dlg = document.getElementById('oftRatesDialog');
+      if (!dlg) {
+        dlg = document.createElement('dialog');
+        dlg.id = 'oftRatesDialog'; dlg.className = 'oft-dialog'; dlg.setAttribute('aria-labelledby', 'oftRatesTitle');
+        dlg.innerHTML = `<form method="dialog" id="oftRatesForm"><h2 id="oftRatesTitle">Exchange rates</h2>
+          <p id="oftRatesIntro"></p>
+          <div id="oftRateRows" role="group" aria-label="Rates"></div>
+          <p><button type="button" class="btn small" id="oftRateAdd">Add a rate</button></p>
+          <p id="oftRatesErr" class="oft-unmatched" aria-live="polite"></p>
+          <div class="oft-actions"><button type="button" class="btn" id="oftRatesCancel">Cancel</button><button type="submit" class="btn primary">Save rates</button></div></form>`;
+        document.body.append(dlg);
+        dlg.querySelector('#oftRateAdd').onclick = () => { dlg.querySelector('#oftRateRows').insertAdjacentHTML('beforeend', rowHtml({})); dlg.querySelector('#oftRateRows .oft-rate:last-child input').focus(); };
+        dlg.querySelector('#oftRateRows').addEventListener('click', ev => { const b = ev.target.closest('[data-oft-del]'); if (b) b.closest('.oft-rate').remove(); });
+        dlg.querySelector('#oftRatesCancel').onclick = () => dlg.close();
+        dlg.querySelector('#oftRatesForm').addEventListener('submit', ev => {
+          const out = [];
+          for (const row of dlg.querySelectorAll('.oft-rate')) {
+            const c = up(row.querySelector('.oft-rate-cur').value), v = row.querySelector('.oft-rate-val').value, d = row.querySelector('.oft-rate-date').value;
+            if (!c && !v) continue;
+            if (!/^[A-Z]{3}$/.test(c) || !(Number(v) > 0)) { ev.preventDefault(); dlg.querySelector('#oftRatesErr').textContent = 'Each rate needs a three-letter currency code, such as EUR, and a number above zero.'; return; }
+            out.push(Object.assign({ currency: c, rate: Number(v) }, d ? { date: d } : {}));
+          }
+          if (out.length) doc.project.exchangeRates = out; else delete doc.project.exchangeRates;
+          if (typeof changed === 'function') changed(); else { dirty = true; render(); }
+        });
+      }
+      dlg.querySelector('#oftRatesIntro').textContent = `Type in what one unit of each currency is worth in ${home()}, the project currency. Nothing is looked up online. Add a date to use a rate from that date on, or leave it blank for one rate throughout.`;
+      dlg.querySelector('#oftRatesErr').textContent = '';
+      const rs = list(doc.project && doc.project.exchangeRates);
+      dlg.querySelector('#oftRateRows').innerHTML = (rs.length ? rs : inUse().map(c => ({ currency: c }))).map(rowHtml).join('') || rowHtml({});
+      dlg.showModal();
+    }
+    // A field for an amount's currency, for the tools' editors.
+    function currencies() { return [...new Set([home(), ...rates().map(r => up(r.currency)), ...inUse()])]; }
+    return { home, rateFor, convert, amountOf, inUse, note, fmt, dialog, currencies, up };
+  })();
+  // Shows which rates the totals use, under the file buttons and on the printed report.
+  const oftMoneyRender = render;
+  render = function () {
+    const out = oftMoneyRender.apply(this, arguments);
+    let p = document.getElementById('oftRatesNote');
+    const text = oftMoney.note();
+    if (!p && text) { p = document.createElement('p'); p.id = 'oftRatesNote'; p.className = 'oft-rates-note'; const main = document.querySelector('main#main') || document.querySelector('main'); if (main) main.prepend(p); }
+    if (p) { p.textContent = text; p.hidden = !text; }
+    return out;
+  };
+  if (typeof renderReport === 'function') {
+    const oftMoneyReport = renderReport;
+    renderReport = function () {
+      const out = oftMoneyReport.apply(this, arguments);
+      const r = document.getElementById('report'), text = oftMoney.note();
+      if (r && text) { const p = document.createElement('p'); p.className = 'oft-rates-note'; p.textContent = text; r.append(p); }
+      return out;
+    };
+  }
+  /* oft-shared:money end */
   // Columns for importing from a spreadsheet, named as in this tool's template.
   const OFT_IMPORT = { noun: 'deal memo', nouns: 'deal memos', key: 'personIds', list: () => doc.contracts, make: () => ({ type: TYPE, status: 'draft' }), prefix: 'contract-deal',
     fields: [['Name', 'personIds', 'people'], ['Role', 'role'], ['Status', 'status', 'enum', { values: STATUSES }], ['Start', 'startDate', 'date'], ['End', 'endDate', 'date'], ['Rate', 'rate', 'num'], ['Per', 'rateUnit', 'enum', { values: PER }], ['Guaranteed', 'guarantee', 'num'],
@@ -1772,6 +1949,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   .oft-map th, .oft-map td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--rule); vertical-align: middle; }
   .oft-map select { max-width: 100%; padding: 4px 6px; font: inherit; color: var(--ink); background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; }
   .oft-unmatched { color: var(--bad); font-weight: 600; }
+  .oft-rate { display: grid; grid-template-columns: 70px minmax(0, 1fr) minmax(0, 1fr) auto; gap: 6px; align-items: center; margin: 0 0 6px; }
+  .oft-rate input { min-width: 0; padding: 6px 8px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); color: var(--ink); font: inherit; }
+  .oft-rates-note { margin: 0 0 12px; font-size: 13px; color: var(--ink-2); }
   .oft-conflict { margin: 8px 0; padding: 8px 12px; border: 1px solid var(--rule); border-radius: 8px; }
   .oft-conflict legend { font-weight: 600; padding: 0 4px; }
   .oft-conflict label { display: flex; gap: 8px; align-items: flex-start; padding: 4px 0; overflow-wrap: anywhere; }
@@ -1797,6 +1977,12 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       imp.type = 'button'; imp.className = 'link-btn'; imp.id = 'oftImportBtn'; imp.textContent = 'Import from a spreadsheet';
       imp.onclick = () => oftImport.open(OFT_IMPORT);
       links.prepend(imp);
+    }
+    if (typeof oftMoney !== 'undefined') {
+      const fx = document.createElement('button');
+      fx.type = 'button'; fx.className = 'link-btn'; fx.id = 'oftRatesBtn'; fx.textContent = 'Exchange rates';
+      fx.onclick = () => oftMoney.dialog();
+      links.prepend(fx);
     }
     if (typeof oftProject !== 'undefined') {
       const cal = document.createElement('button');

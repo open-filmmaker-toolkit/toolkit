@@ -40,6 +40,8 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 
 This tool contains financial records. Keep the project file and any receipt files somewhere private; don't attach them to an issue.
 
+- **Other currencies.** An expense can have its own currency. Totals convert it at the exchange rate for its date, set under **Exchange rates**.
+
 ## Saving and file conflicts
 
 Chrome and Edge can save straight back to the file you opened. If it changed on disk since you opened it, the tool warns before saving. You can reload the latest version, save your edits as a separate copy, or explicitly overwrite the changed file. Safari and Firefox download a new copy instead.

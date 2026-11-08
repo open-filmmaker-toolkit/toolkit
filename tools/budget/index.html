@@ -121,7 +121,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .acct-head .code { color: var(--ink-3); font-variant-numeric: tabular-nums; margin-right: 6px; font-weight: 500; }
 .acct-head .amt { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .lines { list-style: none; margin: 0; padding: 0; }
-.lh, .ln { display: grid; grid-template-columns: minmax(0, 1fr) 58px 78px 46px 84px 118px 96px 30px; gap: 6px; align-items: center; padding: 5px 12px; }
+.lh, .ln { display: grid; grid-template-columns: minmax(0, 1fr) 58px 78px 46px 84px 118px 96px 30px 30px; gap: 6px; align-items: center; padding: 5px 12px; }
 .lh { font-size: 12px; color: var(--ink-3); padding-top: 6px; padding-bottom: 0; }
 .lh .r, .ln .tot { text-align: right; }
 .ln + .ln { border-top: 1px solid var(--rule-soft); }
@@ -147,6 +147,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .vlist .d { color: var(--ink-2); font-size: 13px; display: block; }
 .rate-rows { display: grid; gap: 6px; }
 .rate-row { display: grid; grid-template-columns: minmax(0, 1fr) 110px 30px; gap: 8px; align-items: center; }
+.rate-row:has(.r-cap) { grid-template-columns: minmax(0, 1fr) 80px 110px 30px; }
+label.chk { display: flex; gap: 8px; align-items: flex-start; padding: 3px 0; font-weight: 400; }
 .rate-row input { min-width: 0; padding: 7px 9px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); }
 .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .cmp { width: 100%; border-collapse: collapse; font-size: 14px; }
@@ -336,13 +338,24 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   </form>
 </dialog>
 
+<dialog class="modal" id="lineDialog" aria-labelledby="lineTitle">
+  <form id="lineForm" method="dialog" novalidate>
+    <div class="dlg-head"><h2 id="lineTitle">This line</h2></div>
+    <div class="dlg-body">
+      <div class="field"><label for="l-currency">Currency of the rate</label><input id="l-currency" type="text" maxlength="3" list="l-curlist" autocomplete="off" style="max-width: 8em; text-transform: uppercase"><datalist id="l-curlist"></datalist>
+        <p class="hint">Leave it blank for the project currency. Other currencies convert at the exchange rates you set, under the file buttons.</p></div>
+      <fieldset class="field"><legend>Fringes on this line</legend><div id="l-fringes"></div></fieldset>
+    </div>
+    <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn" id="lineCancel">Cancel</button><button type="submit" class="btn primary">Save</button></div>
+  </form>
+</dialog>
 <dialog class="modal" id="ratesDialog" aria-labelledby="ratesTitle">
   <form id="ratesForm" method="dialog" novalidate>
     <div class="dlg-head"><h2 id="ratesTitle">Fringes and percentages</h2></div>
     <div class="dlg-body">
       <div class="group">
         <h3 id="fringeHead">Fringes</h3>
-        <p class="hint">Payroll taxes, benefits or union contributions, as a percentage of the lines you apply them to. Pick a fringe on each payroll line.</p>
+        <p class="hint">Payroll taxes, benefits or union contributions, as a percentage of the lines you apply them to. Pick a fringe on each payroll line, or several with ⋯. A cap limits a fringe to wages up to that amount for each person on a line, such as a tax that stops at a wage limit.</p>
         <div class="rate-rows" id="fringeRows" role="group" aria-labelledby="fringeHead"></div>
         <div><button type="button" class="btn small" id="addFringeBtn">Add a fringe</button></div>
       </div>
@@ -496,6 +509,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   }
 
   // ---------- Budget arithmetic (the same in the budget, budget converter and finance plan) ----------
+  /* oft-shared:budget begin. Copied from shared/budget.js by .github/scripts/sync_shared.py; edit it there. */
+  // How the budget adds up, shared by every tool that reads it.
   const SECTIONS = [
     { id: 'atl', label: 'Above the line' },
     { id: 'production', label: 'Production' },
@@ -506,14 +521,27 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const num = v => (v === '' || v == null || !isFinite(Number(v)) ? 0 : Number(v));
   const cents = n => Math.round(n * 100) / 100;
   const objs = v => arr(v).filter(x => x && typeof x === 'object');
-  // A line costs quantity × multiplier × rate. The multiplier defaults to 1 (use it for people, units or episodes).
+  // How many people a line pays: its multiplier, which defaults to 1.
+  const linePeople = l => (l.multiplier === '' || l.multiplier == null ? 1 : num(l.multiplier));
+  // A line costs quantity × multiplier × rate, in the line's own currency.
+  const lineRaw = l => cents(num(l.quantity) * linePeople(l) * num(l.rate));
+  // The same, in the project currency (see the exchange rates).
   function lineSubtotal(l) {
-    const x = l.multiplier === '' || l.multiplier == null ? 1 : num(l.multiplier);
-    return cents(num(l.quantity) * x * num(l.rate));
+    const raw = lineRaw(l);
+    return l.currency && typeof oftMoney !== 'undefined' ? cents(oftMoney.convert(raw, l.currency)) : raw;
+  }
+  // A line can have several fringes. Older files have one, in fringeId.
+  const lineFringeIds = l => (Array.isArray(l.fringeIds) && l.fringeIds.length ? l.fringeIds : l.fringeId ? [l.fringeId] : []);
+  // A fringe is a percentage of the line. With a cap, such as a payroll tax that stops at a wage limit,
+  // it applies only to wages up to the cap for each person on the line.
+  function fringeOn(f, sub, l) {
+    const cap = num(f.cap);
+    const base = cap > 0 ? Math.min(sub, cap * Math.max(linePeople(l), 1)) : sub;
+    return cents(base * num(f.percent) / 100);
   }
   const accountOrder = (a, b) => SECTIONS.findIndex(s => s.id === a.section) - SECTIONS.findIndex(s => s.id === b.section) ||
     str(a.code).localeCompare(str(b.code), undefined, { numeric: true }) || str(a.name).localeCompare(str(b.name));
-  // Totals for a budget record: each line with its fringe, each account, each section, then fringes and percentages on the subtotal.
+  // Totals for a budget record: each line with its fringes, each account, each section, then fringes and percentages on the subtotal.
   function budgetTotals(b) {
     b = b && typeof b === 'object' ? b : {};
     const fringes = objs(b.fringes);
@@ -521,9 +549,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const accounts = objs(b.accounts).slice().sort(accountOrder);
     const lines = objs(b.lines).map(l => {
       const sub = lineSubtotal(l);
-      const f = l.fringeId ? fringes.find(x => x.id === l.fringeId) : null;
-      const fringe = f ? cents(sub * num(f.percent) / 100) : 0;
-      return { line: l, sub, fringe, total: cents(sub + fringe) };
+      const parts = lineFringeIds(l).map(id => fringes.find(x => x.id === id)).filter(Boolean).map(f => ({ fringe: f, amount: fringeOn(f, sub, l) }));
+      const fringe = cents(parts.reduce((t, p) => t + p.amount, 0));
+      return { line: l, sub, fringe, fringes: parts, total: cents(sub + fringe) };
     });
     const byAccount = accounts.map(a => {
       const ls = lines.filter(x => x.line.accountId === a.id);
@@ -539,9 +567,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const subtotal = cents(direct + fringeTotal);
     const marks = markups.map(m => ({ markup: m, amount: cents(subtotal * num(m.percent) / 100) }));
     const grand = cents(subtotal + marks.reduce((t, x) => t + x.amount, 0));
-    const fringeTotals = fringes.map(f => ({ fringe: f, amount: cents(lines.filter(x => x.line.fringeId === f.id).reduce((t, x) => t + x.fringe, 0)) }));
+    const fringeTotals = fringes.map(f => ({ fringe: f, amount: cents(lines.reduce((t, x) => t + x.fringes.filter(p => p.fringe === f).reduce((s, p) => s + p.amount, 0), 0)) }));
     return { lines, accounts: byAccount, loose, sections, direct, fringeTotal, fringeTotals, subtotal, markups: marks, grand };
   }
+  /* oft-shared:budget end */
   function money(n, withCents) {
     if (n == null || n === '' || !isFinite(Number(n))) return '';
     const opts = { style: 'currency', currency: (doc.project && doc.project.currency) || 'USD', minimumFractionDigits: withCents ? 2 : 0, maximumFractionDigits: withCents ? 2 : 0 };
@@ -599,8 +628,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       <input data-k="unit" type="text" list="units" value="${esc(l.unit)}" placeholder="Unit" aria-label="Unit" autocomplete="off">
       <input data-k="multiplier" type="number" step="any" min="0" value="${esc(l.multiplier ?? '')}" placeholder="×1" aria-label="Multiplier, such as number of people">
       <input data-k="rate" type="number" step="any" min="0" value="${esc(l.rate ?? '')}" placeholder="Rate" aria-label="Rate">
-      <select class="fringe" data-k="fringeId" aria-label="Fringe"><option value="">None</option>${fr.map(f => `<option value="${esc(f.id)}"${l.fringeId === f.id ? ' selected' : ''}>${esc(f.name || 'Fringe')} ${esc(num(f.percent))}%</option>`).join('')}</select>
+      <select class="fringe" data-k="fringeId" aria-label="Fringe"><option value="">None</option>${lineFringeIds(l).length > 1 ? `<option value="__many" selected>${lineFringeIds(l).length} fringes</option>` : ''}${fr.map(f => `<option value="${esc(f.id)}"${lineFringeIds(l).length === 1 && lineFringeIds(l)[0] === f.id ? ' selected' : ''}>${esc(f.name || 'Fringe')} ${esc(num(f.percent))}%</option>`).join('')}${fr.length > 1 ? '<option value="__pick">Several fringes…</option>' : ''}</select>
       <span class="tot" data-tot></span>
+      <button type="button" class="icon-btn" data-moreline aria-label="More for this line: currency and fringes">⋯</button>
       <button type="button" class="icon-btn" data-delline aria-label="Remove this line">×</button>
     </li>`;
   }
@@ -615,7 +645,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       <div class="sec-head"><h3>${esc(s.section.label)}</h3><span class="amt" data-sec="${s.section.id}"></span></div>
       ${s.accounts.map(x => `<div class="acct" data-acct="${esc(x.account.id)}">
         <div class="acct-head"><button type="button" class="what" data-edit="${esc(x.account.id)}">${x.account.code ? `<span class="code">${esc(x.account.code)}</span>` : ''}${esc(x.account.name || 'Unnamed account')}</button><span class="amt" data-acct-tot></span></div>
-        ${x.lines.length ? `<div class="lh" aria-hidden="true"><span>Description</span><span class="r">Qty</span><span>Unit</span><span class="r">×</span><span class="r">Rate</span><span>Fringe</span><span class="r">Total</span><span></span></div>` : ''}
+        ${x.lines.length ? `<div class="lh" aria-hidden="true"><span>Description</span><span class="r">Qty</span><span>Unit</span><span class="r">×</span><span class="r">Rate</span><span>Fringe</span><span class="r">Total</span><span></span><span></span></div>` : ''}
         <ul class="lines">${x.lines.map(y => lineHtml(y.line)).join('')}</ul>
         <div class="acct-foot"><button type="button" class="btn small" data-addline="${esc(x.account.id)}">Add a line</button></div>
       </div>`).join('')}
@@ -629,7 +659,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('count').textContent = t.lines.length ? `${t.lines.length} line${t.lines.length === 1 ? '' : 's'} · ${money(t.grand)}` : '';
     for (const x of t.lines) {
       const el = document.querySelector(`[data-line="${CSS.escape(x.line.id)}"] [data-tot]`);
-      if (el) el.innerHTML = `${esc(money(x.total, true))}${x.fringe ? `<span class="fr">incl. ${esc(money(x.fringe, true))} fringe</span>` : ''}`;
+      if (el) el.innerHTML = `${esc(money(x.total, true))}${x.line.currency && oftMoney.up(x.line.currency) !== oftMoney.home() ? `<span class="fr">${esc(oftMoney.fmt(lineRaw(x.line), x.line.currency))} before fringes</span>` : ''}${x.fringe ? `<span class="fr">incl. ${esc(money(x.fringe, true))} fringe${x.fringes.length > 1 ? 's' : ''}</span>` : ''}`;
     }
     for (const a of t.accounts) { const el = document.querySelector(`[data-acct="${CSS.escape(a.account.id)}"] [data-acct-tot]`); if (el) el.textContent = money(a.total); }
     for (const s of t.sections) { const el = document.querySelector(`[data-sec="${s.section.id}"]`); if (el) el.textContent = money(s.total); }
@@ -669,7 +699,13 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const k = input.dataset.k;
     const v = input.value;
     if (['quantity', 'multiplier', 'rate'].includes(k)) { if (v === '' || !isFinite(Number(v))) delete l[k]; else l[k] = Number(v); }
-    else if (v.trim()) l[k] = k === 'fringeId' ? v : v; else delete l[k];
+    else if (k === 'fringeId') {
+      if (v === '__pick') { openLine(l.id); return; }
+      if (v === '__many') return;
+      delete l.fringeIds; if (v) l.fringeId = v; else delete l.fringeId;
+      touched(); return;
+    }
+    else if (v.trim()) l[k] = v; else delete l[k];
     touched();
   }
   function addLine(accountId) {
@@ -725,10 +761,39 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     toast(`Removed ${editing.name || 'the account'}${n ? ` and its ${n} line${n === 1 ? '' : 's'}` : ''}.`);
   }
 
+  // ---------- A line's currency and fringes ----------
+  let lineEditing = null;
+  function openLine(id) {
+    const l = B().lines.find(x => x.id === id);
+    if (!l) return;
+    lineEditing = l;
+    $('l-currency').value = str(l.currency);
+    $('l-currency').placeholder = oftMoney.home();
+    $('l-curlist').innerHTML = oftMoney.currencies().map(c => `<option value="${esc(c)}">`).join('');
+    const ids = lineFringeIds(l);
+    $('l-fringes').innerHTML = B().fringes.length ? B().fringes.map(f => `<label class="chk"><input type="checkbox" value="${esc(f.id)}"${ids.includes(f.id) ? ' checked' : ''}> <span>${esc(f.name || 'Fringe')} ${esc(num(f.percent))}%${num(f.cap) ? `, on wages up to ${esc(money(f.cap))} a person` : ''}</span></label>`).join('')
+      : '<p class="hint">No fringes yet. Add them under Fringes and percentages.</p>';
+    $('lineTitle').textContent = l.description ? `Line: ${l.description}` : 'This line';
+    $('lineDialog').showModal();
+  }
+  function saveLine() {
+    const l = lineEditing; if (!l) return;
+    const cur = $('l-currency').value.trim().toUpperCase();
+    if (cur && !/^[A-Z]{3}$/.test(cur)) { $('l-currency').setCustomValidity('Use a three-letter currency code, such as EUR.'); $('l-currency').reportValidity(); return; }
+    if (cur && cur !== oftMoney.home()) l.currency = cur; else delete l.currency;
+    const ids = [...$('l-fringes').querySelectorAll('input:checked')].map(x => x.value);
+    delete l.fringeIds; delete l.fringeId;
+    if (ids.length === 1) l.fringeId = ids[0]; else if (ids.length) { l.fringeId = ids[0]; l.fringeIds = ids; }
+    $('lineDialog').close();
+    changed();
+    if (cur && cur !== oftMoney.home() && !oftMoney.rateFor(cur)) toast(`Add an exchange rate for ${cur} so this line converts to ${oftMoney.home()}.`);
+  }
+
   // ---------- Fringes and percentages ----------
   function rateRow(r, kind) {
     return `<div class="rate-row" data-id="${esc(r.id)}"><input type="text" class="r-name" value="${esc(r.name)}" placeholder="${kind === 'fringe' ? 'Payroll taxes' : 'Contingency'}" aria-label="Name" autocomplete="off">
       <input type="number" class="r-pct" step="any" min="0" max="100" value="${esc(r.percent ?? '')}" placeholder="%" aria-label="Percent">
+      ${kind === 'fringe' ? `<input type="number" class="r-cap" step="any" min="0" value="${esc(r.cap ?? '')}" placeholder="No cap" aria-label="Only on wages up to this amount a person">` : ''}
       <button type="button" class="icon-btn" data-delrate aria-label="Remove">×</button></div>`;
   }
   function openRates() {
@@ -738,15 +803,18 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('ratesDialog').showModal();
   }
   function readRates(box, prefix) {
-    return [...box.querySelectorAll('.rate-row')].map(r => ({ id: r.dataset.id || newId(prefix), name: r.querySelector('.r-name').value.trim(), percent: num(r.querySelector('.r-pct').value) }))
-      .filter(r => r.name || r.percent).map(r => (r.name ? r : { id: r.id, name: prefix === 'fringe' ? 'Fringe' : 'Percentage', percent: r.percent }));
+    return [...box.querySelectorAll('.rate-row')].map(r => { const cap = r.querySelector('.r-cap') && num(r.querySelector('.r-cap').value); return Object.assign({ id: r.dataset.id || newId(prefix), name: r.querySelector('.r-name').value.trim(), percent: num(r.querySelector('.r-pct').value) }, cap > 0 ? { cap } : {}); })
+      .filter(r => r.name || r.percent).map(r => (r.name ? r : Object.assign({}, r, { name: prefix === 'fringe' ? 'Fringe' : 'Percentage' })));
   }
   function saveRates() {
     const cur = $('f-currency').value.trim().toUpperCase();
     if (cur && !/^[A-Z]{3}$/.test(cur)) { $('f-currency').setCustomValidity('Use a three-letter currency code, such as USD, CAD or EUR.'); $('f-currency').reportValidity(); return; }
     const fr = readRates($('fringeRows'), 'fringe');
     B().fringes = fr;
-    for (const l of B().lines) if (l.fringeId && !fr.some(f => f.id === l.fringeId)) delete l.fringeId;
+    for (const l of B().lines) {
+      if (Array.isArray(l.fringeIds)) { l.fringeIds = l.fringeIds.filter(id => fr.some(f => f.id === id)); if (l.fringeIds.length < 2) delete l.fringeIds; }
+      if (l.fringeId && !fr.some(f => f.id === l.fringeId)) { delete l.fringeId; if (l.fringeIds) l.fringeId = l.fringeIds[0]; }
+    }
     B().markups = readRates($('markRows'), 'markup');
     if (cur) doc.project.currency = cur;
     $('ratesDialog').close();
@@ -802,15 +870,14 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   }
 
   // ---------- CSV and print ----------
-  const CSV_HEAD = ['Account number', 'Account', 'Section', 'Description', 'Quantity', 'Unit', 'Multiplier', 'Rate', 'Subtotal', 'Fringe', 'Fringe amount', 'Total'];
+  const CSV_HEAD = ['Account number', 'Account', 'Section', 'Description', 'Quantity', 'Unit', 'Multiplier', 'Rate', 'Subtotal', 'Fringe', 'Fringe amount', 'Total', 'Currency'];
   function exportCsv() {
     const t = budgetTotals(B());
     const fr = id => B().fringes.find(f => f.id === id);
     const rows = [];
     for (const a of t.accounts) for (const x of a.lines) {
-      const f = fr(x.line.fringeId);
       rows.push([a.account.code, a.account.name, sectionLabel(a.account.section), x.line.description, x.line.quantity, x.line.unit, x.line.multiplier, x.line.rate, x.sub.toFixed(2),
-        f ? `${f.name} ${num(f.percent)}%` : '', x.fringe ? x.fringe.toFixed(2) : '', x.total.toFixed(2)]);
+        x.fringes.map(p => `${p.fringe.name} ${num(p.fringe.percent)}%`).join('; '), x.fringe ? x.fringe.toFixed(2) : '', x.total.toFixed(2), x.line.currency || '']);
     }
     for (const m of t.markups) rows.push(['', m.markup.name, 'Percentage of the subtotal', `${num(m.markup.percent)}% of ${t.subtotal.toFixed(2)}`, '', '', '', '', m.amount.toFixed(2), '', '', m.amount.toFixed(2)]);
     rows.push(['', 'Total', '', '', '', '', '', '', '', '', '', t.grand.toFixed(2)]);
@@ -834,7 +901,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const detail = t.accounts.filter(a => a.lines.length).map(a => `<h2>${esc(a.account.code ? a.account.code + ' ' : '')}${esc(a.account.name || '')}</h2>
       <table><thead><tr><th>Description</th><th class="n">Qty</th><th>Unit</th><th class="n">×</th><th class="n">Rate</th><th class="n">Fringe</th><th class="n">Total</th></tr></thead><tbody>
       ${a.lines.map(x => `<tr><td>${esc(x.line.description || '')}</td><td class="n">${esc(x.line.quantity ?? '')}</td><td>${esc(x.line.unit || '')}</td><td class="n">${esc(x.line.multiplier ?? '')}</td><td class="n">${esc(money(x.line.rate, true))}</td>
-        <td class="n">${x.fringe ? `${esc(money(x.fringe, true))}<span class="r-sub">${esc((fr(x.line.fringeId) || {}).name || '')}</span>` : ''}</td><td class="n">${esc(money(x.total, true))}</td></tr>`).join('')}
+        <td class="n">${x.fringe ? `${esc(money(x.fringe, true))}<span class="r-sub">${esc(x.fringes.map(p => p.fringe.name).join(', '))}</span>` : ''}</td><td class="n">${esc(money(x.total, true))}</td></tr>`).join('')}
       <tr class="r-tot"><td colspan="6">Total for ${esc(a.account.name || 'the account')}</td><td class="n">${esc(money(a.total, true))}</td></tr></tbody></table>`).join('');
     $('report').innerHTML = `<h1>Budget</h1><p class="r-meta">${esc([doc.project.title, doc.project.company, `Printed ${fmtDate(today())}`].filter(Boolean).join(' · '))}</p>
       <h2>Top sheet</h2><table class="r-top"><tbody>${top.join('')}</tbody></table>
@@ -1073,6 +1140,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       const e = ev.target.closest('[data-edit]'); if (e) { openEditor(e.dataset.edit); return; }
       const a = ev.target.closest('[data-addline]'); if (a) { addLine(a.dataset.addline); return; }
       const d = ev.target.closest('[data-delline]'); if (d) removeLine(d.closest('[data-line]').dataset.line);
+      const mo = ev.target.closest('[data-moreline]'); if (mo) openLine(mo.closest('[data-line]').dataset.line);
     });
     $('sections').addEventListener('input', ev => { if (ev.target.dataset.k) editLine(ev.target); });
     $('sections').addEventListener('change', ev => { if (ev.target.dataset.k === 'fringeId') editLine(ev.target); });
@@ -1081,6 +1149,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('editorCancel').onclick = () => $('editor').close();
     $('deleteBtn').onclick = removeEditing;
     $('ratesBtn').onclick = openRates;
+    $('lineForm').addEventListener('submit', ev => { ev.preventDefault(); saveLine(); });
+    $('lineCancel').onclick = () => { $('lineDialog').close(); render(); };
+    $('l-currency').addEventListener('input', () => $('l-currency').setCustomValidity(''));
     $('addFringeBtn').onclick = () => { $('fringeRows').insertAdjacentHTML('beforeend', rateRow({}, 'fringe')); $('fringeRows').lastElementChild.querySelector('input').focus(); };
     $('addMarkBtn').onclick = () => { $('markRows').insertAdjacentHTML('beforeend', rateRow({}, 'markup')); $('markRows').lastElementChild.querySelector('input').focus(); };
     $('ratesForm').addEventListener('click', ev => { const b = ev.target.closest('[data-delrate]'); if (b) b.closest('.rate-row').remove(); });
@@ -1114,17 +1185,132 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   document.documentElement.classList.remove('no-js');
   window.addEventListener('error', ev => toast(`Something went wrong: ${ev.message}. Save your work, then reload the page.`, true));
   window.addEventListener('unhandledrejection', ev => toast(`Something went wrong: ${ev.reason && ev.reason.message ? ev.reason.message : ev.reason}. Save your work, then reload the page.`, true));
+  /* oft-shared:money begin. Copied from shared/money.js by .github/scripts/sync_shared.py; edit it there. */
+  // Several currencies. Any amount can carry its own currency (a `currency` field on
+  // its record); the project currency is the default. Exchange rates are typed in by
+  // hand, never fetched: project.exchangeRates, each { currency, rate, date? }, where
+  // rate is what one unit of that currency is worth in the project currency. A rate
+  // with a date applies from that date; one without a date applies to everything else.
+  const oftMoney = (() => {
+    const up = s => String(s == null ? '' : s).trim().toUpperCase();
+    const isDay = v => /^\d{4}-\d{2}-\d{2}$/.test(String(v || ''));
+    const list = v => (Array.isArray(v) ? v.filter(x => x && typeof x === 'object') : []);
+    const home = () => up(doc.project && doc.project.currency) || 'USD';
+    const rates = () => list(doc.project && doc.project.exchangeRates).filter(r => /^[A-Z]{3}$/.test(up(r.currency)) && Number(r.rate) > 0);
+    function rateFor(cur, date) {
+      cur = up(cur);
+      if (!cur || cur === home()) return { rate: 1 };
+      const all = rates().filter(r => up(r.currency) === cur);
+      const dated = all.filter(r => isDay(r.date)).sort((a, b) => a.date.localeCompare(b.date));
+      const fixed = all.find(r => !isDay(r.date));
+      const onDate = isDay(date) ? [...dated].reverse().find(r => r.date <= date) : null;
+      const hit = onDate || fixed || dated[dated.length - 1];
+      return hit ? { rate: Number(hit.rate), from: hit } : null;
+    }
+    // Converts an amount to the project currency. With no rate for its currency, the amount is counted as it is.
+    function convert(amount, cur, date) { const r = rateFor(cur, date); return r ? Number(amount) * r.rate : Number(amount); }
+    // A record's amount in the project currency, at the rate for its date.
+    const amountOf = (r, field = 'amount', dateField = 'date') => (r.currency ? convert(Number(r[field]) || 0, r.currency, r[dateField]) : Number(r[field]) || 0);
+    // Currencies other than the project's that money records use.
+    function inUse() {
+      const b = doc.budget || {}, f = doc.financePlan || {};
+      const recs = [...list(b.lines), ...list(f.sources), ...list(doc.contracts), ...list(doc.expenses)];
+      return [...new Set(recs.map(r => up(r.currency)).filter(c => c && c !== home()))].sort();
+    }
+    const show = n => Number(n).toLocaleString(undefined, { maximumFractionDigits: 6 });
+    function note() {
+      const cs = inUse();
+      if (!cs.length) return '';
+      const parts = cs.map(c => {
+        const all = rates().filter(r => up(r.currency) === c), dated = all.filter(r => isDay(r.date)), fixed = all.find(r => !isDay(r.date));
+        if (!all.length) return `there's no exchange rate for ${c} yet, so ${c} amounts are counted as ${home()}`;
+        if (!dated.length) return `1 ${c} = ${show(fixed.rate)} ${home()}`;
+        const last = dated.sort((a, b) => a.date.localeCompare(b.date))[dated.length - 1];
+        return `${c} at the rate for each date (latest: 1 ${c} = ${show(last.rate)} ${home()} from ${last.date})${fixed ? `, otherwise 1 ${c} = ${show(fixed.rate)} ${home()}` : ''}`;
+      });
+      return `Totals are in ${home()}: ${parts.join('; ')}.`;
+    }
+    function fmt(n, cur) {
+      try { return new Intl.NumberFormat(undefined, { style: 'currency', currency: up(cur) || home() }).format(Number(n)); }
+      catch { return `${up(cur) || home()} ${Number(n).toLocaleString()}`; }
+    }
+    // The rates dialog, opened from "Exchange rates" under the file buttons.
+    function rowHtml(r) {
+      const e = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+      return `<div class="oft-rate"><input type="text" class="oft-rate-cur" maxlength="3" value="${e(r.currency)}" placeholder="EUR" aria-label="Currency" autocomplete="off">
+        <input type="number" class="oft-rate-val" step="any" min="0" value="${e(r.rate)}" placeholder="Rate" aria-label="What 1 of it is worth in ${e(home())}">
+        <input type="date" class="oft-rate-date" value="${e(r.date)}" aria-label="From this date (leave blank for one rate)">
+        <button type="button" class="btn small" data-oft-del aria-label="Remove this rate">Remove</button></div>`;
+    }
+    function dialog() {
+      let dlg = document.getElementById('oftRatesDialog');
+      if (!dlg) {
+        dlg = document.createElement('dialog');
+        dlg.id = 'oftRatesDialog'; dlg.className = 'oft-dialog'; dlg.setAttribute('aria-labelledby', 'oftRatesTitle');
+        dlg.innerHTML = `<form method="dialog" id="oftRatesForm"><h2 id="oftRatesTitle">Exchange rates</h2>
+          <p id="oftRatesIntro"></p>
+          <div id="oftRateRows" role="group" aria-label="Rates"></div>
+          <p><button type="button" class="btn small" id="oftRateAdd">Add a rate</button></p>
+          <p id="oftRatesErr" class="oft-unmatched" aria-live="polite"></p>
+          <div class="oft-actions"><button type="button" class="btn" id="oftRatesCancel">Cancel</button><button type="submit" class="btn primary">Save rates</button></div></form>`;
+        document.body.append(dlg);
+        dlg.querySelector('#oftRateAdd').onclick = () => { dlg.querySelector('#oftRateRows').insertAdjacentHTML('beforeend', rowHtml({})); dlg.querySelector('#oftRateRows .oft-rate:last-child input').focus(); };
+        dlg.querySelector('#oftRateRows').addEventListener('click', ev => { const b = ev.target.closest('[data-oft-del]'); if (b) b.closest('.oft-rate').remove(); });
+        dlg.querySelector('#oftRatesCancel').onclick = () => dlg.close();
+        dlg.querySelector('#oftRatesForm').addEventListener('submit', ev => {
+          const out = [];
+          for (const row of dlg.querySelectorAll('.oft-rate')) {
+            const c = up(row.querySelector('.oft-rate-cur').value), v = row.querySelector('.oft-rate-val').value, d = row.querySelector('.oft-rate-date').value;
+            if (!c && !v) continue;
+            if (!/^[A-Z]{3}$/.test(c) || !(Number(v) > 0)) { ev.preventDefault(); dlg.querySelector('#oftRatesErr').textContent = 'Each rate needs a three-letter currency code, such as EUR, and a number above zero.'; return; }
+            out.push(Object.assign({ currency: c, rate: Number(v) }, d ? { date: d } : {}));
+          }
+          if (out.length) doc.project.exchangeRates = out; else delete doc.project.exchangeRates;
+          if (typeof changed === 'function') changed(); else { dirty = true; render(); }
+        });
+      }
+      dlg.querySelector('#oftRatesIntro').textContent = `Type in what one unit of each currency is worth in ${home()}, the project currency. Nothing is looked up online. Add a date to use a rate from that date on, or leave it blank for one rate throughout.`;
+      dlg.querySelector('#oftRatesErr').textContent = '';
+      const rs = list(doc.project && doc.project.exchangeRates);
+      dlg.querySelector('#oftRateRows').innerHTML = (rs.length ? rs : inUse().map(c => ({ currency: c }))).map(rowHtml).join('') || rowHtml({});
+      dlg.showModal();
+    }
+    // A field for an amount's currency, for the tools' editors.
+    function currencies() { return [...new Set([home(), ...rates().map(r => up(r.currency)), ...inUse()])]; }
+    return { home, rateFor, convert, amountOf, inUse, note, fmt, dialog, currencies, up };
+  })();
+  // Shows which rates the totals use, under the file buttons and on the printed report.
+  const oftMoneyRender = render;
+  render = function () {
+    const out = oftMoneyRender.apply(this, arguments);
+    let p = document.getElementById('oftRatesNote');
+    const text = oftMoney.note();
+    if (!p && text) { p = document.createElement('p'); p.id = 'oftRatesNote'; p.className = 'oft-rates-note'; const main = document.querySelector('main#main') || document.querySelector('main'); if (main) main.prepend(p); }
+    if (p) { p.textContent = text; p.hidden = !text; }
+    return out;
+  };
+  if (typeof renderReport === 'function') {
+    const oftMoneyReport = renderReport;
+    renderReport = function () {
+      const out = oftMoneyReport.apply(this, arguments);
+      const r = document.getElementById('report'), text = oftMoney.note();
+      if (r && text) { const p = document.createElement('p'); p.className = 'oft-rates-note'; p.textContent = text; r.append(p); }
+      return out;
+    };
+  }
+  /* oft-shared:money end */
   // Columns for importing from a spreadsheet, named as in this tool's template.
   const OFT_IMPORT = { noun: 'line', nouns: 'lines', key: 'description',
     skipRow: raw => !Object.values(raw).some(Boolean) || /^total$/i.test(raw['Account'] || '') || /percentage of the subtotal/i.test(raw['Section'] || ''),
     fields: [['Account number', 'code'], ['Account', 'account'], ['Section', 'section', 'enum', { values: SECTIONS }], ['Description', 'description'], ['Quantity', 'quantity', 'num'], ['Unit', 'unit'], ['Multiplier', 'multiplier', 'num'], ['Rate', 'rate', 'num'],
-      ['Subtotal', '', 'skip'], ['Fringe', 'fringe'], ['Fringe amount', '', 'skip'], ['Total', '', 'skip']],
+      ['Subtotal', '', 'skip'], ['Fringe', 'fringe'], ['Fringe amount', '', 'skip'], ['Total', '', 'skip'], ['Currency', 'currency']],
     put: (r, x) => {
       const b = doc.budget = doc.budget && typeof doc.budget === 'object' ? doc.budget : {}; for (const k of ['accounts', 'lines', 'fringes']) b[k] = arr(b[k]);
       let a = b.accounts.find(y => y && ((r.code && String(y.code) === String(r.code)) || (!r.code && y.name === r.account)));
       if (!a) { a = { id: x.newId('account'), code: r.code || '', name: r.account || 'Imported', section: r.section || 'production' }; b.accounts.push(a); }
       r.accountId = a.id;
-      if (r.fringe) { const f = b.fringes.find(y => y && String(y.name).toLowerCase() === String(r.fringe).toLowerCase().replace(/\s*\(.*\)$/, '')); if (f) r.fringeId = f.id; }
+      if (r.fringe) { const ids = String(r.fringe).split(/\s*;\s*/).map(n => b.fringes.find(y => y && String(y.name).toLowerCase() === n.toLowerCase().replace(/\s+[\d.]+%$/, '').replace(/\s*\(.*\)$/, ''))).filter(Boolean).map(f => f.id); if (ids.length) r.fringeId = ids[0]; if (ids.length > 1) r.fringeIds = ids; }
+      if (r.currency) { r.currency = String(r.currency).toUpperCase(); if (r.currency === oftMoney.home() || !/^[A-Z]{3}$/.test(r.currency)) delete r.currency; }
       ['code', 'account', 'section', 'fringe'].forEach(k => delete r[k]);
       b.lines.push(r);
     } };
@@ -1756,6 +1942,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   .oft-map th, .oft-map td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--rule); vertical-align: middle; }
   .oft-map select { max-width: 100%; padding: 4px 6px; font: inherit; color: var(--ink); background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; }
   .oft-unmatched { color: var(--bad); font-weight: 600; }
+  .oft-rate { display: grid; grid-template-columns: 70px minmax(0, 1fr) minmax(0, 1fr) auto; gap: 6px; align-items: center; margin: 0 0 6px; }
+  .oft-rate input { min-width: 0; padding: 6px 8px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); color: var(--ink); font: inherit; }
+  .oft-rates-note { margin: 0 0 12px; font-size: 13px; color: var(--ink-2); }
   .oft-conflict { margin: 8px 0; padding: 8px 12px; border: 1px solid var(--rule); border-radius: 8px; }
   .oft-conflict legend { font-weight: 600; padding: 0 4px; }
   .oft-conflict label { display: flex; gap: 8px; align-items: flex-start; padding: 4px 0; overflow-wrap: anywhere; }
@@ -1781,6 +1970,12 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       imp.type = 'button'; imp.className = 'link-btn'; imp.id = 'oftImportBtn'; imp.textContent = 'Import from a spreadsheet';
       imp.onclick = () => oftImport.open(OFT_IMPORT);
       links.prepend(imp);
+    }
+    if (typeof oftMoney !== 'undefined') {
+      const fx = document.createElement('button');
+      fx.type = 'button'; fx.className = 'link-btn'; fx.id = 'oftRatesBtn'; fx.textContent = 'Exchange rates';
+      fx.onclick = () => oftMoney.dialog();
+      links.prepend(fx);
     }
     if (typeof oftProject !== 'undefined') {
       const cal = document.createElement('button');

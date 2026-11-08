@@ -219,13 +219,26 @@ const oftProject = (() => {
     if (!rows.length) return '<p>Nothing here yet.</p>';
     return `<table><thead><tr>${head.map(h => `<th scope="col">${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
   }
+  // The project's own exchange rates (see shared/money.js): a dated rate applies from its date.
+  function conv(d, amount, cur, date) {
+    const home = str((d.project || {}).currency || 'USD').toUpperCase(); cur = str(cur).toUpperCase();
+    if (!cur || cur === home) return amount;
+    const rs = arr((d.project || {}).exchangeRates).filter(r => r && str(r.currency).toUpperCase() === cur && num(r.rate) > 0);
+    const dated = rs.filter(r => isDay(r.date)).sort((a, b) => a.date.localeCompare(b.date));
+    const hit = (isDay(date) && [...dated].reverse().find(r => r.date <= date)) || rs.find(r => !isDay(r.date)) || dated[dated.length - 1];
+    return hit ? amount * num(hit.rate) : amount;
+  }
   function budgetRows(d) {
-    const b = d.budget || {}, fr = new Map(arr(b.fringes).filter(Boolean).map(f => [f.id, num(f.percent)]));
+    const b = d.budget || {}, fringes = arr(b.fringes).filter(Boolean);
     const spent = {};
-    for (const e of arr(d.expenses).filter(Boolean)) spent[e.accountId] = (spent[e.accountId] || 0) + num(e.amount);
+    for (const e of arr(d.expenses).filter(Boolean)) spent[e.accountId] = (spent[e.accountId] || 0) + conv(d, num(e.amount), e.currency, e.date);
     let total = 0, totalSpent = 0;
     const rows = arr(b.accounts).filter(Boolean).map(a => {
-      const sum = arr(b.lines).filter(l => l && l.accountId === a.id).reduce((s, l) => { const base = num(l.quantity) * (num(l.multiplier) || 1) * num(l.rate); return s + base + base * (fr.get(l.fringeId) || 0) / 100; }, 0);
+      const sum = arr(b.lines).filter(l => l && l.accountId === a.id).reduce((s, l) => {
+        const people = l.multiplier === '' || l.multiplier == null ? 1 : num(l.multiplier), base = conv(d, num(l.quantity) * people * num(l.rate), l.currency);
+        const ids = Array.isArray(l.fringeIds) && l.fringeIds.length ? l.fringeIds : l.fringeId ? [l.fringeId] : [];
+        return s + base + ids.map(id => fringes.find(f => f.id === id)).filter(Boolean).reduce((t, f) => t + (num(f.cap) > 0 ? Math.min(base, num(f.cap) * Math.max(people, 1)) : base) * num(f.percent) / 100, 0);
+      }, 0);
       total += sum; totalSpent += spent[a.id] || 0;
       return { a, sum, spent: spent[a.id] || 0 };
     }).filter(r => r.sum || r.spent);
