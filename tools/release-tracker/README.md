@@ -42,6 +42,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **Prints a release report** for your E&O attorney: what still needs a signed release, everyone and everywhere on camera with their release, and every release with its scan.
 - **Exports releases (CSV),** one row per release. The blank [release log spreadsheet](../../templates/release-log-template.csv) has the same columns, and the [Word version](../../templates/release-log-template.docx) adds an on-camera list to fill in on set, for anyone who doesn't use the tool.
 - **Exports project data.** Save project details, people, locations, third-party elements, contracts, assets, music cue sheet details or call sheets as separate CSV files. Nested values stay as JSON inside their cell.
+- **Imports from a spreadsheet:** choose **Import from a spreadsheet** under the file buttons and pick a CSV file. One with the columns of the [spreadsheet template](../../templates/release-log-template.csv) imports as it is; match any other columns once and the tool remembers. Problems, such as a date it can't read, show row by row before anything is added, and importing only adds.
 
 ## Who needs a release
 

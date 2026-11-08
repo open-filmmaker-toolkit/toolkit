@@ -44,6 +44,8 @@ For anyone who doesn't use the tool, there's a blank [deal memo form](../../temp
 
 This is not legal advice. Deal memos are contracts, and what they need differs from place to place and with union rules. Have a lawyer licensed where you work review your form before anyone signs it. See [Not legal advice](../../README.md#not-legal-advice).
 
+- **Imports from a spreadsheet:** choose **Import from a spreadsheet** under the file buttons and pick a CSV file. One with the columns of the [spreadsheet template](../../templates/deal-memos-template.csv) imports as it is; match any other columns once and the tool remembers. Problems, such as a date it can't read, show row by row before anything is added, and importing only adds.
+
 ## Saving and file conflicts
 
 Chrome and Edge can save straight back to the file you opened. If it changed on disk since you opened it, the tool warns before saving. You can reload the latest version, save your edits as a separate copy, or explicitly overwrite the changed file. Safari and Firefox download a new copy instead.

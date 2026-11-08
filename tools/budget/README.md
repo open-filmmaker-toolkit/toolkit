@@ -45,6 +45,8 @@ For anyone who doesn't use the tool, there's a blank [spreadsheet template](../.
 
 The rates in the documentary accounts start at zero for fringes and insurance: set your own. Check what your funders, insurer and payroll company need.
 
+- **Imports from a spreadsheet:** choose **Import from a spreadsheet** under the file buttons and pick a CSV file. One with the columns of the [spreadsheet template](../../templates/budget-template.csv) imports as it is; match any other columns once and the tool remembers. Problems, such as a date it can't read, show row by row before anything is added, and importing only adds.
+
 ## Saving and file conflicts
 
 Chrome and Edge can save straight back to the file you opened. If it changed on disk since you opened it, the tool warns before saving. You can reload the latest version, save your edits as a separate copy, or explicitly overwrite the changed file. Safari and Firefox download a new copy instead.
@@ -61,7 +63,7 @@ A `budget` record with `accounts` (each with `id`, `code`, `name`, `section` and
 
 - Globals, such as a shoot length every line can refer to
 - Several fringes on one line, or fringes with a cap
-- Importing a budget from another budgeting program or a spreadsheet
+- Importing a budget from another budgeting program's own file
 
 ## License
 

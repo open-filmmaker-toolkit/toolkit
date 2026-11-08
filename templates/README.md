@@ -4,6 +4,8 @@ Blank versions of the toolkit's tools, for people who'd rather work in a spreads
 
 Part of the [Open Filmmaker Toolkit](../README.md).
 
+Started in a spreadsheet and want to move to the tool? Most tools can import a filled-in spreadsheet template: choose **Import from a spreadsheet** under the tool's file buttons. The templates for the final cost report, recoupment waterfall, rights availability matrix, cash flow, budget-to-actuals, chain-of-title binder, annotated-transcript clearance report, contract and release archive, security checklist and paper edit are reports the tools work out from the project, so they don't import. The stills library needs the images themselves.
+
 | Template | Spreadsheet | Document | Matches the tool |
 | --- | --- | --- | --- |
 | Subject tracker | [subject-tracker-template.csv](subject-tracker-template.csv) | | [Subject tracker](../tools/subject-tracker/) |

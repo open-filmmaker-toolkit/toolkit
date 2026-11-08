@@ -44,6 +44,7 @@ For anyone who doesn't use the tool, there's a blank [scout sheet](../../templat
 Scout reports have contact details in them. Keep printed copies private.
 
 - **A calendar file of every date in the project**, gathered from every tool: choose **Calendar of every date** under the file buttons and pick which kinds of dates to include. Importing a newer file updates the same events instead of adding them twice.
+- **Imports from a spreadsheet:** choose **Import from a spreadsheet** under the file buttons and pick a CSV file. One with the columns of the [spreadsheet template](../../templates/location-scout-template.csv) imports as it is; match any other columns once and the tool remembers. Problems, such as a date it can't read, show row by row before anything is added, and importing only adds.
 
 ## Saving and file conflicts
 
