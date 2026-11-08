@@ -1319,6 +1319,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   .oft-dialog .oft-files { display: grid; gap: 8px; margin: 8px 0; }
   .oft-dialog .oft-files div { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
   .oft-dialog .oft-files span { flex: 1 1 200px; color: var(--ink-2); overflow-wrap: anywhere; }
+  .oft-kinds { margin: 8px 0; padding: 8px 12px; border: 1px solid var(--rule); border-radius: 8px; }
+  .oft-kinds label { display: flex; gap: 8px; align-items: flex-start; padding: 3px 0; }
+  .oft-kinds small { color: var(--ink-3); }
   .oft-conflict { margin: 8px 0; padding: 8px 12px; border: 1px solid var(--rule); border-radius: 8px; }
   .oft-conflict legend { font-weight: 600; padding: 0 4px; }
   .oft-conflict label { display: flex; gap: 8px; align-items: flex-start; padding: 4px 0; overflow-wrap: anywhere; }
@@ -1339,6 +1342,12 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const links = document.createElement('p');
     links.className = 'oft-links';
     links.innerHTML = `<button type="button" class="link-btn" id="oftNameBtn">Add your name</button><button type="button" class="link-btn" id="oftMergeBtn">Merge two copies</button><a href="${OFT_GUIDE}">Working on a shared file</a>`;
+    if (typeof oftProject !== 'undefined') {
+      const cal = document.createElement('button');
+      cal.type = 'button'; cal.className = 'link-btn'; cal.id = 'oftCalBtn'; cal.textContent = 'Calendar of every date';
+      cal.onclick = () => oftProject.calendarDialog(() => JSON.parse(serialize()));
+      links.prepend(cal);
+    }
     const state = oftEl('fileState');
     if (state && state.parentElement) state.parentElement.append(links);
     const dlgs = document.createElement('div');

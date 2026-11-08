@@ -40,6 +40,8 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 
 For anyone who doesn't use the tool, there's a [spreadsheet template](../../templates/deliverables-template.csv) with the same columns as the export.
 
+- **A calendar file of every date in the project**, gathered from every tool: choose **Calendar of every date** under the file buttons and pick which kinds of dates to include. Importing a newer file updates the same events instead of adding them twice.
+
 ## Saving and file conflicts
 
 Chrome and Edge can save straight back to the file you opened. If it changed on disk since you opened it, the tool warns before saving. You can reload the latest version, save your edits as a separate copy, or explicitly overwrite the changed file. Safari and Firefox download a new copy instead.

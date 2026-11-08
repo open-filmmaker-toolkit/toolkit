@@ -43,6 +43,8 @@ For anyone who doesn't use the tool, there's a blank [spreadsheet template](../.
 
 This tool holds other people's contact details. Keep the project file somewhere private, and don't attach it to an issue.
 
+- **A calendar file of every date in the project**, gathered from every tool: choose **Calendar of every date** under the file buttons and pick which kinds of dates to include. Importing a newer file updates the same events instead of adding them twice.
+
 ## Saving and file conflicts
 
 Chrome and Edge can save straight back to the file you opened. If it changed on disk since you opened it, the tool warns before saving. You can reload the latest version, save your edits as a separate copy, or explicitly overwrite the changed file. Safari and Firefox download a new copy instead.
@@ -60,7 +62,6 @@ It also adds screenings to a shared `screenings` list, each with an `id` and opt
 ## Not yet
 
 - Editing or removing a screening once it's added (for now, edit the project file)
-- Reminders outside the tool, such as a calendar file of commitments
 - Importing contacts from a spreadsheet or an address book
 
 ## License

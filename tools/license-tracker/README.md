@@ -43,6 +43,8 @@ For anyone who doesn't use the tool, there's a [spreadsheet template](../../temp
 
 This is not legal advice. Your licenses' own terms are what count. See [Not legal advice](../../README.md#not-legal-advice).
 
+- **A calendar file of every date in the project**, gathered from every tool: choose **Calendar of every date** under the file buttons and pick which kinds of dates to include. Importing a newer file updates the same events instead of adding them twice.
+
 ## Saving and file conflicts
 
 Chrome and Edge can save straight back to the file you opened. If it changed on disk since you opened it, the tool warns before saving. You can reload the latest version, save your edits as a separate copy, or explicitly overwrite the changed file. Safari and Firefox download a new copy instead.
@@ -59,7 +61,6 @@ The signed copy is an asset with `type` "license" and a `relativePath`. Everythi
 
 ## Not yet
 
-- Reminders outside the browser, such as a calendar file of deadlines
 - Most-favored-nations terms across licenses
 - Fees in other currencies
 

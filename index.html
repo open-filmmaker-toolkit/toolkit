@@ -8,13 +8,13 @@
 <style>
 :root {
   --paper: #f3f2ee; --sheet: #fbfaf7; --ink: #1c1c1a; --ink-2: #45453f; --ink-3: #5f5f57; --rule: #cfccc2; --rule-soft: #e2dfd6;
-  --tape: #1c1c1a; --tape-ink: #f3f2ee; --mark: #e2a72e; --focus: #1f5fd1; --hover: #ecebe5;
+  --tape: #1c1c1a; --tape-ink: #f3f2ee; --mark: #e2a72e; --focus: #1f5fd1; --hover: #ecebe5; --bad: #a3271b; --warn: #7a4f00;
   --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
   color-scheme: light dark;
 }
 @media (prefers-color-scheme: dark) {
-  :root { --paper: #161614; --sheet: #1d1d1a; --ink: #ecebe5; --ink-2: #c4c3ba; --ink-3: #a3a298; --rule: #3a3a35; --rule-soft: #2b2b27; --tape: #ecebe5; --tape-ink: #161614; --mark: #e2a72e; --focus: #7aa7ff; --hover: #24241f; }
+  :root { --paper: #161614; --sheet: #1d1d1a; --ink: #ecebe5; --ink-2: #c4c3ba; --ink-3: #a3a298; --rule: #3a3a35; --rule-soft: #2b2b27; --tape: #ecebe5; --tape-ink: #161614; --mark: #e2a72e; --focus: #7aa7ff; --hover: #24241f; --bad: #ef7a6c; --warn: #e2a531; }
 }
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
@@ -104,6 +104,59 @@ footer p { margin: 0 0 8px; max-width: 80ch; }
   .stage-head .tally { grid-column: 2; grid-row: auto; }
 }
 @media print { .finder, .bar nav { display: none; } }
+.open-box { padding: 12px 14px; border-bottom: 1px solid var(--rule); }
+.open-box p { margin: 0 0 8px; font-size: 15px; color: var(--ink); }
+.open-box .row { display: flex; flex-wrap: wrap; gap: 8px; }
+.open-box .hint, .open-box .reopen { font-size: 14px; color: var(--ink-2); }
+.open-box .reopen { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 8px 0 0; }
+button.btn { font: inherit; font-weight: 600; cursor: pointer; min-height: 40px; }
+body.dropping .page { outline: 3px dashed var(--ink-3); outline-offset: -8px; }
+.dash { padding: 24px 0 0; scroll-margin-top: 20px; }
+.dash-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 12px 24px; padding-bottom: 14px; border-bottom: 1px solid var(--rule); }
+.dash-head .kicker, .glance .k, .dash h3 { margin: 0; font: 600 12.5px/1.5 var(--mono); letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-3); }
+.dash-head h1 { margin: 0; font-size: 30px; line-height: 1.2; }
+.dash-head .meta { margin: 4px 0 0; color: var(--ink-2); font-size: 15px; }
+.dash-head .row { display: flex; flex-wrap: wrap; gap: 8px; }
+.glance { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 18px 0 0; border: 1px solid var(--ink); background: var(--sheet); }
+.glance div { padding: 12px 14px; border-left: 1px solid var(--rule); min-width: 0; }
+.glance div:first-child { border-left: 0; }
+.glance .v { margin: 0; font-size: 24px; font-weight: 700; line-height: 1.3; overflow-wrap: anywhere; }
+.glance .s { margin: 0; font-size: 14px; color: var(--ink-2); }
+.dash-cols { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 32px; margin: 26px 0 0; align-items: start; }
+.dash h2.sec { margin: 0; padding-bottom: 6px; border-bottom: 2px solid var(--ink); font-size: 20px; }
+.dash h3 { margin: 16px 0 0; }
+.dash h3.overdue { color: var(--bad); }
+.dash h3.week { color: var(--warn); }
+.needs, .soon, .recent { list-style: none; margin: 0; padding: 0; }
+.needs li { padding: 10px 0; border-bottom: 1px solid var(--rule-soft); }
+.needs .t { display: block; font: 12.5px/1.5 var(--mono); color: var(--ink-3); }
+.needs a { font-weight: 700; text-decoration: none; border-bottom: 2px solid var(--mark); }
+.needs a:hover { background: var(--hover); }
+.needs .d { display: block; font-size: 14px; color: var(--ink-2); }
+.soon li { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--rule-soft); font-size: 14.5px; }
+.soon b { font: 600 13px/1.6 var(--mono); }
+.soon .t { color: var(--ink-3); font-size: 13px; }
+.side section + section { margin-top: 26px; }
+.side p { margin: 10px 0 0; font-size: 14.5px; color: var(--ink-2); }
+.recent li { padding: 5px 0; border-bottom: 1px solid var(--rule-soft); font-size: 15px; display: flex; justify-content: space-between; gap: 8px; }
+.recent span { color: var(--ink-3); font-size: 13px; white-space: nowrap; }
+.empty { color: var(--ink-2); margin: 12px 0 0; }
+.all-tools { margin: 26px 0 0; }
+.dlg { width: min(640px, calc(100vw - 32px)); max-height: calc(100vh - 48px); padding: 20px; border: 1px solid var(--ink); border-radius: 4px; background: var(--sheet); color: var(--ink); overflow: auto; }
+.dlg::backdrop { background: rgba(20, 20, 18, 0.5); }
+.dlg h2 { margin: 0 0 8px; font-size: 20px; }
+.dlg p { margin: 0 0 10px; color: var(--ink-2); }
+.dlg fieldset, .oft-kinds { margin: 8px 0 12px; padding: 8px 12px; border: 1px solid var(--rule); }
+.dlg legend { font-weight: 600; padding: 0 4px; }
+.dlg label, .oft-kinds label { display: flex; gap: 8px; align-items: flex-start; padding: 4px 0; }
+.dlg label small, .oft-kinds small { color: var(--ink-3); }
+.dlg .acts, .oft-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; margin-top: 14px; }
+.oft-dialog { width: min(640px, calc(100vw - 32px)); max-height: calc(100vh - 48px); padding: 20px; border: 1px solid var(--ink); border-radius: 4px; background: var(--sheet); color: var(--ink); overflow: auto; }
+.oft-dialog::backdrop { background: rgba(20, 20, 18, 0.5); }
+.oft-dialog h2 { margin: 0 0 8px; font-size: 20px; }
+.oft-dialog p { margin: 0 0 10px; color: var(--ink-2); }
+.toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); max-width: calc(100vw - 32px); padding: 10px 16px; border-radius: 4px; background: var(--ink); color: var(--paper); font-size: 15px; z-index: 50; }
+@media (max-width: 860px) { .dash-cols { grid-template-columns: 1fr; } .glance { grid-template-columns: repeat(2, minmax(0, 1fr)); } .glance div:nth-child(3) { border-left: 0; } .glance div:nth-child(n+3) { border-top: 1px solid var(--rule); } }
 .skip-link { position: absolute; left: 12px; top: -80px; z-index: 1000; padding: 8px 14px; border: 2px solid var(--focus); border-radius: 6px; background: var(--sheet); color: var(--ink); font-weight: 600; text-decoration: none; }
 .skip-link:focus { top: 12px; }
 input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:focus, input[type="time"]:focus-within { outline: 2px solid var(--focus, #2f6fdb); outline-offset: 2px; }
@@ -114,7 +167,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
 <div class="page">
   <header class="bar">
     <a href="./" aria-label="Open Filmmaker Toolkit home"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/logo-dark.svg"><img src="docs/assets/logo.svg" alt="Open Filmmaker Toolkit" width="220" height="44"></picture></a>
-    <nav aria-label="On this page"><a href="#tools">Tools</a><a href="#workflows">How they connect</a><a href="#other">Other software</a><a href="#help">Help out</a><a href="https://github.com/open-filmmaker-toolkit/toolkit">GitHub</a></nav>
+    <nav aria-label="On this page"><a href="#dashboard" id="navProject" hidden>Your project</a><a href="#tools" id="navTools">Tools</a><a href="#workflows">How they connect</a><a href="#other">Other software</a><a href="#help">Help out</a><a href="https://github.com/open-filmmaker-toolkit/toolkit">GitHub</a></nav>
   </header>
 
   <main id="main">
@@ -126,9 +179,15 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       </div>
       <section class="start" aria-labelledby="start-h">
         <h2 id="start-h">Start here</h2>
+        <div class="open-box">
+          <p>Open your project file to see what needs you across the whole project.</p>
+          <p class="row"><button type="button" class="btn primary" id="openProject">Open your project file</button><a class="btn" href="samples/the-river-keeps.oft.json" download>Get the sample project</a></p>
+          <p class="hint">Or drop a <code>.oft.json</code> file on this page. It stays on your computer.</p>
+          <p class="reopen" id="reopenHome" hidden><span id="reopenText"></span> <button type="button" class="btn" id="reopenBtn">Open it</button></p>
+          <input type="file" id="projectInput" accept=".json,application/json" hidden>
+        </div>
         <ol>
-          <li><a href="samples/the-river-keeps.oft.json" download>Download the sample project</a>, a made-up documentary.</li>
-          <li>Open any tool and choose <b>Open file</b>.</li>
+          <li>The sample project is a made-up documentary. Open it here, or in any tool with <b>Open file</b>.</li>
           <li>For your own film, choose <b>New project</b> and save the file.</li>
         </ol>
         <p class="dl">Working with other people? Read <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/docs/sharing-a-project.md">working on a shared file</a>.</p>
@@ -136,6 +195,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       </section>
     </section>
 
+    <section class="dash" id="dashboard" aria-labelledby="dashTitle" hidden></section>
+    <div id="catalog">
     <div class="finder" id="finder" hidden>
       <label class="sr-only" for="q">Find a tool</label>
       <input id="q" type="search" placeholder="Find a tool: try “release” or “grant”" autocomplete="off">
@@ -169,6 +230,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       <ul class="flows"><li class="flow" data-search="pitch the film your subjects, treatment and comps fill the deck. subject tracker treatment builder comps tracker pitch deck builder"><h3>Pitch the film</h3><p class="steps"><a href="tools/subject-tracker/index.html">Subject tracker</a> <span aria-hidden="true">→</span> <a href="tools/treatment-builder/index.html">Treatment builder</a> <span aria-hidden="true">→</span> <a href="tools/comps-tracker/index.html">Comps tracker</a> <span aria-hidden="true">→</span> <a href="tools/pitch-deck/index.html">Pitch deck builder</a></p><p>Your subjects, treatment and comps fill the deck.</p></li><li class="flow" data-search="raise the money deadlines, answers and funder talks add up in the finance plan. grant calendar grant narrative library funder crm finance plan"><h3>Raise the money</h3><p class="steps"><a href="tools/grant-calendar/index.html">Grant calendar</a> <span aria-hidden="true">→</span> <a href="tools/narrative-library/index.html">Grant narrative library</a> <span aria-hidden="true">→</span> <a href="tools/funder-crm/index.html">Funder CRM</a> <span aria-hidden="true">→</span> <a href="tools/finance-plan/index.html">Finance plan</a></p><p>Deadlines, answers and funder talks add up in the finance plan.</p></li><li class="flow" data-search="budget and cash build one budget, reshape it for each funder, and see when cash runs short. budget budget converter finance plan cash flow"><h3>Budget and cash</h3><p class="steps"><a href="tools/budget/index.html">Budget</a> <span aria-hidden="true">→</span> <a href="tools/budget-converter/index.html">Budget converter</a> <span aria-hidden="true">→</span> <a href="tools/finance-plan/index.html">Finance plan</a> <span aria-hidden="true">→</span> <a href="tools/cash-flow/index.html">Cash flow</a></p><p>Build one budget, reshape it for each funder, and see when cash runs short.</p></li><li class="flow" data-search="plan the shoot scouts, interviews and shoot days feed each call sheet. location scout sheet interview prep shooting calendar call sheet release tracker"><h3>Plan the shoot</h3><p class="steps"><a href="tools/location-scout/index.html">Location scout sheet</a> <span aria-hidden="true">→</span> <a href="tools/interview-prep/index.html">Interview prep</a> <span aria-hidden="true">→</span> <a href="tools/shooting-calendar/index.html">Shooting calendar</a> <span aria-hidden="true">→</span> <a href="tools/call-sheet/index.html">Call sheet</a> <span aria-hidden="true">→</span> <a href="tools/release-tracker/index.html">Release tracker</a></p><p>Scouts, interviews and shoot days feed each call sheet.</p></li><li class="flow" data-search="hire the crew deal memo rates go into the budget, and promised credits go into the end credits. deal memos budget call sheet credits builder"><h3>Hire the crew</h3><p class="steps"><a href="tools/deal-memos/index.html">Deal memos</a> <span aria-hidden="true">→</span> <a href="tools/budget/index.html">Budget</a> <span aria-hidden="true">→</span> <a href="tools/call-sheet/index.html">Call sheet</a> <span aria-hidden="true">→</span> <a href="tools/credits-builder/index.html">Credits builder</a></p><p>Deal memo rates go into the budget, and promised credits go into the end credits.</p></li><li class="flow" data-search="ready each day each day gets its gear, certificates and permits. shooting calendar gear list coi and permit tracker call sheet"><h3>Ready each day</h3><p class="steps"><a href="tools/shooting-calendar/index.html">Shooting calendar</a> <span aria-hidden="true">→</span> <a href="tools/gear-list/index.html">Gear list</a> <span aria-hidden="true">→</span> <a href="tools/coi-permit-tracker/index.html">COI and permit tracker</a> <span aria-hidden="true">→</span> <a href="tools/call-sheet/index.html">Call sheet</a></p><p>Each day gets its gear, certificates and permits.</p></li><li class="flow" data-search="travel safely each trip gets a travel sheet, risk plan and security checklist. shooting calendar travel sheet risk and hostile-environment plans security checklist"><h3>Travel safely</h3><p class="steps"><a href="tools/shooting-calendar/index.html">Shooting calendar</a> <span aria-hidden="true">→</span> <a href="tools/travel-sheet/index.html">Travel sheet</a> <span aria-hidden="true">→</span> <a href="tools/risk-plan/index.html">Risk and hostile-environment plans</a> <span aria-hidden="true">→</span> <a href="tools/security-checklist/index.html">Security checklist</a></p><p>Each trip gets a travel sheet, risk plan and security checklist.</p></li><li class="flow" data-search="from shoot to edit logged cards and transcripts become a paper edit. camera and sound reports footage log interview log paper edit"><h3>From shoot to edit</h3><p class="steps"><a href="tools/camera-sound-reports/index.html">Camera and sound reports</a> <span aria-hidden="true">→</span> <a href="tools/footage-log/index.html">Footage log</a> <span aria-hidden="true">→</span> <a href="tools/interview-log/index.html">Interview log</a> <span aria-hidden="true">→</span> <a href="tools/paper-edit/index.html">Paper edit</a></p><p>Logged cards and transcripts become a paper edit.</p></li><li class="flow" data-search="edit to lock bites become scenes, notes attach to them, and the locked cut feeds the clearances. paper edit structure board cut version tracker clearance log music cue sheet"><h3>Edit to lock</h3><p class="steps"><a href="tools/paper-edit/index.html">Paper edit</a> <span aria-hidden="true">→</span> <a href="tools/structure-board/index.html">Structure board</a> <span aria-hidden="true">→</span> <a href="tools/cut-tracker/index.html">Cut version tracker</a> <span aria-hidden="true">→</span> <a href="tools/clearance-log/index.html">Clearance log</a> <span aria-hidden="true">→</span> <a href="tools/music-cue-sheet/index.html">Music cue sheet</a></p><p>Bites become scenes, notes attach to them, and the locked cut feeds the clearances.</p></li><li class="flow" data-search="track the spending log spending and see which lines run over. budget expense log budget-to-actuals"><h3>Track the spending</h3><p class="steps"><a href="tools/budget/index.html">Budget</a> <span aria-hidden="true">→</span> <a href="tools/expense-log/index.html">Expense log</a> <span aria-hidden="true">→</span> <a href="tools/budget-to-actuals/index.html">Budget-to-actuals</a></p><p>Log spending and see which lines run over.</p></li><li class="flow" data-search="clear the film archival leads become clearances, cue sheet entries and credits. research and archival log clearance log music cue sheet credits builder"><h3>Clear the film</h3><p class="steps"><a href="tools/research-log/index.html">Research and archival log</a> <span aria-hidden="true">→</span> <a href="tools/clearance-log/index.html">Clearance log</a> <span aria-hidden="true">→</span> <a href="tools/music-cue-sheet/index.html">Music cue sheet</a> <span aria-hidden="true">→</span> <a href="tools/credits-builder/index.html">Credits builder</a></p><p>Archival leads become clearances, cue sheet entries and credits.</p></li><li class="flow" data-search="ready for e&amp;o and delivery license, write up fair use, annotate the script and build the binder. clearance log license tracker fair use log annotated-transcript clearance report chain-of-title binder"><h3>Ready for E&amp;O and delivery</h3><p class="steps"><a href="tools/clearance-log/index.html">Clearance log</a> <span aria-hidden="true">→</span> <a href="tools/license-tracker/index.html">License tracker</a> <span aria-hidden="true">→</span> <a href="tools/fair-use-log/index.html">Fair use log</a> <span aria-hidden="true">→</span> <a href="tools/clearance-report/index.html">Annotated-transcript clearance report</a> <span aria-hidden="true">→</span> <a href="tools/chain-of-title/index.html">Chain-of-title binder</a></p><p>License, write up fair use, annotate the script and build the binder.</p></li><li class="flow" data-search="plan the festival run pick festivals that protect your premiere, track each entry, and plan the posts and awards around them. festival strategy map festival submission tracker awards and social calendars"><h3>Plan the festival run</h3><p class="steps"><a href="tools/festival-strategy/index.html">Festival strategy map</a> <span aria-hidden="true">→</span> <a href="tools/festival-submissions/index.html">Festival submission tracker</a> <span aria-hidden="true">→</span> <a href="tools/awards-social/index.html">Awards and social calendars</a></p><p>Pick festivals that protect your premiere, track each entry, and plan the posts and awards around them.</p></li><li class="flow" data-search="get the word out approved stills go into the press notes, the press notes go to press, and hosts get a kit. stills library epk and press notes builder press list screening kit builder"><h3>Get the word out</h3><p class="steps"><a href="tools/stills-library/index.html">Stills library</a> <span aria-hidden="true">→</span> <a href="tools/press-notes/index.html">EPK and press notes builder</a> <span aria-hidden="true">→</span> <a href="tools/press-list/index.html">Press list</a> <span aria-hidden="true">→</span> <a href="tools/screening-kit/index.html">Screening kit builder</a></p><p>Approved stills go into the press notes, the press notes go to press, and hosts get a kit.</p></li><li class="flow" data-search="sell and deliver track the rights you&#x27;ve sold, then deliver the masters, a clean qc and the paperwork. rights availability matrix deliverables checklist qc tracker chain-of-title binder"><h3>Sell and deliver</h3><p class="steps"><a href="tools/rights-matrix/index.html">Rights availability matrix</a> <span aria-hidden="true">→</span> <a href="tools/deliverables/index.html">Deliverables checklist</a> <span aria-hidden="true">→</span> <a href="tools/qc-tracker/index.html">QC tracker</a> <span aria-hidden="true">→</span> <a href="tools/chain-of-title/index.html">Chain-of-title binder</a></p><p>Track the rights you&#x27;ve sold, then deliver the masters, a clean QC and the paperwork.</p></li><li class="flow" data-search="follow the money statements from each deal add up, and the waterfall shows who gets paid. rights availability matrix revenue tracker recoupment waterfall model educational and theatrical booking trackers"><h3>Follow the money</h3><p class="steps"><a href="tools/rights-matrix/index.html">Rights availability matrix</a> <span aria-hidden="true">→</span> <a href="tools/revenue-tracker/index.html">Revenue tracker</a> <span aria-hidden="true">→</span> <a href="tools/waterfall/index.html">Recoupment waterfall model</a> <span aria-hidden="true">→</span> <a href="tools/bookings/index.html">Educational and theatrical booking trackers</a></p><p>Statements from each deal add up, and the waterfall shows who gets paid.</p></li><li class="flow" data-search="run the impact campaign plan the change, equip hosts, book screenings, and report what happened. theory of change builder partner crm screening kit builder educational and theatrical booking trackers impact report"><h3>Run the impact campaign</h3><p class="steps"><a href="tools/theory-of-change/index.html">Theory of change builder</a> <span aria-hidden="true">→</span> <a href="tools/partner-crm/index.html">Partner CRM</a> <span aria-hidden="true">→</span> <a href="tools/screening-kit/index.html">Screening kit builder</a> <span aria-hidden="true">→</span> <a href="tools/bookings/index.html">Educational and theatrical booking trackers</a> <span aria-hidden="true">→</span> <a href="tools/impact-report/index.html">Impact report</a></p><p>Plan the change, equip hosts, book screenings, and report what happened.</p></li><li class="flow" data-search="close it out close the budget, report to each funder, and file every contract and copy. budget-to-actuals final cost report grant final reports contract and release archive archive log"><h3>Close it out</h3><p class="steps"><a href="tools/budget-to-actuals/index.html">Budget-to-actuals</a> <span aria-hidden="true">→</span> <a href="tools/final-cost-report/index.html">Final cost report</a> <span aria-hidden="true">→</span> <a href="tools/grant-reports/index.html">Grant final reports</a> <span aria-hidden="true">→</span> <a href="tools/contract-archive/index.html">Contract and release archive</a> <span aria-hidden="true">→</span> <a href="tools/archive-log/index.html">Archive log</a></p><p>Close the budget, report to each funder, and file every contract and copy.</p></li><li class="flow" data-search="get the names right enter a name once, and it&#x27;s spelled the same everywhere. subject tracker name supers list credits builder"><h3>Get the names right</h3><p class="steps"><a href="tools/subject-tracker/index.html">Subject tracker</a> <span aria-hidden="true">→</span> <a href="tools/name-supers/index.html">Name supers list</a> <span aria-hidden="true">→</span> <a href="tools/credits-builder/index.html">Credits builder</a></p><p>Enter a name once, and it&#x27;s spelled the same everywhere.</p></li></ul>
     </section>
 
+    </div>
     <div class="cols" data-block>
       <section aria-labelledby="other-h" id="other">
         <h2 id="other-h">Other free software we like</h2>
@@ -193,6 +255,19 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     <p>Code is <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/LICENSE">GPL-3.0-or-later</a>, and templates and guides are <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/LICENSES/CC-BY-SA-4.0.txt">CC BY-SA 4.0</a>. Made by Basil Shadid, Alex Perrault and <a href="https://github.com/open-filmmaker-toolkit/toolkit/graphs/contributors">contributors</a>. The <a href="https://github.com/open-filmmaker-toolkit/toolkit">source is on GitHub</a>.</p>
   </footer>
 </div>
+<p class="toast" id="toast" role="status" hidden></p>
+<dialog class="dlg" id="summaryDialog" aria-labelledby="summaryTitle"><form method="dialog" id="summaryForm">
+  <h2 id="summaryTitle">Share a summary</h2>
+  <p>Make a read-only page of parts of the project, for a funder, a lawyer or a distributor, without sending the whole file. The page works offline and makes no network requests.</p>
+  <fieldset id="summaryParts"><legend>Parts to include</legend></fieldset>
+  <fieldset><legend>Private details</legend>
+    <label><input type="checkbox" name="private" value="contacts"> <span>Contact details</span></label>
+    <label><input type="checkbox" name="private" value="notes"> <span>Notes</span></label>
+    <label><input type="checkbox" name="private" value="fees"> <span>Fees and costs on each record</span></label>
+  </fieldset>
+  <p id="summaryNote" aria-live="polite"></p>
+  <div class="acts"><button type="button" class="btn" id="summaryCancel">Cancel</button><button type="button" class="btn" id="summaryPrint">Print or save as PDF</button><button type="submit" class="btn primary">Download the page</button></div>
+</form></dialog>
 <script>
 (() => {
   'use strict';
@@ -215,6 +290,483 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     document.getElementById('noMatch').hidden = !words.length || shown > 0;
   }
   q.addEventListener('input', filter);
+})();
+</script>
+<script>
+(() => {
+  'use strict';
+  /* oft-shared:project begin. Copied from shared/project.js by .github/scripts/sync_shared.py; edit it there. */
+  // Shared by the home page and the tools: what needs you across the project,
+  // every date in it as one calendar file, and read-only summaries to share.
+  // Pure functions of the project data; nothing here reads or writes files.
+  const oftProject = (() => {
+    const arr = v => (Array.isArray(v) ? v : []);
+    const str = v => (v == null ? '' : String(v));
+    const isDay = v => /^\d{4}-\d{2}-\d{2}$/.test(str(v));
+    const num = v => (v == null || v === '' || !isFinite(Number(v)) ? 0 : Number(v));
+    const same = (a, b) => !!str(a).trim() && str(a).trim().toLowerCase() === str(b).trim().toLowerCase();
+    const esc = s => str(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+    function today() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+    function addDays(iso, n) { const [y, m, d] = iso.split('-').map(Number); const t = new Date(Date.UTC(y, m - 1, d + n)); return t.toISOString().slice(0, 10); }
+    function fmt(iso) { if (!isDay(iso)) return str(iso); const [y, m, d] = iso.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString(undefined, { timeZone: 'UTC', month: 'short', day: 'numeric', year: iso.slice(0, 4) === today().slice(0, 4) ? undefined : 'numeric' }); }
+    function money(n, cur) { try { return Number(n).toLocaleString(undefined, { style: 'currency', currency: cur || 'USD', maximumFractionDigits: Number(n) % 1 ? 2 : 0 }); } catch { return `${cur || ''} ${Number(n).toLocaleString()}`.trim(); } }
+
+    const TOOLS = {
+      'release-tracker': 'Release tracker', 'festival-strategy': 'Festival strategy map', 'festival-submissions': 'Festival submission tracker', 'qc-tracker': 'QC tracker',
+      'contract-archive': 'Contract and release archive', bookings: 'Booking trackers', 'grant-reports': 'Grant final reports', 'grant-calendar': 'Grant calendar',
+      'coi-permit-tracker': 'COI and permit tracker', 'license-tracker': 'License tracker', deliverables: 'Deliverables checklist', 'funder-crm': 'Funder CRM',
+      'partner-crm': 'Partner CRM', 'subject-tracker': 'Subject tracker', 'rights-matrix': 'Rights availability matrix', 'name-supers': 'Name supers list',
+      'awards-social': 'Awards and social calendars', 'shooting-calendar': 'Shooting calendar', 'call-sheet': 'Call sheet', 'travel-sheet': 'Travel sheet',
+      'location-scout': 'Location scout sheet', 'interview-prep': 'Interview prep', 'finance-plan': 'Finance plan', 'cut-tracker': 'Cut version tracker',
+      'press-list': 'Press list', 'revenue-tracker': 'Revenue tracker', 'impact-report': 'Impact report', 'clearance-log': 'Clearance log', budget: 'Budget',
+      'final-cost-report': 'Final cost report', 'deal-memos': 'Deal memos', 'risk-plan': 'Risk plans', 'theory-of-change': 'Theory of change builder',
+    };
+
+    // ---------- What needs you ----------
+    // Each rule is the same one the tool itself uses to flag a record.
+    function flags(d, asOf) {
+      const t = asOf || today(), out = [];
+      const add = (slug, id, title, date, detail, level) => out.push({ slug, tool: TOOLS[slug], id, title, date: date || '', detail: detail || '', level: level || (date ? (date < t ? 'overdue' : date <= addDays(t, 7) ? 'week' : 'soon') : 'fix') });
+      const contracts = arr(d.contracts).filter(c => c && typeof c === 'object');
+      const people = arr(d.people).filter(Boolean), locations = arr(d.locations).filter(Boolean);
+      const roleOf = p => (Array.isArray(p.roles) ? p.roles.join(', ') : str(p.roles));
+
+      // Release tracker: anyone or anywhere on camera without a signed release
+      const isRelease = c => /release/i.test(str(c.type)) && !/material/i.test(str(c.type));
+      const stateOf = c => c.status === 'signed' ? (isDay(c.expirationDate) && c.expirationDate < t ? 'expired' : 'signed') : (c.status === 'pending' || c.status === 'declined') ? c.status : c.status ? 'other' : 'pending';
+      const RANK = { signed: 0, pending: 1, expired: 2, declined: 3, other: 4 };
+      const releasesFor = (field, id) => contracts.filter(c => isRelease(c) && arr(c[field]).includes(id));
+      const coverage = (field, id) => { const l = releasesFor(field, id).sort((a, b) => RANK[stateOf(a)] - RANK[stateOf(b)] || str(b.signedDate).localeCompare(str(a.signedDate))); return l.length ? stateOf(l[0]) : 'missing'; };
+      const onSheets = new Set(arr(d.callSheets).map(s => s && s.locationId).filter(Boolean));
+      const filmed = [
+        ...people.filter(p => p.onCamera === true || (p.onCamera !== false && releasesFor('personIds', p.id).length)).map(p => ['personIds', p]),
+        ...locations.filter(l => l.onCamera === true || (l.onCamera !== false && (onSheets.has(l.id) || releasesFor('locationIds', l.id).length))).map(l => ['locationIds', l]),
+      ];
+      for (const [field, x] of filmed) {
+        const s = coverage(field, x.id);
+        if (s === 'missing') add('release-tracker', x.id, `${x.name || 'Someone'} is on camera with no release`);
+        else if (s === 'declined') add('release-tracker', x.id, `${x.name || 'Someone'} declined the release`, '', "Don't use the footage");
+        else if (s === 'expired') add('release-tracker', x.id, `The release for ${x.name || 'someone'} has expired`);
+      }
+
+      // Festival strategy map: an earlier festival that ends a premiere
+      const fs = d.festivalStrategy || {}, fests = arr(d.festivals).filter(Boolean);
+      const firstDay = f => [f.startDate, ...arr(f.screenings).map(s => s && s.date)].filter(isDay).sort()[0] || '';
+      const breaks = (e, f) => { const p = f.premiere; if (p === 'world') return true; if (p === 'international') return !!str(e.country).trim() && !!str(fs.homeCountry).trim() && !same(e.country, fs.homeCountry); if (p === 'regional') return same(e.region, f.region); if (p === 'national') return same(e.country, f.country); if (p === 'city') return same(e.city, f.city); return false; };
+      const live = fests.filter(f => f.status !== 'declined' && firstDay(f));
+      for (const f of live) {
+        if (!f.premiere || f.premiere === 'none') continue;
+        for (const e of live) if (e !== f && firstDay(e) < firstDay(f) && breaks(e, f)) add('festival-strategy', f.id, e.status === 'accepted' ? `${e.name || 'An earlier festival'} ends your premiere at ${f.name || 'a later festival'}` : `${e.name || 'An earlier festival'} could cost your premiere at ${f.name || 'a later festival'}`, '', `${f.name || 'It'} starts ${fmt(firstDay(f))}`);
+      }
+      // Festival submission tracker: entry deadlines
+      for (const f of fests) if (f.status === 'planned' && isDay(f.deadline) && f.deadline <= addDays(t, 60)) add('festival-submissions', f.id, f.deadline < t ? `The deadline for ${f.name || 'a festival'} passed` : `Submit to ${f.name || 'a festival'}`, f.deadline);
+
+      // QC tracker: open fixes
+      for (const r of arr((d.qc || {}).reports)) for (const i of arr(r && r.issues)) if (i && (!i.fix || i.fix === 'open' || i.fix === 'disputed')) add('qc-tracker', i.id, `${i.description || 'A QC issue'}${i.tc ? ` at ${i.tc}` : ''}`, '', `${i.fix === 'disputed' ? 'Disputed' : 'Open'}${i.owner ? `. For the ${i.owner}` : ''}`);
+
+      // Contract and release archive: signed with no copy linked
+      const assets = new Map(arr(d.assets).filter(Boolean).map(a => [a.id, a]));
+      const noCopy = contracts.filter(c => ['signed', 'received', 'issued'].includes(c.status) && !arr(c.assetIds).map(id => assets.get(id)).some(a => a && (str(a.relativePath).trim() || /^data:/.test(str(a.data)))));
+      if (noCopy.length) add('contract-archive', noCopy[0].id, `${noCopy.length} signed agreement${noCopy.length === 1 ? ' has' : 's have'} no copy linked`);
+
+      // Booking trackers: invoices over 30 days old
+      for (const b of arr(d.bookings).filter(Boolean)) if (b.payment === 'invoiced' && isDay(b.invoicedDate) && addDays(b.invoicedDate, 30) < t) add('bookings', b.id, `${b.venue || 'A booking'} hasn't paid`, addDays(b.invoicedDate, 30), `${b.fee ? `${money(b.fee, (d.project || {}).currency)} ` : ''}invoiced ${fmt(b.invoicedDate)}`);
+
+      // Grant final reports and the grant calendar
+      const grants = arr(d.grants).filter(Boolean);
+      for (const r of arr(d.grantReports).filter(Boolean)) {
+        const g = grants.find(x => x.id === r.grantId);
+        if (g && g.status === 'awarded' && r.status !== 'submitted' && isDay(r.dueDate) && r.dueDate <= addDays(t, 60)) add('grant-reports', g.id, `${g.funder || g.name || 'Grant'} final report`, r.dueDate);
+      }
+      for (const g of grants) if (['researching', 'drafting'].includes(g.status) && isDay(g.deadline) && g.deadline >= t && g.deadline <= addDays(t, 60)) add('grant-calendar', g.id, `Apply to ${g.name || g.funder || 'a grant'}`, g.deadline);
+
+      // COI and permit tracker, license tracker, rights matrix
+      for (const c of contracts) {
+        if ((c.type === 'certificate of insurance' || c.type === 'permit') && ['received', 'issued'].includes(c.status) && isDay(c.expirationDate) && c.expirationDate <= addDays(t, 30)) add('coi-permit-tracker', c.id, `${c.title || (c.type === 'permit' ? 'A permit' : 'A certificate')} ${c.expirationDate < t ? 'has expired' : 'expires'}`, c.expirationDate);
+        if (c.type === 'license') {
+          if (isDay(c.expirationDate) && c.expirationDate <= addDays(t, 90)) add('license-tracker', c.id, `${c.title || 'A license'} ${c.expirationDate < t ? 'has expired' : 'expires'}`, c.expirationDate);
+          for (const o of arr(c.options)) if (o && !o.exercised && isDay(o.deadline) && o.deadline <= addDays(t, 60)) add('license-tracker', c.id, `${o.deadline < t ? 'Option lapsed' : 'Exercise the option'}: ${o.what || c.title || 'option'}`, o.deadline);
+          for (const p of arr(c.payments)) if (p && !p.paid && isDay(p.due) && p.due <= addDays(t, 30)) add('license-tracker', c.id, `Pay ${money(num(p.amount), (d.project || {}).currency)} for ${c.title || 'a license'}`, p.due);
+        }
+        if (c.type === 'distribution' && c.status === 'signed' && isDay(c.expirationDate) && c.expirationDate >= t && c.expirationDate <= addDays(t, 183)) add('rights-matrix', c.id, `Rights from ${c.licensee || c.title || 'a deal'} revert`, c.expirationDate, arr(c.territories).join(', '));
+      }
+
+      // Deliverables checklist
+      const del = d.deliverables || {};
+      for (const i of deliverables(d)) {
+        const due = isDay(i.due) ? i.due : isDay(del.dueDate) ? del.dueDate : '';
+        if (!['delivered', 'accepted', 'na'].includes(i.status) && due && due <= addDays(t, 14)) add('deliverables', i.id, `Deliver ${i.title || i.key || 'an item'}`, due, i.owner || '');
+      }
+
+      // Funder CRM and partner CRM next steps, subject tracker follow-ups
+      for (const f of arr(d.funders).filter(Boolean)) for (const s of arr(f.nextSteps)) if (s && !s.done && isDay(s.due) && s.due <= addDays(t, 7)) add('funder-crm', f.id, `${s.text || 'Next step'} (${f.name || 'funder'})`, s.due);
+      for (const p of arr(d.partners).filter(Boolean)) for (const s of arr(p.commitments)) if (s && !s.done && isDay(s.due) && s.due <= addDays(t, 7)) add('partner-crm', p.id, `${s.text || 'Commitment'} (${p.name || 'partner'})`, s.due);
+      for (const s of arr(d.subjects).filter(Boolean)) if (isDay(s.nextFollowUp) && s.status !== 'declined' && s.nextFollowUp <= addDays(t, 7)) add('subject-tracker', s.id, `Follow up with ${s.name || 'a subject'}`, s.nextFollowUp);
+
+      // Name supers list: people on camera with no super
+      const supers = arr((d.supers || {}).entries).filter(Boolean);
+      const onCam = p => p.onCamera === true || (p.onCamera !== false && /subject|interview|featur|contributor/i.test(roleOf(p)));
+      for (const p of people) if (onCam(p) && str(p.name).trim() && !supers.some(e => e.personId === p.id)) add('name-supers', p.id, `${p.name} is on camera with no super`);
+
+      // Awards: entry deadlines
+      for (const a of arr(d.awards).filter(Boolean)) if (!['entered', 'declined', 'skipped'].includes(a.status) && isDay(a.deadline) && a.deadline >= t && a.deadline <= addDays(t, 60)) add('awards-social', a.id, `Enter ${a.name || 'an award'}`, a.deadline);
+
+      const ORDER = { overdue: 0, week: 1, fix: 2, soon: 3 };
+      return out.sort((a, b) => ORDER[a.level] - ORDER[b.level] || (a.date || '9999').localeCompare(b.date || '9999') || a.title.localeCompare(b.title));
+    }
+
+    // The deliverables checklist's usual list, merged with the items the project changed or added.
+    const BUILT = { dcp: 'Digital cinema package (DCP)', master: 'Master with titles (ProRes)', textless: 'Textless master and textless elements', hd: 'Broadcast master', trailer: 'Trailer', mix51: '5.1 mix', stereo: 'Stereo mix', me: 'Music and effects (M&E) mix', stems: 'Dialogue, music and effects stems', cc: 'Closed captions', sdh: 'Subtitles for the deaf and hard of hearing (SDH)', dcl: 'Dialogue and continuity list', subs: 'Subtitles in other languages', keyart: 'Key art', stills: 'Production stills', epk: 'Press notes and EPK', chain: 'Chain-of-title documents', eo: 'Errors and omissions (E&O) insurance certificate', cue: 'Music cue sheet', credits: 'Final credits list', licenses: 'Music and archival licenses', releases: 'Appearance and location releases', qc: 'Quality control (QC) report' };
+    function deliverables(d) {
+      const saved = arr((d.deliverables || {}).items).filter(x => x && (x.key || x.id));
+      return Object.entries(BUILT).map(([key, title]) => Object.assign({ id: `deliverable-${key}`, key, title, status: 'todo' }, saved.find(s => s.key === key) || {}, { title: (saved.find(s => s.key === key) || {}).title || title }))
+        .concat(saved.filter(s => !s.key || !BUILT[s.key]));
+    }
+
+    // ---------- At a glance ----------
+    function glance(d) {
+      const cur = (d.project || {}).currency || 'USD';
+      const statements = arr(d.revenueStatements).filter(Boolean);
+      const net = s => (s.net != null && s.net !== '' ? num(s.net) : num(s.gross) - num(s.fees) - num(s.expenses));
+      const due = statements.reduce((a, s) => a + net(s), 0), paid = statements.filter(s => isDay(s.paidDate)).reduce((a, s) => a + net(s), 0);
+      const toc = d.theoryOfChange || {}, results = (d.impactReport || {}).results || {};
+      const ind = arr(toc.indicators).find(i => i && num(i.target) > 0 && results[i.id] && results[i.id].value != null) || arr(toc.indicators).find(i => i && num(i.target) > 0);
+      return {
+        revenue: statements.length ? { due: money(due, cur), paid: money(paid, cur), allPaid: Math.abs(due - paid) < 0.005 } : null,
+        impact: ind ? { value: num((results[ind.id] || {}).value), target: num(ind.target), unit: ind.unit || '', text: ind.text || '' } : null,
+      };
+    }
+
+    // ---------- Every date ----------
+    const KINDS = [
+      ['grants', 'Grant deadlines and reports'], ['shoot', 'Shoot days, scouts, interviews and travel'], ['paperwork', 'Certificates, permits, licenses and payments'],
+      ['festivals', 'Festivals and awards'], ['release', 'Screenings, bookings and posts'], ['delivery', 'Delivery and QC'],
+      ['contacts', 'Follow-ups and next steps'], ['money', 'Money coming in'],
+    ];
+    function dates(d) {
+      const out = [];
+      const add = (kind, slug, id, field, date, title, end) => { if (isDay(date)) out.push({ kind, slug, tool: TOOLS[slug], id, uid: `${id}-${field}`, date, end: isDay(end) && end > date ? end : '', title }); };
+      for (const g of arr(d.grants).filter(Boolean)) { add('grants', 'grant-calendar', g.id, 'deadline', g.deadline, `Deadline: ${g.name || g.funder || 'grant'}`); add('grants', 'grant-calendar', g.id, 'decision', g.decisionOn, `Decision expected: ${g.name || g.funder || 'grant'}`); }
+      for (const r of arr(d.grantReports).filter(Boolean)) { const g = arr(d.grants).find(x => x && x.id === r.grantId) || {}; add('grants', 'grant-reports', r.id, 'due', r.dueDate, `Final report due: ${g.funder || g.name || 'grant'}`); }
+      for (const s of arr(d.shootDays).filter(Boolean)) add('shoot', 'shooting-calendar', s.id, 'date', s.date, `${s.kind === 'travel' ? 'Travel day' : s.kind === 'hold' ? 'Hold' : 'Shoot day'}${s.title || s.label ? `: ${s.title || s.label}` : ''}`);
+      const shootDates = new Set(arr(d.shootDays).map(s => s && s.date));
+      for (const c of arr(d.callSheets).filter(Boolean)) if (!shootDates.has(c.date)) add('shoot', 'call-sheet', c.id, 'date', c.date, `Call sheet${c.title ? `: ${c.title}` : ''}`);
+      for (const s of arr(d.scouts).filter(Boolean)) { const l = arr(d.locations).find(x => x && x.id === s.locationId); add('shoot', 'location-scout', s.id, 'date', s.date, `Scout${l ? `: ${l.name}` : ''}`); }
+      for (const i of arr(d.interviews).filter(Boolean)) { const p = arr(d.people).find(x => x && x.id === i.personId); add('shoot', 'interview-prep', i.id, 'date', i.date, `Interview${p ? `: ${p.name}` : i.title ? `: ${i.title}` : ''}`); }
+      for (const t of arr(d.trips).filter(Boolean)) add('shoot', 'travel-sheet', t.id, 'trip', t.startDate, `Trip${t.name ? `: ${t.name}` : t.destination ? ` to ${t.destination}` : ''}`, t.endDate);
+      for (const c of arr(d.contracts).filter(Boolean)) {
+        const name = c.title || c.type || 'Agreement';
+        if (c.type === 'certificate of insurance' || c.type === 'permit') add('paperwork', 'coi-permit-tracker', c.id, 'expires', c.expirationDate, `Expires: ${name}`);
+        else if (c.type === 'license') {
+          add('paperwork', 'license-tracker', c.id, 'expires', c.expirationDate, `License expires: ${name}`);
+          arr(c.options).forEach((o, i) => o && !o.exercised && add('paperwork', 'license-tracker', c.id, `option-${o.id || i}`, o.deadline, `Option deadline: ${o.what || name}`));
+          arr(c.payments).forEach((p, i) => p && !p.paid && add('paperwork', 'license-tracker', c.id, `payment-${p.id || i}`, p.due, `Payment due: ${name}`));
+        } else if (c.type === 'distribution') add('paperwork', 'rights-matrix', c.id, 'expires', c.expirationDate, `Rights revert: ${c.licensee || name}`);
+      }
+      for (const f of arr(d.festivals).filter(Boolean)) {
+        if (f.status === 'planned') add('festivals', 'festival-submissions', f.id, 'deadline', f.deadline, `Entry deadline: ${f.name || 'festival'}`);
+        if (f.status !== 'declined') { add('festivals', 'festival-submissions', f.id, 'notify', f.notifyDate, `Decision: ${f.name || 'festival'}`); add('festivals', 'festival-submissions', f.id, 'festival', f.startDate, f.name || 'Festival', f.endDate); }
+        arr(f.screenings).forEach((s, i) => s && add('festivals', 'festival-submissions', f.id, `screening-${s.id || i}`, s.date, `Screening at ${f.name || 'a festival'}`));
+      }
+      for (const a of arr(d.awards).filter(Boolean)) { add('festivals', 'awards-social', a.id, 'deadline', a.deadline, `Award entry deadline: ${a.name || 'award'}`); add('festivals', 'awards-social', a.id, 'nominations', a.nominationsDate, `Nominations: ${a.name || 'award'}`); add('festivals', 'awards-social', a.id, 'ceremony', a.ceremonyDate, `Ceremony: ${a.name || 'award'}`); }
+      for (const s of arr(d.screenings).filter(Boolean)) add('release', 'press-list', s.id, 'date', s.date, s.title || s.name || 'Screening');
+      for (const b of arr(d.bookings).filter(Boolean)) if (b.status !== 'declined' && b.status !== 'cancelled') add('release', 'bookings', b.id, 'start', b.startDate, `${b.kind === 'educational' ? 'License starts' : 'Booking'}: ${b.venue || 'venue'}`, b.kind === 'educational' ? '' : b.endDate);
+      for (const p of arr(d.socialPosts).filter(Boolean)) add('release', 'awards-social', p.id, 'date', p.date, `Post${p.platform ? ` on ${p.platform}` : ''}${p.text ? `: ${str(p.text).slice(0, 60)}` : ''}`);
+      const del = d.deliverables || {};
+      add('delivery', 'deliverables', 'deliverables', 'due', del.dueDate, `Delivery due${del.deliverTo ? `: ${del.deliverTo}` : ''}`);
+      for (const i of deliverables(d)) if (!['delivered', 'accepted', 'na'].includes(i.status) && isDay(i.due) && i.due !== del.dueDate) add('delivery', 'deliverables', i.id, 'due', i.due, `Deliver: ${i.title}`);
+      for (const c of arr(d.cuts).filter(Boolean)) arr(c.screenings).forEach((s, i) => s && add('delivery', 'cut-tracker', c.id, `screening-${s.id || i}`, s.date, `Feedback screening: ${c.name || c.title || 'cut'}`));
+      for (const f of arr(d.funders).filter(Boolean)) arr(f.nextSteps).forEach((s, i) => s && !s.done && add('contacts', 'funder-crm', f.id, `step-${s.id || i}`, s.due, `${s.text || 'Next step'} (${f.name || 'funder'})`));
+      for (const p of arr(d.partners).filter(Boolean)) arr(p.commitments).forEach((s, i) => s && !s.done && add('contacts', 'partner-crm', p.id, `step-${s.id || i}`, s.due, `${s.text || 'Commitment'} (${p.name || 'partner'})`));
+      for (const s of arr(d.subjects).filter(Boolean)) if (s.status !== 'declined') add('contacts', 'subject-tracker', s.id, 'followup', s.nextFollowUp, `Follow up with ${s.name || 'a subject'}`);
+      for (const s of arr((d.financePlan || {}).sources).filter(Boolean)) {
+        const g = arr(d.grants).find(x => x && x.id === s.grantId);
+        arr(s.payments).forEach((p, i) => p && add('money', 'finance-plan', s.id, `payment-${i}`, p.date, `Expected: ${money(num(p.amount), (d.project || {}).currency)} from ${s.name || (g && (g.funder || g.name)) || 'a source'}`));
+      }
+      return out.sort((a, b) => a.date.localeCompare(b.date) || a.title.localeCompare(b.title));
+    }
+    function ics(d, kinds) {
+      const keep = new Set(kinds || KINDS.map(k => k[0]));
+      const text = s => str(s).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
+      const fold = line => { const out = []; let cur = ''; for (const ch of line) { if (new TextEncoder().encode(cur + ch).length > 74) { out.push(cur); cur = ' ' + ch; } else cur += ch; } out.push(cur); return out.join('\r\n'); };
+      const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
+      const title = (d.project || {}).title || 'Film project';
+      const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Open Filmmaker Toolkit//Project dates//EN', 'CALSCALE:GREGORIAN', `X-WR-CALNAME:${text(title)}`];
+      const events = dates(d).filter(e => keep.has(e.kind));
+      for (const e of events) {
+        const end = addDays(e.end || e.date, 1).replace(/-/g, '');
+        lines.push('BEGIN:VEVENT', `UID:${text(e.uid)}@open-filmmaker-toolkit`, `DTSTAMP:${stamp}`, `DTSTART;VALUE=DATE:${e.date.replace(/-/g, '')}`, `DTEND;VALUE=DATE:${end}`, `SUMMARY:${text(`${e.title} (${title})`)}`, `DESCRIPTION:${text(`From the ${e.tool}`)}`, 'TRANSP:TRANSPARENT', 'END:VEVENT');
+      }
+      lines.push('END:VCALENDAR');
+      return { text: lines.map(fold).join('\r\n') + '\r\n', count: events.length };
+    }
+
+    // ---------- Read-only summaries ----------
+    const PARTS = [
+      ['clearances', 'Clearance status', 'Every third-party element and its license status, for an E&O lawyer'],
+      ['releases', 'Releases', 'Who and where is on camera, and whether each has a signed release'],
+      ['budget', 'Budget and costs', 'The budget by account, and what has been spent against it'],
+      ['finance', 'Finance plan', 'Where the money is coming from'],
+      ['schedule', 'Shoot days', 'The shooting schedule'],
+      ['festivals', 'Festival plan', 'Festivals, dates and status'],
+      ['delivery', 'Deliverables', 'What is due to whom, and what is done'],
+      ['impact', 'Impact', 'Results against the campaign\'s targets'],
+    ];
+    const CONTACT = ['email', 'phone', 'address', 'contact', 'contacts', 'website'];
+    function table(head, rows) {
+      if (!rows.length) return '<p>Nothing here yet.</p>';
+      return `<table><thead><tr>${head.map(h => `<th scope="col">${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+    }
+    function budgetRows(d) {
+      const b = d.budget || {}, fr = new Map(arr(b.fringes).filter(Boolean).map(f => [f.id, num(f.percent)]));
+      const spent = {};
+      for (const e of arr(d.expenses).filter(Boolean)) spent[e.accountId] = (spent[e.accountId] || 0) + num(e.amount);
+      let total = 0, totalSpent = 0;
+      const rows = arr(b.accounts).filter(Boolean).map(a => {
+        const sum = arr(b.lines).filter(l => l && l.accountId === a.id).reduce((s, l) => { const base = num(l.quantity) * (num(l.multiplier) || 1) * num(l.rate); return s + base + base * (fr.get(l.fringeId) || 0) / 100; }, 0);
+        total += sum; totalSpent += spent[a.id] || 0;
+        return { a, sum, spent: spent[a.id] || 0 };
+      }).filter(r => r.sum || r.spent);
+      const markups = arr(b.markups).filter(Boolean).map(m => ({ name: m.name, amount: total * num(m.percent) / 100 }));
+      return { rows, markups, total: total + markups.reduce((s, m) => s + m.amount, 0), spent: totalSpent };
+    }
+    function summary(d, parts, opts) {
+      const o = opts || {}, cur = (d.project || {}).currency || 'USD', p = d.project || {};
+      const want = new Set(parts);
+      const sections = [];
+      const note = (r, extra) => [extra, o.notes ? r.notes : ''].filter(Boolean).join('. ');
+      if (want.has('clearances')) {
+        const head = ['Element', 'Type', 'Source', 'Rights holder', 'Status', 'Rights'].concat(o.fees ? ['Cost'] : [], o.contacts ? ['Contact'] : [], o.notes ? ['Notes'] : []);
+        const rows = arr(d.thirdPartyElements).filter(Boolean).map(e => [e.description || e.name, e.type, e.source, e.rightsHolder, e.status, e.rights].concat(o.fees ? [e.cost != null && e.cost !== '' ? money(num(e.cost), cur) : ''] : [], o.contacts ? [e.contact] : [], o.notes ? [e.notes] : []));
+        sections.push(['Clearance status', table(head, rows)]);
+      }
+      if (want.has('releases')) {
+        const rel = arr(d.contracts).filter(c => c && /release/i.test(str(c.type)));
+        const who = (c) => [...arr(c.personIds).map(id => (arr(d.people).find(x => x && x.id === id) || {}).name), ...arr(c.locationIds).map(id => (arr(d.locations).find(x => x && x.id === id) || {}).name)].filter(Boolean).join(', ');
+        sections.push(['Releases', table(['Release', 'Covers', 'Type', 'Status', 'Signed'].concat(o.notes ? ['Notes'] : []), rel.map(c => [c.title, who(c), c.type, c.status, c.signedDate ? fmt(c.signedDate) : ''].concat(o.notes ? [c.notes] : [])))]);
+      }
+      if (want.has('budget')) {
+        const r = budgetRows(d);
+        const rows = r.rows.map(x => [`${x.a.code ? `${x.a.code} ` : ''}${x.a.name}`, money(x.sum, cur), money(x.spent, cur)]).concat(r.markups.map(m => [m.name, money(m.amount, cur), '']), [['Total', money(r.total, cur), money(r.spent, cur)]]);
+        sections.push(['Budget and costs', table(['Account', 'Budget', 'Spent'], rows) + ((d.finalCostReport || {}).closeDate ? `<p>Costs run to ${esc(fmt(d.finalCostReport.closeDate))}${d.finalCostReport.final ? ', final' : ''}.</p>` : '')]);
+      }
+      if (want.has('finance')) {
+        const rows = arr((d.financePlan || {}).sources).filter(Boolean).map(s => { const g = arr(d.grants).find(x => x && x.id === s.grantId) || {}; return [s.name || g.name || g.funder || s.kind, s.kind, s.status, money(arr(s.payments).reduce((a, x) => a + num(x && x.amount), 0), cur)].concat(o.notes ? [s.notes] : []); });
+        sections.push(['Finance plan', table(['Source', 'Kind', 'Status', 'Amount'].concat(o.notes ? ['Notes'] : []), rows)]);
+      }
+      if (want.has('schedule')) {
+        const rows = arr(d.shootDays).filter(Boolean).sort((a, b) => str(a.date).localeCompare(str(b.date))).map(s => [fmt(s.date), s.kind || 'shoot', s.title || s.label || '', arr(s.locationIds || (s.locationId ? [s.locationId] : [])).map(id => (arr(d.locations).find(x => x && x.id === id) || {}).name).filter(Boolean).join(', ')].concat(o.notes ? [s.notes] : []));
+        sections.push(['Shoot days', table(['Date', 'Kind', 'Day', 'Locations'].concat(o.notes ? ['Notes'] : []), rows)]);
+      }
+      if (want.has('festivals')) {
+        const rows = arr(d.festivals).filter(Boolean).map(f => [f.name, [f.city, f.country].filter(Boolean).join(', '), f.startDate ? fmt(f.startDate) : '', f.deadline ? fmt(f.deadline) : '', f.status].concat(o.fees ? [f.fee != null && f.fee !== '' ? money(num(f.fee), cur) : ''] : [], o.notes ? [f.notes] : []));
+        sections.push(['Festival plan', table(['Festival', 'Place', 'Starts', 'Deadline', 'Status'].concat(o.fees ? ['Fee'] : [], o.notes ? ['Notes'] : []), rows)]);
+      }
+      if (want.has('delivery')) {
+        const del = d.deliverables || {};
+        const STATUS = { todo: 'To do', progress: 'In progress', delivered: 'Delivered', accepted: 'Accepted', na: 'Not needed' };
+        const rows = deliverables(d).filter(i => i.status !== 'na').map(i => [i.title, STATUS[i.status] || i.status || '', i.due ? fmt(i.due) : del.dueDate ? fmt(del.dueDate) : '', i.spec || '']);
+        sections.push(['Deliverables', `${del.deliverTo ? `<p>To ${esc(del.deliverTo)}${del.dueDate ? `, due ${esc(fmt(del.dueDate))}` : ''}.</p>` : ''}${table(['Item', 'Status', 'Due', 'Spec'], rows)}`]);
+      }
+      if (want.has('impact')) {
+        const toc = d.theoryOfChange || {}, res = (d.impactReport || {}).results || {};
+        const rows = arr(toc.indicators).filter(Boolean).map(i => [i.text, i.target != null ? `${i.target} ${i.unit || ''}`.trim() : '', res[i.id] && res[i.id].value != null ? `${res[i.id].value} ${i.unit || ''}`.trim() : 'Not measured yet', i.source || '']);
+        sections.push(['Impact', `${toc.goal ? `<p>${esc(toc.goal)}</p>` : ''}${table(['Indicator', 'Target', 'So far', 'Measured by'], rows)}`]);
+      }
+      const made = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+      const css = 'body{margin:0;background:#fff;color:#1a2130;font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}main{max-width:960px;margin:0 auto;padding:24px 16px 48px}h1{font-size:26px;margin:0 0 4px}h2{font-size:19px;margin:28px 0 8px;padding-bottom:4px;border-bottom:2px solid #1a2130}.meta{color:#4b556a;margin:0 0 4px}.wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;vertical-align:top;padding:6px 8px;border-bottom:1px solid #d4dad8}th{background:#f1f3f2}footer{margin-top:32px;color:#4b556a;font-size:13px}@media (prefers-color-scheme: dark){body{background:#141922;color:#e6e9ee}.meta,footer{color:#a6afbd}h2{border-color:#e6e9ee}th{background:#1b212b}th,td{border-color:#2f3744}}@media print{body{background:#fff;color:#000}.wrap{overflow:visible}}';
+      const body = sections.map(([h, html]) => `<section><h2>${esc(h)}</h2><div class="wrap">${html}</div></section>`).join('');
+      return `<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'">\n<title>${esc(p.title || 'Film project')}: summary</title>\n<style>${css}</style>\n</head>\n<body>\n<main>\n<h1>${esc(p.title || 'Film project')}</h1>\n<p class="meta">${esc([p.company, p.producer && `produced by ${p.producer}`].filter(Boolean).join(', '))}</p>\n<p class="meta">Summary made ${esc(made)}. Read-only: this page doesn't change the project.</p>\n${body}\n<footer>Made with the Open Filmmaker Toolkit. ${o.contacts || o.notes || o.fees ? `Includes ${[o.contacts && 'contact details', o.notes && 'notes', o.fees && 'fees'].filter(Boolean).join(', ')}.` : 'Contact details, notes and fees are left out.'}</footer>\n</main>\n</body>\n</html>\n`;
+    }
+    // ---------- The calendar dialog, used by the home page and the tools ----------
+    function saveText(text, name, type) {
+      const url = URL.createObjectURL(new Blob([text], { type }));
+      const a = document.createElement('a'); a.href = url; a.download = name; document.body.append(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+    const stem = d => (str((d.project || {}).title).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'project');
+    function calendarDialog(getData) {
+      let dlg = document.getElementById('oftCalDialog');
+      if (!dlg) {
+        dlg = document.createElement('dialog');
+        dlg.id = 'oftCalDialog'; dlg.className = 'oft-dialog'; dlg.setAttribute('aria-labelledby', 'oftCalTitle');
+        dlg.innerHTML = `<form method="dialog" id="oftCalForm"><h2 id="oftCalTitle">Add every date to your calendar</h2>
+          <p>One calendar file with the dates from every tool. Import it into Google Calendar, Apple Calendar or Outlook. Importing a newer file updates the same events instead of adding them twice.</p>
+          <fieldset class="oft-kinds"><legend>Dates to include</legend>${KINDS.map(([k, label]) => `<label><input type="checkbox" name="kind" value="${k}" checked> <span>${esc(label)} <small data-count="${k}"></small></span></label>`).join('')}</fieldset>
+          <p id="oftCalNote" class="oft-changed" aria-live="polite"></p>
+          <div class="oft-actions"><button type="button" class="btn" id="oftCalCancel">Cancel</button><button type="submit" class="btn primary" id="oftCalSave">Download the calendar file</button></div></form>`;
+        document.body.append(dlg);
+        dlg.querySelector('#oftCalCancel').onclick = () => dlg.close();
+        dlg.querySelector('#oftCalForm').addEventListener('submit', ev => {
+          const d = getData(), kinds = [...dlg.querySelectorAll('input[name="kind"]:checked')].map(x => x.value);
+          if (!kinds.length) { ev.preventDefault(); dlg.querySelector('#oftCalNote').textContent = 'Choose at least one kind of date.'; return; }
+          const out = ics(d, kinds);
+          saveText(out.text, `${stem(d)}-dates.ics`, 'text/calendar');
+        });
+      }
+      const d = getData(), all = dates(d);
+      for (const [k] of KINDS) { const n = all.filter(e => e.kind === k).length; dlg.querySelector(`[data-count="${k}"]`).textContent = `(${n})`; }
+      dlg.querySelector('#oftCalNote').textContent = all.length ? '' : 'There are no dates in this project yet.';
+      dlg.showModal();
+    }
+    return { TOOLS, KINDS, PARTS, CONTACT, flags, glance, dates, ics, summary, today, addDays, fmt, calendarDialog, saveText, stem };
+  })();
+  /* oft-shared:project end */
+  // The project dashboard: open the project file here to see what needs you across every tool.
+  const $ = id => document.getElementById(id);
+  const P = oftProject;
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const store = (k, v) => { try { if (v === undefined) return sessionStorage.getItem(k); if (v === null) sessionStorage.removeItem(k); else sessionStorage.setItem(k, v); } catch { return null; } return null; };
+  let project = null, text = '', name = '', handle = null, openedAt = '', showTools = false, toastTimer;
+  function idb(op, key, val) {
+    return new Promise(res => {
+      try {
+        const r = indexedDB.open('open-filmmaker-toolkit', 1);
+        r.onupgradeneeded = () => r.result.createObjectStore('handles');
+        r.onerror = () => res(null);
+        r.onsuccess = () => { const db = r.result; try { const tx = db.transaction('handles', op === 'get' ? 'readonly' : 'readwrite'); const s = tx.objectStore('handles'); const q = op === 'get' ? s.get(key) : op === 'del' ? s.delete(key) : s.put(val, key); tx.oncomplete = () => { db.close(); res(op === 'get' ? q.result || null : true); }; tx.onerror = tx.onabort = () => { db.close(); res(null); }; } catch { db.close(); res(null); } };
+      } catch { res(null); }
+    });
+  }
+  function toast(msg) { const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 5000); }
+  const toolHref = slug => ['tools', slug, 'index.html'].join('/');
+  const toolName = slug => { const a = document.querySelector(`.tool h4 a[href="${toolHref(slug)}"]`); return a ? a.textContent : P.TOOLS[slug] || slug; };
+  const stageOf = slug => { const a = document.querySelector(`.tool h4 a[href="${toolHref(slug)}"]`); const s = a && a.closest('.stage'); return s ? s.querySelector('h2').textContent : ''; };
+  function take(t, n, h) {
+    let d;
+    try { d = JSON.parse(t); } catch { toast(`Couldn't open ${n}: it isn't a project file.`); return false; }
+    if (!d || d.format !== 'open-filmmaker-toolkit/project') { toast(`Couldn't open ${n}: it isn't an Open Filmmaker Toolkit project file.`); return false; }
+    project = d; text = t; name = n; handle = h || null; openedAt = new Date().toISOString(); showTools = false;
+    store('oft-home', JSON.stringify({ name, text, at: openedAt }));
+    if (handle) idb('put', 'file', { handle, name, at: openedAt });
+    render();
+    return true;
+  }
+  async function openProject() {
+    if (window.showOpenFilePicker && window.self === window.top) {
+      try { const [h] = await window.showOpenFilePicker({ types: [{ description: 'Film project file', accept: { 'application/json': ['.json'] } }] }); const f = await h.getFile(); if (take(await f.text(), f.name, h)) $('dashboard').focus(); }
+      catch (err) { if (err.name !== 'AbortError') toast(`Couldn't open the file: ${err.message}`); }
+      return;
+    }
+    $('projectInput').click();
+  }
+  function close() {
+    project = null; text = ''; name = ''; handle = null; store('oft-home', null); render();
+    $('openProject').focus();
+  }
+  function handoff(ev) {
+    const a = ev.target.closest('a[data-tool]');
+    if (!a || !project) return;
+    try { sessionStorage.setItem('oft-handoff', JSON.stringify({ text, name, at: Date.now() })); } catch { /* the tool will ask for the file */ }
+  }
+  const GROUPS = [['overdue', 'Overdue'], ['week', 'This week'], ['fix', 'To fix'], ['soon', 'Coming up']];
+  function render() {
+    const on = !!project;
+    $('dashboard').hidden = !on || showTools;
+    $('catalog').hidden = on && !showTools;
+    document.querySelector('.intro').hidden = on;
+    $('navProject').hidden = !on;
+    if (!on) { document.title = 'Open Filmmaker Toolkit: free tools for documentary and indie filmmakers'; return; }
+    const d = project, p = d.project || {}, t = P.today();
+    const flags = P.flags(d, t), g = P.glance(d);
+    const next = P.dates(d).filter(e => e.date >= t && e.date <= P.addDays(t, 60));
+    const deadline = flags.filter(f => f.date && f.date >= t).sort((a, b) => a.date.localeCompare(b.date))[0] || next[0];
+    const overdue = flags.filter(f => f.level === 'overdue').length;
+    document.title = `${p.title ? `${p.title} · ` : ''}Open Filmmaker Toolkit`;
+    const tile = (k, v, s) => `<div><p class="k">${esc(k)}</p><p class="v">${esc(v)}</p><p class="s">${esc(s)}</p></div>`;
+    const item = f => `<li><span class="t">${esc(toolName(f.slug))}</span><a href="${toolHref(f.slug)}#record=${encodeURIComponent(f.id)}" data-tool="${f.slug}">${esc(f.title)}</a>${f.date || f.detail ? `<span class="d">${esc([f.date ? P.fmt(f.date) : '', f.detail].filter(Boolean).join('. '))}</span>` : ''}</li>`;
+    const groups = GROUPS.map(([lv, label]) => { const list = flags.filter(f => f.level === lv); return list.length ? `<h3 class="${lv}">${label}</h3><ol class="needs">${list.map(item).join('')}</ol>` : ''; }).join('');
+    let recent = [];
+    try { recent = JSON.parse(localStorage.getItem('oft-recent-tools') || '[]').filter(x => x && document.querySelector(`.tool h4 a[href="${toolHref(x.slug)}"]`)).slice(0, 5); } catch { /* none */ }
+    const stages = {};
+    flags.forEach(f => { const s = stageOf(f.slug); if (s) stages[s] = (stages[s] || 0) + 1; });
+    const stageList = [...document.querySelectorAll('.stage')].map(s => { const h = s.querySelector('h2').textContent; return `<li><a href="#${s.id}" data-stage>${esc(h)}</a><span>${stages[h] ? `${stages[h]} open` : 'Nothing open'}</span></li>`; }).join('');
+    $('dashboard').innerHTML = `<div class="dash-head"><div><p class="kicker">Your project</p><h1 id="dashTitle" tabindex="-1">${esc(p.title || 'Untitled film')}</h1><p class="meta">${esc(name)}, opened ${esc(new Date(openedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }))}${handle ? '' : '. Changes you save in a tool show here when you open the file again'}.</p></div>
+      <div class="row"><button type="button" class="btn" id="openAnother">Open another</button><button type="button" class="btn" id="showTools">All tools</button><button type="button" class="btn" id="closeProject">Close</button></div></div>
+      <section class="glance" aria-label="At a glance">
+        ${tile('Needs you', String(flags.length), overdue ? `${overdue} overdue` : 'Nothing overdue')}
+        ${tile('Next deadline', deadline ? P.fmt(deadline.date) : 'None', deadline ? deadline.title : 'No dates in the next 60 days')}
+        ${tile('Revenue', g.revenue ? g.revenue.due : 'None yet', g.revenue ? (g.revenue.allPaid ? 'due, all paid' : `due, ${g.revenue.paid} paid`) : 'No statements yet')}
+        ${tile('Impact', g.impact ? `${g.impact.value.toLocaleString()} of ${g.impact.target.toLocaleString()}` : 'No targets yet', g.impact ? g.impact.text : 'Set them in the theory of change')}
+      </section>
+      <div class="dash-cols">
+        <section aria-labelledby="needsH"><h2 class="sec" id="needsH">What needs you</h2>${groups || '<p class="empty">Nothing needs you right now.</p>'}</section>
+        <div class="side">
+          <section aria-labelledby="soonH"><h2 class="sec" id="soonH">Next 60 days</h2>${next.length ? `<ol class="soon">${next.slice(0, 12).map(e => `<li><b>${esc(P.fmt(e.date))}</b><span>${esc(e.title)} <span class="t">${esc(toolName(e.slug))}</span></span></li>`).join('')}</ol>${next.length > 12 ? `<p>And ${next.length - 12} more.</p>` : ''}` : '<p class="empty">No dates in the next 60 days.</p>'}
+            <p><button type="button" class="btn" id="calBtn">Add every date to your calendar</button></p></section>
+          <section aria-labelledby="shareH"><h2 class="sec" id="shareH">Share a summary</h2><p>Send a funder, lawyer or distributor a read-only page of the parts they need, without the whole file.</p><p><button type="button" class="btn" id="summaryBtn">Make a summary</button></p></section>
+          <section aria-labelledby="recentH"><h2 class="sec" id="recentH">Your tools</h2>${recent.length ? `<ul class="recent">${recent.map(r => `<li><a href="${toolHref(r.slug)}" data-tool="${r.slug}">${esc(toolName(r.slug))}</a><span>${esc(new Date(r.at).toLocaleDateString([], { month: 'short', day: 'numeric' }))}</span></li>`).join('')}</ul>` : '<p>Tools you use in this browser show here.</p>'}
+            <h3>Open by stage</h3><ul class="recent">${stageList}</ul></section>
+        </div>
+      </div>`;
+    $('openAnother').onclick = openProject;
+    $('closeProject').onclick = close;
+    $('showTools').onclick = () => { showTools = true; render(); $('tools-h').scrollIntoView(); };
+    $('calBtn').onclick = () => P.calendarDialog(() => project);
+    $('summaryBtn').onclick = openSummary;
+    for (const a of $('dashboard').querySelectorAll('[data-stage]')) a.onclick = () => { showTools = true; render(); };
+  }
+  // Read-only summaries
+  function summaryHtml() {
+    const parts = [...document.querySelectorAll('#summaryParts input:checked')].map(x => x.value);
+    const priv = Object.fromEntries([...document.querySelectorAll('#summaryForm input[name="private"]')].map(x => [x.value, x.checked]));
+    if (!parts.length) { $('summaryNote').textContent = 'Choose at least one part.'; return null; }
+    $('summaryNote').textContent = '';
+    return P.summary(project, parts, priv);
+  }
+  function openSummary() {
+    $('summaryParts').innerHTML = '<legend>Parts to include</legend>' + P.PARTS.map(([k, label, about]) => `<label><input type="checkbox" value="${k}"${k === 'clearances' ? ' checked' : ''}> <span>${esc(label)} <small>${esc(about)}</small></span></label>`).join('');
+    $('summaryNote').textContent = '';
+    $('summaryDialog').showModal();
+  }
+  $('summaryForm').addEventListener('submit', ev => { const html = summaryHtml(); if (!html) { ev.preventDefault(); return; } P.saveText(html, `${P.stem(project)}-summary.html`, 'text/html'); toast('Downloaded the summary. Check it before you send it.'); });
+  $('summaryCancel').onclick = () => $('summaryDialog').close();
+  $('summaryPrint').onclick = () => {
+    const html = summaryHtml(); if (!html) return;
+    const f = document.createElement('iframe'); f.title = 'Summary to print'; f.style.cssText = 'position:fixed;width:0;height:0;border:0;';
+    f.srcdoc = html; document.body.append(f);
+    f.onload = () => { f.contentWindow.print(); setTimeout(() => f.remove(), 1000); };
+    $('summaryDialog').close();
+  };
+  // Opening the file: buttons, dropping a file, a file remembered from a tool, or the copy from this tab
+  $('openProject').onclick = openProject;
+  $('projectInput').addEventListener('change', async () => { const f = $('projectInput').files[0]; if (f && take(await f.text(), f.name, null)) $('dashTitle').focus(); $('projectInput').value = ''; });
+  $('dashboard').addEventListener('click', handoff);
+  $('dashboard').tabIndex = -1;
+  document.addEventListener('dragover', ev => { if ([...(ev.dataTransfer || {}).types || []].includes('Files')) { ev.preventDefault(); document.body.classList.add('dropping'); } });
+  document.addEventListener('dragleave', ev => { if (!ev.relatedTarget) document.body.classList.remove('dropping'); });
+  document.addEventListener('drop', async ev => {
+    document.body.classList.remove('dropping');
+    const f = ev.dataTransfer && ev.dataTransfer.files[0];
+    if (!f) return;
+    ev.preventDefault();
+    let h = null;
+    try { const item = ev.dataTransfer.items && ev.dataTransfer.items[0]; if (item && item.getAsFileSystemHandle) h = await item.getAsFileSystemHandle(); } catch { h = null; }
+    if (take(await f.text(), f.name, h && h.kind === 'file' ? h : null)) $('dashTitle').focus();
+  });
+  async function start() {
+    let saved = null;
+    try { saved = JSON.parse(store('oft-home') || 'null'); } catch { saved = null; }
+    const remembered = window.showOpenFilePicker ? await idb('get', 'file') : null;
+    if (remembered && remembered.handle && remembered.handle.queryPermission && (await remembered.handle.queryPermission({ mode: 'read' })) === 'granted') {
+      try { const f = await remembered.handle.getFile(); take(await f.text(), f.name, remembered.handle); return; } catch { /* fall through */ }
+    }
+    if (saved && saved.text) { take(saved.text, saved.name, null); openedAt = saved.at || openedAt; render(); return; }
+    if (remembered && remembered.handle) {
+      $('reopenText').textContent = `Open ${remembered.name} again? You used it last in this browser.`;
+      $('reopenHome').hidden = false;
+      $('reopenBtn').onclick = async () => {
+        try {
+          if (remembered.handle.requestPermission && (await remembered.handle.requestPermission({ mode: 'read' })) !== 'granted') return;
+          const f = await remembered.handle.getFile();
+          if (take(await f.text(), f.name, remembered.handle)) $('dashTitle').focus();
+        } catch (err) { toast(`Couldn't open ${remembered.name}: ${err.message}. Use Open your project file instead.`); }
+      };
+    }
+  }
+  $('navTools').addEventListener('click', () => { if (project) { showTools = true; render(); } });
+  $('navProject').addEventListener('click', () => { showTools = false; render(); });
+  start();
 })();
 </script>
 </body>
