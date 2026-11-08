@@ -230,6 +230,9 @@ pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; b
 input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:focus, input[type="time"]:focus-within { outline: 2px solid var(--focus, #2f6fdb); outline-offset: 2px; }
 .home-link { color: inherit; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
 .home-link:hover { text-decoration-thickness: 2px; }
+.flow td.spent { color: var(--ink-2); }
+.flow td.spent.over { color: var(--bad); font-weight: 600; }
+.unsched li.bad > span:first-child { color: var(--bad); }
 </style>
 </head>
 <body>
@@ -281,7 +284,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
           <button type="button" id="schedViewBtn" aria-pressed="false">When costs are paid</button>
         </div>
         <div id="flowView">
-          <div class="flow-wrap"><table class="flow" id="flow"></table></div>
+          <div class="flow-wrap" tabindex="0" role="region" aria-label="The cash flow by period, scrolls sideways"><table class="flow" id="flow"></table></div>
         </div>
         <div id="schedView" hidden>
           <p class="hint">Spread each account across the months or weeks it's paid. Open an account to schedule a single line differently. Mark deferred fees and in-kind support so they don't count as cash going out.</p>
@@ -299,6 +302,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       <section class="card" aria-labelledby="sumHead">
         <div class="card-head"><h2 id="sumHead">Summary</h2></div>
         <table class="sums" id="sums"></table>
+      </section>
+      <section class="card" aria-labelledby="spentHead">
+        <div class="card-head"><h2 id="spentHead">Spent so far</h2></div>
+        <p class="lead">From the expense log, against what the plan has going out by today, for each account.</p>
+        <ul class="unsched" id="spentList"></ul>
       </section>
       <section class="card" aria-labelledby="unHead">
         <div class="card-head"><h2 id="unHead">Not on the schedule</h2><span class="count" id="unCount"></span></div>
@@ -619,19 +627,24 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     if (isDate(CF().start)) dates.push(periodStart(CF().start));
     if (isDate(CF().end)) dates.push(periodStart(CF().end));
     dates.sort();
+    // What was actually spent, from the expense log, in the same periods.
+    const spentIn = new Map();
+    for (const e of objs(doc.expenses)) if (isDate(e.date)) { const p = periodStart(e.date); spentIn.set(p, cents((spentIn.get(p) || 0) + oftMoney.amountOf(e))); dates.push(p); }
+    dates.sort();
     const rows = [];
     let bal = num(CF().openingBalance), low = null, firstShort = null;
     if (dates.length) for (const p of periodsBetween(dates[0], dates[dates.length - 1])) {
       const o = outs.filter(x => x.p === p), i = ins.filter(x => x.p === p);
       const out = cents(o.reduce((n, x) => n + x.amount, 0)), inn = cents(i.reduce((n, x) => n + x.amount, 0));
       bal = cents(bal + inn - out);
-      const row = { p, out, in: inn, net: cents(inn - out), balance: bal, items: [...i.map(x => `+ ${x.label}: ${money(x.amount)}`), ...o.map(x => `− ${x.label}: ${money(x.amount)}`)] };
+      const spent = spentIn.get(p) || 0;
+      const row = { p, out, in: inn, net: cents(inn - out), balance: bal, spent, over: spent > out + 0.005, items: [...i.map(x => `+ ${x.label}: ${money(x.amount)}`), ...o.map(x => `− ${x.label}: ${money(x.amount)}`)] };
       if (!low || bal < low.balance) low = row;
       if (bal < 0 && !firstShort) firstShort = row;
       rows.push(row);
     }
     const sum = l => cents(l.reduce((n, x) => n + x.amount, 0));
-    return { t, rows, low, firstShort, totalOut: sum(outs), totalIn: sum(ins), unscheduledCosts, undatedIncome, noCash, opening: num(CF().openingBalance), closing: bal };
+    return { t, rows, low, firstShort, totalOut: sum(outs), totalIn: sum(ins), totalSpent: cents([...spentIn.values()].reduce((n, x) => n + x, 0)), unscheduledCosts, undatedIncome, noCash, opening: num(CF().openingBalance), closing: bal };
   }
 
   // ---------- Render ----------
@@ -654,9 +667,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('schedViewBtn').setAttribute('aria-pressed', String(view === 'sched'));
     $('flowView').hidden = view !== 'flow';
     $('schedView').hidden = view !== 'sched';
-    $('flow').innerHTML = pl.rows.length ? `<thead><tr><th scope="col">${CF().period === 'week' ? 'Week' : 'Month'}</th><th scope="col">Out</th><th scope="col">In</th><th scope="col">Net</th><th scope="col">Balance</th></tr></thead><tbody>
-      <tr class="open"><td>Cash on hand at the start</td><td></td><td></td><td></td><td class="bal">${esc(money(pl.opening))}</td></tr>
-      ${pl.rows.map(r => `<tr class="${r.balance < 0 ? 'short' : ''}" title="${esc(r.items.join('\n'))}"><td>${esc(periodLabel(r.p))}${r.balance < 0 ? '<span class="tag">Short</span>' : ''}</td><td class="out">${r.out ? esc(money(r.out)) : ''}</td><td class="in">${r.in ? esc(money(r.in)) : ''}</td>
+    $('flow').innerHTML = pl.rows.length ? `<thead><tr><th scope="col">${CF().period === 'week' ? 'Week' : 'Month'}</th><th scope="col">Out</th><th scope="col">Spent</th><th scope="col">In</th><th scope="col">Net</th><th scope="col">Balance</th></tr></thead><tbody>
+      <tr class="open"><td>Cash on hand at the start</td><td></td><td></td><td></td><td></td><td class="bal">${esc(money(pl.opening))}</td></tr>
+      ${pl.rows.map(r => `<tr class="${r.balance < 0 ? 'short' : ''}" title="${esc(r.items.join('\n'))}"><td>${esc(periodLabel(r.p))}${r.balance < 0 ? '<span class="tag">Short</span>' : ''}</td><td class="out">${r.out ? esc(money(r.out)) : ''}</td><td class="spent${r.over ? ' over' : ''}">${r.spent ? esc(money(r.spent)) : ''}${r.over ? `<span class="tag">Over by ${esc(money(cents(r.spent - r.out)))}</span>` : ''}</td><td class="in">${r.in ? esc(money(r.in)) : ''}</td>
         <td>${r.net ? (r.net > 0 ? '+' : '−') + esc(money(Math.abs(r.net))) : ''}</td><td class="bal">${esc(money(r.balance))}</td></tr>`).join('')}</tbody>`
       : '<tbody><tr><td class="empty-line">Schedule some costs, or add payment dates in the finance plan, to see the balance.</td></tr></tbody>';
     if (view === 'sched') renderSched();
@@ -676,8 +689,27 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const def = pl.noCash.filter(x => x.mode === 'deferred'), kind = pl.noCash.filter(x => x.mode === 'in-kind');
     if (def.length) un.push(`<li><span>Deferred</span><span class="n">${esc(money(def.reduce((n, x) => n + x.amount, 0)))}</span></li>`);
     if (kind.length) un.push(`<li><span>In-kind</span><span class="n">${esc(money(kind.reduce((n, x) => n + x.amount, 0)))}</span></li>`);
+    $('spentList').innerHTML = spentByAccount(pl).map(x => `<li${x.over ? ' class="bad"' : ''}><span>${esc(x.name)}${x.over ? ` <span class="tag">Over by ${esc(money(cents(x.spent - x.planned)))}</span>` : ''}</span><span class="n">${esc(money(x.spent))} of ${esc(money(x.planned))}</span></li>`).join('') || '<li class="empty-line">No expenses logged yet.</li>';
     $('unCount').textContent = uc.length + pl.undatedIncome.length ? String(uc.length + pl.undatedIncome.length) : '';
     $('unsched').innerHTML = un.length ? un.join('') + (uc.length ? '<li><button type="button" class="btn small" id="goSched">Schedule the costs</button></li>' : '') : '<li class="empty-line">Every cost and payment is on the schedule.</li>';
+  }
+  // Each account's spending in the expense log against what the plan has going out through today.
+  function spentByAccount(pl) {
+    const t = pl.t, now = periodStart(today());
+    const plannedTo = new Map();
+    for (const x of t.lines) {
+      const s = lineSched(x);
+      let amt = 0;
+      if (s && s.mode === 'spread' && isDate(s.from)) { const ps = periodsBetween(s.from, isDate(s.to) && s.to >= s.from ? s.to : s.from); amt = cents(x.total * ps.filter(p => p <= now).length / ps.length); }
+      plannedTo.set(x.line.accountId, cents((plannedTo.get(x.line.accountId) || 0) + amt));
+    }
+    const spent = new Map();
+    for (const e of objs(doc.expenses)) spent.set(e.accountId || '', cents((spent.get(e.accountId || '') || 0) + oftMoney.amountOf(e)));
+    return [...spent.entries()].map(([id, amount]) => {
+      const a = t.accounts.find(y => y.account.id === id);
+      const planned = plannedTo.get(id) || 0;
+      return { name: a ? `${a.account.code ? a.account.code + ' ' : ''}${a.account.name || ''}` : 'No account', spent: amount, planned, over: amount > planned + 0.005 };
+    }).sort((x, y) => (y.over ? 1 : 0) - (x.over ? 1 : 0) || y.spent - x.spent);
   }
   function modeCells(s, kind, id, sameOption) {
     const mode = s ? s.mode : (sameOption ? 'same' : '');
@@ -745,10 +777,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   }
 
   // ---------- CSV and print ----------
-  const CSV_HEAD = ['Period', 'Starts', 'Out', 'In', 'Net', 'Balance', 'Short'];
+  const CSV_HEAD = ['Period', 'Starts', 'Out', 'In', 'Net', 'Balance', 'Short', 'Spent', 'Spent over the plan'];
   function exportCsv() {
     const pl = plan();
-    const rows = [['Cash on hand at the start', '', '', '', '', pl.opening.toFixed(2), '']].concat(pl.rows.map(r => [periodLabel(r.p), r.p, r.out.toFixed(2), r.in.toFixed(2), r.net.toFixed(2), r.balance.toFixed(2), r.balance < 0 ? 'Yes' : '']));
+    const rows = [['Cash on hand at the start', '', '', '', '', pl.opening.toFixed(2), '']].concat(pl.rows.map(r => [periodLabel(r.p), r.p, r.out.toFixed(2), r.in.toFixed(2), r.net.toFixed(2), r.balance.toFixed(2), r.balance < 0 ? 'Yes' : '', r.spent ? r.spent.toFixed(2) : '', r.over ? cents(r.spent - r.out).toFixed(2) : '']));
     const csv = '﻿' + [CSV_HEAD, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
     const name = `${slug()}-cash-flow.csv`;
     download(csv, name, 'text/csv;charset=utf-8');
@@ -759,8 +791,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const uc = pl.unscheduledCosts.reduce((n, x) => n + x.amount, 0);
     $('report').innerHTML = `<h1>Cash flow</h1><p class="r-meta">${esc([doc.project.title, doc.project.company, `Printed ${fmtDate(today())}`].filter(Boolean).join(' · '))}</p>
       <p>Cash on hand at the start: <b>${esc(money(pl.opening))}</b> · Coming in: <b>${esc(money(pl.totalIn))}</b> · Going out: <b>${esc(money(pl.totalOut))}</b> · At the end: <b>${esc(money(pl.closing))}</b>${pl.firstShort ? ` · First short: <b>${esc(periodLabel(pl.firstShort.p))}</b>` : ''}</p>
-      <table><thead><tr><th>${CF().period === 'week' ? 'Week' : 'Month'}</th><th class="n">Out</th><th class="n">In</th><th class="n">Net</th><th class="n">Balance</th></tr></thead><tbody>
-      ${pl.rows.map(r => `<tr${r.balance < 0 ? ' class="r-short"' : ''}><td>${esc(periodLabel(r.p))}${r.balance < 0 ? ' (short)' : ''}</td><td class="n">${r.out ? esc(money(r.out)) : ''}</td><td class="n">${r.in ? esc(money(r.in)) : ''}</td><td class="n">${esc(money(r.net))}</td><td class="n">${esc(money(r.balance))}</td></tr>`).join('')}</tbody></table>
+      <table><thead><tr><th>${CF().period === 'week' ? 'Week' : 'Month'}</th><th class="n">Out</th><th class="n">Spent</th><th class="n">In</th><th class="n">Net</th><th class="n">Balance</th></tr></thead><tbody>
+      ${pl.rows.map(r => `<tr${r.balance < 0 ? ' class="r-short"' : ''}><td>${esc(periodLabel(r.p))}${r.balance < 0 ? ' (short)' : ''}</td><td class="n">${r.out ? esc(money(r.out)) : ''}</td><td class="n">${r.spent ? esc(money(r.spent)) + (r.over ? ' (over)' : '') : ''}</td><td class="n">${r.in ? esc(money(r.in)) : ''}</td><td class="n">${esc(money(r.net))}</td><td class="n">${esc(money(r.balance))}</td></tr>`).join('')}</tbody></table>
       <p class="r-note">Counts ${esc(counted())} money from the finance plan.${uc ? ` ${esc(money(uc))} of costs isn't scheduled yet and isn't shown.` : ''}${pl.undatedIncome.length ? ` ${esc(money(pl.undatedIncome.reduce((n, x) => n + x.amount, 0)))} of income has no payment date and isn't shown.` : ''}</p>`;
   }
 
@@ -1143,7 +1175,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const OFT_SLUG = (window.location.pathname.match(/tools\/([^/]+)\//) || [])[1] || '';
   const OFT_GUIDE = 'https://github.com/open-filmmaker-toolkit/toolkit/blob/main/docs/sharing-a-project.md';
   const OFT_HOURS = 4;
-  const OFT_KEYS = { project: 'Project details', people: 'People', locations: 'Locations', thirdPartyElements: 'Clearance log', contracts: 'Contracts and releases', assets: 'Files and stills', musicCueSheet: 'Music cue sheet', callSheets: 'Call sheets', credits: 'Credits', supers: 'Name supers', subjects: 'Subject tracker', sources: 'Research log', comps: 'Comps tracker', treatment: 'Treatment', pitchDeck: 'Pitch deck', grants: 'Grant calendar', narratives: 'Narrative library', budget: 'Budget', budgetFormats: 'Budget converter', financePlan: 'Finance plan', funders: 'Funder CRM', cashFlow: 'Cash flow', shootDays: 'Shooting calendar', script: 'Script', scenes: 'Script breakdown', characters: 'Cast', dayOutOfDays: 'Day-out-of-days', shots: 'Shot list', interviews: 'Interviews', journal: 'Field journal', scouts: 'Location scouts', gear: 'Gear list', trips: 'Travel sheet', riskPlans: 'Risk plans', security: 'Security checklist', mediaReports: 'Camera and sound reports', dailyReports: 'Daily reports', expenses: 'Expense log', festivals: 'Festival submissions', screenings: 'Screenings', pressOutlets: 'Press list', partners: 'Partner CRM', discussionGuide: 'Discussion guide', paperEdit: 'Paper edit', costReport: 'Budget-to-actuals', structure: 'Structure board', cuts: 'Cut tracker', clearanceReport: 'Clearance report', chainOfTitle: 'Chain of title', festivalStrategy: 'Festival strategy', pressNotes: 'Press notes', awards: 'Awards', socialPosts: 'Social posts', deliverables: 'Deliverables', qc: 'QC tracker', waterfall: 'Waterfall', revenueStatements: 'Revenue tracker', bookings: 'Bookings', theoryOfChange: 'Theory of change', screeningKit: 'Screening kit', impactReport: 'Impact report', finalCostReport: 'Final cost report', grantReports: 'Grant reports', contractArchive: 'Contract archive' };
+  const OFT_KEYS = { project: 'Project details', people: 'People', locations: 'Locations', thirdPartyElements: 'Clearance log', contracts: 'Contracts and releases', assets: 'Files and stills', musicCueSheet: 'Music cue sheet', callSheets: 'Call sheets', credits: 'Credits', supers: 'Name supers', subjects: 'Subject tracker', sources: 'Research log', comps: 'Comps tracker', treatment: 'Treatment', pitchDeck: 'Pitch deck', grants: 'Grant calendar', narratives: 'Narrative library', budget: 'Budget', budgetFormats: 'Budget converter', financePlan: 'Finance plan', funders: 'Funder CRM', cashFlow: 'Cash flow', shootDays: 'Shooting calendar', script: 'Script', scenes: 'Script breakdown', characters: 'Cast', dayOutOfDays: 'Day-out-of-days', budgetLinks: 'Budget', shots: 'Shot list', interviews: 'Interviews', journal: 'Field journal', scouts: 'Location scouts', gear: 'Gear list', trips: 'Travel sheet', riskPlans: 'Risk plans', security: 'Security checklist', mediaReports: 'Camera and sound reports', dailyReports: 'Daily reports', expenses: 'Expense log', festivals: 'Festival submissions', screenings: 'Screenings', pressOutlets: 'Press list', partners: 'Partner CRM', discussionGuide: 'Discussion guide', paperEdit: 'Paper edit', costReport: 'Budget-to-actuals', structure: 'Structure board', cuts: 'Cut tracker', clearanceReport: 'Clearance report', chainOfTitle: 'Chain of title', festivalStrategy: 'Festival strategy', pressNotes: 'Press notes', awards: 'Awards', socialPosts: 'Social posts', deliverables: 'Deliverables', qc: 'QC tracker', waterfall: 'Waterfall', revenueStatements: 'Revenue tracker', bookings: 'Bookings', theoryOfChange: 'Theory of change', screeningKit: 'Screening kit', impactReport: 'Impact report', finalCostReport: 'Final cost report', grantReports: 'Grant reports', contractArchive: 'Contract archive' };
   const oftStore = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch { /* storage off */ } } };
   const oftMe = () => (oftStore.get('oft-user-name') || '').trim();
   const oftEsc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -1619,6 +1651,12 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       imp.type = 'button'; imp.className = 'link-btn'; imp.id = 'oftImportBtn'; imp.textContent = 'Import from a spreadsheet';
       imp.onclick = () => oftImport.open(OFT_IMPORT);
       links.prepend(imp);
+    }
+    if (typeof oftCosts !== 'undefined' && typeof OFT_COSTS !== 'undefined') {
+      const cb = document.createElement('button');
+      cb.type = 'button'; cb.className = 'link-btn'; cb.id = 'oftCostsBtn'; cb.textContent = 'Send costs to the budget';
+      cb.onclick = () => oftCosts.open();
+      links.prepend(cb);
     }
     if (typeof oftMoney !== 'undefined') {
       const fx = document.createElement('button');

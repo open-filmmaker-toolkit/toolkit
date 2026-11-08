@@ -39,6 +39,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **Sums it up:** money in and out, the balance at the end, the first period that's short and the lowest point.
 - **Lists what's not on the schedule:** costs not scheduled yet, money with no payment date, and how much is deferred or in-kind.
 - **Months or weeks,** between dates you choose or across everything that's scheduled.
+- **What was actually spent,** from the [expense log](../expense-log/), next to what the plan has going out each month or week, with the months that spent more flagged. The side panel shows each account's spending against what the plan has going out by today.
 - **Exports CSV and prints** the table. Also exports project data: project details, people, locations, third-party elements, contracts, assets, music cue sheet details or call sheets as separate CSV files.
 
 It reads the budget from the [budget tool](../budget/) and the money coming in from the finance plan, in the same project file, and changes neither. For anyone who doesn't use the tool, there's a blank [spreadsheet template](../../templates/cash-flow-template.csv) with the same columns.
@@ -61,7 +62,6 @@ A `cashFlow` record with `period` (`month` or `week`), optional `openingBalance`
 
 - Spreading a cost unevenly, such as a deposit and a final payment
 - One-off costs and income that aren't in the budget or the finance plan
-- Actual spending from the expense log against the plan
 
 ## License
 

@@ -39,6 +39,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **Percentages on the whole budget,** such as contingency, insurance, fees or overhead, worked out on all lines plus fringes.
 - **The top sheet** updates as you type: each section and account, the subtotal, each percentage and the total, in the project's currency.
 - **Versions to compare.** Save a version before you send the budget to a funder. Compare shows each account then and now, with what went up or down.
+- **Shows where a line comes from** when another tool keeps it up to date: rentals from the [gear list](../gear-list/), per diems and travel from the [travel sheet](../travel-sheet/), permit fees from the [certificate and permit tracker](../coi-permit-tracker/), and pay from [deal memos](../deal-memos/). Their numbers change when the cost changes there.
 - **Prints** the top sheet, then the detail by account. **Exports CSV** of every line with its fringe and total, followed by the percentages and the total. Also exports project data: project details, people, locations, third-party elements, contracts, assets, music cue sheet details or call sheets as separate CSV files.
 
 For anyone who doesn't use the tool, there's a blank [spreadsheet template](../../templates/budget-template.csv) with the same columns. The [budget converter](../budget-converter/) turns this budget into a funder's categories, and the [finance plan](../finance-plan/) measures what you've raised against its total.

@@ -283,6 +283,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <table class="sums" id="sums"></table>
         <div class="field" style="margin-top:10px"><label for="asOf">Report as of</label><input id="asOf" type="date"><p class="hint">Counts expenses up to this date. Leave it empty for all of them.</p></div>
       </section>
+      <section class="card" aria-labelledby="poHead">
+        <div class="card-head"><h2 id="poHead">Purchase orders</h2><span class="count" id="poCount"></span><span class="spacer"></span><button type="button" class="link-btn" id="addPoBtn">Add a purchase order</button></div>
+        <p class="lead">Money promised to a vendor before the bill comes. It counts as committed against its line, along with signed deal memos.</p>
+        <ul class="todo" id="poList"></ul>
+      </section>
       <section class="card" aria-labelledby="overHead">
         <div class="card-head"><h2 id="overHead">Over budget</h2><span class="count" id="overCount"></span></div>
         <ul class="todo" id="over"></ul>
@@ -328,6 +333,19 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       <div class="group"><h3>Spent on this line</h3><ul class="explist" id="lineExp"></ul></div>
     </div>
     <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn" id="lineCancel">Cancel</button><button type="submit" class="btn primary">Save</button></div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="poDialog" aria-labelledby="poTitle">
+  <form id="poForm" method="dialog" novalidate>
+    <div class="dlg-head"><h2 id="poTitle">Purchase order</h2></div>
+    <div class="dlg-body">
+      <div class="two"><div class="field"><label for="po-number">Number</label><input id="po-number" type="text" autocomplete="off" placeholder="PO-014"></div><div class="field"><label for="po-date">Date</label><input id="po-date" type="date"></div></div>
+      <div class="field"><label for="po-vendor">Vendor</label><input id="po-vendor" type="text" autocomplete="off" placeholder="Rental house, lab or supplier"></div>
+      <div class="field"><label for="po-desc">What it's for</label><input id="po-desc" type="text" autocomplete="off"></div>
+      <div class="two"><div class="field"><label for="po-amount">Amount</label><input id="po-amount" type="number" min="0" step="any" inputmode="decimal" required></div><div class="field"><label for="po-line">Budget line</label><select id="po-line" required></select></div></div>
+    </div>
+    <div class="dlg-foot"><button type="button" class="btn danger" id="poDelete">Remove</button><span class="spacer"></span><button type="button" class="btn" id="poCancel">Cancel</button><button type="submit" class="btn primary">Save</button></div>
   </form>
 </dialog>
 
@@ -514,6 +532,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     if (!Array.isArray(d.people)) d.people = [];
     if (!d.costReport || typeof d.costReport !== 'object' || Array.isArray(d.costReport)) d.costReport = {};
     d.costReport.estimates = objs(d.costReport.estimates);
+    if (d.costReport.purchaseOrders !== undefined) d.costReport.purchaseOrders = objs(d.costReport.purchaseOrders);
     for (const e of d.costReport.estimates) if (!e.id) e.id = newId('estimate');
     d.format = FORMAT;
     d.formatVersion = FORMAT_VERSION;
@@ -536,12 +555,23 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   }
   const est = key => C().estimates.find(x => (x.lineId || `markup:${x.markupId}`) === key);
   // One row: budget, spent, to complete (estimated unless set), final and variance.
-  function row(budget, spent, key) {
+  // Committed: signed deal memos and purchase orders against a line. What's committed and not yet spent is still to come.
+  function commitments(T) {
+    const m = new Map(), add = (id, amount, label) => { if (!id || !amount) return; if (!m.has(id)) m.set(id, []); m.get(id).push({ amount: cents(amount), label }); };
+    for (const c of objs(doc.contracts)) if (c.type === 'deal memo' && c.status === 'signed') {
+      const name = (objs(doc.people).find(p => arr(c.personIds).includes(p.id)) || {}).name || 'a crew member';
+      for (const id of [...arr(c.budgetLineIds), ...objs(c.rates).map(r => r.budgetLineId)]) { const x = T.lines.find(y => y.line.id === id); if (x) add(id, x.total, `Deal memo, ${name}`); }
+    }
+    for (const o of objs(C().purchaseOrders)) add(o.lineId, oftMoney.amountOf(o), `Purchase order${o.number ? ` ${o.number}` : ''}${o.vendor ? `, ${o.vendor}` : ''}`);
+    return m;
+  }
+  function row(budget, spent, key, committed = 0) {
     const e = key && est(key);
     const set = e && e.toComplete != null;
-    const etc = set ? num(e.toComplete) : Math.max(0, cents(budget - spent));
+    const open = Math.max(0, cents(committed - spent));
+    const etc = set ? num(e.toComplete) : Math.max(open, cents(budget - spent));
     const final = cents(spent + etc);
-    return { budget: cents(budget), spent: cents(spent), etc: cents(etc), set, final, variance: cents(budget - final), note: e && e.note };
+    return { budget: cents(budget), committed: cents(committed), open, remaining: cents(budget - spent - open), spent: cents(spent), etc: cents(etc), set, final, variance: cents(budget - final), note: e && e.note };
   }
   function report() {
     const T = B();
@@ -554,8 +584,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       else byAcct.set(p.accountId, [...(byAcct.get(p.accountId) || []), e]);
     }
     const sumOf = l => cents(arr(l).reduce((t, e) => t + oftMoney.amountOf(e), 0));
+    const com = commitments(T), comOf = id => cents((com.get(id) || []).reduce((t, x) => t + x.amount, 0));
     const sections = T.sections.filter(s => s.accounts.length).map(s => ({ section: s.section, accounts: s.accounts.map(a => {
-      const lines = a.lines.map(x => Object.assign({ line: x.line, key: x.line.id, expenses: byLine.get(x.line.id) || [] }, row(x.total, sumOf(byLine.get(x.line.id)), x.line.id)));
+      const lines = a.lines.map(x => Object.assign({ line: x.line, key: x.line.id, expenses: byLine.get(x.line.id) || [] }, row(x.total, sumOf(byLine.get(x.line.id)), x.line.id, comOf(x.line.id)), { commitments: com.get(x.line.id) || [] }));
       // Spending in the account that isn't on a line comes out of what's left on its lines without a set estimate.
       const un = byAcct.get(a.account.id) || [], U = sumOf(un);
       const t = k => cents(lines.reduce((x, l) => x + l[k], 0));
@@ -563,14 +594,17 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       const etc = cents(lines.filter(l => l.set).reduce((x, l) => x + l.etc, 0) + Math.max(0, left - U));
       const spent = cents(t('spent') + U), budget = t('budget'), final = cents(spent + etc);
       if (un.length) lines.push({ unassigned: true, key: `unassigned:${a.account.id}`, expenses: un, spent: U });
-      return { account: a.account, lines, budget, spent, etc, final, variance: cents(budget - final), absorbed: un.length ? Math.min(U, left) : 0 };
+      const committed = t('committed'), open = t('open');
+      return { account: a.account, lines, budget, committed, open, remaining: cents(budget - spent - open), spent, etc, final, variance: cents(budget - final), absorbed: un.length ? Math.min(U, left) : 0 };
     }) }));
     const markups = T.markups.map(m => Object.assign({ markup: m.markup, key: `markup:${m.markup.id}` }, row(m.amount, 0, `markup:${m.markup.id}`)));
     const all = [...sections.flatMap(s => s.accounts), ...markups];
     // Spending outside the budget counts in the totals, with nothing budgeted against it.
     const t = k => cents(all.reduce((x, r) => x + r[k], 0));
     const lt = sumOf(loose);
-    const total = { budget: t('budget'), spent: cents(t('spent') + lt), etc: t('etc'), final: cents(t('final') + lt) };
+    const total = { budget: t('budget'), committed: cents(all.reduce((x, r) => x + (r.committed || 0), 0)), spent: cents(t('spent') + lt), etc: t('etc'), final: cents(t('final') + lt) };
+    total.open = cents(all.reduce((x, r) => x + (r.open || 0), 0));
+    total.remaining = cents(total.budget - total.spent - total.open);
     total.variance = cents(total.budget - total.final);
     return { T, sections, markups, loose, looseTotal: lt, total };
   }
@@ -596,14 +630,14 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('count').textContent = has ? `${n} expense${n === 1 ? '' : 's'}${asOf() ? ` to ${fmtDate(asOf())}` : ''}` : '';
     $('addBtn').textContent = need ? `Assign expenses to lines (${need})` : 'Assign expenses to lines';
     if (document.activeElement !== $('asOf')) $('asOf').value = asOf();
-    const head = '<thead><tr><th>Account and line</th><th class="n">Budget</th><th class="n">Spent</th><th class="n">To complete</th><th class="n">Estimated final</th><th class="n">Variance</th></tr></thead>';
-    const cells = r => `<td class="n">${esc(money(r.budget))}</td><td class="n">${esc(money(r.spent, true))}</td><td class="n${r.set ? '' : ' est'}">${esc(money(r.etc))}</td><td class="n">${esc(money(r.final))}</td>${varCell(r.variance)}`;
-    $('table').innerHTML = head + '<tbody>' + R.sections.map(s => `<tr class="sec"><td colspan="6">${esc(s.section.label)}</td></tr>` + s.accounts.map(a =>
+    const head = '<thead><tr><th>Account and line</th><th class="n">Budget</th><th class="n">Committed</th><th class="n">Spent</th><th class="n">Remaining</th><th class="n">To complete</th><th class="n">Estimated final</th><th class="n">Variance</th></tr></thead>';
+    const cells = r => `<td class="n">${esc(money(r.budget))}</td><td class="n">${r.committed ? esc(money(r.committed)) : '—'}</td><td class="n">${esc(money(r.spent, true))}</td><td class="n${r.remaining < 0 ? ' over' : ''}">${esc(money(r.remaining))}</td><td class="n${r.set ? '' : ' est'}">${esc(money(r.etc))}</td><td class="n">${esc(money(r.final))}</td>${varCell(r.variance)}`;
+    $('table').innerHTML = head + '<tbody>' + R.sections.map(s => `<tr class="sec"><td colspan="8">${esc(s.section.label)}</td></tr>` + s.accounts.map(a =>
       `<tr class="acct"><td>${esc(acctName(a.account))}</td>${cells(a)}</tr>` + a.lines.map(l =>
-        (l.unassigned ? `<tr class="line"><td><button type="button" data-assign>Not assigned to a line<span class="sub">${l.expenses.length} expense${l.expenses.length === 1 ? '' : 's'}, taken from the account's estimate to complete. Click to assign.</span></button></td><td class="n">—</td><td class="n">${esc(money(l.spent, true))}</td><td class="n">—</td><td class="n">—</td><td class="n">—</td></tr>`
+        (l.unassigned ? `<tr class="line"><td><button type="button" data-assign>Not assigned to a line<span class="sub">${l.expenses.length} expense${l.expenses.length === 1 ? '' : 's'}, taken from the account's estimate to complete. Click to assign.</span></button></td><td class="n">—</td><td class="n">—</td><td class="n">${esc(money(l.spent, true))}</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">—</td></tr>`
           : `<tr class="line"><td><button type="button" data-line="${esc(l.key)}">${esc(lineName(l.line))}${l.note ? `<span class="sub">${esc(l.note)}</span>` : ''}</button></td>${cells(l)}</tr>`)).join('')).join('')).join('')
-      + (R.markups.length ? `<tr class="sec"><td colspan="6">Percentages</td></tr>` + R.markups.map(m => `<tr class="line"><td><button type="button" data-line="${esc(m.key)}">${esc(m.markup.name || 'Percentage')} ${esc(num(m.markup.percent))}%${m.note ? `<span class="sub">${esc(m.note)}</span>` : ''}</button></td>${cells(m)}</tr>`).join('') : '')
-      + (R.loose.length ? `<tr class="sec"><td colspan="6">Not in the budget</td></tr><tr class="line"><td>${R.loose.length} expense${R.loose.length === 1 ? '' : 's'}</td><td class="n">—</td><td class="n">${esc(money(R.looseTotal, true))}</td><td class="n">—</td><td class="n">${esc(money(R.looseTotal))}</td>${varCell(-R.looseTotal)}</tr>` : '')
+      + (R.markups.length ? `<tr class="sec"><td colspan="8">Percentages</td></tr>` + R.markups.map(m => `<tr class="line"><td><button type="button" data-line="${esc(m.key)}">${esc(m.markup.name || 'Percentage')} ${esc(num(m.markup.percent))}%${m.note ? `<span class="sub">${esc(m.note)}</span>` : ''}</button></td>${cells(m)}</tr>`).join('') : '')
+      + (R.loose.length ? `<tr class="sec"><td colspan="8">Not in the budget</td></tr><tr class="line"><td>${R.loose.length} expense${R.loose.length === 1 ? '' : 's'}</td><td class="n">—</td><td class="n">—</td><td class="n">${esc(money(R.looseTotal, true))}</td><td class="n">—</td><td class="n">—</td><td class="n">${esc(money(R.looseTotal))}</td>${varCell(-R.looseTotal)}</tr>` : '')
       + `<tr class="tot"><td>Total</td>${cells(T)}</tr></tbody>`;
     const pct = T.budget ? Math.min(100, Math.round(T.spent / T.budget * 100)) : 0;
     $('meterBar').style.width = `${pct}%`;
@@ -617,6 +651,46 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('looseCount').textContent = R.loose.length ? String(R.loose.length) : '';
     $('loose').innerHTML = R.loose.map(e => `<li><span>${esc(e.description || e.payee || 'Expense')}<span class="sub">${esc([e.date && fmtDate(e.date), e.payee].filter(Boolean).join(' · '))}</span></span><span>${esc(money(e.amount, true))}</span></li>`).join('');
     $('printBtn').disabled = !has;
+    renderPos();
+  }
+
+  // ---------- Purchase orders ----------
+  let poEditing = null;
+  const pos = () => objs(C().purchaseOrders);
+  function renderPos() {
+    const T = B(), list = pos();
+    $('poCount').textContent = list.length ? String(list.length) : '';
+    $('poList').innerHTML = list.length ? list.map(o => { const x = T.lines.find(y => y.line.id === o.lineId); return `<li><span><button type="button" class="link-btn" data-po="${esc(o.id)}">${esc([o.number, o.vendor].filter(Boolean).join(', ') || 'Purchase order')}</button><span class="sub">${esc([o.description, x ? lineName(x.line) : 'No budget line'].filter(Boolean).join(' · '))}</span></span><span>${esc(money(oftMoney.amountOf(o)))}</span></li>`; }).join('') : '<li class="empty-line">None yet.</li>';
+  }
+  function openPo(id) {
+    const o = id && pos().find(x => x.id === id);
+    poEditing = o ? structuredClone(o) : { id: newId('po') };
+    const T = B();
+    $('po-line').innerHTML = '<option value="">Choose a line</option>' + T.accounts.filter(a => a.lines.length).map(a => `<optgroup label="${esc(acctName(a.account))}">${a.lines.map(x => `<option value="${esc(x.line.id)}">${esc(lineName(x.line))}</option>`).join('')}</optgroup>`).join('');
+    for (const [k, id] of [['number', 'po-number'], ['date', 'po-date'], ['vendor', 'po-vendor'], ['description', 'po-desc'], ['amount', 'po-amount'], ['lineId', 'po-line']]) $(id).value = poEditing[k] == null ? '' : String(poEditing[k]);
+    $('poTitle').textContent = o ? 'Purchase order' : 'Add a purchase order';
+    $('poDelete').hidden = !o;
+    $('poDialog').showModal();
+    $('po-number').focus();
+  }
+  function savePo() {
+    if (!($('po-amount').value !== '' && Number($('po-amount').value) >= 0)) { $('po-amount').setCustomValidity('Enter the amount.'); $('po-amount').reportValidity(); return; }
+    if (!$('po-line').value) { $('po-line').setCustomValidity('Choose the budget line it comes out of.'); $('po-line').reportValidity(); return; }
+    const o = poEditing;
+    for (const [k, id] of [['number', 'po-number'], ['date', 'po-date'], ['vendor', 'po-vendor'], ['description', 'po-desc'], ['lineId', 'po-line']]) { const v = $(id).value.trim(); if (v) o[k] = v; else delete o[k]; }
+    o.amount = Number($('po-amount').value);
+    const line = B().lines.find(x => x.line.id === o.lineId); if (line) o.accountId = line.line.accountId;
+    if (!Array.isArray(C().purchaseOrders)) C().purchaseOrders = [];
+    const i = C().purchaseOrders.findIndex(x => x && x.id === o.id);
+    if (i >= 0) C().purchaseOrders[i] = o; else C().purchaseOrders.push(o);
+    $('poDialog').close();
+    changed();
+  }
+  function removePo() {
+    C().purchaseOrders = pos().filter(x => x.id !== poEditing.id);
+    if (!C().purchaseOrders.length) delete C().purchaseOrders;
+    $('poDialog').close();
+    changed();
   }
 
   // ---------- Assigning expenses ----------
@@ -675,17 +749,17 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   }
 
   // ---------- CSV and print ----------
-  const CSV_HEAD = ['Section', 'Account', 'Line', 'Budget', 'Spent', 'To complete', 'Estimated final', 'Variance', 'Note'];
+  const CSV_HEAD = ['Section', 'Account', 'Line', 'Budget', 'Spent', 'To complete', 'Estimated final', 'Variance', 'Note', 'Committed', 'Remaining'];
   function exportCsv() {
     const R = report(), rows = [];
     const f = n => cents(n);
     for (const s of R.sections) for (const a of s.accounts) {
-      for (const l of a.lines) rows.push(l.unassigned ? [s.section.label, acctName(a.account), 'Not assigned to a line', '', f(l.spent), '', '', '', "Taken from the account's estimate to complete"] : [s.section.label, acctName(a.account), lineName(l.line), f(l.budget), f(l.spent), f(l.etc), f(l.final), f(l.variance), l.note]);
-      if (a.lines.some(l => l.unassigned)) rows.push([s.section.label, acctName(a.account), 'Account total', f(a.budget), f(a.spent), f(a.etc), f(a.final), f(a.variance), '']);
+      for (const l of a.lines) rows.push(l.unassigned ? [s.section.label, acctName(a.account), 'Not assigned to a line', '', f(l.spent), '', '', '', "Taken from the account's estimate to complete"] : [s.section.label, acctName(a.account), lineName(l.line), f(l.budget), f(l.spent), f(l.etc), f(l.final), f(l.variance), l.note, f(l.committed), f(l.remaining)]);
+      if (a.lines.some(l => l.unassigned)) rows.push([s.section.label, acctName(a.account), 'Account total', f(a.budget), f(a.spent), f(a.etc), f(a.final), f(a.variance), '', f(a.committed), f(a.remaining)]);
     }
-    for (const m of R.markups) rows.push(['Percentages', '', `${m.markup.name || 'Percentage'} ${num(m.markup.percent)}%`, f(m.budget), f(m.spent), f(m.etc), f(m.final), f(m.variance), m.note]);
+    for (const m of R.markups) rows.push(['Percentages', '', `${m.markup.name || 'Percentage'} ${num(m.markup.percent)}%`, f(m.budget), f(m.spent), f(m.etc), f(m.final), f(m.variance), m.note, 0, f(m.remaining)]);
     if (R.loose.length) rows.push(['Not in the budget', '', `${R.loose.length} expenses`, 0, f(R.looseTotal), 0, f(R.looseTotal), f(-R.looseTotal), '']);
-    rows.push(['Total', '', '', f(R.total.budget), f(R.total.spent), f(R.total.etc), f(R.total.final), f(R.total.variance), '']);
+    rows.push(['Total', '', '', f(R.total.budget), f(R.total.spent), f(R.total.etc), f(R.total.final), f(R.total.variance), '', f(R.total.committed), f(R.total.remaining)]);
     // Amounts stay numbers, so a negative variance isn't guarded like text that starts with a minus sign.
     const cell = v => (typeof v === 'number' ? v.toFixed(2) : csvCell(v));
     const csv = '﻿' + [CSV_HEAD, ...rows].map(r => r.map(cell).join(',')).join('\r\n') + '\r\n';
@@ -697,16 +771,16 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     if (!hasBudget()) { $('report').innerHTML = ''; return; }
     const R = report(), T = R.total;
     const v = x => (x < 0 ? `${money(-x)} over` : x > 0 ? `${money(x)} under` : '—');
-    const cells = r => `<td class="n">${esc(money(r.budget))}</td><td class="n">${esc(money(r.spent))}</td><td class="n">${esc(money(r.etc))}</td><td class="n">${esc(money(r.final))}</td><td class="n">${esc(v(r.variance))}</td>`;
-    const h = '<thead><tr><th></th><th class="n">Budget</th><th class="n">Spent</th><th class="n">To complete</th><th class="n">Estimated final</th><th class="n">Variance</th></tr></thead>';
+    const cells = r => `<td class="n">${esc(money(r.budget))}</td><td class="n">${r.committed ? esc(money(r.committed)) : '—'}</td><td class="n">${esc(money(r.spent))}</td><td class="n">${esc(money(r.remaining || 0))}</td><td class="n">${esc(money(r.etc))}</td><td class="n">${esc(money(r.final))}</td><td class="n">${esc(v(r.variance))}</td>`;
+    const h = '<thead><tr><th></th><th class="n">Budget</th><th class="n">Committed</th><th class="n">Spent</th><th class="n">Remaining</th><th class="n">To complete</th><th class="n">Estimated final</th><th class="n">Variance</th></tr></thead>';
     $('report').innerHTML = `<h1>Cost report</h1>
       <p class="r-meta">${esc([doc.project.title, doc.project.company, asOf() ? `Spending to ${fmtDate(asOf())}` : 'All spending logged', `Printed ${fmtDate(today())}`].filter(Boolean).join(' · '))}</p>
-      <h2>Summary</h2><table>${h}<tbody>${R.sections.map(s => { const t = k => s.accounts.reduce((x, a) => x + a[k], 0); return `<tr><td>${esc(s.section.label)}</td>${cells({ budget: t('budget'), spent: t('spent'), etc: t('etc'), final: t('final'), variance: t('variance') })}</tr>`; }).join('')}
+      <h2>Summary</h2><table>${h}<tbody>${R.sections.map(s => { const t = k => s.accounts.reduce((x, a) => x + a[k], 0); return `<tr><td>${esc(s.section.label)}</td>${cells({ budget: t('budget'), committed: t('committed'), spent: t('spent'), remaining: t('remaining'), etc: t('etc'), final: t('final'), variance: t('variance') })}</tr>`; }).join('')}
         ${R.markups.map(m => `<tr><td>${esc(m.markup.name || 'Percentage')} ${esc(num(m.markup.percent))}%</td>${cells(m)}</tr>`).join('')}
-        ${R.loose.length ? `<tr><td>Not in the budget</td><td class="n">—</td><td class="n">${esc(money(R.looseTotal))}</td><td class="n">—</td><td class="n">${esc(money(R.looseTotal))}</td><td class="n">${esc(v(-R.looseTotal))}</td></tr>` : ''}
+        ${R.loose.length ? `<tr><td>Not in the budget</td><td class="n">—</td><td class="n">—</td><td class="n">${esc(money(R.looseTotal))}</td><td class="n">—</td><td class="n">—</td><td class="n">${esc(money(R.looseTotal))}</td><td class="n">${esc(v(-R.looseTotal))}</td></tr>` : ''}
         <tr class="r-tot"><td>Total</td>${cells(T)}</tr></tbody></table>
-      <h2>Detail</h2><table>${h}<tbody>${R.sections.map(s => s.accounts.map(a => `<tr class="r-acct"><td>${esc(acctName(a.account))}</td>${cells(a)}</tr>` + a.lines.map(l => l.unassigned ? `<tr><td class="r-line">Not assigned to a line<br><i>Taken from the account's estimate to complete</i></td><td class="n">—</td><td class="n">${esc(money(l.spent))}</td><td class="n">—</td><td class="n">—</td><td class="n">—</td></tr>` : `<tr><td class="r-line">${esc(lineName(l.line))}${l.note ? `<br><i>${esc(l.note)}</i>` : ''}</td>${cells(l)}</tr>`).join('')).join('')).join('')}</tbody></table>
-      <p class="r-note">Estimated final cost is what's spent plus the estimate to complete; the estimate is what's left of the budget unless set. Variance is the budget less the estimated final cost.</p>`;
+      <h2>Detail</h2><table>${h}<tbody>${R.sections.map(s => s.accounts.map(a => `<tr class="r-acct"><td>${esc(acctName(a.account))}</td>${cells(a)}</tr>` + a.lines.map(l => l.unassigned ? `<tr><td class="r-line">Not assigned to a line<br><i>Taken from the account's estimate to complete</i></td><td class="n">—</td><td class="n">—</td><td class="n">${esc(money(l.spent))}</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">—</td></tr>` : `<tr><td class="r-line">${esc(lineName(l.line))}${l.note ? `<br><i>${esc(l.note)}</i>` : ''}</td>${cells(l)}</tr>`).join('')).join('')).join('')}</tbody></table>
+      <p class="r-note">Committed is signed deal memos and purchase orders. Remaining is the budget less what's spent and what's committed but not yet spent. Estimated final cost is what's spent plus the estimate to complete; the estimate is what's left of the budget, or what's committed and not yet spent if that's more, unless set. Variance is the budget less the estimated final cost.</p>`;
   }
 
   // ---------- Project CSV ----------
@@ -921,6 +995,12 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('editProjectBtn').onclick = openProjectDialog;
     $('filmTitle').onclick = openProjectDialog;
     $('printBtn').onclick = () => { renderReport(); window.print(); };
+    $('addPoBtn').onclick = () => openPo(null);
+    $('poList').addEventListener('click', ev => { const b = ev.target.closest('[data-po]'); if (b) openPo(b.dataset.po); });
+    $('poForm').addEventListener('submit', ev => { ev.preventDefault(); savePo(); });
+    $('poForm').addEventListener('input', ev => { if (ev.target.setCustomValidity) ev.target.setCustomValidity(''); });
+    $('poCancel').onclick = () => $('poDialog').close();
+    $('poDelete').onclick = removePo;
     window.addEventListener('beforeprint', renderReport);
     $('projectCsvBtn').onclick = () => $('projectCsvDialog').showModal();
     $('projectCsvCancel').onclick = () => $('projectCsvDialog').close();
@@ -1083,7 +1163,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const OFT_SLUG = (window.location.pathname.match(/tools\/([^/]+)\//) || [])[1] || '';
   const OFT_GUIDE = 'https://github.com/open-filmmaker-toolkit/toolkit/blob/main/docs/sharing-a-project.md';
   const OFT_HOURS = 4;
-  const OFT_KEYS = { project: 'Project details', people: 'People', locations: 'Locations', thirdPartyElements: 'Clearance log', contracts: 'Contracts and releases', assets: 'Files and stills', musicCueSheet: 'Music cue sheet', callSheets: 'Call sheets', credits: 'Credits', supers: 'Name supers', subjects: 'Subject tracker', sources: 'Research log', comps: 'Comps tracker', treatment: 'Treatment', pitchDeck: 'Pitch deck', grants: 'Grant calendar', narratives: 'Narrative library', budget: 'Budget', budgetFormats: 'Budget converter', financePlan: 'Finance plan', funders: 'Funder CRM', cashFlow: 'Cash flow', shootDays: 'Shooting calendar', script: 'Script', scenes: 'Script breakdown', characters: 'Cast', dayOutOfDays: 'Day-out-of-days', shots: 'Shot list', interviews: 'Interviews', journal: 'Field journal', scouts: 'Location scouts', gear: 'Gear list', trips: 'Travel sheet', riskPlans: 'Risk plans', security: 'Security checklist', mediaReports: 'Camera and sound reports', dailyReports: 'Daily reports', expenses: 'Expense log', festivals: 'Festival submissions', screenings: 'Screenings', pressOutlets: 'Press list', partners: 'Partner CRM', discussionGuide: 'Discussion guide', paperEdit: 'Paper edit', costReport: 'Budget-to-actuals', structure: 'Structure board', cuts: 'Cut tracker', clearanceReport: 'Clearance report', chainOfTitle: 'Chain of title', festivalStrategy: 'Festival strategy', pressNotes: 'Press notes', awards: 'Awards', socialPosts: 'Social posts', deliverables: 'Deliverables', qc: 'QC tracker', waterfall: 'Waterfall', revenueStatements: 'Revenue tracker', bookings: 'Bookings', theoryOfChange: 'Theory of change', screeningKit: 'Screening kit', impactReport: 'Impact report', finalCostReport: 'Final cost report', grantReports: 'Grant reports', contractArchive: 'Contract archive' };
+  const OFT_KEYS = { project: 'Project details', people: 'People', locations: 'Locations', thirdPartyElements: 'Clearance log', contracts: 'Contracts and releases', assets: 'Files and stills', musicCueSheet: 'Music cue sheet', callSheets: 'Call sheets', credits: 'Credits', supers: 'Name supers', subjects: 'Subject tracker', sources: 'Research log', comps: 'Comps tracker', treatment: 'Treatment', pitchDeck: 'Pitch deck', grants: 'Grant calendar', narratives: 'Narrative library', budget: 'Budget', budgetFormats: 'Budget converter', financePlan: 'Finance plan', funders: 'Funder CRM', cashFlow: 'Cash flow', shootDays: 'Shooting calendar', script: 'Script', scenes: 'Script breakdown', characters: 'Cast', dayOutOfDays: 'Day-out-of-days', budgetLinks: 'Budget', shots: 'Shot list', interviews: 'Interviews', journal: 'Field journal', scouts: 'Location scouts', gear: 'Gear list', trips: 'Travel sheet', riskPlans: 'Risk plans', security: 'Security checklist', mediaReports: 'Camera and sound reports', dailyReports: 'Daily reports', expenses: 'Expense log', festivals: 'Festival submissions', screenings: 'Screenings', pressOutlets: 'Press list', partners: 'Partner CRM', discussionGuide: 'Discussion guide', paperEdit: 'Paper edit', costReport: 'Budget-to-actuals', structure: 'Structure board', cuts: 'Cut tracker', clearanceReport: 'Clearance report', chainOfTitle: 'Chain of title', festivalStrategy: 'Festival strategy', pressNotes: 'Press notes', awards: 'Awards', socialPosts: 'Social posts', deliverables: 'Deliverables', qc: 'QC tracker', waterfall: 'Waterfall', revenueStatements: 'Revenue tracker', bookings: 'Bookings', theoryOfChange: 'Theory of change', screeningKit: 'Screening kit', impactReport: 'Impact report', finalCostReport: 'Final cost report', grantReports: 'Grant reports', contractArchive: 'Contract archive' };
   const oftStore = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch { /* storage off */ } } };
   const oftMe = () => (oftStore.get('oft-user-name') || '').trim();
   const oftEsc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -1559,6 +1639,12 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       imp.type = 'button'; imp.className = 'link-btn'; imp.id = 'oftImportBtn'; imp.textContent = 'Import from a spreadsheet';
       imp.onclick = () => oftImport.open(OFT_IMPORT);
       links.prepend(imp);
+    }
+    if (typeof oftCosts !== 'undefined' && typeof OFT_COSTS !== 'undefined') {
+      const cb = document.createElement('button');
+      cb.type = 'button'; cb.className = 'link-btn'; cb.id = 'oftCostsBtn'; cb.textContent = 'Send costs to the budget';
+      cb.onclick = () => oftCosts.open();
+      links.prepend(cb);
     }
     if (typeof oftMoney !== 'undefined') {
       const fx = document.createElement('button');

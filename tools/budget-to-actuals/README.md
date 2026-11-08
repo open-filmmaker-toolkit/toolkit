@@ -39,6 +39,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **Percentages,** such as contingency and insurance, are rows too, with estimates you can set.
 - **Not in the budget:** expenses with no account, or an account the budget doesn't have, are listed and counted in the total.
 - **Report as of a date,** to count only the expenses up to it.
+- **Committed costs:** signed [deal memos](../deal-memos/) count as committed against their lines, and so do purchase orders you add here. The report shows what's committed and what's remaining: the budget less what's spent and what's committed but not yet spent. A line's estimate to complete is at least what's committed and not yet spent.
 - **Prints a cost report:** a summary by section, then every account and line. **Exports CSV.** Also exports project data: project details, people, locations, third-party elements, contracts, assets, music cue sheet details or call sheets as separate CSV files.
 
 For anyone who doesn't use the tool, there's a [spreadsheet template](../../templates/cost-report-template.csv) with the same columns as the export.
@@ -57,11 +58,10 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 A `costReport` record with optional `asOf` (the report date) and `estimates`, each with an `id`, a `lineId` (in `budget.lines`) or `markupId` (in `budget.markups`), and optional `toComplete` and `note`.
 
-Assigning an expense to a line adds `budgetLineId` to it in `expenses`. It reads `budget` and `expenses`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
+Assigning an expense to a line adds `budgetLineId` to it in `expenses`. It reads `budget` and `expenses`. Purchase orders go in `costReport.purchaseOrders`, each with an `id`, and optional `number`, `date`, `vendor`, `description`, `amount`, `lineId` and `accountId`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
-- Committed costs, such as signed deal memos and purchase orders, separate from what's spent
 - Cost reports by period, and comparing two reports
 
 ## License
