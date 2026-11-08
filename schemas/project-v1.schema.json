@@ -218,6 +218,18 @@
       },
       "description": "The characters in the script, numbered for the schedule, and who plays each one, kept by the script breakdown."
     },
+    "dayOutOfDays": {
+      "type": "object",
+      "properties": {
+        "dropDays": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "A gap between work days longer than this drops someone until they're needed again; 0 never drops."
+        }
+      },
+      "additionalProperties": true,
+      "description": "Settings for the day-out-of-days. A record rather than a collection."
+    },
     "interviews": {
       "type": "array",
       "items": {
@@ -4401,6 +4413,14 @@
         "callSheetId": {
           "$ref": "#/$defs/id",
           "description": "The call sheet started from this day, in callSheets."
+        },
+        "sceneIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true,
+          "description": "The scenes scheduled for the day, in shooting order, set on the stripboard."
         },
         "notes": {
           "type": "string"

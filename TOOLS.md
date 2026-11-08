@@ -1,6 +1,6 @@
 # Tools
 
-The tools we build, by production phase. Each one is a single page that runs in your browser on the shared project file, with nothing to install and nothing sent anywhere. 63 are ready to use.
+The tools we build, by production phase. Each one is a single page that runs in your browser on the shared project file, with nothing to install and nothing sent anywhere. 65 are ready to use.
 
 - **Ready to use:** linked tools. Each has a README with what it does.
 - **Want another tool?** [Ask for it](https://github.com/open-filmmaker-toolkit/toolkit/issues/new?template=request-a-tool.yml). New tools get an issue and a line here before work starts. Order of work is in [ROADMAP.md](ROADMAP.md).
@@ -35,6 +35,8 @@ Looking for other free, open-source software for filmmaking, such as editing, so
 | [Budget](tools/budget/) | Build a budget from detail lines up to a top sheet. | First version |
 | [Cash flow](tools/cash-flow/) | See when money comes and goes, and when you'll run short. | First version |
 | [Script breakdown](tools/script-breakdown/) | Break down a script into scenes, cast and props. | First version |
+| [Stripboard](tools/stripboard/) | Arrange the script's scenes into shoot days. | First version |
+| [Day-out-of-days](tools/day-out-of-days/) | See which days each cast member works. | First version |
 | [Shooting calendar](tools/shooting-calendar/) | Schedule shoot days, travel and holds. | First version |
 | [Interview prep](tools/interview-prep/) | Prepare research and questions for each interview. | First version |
 | [Location scout sheet](tools/location-scout/) | Record scouts with photos for the crew. | First version |

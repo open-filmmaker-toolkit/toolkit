@@ -1,0 +1,1339 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day-out-of-days · Open Filmmaker Toolkit</title>
+<meta name="description" content="See which days each cast member works, holds and travels, from the stripboard's schedule, with counts for their deals. Runs in your browser; your data stays on your computer.">
+<style>
+:root {
+  --paper: #f1f3f2; --sheet: #ffffff; --ink: #1a2130; --ink-2: #4b556a; --ink-3: #5d6677;
+  --rule: #d4dad8; --rule-soft: #e6eae8; --hover: #f6f8f7; --focus: #2f6fdb;
+  --good: #236b4b; --good-bg: #dff1e8; --warn: #8a5a00; --warn-bg: #fbf0d9; --bad: #b3392d; --bad-bg: #f8e1de;
+  --screen: #050506; --screen-ink: #f4f1ea; --screen-dim: #a7a29a;
+  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #141922; --sheet: #1b212b; --ink: #e6e9ee; --ink-2: #a6afbd; --ink-3: #8790a0;
+    --rule: #2f3744; --rule-soft: #262d38; --hover: #212834; --focus: #7aa7ff;
+    --good: #4fb386; --good-bg: #1a3329; --warn: #e2a531; --warn-bg: #3a2f17; --bad: #ef7a6c; --bad-bg: #3b2220;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans); }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+[hidden] { display: none !important; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.foot { margin-top: 28px; font-size: 13px; color: var(--ink-3); }
+.cant-run { display: none; max-width: 640px; margin: 64px auto; padding: 0 24px; }
+.cant-run h1 { margin: 0 0 8px; font: 600 26px/1.2 var(--serif); }
+.cant-run p { margin: 0 0 10px; color: var(--ink-2); }
+.no-js .cant-run { display: block; }
+.no-js .page { display: none; }
+.page { max-width: 1240px; margin: 0 auto; padding: 0 24px 48px; }
+
+.masthead { display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: flex-end; justify-content: space-between; padding: 28px 0 20px; }
+.tool-name { margin: 0 0 2px; font-size: 14px; font-weight: 600; color: var(--ink-2); }
+.film-title { margin: 0; font: 600 32px/1.15 var(--serif); letter-spacing: -0.01em; overflow-wrap: anywhere; cursor: pointer; }
+.film-title.is-empty { color: var(--ink-3); font-style: italic; font-weight: 400; }
+.film-meta { margin: 4px 0 0; color: var(--ink-2); font-size: 14px; }
+.file { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.file-state { margin: 0; font-size: 13px; color: var(--ink-2); text-align: right; }
+.file-state .dirty { color: var(--warn); font-weight: 600; }
+.file-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; }
+.btn:hover { border-color: var(--ink-3); }
+.btn.primary { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.btn.primary:hover { opacity: 0.88; }
+.btn.danger { color: var(--bad); }
+.btn.small { padding: 4px 10px; font-size: 13px; }
+.link-btn { padding: 0; border: 0; background: none; cursor: pointer; color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; font-size: 14px; }
+.link-btn:hover { color: var(--ink); }
+
+.banner { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 0 0 16px; padding: 12px 16px; border-radius: 8px; background: var(--warn-bg); border: 1px solid color-mix(in srgb, var(--warn) 40%, transparent); }
+.banner p { margin: 0; flex: 1 1 280px; }
+.banner .actions { display: flex; gap: 8px; }
+
+.workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr); gap: 24px; align-items: start; }
+.col { display: grid; gap: 18px; min-width: 0; }
+.card { background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 18px; min-width: 0; }
+.card-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; margin: 0 0 6px; }
+.card-head h2 { margin: 0; font: 600 18px/1.3 var(--serif); }
+.card-head .count { font-size: 13px; color: var(--ink-2); }
+.card-head .spacer { flex: 1; }
+.card p.lead { margin: 0 0 8px; font-size: 14px; color: var(--ink-2); }
+
+/* Side cards */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 2px; padding: 0; list-style: none; }
+.chip { display: inline-flex; border: 1px solid var(--rule); border-radius: 999px; overflow: hidden; background: var(--paper); }
+.chip button { padding: 4px 10px; border: 0; background: none; cursor: pointer; font-size: 13px; font-weight: 600; }
+.chip button:hover { background: var(--hover); }
+.chip .sub { font-weight: 400; color: var(--ink-3); margin-left: 4px; }
+.empty-line { margin: 4px 0; color: var(--ink-2); font-size: 14px; }
+.changes { margin: 0; padding-left: 18px; font-size: 14px; }
+.changes li + li { margin-top: 2px; }
+
+/* The list */
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 10px; }
+.toolbar h2 { margin: 0 8px 0 0; font: 600 20px/1.2 var(--serif); }
+.toolbar .count { font-size: 13px; color: var(--ink-2); }
+.toolbar .spacer { flex: 1; }
+.rows { list-style: none; margin: 0; padding: 0; background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; }
+.row { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 2px 14px; align-items: start; padding: 10px 14px; }
+.row + .row { border-top: 1px solid var(--rule-soft); }
+.row:hover { background: var(--hover); }
+.row.is-selected { background: var(--hover); box-shadow: inset 3px 0 0 var(--ink); }
+.row .tc { font-variant-numeric: tabular-nums; font-size: 14px; color: var(--ink-2); padding-top: 1px; }
+.row .what { min-width: 0; padding: 0; border: 0; background: none; text-align: left; cursor: pointer; overflow-wrap: anywhere; }
+.row .what:hover .nm { text-decoration: underline; text-underline-offset: 2px; }
+.row .nm { display: block; font-weight: 600; }
+.row .tt { display: block; font-size: 14px; color: var(--ink-2); }
+.flags { grid-column: 2; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.flag { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 999px; font-size: 12.5px; font-weight: 600; }
+.flag.new { background: var(--good-bg); color: var(--good); }
+.flag.changed { background: var(--warn-bg); color: var(--warn); }
+.flag.problem { background: var(--bad-bg); color: var(--bad); }
+.flag.linked { background: var(--paper); color: var(--ink-3); font-weight: 500; border: 1px solid var(--rule); }
+.flag button { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+
+.empty { padding: 36px 24px; text-align: center; background: var(--sheet); border: 1px dashed var(--rule); border-radius: 8px; }
+.empty h2 { margin: 0 0 6px; font: 600 20px/1.3 var(--serif); }
+.empty p { margin: 0 auto 16px; max-width: 52ch; color: var(--ink-2); }
+.empty .actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+
+.workspace > * { min-width: 0; }
+.side { position: sticky; top: 16px; display: grid; gap: 18px; }
+.filters { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; align-items: center; }
+.views { display: inline-flex; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+.views button { padding: 4px 12px; border: 0; background: var(--sheet); font-size: 13px; cursor: pointer; }
+.views button + button { border-left: 1px solid var(--rule); }
+.views button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.check-inline { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; color: var(--ink-2); margin-left: auto; }
+.due-list { list-style: none; margin: 4px 0 0; padding: 0; }
+.due-list li { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; font-size: 14px; }
+.due-list li + li { border-top: 1px solid var(--rule-soft); }
+.due-list button { padding: 0; border: 0; background: none; cursor: pointer; text-align: left; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; min-width: 0; overflow-wrap: anywhere; }
+.due-list .when { color: var(--ink-2); white-space: nowrap; }
+.who-list { list-style: none; margin: 4px 0 0; padding: 0; font-size: 14px; display: grid; gap: 4px; }
+.who-list li { display: flex; justify-content: space-between; gap: 10px; }
+.who-list .n { color: var(--ink-2); white-space: nowrap; }
+.people { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 12px; max-height: 240px; overflow: auto; padding: 2px; }
+.people label { display: flex; gap: 8px; align-items: baseline; font-size: 14px; min-width: 0; }
+.people input { width: 16px; height: 16px; margin: 0; flex: none; }
+.people .sub { color: var(--ink-3); font-size: 12.5px; }
+.cs-note { margin: 0; padding: 8px 10px; border-radius: 6px; background: var(--good-bg); color: var(--good); font-size: 14px; }
+.cs-note.warn { background: var(--warn-bg); color: var(--warn); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.three { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+dialog { border: 0; padding: 0; color: var(--ink); background: var(--sheet); box-shadow: 0 10px 40px rgba(10, 14, 22, 0.25); }
+dialog::backdrop { background: rgba(16, 20, 28, 0.42); }
+dialog.drawer { margin: 0 0 0 auto; width: min(600px, 100vw); height: 100dvh; max-height: 100dvh; max-width: 100vw; border-left: 1px solid var(--rule); }
+dialog.modal { width: min(560px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); border-radius: 10px; }
+dialog form { display: flex; flex-direction: column; height: 100%; max-height: inherit; }
+.dlg-head { padding: 20px 24px 12px; border-bottom: 1px solid var(--rule-soft); }
+.dlg-head h2 { margin: 0; font: 600 22px/1.25 var(--serif); }
+.dlg-body { flex: 1; overflow-y: auto; padding: 16px 24px 24px; display: grid; gap: 14px; align-content: start; }
+.dlg-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 14px 24px; border-top: 1px solid var(--rule-soft); }
+.dlg-foot .spacer { flex: 1; }
+.field { display: grid; gap: 4px; }
+.field > label, .field > .label, .group h3 { font-size: 14px; font-weight: 600; margin: 0; }
+.hint { margin: 0; font-size: 13px; color: var(--ink-3); }
+.field input, .field select, .field textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); }
+.group { display: grid; gap: 8px; padding-top: 10px; border-top: 1px solid var(--rule-soft); }
+.checks { display: grid; gap: 2px; max-height: 260px; overflow-y: auto; padding: 2px; }
+.check { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; align-items: start; padding: 5px 4px; border-radius: 6px; cursor: pointer; }
+.check:hover { background: var(--hover); }
+.check input { width: 18px; height: 18px; margin: 2px 0 0; }
+.check .who { overflow-wrap: anywhere; }
+.check .sub { margin-left: 4px; font-size: 13px; color: var(--ink-3); }
+.check .lines { display: block; font-size: 13px; color: var(--ink-3); white-space: pre-line; }
+#songList, #sourceList { max-height: none; }
+.radio-row { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.radio-row label { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; cursor: pointer; }
+pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); font-size: 13px; white-space: pre-wrap; }
+
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); max-width: calc(100vw - 32px); padding: 10px 16px; border-radius: 8px; background: var(--ink); color: var(--paper); font-size: 14px; box-shadow: 0 6px 24px rgba(10, 14, 22, 0.25); z-index: 10; }
+.toast.error { background: var(--bad); color: #ffffff; }
+.report { display: none; }
+
+@media (max-width: 900px) {
+  .workspace { grid-template-columns: 1fr; }
+  .side { position: static; }
+}
+@media (max-width: 720px) {
+  .page { padding: 0 16px 40px; }
+  .film-title { font-size: 26px; }
+  .file { align-items: flex-start; }
+  .file-state { text-align: left; }
+  .toolbar h2 { flex-basis: 100%; order: -2; }
+  .toolbar #addBtn { flex: 1 1 100%; justify-content: center; order: -1; }
+  .row { grid-template-columns: minmax(0, 1fr); }
+  .flags { grid-column: 1; }
+}
+@media print {
+  :root { color-scheme: light; }
+  body { background: #ffffff; color: #000000; font-size: 10pt; }
+  .page, dialog, .toast { display: none !important; }
+  .report { display: block; }
+  .report h1 { margin: 0; font: 700 18pt/1.2 var(--serif); }
+  .report h2 { margin: 14pt 0 4pt; font: 700 12pt/1.2 var(--serif); break-after: avoid; page-break-after: avoid; }
+  .report .r-meta { margin: 2pt 0 10pt; }
+  .report table { width: 100%; border-collapse: collapse; }
+  .report th, .report td { padding: 4pt 5pt; border-bottom: 0.75pt solid #999999; text-align: left; vertical-align: top; }
+  .report th { font-size: 9pt; border-bottom: 1pt solid #000000; }
+  .report tr { break-inside: avoid; page-break-inside: avoid; }
+  .report .r-sub { display: block; font-size: 8.5pt; color: #333333; }
+  .report .r-note { margin-top: 14pt; font-size: 8pt; color: #333333; }
+  @page { size: landscape; margin: 12mm; }
+  .report .r-month { break-after: page; page-break-after: always; }
+  .report .r-month:last-child { break-after: auto; page-break-after: auto; }
+}
+.skip-link { position: absolute; left: 12px; top: -80px; z-index: 1000; padding: 8px 14px; border: 2px solid var(--focus, #2f6fdb); border-radius: 6px; background: var(--sheet, #ffffff); color: var(--ink, #1a2130); font-weight: 600; text-decoration: none; }
+.skip-link:focus { top: 12px; }
+input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:focus, input[type="time"]:focus-within { outline: 2px solid var(--focus, #2f6fdb); outline-offset: 2px; }
+.home-link { color: inherit; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.home-link:hover { text-decoration-thickness: 2px; }
+.scroll { overflow-x: auto; background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; }
+.scroll:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+table.dood { border-collapse: collapse; font-size: 14px; min-width: 100%; }
+.dood th, .dood td { padding: 6px 8px; border-bottom: 1px solid var(--rule-soft); text-align: center; white-space: nowrap; }
+.dood thead th { font-size: 12.5px; font-weight: 600; color: var(--ink-2); vertical-align: bottom; border-bottom: 1px solid var(--rule); }
+.dood thead th span { display: block; font-weight: 400; }
+.dood th.who, .dood td.who { text-align: left; position: sticky; left: 0; background: var(--sheet); white-space: normal; min-width: 150px; }
+.dood td.who b { display: block; }
+.dood td.who small { color: var(--ink-2); font-size: 12.5px; }
+.dood td.c { font-weight: 700; font-size: 12.5px; }
+.dood td.c-w { background: var(--good-bg); color: var(--good); }
+.dood td.c-h { background: var(--warn-bg); color: var(--warn); }
+.dood td.c-t { background: var(--hover); color: var(--ink); }
+.dood td.n { font-variant-numeric: tabular-nums; }
+.dood .th-total { border-left: 1px solid var(--rule); }
+.codes { margin: 4px 0 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 14px; }
+.codes b { display: inline-block; min-width: 38px; }
+.inline-field { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.inline-field input { width: 90px; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); }
+@media print {
+  @page { size: landscape; margin: 10mm; }
+  .report th, .report td { text-align: center; font-size: 8.5pt; padding: 3pt 4pt; }
+  .report td.who, .report th.who { text-align: left; }
+}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to the tool</a>
+<div class="cant-run" id="cantRun">
+  <h1 id="cantRunTitle">Open this file in a web browser</h1>
+  <p id="cantRunText">This tool runs in Chrome, Edge, Firefox or Safari. You're seeing a preview that doesn't run it, so none of the buttons would work.</p>
+  <p id="cantRunHow">In your browser, choose File, then Open File, and pick this file. Or right-click the file and open it with your browser.</p>
+</div>
+<div class="page">
+  <header class="masthead">
+    <div>
+      <p class="tool-name"><a class="home-link" href="../../index.html">Open Filmmaker Toolkit</a> <span aria-hidden="true">/</span> Day-out-of-days</p>
+      <h1 class="film-title" id="filmTitle">Untitled film</h1>
+      <p class="film-meta"><span id="filmMeta"></span> <button type="button" class="link-btn" id="editProjectBtn">Edit film details</button></p>
+    </div>
+    <div class="file">
+      <p class="file-state" id="fileState">Not saved to a file yet</p>
+      <div class="file-actions">
+        <button type="button" class="btn" id="newBtn">New project</button>
+        <button type="button" class="btn" id="openBtn">Open file</button>
+        <button type="button" class="btn" id="projectCsvBtn">Export project data (CSV)</button>
+        <button type="button" class="btn primary" id="saveBtn">Save file</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="banner" id="recovery" role="region" aria-label="Unsaved work" hidden>
+    <p id="recoveryText"></p>
+    <div class="actions">
+      <button type="button" class="btn primary" id="restoreBtn">Restore it</button>
+      <button type="button" class="btn" id="discardBtn">Discard it</button>
+    </div>
+  </div>
+
+  <main id="main" class="workspace">
+    <section aria-labelledby="listHead">
+      <div class="toolbar">
+        <h2 id="listHead">Day-out-of-days</h2>
+        <span class="count" id="count"></span>
+        <span class="spacer"></span>
+        <button type="button" class="btn" id="settingsBtn">Drop and pick up</button>
+        <button type="button" class="btn" id="csvBtn">Export CSV</button>
+        <button type="button" class="btn" id="printBtn">Print</button>
+      </div>
+      <div class="scroll" id="tableWrap" tabindex="0" role="region" aria-label="The grid, scrolls sideways"><table class="dood" id="table"></table></div>
+      <p class="hint" id="note"></p>
+      <div class="empty" id="empty" hidden>
+        <h2>Nothing scheduled yet</h2>
+        <p>The day-out-of-days is worked out from the scenes you've put on shoot days in the <a href="../stripboard/index.html">stripboard</a>, and the cast from the <a href="../script-breakdown/index.html">script breakdown</a>. Open a project that has a schedule.</p>
+        <div class="actions"><button type="button" class="btn primary" id="emptyOpenBtn">Open file</button></div>
+      </div>
+    </section>
+
+    <div class="side">
+      <section class="card" aria-labelledby="codeHead">
+        <div class="card-head"><h2 id="codeHead">What the codes mean</h2></div>
+        <ul class="codes">
+          <li><b>SW</b> Start work: the first day</li>
+          <li><b>W</b> Work</li>
+          <li><b>WF</b> Work finish: the last day</li>
+          <li><b>SWF</b> Starts and finishes the same day</li>
+          <li><b>H</b> Hold: on the job but not working</li>
+          <li><b>T</b> Travel</li>
+          <li><b>WD</b> Work, then dropped until needed again</li>
+          <li><b>PW</b> Picked up again, and works</li>
+        </ul>
+      </section>
+      <section class="card" aria-labelledby="sumHead">
+        <div class="card-head"><h2 id="sumHead">Totals</h2></div>
+        <ul class="due-list" id="sumList"></ul>
+      </section>
+    </div>
+  </main>
+
+  <footer class="foot">
+    <p>Part of the <a href="../../index.html">Open Filmmaker Toolkit</a>. This page makes no network requests: everything stays on this computer until you save or export it. Uses the same project file as the other toolkit tools.</p>
+  </footer>
+</div>
+
+<dialog class="modal" id="settingsDialog" aria-labelledby="settingsTitle">
+  <form id="settingsForm" method="dialog" novalidate>
+    <div class="dlg-head"><h2 id="settingsTitle">Drop and pick up</h2></div>
+    <div class="dlg-body">
+      <p>When someone has a long gap between work days, you can drop them and pick them up again instead of paying holds. Their hold days stop at the drop.</p>
+      <div class="field"><label for="s-drop">Drop when the gap is longer than this many days</label><div class="inline-field"><input id="s-drop" type="number" min="0" step="1" inputmode="numeric" aria-describedby="dropHint"><span class="hint" id="dropHint">0 means never drop. Union agreements set their own rules; check yours.</span></div></div>
+    </div>
+    <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn" id="settingsCancel">Cancel</button><button type="submit" class="btn primary">Save</button></div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="projectDialog" aria-labelledby="projectDialogTitle">
+  <form id="projectForm" method="dialog">
+    <div class="dlg-head"><h2 id="projectDialogTitle">Film details</h2></div>
+    <div class="dlg-body">
+      <div class="field"><label for="p-title">Film title</label><input id="p-title" type="text" placeholder="Working title is fine"></div>
+      <div class="field"><label for="p-company">Production company</label><input id="p-company" type="text"></div>
+      <div class="field"><label for="p-producer">Producer</label><input id="p-producer" type="text"></div>
+    </div>
+    <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn" id="projectCancel">Cancel</button><button type="submit" class="btn primary">Save details</button></div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="projectCsvDialog" aria-labelledby="projectCsvTitle">
+  <form id="projectCsvForm" method="dialog">
+    <div class="dlg-head"><h2 id="projectCsvTitle">Export project data</h2></div>
+    <div class="dlg-body">
+      <div class="field">
+        <label for="projectCsvCollection">Data to export</label>
+        <select id="projectCsvCollection">
+          <option value="project">Project details</option>
+          <option value="people">People</option>
+          <option value="locations">Locations</option>
+          <option value="thirdPartyElements">Third-party elements</option>
+          <option value="contracts">Contracts</option>
+          <option value="assets">Assets</option>
+          <option value="musicCueSheet">Music cue sheet details</option>
+          <option value="callSheets">Call sheets</option>
+          <option value="characters">Cast</option>
+          <option value="shootDays">Shoot days</option>
+        </select>
+      </div>
+      <p class="hint">Exports one CSV file for the selected collection. Nested values are kept as JSON in their cell.</p>
+    </div>
+    <div class="dlg-foot">
+      <button type="submit" class="btn primary">Export CSV</button>
+      <button type="button" class="btn" id="projectCsvCancel">Cancel</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="conflictDialog" aria-labelledby="conflictTitle">
+  <form method="dialog">
+    <div class="dlg-head"><h2 id="conflictTitle">Project file changed</h2></div>
+    <div class="dlg-body">
+      <p id="conflictText">This project file changed after you opened it. Saving will replace those changes.</p>
+      <p class="hint">Your edits are still here. Choose whether to overwrite the changed file, save a separate copy, or load its latest contents. Save in one tool at a time; simultaneous saves can still race.</p>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn" id="conflictReloadBtn">Reload latest</button>
+      <button type="button" class="btn" id="conflictCopyBtn">Save a copy</button>
+      <button type="button" class="btn danger" id="conflictOverwriteBtn">Overwrite file</button>
+      <button type="button" class="btn" id="conflictCancelBtn">Keep editing</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="report" id="report" aria-hidden="true"></div>
+<input type="file" id="fileInput" accept=".json,application/json" hidden>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+(() => {
+  'use strict';
+
+  const FORMAT = 'open-filmmaker-toolkit/project';
+  const FORMAT_VERSION = 1;
+  const TOOL = 'day-out-of-days 0.1.0';
+  const DRAFT_KEY = 'oft.day-out-of-days.draft';
+  const PROJECT_TEXT = ['title', 'company', 'producer'];
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const str = v => (v == null ? '' : String(v));
+  const arr = v => (Array.isArray(v) ? v : []);
+  const norm = s => str(s).toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+
+  let doc = blankDoc();
+  let fileHandle = null;
+  let baselineText = null;
+  let fileName = null;
+  let dirty = false;
+  let editing = null;
+
+  function blankDoc() {
+    return { format: FORMAT, formatVersion: FORMAT_VERSION, project: { title: '', company: '', producer: '', frameRate: 24, currency: 'USD' }, people: [], locations: [], callSheets: [], scenes: [], characters: [], shootDays: [] };
+  }
+  function newId(prefix) {
+    if (window.crypto && crypto.randomUUID) return `${prefix}-${crypto.randomUUID()}`;
+    return `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+  }
+  function today() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  function fmtDate(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str(iso));
+    if (!m) return str(iso);
+    return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+  function daysUntil(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str(iso));
+    if (!m) return null;
+    const t = new Date(); const a = Date.UTC(t.getFullYear(), t.getMonth(), t.getDate());
+    return Math.round((Date.UTC(+m[1], +m[2] - 1, +m[3]) - a) / 86400000);
+  }
+
+  // Fills in only what this tool needs; everything else in the file is left as it was.
+  function normalize(d) {
+    if (!d.project || typeof d.project !== 'object') d.project = {};
+    for (const k of PROJECT_TEXT) if (typeof d.project[k] !== 'string') d.project[k] = str(d.project[k]);
+    for (const k of ['people', 'locations', 'callSheets', 'scenes', 'characters', 'shootDays']) if (!Array.isArray(d[k])) d[k] = [];
+    if (d.dayOutOfDays !== undefined && (!d.dayOutOfDays || typeof d.dayOutOfDays !== 'object' || Array.isArray(d.dayOutOfDays))) delete d.dayOutOfDays;
+    d.format = FORMAT;
+    d.formatVersion = FORMAT_VERSION;
+    return d;
+  }
+  const isDate = s => /^\d{4}-\d{2}-\d{2}$/.test(str(s));
+  const person = id => doc.people.find(p => p && p.id === id);
+  const scene = id => doc.scenes.find(s => s && s.id === id && !s.notInScript);
+  const cast = () => doc.characters.filter(c => c && c.id).sort((a, b) => (Number(a.number) || 999) - (Number(b.number) || 999) || str(a.name).localeCompare(str(b.name)));
+  const dropDays = () => { const n = Number(doc.dayOutOfDays && doc.dayOutOfDays.dropDays); return Number.isFinite(n) && n >= 0 ? n : 10; };
+  const dayNum = iso => Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10)) / 86400000;
+  // Shoot days with scenes on them, in date order, and travel days with someone from the cast.
+  const workDays = () => doc.shootDays.filter(d => d && (d.kind || 'shoot') === 'shoot' && isDate(d.date) && arr(d.sceneIds).some(scene)).sort((a, b) => a.date.localeCompare(b.date));
+  const actorIds = () => new Set(cast().map(c => c.personId).filter(Boolean));
+  const travelDays = () => doc.shootDays.filter(d => d && d.kind === 'travel' && isDate(d.date) && arr(d.personIds).some(id => actorIds().has(id)));
+  const columns = () => [...workDays(), ...travelDays()].sort((a, b) => a.date.localeCompare(b.date) || (a.kind === 'travel' ? -1 : 1));
+  const works = (c, d) => (d.kind || 'shoot') === 'shoot' && arr(d.sceneIds).map(scene).filter(Boolean).some(s => arr(s.characterIds).includes(c.id));
+  // Each character's code for each column, and their counts.
+  function rowFor(c) {
+    const cols = columns();
+    const codes = cols.map(d => (d.kind === 'travel' ? (c.personId && arr(d.personIds).includes(c.personId) ? 'T' : '') : works(c, d) ? 'W' : ''));
+    const idx = codes.map((x, i) => (x === 'W' ? i : -1)).filter(i => i >= 0);
+    if (idx.length) {
+      const first = idx[0], last = idx[idx.length - 1];
+      const drop = dropDays();
+      for (let k = 0; k < idx.length - 1; k++) {
+        const a = idx[k], b = idx[k + 1];
+        const gap = dayNum(cols[b].date) - dayNum(cols[a].date) - 1;
+        const dropped = drop > 0 && gap > drop;
+        if (dropped) { codes[a] = 'WD'; codes[b] = 'PW'; }
+        for (let j = a + 1; j < b; j++) if (!codes[j] && (cols[j].kind || 'shoot') === 'shoot') codes[j] = dropped ? '' : 'H';
+      }
+      if (first === last) codes[first] = 'SWF';
+      else {
+        codes[first] = codes[first] === 'WD' ? 'SWD' : 'SW';
+        codes[last] = codes[last] === 'PW' ? 'PWF' : 'WF';
+      }
+    }
+    const count = re => codes.filter(x => re.test(x)).length;
+    const on = cols.filter((d, i) => codes[i]);
+    return { codes, work: count(/W/), hold: count(/^H$/), travel: count(/^T$/), start: on.length ? on[0].date : '', finish: on.length ? on[on.length - 1].date : '' };
+  }
+  const label = { SW: 'Start work', W: 'Work', WF: 'Work finish', SWF: 'Start and finish', H: 'Hold', T: 'Travel', WD: 'Work, then drop', PW: 'Pick up and work', SWD: 'Start work, then drop', PWF: 'Pick up, work and finish' };
+  const cls = x => (/W/.test(x) ? 'c-w' : x === 'H' ? 'c-h' : x === 'T' ? 'c-t' : '');
+  const shortDate = iso => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso); return m ? new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : iso; };
+  const weekday = iso => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso); return m ? new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString(undefined, { weekday: 'short' }) : ''; };
+  // Numbered like the stripboard: among all shoot days, in date order.
+  const colHead = d => (d.kind === 'travel' ? 'Travel' : `Day ${doc.shootDays.filter(x => x && (x.kind || 'shoot') === 'shoot').sort((a, b) => str(a.date).localeCompare(str(b.date))).indexOf(d) + 1}`);
+
+  // ---------- Render ----------
+  function render() {
+    $('filmTitle').textContent = doc.project.title || 'Untitled film';
+    $('filmTitle').classList.toggle('is-empty', !doc.project.title);
+    $('filmMeta').textContent = [doc.project.company, doc.project.producer && `Producer: ${doc.project.producer}`].filter(Boolean).join(' · ');
+    $('fileState').innerHTML = (fileName ? esc(fileName) : 'Not saved to a file yet') + (dirty ? ' · <span class="dirty">Unsaved changes</span>' : '');
+    document.title = `${doc.project.title ? doc.project.title + ' · ' : ''}Day-out-of-days · Open Filmmaker Toolkit`;
+    const cols = columns(), people = cast();
+    const has = workDays().length && people.length;
+    $('empty').hidden = !!has;
+    for (const id of ['tableWrap', 'note', 'csvBtn', 'printBtn']) $(id).hidden = !has;
+    $('count').textContent = has ? `${people.length} in the cast, ${workDays().length} shoot day${workDays().length === 1 ? '' : 's'}` : '';
+    const rows = people.map(c => [c, rowFor(c)]);
+    $('table').innerHTML = has ? `<caption class="sr-only">Each cast member's work, hold and travel days</caption><thead><tr><th class="who" scope="col">Cast</th>${cols.map((d, i) => `<th scope="col">${esc(colHead(d))}<span>${esc(weekday(d.date))} ${esc(shortDate(d.date))}</span></th>`).join('')}<th scope="col" class="th-total">Work</th><th scope="col">Hold</th><th scope="col">Travel</th></tr></thead>
+      <tbody>${rows.map(([c, r]) => `<tr data-id="${esc(c.id)}"><td class="who"><b>${esc(`${c.number ? c.number + '. ' : ''}${c.name || ''}`)}</b><small>${esc(person(c.personId) ? person(c.personId).name : 'Not cast yet')}</small></td>${r.codes.map((x, i) => `<td class="c ${cls(x)}"${x ? ` title="${esc(label[x])}, ${esc(shortDate(cols[i].date))}"` : ''}>${esc(x)}</td>`).join('')}<td class="n th-total">${r.work}</td><td class="n">${r.hold}</td><td class="n">${r.travel}</td></tr>`).join('')}</tbody>` : '';
+    $('note').textContent = has ? `Worked out from the stripboard. Holds count shoot days between a character's first and last day; ${dropDays() ? `a gap of more than ${dropDays()} days drops them and picks them up again` : 'nobody is dropped'}. Travel shows when the actor is on a travel day in the shooting calendar.` : '';
+    const tot = k => rows.reduce((n, [, r]) => n + r[k], 0);
+    $('sumList').innerHTML = has ? [['Work days', tot('work')], ['Hold days', tot('hold')], ['Travel days', tot('travel')], ['Not on the schedule', rows.filter(([, r]) => !r.work).length]].map(([t, n]) => `<li><span>${esc(t)}</span><span class="when">${n}</span></li>`).join('') : '<li class="empty-line">Nothing scheduled yet.</li>';
+  }
+
+  // ---------- Settings ----------
+  function openSettings() { $('s-drop').value = String(dropDays()); $('settingsDialog').showModal(); $('s-drop').focus(); }
+  function saveSettings() {
+    const n = parseInt($('s-drop').value, 10);
+    if (!(n >= 0)) { $('s-drop').setCustomValidity('Enter a number of days, or 0 to never drop.'); $('s-drop').reportValidity(); return; }
+    doc.dayOutOfDays = Object.assign(doc.dayOutOfDays || {}, { dropDays: n });
+    $('settingsDialog').close();
+    changed();
+  }
+
+  // ---------- Exports and print ----------
+  function exportCsv() {
+    const cols = columns();
+    const head = ['Cast', 'Character', 'Played by', ...cols.map(d => `${d.date}${d.kind === 'travel' ? ' (travel)' : ''}`), 'Work', 'Hold', 'Travel', 'Start', 'Finish'];
+    const rows = cast().map(c => { const r = rowFor(c); return [c.number, c.name, (person(c.personId) || {}).name, ...r.codes, r.work, r.hold, r.travel, r.start, r.finish]; });
+    const csv = '﻿' + [head, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
+    const name = `${slug()}-day-out-of-days.csv`;
+    download(csv, name, 'text/csv;charset=utf-8');
+    toast(`Exported ${rows.length} cast member${rows.length === 1 ? '' : 's'} to ${name}`);
+  }
+  function renderReport() {
+    const cols = columns();
+    $('report').innerHTML = `<h1>${esc(doc.project.title || 'Untitled film')}: day-out-of-days</h1><p class="r-meta">${esc([doc.project.company, `Printed ${fmtDate(today())}`].filter(Boolean).join(' · '))}</p>
+      <table><thead><tr><th class="who">Cast</th>${cols.map((d, i) => `<th>${esc(colHead(d))}<span class="r-sub">${esc(shortDate(d.date))}</span></th>`).join('')}<th>Work</th><th>Hold</th><th>Travel</th></tr></thead>
+      <tbody>${cast().map(c => { const r = rowFor(c); return `<tr><td class="who">${esc(`${c.number ? c.number + '. ' : ''}${c.name || ''}`)}<span class="r-sub">${esc((person(c.personId) || {}).name || '')}</span></td>${r.codes.map(x => `<td>${esc(x)}</td>`).join('')}<td>${r.work}</td><td>${r.hold}</td><td>${r.travel}</td></tr>`; }).join('')}</tbody></table>
+      <p class="r-note">SW start work · W work · WF work finish · SWF start and finish · H hold · T travel · WD work, then drop · PW pick up and work. ${esc($('note').textContent)}</p>`;
+  }
+
+  // ---------- Project CSV ----------
+  function csvCell(v) {
+    let s = v == null ? '' : String(v);
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+    return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }
+  const csvCollections = {
+    project: 'project details', people: 'people', locations: 'locations', thirdPartyElements: 'third-party elements',
+    contracts: 'contracts', assets: 'assets', musicCueSheet: 'music cue sheet details', callSheets: 'call sheets', characters: 'cast', shootDays: 'shoot days'
+  };
+  function exportProjectCsv() {
+    const collection = $('projectCsvCollection').value;
+    const value = doc[collection];
+    const rows = Array.isArray(value) ? value : value && typeof value === 'object' ? [value] : [];
+    if (rows.some(row => !row || typeof row !== 'object' || Array.isArray(row))) {
+      toast(`Couldn't export ${csvCollections[collection]}: the project contains an invalid record.`, true);
+      return;
+    }
+    const headers = [...new Set(rows.flatMap(row => Object.keys(row)))];
+    if (!headers.length) headers.push('id');
+    const csvRows = rows.map(row => headers.map(key => { const cell = row[key]; return cell && typeof cell === 'object' ? JSON.stringify(cell) : cell; }));
+    const csv = '﻿' + [headers, ...csvRows].map(row => row.map(csvCell).join(',')).join('\r\n') + '\r\n';
+    const name = suggestedName().replace(/\.oft\.json$/i, `-${collection}.csv`);
+    download(csv, name, 'text/csv;charset=utf-8');
+    toast(`Exported ${rows.length} ${csvCollections[collection]} to ${name}`);
+  }
+
+  // ---------- Film details ----------
+  function openProjectDialog() {
+    for (const k of PROJECT_TEXT) $(`p-${k}`).value = doc.project[k] || '';
+    $('projectDialog').showModal();
+    $('p-title').focus();
+  }
+  function saveProjectDialog() {
+    for (const k of PROJECT_TEXT) doc.project[k] = $(`p-${k}`).value.trim();
+    $('projectDialog').close();
+    changed();
+  }
+
+  // ---------- Dirty state & recovery draft ----------
+  function changed() { dirty = true; saveDraft(); render(); }
+  function saveDraft() {
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ doc, fileName, baselineText, at: new Date().toISOString() })); } catch { /* the file on disk is the real copy */ }
+  }
+  function clearDraft() {
+    try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+    $('recovery').hidden = true;
+  }
+  function checkDraft() {
+    let draft = null;
+    try { draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); } catch { draft = null; }
+    if (!draft || !draft.doc || draft.doc.format !== FORMAT) return;
+    const n = Array.isArray(draft.doc.characters) ? draft.doc.characters.length : 0;
+    if (!n && !(draft.doc.project && draft.doc.project.title)) { clearDraft(); return; }
+    const when = draft.at ? new Date(draft.at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'earlier';
+    const title = draft.doc.project && draft.doc.project.title ? `"${draft.doc.project.title}"` : 'an untitled project';
+    $('recoveryText').textContent = `You have unsaved changes to ${title} from ${when} (${n} ${n === 1 ? 'character' : 'characters'}). Restore them, or discard them and start fresh.`;
+    $('recovery').hidden = false;
+    $('restoreBtn').onclick = () => {
+      doc = normalize(draft.doc); fileName = draft.fileName || null; fileHandle = null;
+      baselineText = typeof draft.baselineText === 'string' ? draft.baselineText : null; dirty = true;
+      $('recovery').hidden = true; render();
+      toast(fileName ? `Restored. Save to write the changes back to ${fileName}.` : 'Restored. Save to keep it as a file.');
+    };
+    $('discardBtn').onclick = () => { clearDraft(); toast('Discarded the unsaved changes.'); };
+  }
+
+  // ---------- Files ----------
+  const pickerTypes = [{ description: 'Film project file', accept: { 'application/json': ['.json'] } }];
+  function slug() {
+    return (doc.project.title || 'untitled-film').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'untitled-film';
+  }
+  const suggestedName = () => `${slug()}.oft.json`;
+  function serialize() {
+    doc.savedAt = new Date().toISOString();
+    doc.savedBy = TOOL;
+    return JSON.stringify(doc, null, 2) + '\n';
+  }
+  function download(text, name, type) {
+    const url = URL.createObjectURL(new Blob([text], { type }));
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  function afterSave(name, downloaded, content) {
+    fileName = name;
+    if (downloaded) fileHandle = null;
+    baselineText = content;
+    dirty = false; clearDraft(); render();
+    toast(downloaded ? `Downloaded ${name}. Keep it with your project files and open it here next time.` : `Saved to ${name}`);
+  }
+  async function writeProjectFile(handle, content) {
+    try {
+      const writable = await handle.createWritable();
+      await writable.write(content);
+      await writable.close();
+    } catch (err) {
+      if (err.name !== 'AbortError') toast(`Couldn't save the file: ${err.message}`, true);
+      return;
+    }
+    fileHandle = handle;
+    afterSave(handle.name, false, content);
+  }
+  function saveCopy(content) {
+    const base = (fileName || suggestedName()).replace(/\.oft\.json$/i, '');
+    const name = `${base}-copy.oft.json`;
+    download(content, name, 'application/json');
+    afterSave(name, true, content);
+  }
+  async function reloadLatest(handle) {
+    try {
+      const file = await handle.getFile();
+      loadText(await file.text(), handle.name, handle);
+    } catch (err) {
+      toast(`Couldn't reload the file: ${err.message}`, true);
+    }
+  }
+  function showConflictDialog(content, observedText, unknownBaseline = false) {
+    const handle = fileHandle;
+    dirty = true;
+    saveDraft();
+    render();
+    $('conflictText').textContent = unknownBaseline
+      ? `The tool can't verify whether ${handle.name} changed since your recovery copy was made. Your edits are not saved.`
+      : `${handle.name} changed after you opened it. Your edits are not saved. Overwriting replaces the newer file.`;
+    $('conflictDialog').showModal();
+    $('conflictReloadBtn').onclick = () => { $('conflictDialog').close(); reloadLatest(handle); };
+    $('conflictCopyBtn').onclick = () => { $('conflictDialog').close(); saveCopy(content); };
+    $('conflictOverwriteBtn').onclick = async () => {
+      $('conflictDialog').close();
+      let latestText;
+      try { latestText = await (await handle.getFile()).text(); }
+      catch (err) { toast(`Couldn't check the file before overwriting: ${err.message}`, true); return; }
+      if (latestText !== observedText) {
+        toast('The file changed again. Review the updated conflict warning before overwriting.', true);
+        showConflictDialog(content, latestText);
+        return;
+      }
+      await writeProjectFile(handle, content);
+    };
+    $('conflictCancelBtn').onclick = () => $('conflictDialog').close();
+  }
+  async function saveFile() {
+    const out = serialize();
+    if (fileHandle) {
+      let currentText;
+      try { currentText = await (await fileHandle.getFile()).text(); }
+      catch (err) { toast(`Couldn't check the file before saving: ${err.message}`, true); return; }
+      if (baselineText === null || currentText !== baselineText) { showConflictDialog(out, currentText, baselineText === null); return; }
+      await writeProjectFile(fileHandle, out);
+      return;
+    }
+    if (window.showSaveFilePicker && window.self === window.top) {
+      try {
+        const h = await window.showSaveFilePicker({ suggestedName: fileName || suggestedName(), types: pickerTypes });
+        if (h.name === fileName) {
+          const currentText = await (await h.getFile()).text();
+          if (baselineText === null || currentText !== baselineText) { fileHandle = h; showConflictDialog(out, currentText, baselineText === null); return; }
+        }
+        await writeProjectFile(h, out);
+      } catch (err) { if (err.name !== 'AbortError') toast(`Couldn't save the file: ${err.message}`, true); }
+      return;
+    }
+    const name = fileName || suggestedName();
+    download(out, name, 'application/json');
+    afterSave(name, true, out);
+  }
+  function loadText(text, name, handle) {
+    let data;
+    try { data = JSON.parse(text); } catch { toast(`Couldn't open ${name}: it isn't a project file.`, true); return; }
+    if (!data || data.format !== FORMAT) { toast(`Couldn't open ${name}: it isn't an Open Filmmaker Toolkit project file.`, true); return; }
+    if (Number(data.formatVersion) > FORMAT_VERSION) { toast(`Couldn't open ${name}: it was saved by a newer version of the toolkit. Get the latest version of this tool.`, true); return; }
+    doc = normalize(data); fileHandle = handle; baselineText = text; fileName = name; dirty = false;
+    clearDraft(); render();
+    const n = doc.characters.length;
+    toast(`Opened ${name}: ${n ? `${n} ${n === 1 ? 'character' : 'characters'}` : 'no characters yet'}`);
+  }
+  async function openFile() {
+    if (dirty && !confirm('You have unsaved changes. Open another file and lose them?')) return;
+    if (window.showOpenFilePicker && window.self === window.top) {
+      try { const [h] = await window.showOpenFilePicker({ types: pickerTypes }); const f = await h.getFile(); loadText(await f.text(), f.name, h); }
+      catch (err) { if (err.name !== 'AbortError') toast(`Couldn't open the file: ${err.message}`, true); }
+      return;
+    }
+    $('fileInput').click();
+  }
+  function newProject() {
+    if (dirty && !confirm('You have unsaved changes. Start a new project and lose them?')) return;
+    doc = normalize(blankDoc()); fileHandle = null; baselineText = null; fileName = null; dirty = false;
+    clearDraft(); render(); openProjectDialog();
+  }
+
+  let toastTimer = null;
+  function toast(msg, isError) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.classList.toggle('error', !!isError);
+    t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.hidden = true; }, isError ? 7000 : 4200);
+  }
+
+  // ---------- Wiring ----------
+  function init() {
+    doc = normalize(doc);
+    $('newBtn').onclick = newProject;
+    $('openBtn').onclick = openFile;
+    $('saveBtn').onclick = saveFile;
+    $('editProjectBtn').onclick = openProjectDialog;
+    $('filmTitle').onclick = openProjectDialog;
+    $('printBtn').onclick = () => { renderReport(); window.print(); };
+    window.addEventListener('beforeprint', renderReport);
+    $('projectCsvBtn').onclick = () => $('projectCsvDialog').showModal();
+    $('projectCsvCancel').onclick = () => $('projectCsvDialog').close();
+    $('projectCsvForm').addEventListener('submit', ev => { ev.preventDefault(); exportProjectCsv(); $('projectCsvDialog').close(); });
+    $('fileInput').addEventListener('change', async () => {
+      const f = $('fileInput').files[0];
+      if (f) loadText(await f.text(), f.name, null);
+      $('fileInput').value = '';
+    });
+    $('projectForm').addEventListener('submit', ev => { ev.preventDefault(); saveProjectDialog(); });
+    $('projectCancel').onclick = () => $('projectDialog').close();
+    $('emptyOpenBtn').onclick = openFile;
+    $('csvBtn').onclick = exportCsv;
+    $('settingsBtn').onclick = openSettings;
+    $('settingsForm').addEventListener('submit', ev => { ev.preventDefault(); saveSettings(); });
+    $('settingsForm').addEventListener('input', ev => { if (ev.target.setCustomValidity) ev.target.setCustomValidity(''); });
+    $('settingsCancel').onclick = () => $('settingsDialog').close();
+
+    document.addEventListener('keydown', ev => {
+      const mod = ev.metaKey || ev.ctrlKey;
+      if (mod && ev.key.toLowerCase() === 's') { ev.preventDefault(); saveFile(); }
+      else if (mod && ev.key.toLowerCase() === 'o') { ev.preventDefault(); openFile(); }
+    });
+    window.addEventListener('beforeunload', ev => { if (dirty) { ev.preventDefault(); ev.returnValue = ''; } });
+    render();
+    checkDraft();
+  }
+
+  if (typeof HTMLDialogElement !== 'function' || typeof HTMLDialogElement.prototype.showModal !== 'function' || typeof structuredClone !== 'function') {
+    $('cantRunTitle').textContent = 'This browser is too old to run this tool';
+    $('cantRunText').textContent = 'Update to a current version of Chrome, Edge, Firefox or Safari, then open this file again.';
+    $('cantRunHow').hidden = true;
+    return;
+  }
+  document.documentElement.classList.remove('no-js');
+  window.addEventListener('error', ev => toast(`Something went wrong: ${ev.message}. Save your work, then reload the page.`, true));
+  window.addEventListener('unhandledrejection', ev => toast(`Something went wrong: ${ev.reason && ev.reason.message ? ev.reason.message : ev.reason}. Save your work, then reload the page.`, true));
+
+  /* oft-shared:tool begin. Copied from shared/tool.js by .github/scripts/sync_shared.py; edit it there. */
+  // Shared by every tool: your name, remembering the open file, who has it open,
+  // who changed what, merging two copies and spotting conflicted copies.
+  // Runs inside each tool's script and uses its doc, fileHandle, baselineText,
+  // fileName, dirty, loadText, saveFile, serialize, render and toast.
+  const OFT_SLUG = (window.location.pathname.match(/tools\/([^/]+)\//) || [])[1] || '';
+  const OFT_GUIDE = 'https://github.com/open-filmmaker-toolkit/toolkit/blob/main/docs/sharing-a-project.md';
+  const OFT_HOURS = 4;
+  const OFT_KEYS = { project: 'Project details', people: 'People', locations: 'Locations', thirdPartyElements: 'Clearance log', contracts: 'Contracts and releases', assets: 'Files and stills', musicCueSheet: 'Music cue sheet', callSheets: 'Call sheets', credits: 'Credits', supers: 'Name supers', subjects: 'Subject tracker', sources: 'Research log', comps: 'Comps tracker', treatment: 'Treatment', pitchDeck: 'Pitch deck', grants: 'Grant calendar', narratives: 'Narrative library', budget: 'Budget', budgetFormats: 'Budget converter', financePlan: 'Finance plan', funders: 'Funder CRM', cashFlow: 'Cash flow', shootDays: 'Shooting calendar', script: 'Script', scenes: 'Script breakdown', characters: 'Cast', dayOutOfDays: 'Day-out-of-days', interviews: 'Interviews', journal: 'Field journal', scouts: 'Location scouts', gear: 'Gear list', trips: 'Travel sheet', riskPlans: 'Risk plans', security: 'Security checklist', mediaReports: 'Camera and sound reports', dailyReports: 'Daily reports', expenses: 'Expense log', festivals: 'Festival submissions', screenings: 'Screenings', pressOutlets: 'Press list', partners: 'Partner CRM', discussionGuide: 'Discussion guide', paperEdit: 'Paper edit', costReport: 'Budget-to-actuals', structure: 'Structure board', cuts: 'Cut tracker', clearanceReport: 'Clearance report', chainOfTitle: 'Chain of title', festivalStrategy: 'Festival strategy', pressNotes: 'Press notes', awards: 'Awards', socialPosts: 'Social posts', deliverables: 'Deliverables', qc: 'QC tracker', waterfall: 'Waterfall', revenueStatements: 'Revenue tracker', bookings: 'Bookings', theoryOfChange: 'Theory of change', screeningKit: 'Screening kit', impactReport: 'Impact report', finalCostReport: 'Final cost report', grantReports: 'Grant reports', contractArchive: 'Contract archive' };
+  const oftStore = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch { /* storage off */ } } };
+  const oftMe = () => (oftStore.get('oft-user-name') || '').trim();
+  const oftEsc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const oftEl = id => document.getElementById(id);
+  function oftIdb(op, key, val) {
+    return new Promise(res => {
+      try {
+        const r = indexedDB.open('open-filmmaker-toolkit', 1);
+        r.onupgradeneeded = () => r.result.createObjectStore('handles');
+        r.onerror = () => res(null);
+        r.onsuccess = () => {
+          const db = r.result;
+          try {
+            const tx = db.transaction('handles', op === 'get' ? 'readonly' : 'readwrite');
+            const s = tx.objectStore('handles');
+            const q = op === 'get' ? s.get(key) : op === 'del' ? s.delete(key) : s.put(val, key);
+            tx.oncomplete = () => { db.close(); res(op === 'get' ? q.result || null : true); };
+            tx.onerror = tx.onabort = () => { db.close(); res(null); };
+          } catch { db.close(); res(null); }
+        };
+      } catch { res(null); }
+    });
+  }
+  function oftWhen(iso) {
+    const d = new Date(iso);
+    if (isNaN(d)) return '';
+    const time = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    return d.toDateString() === new Date().toDateString() ? time : `${d.toLocaleDateString([], { month: 'short', day: 'numeric' })}, ${time}`;
+  }
+  const oftDay = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString([], { month: 'short', day: 'numeric' }); };
+  const oftChangedText = r => r && r.changedAt ? `Changed ${r.changedBy ? `by ${r.changedBy}, ` : ''}${oftDay(r.changedAt)}` : '';
+
+  // ---------- Who changed what ----------
+  const OFT_META = new Set(['changedAt', 'changedBy']);
+  const oftStrip = (k, v) => OFT_META.has(k) ? undefined : v && typeof v === 'object' && !Array.isArray(v) ? Object.fromEntries(Object.keys(v).sort().map(x => [x, v[x]])) : v;
+  const oftSame = (a, b) => JSON.stringify(a, oftStrip) === JSON.stringify(b, oftStrip);
+  const oftIsObj = v => !!v && typeof v === 'object' && !Array.isArray(v);
+  // Calls fn(record, key) for every object with an id. The key adds the path, because
+  // snapshots (saved versions, the last export) repeat ids from the live records.
+  function oftWalk(x, fn, path = '') {
+    if (Array.isArray(x)) x.forEach(v => oftWalk(v, fn, path));
+    else if (oftIsObj(x)) {
+      if (typeof x.id === 'string' && x.id) fn(x, `${path}#${x.id}`);
+      for (const [k, v] of Object.entries(x)) if (v && typeof v === 'object') oftWalk(v, fn, `${path}.${k}`);
+    }
+  }
+  function oftStamp() {
+    const me = oftMe();
+    if (!me || !doc) return;
+    let before = {};
+    try { if (baselineText) before = JSON.parse(baselineText); } catch { /* keep empty */ }
+    const old = new Map();
+    oftWalk(before, (r, key) => old.set(key, r));
+    const now = new Date().toISOString();
+    oftWalk(doc, (r, key) => { const o = old.get(key); if (!o || !oftSame(o, r)) { r.changedBy = me; r.changedAt = now; } });
+  }
+
+  // ---------- Who has it open ----------
+  const oftFresh = p => p && p.name && p.since && Date.now() - new Date(p.since).getTime() < OFT_HOURS * 3600e3;
+  const oftOpenList = data => (Array.isArray(data && data.openBy) ? data.openBy : []).filter(oftFresh);
+  function oftWithout(text, me) {
+    const data = JSON.parse(text);
+    const list = oftOpenList(data).filter(p => p.name !== me);
+    if (list.length) data.openBy = list; else delete data.openBy;
+    return data;
+  }
+  async function oftWritable(handle) {
+    if (!handle || !handle.queryPermission) return !!handle;
+    try { return (await handle.queryPermission({ mode: 'readwrite' })) === 'granted' || (await handle.requestPermission({ mode: 'readwrite' })) === 'granted'; } catch { return false; }
+  }
+  async function oftWrite(handle, text) {
+    const w = await handle.createWritable();
+    await w.write(text);
+    await w.close();
+  }
+  async function oftMarkOpen(text, handle) {
+    const me = oftMe();
+    if (!me || !handle || !(await oftWritable(handle))) return;
+    try {
+      const current = await (await handle.getFile()).text();
+      if (current !== text || fileHandle !== handle) return;
+      const data = oftWithout(current, me);
+      data.openBy = (data.openBy || []).concat([{ name: me, since: new Date().toISOString(), tool: OFT_SLUG }]);
+      const out = JSON.stringify(data, null, 2) + '\n';
+      await oftWrite(handle, out);
+      if (baselineText === text) baselineText = out;
+      if (doc) doc.openBy = data.openBy;
+    } catch { /* the note is optional */ }
+  }
+  async function oftClearOpen() {
+    const me = oftMe(), handle = fileHandle;
+    if (!me || !handle || dirty) return;
+    try {
+      if (handle.queryPermission && (await handle.queryPermission({ mode: 'readwrite' })) !== 'granted') return;
+      const current = await (await handle.getFile()).text();
+      if (!oftOpenList(JSON.parse(current)).some(p => p.name === me)) return;
+      await oftWrite(handle, JSON.stringify(oftWithout(current, me), null, 2) + '\n');
+    } catch { /* best effort */ }
+  }
+  function oftWarnOpen(text) {
+    let list = [];
+    try { list = oftOpenList(JSON.parse(text)).filter(p => p.name !== oftMe()); } catch { /* not JSON */ }
+    const bar = oftEl('oftPresence');
+    if (!bar) return;
+    bar.hidden = !list.length;
+    if (list.length) oftEl('oftPresenceText').textContent = `${list.map(p => `${p.name} has had this file open since ${oftWhen(p.since)}`).join('. ')}. If you both change it, whoever saves second gets a warning and can merge the two.`;
+  }
+
+  // ---------- Merging ----------
+  const OFT_SKIP = new Set(['savedAt', 'savedBy', 'openBy']);
+  const oftClone = v => v === undefined ? undefined : JSON.parse(JSON.stringify(v));
+  const oftLabel = r => { if (!oftIsObj(r)) return ''; const v = r.name || r.title || r.label || r.element || r.description || r.text || r.id; return String(v).slice(0, 70); };
+  const oftRecList = v => Array.isArray(v) && v.length > 0 && v.every(x => oftIsObj(x) && typeof x.id === 'string' && x.id);
+  const oftNewer = (a, b) => String((b && b.changedAt) || '') > String((a && a.changedAt) || '') ? 'b' : 'a';
+  function oftMerge(base, a, b) {
+    const res = { conflicts: [], changes: [] };
+    const tool = path => OFT_KEYS[path[0]] || String(path[0] || 'Project');
+    const note = (side, kind, path, rec) => res.changes.push({ side, kind, tool: tool(path), label: oftLabel(rec) || path.slice(1).join(' ') || tool(path) });
+    const conflict = (path, rec, av, bv, recA, recB, put) => {
+      const pick = base === undefined ? oftNewer(recA, recB) : 'a';
+      const c = { tool: tool(path), label: oftLabel(rec), field: String(path[path.length - 1]), a: av, b: bv, byA: oftChangedText(recA), byB: oftChangedText(recB), pick, put };
+      res.conflicts.push(c);
+      put(oftClone(pick === 'a' ? av : bv));
+    };
+    function recChanges(bs, av, bv, path) {
+      if (bs === undefined) return;
+      if (!oftSame(av, bs)) note('a', 'changed', path, av);
+      if (!oftSame(bv, bs)) note('b', 'changed', path, bv);
+    }
+    function m(bs, av, bv, path, recA, recB, put) {
+      if (oftSame(av, bv)) { put(oftClone(oftNewer(av, bv) === 'b' ? bv : av)); return; }
+      if (bs !== undefined && base !== undefined) {
+        if (oftSame(av, bs)) { put(oftClone(bv)); return; }
+        if (oftSame(bv, bs)) { put(oftClone(av)); return; }
+      }
+      if (oftIsObj(av) && oftIsObj(bv)) {
+        const out = {};
+        put(out);
+        const isRec = typeof av.id === 'string';
+        const ra = isRec ? av : recA, rb = isRec ? bv : recB;
+        const keys = [...new Set([...Object.keys(av), ...Object.keys(bv)])];
+        for (const k of keys) {
+          if (OFT_META.has(k)) continue;
+          if (OFT_SKIP.has(k) && path.length === 0) { if (k in av) out[k] = oftClone(av[k]); continue; }
+          const inA = k in av, inB = k in bv, bk = oftIsObj(bs) ? bs[k] : undefined, inBase = oftIsObj(bs) && k in bs;
+          const p = path.concat(k);
+          if (inA && inB) m(bk, av[k], bv[k], p, ra, rb, v => { out[k] = v; });
+          else if (inA) {
+            if (inBase && base !== undefined) { if (!oftSame(av[k], bk)) conflict(p, ra, av[k], undefined, ra, rb, v => { if (v === undefined) delete out[k]; else out[k] = v; }); }
+            else out[k] = oftClone(av[k]);
+          } else {
+            if (inBase && base !== undefined) { if (!oftSame(bv[k], bk)) conflict(p, rb, undefined, bv[k], ra, rb, v => { if (v === undefined) delete out[k]; else out[k] = v; }); }
+            else out[k] = oftClone(bv[k]);
+          }
+        }
+        const src = oftNewer(av, bv) === 'b' ? bv : av;
+        for (const k of OFT_META) if (k in src) out[k] = src[k];
+        if (isRec) recChanges(bs, av, bv, path);
+        return;
+      }
+      if (Array.isArray(av) && Array.isArray(bv) && (oftRecList(av) || oftRecList(bv)) && av.concat(bv).every(x => oftIsObj(x) && typeof x.id === 'string')) {
+        const out = [];
+        put(out);
+        const ba = new Map(bv.map(x => [x.id, x])), aa = new Map(av.map(x => [x.id, x]));
+        const bb = new Map((Array.isArray(bs) ? bs : []).filter(oftIsObj).map(x => [x.id, x]));
+        const order = av.map(x => x.id);
+        bv.forEach((x, i) => { if (!aa.has(x.id)) { const prev = i ? bv[i - 1].id : null; const at = prev ? order.indexOf(prev) : -1; order.splice(at + 1, 0, x.id); } });
+        const slots = order.map(() => undefined);
+        order.forEach((id, i) => {
+          const x = aa.get(id), y = ba.get(id), z = bb.get(id), p = path.concat(oftLabel(x || y));
+          const set = v => { slots[i] = v; };
+          if (x && y) m(z, x, y, p, x, y, set);
+          else if (x) {
+            if (z && base !== undefined) { if (oftSame(x, z)) { note('b', 'removed', path, x); set(undefined); } else conflict(p, x, x, undefined, x, null, set); }
+            else { note('a', 'added', path, x); set(oftClone(x)); }
+          } else {
+            if (z && base !== undefined) { if (oftSame(y, z)) { note('a', 'removed', path, y); set(undefined); } else conflict(p, y, undefined, y, null, y, set); }
+            else { note('b', 'added', path, y); set(oftClone(y)); }
+          }
+        });
+        res.finish = (res.finish || []).concat(() => { out.splice(0, out.length, ...slots.filter(v => v !== undefined)); });
+        return;
+      }
+      conflict(path, recA || recB, av, bv, recA, recB, put);
+    }
+    let value;
+    m(base, a, b, [], null, null, v => { value = v; });
+    res.value = value;
+    res.build = () => { (res.finish || []).forEach(f => f()); return value; };
+    return res;
+  }
+  const oftShow = v => v === undefined ? 'Not there' : typeof v === 'string' ? v || 'Empty' : JSON.stringify(v);
+
+  let oftMergeState = null;
+  function oftOpenMerge(mode) {
+    oftMergeState = { mode, a: null, b: null, base: undefined };
+    const dlg = oftEl('oftMergeDialog');
+    oftEl('oftMergeIntro').textContent = mode === 'conflict'
+      ? `${fileName} changed after you opened it. These are the changes on each side. Where you both changed the same thing, choose which to keep.`
+      : 'Choose two copies of the project file. Changes that don\'t clash are combined. Where both copies changed the same thing, you choose. The result is saved as a new file, so neither copy is changed.';
+    oftEl('oftMergePick').hidden = mode === 'conflict';
+    oftEl('oftMergeA').textContent = doc && fileName ? `The open file, ${fileName}` : 'Not chosen';
+    if (mode !== 'conflict' && doc && fileName) oftMergeState.a = { name: fileName, data: JSON.parse(serialize()) };
+    oftEl('oftMergeB').textContent = 'Not chosen';
+    oftEl('oftMergeResult').innerHTML = '';
+    oftEl('oftMergeSave').disabled = true;
+    if (!dlg.open) dlg.showModal();
+  }
+  function oftReadCopy(side) {
+    const input = oftEl('oftMergeFile');
+    input.dataset.side = side;
+    input.value = '';
+    input.click();
+  }
+  async function oftTakeCopy(side, name, text) {
+    let data;
+    try { data = JSON.parse(text); } catch { toast(`Couldn't read ${name}: it isn't a project file.`, true); return; }
+    if (!data || data.format !== 'open-filmmaker-toolkit/project') { toast(`Couldn't read ${name}: it isn't an Open Filmmaker Toolkit project file.`, true); return; }
+    oftMergeState[side] = { name, data };
+    oftEl(side === 'a' ? 'oftMergeA' : 'oftMergeB').textContent = name;
+    if (oftMergeState.a && oftMergeState.b) oftCompare();
+  }
+  function oftCompare() {
+    const s = oftMergeState;
+    const r = oftMerge(s.base, s.a.data, s.b.data);
+    s.result = r;
+    const nameA = s.mode === 'conflict' ? 'Your changes' : s.a.name, nameB = s.mode === 'conflict' ? 'In the file now' : s.b.name;
+    const tools = {};
+    r.changes.forEach(c => { (tools[c.tool] = tools[c.tool] || []).push(c); });
+    const verb = { added: 'Added', changed: 'Changed', removed: 'Removed' };
+    const changeHtml = Object.keys(tools).length ? Object.entries(tools).map(([t, list]) => `<h4>${oftEsc(t)}</h4><ul>${list.map(c => `<li>${oftEsc(verb[c.kind])} in ${oftEsc(c.side === 'a' ? nameA : nameB)}: ${oftEsc(c.label)}</li>`).join('')}</ul>`).join('') : '<p>No records were added, changed or removed on just one side.</p>';
+    const conflictHtml = r.conflicts.map((c, i) => `<fieldset class="oft-conflict"><legend>${oftEsc(c.tool)}${c.label ? `: ${oftEsc(c.label)}` : ''}, ${oftEsc(c.field)}</legend>
+      <label><input type="radio" name="oftC${i}" value="a"${c.pick === 'a' ? ' checked' : ''}> <span><b>${oftEsc(nameA)}</b>${c.byA ? ` <small>${oftEsc(c.byA)}</small>` : ''}<br>${oftEsc(oftShow(c.a))}</span></label>
+      <label><input type="radio" name="oftC${i}" value="b"${c.pick === 'b' ? ' checked' : ''}> <span><b>${oftEsc(nameB)}</b>${c.byB ? ` <small>${oftEsc(c.byB)}</small>` : ''}<br>${oftEsc(oftShow(c.b))}</span></label></fieldset>`).join('');
+    oftEl('oftMergeResult').innerHTML = `<h3>What changed</h3>${changeHtml}<h3>${r.conflicts.length ? `${r.conflicts.length} thing${r.conflicts.length === 1 ? '' : 's'} changed in both` : 'Nothing clashes'}</h3>${r.conflicts.length ? conflictHtml : '<p>Everything can be combined as it is.</p>'}`;
+    oftEl('oftMergeSave').disabled = false;
+  }
+  async function oftSaveMerged() {
+    const s = oftMergeState, r = s.result;
+    r.conflicts.forEach((c, i) => { const v = (document.querySelector(`input[name="oftC${i}"]:checked`) || {}).value || c.pick; c.put(oftClone(v === 'a' ? c.a : c.b)); });
+    const data = r.build();
+    delete data.openBy;
+    data.savedAt = new Date().toISOString();
+    const text = JSON.stringify(data, null, 2) + '\n';
+    oftEl('oftMergeDialog').close();
+    if (s.mode === 'conflict') {
+      const handle = fileHandle;
+      try {
+        const now = await (await handle.getFile()).text();
+        if (now !== s.observed) { toast('The file changed again while you were merging. Save again to see the newest changes.', true); return; }
+        await oftWrite(handle, text);
+      } catch (err) { toast(`Couldn't save the merged file: ${err.message}`, true); return; }
+      loadText(text, handle.name, handle);
+      toast(`Merged your changes into ${handle.name}`);
+      return;
+    }
+    const name = (s.a.name || 'project').replace(/\.oft\.json$|\.json$/i, '') + '-merged.oft.json';
+    if (window.showSaveFilePicker && window.self === window.top) {
+      try { const h = await window.showSaveFilePicker({ suggestedName: name, types: [{ description: 'Film project file', accept: { 'application/json': ['.json'] } }] }); await oftWrite(h, text); loadText(text, h.name, h); toast(`Saved the merged file as ${h.name}`); }
+      catch (err) { if (err.name !== 'AbortError') toast(`Couldn't save the merged file: ${err.message}`, true); }
+      return;
+    }
+    const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+    const a = document.createElement('a'); a.href = url; a.download = name; document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    loadText(text, name, null);
+    toast(`Downloaded the merged file as ${name}. Open it from now on.`);
+  }
+  async function oftMergeConflict() {
+    const handle = fileHandle;
+    if (!handle) return;
+    oftEl('conflictDialog') && oftEl('conflictDialog').close();
+    let observed, theirs, base;
+    try { observed = await (await handle.getFile()).text(); theirs = JSON.parse(observed); } catch (err) { toast(`Couldn't read ${handle.name}: ${err.message}`, true); return; }
+    try { base = baselineText ? JSON.parse(baselineText) : undefined; } catch { base = undefined; }
+    oftStamp();
+    const mine = JSON.parse(serialize());
+    oftOpenMerge('conflict');
+    Object.assign(oftMergeState, { base, observed, a: { name: 'Your changes', data: mine }, b: { name: handle.name, data: theirs } });
+    oftCompare();
+    if (!oftMergeState.result.conflicts.length) await oftSaveMerged();
+  }
+
+  // ---------- Conflicted copies from sync apps ----------
+  let oftFolder = null;
+  function oftIsCopy(name, of) {
+    const stem = of.replace(/\.oft\.json$|\.json$/i, ''), m = name.match(/^(.*?)(\.oft)?\.json$/i);
+    if (!m || name === of || !m[1].startsWith(stem)) return false;
+    const rest = m[1].slice(stem.length);
+    return /conflict/i.test(rest) || /^ ?\(\d+\)$/.test(rest) || /^ \d+$/.test(rest) || /^-[A-Z0-9][A-Z0-9-]*$/.test(rest);
+  }
+  async function oftScanFolder() {
+    const bar = oftEl('oftCopies');
+    if (!bar || !fileHandle || !fileName) return;
+    const dir = oftFolder || await oftIdb('get', 'folder');
+    if (!dir || !dir.values) return;
+    try {
+      if (dir.queryPermission && (await dir.queryPermission({ mode: 'read' })) !== 'granted') return;
+      const inside = dir.resolve ? await dir.resolve(fileHandle) : [fileName];
+      if (!inside || inside.length !== 1) return;
+      const found = [];
+      for await (const h of dir.values()) if (h.kind !== 'directory' && oftIsCopy(h.name, fileName)) found.push(h);
+      bar.hidden = !found.length;
+      if (!found.length) return;
+      oftEl('oftCopiesText').textContent = `Your sync app made ${found.length === 1 ? 'a conflicted copy' : `${found.length} conflicted copies`} of this file: ${found.map(h => h.name).join(', ')}. Merge ${found.length === 1 ? 'it' : 'them one at a time'} so no one's changes are lost.`;
+      oftEl('oftCopiesBtn').onclick = async () => { oftOpenMerge('copies'); const h = found[0]; await oftTakeCopy('b', h.name, await (await h.getFile()).text()); };
+    } catch { /* folder unavailable */ }
+  }
+  async function oftPickFolder() {
+    if (!window.showDirectoryPicker) return;
+    try {
+      const dir = await window.showDirectoryPicker({ id: 'oft-project', mode: 'read', startIn: fileHandle || undefined });
+      if (fileHandle && dir.resolve) { const inside = await dir.resolve(fileHandle); if (!inside || inside.length !== 1) { toast(`${fileName} isn't in that folder. Choose the folder the project file is in.`, true); return; } }
+      oftFolder = dir;
+      await oftIdb('put', 'folder', dir);
+      oftEl('oftFolderText').textContent = `Checking ${dir.name} for conflicted copies.`;
+      await oftScanFolder();
+      if (oftEl('oftCopies').hidden) toast(`No conflicted copies in ${dir.name}`);
+    } catch (err) { if (err.name !== 'AbortError') toast(`Couldn't use that folder: ${err.message}`, true); }
+  }
+
+  // ---------- Opening the same file in the next tool ----------
+  function oftRecent() {
+    let list = [];
+    try { list = JSON.parse(oftStore.get('oft-recent-tools') || '[]'); } catch { /* reset */ }
+    list = [{ slug: OFT_SLUG, at: new Date().toISOString() }].concat(list.filter(t => t && t.slug !== OFT_SLUG)).slice(0, 12);
+    oftStore.set('oft-recent-tools', JSON.stringify(list));
+  }
+  async function oftOffer() {
+    const bar = oftEl('oftReopen');
+    if (!bar || !window.showOpenFilePicker || fileName || dirty) return;
+    const saved = await oftIdb('get', 'file');
+    if (!saved || !saved.handle || fileName || dirty) return;
+    if (oftEl('recovery') && !oftEl('recovery').hidden) return;
+    oftEl('oftReopenText').textContent = `Open ${saved.name} again? It's the project file you last used in this browser.`;
+    bar.hidden = false;
+    oftEl('oftReopenBtn').onclick = async () => {
+      const h = saved.handle;
+      try {
+        if (h.requestPermission && (await h.requestPermission({ mode: 'readwrite' })) !== 'granted') { toast(`The browser didn't allow opening ${saved.name}. Use Open file instead.`, true); return; }
+        const f = await h.getFile();
+        loadText(await f.text(), f.name, h);
+      } catch (err) { toast(`Couldn't open ${saved.name}: ${err.message}. It may have been moved or renamed. Use Open file instead.`, true); }
+    };
+    oftEl('oftForgetBtn').onclick = oftForget;
+  }
+  async function oftForget() {
+    await oftIdb('del', 'file');
+    await oftIdb('del', 'folder');
+    oftFolder = null;
+    if (oftEl('oftReopen')) oftEl('oftReopen').hidden = true;
+    oftSettingsText();
+    toast('This browser no longer remembers the project file.');
+  }
+  function oftShowRecord(id) {
+    if (!id) return;
+    const sel = ['data-edit', 'data-id', 'data-open'].map(a => `[${a}="${CSS.escape(id)}"]`).join(', ');
+    const el = [...document.querySelectorAll(sel)].find(e => e.offsetParent !== null) || document.querySelector(sel);
+    if (!el) return;
+    el.scrollIntoView({ block: 'center' });
+    el.classList.add('oft-flash');
+    setTimeout(() => el.classList.remove('oft-flash'), 2500);
+    if (el.dataset.edit === id && el.matches('button, a, [role="button"]')) el.click();
+    else if (el.matches('button, a, input, select, textarea, [tabindex]')) el.focus();
+  }
+  const oftRecordFromHash = () => { const m = window.location.hash.match(/record=([^&]+)/); return m ? decodeURIComponent(m[1]) : ''; };
+  function oftOpened(text, name, handle) {
+    oftRecent();
+    if (oftEl('oftReopen')) oftEl('oftReopen').hidden = true;
+    if (oftEl('oftCopies')) oftEl('oftCopies').hidden = true;
+    if (handle) oftIdb('put', 'file', { handle, name, at: new Date().toISOString() });
+    oftWarnOpen(text);
+    if (handle) oftMarkOpen(text, handle).then(oftScanFolder);
+    const rec = oftRecordFromHash();
+    if (rec) setTimeout(() => oftShowRecord(rec), 60);
+  }
+  async function oftHandoff() {
+    let h = null;
+    try { h = JSON.parse(sessionStorage.getItem('oft-handoff') || 'null'); sessionStorage.removeItem('oft-handoff'); } catch { /* none */ }
+    if (!h || !h.text || fileName || dirty || Date.now() - (h.at || 0) > 10 * 60e3) return false;
+    const saved = window.showOpenFilePicker ? await oftIdb('get', 'file') : null;
+    loadText(h.text, h.name, saved && saved.name === h.name ? saved.handle : null);
+    return true;
+  }
+
+  // ---------- Settings dialog: your name, the remembered file, the folder ----------
+  async function oftSettingsText() {
+    const saved = await oftIdb('get', 'file');
+    if (oftEl('oftFileText')) oftEl('oftFileText').textContent = saved && saved.name ? `This browser remembers ${saved.name}, so the next tool you open can offer it.` : 'This browser doesn\'t remember a project file.';
+    if (oftEl('oftForgetFile')) oftEl('oftForgetFile').hidden = !saved;
+    const nameBtn = oftEl('oftNameBtn');
+    if (nameBtn) nameBtn.textContent = oftMe() ? `You're ${oftMe()}` : 'Add your name';
+  }
+  function oftChangedNote() {
+    let rec = null;
+    try { rec = editing; } catch { rec = null; } // eslint-disable-line no-undef
+    return rec && typeof rec === 'object' ? oftChangedText(rec) : '';
+  }
+  function oftWatchDialogs() {
+    const seen = new WeakSet();
+    const show = dlg => {
+      if (dlg.id.startsWith('oft') || dlg.id === 'conflictDialog') return;
+      setTimeout(() => {
+        const text = oftChangedNote();
+        let p = dlg.querySelector('.oft-changed');
+        if (!text) { if (p) p.remove(); return; }
+        if (!p) { p = document.createElement('p'); p.className = 'oft-changed'; const h = dlg.querySelector('h2, h3'); if (h) h.after(p); else dlg.prepend(p); }
+        p.textContent = text;
+      }, 0);
+    };
+    const watch = () => document.querySelectorAll('dialog').forEach(d => { if (seen.has(d)) return; seen.add(d); new MutationObserver(() => { if (d.open) show(d); }).observe(d, { attributes: true, attributeFilter: ['open'] }); });
+    watch();
+  }
+  function oftBuild() {
+    const style = document.createElement('style');
+    style.textContent = `.oft-links { margin: 8px 0 0; display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 13px; }
+  .oft-links .link-btn, .oft-links a { padding: 0; border: 0; background: none; cursor: pointer; font: inherit; font-size: 13px; color: var(--ink-2); min-height: 24px; text-decoration: underline; text-underline-offset: 2px; }
+  .oft-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 0 0 16px; padding: 12px 16px; border-radius: 8px; background: var(--warn-bg, #fbf0d9); border: 1px solid var(--rule); color: var(--ink); }
+  .oft-bar.quiet { background: var(--sheet); }
+  .oft-bar p { margin: 0; flex: 1 1 280px; }
+  .oft-bar .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  .oft-dialog { width: min(680px, calc(100vw - 32px)); max-height: calc(100vh - 48px); padding: 20px; border: 1px solid var(--rule); border-radius: 10px; background: var(--sheet); color: var(--ink); overflow: auto; }
+  .oft-dialog::backdrop { background: rgba(10, 14, 20, 0.45); }
+  .oft-dialog h2 { margin: 0 0 8px; font-size: 20px; }
+  .oft-dialog h3 { margin: 18px 0 6px; font-size: 16px; }
+  .oft-dialog h4 { margin: 10px 0 4px; font-size: 14px; }
+  .oft-dialog ul { margin: 0; padding-left: 20px; }
+  .oft-dialog p { margin: 0 0 10px; }
+  .oft-dialog label.oft-field { display: block; font-weight: 600; margin: 8px 0 4px; }
+  .oft-dialog input[type="text"] { width: 100%; box-sizing: border-box; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); color: var(--ink); font: inherit; }
+  .oft-dialog .oft-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+  .oft-dialog .oft-files { display: grid; gap: 8px; margin: 8px 0; }
+  .oft-dialog .oft-files div { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .oft-dialog .oft-files span { flex: 1 1 200px; color: var(--ink-2); overflow-wrap: anywhere; }
+  .oft-kinds { margin: 8px 0; padding: 8px 12px; border: 1px solid var(--rule); border-radius: 8px; }
+  .oft-kinds label { display: flex; gap: 8px; align-items: flex-start; padding: 3px 0; }
+  .oft-kinds small { color: var(--ink-3); }
+  .oft-map { overflow-x: auto; }
+  .oft-map table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .oft-map th, .oft-map td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--rule); vertical-align: middle; }
+  .oft-map select { max-width: 100%; padding: 4px 6px; font: inherit; color: var(--ink); background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; }
+  .oft-unmatched { color: var(--bad); font-weight: 600; }
+  .oft-rate { display: grid; grid-template-columns: 70px minmax(0, 1fr) minmax(0, 1fr) auto; gap: 6px; align-items: center; margin: 0 0 6px; }
+  .oft-rate input { min-width: 0; padding: 6px 8px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); color: var(--ink); font: inherit; }
+  .oft-rates-note { margin: 0 0 12px; font-size: 13px; color: var(--ink-2); }
+  .oft-review { list-style: none; margin: 0 0 8px; padding: 0; }
+  .oft-review li { padding: 5px 0; border-bottom: 1px solid var(--rule-soft, var(--rule)); }
+  .oft-review label { display: flex; gap: 8px; align-items: flex-start; }
+  .oft-review small { color: var(--ink-3); }
+  .oft-review select { margin: 4px 0 0 26px; max-width: calc(100% - 26px); padding: 4px 6px; font: inherit; color: var(--ink); background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; }
+  .oft-conflict { margin: 8px 0; padding: 8px 12px; border: 1px solid var(--rule); border-radius: 8px; }
+  .oft-conflict legend { font-weight: 600; padding: 0 4px; }
+  .oft-conflict label { display: flex; gap: 8px; align-items: flex-start; padding: 4px 0; overflow-wrap: anywhere; }
+  .oft-conflict input { margin-top: 4px; }
+  .oft-conflict small, .oft-changed { color: var(--ink-3); font-size: 13px; }
+  .oft-changed { margin: -4px 0 10px; }
+  .oft-flash { outline: 3px solid var(--focus) !important; outline-offset: 2px; }
+  @media print { .oft-bar, .oft-links { display: none !important; } }`;
+    document.head.append(style);
+    const bars = document.createElement('div');
+    bars.innerHTML = `<div class="oft-bar quiet" id="oftReopen" role="region" aria-label="Open the last project file" hidden><p id="oftReopenText"></p><div class="actions"><button type="button" class="btn primary" id="oftReopenBtn">Open it</button><button type="button" class="btn" id="oftForgetBtn">Forget it</button></div></div>
+  <div class="oft-bar" id="oftPresence" role="status" hidden><p id="oftPresenceText"></p><div class="actions"><button type="button" class="btn" id="oftPresenceBtn">Dismiss</button></div></div>
+  <div class="oft-bar" id="oftCopies" role="region" aria-label="Conflicted copies" hidden><p id="oftCopiesText"></p><div class="actions"><button type="button" class="btn primary" id="oftCopiesBtn">Merge it</button><button type="button" class="btn" id="oftCopiesHide">Not now</button></div></div>`;
+    const main = document.querySelector('main#main') || document.querySelector('main');
+    const recovery = oftEl('recovery');
+    if (recovery && recovery.parentElement) recovery.before(...bars.children);
+    else if (main) main.prepend(...bars.children);
+    const links = document.createElement('p');
+    links.className = 'oft-links';
+    links.innerHTML = `<button type="button" class="link-btn" id="oftNameBtn">Add your name</button><button type="button" class="link-btn" id="oftMergeBtn">Merge two copies</button><a href="${OFT_GUIDE}">Working on a shared file</a>`;
+    if (typeof oftImport !== 'undefined' && typeof OFT_IMPORT !== 'undefined') {
+      const imp = document.createElement('button');
+      imp.type = 'button'; imp.className = 'link-btn'; imp.id = 'oftImportBtn'; imp.textContent = 'Import from a spreadsheet';
+      imp.onclick = () => oftImport.open(OFT_IMPORT);
+      links.prepend(imp);
+    }
+    if (typeof oftMoney !== 'undefined') {
+      const fx = document.createElement('button');
+      fx.type = 'button'; fx.className = 'link-btn'; fx.id = 'oftRatesBtn'; fx.textContent = 'Exchange rates';
+      fx.onclick = () => oftMoney.dialog();
+      links.prepend(fx);
+    }
+    if (typeof oftProject !== 'undefined') {
+      const cal = document.createElement('button');
+      cal.type = 'button'; cal.className = 'link-btn'; cal.id = 'oftCalBtn'; cal.textContent = 'Calendar of every date';
+      cal.onclick = () => oftProject.calendarDialog(() => JSON.parse(serialize()));
+      links.prepend(cal);
+    }
+    const state = oftEl('fileState');
+    if (state && state.parentElement) state.parentElement.append(links);
+    const dlgs = document.createElement('div');
+    dlgs.innerHTML = `<dialog class="oft-dialog" id="oftSettings" aria-labelledby="oftSettingsTitle"><form method="dialog" id="oftSettingsForm">
+    <h2 id="oftSettingsTitle">You and this browser</h2>
+    <label class="oft-field" for="oftNameInput">Your name</label>
+    <input type="text" id="oftNameInput" autocomplete="name" maxlength="60">
+    <p class="oft-changed">Kept in this browser only. The tools note it on the records you change, and warn others who open the file while you have it open.</p>
+    <h3>Remembered file</h3><p id="oftFileText"></p><p><button type="button" class="btn" id="oftForgetFile">Forget it</button></p>
+    <div id="oftFolderBox"><h3>Conflicted copies</h3><p id="oftFolderText">Let the tools look in the project file's folder for conflicted copies made by your sync app.</p><p><button type="button" class="btn" id="oftFolderBtn">Choose the folder</button></p></div>
+    <div class="oft-actions"><button type="button" class="btn" id="oftSettingsCancel">Cancel</button><button type="submit" class="btn primary">Save</button></div></form></dialog>
+  <dialog class="oft-dialog" id="oftMergeDialog" aria-labelledby="oftMergeTitle"><h2 id="oftMergeTitle">Merge two copies</h2><p id="oftMergeIntro"></p>
+    <div class="oft-files" id="oftMergePick"><div><span id="oftMergeA">Not chosen</span><button type="button" class="btn" id="oftMergeABtn">Choose the first copy</button></div><div><span id="oftMergeB">Not chosen</span><button type="button" class="btn" id="oftMergeBBtn">Choose the second copy</button></div></div>
+    <input type="file" id="oftMergeFile" accept=".json,application/json" hidden>
+    <div id="oftMergeResult" aria-live="polite"></div>
+    <div class="oft-actions"><button type="button" class="btn" id="oftMergeCancel">Cancel</button><button type="button" class="btn primary" id="oftMergeSave" disabled>Save the merged file</button></div></dialog>`;
+    document.body.append(...dlgs.children);
+    oftEl('oftFolderBox').hidden = !window.showDirectoryPicker;
+    oftEl('oftNameBtn').onclick = () => { oftEl('oftNameInput').value = oftMe(); oftSettingsText(); oftEl('oftSettings').showModal(); oftEl('oftNameInput').focus(); };
+    oftEl('oftSettingsCancel').onclick = () => oftEl('oftSettings').close();
+    oftEl('oftSettingsForm').addEventListener('submit', () => { oftStore.set('oft-user-name', oftEl('oftNameInput').value.trim() || null); oftSettingsText(); if (fileHandle && baselineText && !dirty) oftMarkOpen(baselineText, fileHandle); });
+    oftEl('oftForgetFile').onclick = oftForget;
+    oftEl('oftFolderBtn').onclick = oftPickFolder;
+    oftEl('oftMergeBtn').onclick = () => oftOpenMerge('copies');
+    oftEl('oftMergeABtn').onclick = () => oftReadCopy('a');
+    oftEl('oftMergeBBtn').onclick = () => oftReadCopy('b');
+    oftEl('oftMergeFile').addEventListener('change', async ev => { const f = ev.target.files[0]; if (f) await oftTakeCopy(ev.target.dataset.side || 'b', f.name, await f.text()); });
+    oftEl('oftMergeCancel').onclick = () => oftEl('oftMergeDialog').close();
+    oftEl('oftMergeSave').onclick = oftSaveMerged;
+    oftEl('oftPresenceBtn').onclick = () => { oftEl('oftPresence').hidden = true; };
+    oftEl('oftCopiesHide').onclick = () => { oftEl('oftCopies').hidden = true; };
+    const cancel = oftEl('conflictCancelBtn');
+    if (cancel) { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn primary'; b.id = 'conflictMergeBtn'; b.textContent = 'Merge both'; b.onclick = oftMergeConflict; cancel.parentElement.prepend(b); }
+    oftWatchDialogs();
+    oftSettingsText();
+  }
+  const oftLoadText = loadText;
+  loadText = function (text, name, handle) {
+    const out = oftLoadText.apply(this, arguments);
+    if (fileName === name && baselineText === text) oftOpened(text, name, handle || null);
+    return out;
+  };
+  const oftSaveFile = saveFile;
+  saveFile = async function () {
+    if (fileHandle) {
+      if (!(await oftWritable(fileHandle))) { toast(`The browser didn't allow saving to ${fileHandle.name}. Try again and allow it, or open the file again.`, true); return; }
+      try {
+        const current = await (await fileHandle.getFile()).text();
+        if (baselineText != null && current !== baselineText) {
+          const a = JSON.parse(current), b = JSON.parse(baselineText);
+          const others = oftOpenList(a).filter(p => p.name !== oftMe());
+          delete a.openBy; delete b.openBy;
+          if (JSON.stringify(a) === JSON.stringify(b)) { baselineText = current; if (others.length) doc.openBy = others; else delete doc.openBy; }
+        }
+      } catch { /* the tool's own check reports it */ }
+    }
+    if (doc && Array.isArray(doc.openBy)) { const others = doc.openBy.filter(p => oftFresh(p) && p.name !== oftMe()); if (others.length) doc.openBy = others; else delete doc.openBy; }
+    oftStamp();
+    return oftSaveFile.apply(this, arguments);
+  };
+  window.addEventListener('pagehide', oftClearOpen);
+  setTimeout(async () => { oftBuild(); oftRecent(); if (!(await oftHandoff())) oftOffer(); }, 0);
+  /* oft-shared:tool end */
+  init();
+})();
+</script>
+</body>
+</html>
