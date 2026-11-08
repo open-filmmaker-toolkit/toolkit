@@ -128,8 +128,11 @@ The toolkit has two halves:
 | [Screening kit builder](tools/screening-kit/) | Impact and outreach | Put together a kit for the people hosting screenings. |
 | [Impact report](tools/impact-report/) | Impact and outreach | Report on your campaign against your theory of change. |
 | [Archive log](tools/archive-log/) | Close-out and archive | Track where each copy of your project lives. |
+| [Final cost report](tools/final-cost-report/) | Close-out and archive | Close out the budget with final costs. |
+| [Grant final reports](tools/grant-reports/) | Close-out and archive | Write each grant's final report before it's due. |
+| [Contract and release archive](tools/contract-archive/) | Close-out and archive | Index every signed contract and release for the long term. |
 
-All 59 are first versions: they work, and they're still changing. Everything else we plan to build is listed by production phase in [TOOLS.md](TOOLS.md).
+All 62 are first versions: they work, and they're still changing. Everything else we plan to build is listed by production phase in [TOOLS.md](TOOLS.md).
 
 ## How our tools work
 

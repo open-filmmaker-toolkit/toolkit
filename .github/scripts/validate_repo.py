@@ -363,6 +363,10 @@ for sample in sorted((ROOT / "samples").glob("*.oft.json")):
     impact = data.get("impactReport") if isinstance(data.get("impactReport"), dict) else {}
     if set(impact.get("results", {})) - indicator_ids:
         fail(f"{name}: impact report results point to missing indicators")
+    grant_ids = {g.get("id") for g in data.get("grants", [])}
+    for gr in data.get("grantReports", []):
+        if gr.get("grantId") not in grant_ids:
+            fail(f"{name}: grant report {gr.get('id')} points to a missing grant")
     security = data.get("security") if isinstance(data.get("security"), dict) else {}
     if set(security.get("personIds", [])) - ids["people"]:
         fail(f"{name}: security personIds points to missing people")

@@ -19,9 +19,9 @@ from playwright.sync_api import sync_playwright
 
 root = pathlib.Path(__file__).resolve().parents[1]
 sample = (root / 'samples/the-river-keeps.oft.json').read_text()
-TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan', 'funder-crm', 'cash-flow', 'shooting-calendar', 'interview-prep', 'field-journal', 'location-scout', 'deal-memos', 'gear-list', 'coi-permit-tracker', 'travel-sheet', 'risk-plan', 'security-checklist', 'camera-sound-reports', 'interview-log', 'daily-production-report', 'expense-log', 'festival-submissions', 'press-list', 'partner-crm', 'discussion-guide', 'archive-log', 'footage-log', 'paper-edit', 'structure-board', 'cut-tracker', 'budget-to-actuals', 'fair-use-log', 'license-tracker', 'clearance-report', 'chain-of-title', 'festival-strategy', 'press-notes', 'stills-library', 'awards-social', 'rights-matrix', 'deliverables', 'qc-tracker', 'waterfall', 'revenue-tracker', 'bookings', 'theory-of-change', 'screening-kit', 'impact-report']
+TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan', 'funder-crm', 'cash-flow', 'shooting-calendar', 'interview-prep', 'field-journal', 'location-scout', 'deal-memos', 'gear-list', 'coi-permit-tracker', 'travel-sheet', 'risk-plan', 'security-checklist', 'camera-sound-reports', 'interview-log', 'daily-production-report', 'expense-log', 'festival-submissions', 'press-list', 'partner-crm', 'discussion-guide', 'archive-log', 'footage-log', 'paper-edit', 'structure-board', 'cut-tracker', 'budget-to-actuals', 'fair-use-log', 'license-tracker', 'clearance-report', 'chain-of-title', 'festival-strategy', 'press-notes', 'stills-library', 'awards-social', 'rights-matrix', 'deliverables', 'qc-tracker', 'waterfall', 'revenue-tracker', 'bookings', 'theory-of-change', 'screening-kit', 'impact-report', 'final-cost-report', 'grant-reports', 'contract-archive']
 COLLECTIONS = ['project', 'people', 'locations', 'thirdPartyElements', 'contracts', 'assets', 'musicCueSheet', 'callSheets']
-PRINT_BTN = {'impact-report': '#printBtn', 'screening-kit': '#printBtn', 'theory-of-change': '#printBtn', 'bookings': '#printBtn', 'revenue-tracker': '#printBtn', 'waterfall': '#printBtn', 'qc-tracker': '#printBtn', 'deliverables': '#printBtn', 'rights-matrix': '#printBtn', 'awards-social': '#printBtn', 'stills-library': '#printBtn', 'press-notes': '#printBtn', 'festival-strategy': '#printBtn', 'clearance-log': '#printBtn', 'music-cue-sheet': '#printBtn', 'call-sheet': '#printAllBtn', 'release-tracker': '#printBtn',
+PRINT_BTN = {'contract-archive': '#printBtn', 'grant-reports': '#printBtn', 'final-cost-report': '#printBtn', 'impact-report': '#printBtn', 'screening-kit': '#printBtn', 'theory-of-change': '#printBtn', 'bookings': '#printBtn', 'revenue-tracker': '#printBtn', 'waterfall': '#printBtn', 'qc-tracker': '#printBtn', 'deliverables': '#printBtn', 'rights-matrix': '#printBtn', 'awards-social': '#printBtn', 'stills-library': '#printBtn', 'press-notes': '#printBtn', 'festival-strategy': '#printBtn', 'clearance-log': '#printBtn', 'music-cue-sheet': '#printBtn', 'call-sheet': '#printAllBtn', 'release-tracker': '#printBtn',
              'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn', 'treatment-builder': '#printBtn', 'pitch-deck': '#printBtn', 'grant-calendar': '#printBtn', 'narrative-library': '#printBtn', 'budget': '#printBtn', 'budget-converter': '#printBtn', 'finance-plan': '#printBtn', 'funder-crm': '#printBtn', 'cash-flow': '#printBtn', 'shooting-calendar': '#printBtn', 'interview-prep': '#printBtn', 'field-journal': '#printBtn', 'location-scout': '#printBtn', 'deal-memos': '#printBtn', 'gear-list': '#printBtn', 'coi-permit-tracker': '#printBtn', 'travel-sheet': '#printBtn', 'risk-plan': '#printBtn', 'security-checklist': '#printBtn', 'camera-sound-reports': '#printBtn', 'interview-log': '#printBtn', 'daily-production-report': '#printBtn', 'expense-log': '#printBtn', 'festival-submissions': '#printBtn', 'press-list': '#printBtn', 'partner-crm': '#printBtn', 'discussion-guide': '#printBtn', 'archive-log': '#printBtn', 'footage-log': '#printBtn', 'paper-edit': '#printBtn', 'structure-board': '#printBtn', 'cut-tracker': '#printBtn', 'budget-to-actuals': '#printBtn', 'fair-use-log': '#printBtn', 'license-tracker': '#printBtn', 'clearance-report': '#printBtn', 'chain-of-title': '#printBtn'}
 PHONE = {'width': 390, 'height': 844}
 # The button that opens each tool's main dialog, for the phone-width check. Most tools use #addBtn.
@@ -385,7 +385,7 @@ def test_credits_builder(browser, fake):
     ctx.close()
 
 # Each spreadsheet template's columns must appear in its tool's CSV export, in the same order.
-TEMPLATE_EXPORTS = [('impact-report', 'impact-results-template.csv'), ('theory-of-change', 'theory-of-change-template.csv'), ('bookings', 'bookings-template.csv'), ('revenue-tracker', 'revenue-template.csv'), ('waterfall', 'waterfall-template.csv'), ('qc-tracker', 'qc-issues-template.csv'), ('deliverables', 'deliverables-template.csv'), ('rights-matrix', 'rights-matrix-template.csv'), ('stills-library', 'stills-caption-sheet-template.csv'), ('festival-strategy', 'festival-strategy-template.csv'), ('fair-use-log', 'fair-use-template.csv'), ('license-tracker', 'licenses-template.csv'), ('clearance-report', 'clearance-report-template.csv'), ('chain-of-title', 'chain-of-title-template.csv'), ('structure-board', 'structure-board-template.csv'), ('cut-tracker', 'cut-notes-template.csv'), ('budget-to-actuals', 'cost-report-template.csv'), ('footage-log', 'footage-log-template.csv'), ('paper-edit', 'paper-edit-template.csv'), ('press-list', 'press-list-template.csv'), ('partner-crm', 'partner-crm-template.csv'), ('camera-sound-reports', 'camera-and-sound-reports-template.csv'), ('interview-log', 'interview-moments-template.csv'), ('travel-sheet', 'travel-sheet-template.csv'), ('risk-plan', 'risk-assessment-template.csv'), ('security-checklist', 'security-checklist-template.csv'), ('gear-list', 'gear-list-template.csv'), ('coi-permit-tracker', 'certificates-and-permits-template.csv'), ('location-scout', 'location-scout-template.csv'), ('deal-memos', 'deal-memos-template.csv'), ('shooting-calendar', 'shooting-calendar-template.csv'), ('interview-prep', 'interview-questions-template.csv'), ('funder-crm', 'funder-crm-template.csv'), ('cash-flow', 'cash-flow-template.csv'), ('budget', 'budget-template.csv'), ('finance-plan', 'finance-plan-template.csv'), ('grant-calendar', 'grant-calendar-template.csv'), ('clearance-log', 'clearance-log-template.csv'), ('release-tracker', 'release-log-template.csv'),
+TEMPLATE_EXPORTS = [('contract-archive', 'contract-archive-template.csv'), ('final-cost-report', 'final-cost-report-template.csv'), ('impact-report', 'impact-results-template.csv'), ('theory-of-change', 'theory-of-change-template.csv'), ('bookings', 'bookings-template.csv'), ('revenue-tracker', 'revenue-template.csv'), ('waterfall', 'waterfall-template.csv'), ('qc-tracker', 'qc-issues-template.csv'), ('deliverables', 'deliverables-template.csv'), ('rights-matrix', 'rights-matrix-template.csv'), ('stills-library', 'stills-caption-sheet-template.csv'), ('festival-strategy', 'festival-strategy-template.csv'), ('fair-use-log', 'fair-use-template.csv'), ('license-tracker', 'licenses-template.csv'), ('clearance-report', 'clearance-report-template.csv'), ('chain-of-title', 'chain-of-title-template.csv'), ('structure-board', 'structure-board-template.csv'), ('cut-tracker', 'cut-notes-template.csv'), ('budget-to-actuals', 'cost-report-template.csv'), ('footage-log', 'footage-log-template.csv'), ('paper-edit', 'paper-edit-template.csv'), ('press-list', 'press-list-template.csv'), ('partner-crm', 'partner-crm-template.csv'), ('camera-sound-reports', 'camera-and-sound-reports-template.csv'), ('interview-log', 'interview-moments-template.csv'), ('travel-sheet', 'travel-sheet-template.csv'), ('risk-plan', 'risk-assessment-template.csv'), ('security-checklist', 'security-checklist-template.csv'), ('gear-list', 'gear-list-template.csv'), ('coi-permit-tracker', 'certificates-and-permits-template.csv'), ('location-scout', 'location-scout-template.csv'), ('deal-memos', 'deal-memos-template.csv'), ('shooting-calendar', 'shooting-calendar-template.csv'), ('interview-prep', 'interview-questions-template.csv'), ('funder-crm', 'funder-crm-template.csv'), ('cash-flow', 'cash-flow-template.csv'), ('budget', 'budget-template.csv'), ('finance-plan', 'finance-plan-template.csv'), ('grant-calendar', 'grant-calendar-template.csv'), ('clearance-log', 'clearance-log-template.csv'), ('release-tracker', 'release-log-template.csv'),
                     ('music-cue-sheet', 'music-cue-sheet-template.csv'), ('name-supers', 'name-supers-template.csv'),
                     ('subject-tracker', 'subject-tracker-template.csv'), ('research-log', 'research-log-template.csv'),
                     ('comps-tracker', 'comps-tracker-template.csv')]
@@ -2819,6 +2819,89 @@ def test_impact_report(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
+def test_final_cost_report(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'final-cost-report', fake)
+    open_sample(pg, fake)
+    t = pg.inner_text('#table')
+    check('Above the line' in t and 'The drone day ran over by one setup.' in t and 'Total' in t and pg.input_value('#closeDate') == '2026-10-31', 'shows budget against final cost by account, with notes')
+    pg.select_option('#layout', 'line')
+    check(pg.locator('#table tbody tr').count() > 30, 'shows every line')
+    pg.select_option('#layout', 'top')
+    check('Post-production' in pg.inner_text('#table') and pg.locator('#table tbody tr').count() <= 8, 'shows a top sheet')
+    pg.select_option('#layout', 'format:budget-format-riverbend')
+    check('Personnel' in pg.inner_text('#table') and 'Left out of this format' in pg.inner_text('#table'), "uses a funder's categories")
+    pg.click('#table [data-note="category-rb-personnel"]'); pg.fill('#f-note', 'Editing ran a week longer.'); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check('Editing ran a week longer.' in pg.inner_text('#table'), 'adds a variance note')
+    pg.select_option('#status', 'final'); pg.wait_for_timeout(100)
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    check(rows[0] == ['Section', 'Account or category', 'Line', 'Budget', 'Final cost', 'Variance', 'Note'] and rows[-1][1] == 'Total' and any(r[6] == 'Editing ran a week longer.' for r in rows), 'CSV in the layout picked')
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    r = pg.inner_text('#report')
+    check('Final cost report' in r and '(draft)' not in r and 'Riverbend fund budget form' in r, 'prints the final report')
+    data = saved_project(pg, fake)
+    f = data['finalCostReport']
+    check(f['status'] == 'final' and f['notes']['category-rb-personnel'] == 'Editing ran a week longer.' and f['notes']['account-2100'], 'saves notes and status')
+    check(data['budget'] == original['budget'] and data['expenses'] == original['expenses'] and data['costReport'] == original['costReport'], 'the budget and expenses are unchanged')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+def test_grant_reports(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'grant-reports', fake)
+    open_sample(pg, fake)
+    check(pg.locator('#rows .row').count() == 1 and 'Drafting' in pg.inner_text('[data-id="grant-county-heritage"]') and '2 deliverables' in pg.inner_text('[data-id="grant-county-heritage"]'), 'lists a report for each awarded grant')
+    pg.click('#addBtn')
+    before = pg.input_value('#f-narrative')
+    pg.select_option('#f-lib', index=1); pg.click('#insertBtn')
+    check(pg.input_value('#f-narrative').startswith(before) and len(pg.input_value('#f-narrative')) > len(before) and 'words' in pg.inner_text('#wc'), 'inserts an answer from the narrative library')
+    check('Total' in pg.inner_text('#budgetPreview'), 'shows final costs')
+    pg.fill('#f-outcomes', 'The footage is now public at the historical society.'); pg.select_option('#f-status', 'submitted'); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check('Submitted' in pg.inner_text('#rows'), 'marks the report submitted')
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    r = pg.inner_text('#report')
+    check('Final report: Riverside County Heritage Trust' in r and 'Budget and final costs' in r and 'The footage is now public' in r and 'Impact' in r and 'I never knew the plan was open' in r, 'prints the report with costs and impact')
+    data = saved_project(pg, fake)
+    gr = data['grantReports'][0]
+    check(gr['status'] == 'submitted' and gr['submittedDate'] and gr['outcomes'].startswith('The footage') and len(data['grantReports']) == 1, 'saves the report')
+    check(data['grants'] == original['grants'] and data['narratives'] == original['narratives'], 'grants and narratives are unchanged')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+def test_contract_archive(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'contract-archive', fake)
+    open_sample(pg, fake)
+    check(pg.locator('#sections .row').count() == 17 and '8 missing a signed copy' in pg.inner_text('#count'), 'indexes every agreement and counts missing copies')
+    check('Filed' in pg.inner_text('[data-id="contract-hammond-appearance"]') and 'Original in the office safe' in pg.inner_text('[data-id="contract-hammond-appearance"]') and 'No signed copy linked' in pg.inner_text('[data-id="contract-rchs-license"]'), 'shows filed agreements and missing copies')
+    pg.click('[data-f="unsigned"]')
+    check(pg.locator('#sections .row').count() == 7, 'filters agreements not signed yet')
+    pg.click('[data-f="missing"]')
+    pg.click('[data-edit="contract-rchs-license"]')
+    check('licenses/' in pg.inner_text('#suggest') and '.pdf' in pg.inner_text('#suggest'), 'suggests a folder and file name')
+    pg.fill('#f-path', 'contracts/rchs-license-signed.pdf'); pg.fill('#f-note', 'Countersigned copy'); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check(pg.locator('#sections .row').count() == 7 and '7 missing' in pg.inner_text('#count'), 'linking a copy files it')
+    check('licenses/' in pg.inner_text('#tree') and '(now: contracts/rchs-license-signed.pdf)' in pg.inner_text('#tree'), 'shows the suggested folders')
+    pg.click('[data-f="all"]')
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    check(rows[0][:3] == ['Tab', 'Folder', 'Agreement'] and len(rows) == 18, 'exports the index')
+    with pg.expect_download() as d:
+        pg.click('#treeBtn')
+    check(open(d.value.path(), encoding='utf-8').read().startswith('the-river-keeps-contracts/'), 'exports the folder layout')
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    check('Contract and release archive' in pg.inner_text('#report') and 'MISSING' in pg.inner_text('#report'), 'prints the index')
+    data = saved_project(pg, fake)
+    c = next(x for x in data['contracts'] if x['id'] == 'contract-rchs-license')
+    a = next(x for x in data['assets'] if x['id'] == c['assetIds'][-1])
+    check(a['relativePath'] == 'contracts/rchs-license-signed.pdf' and a['type'] == 'signed contract' and data['contractArchive']['notes']['contract-rchs-license'] == 'Countersigned copy', 'saves the signed copy and note')
+    check([x for x in data['contracts'] if x['id'] != c['id']] == [x for x in original['contracts'] if x['id'] != c['id']], 'other contracts are unchanged')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
 def test_template_columns(browser, fake):
     for name, template in TEMPLATE_EXPORTS:
         ctx, pg, errs = new_page(browser, name, fake)
@@ -2964,6 +3047,12 @@ def main():
         test_screening_kit(browser, fake)
         print('== impact-report / results, attendance, stories and print')
         test_impact_report(browser, fake)
+        print('== final-cost-report / layouts, variance notes and export')
+        test_final_cost_report(browser, fake)
+        print('== grant-reports / reports for awarded grants, narratives, costs and impact')
+        test_grant_reports(browser, fake)
+        print('== contract-archive / index, signed copies and the folder layout')
+        test_contract_archive(browser, fake)
         print('== templates / columns match the tools\' exports')
         test_template_columns(browser, fake)
         browser.close()
