@@ -124,9 +124,12 @@ The toolkit has two halves:
 | [Educational and theatrical booking trackers](tools/bookings/) | Release and distribution | Track educational licenses and screening bookings. |
 | [Partner CRM](tools/partner-crm/) | Impact and outreach | Track impact partners and shared screenings. |
 | [Discussion guide builder](tools/discussion-guide/) | Impact and outreach | Make a screening handout with discussion questions. |
+| [Theory of change builder](tools/theory-of-change/) | Impact and outreach | Map how your campaign leads to change, and how you'll measure it. |
+| [Screening kit builder](tools/screening-kit/) | Impact and outreach | Put together a kit for the people hosting screenings. |
+| [Impact report](tools/impact-report/) | Impact and outreach | Report on your campaign against your theory of change. |
 | [Archive log](tools/archive-log/) | Close-out and archive | Track where each copy of your project lives. |
 
-All 56 are first versions: they work, and they're still changing. Everything else we plan to build is listed by production phase in [TOOLS.md](TOOLS.md).
+All 59 are first versions: they work, and they're still changing. Everything else we plan to build is listed by production phase in [TOOLS.md](TOOLS.md).
 
 ## How our tools work
 

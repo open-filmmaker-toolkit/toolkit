@@ -19,13 +19,13 @@ from playwright.sync_api import sync_playwright
 
 root = pathlib.Path(__file__).resolve().parents[1]
 sample = (root / 'samples/the-river-keeps.oft.json').read_text()
-TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan', 'funder-crm', 'cash-flow', 'shooting-calendar', 'interview-prep', 'field-journal', 'location-scout', 'deal-memos', 'gear-list', 'coi-permit-tracker', 'travel-sheet', 'risk-plan', 'security-checklist', 'camera-sound-reports', 'interview-log', 'daily-production-report', 'expense-log', 'festival-submissions', 'press-list', 'partner-crm', 'discussion-guide', 'archive-log', 'footage-log', 'paper-edit', 'structure-board', 'cut-tracker', 'budget-to-actuals', 'fair-use-log', 'license-tracker', 'clearance-report', 'chain-of-title', 'festival-strategy', 'press-notes', 'stills-library', 'awards-social', 'rights-matrix', 'deliverables', 'qc-tracker', 'waterfall', 'revenue-tracker', 'bookings']
+TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan', 'funder-crm', 'cash-flow', 'shooting-calendar', 'interview-prep', 'field-journal', 'location-scout', 'deal-memos', 'gear-list', 'coi-permit-tracker', 'travel-sheet', 'risk-plan', 'security-checklist', 'camera-sound-reports', 'interview-log', 'daily-production-report', 'expense-log', 'festival-submissions', 'press-list', 'partner-crm', 'discussion-guide', 'archive-log', 'footage-log', 'paper-edit', 'structure-board', 'cut-tracker', 'budget-to-actuals', 'fair-use-log', 'license-tracker', 'clearance-report', 'chain-of-title', 'festival-strategy', 'press-notes', 'stills-library', 'awards-social', 'rights-matrix', 'deliverables', 'qc-tracker', 'waterfall', 'revenue-tracker', 'bookings', 'theory-of-change', 'screening-kit', 'impact-report']
 COLLECTIONS = ['project', 'people', 'locations', 'thirdPartyElements', 'contracts', 'assets', 'musicCueSheet', 'callSheets']
-PRINT_BTN = {'bookings': '#printBtn', 'revenue-tracker': '#printBtn', 'waterfall': '#printBtn', 'qc-tracker': '#printBtn', 'deliverables': '#printBtn', 'rights-matrix': '#printBtn', 'awards-social': '#printBtn', 'stills-library': '#printBtn', 'press-notes': '#printBtn', 'festival-strategy': '#printBtn', 'clearance-log': '#printBtn', 'music-cue-sheet': '#printBtn', 'call-sheet': '#printAllBtn', 'release-tracker': '#printBtn',
+PRINT_BTN = {'impact-report': '#printBtn', 'screening-kit': '#printBtn', 'theory-of-change': '#printBtn', 'bookings': '#printBtn', 'revenue-tracker': '#printBtn', 'waterfall': '#printBtn', 'qc-tracker': '#printBtn', 'deliverables': '#printBtn', 'rights-matrix': '#printBtn', 'awards-social': '#printBtn', 'stills-library': '#printBtn', 'press-notes': '#printBtn', 'festival-strategy': '#printBtn', 'clearance-log': '#printBtn', 'music-cue-sheet': '#printBtn', 'call-sheet': '#printAllBtn', 'release-tracker': '#printBtn',
              'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn', 'treatment-builder': '#printBtn', 'pitch-deck': '#printBtn', 'grant-calendar': '#printBtn', 'narrative-library': '#printBtn', 'budget': '#printBtn', 'budget-converter': '#printBtn', 'finance-plan': '#printBtn', 'funder-crm': '#printBtn', 'cash-flow': '#printBtn', 'shooting-calendar': '#printBtn', 'interview-prep': '#printBtn', 'field-journal': '#printBtn', 'location-scout': '#printBtn', 'deal-memos': '#printBtn', 'gear-list': '#printBtn', 'coi-permit-tracker': '#printBtn', 'travel-sheet': '#printBtn', 'risk-plan': '#printBtn', 'security-checklist': '#printBtn', 'camera-sound-reports': '#printBtn', 'interview-log': '#printBtn', 'daily-production-report': '#printBtn', 'expense-log': '#printBtn', 'festival-submissions': '#printBtn', 'press-list': '#printBtn', 'partner-crm': '#printBtn', 'discussion-guide': '#printBtn', 'archive-log': '#printBtn', 'footage-log': '#printBtn', 'paper-edit': '#printBtn', 'structure-board': '#printBtn', 'cut-tracker': '#printBtn', 'budget-to-actuals': '#printBtn', 'fair-use-log': '#printBtn', 'license-tracker': '#printBtn', 'clearance-report': '#printBtn', 'chain-of-title': '#printBtn'}
 PHONE = {'width': 390, 'height': 844}
 # The button that opens each tool's main dialog, for the phone-width check. Most tools use #addBtn.
-DIALOG_BTN = {'stills-library': '[data-edit]', 'treatment-builder': '[data-compare]', 'cash-flow': '#settingsBtn', 'discussion-guide': '#projectCsvBtn'}
+DIALOG_BTN = {'impact-report': '#addBtn', 'screening-kit': '#addBtn', 'theory-of-change': '#addBtn', 'stills-library': '[data-edit]', 'treatment-builder': '[data-compare]', 'cash-flow': '#settingsBtn', 'discussion-guide': '#projectCsvBtn'}
 
 STUB_PRINT = 'window.print = () => { window.__printed = true; };'
 NO_PICKERS = 'delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker;'
@@ -385,7 +385,7 @@ def test_credits_builder(browser, fake):
     ctx.close()
 
 # Each spreadsheet template's columns must appear in its tool's CSV export, in the same order.
-TEMPLATE_EXPORTS = [('bookings', 'bookings-template.csv'), ('revenue-tracker', 'revenue-template.csv'), ('waterfall', 'waterfall-template.csv'), ('qc-tracker', 'qc-issues-template.csv'), ('deliverables', 'deliverables-template.csv'), ('rights-matrix', 'rights-matrix-template.csv'), ('stills-library', 'stills-caption-sheet-template.csv'), ('festival-strategy', 'festival-strategy-template.csv'), ('fair-use-log', 'fair-use-template.csv'), ('license-tracker', 'licenses-template.csv'), ('clearance-report', 'clearance-report-template.csv'), ('chain-of-title', 'chain-of-title-template.csv'), ('structure-board', 'structure-board-template.csv'), ('cut-tracker', 'cut-notes-template.csv'), ('budget-to-actuals', 'cost-report-template.csv'), ('footage-log', 'footage-log-template.csv'), ('paper-edit', 'paper-edit-template.csv'), ('press-list', 'press-list-template.csv'), ('partner-crm', 'partner-crm-template.csv'), ('camera-sound-reports', 'camera-and-sound-reports-template.csv'), ('interview-log', 'interview-moments-template.csv'), ('travel-sheet', 'travel-sheet-template.csv'), ('risk-plan', 'risk-assessment-template.csv'), ('security-checklist', 'security-checklist-template.csv'), ('gear-list', 'gear-list-template.csv'), ('coi-permit-tracker', 'certificates-and-permits-template.csv'), ('location-scout', 'location-scout-template.csv'), ('deal-memos', 'deal-memos-template.csv'), ('shooting-calendar', 'shooting-calendar-template.csv'), ('interview-prep', 'interview-questions-template.csv'), ('funder-crm', 'funder-crm-template.csv'), ('cash-flow', 'cash-flow-template.csv'), ('budget', 'budget-template.csv'), ('finance-plan', 'finance-plan-template.csv'), ('grant-calendar', 'grant-calendar-template.csv'), ('clearance-log', 'clearance-log-template.csv'), ('release-tracker', 'release-log-template.csv'),
+TEMPLATE_EXPORTS = [('impact-report', 'impact-results-template.csv'), ('theory-of-change', 'theory-of-change-template.csv'), ('bookings', 'bookings-template.csv'), ('revenue-tracker', 'revenue-template.csv'), ('waterfall', 'waterfall-template.csv'), ('qc-tracker', 'qc-issues-template.csv'), ('deliverables', 'deliverables-template.csv'), ('rights-matrix', 'rights-matrix-template.csv'), ('stills-library', 'stills-caption-sheet-template.csv'), ('festival-strategy', 'festival-strategy-template.csv'), ('fair-use-log', 'fair-use-template.csv'), ('license-tracker', 'licenses-template.csv'), ('clearance-report', 'clearance-report-template.csv'), ('chain-of-title', 'chain-of-title-template.csv'), ('structure-board', 'structure-board-template.csv'), ('cut-tracker', 'cut-notes-template.csv'), ('budget-to-actuals', 'cost-report-template.csv'), ('footage-log', 'footage-log-template.csv'), ('paper-edit', 'paper-edit-template.csv'), ('press-list', 'press-list-template.csv'), ('partner-crm', 'partner-crm-template.csv'), ('camera-sound-reports', 'camera-and-sound-reports-template.csv'), ('interview-log', 'interview-moments-template.csv'), ('travel-sheet', 'travel-sheet-template.csv'), ('risk-plan', 'risk-assessment-template.csv'), ('security-checklist', 'security-checklist-template.csv'), ('gear-list', 'gear-list-template.csv'), ('coi-permit-tracker', 'certificates-and-permits-template.csv'), ('location-scout', 'location-scout-template.csv'), ('deal-memos', 'deal-memos-template.csv'), ('shooting-calendar', 'shooting-calendar-template.csv'), ('interview-prep', 'interview-questions-template.csv'), ('funder-crm', 'funder-crm-template.csv'), ('cash-flow', 'cash-flow-template.csv'), ('budget', 'budget-template.csv'), ('finance-plan', 'finance-plan-template.csv'), ('grant-calendar', 'grant-calendar-template.csv'), ('clearance-log', 'clearance-log-template.csv'), ('release-tracker', 'release-log-template.csv'),
                     ('music-cue-sheet', 'music-cue-sheet-template.csv'), ('name-supers', 'name-supers-template.csv'),
                     ('subject-tracker', 'subject-tracker-template.csv'), ('research-log', 'research-log-template.csv'),
                     ('comps-tracker', 'comps-tracker-template.csv')]
@@ -2734,6 +2734,91 @@ def test_bookings(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
+def test_theory_of_change(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'theory-of-change', fake)
+    open_sample(pg, fake)
+    check(pg.input_value('#goal').startswith('Riverside residents') and pg.locator('#map .tbox').count() == 7 and 'People at community screenings: 500 people' in pg.inner_text('#map'), 'lays out the goal, columns and indicators')
+    check("No indicator yet for: The levee plan reflects residents' comments" in pg.inner_text('#gaps') and 'No activity leads to' in pg.inner_text('#gaps'), 'flags gaps')
+    pg.click('#indBtn'); pg.fill('#f-text', 'Changes to the levee plan that cite residents'); pg.select_option('#f-outcome', 'outcome-plan'); pg.fill('#f-target', '3'); pg.fill('#f-unit', 'changes')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check("No indicator yet for: The levee plan" not in pg.inner_text('#gaps'), 'adds an indicator to an outcome')
+    pg.click('[data-add="audiences"]'); pg.fill('#f-text', 'High school teachers'); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check('No activity reaches: High school teachers' in pg.inner_text('#gaps'), 'flags an audience no activity reaches')
+    pg.click('[data-add="activities"]'); pg.fill('#f-text', 'Classroom screenings'); pg.locator('#f-aud label:has-text("High school teachers") input').check(); pg.locator('#f-out label:has-text("levee plan reflects") input').check()
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check('High school teachers' not in pg.inner_text('#gaps') and 'No activity leads to' not in pg.inner_text('#gaps'), 'an activity reaches an audience and leads to an outcome')
+    pg.click('[data-edit="outcome-aware"]'); pg.click('#deleteBtn'); pg.wait_for_timeout(200)
+    check('People at community screenings' not in pg.inner_text('#indicators'), "deleting an outcome deletes its indicators")
+    pg.fill('#goal', 'Residents shape the levee plan.'); pg.locator('#goal').dispatch_event('change')
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    check('Theory of change' in pg.inner_text('#report') and 'Residents shape the levee plan.' in pg.inner_text('#report') and 'Classroom screenings' in pg.inner_text('#report'), 'prints the diagram')
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    check(rows[0][:2] == ['Kind', 'Text'] and any(r[0] == 'Indicator' and r[5].startswith('The levee plan') for r in rows), 'CSV lists every item')
+    data = saved_project(pg, fake)
+    t = data['theoryOfChange']
+    act = next(a for a in t['activities'] if a['text'] == 'Classroom screenings')
+    check(t['goal'] == 'Residents shape the levee plan.' and len(t['audiences']) == 3 and act['outcomeIds'] == ['outcome-plan'] and not any(o['id'] == 'outcome-aware' for o in t['outcomes'])
+          and 'outcomeIds' not in next(a for a in t['activities'] if a['id'] == 'activity-screenings'), 'saves the theory of change, cleaning up links to a deleted outcome')
+    check(data['partners'] == original['partners'], 'other data is unchanged')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+def test_screening_kit(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'screening-kit', fake)
+    open_sample(pg, fake)
+    check('From the project' in pg.inner_text('[data-key="about"]') and 'Written' in pg.inner_text('[data-key="hosting"]') and 'Not done yet' in pg.inner_text('[data-key="discussion"]'), 'marks each section')
+    pg.click('[data-edit="promotion"]'); pg.click('#starterBtn')
+    check(pg.input_value('#f-text').startswith('Use the poster'), 'starts from our wording')
+    pg.check('[data-img="asset-still-levee"]'); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check('1 image' in pg.inner_text('[data-key="promotion"]'), 'adds approved stills for hosts')
+    pg.click('#addBtn'); pg.fill('#ck-t-7', 'Book an accessible room'); pg.select_option('#ck-w-7', '4w'); pg.click('[data-ckdel="5"]')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check('7 items' in pg.inner_text('[data-key="checklist"]'), 'adds and removes checklist items')
+    pg.click('[data-edit="contact"]'); pg.fill('#f-text', 'Ana Reyes, ana@example.com'); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    pg.click('[data-edit="tech"]'); pg.check('#f-hide'); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    r = pg.inner_text('#report')
+    check('Screening kit for hosts' in r and 'When the river that drowned her town' in r and 'Book an accessible room' in r and 'Put out a sign-in sheet' not in r and 'Tech specs' not in r and 'Photo: Teo Ramirez' in r and 'ana@example.com' in r, 'prints the kit')
+    data = saved_project(pg, fake)
+    k = data['screeningKit']
+    check(k['imageIds'] == ['asset-still-levee'] and k['removed'] == ['signin'] and k['checklist'][0]['when'] == '4w' and k['hidden'] == ['tech'] and k['formats'] == ['bluray', 'file'], 'saves the kit')
+    check(data['assets'] == original['assets'] and data['partners'] == original['partners'], 'other data is unchanged')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+def test_impact_report(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'impact-report', fake)
+    open_sample(pg, fake)
+    st = pg.inner_text('#stats')
+    check('4\nscreenings' in st and '85' in st and '0 of 2' in st and pg.input_value('[data-result="indicator-attendance"]') == '140', 'totals screenings, audience, partners and targets')
+    pg.fill('#att-screening-library', '120'); pg.locator('#att-screening-library').dispatch_event('change'); pg.wait_for_timeout(100)
+    check('205' in pg.inner_text('#stats'), 'records attendance')
+    pg.fill('[data-result="indicator-attendance"]', '520'); pg.locator('[data-result="indicator-attendance"]').dispatch_event('change'); pg.wait_for_timeout(100)
+    check('1 of 2' in pg.inner_text('#stats'), 'counts targets met')
+    pg.fill('#to', '2026-12-31'); pg.locator('#to').dispatch_event('change'); pg.wait_for_timeout(100)
+    check('Library premiere' not in pg.inner_text('#screenings'), 'limits screenings to the period')
+    pg.click('#addBtn'); pg.fill('#f-quote', 'My students asked to see it again.'); pg.fill('#f-who', 'Teacher'); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check(pg.locator('#stories .row').count() == 2 and 'Ask before quoting' in pg.inner_text('#stories'), 'adds a story without permission to quote')
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    r = pg.inner_text('#report')
+    check('Impact report' in r and 'I never knew the plan was open for comment' in r and 'My students asked' not in r and '520' in r, 'prints results and only the quotes with permission')
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    check(rows[0][0] == 'Indicator' and len(rows) == 3 and rows[1][5] == '520', 'exports results')
+    data = saved_project(pg, fake)
+    ir = data['impactReport']
+    lib = next(s for s in data['screenings'] if s['id'] == 'screening-library')
+    check(ir['periodEnd'] == '2026-12-31' and ir['results']['indicator-attendance']['value'] == 520 and len(ir['stories']) == 2 and lib['attendance'] == 120, 'saves the report and attendance')
+    check(data['theoryOfChange'] == original['theoryOfChange'] and data['partners'] == original['partners'], 'other data is unchanged')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
 def test_template_columns(browser, fake):
     for name, template in TEMPLATE_EXPORTS:
         ctx, pg, errs = new_page(browser, name, fake)
@@ -2873,6 +2958,12 @@ def main():
         test_revenue_tracker(browser, fake)
         print('== bookings / terms, payments, materials and totals')
         test_bookings(browser, fake)
+        print('== theory-of-change / outcomes, indicators, gaps and the diagram')
+        test_theory_of_change(browser, fake)
+        print('== screening-kit / sections, images, checklist and print')
+        test_screening_kit(browser, fake)
+        print('== impact-report / results, attendance, stories and print')
+        test_impact_report(browser, fake)
         print('== templates / columns match the tools\' exports')
         test_template_columns(browser, fake)
         browser.close()

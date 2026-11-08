@@ -352,6 +352,17 @@ for sample in sorted((ROOT / "samples").glob("*.oft.json")):
     for statement in data.get("revenueStatements", []):
         if statement.get("contractId") and statement["contractId"] not in contract_ids:
             fail(f"{name}: revenue statement {statement.get('id')} contractId points to a missing contract")
+    toc = data.get("theoryOfChange") if isinstance(data.get("theoryOfChange"), dict) else {}
+    toc_ids = {k: {x.get("id") for x in toc.get(k, [])} for k in ("audiences", "outcomes")}
+    for x in toc.get("activities", []) + toc.get("outcomes", []):
+        if set(x.get("audienceIds", [])) - toc_ids["audiences"] or set(x.get("outcomeIds", [])) - toc_ids["outcomes"]:
+            fail(f"{name}: theory of change item {x.get('id')} points to a missing audience or outcome")
+    indicator_ids = {i.get("id") for i in toc.get("indicators", [])}
+    if any(i.get("outcomeId") not in toc_ids["outcomes"] for i in toc.get("indicators", [])):
+        fail(f"{name}: an indicator points to a missing outcome")
+    impact = data.get("impactReport") if isinstance(data.get("impactReport"), dict) else {}
+    if set(impact.get("results", {})) - indicator_ids:
+        fail(f"{name}: impact report results point to missing indicators")
     security = data.get("security") if isinstance(data.get("security"), dict) else {}
     if set(security.get("personIds", [])) - ids["people"]:
         fail(f"{name}: security personIds points to missing people")
