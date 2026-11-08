@@ -41,6 +41,8 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 
 For anyone who doesn't use the tool, there's a [spreadsheet template](../../templates/final-cost-report-template.csv) with the same columns as the export.
 
+- **Other currencies.** Budget lines and expenses in other currencies convert at the project's exchange rates, with each expense at the rate for its date, and the report says which rates it used. Lines with several fringes or capped fringes count as they do in the budget.
+
 ## Saving and file conflicts
 
 Chrome and Edge can save straight back to the file you opened. If it changed on disk since you opened it, the tool warns before saving. You can reload the latest version, save your edits as a separate copy, or explicitly overwrite the changed file. Safari and Firefox download a new copy instead.
@@ -58,7 +60,6 @@ It reads `budget`, `expenses`, `costReport` and `budgetFormats`. Everything else
 ## Not yet
 
 - An accountant's sign-off page
-- Reports in more than one currency
 - Comparing two final cost reports
 
 ## License

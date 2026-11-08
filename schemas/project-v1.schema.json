@@ -1478,6 +1478,31 @@
         "currency": {
           "type": "string",
           "pattern": "^[A-Za-z]{3}$"
+        },
+        "exchangeRates": {
+          "type": "array",
+          "description": "Exchange rates typed in by the user: what one unit of a currency is worth in the project currency. A rate with a date applies from that date; one without a date applies otherwise.",
+          "items": {
+            "type": "object",
+            "required": [
+              "currency",
+              "rate"
+            ],
+            "properties": {
+              "currency": {
+                "type": "string",
+                "pattern": "^[A-Z]{3}$"
+              },
+              "rate": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "date": {
+                "type": "string",
+                "format": "date"
+              }
+            }
+          }
         }
       },
       "additionalProperties": true
@@ -2070,6 +2095,38 @@
         "exclusive": {
           "type": "boolean",
           "description": "Distribution deals: false for a non-exclusive deal. Exclusive when unset."
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$",
+          "description": "The amount's currency, when it isn't the project currency. Totals convert it at the project's exchange rates."
+        },
+        "rates": {
+          "type": "array",
+          "description": "A deal memo's other rates, such as prep or travel days, each with its own budget line.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "rate": {
+                "type": "number"
+              },
+              "rateUnit": {
+                "type": "string"
+              },
+              "guarantee": {
+                "type": "number"
+              },
+              "budgetLineId": {
+                "type": "string"
+              }
+            }
+          }
         }
       },
       "additionalProperties": true
@@ -3223,6 +3280,18 @@
         },
         "fringeId": {
           "$ref": "#/$defs/id"
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$",
+          "description": "The amount's currency, when it isn't the project currency. Totals convert it at the project's exchange rates."
+        },
+        "fringeIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Every fringe on the line, when it has more than one. fringeId stays the first, for older tools."
         }
       },
       "additionalProperties": true
@@ -3242,6 +3311,11 @@
         "percent": {
           "type": "number",
           "minimum": 0
+        },
+        "cap": {
+          "type": "number",
+          "minimum": 0,
+          "description": "For a fringe: it applies only to wages up to this amount for each person on a line."
         }
       },
       "additionalProperties": true
@@ -3453,6 +3527,11 @@
             },
             "additionalProperties": true
           }
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$",
+          "description": "The amount's currency, when it isn't the project currency. Totals convert it at the project's exchange rates."
         }
       },
       "additionalProperties": true
@@ -3770,6 +3849,11 @@
         "budgetLineId": {
           "$ref": "#/$defs/id",
           "description": "Budget-to-actuals: the line in the expense's account it counts against, in budget.lines."
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$",
+          "description": "The amount's currency, when it isn't the project currency. Totals convert it at the project's exchange rates."
         }
       },
       "additionalProperties": true

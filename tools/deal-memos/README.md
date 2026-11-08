@@ -45,6 +45,7 @@ For anyone who doesn't use the tool, there's a blank [deal memo form](../../temp
 This is not legal advice. Deal memos are contracts, and what they need differs from place to place and with union rules. Have a lawyer licensed where you work review your form before anyone signs it. See [Not legal advice](../../README.md#not-legal-advice).
 
 - **Imports from a spreadsheet:** choose **Import from a spreadsheet** under the file buttons and pick a CSV file. One with the columns of the [spreadsheet template](../../templates/deal-memos-template.csv) imports as it is; match any other columns once and the tool remembers. Problems, such as a date it can't read, show row by row before anything is added, and importing only adds.
+- **Several rates in one memo,** such as prep, shoot and travel days. Each goes on its own budget line, and the printed memo lists them all.
 
 ## Saving and file conflicts
 
@@ -65,7 +66,6 @@ A new crew member is added to `people`, with the role. Everything else in the fi
 - Union rates and rules, such as minimums, meal penalties and turnaround
 - Timecards and payroll
 - Deal memos for cast and contributors, beyond crew
-- Several rates in one memo, such as a prep rate and a shoot rate
 
 ## License
 

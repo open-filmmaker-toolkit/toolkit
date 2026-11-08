@@ -45,6 +45,7 @@ This is not legal advice. Your licenses' own terms are what count. See [Not lega
 
 - **A calendar file of every date in the project**, gathered from every tool: choose **Calendar of every date** under the file buttons and pick which kinds of dates to include. Importing a newer file updates the same events instead of adding them twice.
 - **Imports from a spreadsheet:** choose **Import from a spreadsheet** under the file buttons and pick a CSV file. One with the columns of the [spreadsheet template](../../templates/licenses-template.csv) imports as it is; match any other columns once and the tool remembers. Problems, such as a date it can't read, show row by row before anything is added, and importing only adds.
+- **Fees in other currencies.** A license can have its own currency. Its fee and payments show in that currency, and the totals convert at the exchange rates you type in under **Exchange rates**.
 
 ## Saving and file conflicts
 
@@ -63,7 +64,6 @@ The signed copy is an asset with `type` "license" and a `relativePath`. Everythi
 ## Not yet
 
 - Most-favored-nations terms across licenses
-- Fees in other currencies
 
 ## License
 

@@ -45,6 +45,7 @@ A finance plan isn't an offering to investors. Talk to a lawyer before you raise
 
 - **A calendar file of every date in the project**, gathered from every tool: choose **Calendar of every date** under the file buttons and pick which kinds of dates to include. Importing a newer file updates the same events instead of adding them twice.
 - **Imports from a spreadsheet:** choose **Import from a spreadsheet** under the file buttons and pick a CSV file. One with the columns of the [spreadsheet template](../../templates/finance-plan-template.csv) imports as it is; match any other columns once and the tool remembers. Problems, such as a date it can't read, show row by row before anything is added, and importing only adds.
+- **Money in other currencies.** A source can have its own currency. Totals and the timeline convert it at the exchange rates you type in under **Exchange rates**, using the rate for each payment's date, and say which rates they used.
 
 ## Saving and file conflicts
 
@@ -61,7 +62,6 @@ A `financePlan` record with `sources`, and an optional `budgetTotal` used when t
 ## Not yet
 
 - Linking investors and broadcasters to their organization in the funder CRM
-- Several currencies in one plan
 
 ## License
 

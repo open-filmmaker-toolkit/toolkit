@@ -226,6 +226,7 @@ pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; b
 input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:focus, input[type="time"]:focus-within { outline: 2px solid var(--focus, #2f6fdb); outline-offset: 2px; }
 .home-link { color: inherit; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
 .home-link:hover { text-decoration-thickness: 2px; }
+.sub-label { display: block; margin-top: 6px; font-size: 12.5px; color: var(--ink-3); font-weight: 400; }
 </style>
 </head>
 <body>
@@ -335,7 +336,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <div class="field"><label for="f-end">Ends</label><input id="f-end" type="date"><p class="hint">Leave empty for a license in perpetuity.</p></div>
       </div>
       <div class="two">
-        <div class="field"><label for="f-fee">Fee</label><input id="f-fee" type="number" min="0" step="any" inputmode="decimal"></div>
+        <div class="field"><label for="f-fee">Fee</label><input id="f-fee" type="number" min="0" step="any" inputmode="decimal"><label for="f-cur" class="sub-label">Currency, if not the project's</label><input id="f-cur" type="text" maxlength="3" list="f-curlist" autocomplete="off" style="max-width: 8em; text-transform: uppercase"><datalist id="f-curlist"></datalist></div>
         <div class="field"><label for="f-credit">Credit it requires</label><input id="f-credit" type="text" placeholder="Courtesy of Riverside County Historical Society" autocomplete="off"></div>
       </div>
       <div class="group">
@@ -567,10 +568,12 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const scheduled = c => cents(arr(c.payments).reduce((t, p) => t + num(p.amount), 0));
   const num = v => (v === '' || v == null || !isFinite(Number(v)) ? 0 : Number(v));
   const cents = n => Math.round(n * 100) / 100;
-  function money(n) {
+  // In the project currency, or in a license's own currency when it has one.
+  const inProject = (c, n, date) => (c.currency ? cents(oftMoney.convert(num(n), c.currency, date)) : num(n));
+  function money(n, cur) {
     if (n == null || n === '' || !isFinite(Number(n))) return '';
     const d = Number.isInteger(cents(Number(n))) ? 0 : 2;
-    try { return new Intl.NumberFormat(undefined, { style: 'currency', currency: doc.project.currency || 'USD', minimumFractionDigits: d, maximumFractionDigits: d }).format(Number(n)); }
+    try { return new Intl.NumberFormat(undefined, { style: 'currency', currency: cur || doc.project.currency || 'USD', minimumFractionDigits: d, maximumFractionDigits: d }).format(Number(n)); }
     catch (e) { return Number(n).toFixed(d); }
   }
   // What needs doing soon, worst first.
@@ -631,7 +634,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       if (c.status === 'signed' && !arr(c.assetIds).length) flags.push('<span class="flag changed">No signed copy recorded</span>');
       return `<li class="row" data-id="${esc(c.id)}"><span class="kd">${esc(KIND[kindOf(c)])}</span>
         <button type="button" class="what" data-edit="${esc(c.id)}"><span class="nm">${esc(c.title || 'Untitled license')}</span>${c.licensor ? `<span class="tt">${esc(c.licensor)}</span>` : ''}</button>
-        <span class="rt">${c.fee != null ? esc(money(c.fee)) : ''}${arr(c.payments).length ? `<span class="sub">${esc(money(paid(c)))} paid of ${esc(money(scheduled(c)))}</span>` : ''}</span>
+        <span class="rt">${c.fee != null ? esc(money(c.fee, c.currency)) : ''}${arr(c.payments).length ? `<span class="sub">${esc(money(paid(c), c.currency))} paid of ${esc(money(scheduled(c), c.currency))}</span>` : ''}</span>
         ${flags.length ? `<div class="flags">${flags.join('')}</div>` : ''}</li>`;
     }).join('');
     const due = all.flatMap(c => alerts(c).map(a => ({ c, a }))).sort((x, y) => x.a.date.localeCompare(y.a.date));
@@ -640,8 +643,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const need = unlicensed();
     $('needCount').textContent = need.length ? String(need.length) : '';
     $('need').innerHTML = need.length ? need.map(e => `<li><span>${esc(e.description || 'Element')}<span class="sub">${esc([e.type, STATUS_LABEL[e.status], e.rightsHolder].filter(Boolean).join(' · '))}</span></span><button type="button" class="btn small" data-element="${esc(e.id)}">Add a license</button></li>`).join('') : '<li class="empty-line">Every licensed element has a license here.</li>';
-    const fee = cents(all.reduce((t, c) => t + num(c.fee), 0)), pd = cents(all.reduce((t, c) => t + paid(c), 0));
-    const opt = cents(all.reduce((t, c) => t + arr(c.options).filter(o => !o.exercised).reduce((x, o) => x + num(o.fee), 0), 0));
+    const fee = cents(all.reduce((t, c) => t + inProject(c, c.fee, c.signedDate), 0)), pd = cents(all.reduce((t, c) => t + arr(c.payments).filter(p => p.paid).reduce((x, p) => x + inProject(c, p.amount, p.paidDate || p.due), 0), 0));
+    const opt = cents(all.reduce((t, c) => t + arr(c.options).filter(o => !o.exercised).reduce((x, o) => x + inProject(c, o.fee), 0), 0));
     $('fees').innerHTML = `<tr><td>Fees agreed</td><td class="n">${esc(money(fee))}</td></tr><tr><td>Paid</td><td class="n">${esc(money(pd))}</td></tr><tr><td>Still to pay</td><td class="n">${esc(money(Math.max(0, cents(fee - pd))))}</td></tr><tr><td>Options not exercised</td><td class="n">${esc(money(opt))}</td></tr>`;
     $('printBtn').disabled = !all.length;
   }
@@ -664,8 +667,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     for (const k of ['payments', 'options']) editing[k] = arr(editing[k]).map(x => Object.assign({}, x));
     const a = arr(editing.assetIds).map(asset).find(x => x && x.type === 'license');
     const vals = { 'f-title': editing.title, 'f-kind': kindOf(editing), 'f-licensor': editing.licensor, 'f-status': editing.status in STATE ? editing.status : 'draft', 'f-media': editing.media, 'f-territory': editing.territory, 'f-term': editing.term,
-      'f-signed': editing.signedDate, 'f-start': editing.effectiveDate, 'f-end': editing.expirationDate, 'f-fee': editing.fee, 'f-credit': editing.requiredCredit, 'f-doc': a ? a.relativePath : '', 'f-notes': editing.notes };
+      'f-signed': editing.signedDate, 'f-start': editing.effectiveDate, 'f-end': editing.expirationDate, 'f-fee': editing.fee, 'f-cur': editing.currency, 'f-credit': editing.requiredCredit, 'f-doc': a ? a.relativePath : '', 'f-notes': editing.notes };
     for (const [k, v] of Object.entries(vals)) $(k).value = v == null ? '' : String(v);
+    $('f-cur').placeholder = oftMoney.home(); $('f-curlist').innerHTML = oftMoney.currencies().map(x => `<option value="${esc(x)}">`).join('');
     $('licensorList').innerHTML = [...new Set(elements().map(e => e.rightsHolder).filter(Boolean))].map(v => `<option value="${esc(v)}">`).join('');
     const on = new Set(arr(editing.thirdPartyElementIds));
     const cands = elements().filter(e => on.has(e.id) || isMusic(e) || isArchival(e) || e.status === 'licensed' || e.status === 'negotiating');
@@ -686,6 +690,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     for (const [k, id] of Object.entries(map)) { const v = $(id).value.trim(); if (v) c[k] = v; else delete c[k]; }
     c.licenseKind = $('f-kind').value;
     if ($('f-fee').value !== '') c.fee = Number($('f-fee').value); else delete c.fee;
+    const cur = $('f-cur').value.trim().toUpperCase();
+    if (cur && /^[A-Z]{3}$/.test(cur) && cur !== oftMoney.home()) c.currency = cur; else delete c.currency;
     if (c.status === 'signed' && !c.signedDate) c.signedDate = today();
     const ids = new Set(picked('elPicks')); const keep = arr(c.thirdPartyElementIds).filter(id => !element(id));
     c.thirdPartyElementIds = [...keep, ...ids]; if (!c.thirdPartyElementIds.length) delete c.thirdPartyElementIds;
@@ -734,7 +740,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       ${list.map(c => { const al = alerts(c); return `<section class="r-lic"><h2>${esc(c.title || 'License')}</h2>
         <table class="r-facts"><tbody>${[['Kind', KIND[kindOf(c)]], ['Licensor', c.licensor], ['Status', STATE[c.status] || c.status], ['Elements', arr(c.thirdPartyElementIds).map(element).filter(Boolean).map(e => `${e.description}${e.tcIn ? ` (${e.tcIn} to ${e.tcOut || ''})` : ''}`).join('; ')],
           ['Media', c.media], ['Territory', c.territory], ['Term', c.term], ['Signed', c.signedDate && fmtDate(c.signedDate)], ['Runs', [c.effectiveDate && fmtDate(c.effectiveDate), c.expirationDate ? fmtDate(c.expirationDate) : c.effectiveDate ? 'no end date' : ''].filter(Boolean).join(' to ')],
-          ['Fee', c.fee != null ? money(c.fee) : ''], ['Credit', c.requiredCredit], ['Signed copy', (arr(c.assetIds).map(asset).find(x => x && x.type === 'license') || {}).relativePath], ['Notes', c.notes]].filter(x => str(x[1]).trim()).map(([k, v]) => `<tr><th>${esc(k)}</th><td>${esc(v)}</td></tr>`).join('')}</tbody></table>
+          ['Fee', c.fee != null ? money(c.fee, c.currency) : ''], ['Credit', c.requiredCredit], ['Signed copy', (arr(c.assetIds).map(asset).find(x => x && x.type === 'license') || {}).relativePath], ['Notes', c.notes]].filter(x => str(x[1]).trim()).map(([k, v]) => `<tr><th>${esc(k)}</th><td>${esc(v)}</td></tr>`).join('')}</tbody></table>
         ${arr(c.payments).length ? `<h3>Payments</h3><table><thead><tr><th>Due</th><th class="n">Amount</th><th>Paid</th><th>Note</th></tr></thead><tbody>${c.payments.map(p => `<tr><td>${esc(p.due ? fmtDate(p.due) : '')}</td><td class="n">${esc(money(p.amount))}</td><td>${p.paid ? `Paid${p.paidDate ? ` ${esc(fmtDate(p.paidDate))}` : ''}` : 'Not yet'}</td><td>${esc(p.note || '')}</td></tr>`).join('')}</tbody></table>` : ''}
         ${arr(c.options).length ? `<h3>Options and step deals</h3><table><thead><tr><th>What it adds</th><th class="n">Fee</th><th>Exercise by</th><th>Exercised</th></tr></thead><tbody>${c.options.map(o => `<tr><td>${esc(o.what || '')}</td><td class="n">${esc(money(o.fee))}</td><td>${esc(o.deadline ? fmtDate(o.deadline) : '')}</td><td>${o.exercised ? `Yes${o.exercisedDate ? `, ${esc(fmtDate(o.exercisedDate))}` : ''}` : 'No'}</td></tr>`).join('')}</tbody></table>` : ''}
         ${al.length ? `<p class="r-alert">${al.map(a => esc(a.text)).join('<br>')}</p>` : ''}</section>`; }).join('')}`;
@@ -994,6 +1000,120 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   document.documentElement.classList.remove('no-js');
   window.addEventListener('error', ev => toast(`Something went wrong: ${ev.message}. Save your work, then reload the page.`, true));
   window.addEventListener('unhandledrejection', ev => toast(`Something went wrong: ${ev.reason && ev.reason.message ? ev.reason.message : ev.reason}. Save your work, then reload the page.`, true));
+  /* oft-shared:money begin. Copied from shared/money.js by .github/scripts/sync_shared.py; edit it there. */
+  // Several currencies. Any amount can carry its own currency (a `currency` field on
+  // its record); the project currency is the default. Exchange rates are typed in by
+  // hand, never fetched: project.exchangeRates, each { currency, rate, date? }, where
+  // rate is what one unit of that currency is worth in the project currency. A rate
+  // with a date applies from that date; one without a date applies to everything else.
+  const oftMoney = (() => {
+    const up = s => String(s == null ? '' : s).trim().toUpperCase();
+    const isDay = v => /^\d{4}-\d{2}-\d{2}$/.test(String(v || ''));
+    const list = v => (Array.isArray(v) ? v.filter(x => x && typeof x === 'object') : []);
+    const home = () => up(doc.project && doc.project.currency) || 'USD';
+    const rates = () => list(doc.project && doc.project.exchangeRates).filter(r => /^[A-Z]{3}$/.test(up(r.currency)) && Number(r.rate) > 0);
+    function rateFor(cur, date) {
+      cur = up(cur);
+      if (!cur || cur === home()) return { rate: 1 };
+      const all = rates().filter(r => up(r.currency) === cur);
+      const dated = all.filter(r => isDay(r.date)).sort((a, b) => a.date.localeCompare(b.date));
+      const fixed = all.find(r => !isDay(r.date));
+      const onDate = isDay(date) ? [...dated].reverse().find(r => r.date <= date) : null;
+      const hit = onDate || fixed || dated[dated.length - 1];
+      return hit ? { rate: Number(hit.rate), from: hit } : null;
+    }
+    // Converts an amount to the project currency. With no rate for its currency, the amount is counted as it is.
+    function convert(amount, cur, date) { const r = rateFor(cur, date); return r ? Number(amount) * r.rate : Number(amount); }
+    // A record's amount in the project currency, at the rate for its date.
+    const amountOf = (r, field = 'amount', dateField = 'date') => (r.currency ? convert(Number(r[field]) || 0, r.currency, r[dateField]) : Number(r[field]) || 0);
+    // Currencies other than the project's that money records use.
+    function inUse() {
+      const b = doc.budget || {}, f = doc.financePlan || {};
+      const recs = [...list(b.lines), ...list(f.sources), ...list(doc.contracts), ...list(doc.expenses)];
+      return [...new Set(recs.map(r => up(r.currency)).filter(c => c && c !== home()))].sort();
+    }
+    const show = n => Number(n).toLocaleString(undefined, { maximumFractionDigits: 6 });
+    function note() {
+      const cs = inUse();
+      if (!cs.length) return '';
+      const parts = cs.map(c => {
+        const all = rates().filter(r => up(r.currency) === c), dated = all.filter(r => isDay(r.date)), fixed = all.find(r => !isDay(r.date));
+        if (!all.length) return `there's no exchange rate for ${c} yet, so ${c} amounts are counted as ${home()}`;
+        if (!dated.length) return `1 ${c} = ${show(fixed.rate)} ${home()}`;
+        const last = dated.sort((a, b) => a.date.localeCompare(b.date))[dated.length - 1];
+        return `${c} at the rate for each date (latest: 1 ${c} = ${show(last.rate)} ${home()} from ${last.date})${fixed ? `, otherwise 1 ${c} = ${show(fixed.rate)} ${home()}` : ''}`;
+      });
+      return `Totals are in ${home()}: ${parts.join('; ')}.`;
+    }
+    function fmt(n, cur) {
+      try { return new Intl.NumberFormat(undefined, { style: 'currency', currency: up(cur) || home() }).format(Number(n)); }
+      catch { return `${up(cur) || home()} ${Number(n).toLocaleString()}`; }
+    }
+    // The rates dialog, opened from "Exchange rates" under the file buttons.
+    function rowHtml(r) {
+      const e = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+      return `<div class="oft-rate"><input type="text" class="oft-rate-cur" maxlength="3" value="${e(r.currency)}" placeholder="EUR" aria-label="Currency" autocomplete="off">
+        <input type="number" class="oft-rate-val" step="any" min="0" value="${e(r.rate)}" placeholder="Rate" aria-label="What 1 of it is worth in ${e(home())}">
+        <input type="date" class="oft-rate-date" value="${e(r.date)}" aria-label="From this date (leave blank for one rate)">
+        <button type="button" class="btn small" data-oft-del aria-label="Remove this rate">Remove</button></div>`;
+    }
+    function dialog() {
+      let dlg = document.getElementById('oftRatesDialog');
+      if (!dlg) {
+        dlg = document.createElement('dialog');
+        dlg.id = 'oftRatesDialog'; dlg.className = 'oft-dialog'; dlg.setAttribute('aria-labelledby', 'oftRatesTitle');
+        dlg.innerHTML = `<form method="dialog" id="oftRatesForm"><h2 id="oftRatesTitle">Exchange rates</h2>
+          <p id="oftRatesIntro"></p>
+          <div id="oftRateRows" role="group" aria-label="Rates"></div>
+          <p><button type="button" class="btn small" id="oftRateAdd">Add a rate</button></p>
+          <p id="oftRatesErr" class="oft-unmatched" aria-live="polite"></p>
+          <div class="oft-actions"><button type="button" class="btn" id="oftRatesCancel">Cancel</button><button type="submit" class="btn primary">Save rates</button></div></form>`;
+        document.body.append(dlg);
+        dlg.querySelector('#oftRateAdd').onclick = () => { dlg.querySelector('#oftRateRows').insertAdjacentHTML('beforeend', rowHtml({})); dlg.querySelector('#oftRateRows .oft-rate:last-child input').focus(); };
+        dlg.querySelector('#oftRateRows').addEventListener('click', ev => { const b = ev.target.closest('[data-oft-del]'); if (b) b.closest('.oft-rate').remove(); });
+        dlg.querySelector('#oftRatesCancel').onclick = () => dlg.close();
+        dlg.querySelector('#oftRatesForm').addEventListener('submit', ev => {
+          const out = [];
+          for (const row of dlg.querySelectorAll('.oft-rate')) {
+            const c = up(row.querySelector('.oft-rate-cur').value), v = row.querySelector('.oft-rate-val').value, d = row.querySelector('.oft-rate-date').value;
+            if (!c && !v) continue;
+            if (!/^[A-Z]{3}$/.test(c) || !(Number(v) > 0)) { ev.preventDefault(); dlg.querySelector('#oftRatesErr').textContent = 'Each rate needs a three-letter currency code, such as EUR, and a number above zero.'; return; }
+            out.push(Object.assign({ currency: c, rate: Number(v) }, d ? { date: d } : {}));
+          }
+          if (out.length) doc.project.exchangeRates = out; else delete doc.project.exchangeRates;
+          if (typeof changed === 'function') changed(); else { dirty = true; render(); }
+        });
+      }
+      dlg.querySelector('#oftRatesIntro').textContent = `Type in what one unit of each currency is worth in ${home()}, the project currency. Nothing is looked up online. Add a date to use a rate from that date on, or leave it blank for one rate throughout.`;
+      dlg.querySelector('#oftRatesErr').textContent = '';
+      const rs = list(doc.project && doc.project.exchangeRates);
+      dlg.querySelector('#oftRateRows').innerHTML = (rs.length ? rs : inUse().map(c => ({ currency: c }))).map(rowHtml).join('') || rowHtml({});
+      dlg.showModal();
+    }
+    // A field for an amount's currency, for the tools' editors.
+    function currencies() { return [...new Set([home(), ...rates().map(r => up(r.currency)), ...inUse()])]; }
+    return { home, rateFor, convert, amountOf, inUse, note, fmt, dialog, currencies, up };
+  })();
+  // Shows which rates the totals use, under the file buttons and on the printed report.
+  const oftMoneyRender = render;
+  render = function () {
+    const out = oftMoneyRender.apply(this, arguments);
+    let p = document.getElementById('oftRatesNote');
+    const text = oftMoney.note();
+    if (!p && text) { p = document.createElement('p'); p.id = 'oftRatesNote'; p.className = 'oft-rates-note'; const main = document.querySelector('main#main') || document.querySelector('main'); if (main) main.prepend(p); }
+    if (p) { p.textContent = text; p.hidden = !text; }
+    return out;
+  };
+  if (typeof renderReport === 'function') {
+    const oftMoneyReport = renderReport;
+    renderReport = function () {
+      const out = oftMoneyReport.apply(this, arguments);
+      const r = document.getElementById('report'), text = oftMoney.note();
+      if (r && text) { const p = document.createElement('p'); p.className = 'oft-rates-note'; p.textContent = text; r.append(p); }
+      return out;
+    };
+  }
+  /* oft-shared:money end */
   // Columns for importing from a spreadsheet, named as in this tool's template.
   const OFT_IMPORT = { noun: 'license', nouns: 'licenses', key: 'title', list: () => doc.contracts, make: () => ({ type: 'license', status: 'draft' }),
     fields: [['License', 'title'], ['Kind', 'licenseKind', 'enum', { values: KIND }], ['Licensor', 'licensor'], ['Status', 'status', 'enum', { values: STATE }], ['Elements', 'elements', 'list'], ['Media', 'media'], ['Territory', 'territory'], ['Term', 'term'],
@@ -1402,13 +1522,26 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       if (!rows.length) return '<p>Nothing here yet.</p>';
       return `<table><thead><tr>${head.map(h => `<th scope="col">${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
     }
+    // The project's own exchange rates (see shared/money.js): a dated rate applies from its date.
+    function conv(d, amount, cur, date) {
+      const home = str((d.project || {}).currency || 'USD').toUpperCase(); cur = str(cur).toUpperCase();
+      if (!cur || cur === home) return amount;
+      const rs = arr((d.project || {}).exchangeRates).filter(r => r && str(r.currency).toUpperCase() === cur && num(r.rate) > 0);
+      const dated = rs.filter(r => isDay(r.date)).sort((a, b) => a.date.localeCompare(b.date));
+      const hit = (isDay(date) && [...dated].reverse().find(r => r.date <= date)) || rs.find(r => !isDay(r.date)) || dated[dated.length - 1];
+      return hit ? amount * num(hit.rate) : amount;
+    }
     function budgetRows(d) {
-      const b = d.budget || {}, fr = new Map(arr(b.fringes).filter(Boolean).map(f => [f.id, num(f.percent)]));
+      const b = d.budget || {}, fringes = arr(b.fringes).filter(Boolean);
       const spent = {};
-      for (const e of arr(d.expenses).filter(Boolean)) spent[e.accountId] = (spent[e.accountId] || 0) + num(e.amount);
+      for (const e of arr(d.expenses).filter(Boolean)) spent[e.accountId] = (spent[e.accountId] || 0) + conv(d, num(e.amount), e.currency, e.date);
       let total = 0, totalSpent = 0;
       const rows = arr(b.accounts).filter(Boolean).map(a => {
-        const sum = arr(b.lines).filter(l => l && l.accountId === a.id).reduce((s, l) => { const base = num(l.quantity) * (num(l.multiplier) || 1) * num(l.rate); return s + base + base * (fr.get(l.fringeId) || 0) / 100; }, 0);
+        const sum = arr(b.lines).filter(l => l && l.accountId === a.id).reduce((s, l) => {
+          const people = l.multiplier === '' || l.multiplier == null ? 1 : num(l.multiplier), base = conv(d, num(l.quantity) * people * num(l.rate), l.currency);
+          const ids = Array.isArray(l.fringeIds) && l.fringeIds.length ? l.fringeIds : l.fringeId ? [l.fringeId] : [];
+          return s + base + ids.map(id => fringes.find(f => f.id === id)).filter(Boolean).reduce((t, f) => t + (num(f.cap) > 0 ? Math.min(base, num(f.cap) * Math.max(people, 1)) : base) * num(f.percent) / 100, 0);
+        }, 0);
         total += sum; totalSpent += spent[a.id] || 0;
         return { a, sum, spent: spent[a.id] || 0 };
       }).filter(r => r.sum || r.spent);
@@ -1948,6 +2081,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   .oft-map th, .oft-map td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--rule); vertical-align: middle; }
   .oft-map select { max-width: 100%; padding: 4px 6px; font: inherit; color: var(--ink); background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; }
   .oft-unmatched { color: var(--bad); font-weight: 600; }
+  .oft-rate { display: grid; grid-template-columns: 70px minmax(0, 1fr) minmax(0, 1fr) auto; gap: 6px; align-items: center; margin: 0 0 6px; }
+  .oft-rate input { min-width: 0; padding: 6px 8px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); color: var(--ink); font: inherit; }
+  .oft-rates-note { margin: 0 0 12px; font-size: 13px; color: var(--ink-2); }
   .oft-conflict { margin: 8px 0; padding: 8px 12px; border: 1px solid var(--rule); border-radius: 8px; }
   .oft-conflict legend { font-weight: 600; padding: 0 4px; }
   .oft-conflict label { display: flex; gap: 8px; align-items: flex-start; padding: 4px 0; overflow-wrap: anywhere; }
@@ -1973,6 +2109,12 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       imp.type = 'button'; imp.className = 'link-btn'; imp.id = 'oftImportBtn'; imp.textContent = 'Import from a spreadsheet';
       imp.onclick = () => oftImport.open(OFT_IMPORT);
       links.prepend(imp);
+    }
+    if (typeof oftMoney !== 'undefined') {
+      const fx = document.createElement('button');
+      fx.type = 'button'; fx.className = 'link-btn'; fx.id = 'oftRatesBtn'; fx.textContent = 'Exchange rates';
+      fx.onclick = () => oftMoney.dialog();
+      links.prepend(fx);
     }
     if (typeof oftProject !== 'undefined') {
       const cal = document.createElement('button');

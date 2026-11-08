@@ -46,6 +46,7 @@ For anyone who doesn't use the tool, there's a blank [spreadsheet template](../.
 The rates in the documentary accounts start at zero for fringes and insurance: set your own. Check what your funders, insurer and payroll company need.
 
 - **Imports from a spreadsheet:** choose **Import from a spreadsheet** under the file buttons and pick a CSV file. One with the columns of the [spreadsheet template](../../templates/budget-template.csv) imports as it is; match any other columns once and the tool remembers. Problems, such as a date it can't read, show row by row before anything is added, and importing only adds.
+- **Several currencies, several fringes and caps.** A line's ⋯ button sets the currency of its rate and picks several fringes. A fringe can have a cap, so it applies only to wages up to that amount for each person, like a payroll tax that stops at a wage limit. Totals convert to the project currency at the exchange rates you type in under **Exchange rates**, and say which rates they used.
 
 ## Saving and file conflicts
 
@@ -62,7 +63,6 @@ A `budget` record with `accounts` (each with `id`, `code`, `name`, `section` and
 ## Not yet
 
 - Globals, such as a shoot length every line can refer to
-- Several fringes on one line, or fringes with a cap
 - Importing a budget from another budgeting program's own file
 
 ## License

@@ -1391,6 +1391,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   .oft-map th, .oft-map td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--rule); vertical-align: middle; }
   .oft-map select { max-width: 100%; padding: 4px 6px; font: inherit; color: var(--ink); background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; }
   .oft-unmatched { color: var(--bad); font-weight: 600; }
+  .oft-rate { display: grid; grid-template-columns: 70px minmax(0, 1fr) minmax(0, 1fr) auto; gap: 6px; align-items: center; margin: 0 0 6px; }
+  .oft-rate input { min-width: 0; padding: 6px 8px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); color: var(--ink); font: inherit; }
+  .oft-rates-note { margin: 0 0 12px; font-size: 13px; color: var(--ink-2); }
   .oft-conflict { margin: 8px 0; padding: 8px 12px; border: 1px solid var(--rule); border-radius: 8px; }
   .oft-conflict legend { font-weight: 600; padding: 0 4px; }
   .oft-conflict label { display: flex; gap: 8px; align-items: flex-start; padding: 4px 0; overflow-wrap: anywhere; }
@@ -1416,6 +1419,12 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       imp.type = 'button'; imp.className = 'link-btn'; imp.id = 'oftImportBtn'; imp.textContent = 'Import from a spreadsheet';
       imp.onclick = () => oftImport.open(OFT_IMPORT);
       links.prepend(imp);
+    }
+    if (typeof oftMoney !== 'undefined') {
+      const fx = document.createElement('button');
+      fx.type = 'button'; fx.className = 'link-btn'; fx.id = 'oftRatesBtn'; fx.textContent = 'Exchange rates';
+      fx.onclick = () => oftMoney.dialog();
+      links.prepend(fx);
     }
     if (typeof oftProject !== 'undefined') {
       const cal = document.createElement('button');
