@@ -27,13 +27,13 @@ from playwright.sync_api import sync_playwright
 
 root = pathlib.Path(__file__).resolve().parents[1]
 sample = (root / 'samples/the-river-keeps.oft.json').read_text()
-TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan', 'funder-crm', 'cash-flow', 'shooting-calendar', 'interview-prep', 'field-journal', 'location-scout', 'deal-memos', 'gear-list', 'coi-permit-tracker', 'travel-sheet', 'risk-plan', 'security-checklist', 'camera-sound-reports', 'interview-log', 'daily-production-report', 'expense-log', 'festival-submissions', 'press-list', 'partner-crm', 'discussion-guide', 'archive-log', 'footage-log', 'paper-edit', 'structure-board', 'cut-tracker', 'budget-to-actuals', 'fair-use-log', 'license-tracker', 'clearance-report', 'chain-of-title', 'festival-strategy', 'press-notes', 'stills-library', 'awards-social', 'rights-matrix', 'deliverables', 'qc-tracker', 'waterfall', 'revenue-tracker', 'bookings', 'theory-of-change', 'screening-kit', 'impact-report', 'final-cost-report', 'grant-reports', 'contract-archive', 'script-breakdown']
+TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan', 'funder-crm', 'cash-flow', 'shooting-calendar', 'interview-prep', 'field-journal', 'location-scout', 'deal-memos', 'gear-list', 'coi-permit-tracker', 'travel-sheet', 'risk-plan', 'security-checklist', 'camera-sound-reports', 'interview-log', 'daily-production-report', 'expense-log', 'festival-submissions', 'press-list', 'partner-crm', 'discussion-guide', 'archive-log', 'footage-log', 'paper-edit', 'structure-board', 'cut-tracker', 'budget-to-actuals', 'fair-use-log', 'license-tracker', 'clearance-report', 'chain-of-title', 'festival-strategy', 'press-notes', 'stills-library', 'awards-social', 'rights-matrix', 'deliverables', 'qc-tracker', 'waterfall', 'revenue-tracker', 'bookings', 'theory-of-change', 'screening-kit', 'impact-report', 'final-cost-report', 'grant-reports', 'contract-archive', 'script-breakdown', 'stripboard', 'day-out-of-days']
 COLLECTIONS = ['project', 'people', 'locations', 'thirdPartyElements', 'contracts', 'assets', 'musicCueSheet', 'callSheets']
-PRINT_BTN = {'script-breakdown': '#printBtn', 'contract-archive': '#printBtn', 'grant-reports': '#printBtn', 'final-cost-report': '#printBtn', 'impact-report': '#printBtn', 'screening-kit': '#printBtn', 'theory-of-change': '#printBtn', 'bookings': '#printBtn', 'revenue-tracker': '#printBtn', 'waterfall': '#printBtn', 'qc-tracker': '#printBtn', 'deliverables': '#printBtn', 'rights-matrix': '#printBtn', 'awards-social': '#printBtn', 'stills-library': '#printBtn', 'press-notes': '#printBtn', 'festival-strategy': '#printBtn', 'clearance-log': '#printBtn', 'music-cue-sheet': '#printBtn', 'call-sheet': '#printAllBtn', 'release-tracker': '#printBtn',
+PRINT_BTN = {'stripboard': '#printBtn', 'day-out-of-days': '#printBtn', 'script-breakdown': '#printBtn', 'contract-archive': '#printBtn', 'grant-reports': '#printBtn', 'final-cost-report': '#printBtn', 'impact-report': '#printBtn', 'screening-kit': '#printBtn', 'theory-of-change': '#printBtn', 'bookings': '#printBtn', 'revenue-tracker': '#printBtn', 'waterfall': '#printBtn', 'qc-tracker': '#printBtn', 'deliverables': '#printBtn', 'rights-matrix': '#printBtn', 'awards-social': '#printBtn', 'stills-library': '#printBtn', 'press-notes': '#printBtn', 'festival-strategy': '#printBtn', 'clearance-log': '#printBtn', 'music-cue-sheet': '#printBtn', 'call-sheet': '#printAllBtn', 'release-tracker': '#printBtn',
              'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn', 'treatment-builder': '#printBtn', 'pitch-deck': '#printBtn', 'grant-calendar': '#printBtn', 'narrative-library': '#printBtn', 'budget': '#printBtn', 'budget-converter': '#printBtn', 'finance-plan': '#printBtn', 'funder-crm': '#printBtn', 'cash-flow': '#printBtn', 'shooting-calendar': '#printBtn', 'interview-prep': '#printBtn', 'field-journal': '#printBtn', 'location-scout': '#printBtn', 'deal-memos': '#printBtn', 'gear-list': '#printBtn', 'coi-permit-tracker': '#printBtn', 'travel-sheet': '#printBtn', 'risk-plan': '#printBtn', 'security-checklist': '#printBtn', 'camera-sound-reports': '#printBtn', 'interview-log': '#printBtn', 'daily-production-report': '#printBtn', 'expense-log': '#printBtn', 'festival-submissions': '#printBtn', 'press-list': '#printBtn', 'partner-crm': '#printBtn', 'discussion-guide': '#printBtn', 'archive-log': '#printBtn', 'footage-log': '#printBtn', 'paper-edit': '#printBtn', 'structure-board': '#printBtn', 'cut-tracker': '#printBtn', 'budget-to-actuals': '#printBtn', 'fair-use-log': '#printBtn', 'license-tracker': '#printBtn', 'clearance-report': '#printBtn', 'chain-of-title': '#printBtn'}
 PHONE = {'width': 390, 'height': 844}
 # The button that opens each tool's main dialog, for the phone-width check. Most tools use #addBtn.
-DIALOG_BTN = {'impact-report': '#addBtn', 'screening-kit': '#addBtn', 'theory-of-change': '#addBtn', 'stills-library': '[data-edit]', 'treatment-builder': '[data-compare]', 'cash-flow': '#settingsBtn', 'discussion-guide': '#projectCsvBtn'}
+DIALOG_BTN = {'day-out-of-days': '#settingsBtn', 'impact-report': '#addBtn', 'screening-kit': '#addBtn', 'theory-of-change': '#addBtn', 'stills-library': '[data-edit]', 'treatment-builder': '[data-compare]', 'cash-flow': '#settingsBtn', 'discussion-guide': '#projectCsvBtn'}
 
 STUB_PRINT = 'window.print = () => { window.__printed = true; };'
 NO_PICKERS = 'delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker;'
@@ -3013,6 +3013,64 @@ def test_script_breakdown(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
+def test_stripboard(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'stripboard', fake, viewport={'width': 1280, 'height': 1600})
+    open_sample(pg, fake)
+    pool = lambda: [x.get_attribute('data-scene') for x in pg.locator('.day.is-pool [data-scene]').all()]
+    day = lambda d: [x.get_attribute('data-scene') for x in pg.locator('.day[data-day="%s"] [data-scene]' % d).all()]
+    check(pool() == ['scene-1', 'scene-5'] and day('shootday-nov-1') == ['scene-2', 'scene-4'], 'scenes not yet scheduled wait above the shoot days')
+    check('Day 5' not in pg.inner_text('#board') and 'Day 3 · ' in pg.inner_text('.day[data-day="shootday-nov-1"]') and '5/8 pages' in pg.inner_text('.day[data-day="shootday-nov-1"]'), 'days are numbered among the shoot days, with page counts')
+    pg.select_option('[data-scene="scene-1"] [data-move]', 'shootday-nov-1'); pg.wait_for_timeout(150)
+    check(day('shootday-nov-1') == ['scene-2', 'scene-4', 'scene-1'] and 'Company move' in pg.inner_text('.day[data-day="shootday-nov-1"]'), 'a strip moves to a day from its menu, and two places in a day is a company move')
+    pg.click('[data-scene="scene-1"] [data-up]'); pg.wait_for_timeout(150)
+    check(day('shootday-nov-1') == ['scene-2', 'scene-1', 'scene-4'], 'the arrows reorder strips within a day')
+    pg.click('#addBtn'); pg.fill('#f-date', '2027-03-17'); pg.click('#editorSubmit'); pg.wait_for_timeout(150)
+    new_day = pg.locator('.day').last.get_attribute('data-day')
+    check(pg.locator('.day:not(.is-pool)').count() == 5 and 'Wed, Mar 17, 2027' in pg.inner_text('.day[data-day="%s"]' % new_day), 'adds a shoot day')
+    pg.drag_and_drop('[data-scene="scene-5"]', '.day[data-day="%s"] .strips' % new_day); pg.wait_for_timeout(150)
+    check(day(new_day) == ['scene-5'] and pool() == [], 'a strip can be dragged to a day')
+    rows = csv_rows(pg)
+    check(rows[0][:3] == ['Day', 'Date', 'Scene'] and ['Day 3', '2026-11-10', '1'] == rows[2][:3] and any(r[0] == 'Day 5' and r[2] == '5' for r in rows), 'CSV lists scenes by day in shooting order')
+    pg.click('#printBtn'); pg.wait_for_timeout(150)
+    check('Company move' in pg.inner_text('#report') and 'Day 5' in pg.inner_text('#report'), 'prints the board day by day')
+    data = saved_project(pg, fake)
+    days = {d['id']: d for d in data['shootDays']}
+    check(days['shootday-nov-1']['sceneIds'] == ['scene-2', 'scene-1', 'scene-4'] and days['shootday-nov-1']['title'] == 'Ruth reads from the diary', 'the schedule is saved on the shoot days, keeping their titles')
+    check(days[new_day]['date'] == '2027-03-17' and days[new_day]['kind'] == 'shoot' and days[new_day]['title'] == 'Scene 5' and days[new_day]['locationId'] == 'location-riverside-levee', 'a new day goes to the shooting calendar with its scenes and place')
+    check(data['scenes'] == original['scenes'] and data['callSheets'] == original['callSheets'], 'other data is unchanged')
+    pg.click('[data-editday="%s"]' % new_day); pg.click('#deleteBtn'); pg.wait_for_timeout(150)
+    check(pool() == ['scene-5'], 'removing a day puts its scenes back')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+def test_day_out_of_days(browser, fake):
+    d = json.loads(sample)
+    for s in d['shootDays']:
+        if s['id'] == 'shootday-may-2': s['sceneIds'] = ['scene-5']
+        if s['id'] == 'shootday-may-travel-out': s['personIds'].append('person-marcus-bell')
+    for c in d['characters']:
+        if c['id'] == 'character-walt': c['personId'] = 'person-marcus-bell'
+    text = json.dumps(d)
+    ctx, pg, errs = new_page(browser, 'day-out-of-days', fake)
+    open_text(pg, fake, text)
+    codes = lambda cid: [x.strip() for x in pg.locator('tr[data-id="%s"] td.c' % cid).all_inner_texts()]
+    check(pg.locator('#table thead th').count() == 8, 'a column for each shoot day with scenes and each travel day with an actor')
+    check(codes('character-walt') == ['T', 'SWD', '', 'PWF'], 'Walt travels, then works with a long gap, so he is dropped and picked up (%s)' % codes('character-walt'))
+    check(codes('character-edith') == ['', 'SWD', 'PWF', ''], 'Edith starts, is dropped and picked up for her last day (%s)' % codes('character-edith'))
+    pg.click('#settingsBtn'); pg.fill('#s-drop', '0'); pg.click('#settingsForm button[type=submit]'); pg.wait_for_timeout(150)
+    check(codes('character-walt') == ['T', 'SW', 'H', 'WF'] and codes('character-josie') == ['', 'SW', 'WF', ''], 'with no drops, the days between are holds')
+    w = pg.inner_text('tr[data-id="character-walt"]')
+    check('Marcus Bell' in w and w.split()[-3:] == ['2', '1', '1'], 'counts work, hold and travel days (%s)' % w.split()[-3:])
+    rows = csv_rows(pg)
+    check(rows[0][:3] == ['Cast', 'Character', 'Played by'] and rows[0][-5:] == ['Work', 'Hold', 'Travel', 'Start', 'Finish'] and any(r[1] == 'WALT' and r[-2] == '2026-05-11' for r in rows), 'CSV has the codes and counts')
+    pg.click('#printBtn'); pg.wait_for_timeout(150)
+    check('SW start work' in pg.inner_text('#report') and 'WALT' in pg.inner_text('#report'), 'prints the grid with what the codes mean')
+    data = saved_project(pg, fake)
+    check(data['dayOutOfDays'] == {'dropDays': 0} and data['shootDays'] == d['shootDays'], 'the drop setting is saved and nothing else changes')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
 def csv_rows(pg, btn='#csvBtn'):
     with pg.expect_download() as d:
         pg.click(btn)
@@ -3625,6 +3683,10 @@ def main():
         test_press_list(browser, fake)
         print('== script-breakdown / a Fountain script, cast, sets, elements and a newer draft')
         test_script_breakdown(browser, fake)
+        print('== stripboard / scenes onto shoot days, company moves and a new day')
+        test_stripboard(browser, fake)
+        print('== day-out-of-days / work, hold, travel, drop and pick up')
+        test_day_out_of_days(browser, fake)
         print('== partner-crm / partners, commitments and screenings')
         test_partner_crm(browser, fake)
         print('== screenings / edit and remove a screening in the press list and partner CRM')

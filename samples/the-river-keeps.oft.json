@@ -3058,7 +3058,11 @@
         "person-teo-ramirez",
         "person-ruth-hammond"
       ],
-      "notes": "Ruth prefers mornings. Bring the diary scans."
+      "notes": "Ruth prefers mornings. Bring the diary scans.",
+      "sceneIds": [
+        "scene-2",
+        "scene-4"
+      ]
     },
     {
       "id": "shootday-nov-hold",
@@ -3083,6 +3087,9 @@
         "person-lena-ward",
         "person-teo-ramirez",
         "person-leon-pryor"
+      ],
+      "sceneIds": [
+        "scene-3"
       ]
     }
   ],
