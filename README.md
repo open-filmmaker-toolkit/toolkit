@@ -119,11 +119,14 @@ The toolkit has two halves:
 | [Rights availability matrix](tools/rights-matrix/) | Release and distribution | See which rights you've sold, by territory and media. |
 | [Deliverables checklist](tools/deliverables/) | Release and distribution | Track every deliverable a distributor asks for. |
 | [QC tracker](tools/qc-tracker/) | Release and distribution | Track QC issues and fixes until the master passes. |
+| [Recoupment waterfall model](tools/waterfall/) | Release and distribution | Model who gets paid, and in what order. |
+| [Revenue tracker](tools/revenue-tracker/) | Release and distribution | Log revenue statements and see the totals. |
+| [Educational and theatrical booking trackers](tools/bookings/) | Release and distribution | Track educational licenses and screening bookings. |
 | [Partner CRM](tools/partner-crm/) | Impact and outreach | Track impact partners and shared screenings. |
 | [Discussion guide builder](tools/discussion-guide/) | Impact and outreach | Make a screening handout with discussion questions. |
 | [Archive log](tools/archive-log/) | Close-out and archive | Track where each copy of your project lives. |
 
-All 53 are first versions: they work, and they're still changing. Everything else we plan to build is listed by production phase in [TOOLS.md](TOOLS.md).
+All 56 are first versions: they work, and they're still changing. Everything else we plan to build is listed by production phase in [TOOLS.md](TOOLS.md).
 
 ## How our tools work
 

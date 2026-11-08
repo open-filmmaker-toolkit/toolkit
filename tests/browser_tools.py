@@ -19,9 +19,9 @@ from playwright.sync_api import sync_playwright
 
 root = pathlib.Path(__file__).resolve().parents[1]
 sample = (root / 'samples/the-river-keeps.oft.json').read_text()
-TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan', 'funder-crm', 'cash-flow', 'shooting-calendar', 'interview-prep', 'field-journal', 'location-scout', 'deal-memos', 'gear-list', 'coi-permit-tracker', 'travel-sheet', 'risk-plan', 'security-checklist', 'camera-sound-reports', 'interview-log', 'daily-production-report', 'expense-log', 'festival-submissions', 'press-list', 'partner-crm', 'discussion-guide', 'archive-log', 'footage-log', 'paper-edit', 'structure-board', 'cut-tracker', 'budget-to-actuals', 'fair-use-log', 'license-tracker', 'clearance-report', 'chain-of-title', 'festival-strategy', 'press-notes', 'stills-library', 'awards-social', 'rights-matrix', 'deliverables', 'qc-tracker']
+TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan', 'funder-crm', 'cash-flow', 'shooting-calendar', 'interview-prep', 'field-journal', 'location-scout', 'deal-memos', 'gear-list', 'coi-permit-tracker', 'travel-sheet', 'risk-plan', 'security-checklist', 'camera-sound-reports', 'interview-log', 'daily-production-report', 'expense-log', 'festival-submissions', 'press-list', 'partner-crm', 'discussion-guide', 'archive-log', 'footage-log', 'paper-edit', 'structure-board', 'cut-tracker', 'budget-to-actuals', 'fair-use-log', 'license-tracker', 'clearance-report', 'chain-of-title', 'festival-strategy', 'press-notes', 'stills-library', 'awards-social', 'rights-matrix', 'deliverables', 'qc-tracker', 'waterfall', 'revenue-tracker', 'bookings']
 COLLECTIONS = ['project', 'people', 'locations', 'thirdPartyElements', 'contracts', 'assets', 'musicCueSheet', 'callSheets']
-PRINT_BTN = {'qc-tracker': '#printBtn', 'deliverables': '#printBtn', 'rights-matrix': '#printBtn', 'awards-social': '#printBtn', 'stills-library': '#printBtn', 'press-notes': '#printBtn', 'festival-strategy': '#printBtn', 'clearance-log': '#printBtn', 'music-cue-sheet': '#printBtn', 'call-sheet': '#printAllBtn', 'release-tracker': '#printBtn',
+PRINT_BTN = {'bookings': '#printBtn', 'revenue-tracker': '#printBtn', 'waterfall': '#printBtn', 'qc-tracker': '#printBtn', 'deliverables': '#printBtn', 'rights-matrix': '#printBtn', 'awards-social': '#printBtn', 'stills-library': '#printBtn', 'press-notes': '#printBtn', 'festival-strategy': '#printBtn', 'clearance-log': '#printBtn', 'music-cue-sheet': '#printBtn', 'call-sheet': '#printAllBtn', 'release-tracker': '#printBtn',
              'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn', 'treatment-builder': '#printBtn', 'pitch-deck': '#printBtn', 'grant-calendar': '#printBtn', 'narrative-library': '#printBtn', 'budget': '#printBtn', 'budget-converter': '#printBtn', 'finance-plan': '#printBtn', 'funder-crm': '#printBtn', 'cash-flow': '#printBtn', 'shooting-calendar': '#printBtn', 'interview-prep': '#printBtn', 'field-journal': '#printBtn', 'location-scout': '#printBtn', 'deal-memos': '#printBtn', 'gear-list': '#printBtn', 'coi-permit-tracker': '#printBtn', 'travel-sheet': '#printBtn', 'risk-plan': '#printBtn', 'security-checklist': '#printBtn', 'camera-sound-reports': '#printBtn', 'interview-log': '#printBtn', 'daily-production-report': '#printBtn', 'expense-log': '#printBtn', 'festival-submissions': '#printBtn', 'press-list': '#printBtn', 'partner-crm': '#printBtn', 'discussion-guide': '#printBtn', 'archive-log': '#printBtn', 'footage-log': '#printBtn', 'paper-edit': '#printBtn', 'structure-board': '#printBtn', 'cut-tracker': '#printBtn', 'budget-to-actuals': '#printBtn', 'fair-use-log': '#printBtn', 'license-tracker': '#printBtn', 'clearance-report': '#printBtn', 'chain-of-title': '#printBtn'}
 PHONE = {'width': 390, 'height': 844}
 # The button that opens each tool's main dialog, for the phone-width check. Most tools use #addBtn.
@@ -385,7 +385,7 @@ def test_credits_builder(browser, fake):
     ctx.close()
 
 # Each spreadsheet template's columns must appear in its tool's CSV export, in the same order.
-TEMPLATE_EXPORTS = [('qc-tracker', 'qc-issues-template.csv'), ('deliverables', 'deliverables-template.csv'), ('rights-matrix', 'rights-matrix-template.csv'), ('stills-library', 'stills-caption-sheet-template.csv'), ('festival-strategy', 'festival-strategy-template.csv'), ('fair-use-log', 'fair-use-template.csv'), ('license-tracker', 'licenses-template.csv'), ('clearance-report', 'clearance-report-template.csv'), ('chain-of-title', 'chain-of-title-template.csv'), ('structure-board', 'structure-board-template.csv'), ('cut-tracker', 'cut-notes-template.csv'), ('budget-to-actuals', 'cost-report-template.csv'), ('footage-log', 'footage-log-template.csv'), ('paper-edit', 'paper-edit-template.csv'), ('press-list', 'press-list-template.csv'), ('partner-crm', 'partner-crm-template.csv'), ('camera-sound-reports', 'camera-and-sound-reports-template.csv'), ('interview-log', 'interview-moments-template.csv'), ('travel-sheet', 'travel-sheet-template.csv'), ('risk-plan', 'risk-assessment-template.csv'), ('security-checklist', 'security-checklist-template.csv'), ('gear-list', 'gear-list-template.csv'), ('coi-permit-tracker', 'certificates-and-permits-template.csv'), ('location-scout', 'location-scout-template.csv'), ('deal-memos', 'deal-memos-template.csv'), ('shooting-calendar', 'shooting-calendar-template.csv'), ('interview-prep', 'interview-questions-template.csv'), ('funder-crm', 'funder-crm-template.csv'), ('cash-flow', 'cash-flow-template.csv'), ('budget', 'budget-template.csv'), ('finance-plan', 'finance-plan-template.csv'), ('grant-calendar', 'grant-calendar-template.csv'), ('clearance-log', 'clearance-log-template.csv'), ('release-tracker', 'release-log-template.csv'),
+TEMPLATE_EXPORTS = [('bookings', 'bookings-template.csv'), ('revenue-tracker', 'revenue-template.csv'), ('waterfall', 'waterfall-template.csv'), ('qc-tracker', 'qc-issues-template.csv'), ('deliverables', 'deliverables-template.csv'), ('rights-matrix', 'rights-matrix-template.csv'), ('stills-library', 'stills-caption-sheet-template.csv'), ('festival-strategy', 'festival-strategy-template.csv'), ('fair-use-log', 'fair-use-template.csv'), ('license-tracker', 'licenses-template.csv'), ('clearance-report', 'clearance-report-template.csv'), ('chain-of-title', 'chain-of-title-template.csv'), ('structure-board', 'structure-board-template.csv'), ('cut-tracker', 'cut-notes-template.csv'), ('budget-to-actuals', 'cost-report-template.csv'), ('footage-log', 'footage-log-template.csv'), ('paper-edit', 'paper-edit-template.csv'), ('press-list', 'press-list-template.csv'), ('partner-crm', 'partner-crm-template.csv'), ('camera-sound-reports', 'camera-and-sound-reports-template.csv'), ('interview-log', 'interview-moments-template.csv'), ('travel-sheet', 'travel-sheet-template.csv'), ('risk-plan', 'risk-assessment-template.csv'), ('security-checklist', 'security-checklist-template.csv'), ('gear-list', 'gear-list-template.csv'), ('coi-permit-tracker', 'certificates-and-permits-template.csv'), ('location-scout', 'location-scout-template.csv'), ('deal-memos', 'deal-memos-template.csv'), ('shooting-calendar', 'shooting-calendar-template.csv'), ('interview-prep', 'interview-questions-template.csv'), ('funder-crm', 'funder-crm-template.csv'), ('cash-flow', 'cash-flow-template.csv'), ('budget', 'budget-template.csv'), ('finance-plan', 'finance-plan-template.csv'), ('grant-calendar', 'grant-calendar-template.csv'), ('clearance-log', 'clearance-log-template.csv'), ('release-tracker', 'release-log-template.csv'),
                     ('music-cue-sheet', 'music-cue-sheet-template.csv'), ('name-supers', 'name-supers-template.csv'),
                     ('subject-tracker', 'subject-tracker-template.csv'), ('research-log', 'research-log-template.csv'),
                     ('comps-tracker', 'comps-tracker-template.csv')]
@@ -2637,6 +2637,103 @@ def test_qc_tracker(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
+def test_waterfall(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'waterfall', fake)
+    open_sample(pg, fake)
+    check(pg.locator('#rows .row').count() == 6 and 'Actual revenue to date: $55,500.00' in pg.inner_text('#scenSel'), 'lists tiers and offers actual revenue as a scenario')
+    pg.select_option('#scenSel', label='High: $400,000.00')
+    check('$237,500.00' in pg.inner_text('#parties') and '$57,500.00' in pg.inner_text('#results'), 'runs a scenario down the tiers')
+    pg.select_option('#scenSel', label='Low: $120,000.00')
+    check('$68,000.00 still owed' in pg.inner_text('[data-id="tier-recoup"]') and '$264,706.00' in pg.inner_text('#breakeven'), 'shows what is still owed and the break-even point')
+    pg.fill('#scenGross', '1000000')
+    check('$1,000,000.00' in pg.inner_text('#results'), 'tries any amount')
+    pg.click('#scenAdd'); pg.wait_for_timeout(100)
+    pg.click('[data-down="0"]'); pg.wait_for_timeout(100)
+    check(pg.locator('#rows .row').first.get_attribute('data-id') == 'tier-sales-expenses', 'reorders tiers')
+    pg.click('[data-edit="tier-profits"]'); pg.fill('#sp-s-1', '40')
+    check('90%' in pg.inner_text('#splitSum'), 'adds up the split shares')
+    pg.fill('#sp-s-1', '50'); pg.click('#editorSubmit'); pg.wait_for_timeout(100)
+    pg.click('#addBtn'); pg.fill('#f-name', 'Composer bonus'); pg.select_option('#f-kind', 'percent'); pg.fill('#f-pct', '150'); pg.click('#editorSubmit'); pg.wait_for_timeout(100)
+    check(pg.is_visible('#editor'), 'a percentage over 100 is refused')
+    pg.fill('#f-pct', '5'); pg.fill('#f-party', 'Mira Castellanos'); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check('A split takes everything left' in pg.inner_text('#rows'), 'warns when a tier comes after the split')
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    check(rows[0] == ['Scenario', 'Gross receipts', 'Tier', 'Paid to', 'Paid', 'Still owed'] and any(r[0] == 'Actual revenue to date' for r in rows), 'CSV has every scenario')
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    check('Recoupment waterfall' in pg.inner_text('#report') and 'By party' in pg.inner_text('#report'), 'prints the summary')
+    data = saved_project(pg, fake)
+    w = data['waterfall']
+    check(len(w['tiers']) == 7 and w['tiers'][0]['id'] == 'tier-sales-expenses' and w['tiers'][-1]['percent'] == 5 and len(w['scenarios']) == 3 and w['scenarios'][2]['gross'] == 1000000, 'saves tiers and scenarios')
+    check(data['revenueStatements'] == original['revenueStatements'], 'other data is unchanged')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+def test_revenue_tracker(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'revenue-tracker', fake)
+    open_sample(pg, fake)
+    check(pg.locator('#rows .row').count() == 2 and '$35,000.00' in pg.inner_text('[data-id="statement-riverside-q3"]'), 'works out what is due from gross, fees and expenses')
+    t = pg.inner_text('#totals')
+    check('$55,500.00' in t and '$38,500.00' in t, 'totals gross and what is due')
+    pg.select_option('#bySel', 'territory')
+    check('Worldwide' in pg.inner_text('#by') and 'United States' in pg.inner_text('#by'), 'groups by territory')
+    pg.click('#addBtn'); pg.click('#editorSubmit'); pg.wait_for_timeout(100)
+    check(pg.is_visible('#editor'), 'a statement needs a source')
+    pg.select_option('#f-deal', 'contract-dist-riverside-streaming'); pg.fill('#f-from', '2026-10-01'); pg.fill('#f-to', '2026-12-31'); pg.select_option('#f-media', 'tvod')
+    pg.fill('#f-gross', '10000'); pg.fill('#f-fees', '2500'); pg.fill('#f-net', '7000')
+    check('$7,500.00' in pg.inner_text('#netHint'), 'shows gross less fees and expenses')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check('differs from gross less fees and expenses' in pg.inner_text('#rows') and 'Riverside Streaming' in pg.inner_text('#unpaid'), 'flags a statement that does not add up, and lists it as unpaid')
+    pg.select_option('#bySel', 'quarter')
+    check('2026 Q4' in pg.inner_text('#by'), 'groups by quarter')
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    check(rows[0][0] == 'Source' and len(rows) == 4 and rows[1][9] == '7000', 'CSV lists every statement')
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    check('By territory' in pg.inner_text('#report'), 'prints the statements and totals')
+    data = saved_project(pg, fake)
+    s = next(x for x in data['revenueStatements'] if x['id'] not in ('statement-riverside-q3', 'statement-skyway-1'))
+    check(s['contractId'] == 'contract-dist-riverside-streaming' and s['gross'] == 10000 and s['net'] == 7000 and 'expenses' not in s, 'saves the statement')
+    check(data['contracts'] == original['contracts'], 'other data is unchanged')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+def test_bookings(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'bookings', fake)
+    open_sample(pg, fake)
+    check(pg.locator('#rows .row').count() == 3 and 'Box office split 35%' in pg.inner_text('[data-id="booking-prairie-cinema"]') and 'To send: Blu-ray, Discussion guide' in pg.inner_text('[data-id="booking-riverside-library"]'), 'lists bookings with terms and materials to send')
+    t = pg.inner_text('#totals')
+    check('$450.00' in t and '$250.00' in t and '$700.00' in t, 'totals fees paid and invoiced')
+    pg.click('[data-f="educational"]')
+    check(pg.locator('#rows .row').count() == 1, 'filters by kind')
+    pg.click('#addBtn')
+    check(pg.input_value('#f-kind') == 'educational', 'a new booking starts in the kind you are looking at')
+    pg.fill('#f-venue', 'Valley College'); pg.select_option('#f-license', 'one-year'); pg.fill('#f-fee', '300'); pg.fill('#f-start', '2027-01-15'); pg.fill('#f-end', '2026-01-15')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(100)
+    check(pg.is_visible('#editor'), 'an end before the start is refused')
+    pg.fill('#f-end', '2028-01-14'); pg.fill('[data-sent="file"]', '2027-01-10'); pg.locator('[data-sent="file"]').dispatch_event('change'); pg.fill('#f-paid', '2027-01-20')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check(pg.locator('#rows .row').count() == 2 and 'Materials sent' in pg.inner_text('#rows'), 'adds a booking with materials sent')
+    pg.click('[data-f="all"]'); pg.select_option('#perSel', 'year')
+    check('2027' in pg.inner_text('#periods') and '2026' in pg.inner_text('#periods'), 'totals by year')
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    check(rows[0][0] == 'Venue or institution' and len(rows) == 5, 'CSV lists every booking')
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    check('Valley College' in pg.inner_text('#report'), 'prints the bookings')
+    data = saved_project(pg, fake)
+    b = next(x for x in data['bookings'] if x['venue'] == 'Valley College')
+    check(b['payment'] == 'paid' and b['materialsNeeded'] == ['file'] and b['materials'] == {'file': '2027-01-10'} and b['fee'] == 300 and b['kind'] == 'educational', 'saves the booking, marking it paid when it has a paid date')
+    check(data['screenings'] == original['screenings'], 'other data is unchanged')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
 def test_template_columns(browser, fake):
     for name, template in TEMPLATE_EXPORTS:
         ctx, pg, errs = new_page(browser, name, fake)
@@ -2770,6 +2867,12 @@ def main():
         test_deliverables(browser, fake)
         print('== qc-tracker / reports, issues, versions and the fix list')
         test_qc_tracker(browser, fake)
+        print('== waterfall / tiers, scenarios, break-even and actual revenue')
+        test_waterfall(browser, fake)
+        print('== revenue-tracker / statements, totals and payments')
+        test_revenue_tracker(browser, fake)
+        print('== bookings / terms, payments, materials and totals')
+        test_bookings(browser, fake)
         print('== templates / columns match the tools\' exports')
         test_template_columns(browser, fake)
         browser.close()
