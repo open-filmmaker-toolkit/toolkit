@@ -43,6 +43,8 @@ For anyone who doesn't use the tool, there's a [spreadsheet template](../../temp
 
 A model, not an accounting or legal advice. Your agreements decide the order and the amounts. See [Not legal advice](../../README.md#not-legal-advice).
 
+- **Pari passu tiers, corridors and interest.** Several parties can share one tier at once, pro rata to what each is owed or by set shares. A corridor pays a party a share of gross receipts, from a set point, alongside the tiers. A fixed tier, such as recoupment, can earn simple interest from a date. The break-even and the printed summary account for all three.
+
 ## Saving and file conflicts
 
 Chrome and Edge can save straight back to the file you opened. If it changed on disk since you opened it, the tool warns before saving. You can reload the latest version, save your edits as a separate copy, or explicitly overwrite the changed file. Safari and Firefox download a new copy instead.
@@ -53,15 +55,14 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-A `waterfall` record with `tiers`, in payment order (`name`, `kind` of `gross`, `percent`, `fixed` or `split`, `party`, `percent`, `amount`, `splits` with `party` and `share`, and `note`), and `scenarios` (`name` and `gross`).
+A `waterfall` record with `tiers`, in payment order (`name`, `kind` of `gross`, `percent`, `fixed`, `pari`, `split` or `corridor`, `party`, `percent`, `amount`, `splits` with `party` and `share`, and `note`), and `scenarios` (`name` and `gross`). A `fixed` tier can have `interest` (a simple yearly percentage) and `interestFrom` (a date). A `pari` tier has `parties`, each with `party`, `amount` and, when `shareBy` is `share`, a `share`. A `corridor` has `percent` and `from`, the gross receipts it starts at; corridors are paid alongside the tiers, wherever they sit in the list.
 
 It reads `revenueStatements`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
-- Pari passu tiers, where several parties share one tier pro rata
-- Corridors and cross-collateralization between territories
-- Interest on recoupment
+- Cross-collateralization between territories
+- Compound interest
 
 ## License
 
