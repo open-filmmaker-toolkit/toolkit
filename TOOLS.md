@@ -1,6 +1,6 @@
 # Tools
 
-The tools we build, by production phase. Each one is a single page that runs in your browser on the shared project file, with nothing to install and nothing sent anywhere. 50 are ready to use and 12 are planned.
+The tools we build, by production phase. Each one is a single page that runs in your browser on the shared project file, with nothing to install and nothing sent anywhere. 53 are ready to use and 9 are planned.
 
 - **Ready to use:** linked tools. Each has a README with what it does.
 - **Planned:** each has an issue. Comment there if you need the tool or want to help build it. Order of work is in [ROADMAP.md](ROADMAP.md).
@@ -94,9 +94,9 @@ Looking for other free, open-source software for filmmaking, such as editing, so
 
 | Tool | Use it for | Status |
 | --- | --- | --- |
-| Rights availability matrix | See which rights you hold and which you've sold, by territory, media and term. | Planned, [#83](https://github.com/open-filmmaker-toolkit/toolkit/issues/83) |
-| Deliverables checklist | Track every deliverable a distributor or broadcaster asks for, from masters to paperwork. | Planned, [#84](https://github.com/open-filmmaker-toolkit/toolkit/issues/84) |
-| QC tracker | Track quality-control reports and fixes until the master passes. | Planned, [#85](https://github.com/open-filmmaker-toolkit/toolkit/issues/85) |
+| [Rights availability matrix](tools/rights-matrix/) | See which rights you've sold, by territory and media. | First version |
+| [Deliverables checklist](tools/deliverables/) | Track every deliverable a distributor asks for. | First version |
+| [QC tracker](tools/qc-tracker/) | Track QC issues and fixes until the master passes. | First version |
 | Recoupment waterfall model | Model who gets paid, and in what order, from the film's revenue. | Planned, [#86](https://github.com/open-filmmaker-toolkit/toolkit/issues/86) |
 | Revenue tracker | Log revenue from each statement and compare it with the waterfall. | Planned, [#87](https://github.com/open-filmmaker-toolkit/toolkit/issues/87) |
 | Educational and theatrical booking trackers | Track educational licenses and theatrical and community bookings: who booked, terms, fees and payment. | Planned, [#88](https://github.com/open-filmmaker-toolkit/toolkit/issues/88) |
