@@ -343,6 +343,11 @@ for sample in sorted((ROOT / "samples").glob("*.oft.json")):
     press = data.get("pressNotes") if isinstance(data.get("pressNotes"), dict) else {}
     if set(press.get("bioIds", [])) - ids["people"] or set(press.get("stillIds", [])) - asset_ids:
         fail(f"{name}: press notes point to missing people or stills")
+    qc = data.get("qc") if isinstance(data.get("qc"), dict) else {}
+    master_ids = {v.get("id") for v in qc.get("versions", [])}
+    for report in qc.get("reports", []):
+        if report.get("versionId") not in master_ids or any(i.get("fixedInId") and i["fixedInId"] not in master_ids for i in report.get("issues", [])):
+            fail(f"{name}: QC report {report.get('id')} points to a missing master version")
     security = data.get("security") if isinstance(data.get("security"), dict) else {}
     if set(security.get("personIds", [])) - ids["people"]:
         fail(f"{name}: security personIds points to missing people")

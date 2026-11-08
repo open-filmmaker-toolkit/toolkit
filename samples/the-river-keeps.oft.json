@@ -768,6 +768,60 @@
           "paidDate": "2026-07-02"
         }
       ]
+    },
+    {
+      "id": "contract-dist-riverside-streaming",
+      "title": "Distribution: Riverside Streaming",
+      "type": "distribution",
+      "status": "signed",
+      "licensee": "Riverside Streaming (fictional)",
+      "territories": [
+        "United States"
+      ],
+      "mediaRights": [
+        "svod",
+        "tvod"
+      ],
+      "effectiveDate": "2026-06-01",
+      "expirationDate": "2027-04-30",
+      "fee": 40000,
+      "signedDate": "2026-05-20",
+      "notes": "Fictional sample deal."
+    },
+    {
+      "id": "contract-dist-northbound",
+      "title": "Distribution: Northbound Media",
+      "type": "distribution",
+      "status": "negotiating",
+      "licensee": "Northbound Media (fictional)",
+      "territories": [
+        "United States",
+        "Canada"
+      ],
+      "mediaRights": [
+        "svod",
+        "free-tv"
+      ],
+      "effectiveDate": "2027-03-01",
+      "expirationDate": "2030-02-28",
+      "fee": 65000
+    },
+    {
+      "id": "contract-dist-skyway",
+      "title": "Distribution: Skyway Inflight",
+      "type": "distribution",
+      "status": "signed",
+      "licensee": "Skyway Inflight (fictional)",
+      "territories": [
+        "Worldwide"
+      ],
+      "mediaRights": [
+        "airline"
+      ],
+      "exclusive": false,
+      "effectiveDate": "2026-09-01",
+      "expirationDate": "2028-08-31",
+      "fee": 3500
     }
   ],
   "assets": [
@@ -4570,5 +4624,102 @@
       "text": "The River Keeps premieres at Prairie Docs in March.",
       "eventKey": "festival:festival-prairie:announce"
     }
-  ]
+  ],
+  "deliverables": {
+    "deliverTo": "Riverside Streaming (fictional)",
+    "dueDate": "2027-02-15",
+    "items": [
+      {
+        "id": "deliverable-master",
+        "key": "master",
+        "status": "delivered",
+        "owner": "Priya Nair",
+        "spec": "ProRes 4444, 23.976 fps, 1.85:1"
+      },
+      {
+        "id": "deliverable-dcp",
+        "key": "dcp",
+        "status": "na"
+      },
+      {
+        "id": "deliverable-cc",
+        "key": "cc",
+        "status": "progress",
+        "owner": "Caption house",
+        "due": "2027-01-20"
+      },
+      {
+        "id": "deliverable-poster",
+        "custom": true,
+        "key": "deliverable-poster",
+        "title": "Platform tile artwork",
+        "section": "artwork",
+        "owner": "Ana Reyes"
+      }
+    ]
+  },
+  "qc": {
+    "versions": [
+      {
+        "id": "master-v1",
+        "name": "v1 master",
+        "date": "2026-10-28"
+      },
+      {
+        "id": "master-v2",
+        "name": "v2 master",
+        "date": "2026-11-04"
+      }
+    ],
+    "reports": [
+      {
+        "id": "qc-report-1",
+        "versionId": "master-v1",
+        "vendor": "Clearframe QC (fictional)",
+        "date": "2026-11-01",
+        "result": "fail",
+        "issues": [
+          {
+            "id": "qc-1",
+            "tc": "01:04:12:08",
+            "description": "Dead pixel, upper left",
+            "severity": "major",
+            "area": "picture",
+            "owner": "colorist",
+            "fix": "fixed",
+            "fixedInId": "master-v2"
+          },
+          {
+            "id": "qc-2",
+            "tc": "01:22:40:00",
+            "tcOut": "01:22:44:12",
+            "description": "Dialogue peaks over -10 dBTP",
+            "severity": "major",
+            "area": "sound",
+            "owner": "mixer",
+            "fix": "open"
+          },
+          {
+            "id": "qc-3",
+            "tc": "00:58:02:15",
+            "description": "Caption off screen two frames early",
+            "severity": "minor",
+            "area": "captions",
+            "owner": "captions",
+            "fix": "disputed",
+            "note": "Caption house says the spec allows it"
+          },
+          {
+            "id": "qc-4",
+            "tc": "01:10:00:00",
+            "description": "Soft focus in archival shot",
+            "severity": "note",
+            "area": "picture",
+            "owner": "editor",
+            "fix": "waived"
+          }
+        ]
+      }
+    ]
+  }
 }

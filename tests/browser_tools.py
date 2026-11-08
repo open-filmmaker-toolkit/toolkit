@@ -19,9 +19,9 @@ from playwright.sync_api import sync_playwright
 
 root = pathlib.Path(__file__).resolve().parents[1]
 sample = (root / 'samples/the-river-keeps.oft.json').read_text()
-TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan', 'funder-crm', 'cash-flow', 'shooting-calendar', 'interview-prep', 'field-journal', 'location-scout', 'deal-memos', 'gear-list', 'coi-permit-tracker', 'travel-sheet', 'risk-plan', 'security-checklist', 'camera-sound-reports', 'interview-log', 'daily-production-report', 'expense-log', 'festival-submissions', 'press-list', 'partner-crm', 'discussion-guide', 'archive-log', 'footage-log', 'paper-edit', 'structure-board', 'cut-tracker', 'budget-to-actuals', 'fair-use-log', 'license-tracker', 'clearance-report', 'chain-of-title', 'festival-strategy', 'press-notes', 'stills-library', 'awards-social']
+TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan', 'funder-crm', 'cash-flow', 'shooting-calendar', 'interview-prep', 'field-journal', 'location-scout', 'deal-memos', 'gear-list', 'coi-permit-tracker', 'travel-sheet', 'risk-plan', 'security-checklist', 'camera-sound-reports', 'interview-log', 'daily-production-report', 'expense-log', 'festival-submissions', 'press-list', 'partner-crm', 'discussion-guide', 'archive-log', 'footage-log', 'paper-edit', 'structure-board', 'cut-tracker', 'budget-to-actuals', 'fair-use-log', 'license-tracker', 'clearance-report', 'chain-of-title', 'festival-strategy', 'press-notes', 'stills-library', 'awards-social', 'rights-matrix', 'deliverables', 'qc-tracker']
 COLLECTIONS = ['project', 'people', 'locations', 'thirdPartyElements', 'contracts', 'assets', 'musicCueSheet', 'callSheets']
-PRINT_BTN = {'awards-social': '#printBtn', 'stills-library': '#printBtn', 'press-notes': '#printBtn', 'festival-strategy': '#printBtn', 'clearance-log': '#printBtn', 'music-cue-sheet': '#printBtn', 'call-sheet': '#printAllBtn', 'release-tracker': '#printBtn',
+PRINT_BTN = {'qc-tracker': '#printBtn', 'deliverables': '#printBtn', 'rights-matrix': '#printBtn', 'awards-social': '#printBtn', 'stills-library': '#printBtn', 'press-notes': '#printBtn', 'festival-strategy': '#printBtn', 'clearance-log': '#printBtn', 'music-cue-sheet': '#printBtn', 'call-sheet': '#printAllBtn', 'release-tracker': '#printBtn',
              'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn', 'treatment-builder': '#printBtn', 'pitch-deck': '#printBtn', 'grant-calendar': '#printBtn', 'narrative-library': '#printBtn', 'budget': '#printBtn', 'budget-converter': '#printBtn', 'finance-plan': '#printBtn', 'funder-crm': '#printBtn', 'cash-flow': '#printBtn', 'shooting-calendar': '#printBtn', 'interview-prep': '#printBtn', 'field-journal': '#printBtn', 'location-scout': '#printBtn', 'deal-memos': '#printBtn', 'gear-list': '#printBtn', 'coi-permit-tracker': '#printBtn', 'travel-sheet': '#printBtn', 'risk-plan': '#printBtn', 'security-checklist': '#printBtn', 'camera-sound-reports': '#printBtn', 'interview-log': '#printBtn', 'daily-production-report': '#printBtn', 'expense-log': '#printBtn', 'festival-submissions': '#printBtn', 'press-list': '#printBtn', 'partner-crm': '#printBtn', 'discussion-guide': '#printBtn', 'archive-log': '#printBtn', 'footage-log': '#printBtn', 'paper-edit': '#printBtn', 'structure-board': '#printBtn', 'cut-tracker': '#printBtn', 'budget-to-actuals': '#printBtn', 'fair-use-log': '#printBtn', 'license-tracker': '#printBtn', 'clearance-report': '#printBtn', 'chain-of-title': '#printBtn'}
 PHONE = {'width': 390, 'height': 844}
 # The button that opens each tool's main dialog, for the phone-width check. Most tools use #addBtn.
@@ -385,7 +385,7 @@ def test_credits_builder(browser, fake):
     ctx.close()
 
 # Each spreadsheet template's columns must appear in its tool's CSV export, in the same order.
-TEMPLATE_EXPORTS = [('stills-library', 'stills-caption-sheet-template.csv'), ('festival-strategy', 'festival-strategy-template.csv'), ('fair-use-log', 'fair-use-template.csv'), ('license-tracker', 'licenses-template.csv'), ('clearance-report', 'clearance-report-template.csv'), ('chain-of-title', 'chain-of-title-template.csv'), ('structure-board', 'structure-board-template.csv'), ('cut-tracker', 'cut-notes-template.csv'), ('budget-to-actuals', 'cost-report-template.csv'), ('footage-log', 'footage-log-template.csv'), ('paper-edit', 'paper-edit-template.csv'), ('press-list', 'press-list-template.csv'), ('partner-crm', 'partner-crm-template.csv'), ('camera-sound-reports', 'camera-and-sound-reports-template.csv'), ('interview-log', 'interview-moments-template.csv'), ('travel-sheet', 'travel-sheet-template.csv'), ('risk-plan', 'risk-assessment-template.csv'), ('security-checklist', 'security-checklist-template.csv'), ('gear-list', 'gear-list-template.csv'), ('coi-permit-tracker', 'certificates-and-permits-template.csv'), ('location-scout', 'location-scout-template.csv'), ('deal-memos', 'deal-memos-template.csv'), ('shooting-calendar', 'shooting-calendar-template.csv'), ('interview-prep', 'interview-questions-template.csv'), ('funder-crm', 'funder-crm-template.csv'), ('cash-flow', 'cash-flow-template.csv'), ('budget', 'budget-template.csv'), ('finance-plan', 'finance-plan-template.csv'), ('grant-calendar', 'grant-calendar-template.csv'), ('clearance-log', 'clearance-log-template.csv'), ('release-tracker', 'release-log-template.csv'),
+TEMPLATE_EXPORTS = [('qc-tracker', 'qc-issues-template.csv'), ('deliverables', 'deliverables-template.csv'), ('rights-matrix', 'rights-matrix-template.csv'), ('stills-library', 'stills-caption-sheet-template.csv'), ('festival-strategy', 'festival-strategy-template.csv'), ('fair-use-log', 'fair-use-template.csv'), ('license-tracker', 'licenses-template.csv'), ('clearance-report', 'clearance-report-template.csv'), ('chain-of-title', 'chain-of-title-template.csv'), ('structure-board', 'structure-board-template.csv'), ('cut-tracker', 'cut-notes-template.csv'), ('budget-to-actuals', 'cost-report-template.csv'), ('footage-log', 'footage-log-template.csv'), ('paper-edit', 'paper-edit-template.csv'), ('press-list', 'press-list-template.csv'), ('partner-crm', 'partner-crm-template.csv'), ('camera-sound-reports', 'camera-and-sound-reports-template.csv'), ('interview-log', 'interview-moments-template.csv'), ('travel-sheet', 'travel-sheet-template.csv'), ('risk-plan', 'risk-assessment-template.csv'), ('security-checklist', 'security-checklist-template.csv'), ('gear-list', 'gear-list-template.csv'), ('coi-permit-tracker', 'certificates-and-permits-template.csv'), ('location-scout', 'location-scout-template.csv'), ('deal-memos', 'deal-memos-template.csv'), ('shooting-calendar', 'shooting-calendar-template.csv'), ('interview-prep', 'interview-questions-template.csv'), ('funder-crm', 'funder-crm-template.csv'), ('cash-flow', 'cash-flow-template.csv'), ('budget', 'budget-template.csv'), ('finance-plan', 'finance-plan-template.csv'), ('grant-calendar', 'grant-calendar-template.csv'), ('clearance-log', 'clearance-log-template.csv'), ('release-tracker', 'release-log-template.csv'),
                     ('music-cue-sheet', 'music-cue-sheet-template.csv'), ('name-supers', 'name-supers-template.csv'),
                     ('subject-tracker', 'subject-tracker-template.csv'), ('research-log', 'research-log-template.csv'),
                     ('comps-tracker', 'comps-tracker-template.csv')]
@@ -2550,6 +2550,93 @@ def test_awards_social(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
+def test_rights_matrix(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'rights-matrix', fake)
+    open_sample(pg, fake)
+    pg.fill('#asOf', '2027-03-15'); pg.locator('#asOf').dispatch_event('change'); pg.wait_for_timeout(100)
+    us = pg.inner_text('#grid tbody tr:has-text("United States")')
+    check('Sold' in us and 'Riverside Streaming' in us and 'Available' in us, 'shows sold and available rights by territory and media')
+    check('On hold' in pg.inner_text('#grid tbody tr:has-text("Canada")') and pg.locator('.cell.c-clash').count() == 1, 'shows a right on hold, and marks the overlap')
+    check(pg.locator('#grid tbody tr').filter(has_text='Airline').count() == 0 and pg.locator('#grid tbody tr').count() == 10 and pg.locator('#grid .cell:has-text("Skyway")').count() == 10, 'a worldwide deal covers every territory')
+    check('Riverside Streaming (fictional) and Northbound Media (fictional)' in pg.inner_text('#clashes') and 'Riverside Streaming' in pg.inner_text('#reverts'), 'lists overlaps and rights reverting soon')
+    pg.click('#addBtn'); pg.fill('#f-licensee', 'Harbor Educational'); pg.check('#f-terr input[value="Canada"]'); pg.fill('#f-terrOther', 'Ireland')
+    pg.check('#f-media input[value="educational"]'); pg.select_option('#f-status', 'signed'); pg.fill('#f-start', '2027-01-01'); pg.fill('#f-end', '2026-01-01')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(100)
+    check(pg.is_visible('#editor'), 'a term that ends before it starts is refused')
+    pg.fill('#f-end', '2029-12-31'); pg.uncheck('#f-excl'); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check(pg.locator('#grid tbody tr:has-text("Ireland")').count() == 1 and 'Harbor Educational' in pg.inner_text('#grid tbody tr:has-text("Ireland")'), 'adds a deal and its territory to the grid')
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    check(rows[0] == ['Territory', 'Media', 'Status', 'Held by', 'Until', 'Overlap'] and len(rows) == 11 * 9 + 1 and ['United States', 'Subscription streaming', 'Sold'] == rows[5][:3] and rows[5][5] == 'Yes', 'CSV has a row for each territory and media')
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    check('Rights availability' in pg.inner_text('#report') and 'Harbor Educational' in pg.inner_text('#report'), 'prints the grid')
+    data = saved_project(pg, fake)
+    h = next(c for c in data['contracts'] if c.get('licensee') == 'Harbor Educational')
+    check(h['type'] == 'distribution' and h['territories'] == ['Canada', 'Ireland'] and h['mediaRights'] == ['educational'] and h['exclusive'] is False and h['status'] == 'signed', 'saves the deal')
+    check([c for c in data['contracts'] if c['id'] != h['id']] == original['contracts'], 'other contracts are unchanged')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+def test_deliverables(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'deliverables', fake)
+    open_sample(pg, fake)
+    check(pg.input_value('#deliverTo') == 'Riverside Streaming (fictional)' and 'Delivered' in pg.inner_text('[data-key="master"]') and 'Not needed' in pg.inner_text('[data-key="dcp"]'), 'shows who it is for and each status')
+    check('Latest QC report: failed' in pg.inner_text('[data-key="qc"]') and '1 approved still' in pg.inner_text('[data-key="stills"]') and 'Platform tile artwork' in pg.inner_text('#sections'), 'shows what the project has, and your own items')
+    pg.click('[data-edit="cue"]')
+    check('music cue sheet' in pg.inner_text('#fromNote') and pg.is_disabled('#f-section') and pg.is_hidden('#deleteBtn'), 'links a built-in item to its tool')
+    pg.select_option('#f-status', 'accepted'); pg.fill('#f-owner', 'Sam Okafor'); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    pg.click('#addBtn'); pg.fill('#f-title', 'Lab access letter'); pg.select_option('#f-section', 'legal'); pg.fill('#f-due', '2000-01-01'); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check('Lab access letter' in pg.inner_text('#late') and 'Overdue' in pg.inner_text('#sections'), 'adds an item and flags it overdue')
+    pg.click('[data-edit="deliverable-poster"]'); pg.click('#deleteBtn'); pg.wait_for_timeout(200)
+    check('Platform tile artwork' not in pg.inner_text('#sections'), 'deletes your own item')
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    check(rows[0][:3] == ['Section', 'Deliverable', 'Status'] and len(rows) == 25, 'CSV lists every item')
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    r = pg.inner_text('#report')
+    check('Deliverables' in r and 'Lab access letter' in r and 'Digital cinema package' not in r, 'prints the checklist without items not needed')
+    data = saved_project(pg, fake)
+    it = {x['key']: x for x in data['deliverables']['items']}
+    check(it['cue']['status'] == 'accepted' and it['cue']['owner'] == 'Sam Okafor' and 'deliverable-poster' not in it and any(x.get('title') == 'Lab access letter' and x['custom'] for x in it.values()), 'saves the checklist')
+    check(data['contracts'] == original['contracts'] and data['assets'] == original['assets'], 'other data is unchanged')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+def test_qc_tracker(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'qc-tracker', fake)
+    open_sample(pg, fake)
+    rows = pg.locator('#rows .row').all_inner_texts()
+    check(len(rows) == 4 and rows[0].startswith('00:58:02:15') and 'Fixed in v2 master' in pg.inner_text('[data-id="qc-1"]'), 'lists issues in timecode order with the version they were fixed in')
+    check('2 open issues' in pg.inner_text('#count'), 'counts open and disputed issues')
+    pg.select_option('#ownerSel', 'mixer')
+    check(pg.inner_text('#fixSum li >> nth=0').endswith('1'), 'filters the fix list by who fixes it')
+    pg.click('[data-edit="qc-2"]'); pg.select_option('#f-fixedIn', 'master-v2'); pg.select_option('#f-fix', 'fixed'); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    pg.fill('#v-name', 'v3 master'); pg.fill('#v-date', '2026-11-10'); pg.click('#versionBtn'); pg.wait_for_timeout(100)
+    pg.click('#reportBtn'); pg.select_option('#r-version', label='v3 master'); pg.fill('#r-vendor', 'Clearframe QC'); pg.select_option('#r-result', 'fail'); pg.click('#reportSubmit'); pg.wait_for_timeout(200)
+    check(pg.locator('#rows .row').count() == 0 and 'v3 master' in pg.inner_text('#reportSel'), 'adds a report for a new version')
+    pg.click('#addBtn'); pg.fill('#f-tc', '1:2'); pg.fill('#f-desc', 'Hit in the left surround'); pg.click('#editorSubmit'); pg.wait_for_timeout(100)
+    check(pg.is_visible('#editor'), 'a timecode in the wrong form is refused')
+    pg.fill('#f-tc', '01:30:00:10'); pg.select_option('#f-sev', 'major'); pg.select_option('#f-area', 'sound'); pg.select_option('#f-owner', 'mixer'); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    r = pg.inner_text('#report')
+    check('QC fix list: Mixer' in r and 'Hit in the left surround' in r and 'Dialogue peaks' not in r and 'Dead pixel' not in r, 'prints the open fixes for one person')
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    check(rows[0][:4] == ['Report', 'Version', 'Result', 'Timecode'] and len(rows) == 6, 'CSV lists every issue')
+    data = saved_project(pg, fake)
+    q = data['qc']
+    new = q['reports'][-1]
+    check(len(q['versions']) == 3 and new['issues'][0]['tc'] == '01:30:00:10' and new['versionId'] == q['versions'][2]['id'] and q['reports'][0]['issues'][1]['fix'] == 'fixed', 'saves versions, reports and fixes')
+    check(data['assets'] == original['assets'], 'other data is unchanged')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
 def test_template_columns(browser, fake):
     for name, template in TEMPLATE_EXPORTS:
         ctx, pg, errs = new_page(browser, name, fake)
@@ -2677,6 +2764,12 @@ def main():
         test_stills_library(browser, fake)
         print('== awards-social / awards, posts, suggestions and the calendar file')
         test_awards_social(browser, fake)
+        print('== rights-matrix / the grid, overlaps and reverting rights')
+        test_rights_matrix(browser, fake)
+        print('== deliverables / the list, the project and the checklist')
+        test_deliverables(browser, fake)
+        print('== qc-tracker / reports, issues, versions and the fix list')
+        test_qc_tracker(browser, fake)
         print('== templates / columns match the tools\' exports')
         test_template_columns(browser, fake)
         browser.close()
