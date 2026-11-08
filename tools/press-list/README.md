@@ -36,6 +36,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **Keeps the people at each outlet by beat,** with email and phone. Pick a beat above the list to see only the outlets with someone on it.
 - **Logs screeners sent** with the date, who got it and the link.
 - **Tracks screening RSVPs** for each person: invited, coming, declined or attended. Screenings are shared with the [partner CRM](../partner-crm/), and you can add one right in the outlet.
+- **Edits and removes screenings** from the Screenings list in the side panel. Before removing one, it says which partners link to it and how many press RSVPs name it, and removes those links with it. Changes show in the partner CRM too.
 - **Logs coverage** with the date, kind (review, article, interview or mention), headline and link. Only web links are made clickable.
 - **Shows where each outlet stands:** not yet sent a screener, screener sent, coming to a screening, or covered the film. Filter by that, and search names, people, beats and headlines.
 - **Exports CSV and prints** one row per outlet. Also exports project data: project details, people, locations, third-party elements, contracts, assets, music cue sheet details, call sheets or screenings as separate CSV files.
@@ -63,7 +64,6 @@ It also adds screenings to a shared `screenings` list, each with an `id` and opt
 
 ## Not yet
 
-- Editing or removing a screening once it's added (for now, edit the project file)
 - Reminders for follow-ups with journalists
 - Importing contacts from an address book
 - Pulling in the press notes and stills from the [EPK and press notes builder](../press-notes/)
