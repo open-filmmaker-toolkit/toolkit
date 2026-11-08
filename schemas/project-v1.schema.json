@@ -418,6 +418,114 @@
         }
       },
       "additionalProperties": true
+    },
+    "awards": {
+      "type": "array",
+      "description": "Awards campaigns, kept by the awards and social calendars.",
+      "items": {
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/id"
+          },
+          "name": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "rules": {
+            "type": "string",
+            "description": "Eligibility rules, as the award states them."
+          },
+          "windowStart": {
+            "type": "string",
+            "format": "date"
+          },
+          "windowEnd": {
+            "type": "string",
+            "format": "date"
+          },
+          "deadline": {
+            "type": "string",
+            "format": "date"
+          },
+          "fee": {
+            "type": "number",
+            "minimum": 0
+          },
+          "status": {
+            "enum": [
+              "considering",
+              "entered",
+              "shortlisted",
+              "nominated",
+              "won",
+              "not-selected"
+            ]
+          },
+          "votingStart": {
+            "type": "string",
+            "format": "date"
+          },
+          "nominationsDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "ceremonyDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "notes": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "socialPosts": {
+      "type": "array",
+      "description": "Planned social posts, kept by the awards and social calendars.",
+      "items": {
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/id"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "platform": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "idea",
+              "draft",
+              "scheduled",
+              "posted"
+            ]
+          },
+          "text": {
+            "type": "string"
+          },
+          "link": {
+            "type": "string"
+          },
+          "eventKey": {
+            "type": "string",
+            "description": "The festival or release moment a suggested post was made for, such as festival:<id>:week."
+          }
+        },
+        "additionalProperties": true
+      }
     }
   },
   "additionalProperties": true,
@@ -1102,7 +1210,7 @@
             "$ref": "#/$defs/id"
           },
           "uniqueItems": true,
-          "description": "Footage log clips: who's in it."
+          "description": "Who is in it: people in a footage log clip or pictured in a still."
         },
         "locationIds": {
           "type": "array",
@@ -1147,6 +1255,18 @@
         "photoCredit": {
           "type": "string",
           "description": "Stills: who took the photo, for the credit line."
+        },
+        "approval": {
+          "enum": [
+            "pending",
+            "approved",
+            "rejected"
+          ],
+          "description": "Stills library: whether the still is approved for publicity."
+        },
+        "approvedBy": {
+          "type": "string",
+          "description": "Stills library: who approved it."
         }
       },
       "additionalProperties": true
