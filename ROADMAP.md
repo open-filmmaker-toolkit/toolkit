@@ -44,7 +44,6 @@ Three tools on one data model. This is the documentary-specific gap.
 
 - [x] Call sheet built from the project's people and locations ([#21](https://github.com/open-filmmaker-toolkit/toolkit/issues/21)), first version with optional online weather lookup
 - [x] Plain template version ([#22](https://github.com/open-filmmaker-toolkit/toolkit/issues/22)): spreadsheet export and a blank [template](templates/call-sheet-template.csv). Printing to PDF works from the browser's print dialog
-- [ ] Import an Analyze Video report (timestamps and frames) into a project's footage log or research notes. This lives in the [Analyze-Video-Skill repo](https://github.com/evillollive/Analyze-Video-Skill) ([tracked there](https://github.com/evillollive/Analyze-Video-Skill/issues/22)), not here: it writes a project file the toolkit tools already read
 
 ## Milestone 5: The hub
 
@@ -57,8 +56,73 @@ The home page becomes a place to work, not just a list. Each step gets an issue 
 - [x] One calendar file for every date in the project, from the dashboard and from each tool with dates ([#149](https://github.com/open-filmmaker-toolkit/toolkit/issues/149))
 - [x] Import a filled-in spreadsheet template into the tool it matches, with columns matched by name, problems shown row by row, and nothing already there changed ([#150](https://github.com/open-filmmaker-toolkit/toolkit/issues/150))
 - [x] Read-only summaries of chosen parts of the project to share, leaving out contact details, notes and fees unless you include them ([#152](https://github.com/open-filmmaker-toolkit/toolkit/issues/152))
-- [ ] Install the hub as an app for offline use
+- [ ] Install the hub as an app for offline use ([#205](https://github.com/open-filmmaker-toolkit/toolkit/issues/205))
 
+## Milestone 6: Planned
+
+Each item has [its own issue](https://github.com/open-filmmaker-toolkit/toolkit/milestone/8). None of it is built yet.
+
+### Scripted productions
+
+- [ ] Script breakdown: scenes, cast, locations, props and other elements read from a Fountain script, ready for the schedule and the call sheet ([#167](https://github.com/open-filmmaker-toolkit/toolkit/issues/167))
+- [ ] Stripboard: scenes from the breakdown arranged into shoot days, with page counts and company moves ([#168](https://github.com/open-filmmaker-toolkit/toolkit/issues/168))
+- [ ] Day-out-of-days: each cast member's start, work, hold and finish days from the schedule ([#169](https://github.com/open-filmmaker-toolkit/toolkit/issues/169))
+- [ ] Sides: the day's scenes from the script, printed small for cast and crew ([#170](https://github.com/open-filmmaker-toolkit/toolkit/issues/170))
+- [ ] Shot list and storyboard for each scene, with your own frames kept in the project file ([#171](https://github.com/open-filmmaker-toolkit/toolkit/issues/171))
+- [ ] Scene and take numbers on the call sheet, daily production report and camera and sound reports ([#172](https://github.com/open-filmmaker-toolkit/toolkit/issues/172))
+
+### Tools that share their work
+
+- [ ] Rental costs from the gear list, per diems and travel from the travel sheet, and permit fees go into the budget ([#173](https://github.com/open-filmmaker-toolkit/toolkit/issues/173))
+- [ ] Actual spending from the expense log against the plan in cash flow ([#174](https://github.com/open-filmmaker-toolkit/toolkit/issues/174))
+- [ ] Committed costs, such as signed deal memos and purchase orders, separate from what's spent, in budget-to-actuals ([#175](https://github.com/open-filmmaker-toolkit/toolkit/issues/175))
+- [ ] Release status shown in the clearance log and call sheet, and the clearance log linked to the release tracker's people and locations ([#176](https://github.com/open-filmmaker-toolkit/toolkit/issues/176))
+- [ ] The interview log's favorite moments as bites in the paper edit, and moments linked to clips in the camera reports ([#177](https://github.com/open-filmmaker-toolkit/toolkit/issues/177))
+- [ ] QC issues linked to the cut in the cut version tracker ([#178](https://github.com/open-filmmaker-toolkit/toolkit/issues/178))
+- [ ] Investors and broadcasters in the finance plan linked to their organizations in the funder CRM ([#179](https://github.com/open-filmmaker-toolkit/toolkit/issues/179))
+- [ ] Smaller links between tools, from the risk plan and travel sheet to bookings and screenings ([#180](https://github.com/open-filmmaker-toolkit/toolkit/issues/180))
+
+### Fixes
+
+- [ ] Edit or remove a screening once it's added, in the partner CRM and press list ([#181](https://github.com/open-filmmaker-toolkit/toolkit/issues/181))
+
+### Money
+
+- [ ] Currencies other than the project currency in the revenue tracker ([#182](https://github.com/open-filmmaker-toolkit/toolkit/issues/182))
+- [ ] Cost reports by period in budget-to-actuals, and comparing two cost reports or two final cost reports ([#183](https://github.com/open-filmmaker-toolkit/toolkit/issues/183))
+- [ ] Globals in the budget, such as a shoot length every line can refer to ([#184](https://github.com/open-filmmaker-toolkit/toolkit/issues/184))
+- [ ] Uneven cost spreads, such as a deposit and a final payment, and one-off items in cash flow ([#185](https://github.com/open-filmmaker-toolkit/toolkit/issues/185))
+- [ ] Cross-collateralization between territories and compound interest in the waterfall ([#186](https://github.com/open-filmmaker-toolkit/toolkit/issues/186))
+- [ ] Most-favored-nations terms across licenses in the license tracker ([#187](https://github.com/open-filmmaker-toolkit/toolkit/issues/187))
+- [ ] Union rates and rules, overtime, meal penalties and turnaround, timecards, and deal memos for cast and contributors ([#188](https://github.com/open-filmmaker-toolkit/toolkit/issues/188))
+
+### Imports
+
+- [ ] Expenses from a bank or card statement into the expense log ([#189](https://github.com/open-filmmaker-toolkit/toolkit/issues/189))
+- [ ] Contacts from an address book (vCard) into the funder CRM, partner CRM, press list and subject tracker ([#190](https://github.com/open-filmmaker-toolkit/toolkit/issues/190))
+- [ ] Festivals from a submission platform's export, and grants from a funder database's export ([#191](https://github.com/open-filmmaker-toolkit/toolkit/issues/191))
+- [ ] QC reports from a QC house's file into the QC tracker, and hash manifests into the archive log ([#192](https://github.com/open-filmmaker-toolkit/toolkit/issues/192))
+- [ ] A budget from another budgeting program's own file ([#193](https://github.com/open-filmmaker-toolkit/toolkit/issues/193))
+
+### Exports
+
+- [ ] An Avid ALE from the footage log, FCPXML and AAF from the paper edit with drop-frame timecode, and QC markers for an editing app ([#194](https://github.com/open-filmmaker-toolkit/toolkit/issues/194))
+- [ ] Exports for titling tools and crawl services from name supers and the credits builder ([#195](https://github.com/open-filmmaker-toolkit/toolkit/issues/195))
+- [ ] The pitch deck as PowerPoint or Keynote, and the call sheet and treatment as Word documents ([#196](https://github.com/open-filmmaker-toolkit/toolkit/issues/196))
+- [ ] Electronic cue sheet formats for performing rights organizations, series and episodes, and splitting a cue sheet by reel ([#197](https://github.com/open-filmmaker-toolkit/toolkit/issues/197))
+
+### Versions and views
+
+- [ ] Several versions to compare in the treatment, structure board, theory of change, narrative library and impact report, and more than one delivery at a time ([#198](https://github.com/open-filmmaker-toolkit/toolkit/issues/198))
+- [ ] Month grids in the awards and social calendars and in the festival strategy map ([#199](https://github.com/open-filmmaker-toolkit/toolkit/issues/199))
+- [ ] Charts in the impact report, and comps side by side with charts in the comps tracker ([#200](https://github.com/open-filmmaker-toolkit/toolkit/issues/200))
+
+### Trust and polish
+
+- [ ] Translations of the tools, starting with Spanish and French ([#201](https://github.com/open-filmmaker-toolkit/toolkit/issues/201))
+- [ ] A guided first run on the home page that points you to the tools you'll need first ([#202](https://github.com/open-filmmaker-toolkit/toolkit/issues/202))
+- [ ] Versioned project files with automatic backups ([#203](https://github.com/open-filmmaker-toolkit/toolkit/issues/203))
+- [ ] Test by hand with VoiceOver and NVDA, and in Firefox and Safari ([#204](https://github.com/open-filmmaker-toolkit/toolkit/issues/204))
 ## Backlog
 
 Every tool in [TOOLS.md](TOOLS.md), built in the order contributors asked for. Each had its own issue in the [Backlog milestone](https://github.com/open-filmmaker-toolkit/toolkit/milestone/6). New requests go there too.
