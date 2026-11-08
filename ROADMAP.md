@@ -55,7 +55,7 @@ The home page becomes a place to work, not just a list. Each step gets an issue 
 
 ## Backlog
 
-Everything else in [TOOLS.md](TOOLS.md), prioritized by what contributors ask for. Each planned tool has its own issue in the [Backlog milestone](https://github.com/open-filmmaker-toolkit/toolkit/milestone/6).
+Every tool in [TOOLS.md](TOOLS.md), built in the order contributors asked for. Each had its own issue in the [Backlog milestone](https://github.com/open-filmmaker-toolkit/toolkit/milestone/6). New requests go there too.
 
 - [x] Subject tracker: possible subjects, access status, follow-ups and a contact log, added to the project when they agree ([#41](https://github.com/open-filmmaker-toolkit/toolkit/issues/41))
 - [x] Research and archival log: archival leads tracked to ready to license and sent to the clearance log, plus research sources ([#42](https://github.com/open-filmmaker-toolkit/toolkit/issues/42))

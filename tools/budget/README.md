@@ -60,7 +60,6 @@ A `budget` record with `accounts` (each with `id`, `code`, `name`, `section` and
 - Globals, such as a shoot length every line can refer to
 - Several fringes on one line, or fringes with a cap
 - Importing a budget from another budgeting program or a spreadsheet
-- Actual costs against the budget (planned as the budget-to-actuals tool)
 
 ## License
 

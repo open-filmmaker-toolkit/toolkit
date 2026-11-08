@@ -56,7 +56,6 @@ Everything else in the file is preserved, including fields this tool doesn't rec
 
 ## Not yet
 
-- A festival strategy map, to plan which festivals to target and in what order ([#77](https://github.com/open-filmmaker-toolkit/toolkit/issues/77), planned)
 - Reminders inside the tool, or a calendar file of deadlines and screenings
 - Importing festivals from a spreadsheet or a submission platform
 - Tracking laurels, screening fees or travel for each festival

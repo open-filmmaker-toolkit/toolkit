@@ -59,7 +59,6 @@ Which answers went to which grant is kept on the answers, in the library's `narr
 ## Not yet
 
 - Reminders inside the tool, beyond the calendar file
-- Reports and other deliverables owed to funders after an award
 - Importing grants from a spreadsheet or a funder database
 - A shared list of funders and their usual deadlines
 

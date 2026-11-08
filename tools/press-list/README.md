@@ -61,7 +61,7 @@ It also adds screenings to a shared `screenings` list, each with an `id` and opt
 - Editing or removing a screening once it's added (for now, edit the project file)
 - Reminders for follow-ups with journalists
 - Importing contacts from a spreadsheet or an address book
-- Pulling in the press notes and stills from the EPK builder
+- Pulling in the press notes and stills from the [EPK and press notes builder](../press-notes/)
 
 ## License
 

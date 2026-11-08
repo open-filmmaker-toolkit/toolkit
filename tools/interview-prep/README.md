@@ -55,7 +55,6 @@ An `interviews` list. Each interview has an `id` and a `status` (`planned` or `d
 ## Not yet
 
 - Follow-up questions nested under a question
-- Timecodes for answers, once the footage is in (planned as the transcript and selects tools)
 - A question bank shared across interviews
 
 ## License

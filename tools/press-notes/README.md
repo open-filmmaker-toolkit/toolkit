@@ -35,7 +35,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **Sections in the usual order,** each marked written, from the project, not done yet or left out.
 - **From the project:** the logline and synopses start from the [treatment](../treatment-builder/), credits come from the [credits builder](../credits-builder/), and festivals marked accepted in the [festival submission tracker](../festival-submissions/) are listed with their screenings.
 - **Bios are saved with each person,** so other tools can use them. Pick who to include, in order.
-- **Stills** are resized and kept in the project file, with a caption and photo credit. The first is used on the title page.
+- **Stills** from the [stills library](../stills-library/), or added from your computer, resized and kept in the project file, with a caption and photo credit. The first is used on the title page. Taking a still out of the press notes leaves it in the stills library.
 - **Press contacts** with role, company, email and phone.
 - **Prints** a title page, then each section, with the stills two to a page. Also exports project data as separate CSV files.
 
@@ -55,7 +55,6 @@ Bios are saved as `bio` on `people`. Stills are `assets` with `type` "still", th
 
 - A downloadable EPK folder with the stills at full size
 - Q&A and press quotes sections
-- Picking stills from the stills library
 
 ## License
 
