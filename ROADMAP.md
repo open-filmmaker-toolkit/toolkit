@@ -64,7 +64,7 @@ Each item has [its own issue](https://github.com/open-filmmaker-toolkit/toolkit/
 
 ### Scripted productions
 
-- [ ] Script breakdown: scenes, cast, locations, props and other elements read from a Fountain script, ready for the schedule and the call sheet ([#167](https://github.com/open-filmmaker-toolkit/toolkit/issues/167))
+- [x] Script breakdown: scenes, cast, locations, props and other elements read from a Fountain script, ready for the schedule and the call sheet ([#167](https://github.com/open-filmmaker-toolkit/toolkit/issues/167))
 - [ ] Stripboard: scenes from the breakdown arranged into shoot days, with page counts and company moves ([#168](https://github.com/open-filmmaker-toolkit/toolkit/issues/168))
 - [ ] Day-out-of-days: each cast member's start, work, hold and finish days from the schedule ([#169](https://github.com/open-filmmaker-toolkit/toolkit/issues/169))
 - [ ] Sides: the day's scenes from the script, printed small for cast and crew ([#170](https://github.com/open-filmmaker-toolkit/toolkit/issues/170))

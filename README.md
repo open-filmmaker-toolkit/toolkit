@@ -81,6 +81,7 @@ The toolkit has two halves:
 | [Funder CRM](tools/funder-crm/) | Funding | Track funder contacts and next steps. |
 | [Budget](tools/budget/) | Pre-production | Build a budget from detail lines up to a top sheet. |
 | [Cash flow](tools/cash-flow/) | Pre-production | See when money comes and goes, and when you'll run short. |
+| [Script breakdown](tools/script-breakdown/) | Pre-production | Break down a script into scenes, cast and props. |
 | [Shooting calendar](tools/shooting-calendar/) | Pre-production | Schedule shoot days, travel and holds. |
 | [Interview prep](tools/interview-prep/) | Pre-production | Prepare research and questions for each interview. |
 | [Location scout sheet](tools/location-scout/) | Pre-production | Record scouts with photos for the crew. |
@@ -132,7 +133,7 @@ The toolkit has two halves:
 | [Grant final reports](tools/grant-reports/) | Close-out and archive | Write each grant's final report before it's due. |
 | [Contract and release archive](tools/contract-archive/) | Close-out and archive | Index every signed contract and release for the long term. |
 
-All 62 are first versions: they work, and they're still changing. To ask for another tool, use the [request form](https://github.com/open-filmmaker-toolkit/toolkit/issues/new?template=request-a-tool.yml).
+All 63 are first versions: they work, and they're still changing. To ask for another tool, use the [request form](https://github.com/open-filmmaker-toolkit/toolkit/issues/new?template=request-a-tool.yml).
 
 ## How our tools work
 
