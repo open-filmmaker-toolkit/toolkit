@@ -1,6 +1,6 @@
 # Tools
 
-The tools we build, by production phase. Each one is a single page that runs in your browser on the shared project file, with nothing to install and nothing sent anywhere. 59 are ready to use and 3 are planned.
+The tools we build, by production phase. Each one is a single page that runs in your browser on the shared project file, with nothing to install and nothing sent anywhere. 62 are ready to use.
 
 - **Ready to use:** linked tools. Each has a README with what it does.
 - **Planned:** each has an issue. Comment there if you need the tool or want to help build it. Order of work is in [ROADMAP.md](ROADMAP.md).
@@ -115,7 +115,7 @@ Looking for other free, open-source software for filmmaking, such as editing, so
 
 | Tool | Use it for | Status |
 | --- | --- | --- |
-| Final cost report | Close out the budget with final costs, for funders and your records. | Planned, [#94](https://github.com/open-filmmaker-toolkit/toolkit/issues/94) |
-| Grant final reports | Write the final report for each grant: narrative, budget, outcomes and deliverables, before it's due. | Planned, [#95](https://github.com/open-filmmaker-toolkit/toolkit/issues/95) |
+| [Final cost report](tools/final-cost-report/) | Close out the budget with final costs. | First version |
+| [Grant final reports](tools/grant-reports/) | Write each grant's final report before it's due. | First version |
 | [Archive log](tools/archive-log/) | Track where each copy of your project lives. | First version |
-| Contract and release archive | Gather every signed contract and release into one indexed archive for the long term. | Planned, [#97](https://github.com/open-filmmaker-toolkit/toolkit/issues/97) |
+| [Contract and release archive](tools/contract-archive/) | Index every signed contract and release for the long term. | First version |

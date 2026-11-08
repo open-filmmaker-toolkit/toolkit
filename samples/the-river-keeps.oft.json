@@ -4968,5 +4968,27 @@
         "permission": true
       }
     ]
+  },
+  "finalCostReport": {
+    "closeDate": "2026-10-31",
+    "notes": {
+      "account-2100": "The drone day ran over by one setup."
+    }
+  },
+  "grantReports": [
+    {
+      "id": "grant-report-county-heritage",
+      "grantId": "grant-county-heritage",
+      "dueDate": "2026-12-15",
+      "status": "drafting",
+      "narrative": "With the County Heritage grant we digitized the Riverside County Historical Society flood footage and filmed two interviews.",
+      "deliverables": "Digitize the 1965 flood footage\nA community screening in Riverside County"
+    }
+  ],
+  "contractArchive": {
+    "location": "Two drives and the Lowwater Films office safe (fictional)",
+    "notes": {
+      "contract-hammond-appearance": "Original in the office safe"
+    }
   }
 }

@@ -1303,6 +1303,100 @@
         }
       },
       "additionalProperties": true
+    },
+    "finalCostReport": {
+      "type": "object",
+      "description": "The final cost report, kept by the final cost report tool: the date costs run to, whether it is final, and variance notes.",
+      "properties": {
+        "closeDate": {
+          "type": "string",
+          "format": "date"
+        },
+        "status": {
+          "enum": [
+            "final"
+          ]
+        },
+        "notes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Variance notes by account id, markup:<id>, a funder category id, or a section id."
+        }
+      },
+      "additionalProperties": true
+    },
+    "grantReports": {
+      "type": "array",
+      "description": "Final reports for awarded grants, kept by the grant final reports tool.",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "grantId"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/id"
+          },
+          "grantId": {
+            "$ref": "#/$defs/id"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "status": {
+            "enum": [
+              "drafting",
+              "submitted"
+            ]
+          },
+          "submittedDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "narrative": {
+            "type": "string"
+          },
+          "outcomes": {
+            "type": "string"
+          },
+          "deliverables": {
+            "type": "string",
+            "description": "What was promised, one per line."
+          },
+          "budgetFormatId": {
+            "type": "string",
+            "description": "A budget format id, or \"account\" or \"top\". When unset, the format for this grant, or the top sheet."
+          },
+          "includeImpact": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "contractArchive": {
+      "type": "object",
+      "description": "The contract and release archive: where it is kept, when it was checked, and notes by contract id.",
+      "properties": {
+        "location": {
+          "type": "string"
+        },
+        "checkedDate": {
+          "type": "string",
+          "format": "date"
+        },
+        "notes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": true
     }
   },
   "additionalProperties": true,

@@ -1,0 +1,871 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Final cost report · Open Filmmaker Toolkit</title>
+<meta name="description" content="Close out the budget with final costs for funders and your records: budget against final cost by account, line, top sheet or a funder's own categories, variance notes, print and CSV. Starts from budget-to-actuals. Runs in your browser; your data stays on your computer.">
+<style>
+:root {
+  --paper: #f1f3f2; --sheet: #ffffff; --ink: #1a2130; --ink-2: #4b556a; --ink-3: #6d778a;
+  --rule: #d4dad8; --rule-soft: #e6eae8; --hover: #f6f8f7; --focus: #2f6fdb;
+  --good: #2b7a57; --good-bg: #dff1e8; --warn: #8a5a00; --warn-bg: #fbf0d9; --bad: #b3392d; --bad-bg: #f8e1de;
+  --screen: #050506; --screen-ink: #f4f1ea; --screen-dim: #a7a29a;
+  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #141922; --sheet: #1b212b; --ink: #e6e9ee; --ink-2: #a6afbd; --ink-3: #8790a0;
+    --rule: #2f3744; --rule-soft: #262d38; --hover: #212834; --focus: #7aa7ff;
+    --good: #4fb386; --good-bg: #1a3329; --warn: #e2a531; --warn-bg: #3a2f17; --bad: #e26657; --bad-bg: #3b2220;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans); }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+[hidden] { display: none !important; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.foot { margin-top: 28px; font-size: 13px; color: var(--ink-3); }
+.cant-run { display: none; max-width: 640px; margin: 64px auto; padding: 0 24px; }
+.cant-run h1 { margin: 0 0 8px; font: 600 26px/1.2 var(--serif); }
+.cant-run p { margin: 0 0 10px; color: var(--ink-2); }
+.no-js .cant-run { display: block; }
+.no-js .page { display: none; }
+.page { max-width: 1240px; margin: 0 auto; padding: 0 24px 48px; }
+
+.masthead { display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: flex-end; justify-content: space-between; padding: 28px 0 20px; }
+.tool-name { margin: 0 0 2px; font-size: 14px; font-weight: 600; color: var(--ink-2); }
+.film-title { margin: 0; font: 600 32px/1.15 var(--serif); letter-spacing: -0.01em; overflow-wrap: anywhere; cursor: pointer; }
+.film-title.is-empty { color: var(--ink-3); font-style: italic; font-weight: 400; }
+.film-meta { margin: 4px 0 0; color: var(--ink-2); font-size: 14px; }
+.file { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.file-state { margin: 0; font-size: 13px; color: var(--ink-2); text-align: right; }
+.file-state .dirty { color: var(--warn); font-weight: 600; }
+.file-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; }
+.btn:hover { border-color: var(--ink-3); }
+.btn.primary { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.btn.primary:hover { opacity: 0.88; }
+.btn.danger { color: var(--bad); }
+.btn.small { padding: 4px 10px; font-size: 13px; }
+.link-btn { padding: 0; border: 0; background: none; cursor: pointer; color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; font-size: 14px; }
+.link-btn:hover { color: var(--ink); }
+
+.banner { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 0 0 16px; padding: 12px 16px; border-radius: 8px; background: var(--warn-bg); border: 1px solid color-mix(in srgb, var(--warn) 40%, transparent); }
+.banner p { margin: 0; flex: 1 1 280px; }
+.banner .actions { display: flex; gap: 8px; }
+
+.workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr); gap: 24px; align-items: start; }
+.col { display: grid; gap: 18px; min-width: 0; }
+.card { background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 18px; min-width: 0; }
+.card-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; margin: 0 0 6px; }
+.card-head h2 { margin: 0; font: 600 18px/1.3 var(--serif); }
+.card-head .count { font-size: 13px; color: var(--ink-2); }
+.card-head .spacer { flex: 1; }
+.card p.lead { margin: 0 0 8px; font-size: 14px; color: var(--ink-2); }
+
+/* Side cards */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 2px; padding: 0; list-style: none; }
+.chip { display: inline-flex; border: 1px solid var(--rule); border-radius: 999px; overflow: hidden; background: var(--paper); }
+.chip button { padding: 4px 10px; border: 0; background: none; cursor: pointer; font-size: 13px; font-weight: 600; }
+.chip button:hover { background: var(--hover); }
+.chip .sub { font-weight: 400; color: var(--ink-3); margin-left: 4px; }
+.empty-line { margin: 4px 0; color: var(--ink-2); font-size: 14px; }
+.changes { margin: 0; padding-left: 18px; font-size: 14px; }
+.changes li + li { margin-top: 2px; }
+
+/* The supers list */
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 10px; }
+.toolbar h2 { margin: 0 8px 0 0; font: 600 20px/1.2 var(--serif); }
+.toolbar .count { font-size: 13px; color: var(--ink-2); }
+.toolbar .spacer { flex: 1; }
+.rows { list-style: none; margin: 0; padding: 0; background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; }
+.row { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 2px 14px; align-items: start; padding: 10px 14px; }
+.row + .row { border-top: 1px solid var(--rule-soft); }
+.row:hover { background: var(--hover); }
+.row.is-selected { background: var(--hover); box-shadow: inset 3px 0 0 var(--ink); }
+.row .tc { font-variant-numeric: tabular-nums; font-size: 14px; color: var(--ink-2); padding-top: 1px; }
+.row .what { min-width: 0; padding: 0; border: 0; background: none; text-align: left; cursor: pointer; overflow-wrap: anywhere; }
+.row .what:hover .nm { text-decoration: underline; text-underline-offset: 2px; }
+.row .nm { display: block; font-weight: 600; }
+.row .tt { display: block; font-size: 14px; color: var(--ink-2); }
+.flags { grid-column: 2; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.flag { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 999px; font-size: 12.5px; font-weight: 600; }
+.flag.new { background: var(--good-bg); color: var(--good); }
+.flag.changed { background: var(--warn-bg); color: var(--warn); }
+.flag.problem { background: var(--bad-bg); color: var(--bad); }
+.flag.linked { background: var(--paper); color: var(--ink-3); font-weight: 500; border: 1px solid var(--rule); }
+.flag button { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+
+.empty { padding: 36px 24px; text-align: center; background: var(--sheet); border: 1px dashed var(--rule); border-radius: 8px; }
+.empty h2 { margin: 0 0 6px; font: 600 20px/1.3 var(--serif); }
+.empty p { margin: 0 auto 16px; max-width: 52ch; color: var(--ink-2); }
+.empty .actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+
+
+.workspace > * { min-width: 0; }
+.side { position: sticky; top: 16px; display: grid; gap: 18px; }
+.row .rt { font-size: 13px; color: var(--ink-2); font-variant-numeric: tabular-nums; padding-top: 2px; }
+.row .st { font-size: 13px; font-weight: 600; white-space: nowrap; padding-top: 2px; text-align: right; }
+.row .st .sub { display: block; font-weight: 400; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.st-good { color: var(--good); }
+.st-warn { color: var(--warn); }
+.st-bad { color: var(--bad); }
+.st-quiet { color: var(--ink-3); }
+.flags { grid-column: 2 / -1; }
+.todo { list-style: none; margin: 4px 0 0; padding: 0; }
+.todo li { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 6px 0; font-size: 14px; }
+.todo li + li { border-top: 1px solid var(--rule-soft); }
+.todo .sub { display: block; color: var(--ink-3); font-size: 13px; }
+.todo .num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.totals { margin: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; font-size: 14px; }
+.totals dt { color: var(--ink-2); }
+.totals dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+.totals .sum { font-weight: 700; color: var(--ink); border-top: 1px solid var(--rule); padding-top: 4px; }
+.chkline { display: flex; gap: 8px; align-items: center; font-size: 14px; }
+.sub-h { margin: 6px 0 8px; font-size: 17px; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.three { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.checks { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 4px 12px; margin: 4px 0 0; }
+.checks label { display: flex; gap: 6px; align-items: baseline; font-size: 14px; font-weight: 400; }
+.tabs { display: flex; gap: 4px; flex-wrap: wrap; margin: 0 0 10px; }
+.tabs button { padding: 6px 12px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); color: var(--ink-2); font: inherit; font-size: 14px; cursor: pointer; }
+.tabs button[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+@media (max-width: 720px) {
+  .two, .three { grid-template-columns: 1fr; }
+  .row { grid-template-columns: minmax(0, 1fr) auto; }
+  .row .rt { grid-column: 1 / -1; }
+  .flags { grid-column: 1 / -1; }
+}
+
+.picker { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; margin: 0 0 12px; }
+.picker .field { margin: 0; min-width: 200px; }
+.gridwrap { overflow-x: auto; border: 1px solid var(--rule); border-radius: 8px; background: var(--sheet); }
+table.fc { width: 100%; border-collapse: collapse; font-size: 14px; }
+.fc th, .fc td { padding: 6px 8px; border-bottom: 1px solid var(--rule-soft); text-align: left; vertical-align: top; }
+.fc thead th { font-size: 12.5px; color: var(--ink-3); }
+.fc .n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.fc .over { color: var(--bad); }
+.fc .under { color: var(--good); }
+.fc tr.sec td { font-weight: 700; background: var(--hover); }
+.fc tfoot td { font-weight: 700; border-top: 2px solid var(--ink); }
+.fc .note { display: block; font-size: 12.5px; color: var(--ink-3); }
+.fc button.lnk { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 3px; }
+
+dialog { border: 0; padding: 0; color: var(--ink); background: var(--sheet); box-shadow: 0 10px 40px rgba(10, 14, 22, 0.25); }
+dialog::backdrop { background: rgba(16, 20, 28, 0.42); }
+dialog.drawer { margin: 0 0 0 auto; width: min(600px, 100vw); height: 100dvh; max-height: 100dvh; max-width: 100vw; border-left: 1px solid var(--rule); }
+dialog.modal { width: min(560px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); border-radius: 10px; }
+dialog form { display: flex; flex-direction: column; height: 100%; max-height: inherit; }
+.dlg-head { padding: 20px 24px 12px; border-bottom: 1px solid var(--rule-soft); }
+.dlg-head h2 { margin: 0; font: 600 22px/1.25 var(--serif); }
+.dlg-body { flex: 1; overflow-y: auto; padding: 16px 24px 24px; display: grid; gap: 14px; align-content: start; }
+.dlg-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 14px 24px; border-top: 1px solid var(--rule-soft); }
+.dlg-foot .spacer { flex: 1; }
+.field { display: grid; gap: 4px; }
+.field > label, .field > .label, .group h3 { font-size: 14px; font-weight: 600; margin: 0; }
+.hint { margin: 0; font-size: 13px; color: var(--ink-3); }
+.field input, .field select, .field textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); }
+.group { display: grid; gap: 8px; padding-top: 10px; border-top: 1px solid var(--rule-soft); }
+.checks { display: grid; gap: 2px; max-height: 260px; overflow-y: auto; padding: 2px; }
+.check { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; align-items: start; padding: 5px 4px; border-radius: 6px; cursor: pointer; }
+.check:hover { background: var(--hover); }
+.check input { width: 18px; height: 18px; margin: 2px 0 0; }
+.check .who { overflow-wrap: anywhere; }
+.check .sub { margin-left: 4px; font-size: 13px; color: var(--ink-3); }
+.check .lines { display: block; font-size: 13px; color: var(--ink-3); white-space: pre-line; }
+#songList, #sourceList { max-height: none; }
+.radio-row { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.radio-row label { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; cursor: pointer; }
+pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); font-size: 13px; white-space: pre-wrap; }
+
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); max-width: calc(100vw - 32px); padding: 10px 16px; border-radius: 8px; background: var(--ink); color: var(--paper); font-size: 14px; box-shadow: 0 6px 24px rgba(10, 14, 22, 0.25); z-index: 10; }
+.toast.error { background: var(--bad); color: #ffffff; }
+.report { display: none; }
+
+@media (max-width: 900px) {
+  .workspace { grid-template-columns: 1fr; }
+  .side { position: static; }
+}
+@media (max-width: 720px) {
+  .page { padding: 0 16px 40px; }
+  .film-title { font-size: 26px; }
+  .file { align-items: flex-start; }
+  .file-state { text-align: left; }
+  .toolbar h2 { flex-basis: 100%; order: -2; }
+  .toolbar #addBtn { flex: 1 1 100%; justify-content: center; order: -1; }
+  .row { grid-template-columns: minmax(0, 1fr); }
+  .flags { grid-column: 1; }
+}
+@media print {
+  @page { size: portrait; margin: 16mm; }
+  :root { color-scheme: light; }
+  body { background: #ffffff; color: #000000; font-size: 10pt; }
+  .page, dialog, .toast { display: none !important; }
+  .report { display: block; }
+  .report h1 { margin: 0; font: 700 18pt/1.2 var(--serif); }
+  .report h2 { margin: 14pt 0 4pt; font: 700 12pt/1.2 var(--serif); break-after: avoid; page-break-after: avoid; }
+  .report .r-meta { margin: 2pt 0 10pt; }
+  .report table { width: 100%; border-collapse: collapse; }
+  .report th, .report td { padding: 4pt 5pt; border-bottom: 0.75pt solid #999999; text-align: left; vertical-align: top; }
+  .report th { font-size: 9pt; border-bottom: 1pt solid #000000; }
+  .report tr { break-inside: avoid; page-break-inside: avoid; }
+  .report .r-sub { display: block; font-size: 8.5pt; color: #333333; }
+  .report .r-note { margin-top: 14pt; font-size: 8pt; color: #333333; }
+  .report .r-n { text-align: right; }
+}
+</style>
+</head>
+<body>
+<div class="cant-run" id="cantRun">
+  <h1 id="cantRunTitle">Open this file in a web browser</h1>
+  <p id="cantRunText">This tool runs in Chrome, Edge, Firefox or Safari. You're seeing a preview that doesn't run it, so none of the buttons would work.</p>
+  <p id="cantRunHow">In your browser, choose File, then Open File, and pick this file. Or right-click the file and open it with your browser.</p>
+</div>
+<div class="page">
+  <header class="masthead">
+    <div>
+      <p class="tool-name">Final cost report</p>
+      <h1 class="film-title" id="filmTitle">Untitled film</h1>
+      <p class="film-meta"><span id="filmMeta"></span> <button type="button" class="link-btn" id="editProjectBtn">Edit film details</button></p>
+    </div>
+    <div class="file">
+      <p class="file-state" id="fileState">Not saved to a file yet</p>
+      <div class="file-actions">
+        <button type="button" class="btn" id="newBtn">New project</button>
+        <button type="button" class="btn" id="openBtn">Open file</button>
+        <button type="button" class="btn" id="projectCsvBtn">Export project data (CSV)</button>
+        <button type="button" class="btn primary" id="saveBtn">Save file</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="banner" id="recovery" role="region" aria-label="Unsaved work" hidden>
+    <p id="recoveryText"></p>
+    <div class="actions">
+      <button type="button" class="btn primary" id="restoreBtn">Restore it</button>
+      <button type="button" class="btn" id="discardBtn">Discard it</button>
+    </div>
+  </div>
+
+  <main class="workspace">
+    <section aria-labelledby="listHead">
+      <div class="toolbar">
+        <h2 id="listHead">Final cost report</h2>
+        <span class="count" id="count"></span>
+        <span class="spacer"></span>
+        <button type="button" class="btn primary" id="addBtn">Add a variance note</button>
+        <button type="button" class="btn" id="csvBtn">Export CSV</button>
+        <button type="button" class="btn" id="printBtn">Print</button>
+      </div>
+      <div class="picker">
+        <div class="field"><label for="layout">Layout</label><select id="layout"><option value="account">By account</option><option value="line">By line</option><option value="top">Top sheet</option></select></div>
+        <div class="field"><label for="closeDate">Costs to</label><input id="closeDate" type="date"></div>
+        <div class="field"><label for="status">Status</label><select id="status"><option value="draft">Draft</option><option value="final">Final</option></select></div>
+      </div>
+      <div class="gridwrap"><table class="fc" id="table"></table></div>
+      <div class="empty" id="empty" hidden>
+        <h2>No budget yet</h2>
+        <p>The final cost report starts from your <a href="../budget/index.html">budget</a> and the <a href="../expense-log/index.html">expense log</a>, through <a href="../budget-to-actuals/index.html">budget-to-actuals</a>. Build the budget and log expenses first.</p>
+        <div class="actions"><button type="button" class="btn" id="emptyOpenBtn">Open file</button></div>
+      </div>
+    </section>
+    <div class="side">
+      <section class="card" aria-labelledby="totHead">
+        <div class="card-head"><h2 id="totHead">Totals</h2></div>
+        <dl class="totals" id="totals"></dl>
+      </section>
+      <section class="card" aria-labelledby="noteHead">
+        <div class="card-head"><h2 id="noteHead">Needs a note</h2></div>
+        <p class="lead">Funders usually ask why a line went more than 10 percent over or under. Click an account to add a note.</p>
+        <ul class="todo" id="needs"></ul>
+      </section>
+      <section class="card" aria-labelledby="howHead">
+        <div class="card-head"><h2 id="howHead">How it's worked out</h2></div>
+        <p class="hint">Final cost is what's in the expense log, plus anything you set still to pay in <a href="../budget-to-actuals/index.html">budget-to-actuals</a>. Lines with nothing set still to pay are closed at what was spent. Funder layouts come from the <a href="../budget-converter/index.html">budget converter</a>.</p>
+      </section>
+    </div>
+  </main>
+
+  <footer class="foot">
+    <p>Part of the Open Filmmaker Toolkit. This page makes no network requests: everything stays on this computer until you save or export it. Uses the same project file as the other toolkit tools.</p>
+  </footer>
+</div>
+
+<dialog class="drawer" id="editor" aria-labelledby="editorTitle">
+  <form id="editorForm" method="dialog" novalidate>
+    <div class="dlg-head"><h2 id="editorTitle">Variance note</h2></div>
+    <div class="dlg-body">
+      <div class="field"><label for="f-key">Account or category</label><select id="f-key"></select></div>
+      <p class="hint" id="keyFacts"></p>
+      <div class="field"><label for="f-note">Why it came in over or under</label><textarea id="f-note" rows="4"></textarea></div>
+    </div>
+    <div class="dlg-foot">
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="editorCancel">Cancel</button>
+      <button type="submit" class="btn primary" id="editorSubmit">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="projectDialog" aria-labelledby="projectDialogTitle">
+  <form id="projectForm" method="dialog">
+    <div class="dlg-head"><h2 id="projectDialogTitle">Film details</h2></div>
+    <div class="dlg-body">
+      <div class="field"><label for="p-title">Film title</label><input id="p-title" type="text" placeholder="Working title is fine"></div>
+      <div class="field"><label for="p-company">Production company</label><input id="p-company" type="text"></div>
+      <div class="field"><label for="p-producer">Producer</label><input id="p-producer" type="text"></div>
+    </div>
+    <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn" id="projectCancel">Cancel</button><button type="submit" class="btn primary">Save details</button></div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="projectCsvDialog" aria-labelledby="projectCsvTitle">
+  <form id="projectCsvForm" method="dialog">
+    <div class="dlg-head"><h2 id="projectCsvTitle">Export project data</h2></div>
+    <div class="dlg-body">
+      <div class="field">
+        <label for="projectCsvCollection">Data to export</label>
+        <select id="projectCsvCollection">
+          <option value="project">Project details</option>
+          <option value="people">People</option>
+          <option value="locations">Locations</option>
+          <option value="thirdPartyElements">Third-party elements</option>
+          <option value="contracts">Contracts</option>
+          <option value="assets">Assets</option>
+          <option value="musicCueSheet">Music cue sheet details</option>
+          <option value="callSheets">Call sheets</option>
+        </select>
+      </div>
+      <p class="hint">Exports one CSV file for the selected collection. Nested values are kept as JSON in their cell.</p>
+    </div>
+    <div class="dlg-foot">
+      <button type="submit" class="btn primary">Export CSV</button>
+      <button type="button" class="btn" id="projectCsvCancel">Cancel</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="conflictDialog" aria-labelledby="conflictTitle">
+  <form method="dialog">
+    <div class="dlg-head"><h2 id="conflictTitle">Project file changed</h2></div>
+    <div class="dlg-body">
+      <p id="conflictText">This project file changed after you opened it. Saving will replace those changes.</p>
+      <p class="hint">Your edits are still here. Choose whether to overwrite the changed file, save a separate copy, or load its latest contents. Save in one tool at a time; simultaneous saves can still race.</p>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn" id="conflictReloadBtn">Reload latest</button>
+      <button type="button" class="btn" id="conflictCopyBtn">Save a copy</button>
+      <button type="button" class="btn danger" id="conflictOverwriteBtn">Overwrite file</button>
+      <button type="button" class="btn" id="conflictCancelBtn">Keep editing</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="report" id="report" aria-hidden="true"></div>
+<input type="file" id="fileInput" accept=".json,application/json" hidden>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+(() => {
+  'use strict';
+
+  const FORMAT = 'open-filmmaker-toolkit/project';
+  const FORMAT_VERSION = 1;
+  const TOOL = 'final-cost-report 0.1.0';
+  const DRAFT_KEY = 'oft.final-cost-report.draft';
+  const PROJECT_TEXT = ['title', 'company', 'producer'];
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const str = v => (v == null ? '' : String(v));
+  const arr = v => (Array.isArray(v) ? v : []);
+  const norm = s => str(s).toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+
+  let doc = blankDoc();
+  let fileHandle = null;
+  let baselineText = null;
+  let fileName = null;
+  let dirty = false;
+
+  function blankDoc() {
+    return { format: FORMAT, formatVersion: FORMAT_VERSION, project: { title: '', company: '', producer: '', frameRate: 24, currency: 'USD' }, people: [], expenses: [] };
+  }
+  function newId(prefix) {
+    if (window.crypto && crypto.randomUUID) return `${prefix}-${crypto.randomUUID()}`;
+    return `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+  }
+  function today() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  function fmtDate(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str(iso));
+    if (!m) return str(iso);
+    return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+  function daysUntil(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str(iso));
+    if (!m) return null;
+    const t = new Date(); const a = Date.UTC(t.getFullYear(), t.getMonth(), t.getDate());
+    return Math.round((Date.UTC(+m[1], +m[2] - 1, +m[3]) - a) / 86400000);
+  }
+
+  // ---------- Budget arithmetic (the same in the budget, budget converter and finance plan) ----------
+  const SECTIONS = [
+    { id: 'atl', label: 'Above the line' },
+    { id: 'production', label: 'Production' },
+    { id: 'post', label: 'Post-production' },
+    { id: 'other', label: 'Other costs' },
+  ];
+  const sectionLabel = id => (SECTIONS.find(s => s.id === id) || SECTIONS[3]).label;
+  const num = v => (v === '' || v == null || !isFinite(Number(v)) ? 0 : Number(v));
+  const cents = n => Math.round(n * 100) / 100;
+  const objs = v => arr(v).filter(x => x && typeof x === 'object');
+  // A line costs quantity × multiplier × rate. The multiplier defaults to 1 (use it for people, units or episodes).
+  function lineSubtotal(l) {
+    const x = l.multiplier === '' || l.multiplier == null ? 1 : num(l.multiplier);
+    return cents(num(l.quantity) * x * num(l.rate));
+  }
+  const accountOrder = (a, b) => SECTIONS.findIndex(s => s.id === a.section) - SECTIONS.findIndex(s => s.id === b.section) ||
+    str(a.code).localeCompare(str(b.code), undefined, { numeric: true }) || str(a.name).localeCompare(str(b.name));
+  // Totals for a budget record: each line with its fringe, each account, each section, then fringes and percentages on the subtotal.
+  function budgetTotals(b) {
+    b = b && typeof b === 'object' ? b : {};
+    const fringes = objs(b.fringes);
+    const markups = objs(b.markups);
+    const accounts = objs(b.accounts).slice().sort(accountOrder);
+    const lines = objs(b.lines).map(l => {
+      const sub = lineSubtotal(l);
+      const f = l.fringeId ? fringes.find(x => x.id === l.fringeId) : null;
+      const fringe = f ? cents(sub * num(f.percent) / 100) : 0;
+      return { line: l, sub, fringe, total: cents(sub + fringe) };
+    });
+    const byAccount = accounts.map(a => {
+      const ls = lines.filter(x => x.line.accountId === a.id);
+      return { account: a, lines: ls, sub: cents(ls.reduce((t, x) => t + x.sub, 0)), fringe: cents(ls.reduce((t, x) => t + x.fringe, 0)), total: cents(ls.reduce((t, x) => t + x.total, 0)) };
+    });
+    const loose = lines.filter(x => !accounts.some(a => a.id === x.line.accountId));
+    const sections = SECTIONS.map(s => {
+      const as = byAccount.filter(x => (SECTIONS.some(y => y.id === x.account.section) ? x.account.section : 'other') === s.id);
+      return { section: s, accounts: as, total: cents(as.reduce((t, x) => t + x.total, 0)) };
+    });
+    const direct = cents(lines.reduce((t, x) => t + x.sub, 0));
+    const fringeTotal = cents(lines.reduce((t, x) => t + x.fringe, 0));
+    const subtotal = cents(direct + fringeTotal);
+    const marks = markups.map(m => ({ markup: m, amount: cents(subtotal * num(m.percent) / 100) }));
+    const grand = cents(subtotal + marks.reduce((t, x) => t + x.amount, 0));
+    const fringeTotals = fringes.map(f => ({ fringe: f, amount: cents(lines.filter(x => x.line.fringeId === f.id).reduce((t, x) => t + x.fringe, 0)) }));
+    return { lines, accounts: byAccount, loose, sections, direct, fringeTotal, fringeTotals, subtotal, markups: marks, grand };
+  }
+  function money(n, withCents) {
+    if (n == null || n === '' || !isFinite(Number(n))) return '';
+    const opts = { style: 'currency', currency: (doc.project && doc.project.currency) || 'USD', minimumFractionDigits: withCents ? 2 : 0, maximumFractionDigits: withCents ? 2 : 0 };
+    try { return new Intl.NumberFormat(undefined, opts).format(Number(n)); }
+    catch (e) { return Number(n).toLocaleString(undefined, { minimumFractionDigits: opts.minimumFractionDigits, maximumFractionDigits: opts.maximumFractionDigits }); }
+  }
+  const hasBudget = () => !!(doc.budget && typeof doc.budget === 'object' && objs(doc.budget.lines).length);
+
+  // Fills in only what this tool needs; everything else in the file is left as it was.
+  function normalize(d) {
+    if (!d.project || typeof d.project !== 'object') d.project = {};
+    for (const k of PROJECT_TEXT) if (typeof d.project[k] !== 'string') d.project[k] = str(d.project[k]);
+    for (const k of ['people', 'expenses', 'budgetFormats']) d[k] = objs(d[k]);
+    if (d.finalCostReport !== undefined && (typeof d.finalCostReport !== 'object' || Array.isArray(d.finalCostReport))) delete d.finalCostReport;
+    d.format = FORMAT;
+    d.formatVersion = FORMAT_VERSION;
+    return d;
+  }
+
+  const F = () => (doc.finalCostReport && typeof doc.finalCostReport === 'object' ? doc.finalCostReport : {});
+  function setF(k, v) { const o = Object.assign({}, F()); if (v == null || v === '' || (typeof v === 'object' && !Object.keys(v).length)) delete o[k]; else o[k] = v; if (Object.keys(o).length) doc.finalCostReport = o; else delete doc.finalCostReport; }
+  const notes = () => (F().notes && typeof F().notes === 'object' ? F().notes : {});
+  const isDate = s => /^\d{4}-\d{2}-\d{2}$/.test(str(s));
+  const estimates = () => objs(doc.costReport && doc.costReport.estimates);
+  const est = key => estimates().find(x => (x.lineId || `markup:${x.markupId}`) === key);
+  const toPay = key => { const e = est(key); return e && e.toComplete != null ? num(e.toComplete) : 0; };
+  const expenses = () => objs(doc.expenses).filter(e => !isDate(F().closeDate) || !isDate(e.date) || e.date <= F().closeDate);
+  const lineName = l => [l.code, l.description].filter(Boolean).join(' ') || 'Unnamed line';
+  const acctName = a => [a.code, a.name].filter(Boolean).join(' ') || 'Unnamed account';
+  // Every row of the report, at the most detailed level: budget lines, spending in an account not on a line, markups and spending outside the budget.
+  function rows() {
+    const T = budgetTotals(doc.budget);
+    const out = [];
+    const spentBy = new Map(), acctSpent = new Map(); let loose = 0;
+    for (const e of expenses()) {
+      const a = T.accounts.find(x => x.account.id === e.accountId);
+      if (!a) { loose += num(e.amount); continue; }
+      const lineId = e.budgetLineId && a.lines.some(x => x.line.id === e.budgetLineId) ? e.budgetLineId : a.lines.length === 1 ? a.lines[0].line.id : null;
+      if (lineId) spentBy.set(lineId, (spentBy.get(lineId) || 0) + num(e.amount)); else acctSpent.set(a.account.id, (acctSpent.get(a.account.id) || 0) + num(e.amount));
+    }
+    for (const s of T.sections) for (const a of s.accounts) {
+      for (const x of a.lines) out.push({ section: s.section, account: a.account, line: x.line, key: x.line.id, budget: x.total, final: cents((spentBy.get(x.line.id) || 0) + toPay(x.line.id)) });
+      if (acctSpent.get(a.account.id)) out.push({ section: s.section, account: a.account, line: null, key: `unassigned:${a.account.id}`, budget: 0, final: cents(acctSpent.get(a.account.id)) });
+    }
+    for (const m of T.markups) out.push({ markup: m.markup, key: `markup:${m.markup.id}`, budget: m.amount, final: cents(toPay(`markup:${m.markup.id}`)) });
+    if (loose) out.push({ outside: true, key: 'outside', budget: 0, final: cents(loose) });
+    return out;
+  }
+  const formats = () => doc.budgetFormats.filter(f => f && f.id && Array.isArray(f.categories));
+  // Groups rows for the layout picked: by account, by section (top sheet), or a funder's categories.
+  function groups(layout) {
+    const rs = rows(), m = new Map();
+    const add = (key, label, sec, r) => { const g = m.get(key) || { key, label, sec, budget: 0, final: 0, lines: [] }; g.budget = cents(g.budget + r.budget); g.final = cents(g.final + r.final); g.lines.push(r); m.set(key, g); };
+    for (const r of rs) {
+      if (layout.startsWith('format:')) {
+        const f = formats().find(x => `format:${x.id}` === layout);
+        let cat = r.markup ? (f.markupMap || {})[r.markup.id] : r.line && (f.lineMap || {})[r.line.id] != null ? f.lineMap[r.line.id] : r.account ? (f.accountMap || {})[r.account.id] : undefined;
+        const c = f.categories.find(x => x.id === cat);
+        if (cat === '') add('left-out', 'Left out of this format', null, r); else if (c) add(c.id, c.name, null, r); else add('unmapped', 'Not in a category yet', null, r);
+      } else if (r.outside) add('outside', 'Spending outside the budget', null, r);
+      else if (r.markup) add(`markup:${r.markup.id}`, r.markup.name || 'Markup', null, r);
+      else if (layout === 'top') add(r.section.id, r.section.label, null, r);
+      else add(r.account.id, acctName(r.account), r.section, r);
+    }
+    return [...m.values()];
+  }
+  const variance = g => cents(g.budget - g.final);
+  const pct = g => (g.budget ? (g.final - g.budget) / g.budget * 100 : g.final ? Infinity : 0);
+  const needsNote = g => Math.abs(pct(g)) > 10 && Math.abs(variance(g)) >= 1 && !str(notes()[g.key]).trim();
+
+  const entries = () => objs(doc.expenses);  const vcell = v => `<td class="n ${v < 0 ? 'over' : v > 0 ? 'under' : ''}">${v < 0 ? `${esc(money(-v))} over` : v > 0 ? `${esc(money(v))} under` : '—'}</td>`;
+  let layout = 'account', editingKey = '';
+
+  function render() {
+    $('filmTitle').textContent = doc.project.title || 'Untitled film';
+    $('filmTitle').classList.toggle('is-empty', !doc.project.title);
+    $('filmMeta').textContent = [doc.project.company, doc.project.producer && `Producer: ${doc.project.producer}`].filter(Boolean).join(' · ');
+    $('fileState').innerHTML = (fileName ? esc(fileName) : 'Not saved to a file yet') + (dirty ? ' · <span class="dirty">Unsaved changes</span>' : '');
+    document.title = `${doc.project.title ? doc.project.title + ' · ' : ''}Final cost report · Open Filmmaker Toolkit`;
+    const has = !!(doc.budget && objs(doc.budget.lines).length);
+    $('empty').hidden = has; $('table').closest('.gridwrap').hidden = !has;
+    for (const id of ['csvBtn', 'printBtn', 'addBtn']) $(id).hidden = !has;
+    const fopts = formats().map(f => `<option value="format:${esc(f.id)}">${esc(f.name || 'Funder format')}</option>`).join('');
+    $('layout').innerHTML = '<option value="account">By account</option><option value="line">By line</option><option value="top">Top sheet</option>' + fopts;
+    if (![...$('layout').options].some(o => o.value === layout)) layout = 'account';
+    $('layout').value = layout; $('closeDate').value = str(F().closeDate); $('status').value = F().status === 'final' ? 'final' : 'draft';
+    if (!has) { $('count').textContent = ''; $('totals').innerHTML = ''; $('needs').innerHTML = ''; return; }
+    const gs = groups(layout === 'line' ? 'account' : layout), all = rows();
+    const tb = cents(all.reduce((t, r) => t + r.budget, 0)), tf = cents(all.reduce((t, r) => t + r.final, 0));
+    $('count').textContent = `${F().status === 'final' ? 'Final' : 'Draft'}${isDate(F().closeDate) ? `, costs to ${fmtDate(F().closeDate)}` : ''}`;
+    const noteCell = g => { const n = str(notes()[g.key]); return `<button type="button" class="lnk" data-note="${esc(g.key)}">${esc(g.label)}</button>${n ? `<span class="note">${esc(n)}</span>` : ''}`; };
+    let body = '', sec = '';
+    for (const g of gs) {
+      if (layout === 'account' || layout === 'line') { const s = g.sec ? g.sec.label : ''; if (s !== sec && s) { body += `<tr class="sec"><td colspan="4">${esc(s)}</td></tr>`; } sec = s; }
+      body += `<tr><td>${noteCell(g)}</td><td class="n">${esc(money(g.budget))}</td><td class="n">${esc(money(g.final))}</td>${vcell(variance(g))}</tr>`;
+      if (layout === 'line') for (const r of g.lines.filter(r => r.line || r.key.startsWith('unassigned'))) body += `<tr><td style="padding-left:24px">${esc(r.line ? lineName(r.line) : 'Not assigned to a line')}</td><td class="n">${esc(money(r.budget))}</td><td class="n">${esc(money(r.final))}</td>${vcell(cents(r.budget - r.final))}</tr>`;
+    }
+    $('table').innerHTML = `<thead><tr><th>${layout.startsWith('format:') ? 'Category' : layout === 'top' ? 'Section' : 'Account'}</th><th class="n">Budget</th><th class="n">Final cost</th><th class="n">Variance</th></tr></thead><tbody>${body}</tbody><tfoot><tr><td>Total</td><td class="n">${esc(money(tb))}</td><td class="n">${esc(money(tf))}</td>${vcell(cents(tb - tf))}</tr></tfoot>`;
+    $('totals').innerHTML = `<dt>Budget</dt><dd>${esc(money(tb))}</dd><dt>Final cost</dt><dd>${esc(money(tf))}</dd><dt class="sum">${tf > tb ? 'Over budget' : 'Under budget'}</dt><dd class="sum">${esc(money(Math.abs(tb - tf)))}</dd><dt>Still to pay, from budget-to-actuals</dt><dd>${esc(money(estimates().reduce((t, e) => t + (e.toComplete != null ? num(e.toComplete) : 0), 0)))}</dd>`;
+    const need = gs.filter(needsNote);
+    $('needs').innerHTML = need.length ? need.slice(0, 8).map(g => `<li><span>${esc(g.label)}<span class="sub">${isFinite(pct(g)) ? `${Math.round(pct(g))}%` : 'Not budgeted'}</span></span><span class="num">${variance(g) < 0 ? 'Over' : 'Under'}</span></li>`).join('') + (need.length > 8 ? `<li class="empty-line">And ${need.length - 8} more</li>` : '') : '<li class="empty-line">Every large variance has a note.</li>';
+  }
+
+  function openEditor(key) {
+    const gs = groups(layout === 'line' ? 'account' : layout);
+    if (!gs.length) return;
+    editingKey = key || (gs.find(needsNote) || gs[0]).key;
+    $('f-key').innerHTML = gs.map(g => `<option value="${esc(g.key)}">${esc(g.label)}</option>`).join('');
+    $('f-key').value = editingKey;
+    showFacts();
+    $('editor').showModal(); $('f-note').focus();
+  }
+  function showFacts() {
+    const g = groups(layout === 'line' ? 'account' : layout).find(x => x.key === $('f-key').value);
+    $('keyFacts').textContent = g ? `Budget ${money(g.budget)}, final cost ${money(g.final)}${g.budget ? ` (${Math.round(pct(g))}%)` : ''}.` : '';
+    $('f-note').value = str(notes()[$('f-key').value]);
+  }
+  function saveEditor() {
+    const n = Object.assign({}, notes()), v = $('f-note').value.trim(), k = $('f-key').value;
+    if (v) n[k] = v; else delete n[k];
+    setF('notes', n);
+    $('editor').close(); changed();
+  }
+  const CSV_HEAD = ['Section', 'Account or category', 'Line', 'Budget', 'Final cost', 'Variance', 'Note'];
+  function exportCsv() {
+    const out = [];
+    for (const g of groups(layout === 'line' ? 'account' : layout)) {
+      out.push([g.sec ? g.sec.label : '', g.label, '', g.budget, g.final, variance(g), str(notes()[g.key])]);
+      if (layout === 'line') for (const r of g.lines.filter(r => r.line || r.key.startsWith('unassigned'))) out.push([g.sec ? g.sec.label : '', g.label, r.line ? lineName(r.line) : 'Not assigned to a line', r.budget, r.final, cents(r.budget - r.final), '']);
+    }
+    const all = rows();
+    out.push(['', 'Total', '', cents(all.reduce((t, r) => t + r.budget, 0)), cents(all.reduce((t, r) => t + r.final, 0)), cents(all.reduce((t, r) => t + r.budget - r.final, 0)), '']);
+    const csv = '﻿' + [CSV_HEAD, ...out].map(r => r.map(v => (typeof v === 'number' ? String(v) : csvCell(v))).join(',')).join('\r\n') + '\r\n';
+    const name = `${slug()}-final-cost-report.csv`;
+    download(csv, name, 'text/csv;charset=utf-8');
+    toast(`Exported the final cost report to ${name}`);
+  }
+  function renderReport() {
+    const gs = groups(layout === 'line' ? 'account' : layout), all = rows();
+    const tb = cents(all.reduce((t, r) => t + r.budget, 0)), tf = cents(all.reduce((t, r) => t + r.final, 0));
+    const f = layout.startsWith('format:') ? formats().find(x => `format:${x.id}` === layout) : null;
+    const v = n => (n < 0 ? `${money(-n)} over` : n > 0 ? `${money(n)} under` : '—');
+    $('report').innerHTML = `<h1>Final cost report${F().status === 'final' ? '' : ' (draft)'}</h1><p class="r-meta">${esc([doc.project.title, doc.project.company, f && `In the ${f.name} categories`, isDate(F().closeDate) && `Costs to ${fmtDate(F().closeDate)}`, `Printed ${fmtDate(today())}`].filter(Boolean).join(' · '))}</p>
+      <table><thead><tr><th>${f ? 'Category' : layout === 'top' ? 'Section' : 'Account'}</th><th class="r-n">Budget</th><th class="r-n">Final cost</th><th class="r-n">Variance</th></tr></thead><tbody>${gs.map(g => `<tr><td>${esc(g.label)}${notes()[g.key] ? `<span class="r-sub">${esc(notes()[g.key])}</span>` : ''}</td><td class="r-n">${esc(money(g.budget))}</td><td class="r-n">${esc(money(g.final))}</td><td class="r-n">${esc(v(variance(g)))}</td></tr>${layout === 'line' ? g.lines.filter(r => r.line).map(r => `<tr><td style="padding-left:12pt">${esc(lineName(r.line))}</td><td class="r-n">${esc(money(r.budget))}</td><td class="r-n">${esc(money(r.final))}</td><td class="r-n">${esc(v(cents(r.budget - r.final)))}</td></tr>`).join('') : ''}`).join('')}</tbody>
+      <tfoot><tr><th>Total</th><th class="r-n">${esc(money(tb))}</th><th class="r-n">${esc(money(tf))}</th><th class="r-n">${esc(v(cents(tb - tf)))}</th></tr></tfoot></table>
+      <p class="r-note">Final cost is spending in the expense log plus anything still to pay.</p>`;
+  }
+
+  // ---------- Project CSV ----------
+  function csvCell(v) {
+    let s = v == null ? '' : String(v);
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+    return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }
+  const csvCollections = {
+    project: 'project details', people: 'people', locations: 'locations', thirdPartyElements: 'third-party elements',
+    contracts: 'contracts', assets: 'assets', musicCueSheet: 'music cue sheet details', callSheets: 'call sheets'
+  };
+  function exportProjectCsv() {
+    const collection = $('projectCsvCollection').value;
+    const value = doc[collection];
+    const rows = Array.isArray(value) ? value : value && typeof value === 'object' ? [value] : [];
+    if (rows.some(row => !row || typeof row !== 'object' || Array.isArray(row))) {
+      toast(`Couldn't export ${csvCollections[collection]}: the project contains an invalid record.`, true);
+      return;
+    }
+    const headers = [...new Set(rows.flatMap(row => Object.keys(row)))];
+    if (!headers.length) headers.push('id');
+    const csvRows = rows.map(row => headers.map(key => { const cell = row[key]; return cell && typeof cell === 'object' ? JSON.stringify(cell) : cell; }));
+    const csv = '﻿' + [headers, ...csvRows].map(row => row.map(csvCell).join(',')).join('\r\n') + '\r\n';
+    const name = suggestedName().replace(/\.oft\.json$/i, `-${collection}.csv`);
+    download(csv, name, 'text/csv;charset=utf-8');
+    toast(`Exported ${rows.length} ${csvCollections[collection]} to ${name}`);
+  }
+
+  // ---------- Film details ----------
+  function openProjectDialog() {
+    for (const k of PROJECT_TEXT) $(`p-${k}`).value = doc.project[k] || '';
+    $('projectDialog').showModal();
+    $('p-title').focus();
+  }
+  function saveProjectDialog() {
+    for (const k of PROJECT_TEXT) doc.project[k] = $(`p-${k}`).value.trim();
+    $('projectDialog').close();
+    changed();
+  }
+
+  // ---------- Dirty state & recovery draft ----------
+  function changed() { dirty = true; saveDraft(); render(); }
+  function saveDraft() {
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ doc, fileName, baselineText, at: new Date().toISOString() })); } catch { /* the file on disk is the real copy */ }
+  }
+  function clearDraft() {
+    try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+    $('recovery').hidden = true;
+  }
+  function checkDraft() {
+    let draft = null;
+    try { draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); } catch { draft = null; }
+    if (!draft || !draft.doc || draft.doc.format !== FORMAT) return;
+    const n = Array.isArray(draft.doc.expenses) ? draft.doc.expenses.length : 0;
+    if (!n && !(draft.doc.project && draft.doc.project.title)) { clearDraft(); return; }
+    const when = draft.at ? new Date(draft.at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'earlier';
+    const title = draft.doc.project && draft.doc.project.title ? `"${draft.doc.project.title}"` : 'an untitled project';
+    $('recoveryText').textContent = `You have unsaved changes to ${title} from ${when} (${n} expense${n === 1 ? '' : 's'}). Restore them, or discard them and start fresh.`;
+    $('recovery').hidden = false;
+    $('restoreBtn').onclick = () => {
+      doc = normalize(draft.doc); fileName = draft.fileName || null; fileHandle = null;
+      baselineText = typeof draft.baselineText === 'string' ? draft.baselineText : null; dirty = true;
+      $('recovery').hidden = true; render();
+      toast(fileName ? `Restored. Save to write the changes back to ${fileName}.` : 'Restored. Save to keep it as a file.');
+    };
+    $('discardBtn').onclick = () => { clearDraft(); toast('Discarded the unsaved changes.'); };
+  }
+
+  // ---------- Files ----------
+  const pickerTypes = [{ description: 'Film project file', accept: { 'application/json': ['.json'] } }];
+  function slug() {
+    return (doc.project.title || 'untitled-film').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'untitled-film';
+  }
+  const suggestedName = () => `${slug()}.oft.json`;
+  function serialize() {
+    doc.savedAt = new Date().toISOString();
+    doc.savedBy = TOOL;
+    return JSON.stringify(doc, null, 2) + '\n';
+  }
+  function download(text, name, type) {
+    const url = URL.createObjectURL(new Blob([text], { type }));
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  function afterSave(name, downloaded, content) {
+    fileName = name;
+    if (downloaded) fileHandle = null;
+    baselineText = content;
+    dirty = false; clearDraft(); render();
+    toast(downloaded ? `Downloaded ${name}. Keep it with your project files and open it here next time.` : `Saved to ${name}`);
+  }
+  async function writeProjectFile(handle, content) {
+    try {
+      const writable = await handle.createWritable();
+      await writable.write(content);
+      await writable.close();
+    } catch (err) {
+      if (err.name !== 'AbortError') toast(`Couldn't save the file: ${err.message}`, true);
+      return;
+    }
+    fileHandle = handle;
+    afterSave(handle.name, false, content);
+  }
+  function saveCopy(content) {
+    const base = (fileName || suggestedName()).replace(/\.oft\.json$/i, '');
+    const name = `${base}-copy.oft.json`;
+    download(content, name, 'application/json');
+    afterSave(name, true, content);
+  }
+  async function reloadLatest(handle) {
+    try {
+      const file = await handle.getFile();
+      loadText(await file.text(), handle.name, handle);
+    } catch (err) {
+      toast(`Couldn't reload the file: ${err.message}`, true);
+    }
+  }
+  function showConflictDialog(content, observedText, unknownBaseline = false) {
+    const handle = fileHandle;
+    dirty = true;
+    saveDraft();
+    render();
+    $('conflictText').textContent = unknownBaseline
+      ? `The tool can't verify whether ${handle.name} changed since your recovery copy was made. Your edits are not saved.`
+      : `${handle.name} changed after you opened it. Your edits are not saved. Overwriting replaces the newer file.`;
+    $('conflictDialog').showModal();
+    $('conflictReloadBtn').onclick = () => { $('conflictDialog').close(); reloadLatest(handle); };
+    $('conflictCopyBtn').onclick = () => { $('conflictDialog').close(); saveCopy(content); };
+    $('conflictOverwriteBtn').onclick = async () => {
+      $('conflictDialog').close();
+      let latestText;
+      try { latestText = await (await handle.getFile()).text(); }
+      catch (err) { toast(`Couldn't check the file before overwriting: ${err.message}`, true); return; }
+      if (latestText !== observedText) {
+        toast('The file changed again. Review the updated conflict warning before overwriting.', true);
+        showConflictDialog(content, latestText);
+        return;
+      }
+      await writeProjectFile(handle, content);
+    };
+    $('conflictCancelBtn').onclick = () => $('conflictDialog').close();
+  }
+  async function saveFile() {
+    const out = serialize();
+    if (fileHandle) {
+      let currentText;
+      try { currentText = await (await fileHandle.getFile()).text(); }
+      catch (err) { toast(`Couldn't check the file before saving: ${err.message}`, true); return; }
+      if (baselineText === null || currentText !== baselineText) { showConflictDialog(out, currentText, baselineText === null); return; }
+      await writeProjectFile(fileHandle, out);
+      return;
+    }
+    if (window.showSaveFilePicker && window.self === window.top) {
+      try {
+        const h = await window.showSaveFilePicker({ suggestedName: fileName || suggestedName(), types: pickerTypes });
+        if (h.name === fileName) {
+          const currentText = await (await h.getFile()).text();
+          if (baselineText === null || currentText !== baselineText) { fileHandle = h; showConflictDialog(out, currentText, baselineText === null); return; }
+        }
+        await writeProjectFile(h, out);
+      } catch (err) { if (err.name !== 'AbortError') toast(`Couldn't save the file: ${err.message}`, true); }
+      return;
+    }
+    const name = fileName || suggestedName();
+    download(out, name, 'application/json');
+    afterSave(name, true, out);
+  }
+  function loadText(text, name, handle) {
+    let data;
+    try { data = JSON.parse(text); } catch { toast(`Couldn't open ${name}: it isn't a project file.`, true); return; }
+    if (!data || data.format !== FORMAT) { toast(`Couldn't open ${name}: it isn't an Open Filmmaker Toolkit project file.`, true); return; }
+    if (Number(data.formatVersion) > FORMAT_VERSION) { toast(`Couldn't open ${name}: it was saved by a newer version of the toolkit. Get the latest version of this tool.`, true); return; }
+    doc = normalize(data); fileHandle = handle; baselineText = text; fileName = name; dirty = false;
+    clearDraft(); render();
+    const n = entries().length;
+    toast(`Opened ${name}: ${n ? `${n} expense${n === 1 ? '' : 's'}` : 'no expenses yet'}`);
+  }
+  async function openFile() {
+    if (dirty && !confirm('You have unsaved changes. Open another file and lose them?')) return;
+    if (window.showOpenFilePicker && window.self === window.top) {
+      try { const [h] = await window.showOpenFilePicker({ types: pickerTypes }); const f = await h.getFile(); loadText(await f.text(), f.name, h); }
+      catch (err) { if (err.name !== 'AbortError') toast(`Couldn't open the file: ${err.message}`, true); }
+      return;
+    }
+    $('fileInput').click();
+  }
+  function newProject() {
+    if (dirty && !confirm('You have unsaved changes. Start a new project and lose them?')) return;
+    doc = normalize(blankDoc()); fileHandle = null; baselineText = null; fileName = null; dirty = false;
+    clearDraft(); render(); openProjectDialog();
+  }
+
+  let toastTimer = null;
+  function toast(msg, isError) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.classList.toggle('error', !!isError);
+    t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.hidden = true; }, isError ? 7000 : 4200);
+  }
+
+  // ---------- Wiring ----------
+  function init() {
+    doc = normalize(doc);
+    $('newBtn').onclick = newProject;
+    $('openBtn').onclick = openFile;
+    $('saveBtn').onclick = saveFile;
+    $('editProjectBtn').onclick = openProjectDialog;
+    $('filmTitle').onclick = openProjectDialog;
+    $('printBtn').onclick = () => { renderReport(); window.print(); };
+    window.addEventListener('beforeprint', renderReport);
+    $('projectCsvBtn').onclick = () => $('projectCsvDialog').showModal();
+    $('projectCsvCancel').onclick = () => $('projectCsvDialog').close();
+    $('projectCsvForm').addEventListener('submit', ev => { ev.preventDefault(); exportProjectCsv(); $('projectCsvDialog').close(); });
+    $('fileInput').addEventListener('change', async () => {
+      const f = $('fileInput').files[0];
+      if (f) loadText(await f.text(), f.name, null);
+      $('fileInput').value = '';
+    });
+    $('projectForm').addEventListener('submit', ev => { ev.preventDefault(); saveProjectDialog(); });
+    $('projectCancel').onclick = () => $('projectDialog').close();
+    $('addBtn').onclick = () => openEditor(null);
+    $('emptyOpenBtn').onclick = openFile;
+    $('csvBtn').onclick = exportCsv;
+    $('layout').addEventListener('change', () => { layout = $('layout').value; render(); });
+    $('closeDate').addEventListener('change', () => { setF('closeDate', $('closeDate').value); changed(); });
+    $('status').addEventListener('change', () => { setF('status', $('status').value === 'final' ? 'final' : ''); changed(); });
+    $('table').addEventListener('click', ev => { const b = ev.target.closest('[data-note]'); if (b) openEditor(b.dataset.note); });
+    $('f-key').addEventListener('change', showFacts);
+    $('editorForm').addEventListener('submit', ev => { ev.preventDefault(); saveEditor(); });
+    $('editorCancel').onclick = () => $('editor').close();
+
+    document.addEventListener('keydown', ev => {
+      const mod = ev.metaKey || ev.ctrlKey;
+      if (mod && ev.key.toLowerCase() === 's') { ev.preventDefault(); saveFile(); }
+      else if (mod && ev.key.toLowerCase() === 'o') { ev.preventDefault(); openFile(); }
+    });
+    window.addEventListener('beforeunload', ev => { if (dirty) { ev.preventDefault(); ev.returnValue = ''; } });
+    render();
+    checkDraft();
+  }
+
+  if (typeof HTMLDialogElement !== 'function' || typeof HTMLDialogElement.prototype.showModal !== 'function' || typeof structuredClone !== 'function') {
+    $('cantRunTitle').textContent = 'This browser is too old to run this tool';
+    $('cantRunText').textContent = 'Update to a current version of Chrome, Edge, Firefox or Safari, then open this file again.';
+    $('cantRunHow').hidden = true;
+    return;
+  }
+  document.documentElement.classList.remove('no-js');
+  window.addEventListener('error', ev => toast(`Something went wrong: ${ev.message}. Save your work, then reload the page.`, true));
+  window.addEventListener('unhandledrejection', ev => toast(`Something went wrong: ${ev.reason && ev.reason.message ? ev.reason.message : ev.reason}. Save your work, then reload the page.`, true));
+  init();
+})();
+</script>
+</body>
+</html>
