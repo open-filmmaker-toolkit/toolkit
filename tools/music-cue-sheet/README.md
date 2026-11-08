@@ -61,6 +61,8 @@ Usage codes: BI background instrumental, BV background vocal, VI visual instrume
 
 Roles: C composer, A author (lyrics), CA composer and author, AR arranger, E publisher, AM administrator, SE sub-publisher.
 
+- **Imports from a spreadsheet:** choose **Import from a spreadsheet** under the file buttons and pick a CSV file. One with the columns of the [spreadsheet template](../../templates/music-cue-sheet-template.csv) imports as it is; match any other columns once and the tool remembers. Problems, such as a date it can't read, show row by row before anything is added, and importing only adds.
+
 ## What it adds to the project file
 
 The shared [version 1 schema](../../schemas/project-v1.schema.json) documents the complete project file format, including data owned by other tools.
@@ -90,7 +92,7 @@ Running time, distributor and release date live in `project` because other tools
 
 - Series and episodes
 - Splitting a cue sheet by reel
-- Importing a cue sheet from CSV or from an edit decision list
+- Importing a cue sheet from an edit decision list
 - Electronic filing formats for performing rights organizations
 
 ## License

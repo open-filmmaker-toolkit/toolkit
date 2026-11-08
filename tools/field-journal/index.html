@@ -1212,6 +1212,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   .oft-kinds { margin: 8px 0; padding: 8px 12px; border: 1px solid var(--rule); border-radius: 8px; }
   .oft-kinds label { display: flex; gap: 8px; align-items: flex-start; padding: 3px 0; }
   .oft-kinds small { color: var(--ink-3); }
+  .oft-map { overflow-x: auto; }
+  .oft-map table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .oft-map th, .oft-map td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--rule); vertical-align: middle; }
+  .oft-map select { max-width: 100%; padding: 4px 6px; font: inherit; color: var(--ink); background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; }
+  .oft-unmatched { color: var(--bad); font-weight: 600; }
   .oft-conflict { margin: 8px 0; padding: 8px 12px; border: 1px solid var(--rule); border-radius: 8px; }
   .oft-conflict legend { font-weight: 600; padding: 0 4px; }
   .oft-conflict label { display: flex; gap: 8px; align-items: flex-start; padding: 4px 0; overflow-wrap: anywhere; }
@@ -1232,6 +1237,12 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const links = document.createElement('p');
     links.className = 'oft-links';
     links.innerHTML = `<button type="button" class="link-btn" id="oftNameBtn">Add your name</button><button type="button" class="link-btn" id="oftMergeBtn">Merge two copies</button><a href="${OFT_GUIDE}">Working on a shared file</a>`;
+    if (typeof oftImport !== 'undefined' && typeof OFT_IMPORT !== 'undefined') {
+      const imp = document.createElement('button');
+      imp.type = 'button'; imp.className = 'link-btn'; imp.id = 'oftImportBtn'; imp.textContent = 'Import from a spreadsheet';
+      imp.onclick = () => oftImport.open(OFT_IMPORT);
+      links.prepend(imp);
+    }
     if (typeof oftProject !== 'undefined') {
       const cal = document.createElement('button');
       cal.type = 'button'; cal.className = 'link-btn'; cal.id = 'oftCalBtn'; cal.textContent = 'Calendar of every date';

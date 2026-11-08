@@ -44,6 +44,8 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 
 Lengths are worked out from timecode at the film's frame rate (also set in **Edit film details**). Drop-frame timecode is treated as non-drop, so long 29.97 segments can be off by a frame or two.
 
+- **Imports from a spreadsheet:** choose **Import from a spreadsheet** under the file buttons and pick a CSV file. One with the columns of the [spreadsheet template](../../templates/clearance-log-template.csv) imports as it is; match any other columns once and the tool remembers. Problems, such as a date it can't read, show row by row before anything is added, and importing only adds.
+
 ## Saving
 
 Your log lives in a project file on your computer (`your-film.oft.json`).
@@ -86,7 +88,6 @@ Status values are `not-started`, `requested`, `negotiating`, `licensed`, `fair-u
 
 ## Not yet
 
-- Importing an existing clearance spreadsheet (CSV)
 - Attaching license PDFs to an element
 - Linking to people and locations from the release tracker
 - Installing as an offline app (works offline now as a saved file; installable once the site is published)

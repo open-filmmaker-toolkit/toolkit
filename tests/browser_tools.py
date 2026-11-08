@@ -17,6 +17,7 @@ The shared code in every tool (shared/tool.js) is checked on the name supers lis
 merging in the save warning, who changed what, who has the file open, conflicted copies, and
 remembering the open file across tools (served over HTTP so the browser gives real file handles).
 The home page dashboard is checked with the sample: its flags against five tools, the calendar file and summaries.
+Every tool whose template lists records imports its template without matching, and imports its own export.
 """
 import base64, datetime, csv, io, json, os, pathlib, re, sys, tempfile
 from playwright.sync_api import sync_playwright
@@ -3149,6 +3150,68 @@ def test_tool_calendar(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
+# Spreadsheet templates that list records, and so can be imported. The others are reports worked out from the project,
+# and the stills library needs the images themselves.
+REPORT_TEMPLATES = {'stills-library', 'contract-archive', 'final-cost-report', 'waterfall', 'rights-matrix', 'clearance-report', 'chain-of-title', 'budget-to-actuals', 'cash-flow', 'security-checklist', 'paper-edit'}
+
+def import_csv(pg, name, text):
+    pg.click('#oftImportBtn')
+    pg.set_input_files('#oftImpInput', files=[{'name': name, 'mimeType': 'text/csv', 'buffer': text.encode('utf-8')}])
+    pg.wait_for_timeout(150)
+
+def test_imports(browser, fake):
+    for name, template in TEMPLATE_EXPORTS:
+        if name in REPORT_TEMPLATES:
+            continue
+        ctx, pg, errs = new_page(browser, name, fake)
+        open_sample(pg, fake)
+        with pg.expect_download() as d:
+            pg.click('#csvBtn')
+        exported = open(d.value.path(), encoding='utf-8-sig').read()
+        rows = list(csv.reader(io.StringIO(exported)))
+        pg.click('#newBtn'); pg.wait_for_timeout(100)
+        pg.evaluate("document.querySelectorAll('dialog[open]').forEach(d => d.close())")
+        head = (root / 'templates' / template).read_text(encoding='utf-8-sig')
+        import_csv(pg, template, head)
+        unmatched = pg.locator('#oftImpMap .oft-unmatched').count()
+        check(unmatched == 0 and pg.is_disabled('#oftImpAdd'), '%s: its template imports without any matching (%d not matched)' % (name, unmatched))
+        pg.click('#oftImpCancel')
+        import_csv(pg, 'export.csv', exported)
+        summary = pg.inner_text('#oftImpSummary')
+        n = int(re.match(r'(\d+)', summary).group(1)) if re.match(r'(\d+)', summary) else 0
+        pg.click('#oftImpAdd'); pg.wait_for_timeout(200)
+        with pg.expect_download() as d:
+            pg.click('#csvBtn')
+        again = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+        first = {r[0] for r in rows[1:] if r and r[0]}
+        check(n >= 1 and len(again) > 1 and (not first or {r[0] for r in again[1:] if r} & first), '%s: imports its own export (%d rows to add, %d exported again)' % (name, n, len(again) - 1))
+        check(not errs, 'no page errors %s' % errs)
+        ctx.close()
+    # Problems per row, matching by hand, remembering it, and never changing what's there
+    ctx, pg, errs = new_page(browser, 'subject-tracker', fake)
+    open_sample(pg, fake)
+    before = json.loads(sample)['subjects']
+    import_csv(pg, 'contacts.csv', 'Full name,Access,Next follow-up\nIrene Walsh,Agreed,2026-12-01\nTomas Reyes,Somewhere,next spring\n,Agreed,2026-12-02\n')
+    check(pg.locator('#oftImpMap .oft-unmatched').count() == 1, 'a column with another name is flagged for matching')
+    pg.select_option('#oftImpMap select[data-col="0"]', 'Name'); pg.wait_for_timeout(100)
+    rowtext = pg.inner_text('#oftImpRows')
+    check('2 subjects to add, 1 row skipped' in pg.inner_text('#oftImpSummary') and 'next spring" isn\'t a date' in rowtext and 'Somewhere" isn\'t one of' in rowtext and 'No name' in rowtext, 'problems are shown per row before anything is added')
+    pg.click('#oftImpAdd'); pg.wait_for_timeout(200)
+    check('Irene Walsh' in pg.inner_text('main') and 'Tomas Reyes' in pg.inner_text('main'), 'adds the rows')
+    import_csv(pg, 'contacts.csv', 'Full name,Access\nAnother Person,Agreed\n')
+    check(pg.input_value('#oftImpMap select[data-col="0"]') == 'Name', 'matching by hand is remembered for next time')
+    pg.click('#oftImpCancel')
+    if fake:
+        pg.click('#saveBtn'); pg.wait_for_timeout(300)
+        saved = json.loads(pg.evaluate('window.__file.text'))
+    else:
+        with pg.expect_download() as d:
+            pg.click('#saveBtn')
+        saved = json.loads(open(d.value.path(), encoding='utf-8').read())
+    check(saved['subjects'][:len(before)] == before and len(saved['subjects']) == len(before) + 2, 'importing never changes or removes existing records')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
 def test_template_columns(browser, fake):
     for name, template in TEMPLATE_EXPORTS:
         ctx, pg, errs = new_page(browser, name, fake)
@@ -3311,6 +3374,8 @@ def main():
         test_dashboard(browser, fake)
         print('== shared code / the calendar file in a tool with dates')
         test_tool_calendar(browser, fake)
+        print('== every tool with a template / importing from a spreadsheet')
+        test_imports(browser, fake)
         print('== templates / columns match the tools\' exports')
         test_template_columns(browser, fake)
         browser.close()

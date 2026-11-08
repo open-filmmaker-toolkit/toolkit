@@ -43,6 +43,8 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 
 For anyone who doesn't use the tool, there's a blank [spreadsheet template](../../templates/research-log-template.csv) with the same columns.
 
+- **Imports from a spreadsheet:** choose **Import from a spreadsheet** under the file buttons and pick a CSV file. One with the columns of the [spreadsheet template](../../templates/research-log-template.csv) imports as it is; match any other columns once and the tool remembers. Problems, such as a date it can't read, show row by row before anything is added, and importing only adds.
+
 ## Sending to the clearance log
 
 **Send to clearance log** adds the source to the clearance log as a third-party element, with its title, type, where it's from, rights holder, contact, cost and notes, at "Not started". The lead moves to ready to license, and both stay linked: the log shows the element's clearance status as it changes. Leads marked ready to license that aren't in the clearance log yet are flagged with a button to send them.

@@ -44,6 +44,7 @@ For anyone who doesn't use the tool, there's a [spreadsheet template](../../temp
 This is not legal advice. Your licenses' own terms are what count. See [Not legal advice](../../README.md#not-legal-advice).
 
 - **A calendar file of every date in the project**, gathered from every tool: choose **Calendar of every date** under the file buttons and pick which kinds of dates to include. Importing a newer file updates the same events instead of adding them twice.
+- **Imports from a spreadsheet:** choose **Import from a spreadsheet** under the file buttons and pick a CSV file. One with the columns of the [spreadsheet template](../../templates/licenses-template.csv) imports as it is; match any other columns once and the tool remembers. Problems, such as a date it can't read, show row by row before anything is added, and importing only adds.
 
 ## Saving and file conflicts
 
