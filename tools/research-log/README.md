@@ -38,6 +38,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **Tracks each archival lead** from found, to screener requested, to screener received, to ready to license, or not using. Research sources go from to check, to checked, to using, or not using.
 - **Shows the pipeline.** A side panel counts archival leads at each step, how many are in the clearance log, and the estimated cost of the leads not sent yet.
 - **Finds things.** Filter by status and search titles, archives, item IDs and notes.
+- **Cites research sources** in Chicago, APA or MLA style. Add the author and the date it was published, then click **Citations** to see the list and download it as text. Check it against the style guide before it goes out: the tool can't tell a book from an article.
 - **Prints** both logs, and **exports CSV**.
 - **Exports project data.** Save project details, people, locations, third-party elements, contracts, assets, music cue sheet details or call sheets as separate CSV files.
 
@@ -62,7 +63,7 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-A `sources` list. Each source has an `id`, a `kind` (`archival` or `research`), and optional `title`, `status`, `type`, `archive`, `itemId`, `link`, `rightsHolder`, `contact`, `cost`, `currency`, `rightsNotes`, `notes`, and `elementId` once it's in `thirdPartyElements`.
+A `sources` list. Each source has an `id`, a `kind` (`archival` or `research`), and optional `title`, `status`, `type`, `archive`, `author`, `published` (as written, such as `1966` or `June 3, 1985`), `accessed` (a date, for web pages), `itemId`, `link`, `rightsHolder`, `contact`, `cost`, `currency`, `rightsNotes`, `notes`, and `elementId` once it's in `thirdPartyElements`.
 
 Archival statuses are `found`, `screener-requested`, `screener-received`, `ready-to-license` and `not-using`. Research statuses are `to-check`, `checked`, `using` and `not-using`.
 
@@ -71,7 +72,6 @@ Sending to the clearance log adds an element to `thirdPartyElements`. Sources ca
 ## Not yet
 
 - Attaching screeners and documents
-- Citations in a standard style for research sources
 
 ## License
 

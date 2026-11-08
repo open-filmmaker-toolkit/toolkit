@@ -523,6 +523,20 @@ def test_research_log(browser, fake):
     pg.fill('#f-cost', '200'); pg.select_option('#f-type', 'Archival still'); pg.fill('#f-archive', 'State archives'); pg.click('#sendBtn'); pg.wait_for_timeout(200)
     check('Levee construction stills' in pg.inner_text('#rows') and '4 sent to the clearance log' in pg.inner_text('#totals'), 'a new source can be sent straight from the editor')
 
+    pg.click('#tab-research'); pg.click('[data-edit="source-army-report"]')
+    check(pg.is_visible('#f-author'), 'research sources have author and date fields')
+    pg.fill('#f-author', 'US Army Corps of Engineers'); pg.fill('#f-published', '1966'); pg.fill('#f-archive', 'Government Printing Office'); pg.click('#editorSubmit'); pg.wait_for_timeout(100)
+    pg.click('#citeBtn')
+    cites = pg.inner_text('#citeList')
+    check('US Army Corps of Engineers. Corps of Engineers post-flood report, 1966. Government Printing Office, 1966. Call number TC423 .R5 1966.' in cites and cites.index('The River Keeps') < cites.index('US Army'), 'lists research sources as Chicago citations, sorted without a leading "The"')
+    pg.select_option('#citeStyle', 'apa')
+    check('US Army Corps of Engineers. (1966). Corps of Engineers' in pg.inner_text('#citeList') and '(n.d.)' in pg.inner_text('#citeList'), 'switches to APA')
+    pg.select_option('#citeStyle', 'mla')
+    check('“Corps of Engineers post-flood report, 1966.”' in pg.inner_text('#citeList') and '"The River Keeps Its Own" newspaper series.' in pg.inner_text('#citeList'), 'switches to MLA without doubling quotation marks')
+    with pg.expect_download() as d:
+        pg.click('#citeDownload')
+    check(open(d.value.path(), encoding='utf-8').read().count('\n\n') == 1 and d.value.suggested_filename.endswith('-citations-mla.txt'), 'downloads the citations as text')
+    pg.click('#citeClose'); pg.click('#tab-archival')
     with pg.expect_download() as d:
         pg.click('#csvBtn')
     lines = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
@@ -598,6 +612,10 @@ def test_treatment_builder(browser, fake):
     check('5 over' in pg.inner_text('#wc-logline') and 'over' in pg.get_attribute('#wc-logline', 'class'), 'flags a section over its target')
     pg.fill('[data-target="logline"]', '60'); pg.wait_for_timeout(100)
     check('55 of 60 words' in pg.inner_text('#wc-logline'), 'targets can be changed')
+    pg.select_option('[data-unit="logline"]', 'characters'); pg.wait_for_timeout(100)
+    check('274 of 300 characters' in pg.inner_text('#wc-logline'), 'a section can count characters instead of words')
+    pg.select_option('[data-unit="logline"]', 'words'); pg.wait_for_timeout(100)
+    pg.fill('[data-target="logline"]', '60'); pg.wait_for_timeout(100)
 
     pg.click('[data-insert="team"]'); pg.wait_for_timeout(100)
     team = pg.input_value('#t-team')
@@ -662,8 +680,20 @@ def test_pitch_deck(browser, fake):
     pg.click('[data-up="8"]'); pg.wait_for_timeout(100)
     check('Full-page image' in pg.locator('#deck .slide-wrap').nth(7).inner_text(), 'moves a slide')
 
+    pg.click('#addBtn'); pg.select_option('#f-kind', 'video'); pg.fill('#f-heading', 'Watch the trailer')
+    pg.fill('#f-link', 'https://example.com/trailer'); pg.fill('#f-password', 'levee'); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check('https://example.com/trailer' in pg.inner_text('#deck') and 'Password: levee' in pg.inner_text('#deck') and pg.locator('#deck a').count() == 0, 'adds a trailer slide with its link and password, not clickable in the editor')
+    pg.select_option('#themeSel', 'night'); pg.select_option('#fontSel', 'modern'); pg.wait_for_timeout(100)
+    bg = pg.evaluate("getComputedStyle(document.querySelector('#deck .slide')).backgroundColor")
+    font = pg.evaluate("getComputedStyle(document.querySelector('#deck .s-h, #deck .s-name')).fontFamily")
+    check(bg == 'rgb(21, 24, 31)' and 'Helvetica' in font, 'themes and fonts change the slides %s %s' % (bg, font))
+    pg.evaluate("const i = document.getElementById('accentIn'); i.value = '#20242c'; i.dispatchEvent(new Event('change', { bubbles: true }))"); pg.wait_for_timeout(100)
+    check('hard to read' in pg.inner_text('#accentHint') and pg.is_visible('#accentReset'), 'warns about an accent color without enough contrast')
+    pg.click('#accentReset'); pg.wait_for_timeout(100)
+    check(pg.inner_text('#accentHint') == '' and pg.input_value('#accentIn') == '#e2b86b', "goes back to the theme's accent")
     pg.check('input[name=size][value=letter]'); pg.click('#printBtn'); pg.wait_for_timeout(200)
-    check(pg.locator('#report .slide').count() == 8 and '11in 8.5in' in pg.inner_text('#pageSize'), 'prints the slides that aren\'t left out, at letter size')
+    check(pg.locator('#report a[href="https://example.com/trailer"]').count() == 1, 'the trailer link is clickable when printed')
+    check(pg.locator('#report .slide').count() == 9 and '11in 8.5in' in pg.inner_text('#pageSize'), 'prints the slides that aren\'t left out, at letter size')
 
     if fake:
         pg.click('#saveBtn'); pg.wait_for_timeout(300)
@@ -674,6 +704,7 @@ def test_pitch_deck(browser, fake):
         data = json.loads(open(d.value.path(), encoding='utf-8').read())
     d = data['pitchDeck']
     new = d['images'][-1]
+    check(d.get('theme') == 'night' and d.get('font') == 'modern' and 'accent' not in d and d['slides'][-1].get('link') == 'https://example.com/trailer' and d['slides'][-1].get('password') == 'levee', 'the look and the trailer slide are saved')
     check(d['size'] == 'letter' and new['name'] == 'still.png' and new['data'].startswith('data:image/jpeg;base64,') and d['slides'][7]['kind'] == 'image' and d['slides'][7]['imageIds'] == [d['images'][1]['id']],
           'size, images and slides are saved')
     original = json.loads(sample)
@@ -734,12 +765,35 @@ def test_grant_calendar(browser, fake):
     pg.click('#editorSubmit'); pg.wait_for_timeout(200)
     names = [t.split('\n')[0] for t in pg.locator('#rows .row .nm').all_inner_texts()]
     check(names[:3] == ['Riverbend Documentary Fund', 'Test Fund', 'Prairie State Arts Board'] and '0 of 4 materials ready' in pg.inner_text('#rows'), 'a new grant starts with the usual materials and sorts by deadline')
+    check(not pg.is_visible('#oftReminders'), 'no reminders when nothing is close')
+    soon = (datetime.date.today() + datetime.timedelta(days=5)).isoformat()
+    pg.click('[data-id="grant-prairie-arts"] [data-edit]'); old_deadline = pg.input_value('#f-deadline'); pg.fill('#f-deadline', soon); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check(pg.is_visible('#oftReminders') and 'Prairie State Arts Board: Media artist grant is due in 5 days' in pg.inner_text('#oftReminders'), 'reminds you of a deadline coming up')
+    pg.click('[data-rem-dismiss]'); pg.wait_for_timeout(200)
+    check(not pg.is_visible('#oftReminders'), 'dismisses a reminder')
+    pg.click('[data-id="grant-prairie-arts"] [data-edit]'); pg.select_option('#f-remind', '3'); pg.fill('#f-deadline', (datetime.date.today() - datetime.timedelta(days=2)).isoformat()); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check("deadline was" in pg.inner_text('#oftReminders'), 'a dismissed reminder comes back when the date changes, and a passed deadline is flagged')
+    pg.click('[data-rem-open]'); pg.wait_for_timeout(100)
+    check(pg.is_visible('#editor') and pg.input_value('#f-funder') == 'Prairie State Arts Board', 'a reminder opens its grant')
+    pg.fill('#f-deadline', old_deadline); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+
+    with pg.expect_download() as d:
+        pg.click('#listSaveBtn')
+    shared = json.loads(open(d.value.path(), encoding='utf-8').read())
+    check(shared['format'] == 'oft-list' and shared['kind'] == 'funders' and len(shared['items']) == 6 and shared['items'][0]['usualDeadline'] == '02-12' and 'notes' not in shared['items'][0], 'saves a funder list with usual deadlines')
+    with pg.expect_file_chooser() as fc:
+        pg.click('#listOpenBtn')
+    fc.value.set_files(str(root / 'samples/shared-funder-list.json')); pg.wait_for_selector('#oftListDialog[open]')
+    check(pg.locator('#oftListItems input:disabled').count() == 1 and pg.locator('#oftListItems input:checked').count() == 2 and 'Lakeshore' in pg.inner_text('#oftListItems'), 'opens a shared list to pick from, marking funders already in the project')
+    pg.locator('#oftListItems input').nth(2).uncheck(); pg.click('#oftListAdd'); pg.wait_for_timeout(200)
+    check('Lakeshore Story Foundation' in pg.inner_text('#rows') and 'Tri-County' not in pg.inner_text('#rows'), 'adds the picked funders as grants to research')
+
 
     with pg.expect_download() as d:
         pg.click('#icsBtn')
     raw = open(d.value.path(), 'rb').read()
     lines = raw.decode('utf-8').split('\r\n')
-    check(raw.count(b'BEGIN:VEVENT') == 5 and b'Eastgate' not in raw and b'DTSTART;VALUE=DATE:20270212' in raw and raw.count(b'TRIGGER:-P7D') == 3,
+    check(raw.count(b'BEGIN:VEVENT') == 6 and b'Eastgate' not in raw and b'DTSTART;VALUE=DATE:20270212' in raw and raw.count(b'TRIGGER:-P14D') == 3 and raw.count(b'TRIGGER:-P3D') == 1,
           'calendar file has every deadline but the declined one, with reminders for open applications')
     check(lines[0] == 'BEGIN:VCALENDAR' and all(len(l.encode()) <= 75 for l in lines) and b'\n' not in raw.replace(b'\r\n', b''), 'calendar file lines are folded and end in CRLF')
 
@@ -753,7 +807,9 @@ def test_grant_calendar(browser, fake):
     check('Test Fund' in pg.inner_text('#report') and 'Eastgate' not in pg.inner_text('#report'), 'prints the list')
     data = saved_project(pg, fake)
     rb = next(g for g in data['grants'] if g['id'] == 'grant-riverbend')
-    check(len(data['grants']) == 5 and rb['materials'][2] == {'name': 'Work sample, 10 minutes', 'done': True} and rb['materials'][-1] == {'name': 'Fiscal sponsor letter'}, 'grants are saved')
+    lake = next(g for g in data['grants'] if g.get('funder') == 'Lakeshore Story Foundation')
+    check(lake['status'] == 'researching' and lake['deadline'].endswith('-05-15') and lake['deadline'] >= datetime.date.today().isoformat() and [m['name'] for m in lake['materials']] == ['Narrative', 'Budget', 'Treatment'], 'a funder from a list gets its next deadline and materials')
+    check(len(data['grants']) == 6 and rb['materials'][2] == {'name': 'Work sample, 10 minutes', 'done': True} and rb['materials'][-1] == {'name': 'Fiscal sponsor letter'}, 'grants are saved')
     versions = {v['id']: v for a in data['narratives'] for v in a['versions']}
     check({'grantId': 'grant-riverbend'}.items() <= versions['version-synopsis-350c']['uses'][0].items(), 'the linked answer is recorded on the library version')
     check(versions['version-logline-150c']['uses'][0] == {'funder': 'Eastgate Film Initiative: Development lab', 'date': '2026-05-29'}, 'removing a grant keeps the record of what was sent, by funder name')
@@ -787,15 +843,23 @@ def test_narrative_library(browser, fake):
     pg.click('#addBtn')
     pg.fill('#f-title', 'Budget narrative')
     pg.locator('#versions .v-limit').first.fill('250'); pg.locator('#versions .v-text').first.fill('We are raising the last third of the budget.')
+    pg.click('#addVersionBtn'); pg.locator('#versions .v-limit').nth(1).fill('250'); pg.locator('#versions .v-lang').nth(1).fill('Spanish')
+    pg.locator('#versions .v-text').nth(1).fill('Estamos recaudando el último tercio del presupuesto.')
     pg.click('#editorSubmit'); pg.wait_for_timeout(200)
-    check('9 of 250 words' in pg.inner_text('#rows'), 'adds an answer')
+    check('9 of 250 words' in pg.inner_text('#rows') and '250 words, Spanish' in pg.inner_text('#rows'), 'adds an answer, with a version in another language')
 
     pg.click('#setBtn')
+    pg.select_option('#setLang', 'Spanish')
+    one_language = pg.locator('#setList .set-row').count() == 1
+    pg.select_option('#setList [data-answer]', index=1)
+    check(one_language and 'Estamos' in pg.input_value('#setOut'), 'picks answers in one language')
+    pg.select_option('#setList [data-answer]', ''); pg.select_option('#setLang', '')
     pg.select_option('#setGrant', 'grant-riverbend')
+    pg.fill('#setList [data-prompt="narrative-impact"]', 'What change do you hope to see?')
     pg.select_option('#setList [data-answer="narrative-logline"]', 'version-logline-25w')
     pg.select_option('#setList [data-answer="narrative-impact"]', 'version-impact-150w')
     out = pg.input_value('#setOut')
-    check(out.startswith('Logline (25 words)\n\nWhen the river') and 'Impact statement (150 words)' in out, 'pulls together the picked versions for one application')
+    check(out.startswith('Logline (25 words)\n\nWhen the river') and 'Impact statement (150 words)\nWhat change do you hope to see?' in out, "pulls together the picked versions for one application, with the funder's question")
     pg.click('#setCopyBtn'); pg.wait_for_timeout(200)
     check('Copied' in pg.inner_text('#toast'), 'copies the set')
     with pg.expect_download() as d:
@@ -815,7 +879,7 @@ def test_narrative_library(browser, fake):
     with pg.expect_download() as d:
         pg.click('#csvBtn')
     rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
-    check(rows[0][:3] == ['Answer', 'Version', 'Limit'] and len(rows) == 1 + 9 and any(r[0] == 'Logline' and 'Riverbend Documentary Fund' in r[9] for r in rows), 'CSV lists every version with where it was sent')
+    check(rows[0][:3] == ['Answer', 'Version', 'Limit'] and len(rows) == 1 + 10 and any(r[0] == 'Logline' and 'Riverbend Documentary Fund' in r[9] for r in rows), 'CSV lists every version with where it was sent')
     pg.click('#printBtn'); pg.wait_for_timeout(200)
     check('Budget narrative' in pg.inner_text('#report') and 'Access' in pg.inner_text('#report'), 'prints every answer')
 
@@ -825,6 +889,9 @@ def test_narrative_library(browser, fake):
     check(rb('version-logline-150c') == [{'grantId': 'grant-riverbend', 'date': '2027-02-10'}] and rb('version-logline-25w') == [] and len(rb('version-impact-150w')) == 1,
           'one version of each answer per application: sending another length replaces the first')
     check(versions['version-bio-ana-50w']['uses'] == [{'funder': 'Station pitch', 'date': '2027-02-10'}], 'a funder outside the calendar is saved by name')
+    check(rb('version-impact-150w')[0].get('prompt') == 'What change do you hope to see?', "the funder's question is saved with the application")
+    budget = next(a for a in data['narratives'] if a['title'] == 'Budget narrative')
+    check([v.get('language') for v in budget['versions']] == [None, 'Spanish'], 'saves the language of each version')
     check(versions['version-synopsis-350c']['updated'] != '2026-10-20' and versions['version-synopsis-100w']['updated'] == '2026-09-15', 'only changed versions get a new date')
     original = json.loads(sample)
     check(data['grants'] == original['grants'] and data['treatment'] == original['treatment'] and data['people'] == original['people'], "other tools' data is unchanged")
@@ -904,6 +971,9 @@ def test_budget_converter(browser, fake):
     pg.click('[data-account="account-1000"] ~ details summary')
     pg.select_option('[data-line="line-1000-0"]', 'category-rb-personnel'); pg.wait_for_timeout(100)
     check('1 sent elsewhere' in pg.inner_text('#mapping'), 'sends one line to another category')
+    pg.select_option('[data-split="line-1000-0"]', 'category-rb-other'); pg.wait_for_timeout(100)
+    pg.fill('[data-splitpct="line-1000-0"]', '20'); pg.dispatch_event('[data-splitpct="line-1000-0"]', 'change'); pg.wait_for_timeout(100)
+    check(pg.input_value('[data-splitpct="line-1000-0"]') == '20' and 'Everything is mapped' in pg.inner_text('#checks'), 'splits one line across two categories, and the total still matches')
 
     pg.click('#addBtn')
     pg.select_option('#f-preset', 'sf424a')
@@ -921,15 +991,20 @@ def test_budget_converter(browser, fake):
     check(pg.locator('#formatSel option').count() == 3 and pg.locator('[data-account="account-2200"] option:checked').inner_text() == 'Travel', 'opens a format file and maps the accounts it names')
 
     pg.select_option('#formatSel', 'budget-format-riverbend'); pg.wait_for_timeout(100)
+    pg.click('#editFormatBtn')
+    pg.locator('#catRows .cat-sec').nth(2).fill('Post'); pg.locator('#catRows .cat-sec').nth(3).fill('Post'); pg.click('#editorSubmit'); pg.wait_for_timeout(100)
+    check('Total for Post' in pg.inner_text('#conv'), "groups line items under the form's own sections")
     with pg.expect_download() as d:
         pg.click('#csvBtn')
     rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
-    check(rows[0] == ['Category', 'Item', 'Amount'] and ['Equipment and travel', '3000 Editorial: Edit system rental', '4200.00'] in rows, 'CSV lists each category with its lines')
+    check(rows[0] == ['Section', 'Category', 'Item', 'Amount'] and ['', 'Equipment and travel', '3000 Editorial: Edit system rental', '4200.00'] in rows and any(r[1:3] == ['', 'Total for Post'] for r in rows), 'CSV lists each category with its lines and sections')
+    check(['', 'Personnel', '1000 Development and research: Archive research (80%)', '2800.00'] in rows and ['', 'Other costs', '1000 Development and research: Archive research (20%)', '700.00'] in rows, 'CSV shows each part of a split line')
     pg.click('#printBtn'); pg.wait_for_timeout(200)
     check('Riverbend Documentary Fund' in pg.inner_text('#report') and 'Music and archival' in pg.inner_text('#report'), 'prints the converted budget for the application')
     data = saved_project(pg, fake)
     rb = next(f for f in data['budgetFormats'] if f['id'] == 'budget-format-riverbend')
     check(len(data['budgetFormats']) == 3 and rb['accountMap']['account-2300'] == 'category-rb-other' and rb['markupMap']['markup-contingency'] == 'category-rb-other' and rb['lineMap']['line-1000-0'] == 'category-rb-personnel', 'mappings are saved')
+    check(rb['lineSplits'] == {'line-1000-0': {'categoryId': 'category-rb-other', 'percent': 20}} and rb['categories'][2]['section'] == 'Post' and 'section' not in rb['categories'][0], 'splits and sections are saved')
     check(data['budget'] == original['budget'] and data['grants'] == original['grants'], "other tools' data is unchanged")
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
@@ -2921,9 +2996,28 @@ def test_grant_reports(browser, fake):
     pg.click('#printBtn'); pg.wait_for_timeout(200)
     r = pg.inner_text('#report')
     check('Final report: Riverside County Heritage Trust' in r and 'Budget and final costs' in r and 'The footage is now public' in r and 'Impact' in r and 'I never knew the plan was open' in r, 'prints the report with costs and impact')
+    pg.click('#interimBtn')
+    check(pg.is_visible('#f-title') and pg.is_visible('#f-grant'), 'adds an interim report, with a name and grant')
+    pg.fill('#f-title', 'Six-month report'); pg.fill('#f-pstart', '2026-03-15'); pg.fill('#f-pend', '2026-09-15'); pg.fill('#f-due', '2026-10-01')
+    pg.click('#addQBtn'); pg.locator('.q-prompt').nth(0).fill('What did you accomplish?'); pg.locator('.q-limit').nth(0).fill('5')
+    pg.locator('.q-answer').nth(0).fill('We digitized every reel in the archive.')
+    check('7 of 5 words, 2 over' in pg.inner_text('.q-wc'), "counts each answer against the funder's limit")
+    pg.click('#addQBtn'); pg.locator('.q-prompt').nth(1).fill('What changed in the budget?')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check(pg.locator('#rows .row').count() == 2 and 'Six-month report' in pg.inner_text('#rows') and '1 of 2 questions answered' in pg.inner_text('#rows'), 'lists the interim report beside the final one')
+    pg.select_option('#printSel', label='Riverside County Heritage Trust, Local history grant: Six-month report'); pg.click('#printBtn'); pg.wait_for_timeout(200)
+    r = pg.inner_text('#report')
+    check('Six-month report: Riverside County Heritage Trust' in r and 'What did you accomplish?' in r and '7 of 5 words' in r and 'Covers Mar 15, 2026 to Sep 15, 2026' in r and 'Narrative' not in r, "prints an interim report in the funder's own order")
+    pg.click('[data-edit="grant-county-heritage"]'); pg.select_option('#f-copyq', index=1)
+    check(pg.locator('.q-row').count() == 2 and pg.locator('.q-answer').nth(0).input_value() == '', "copies another report's questions without their answers")
+    pg.click('#editorCancel')
     data = saved_project(pg, fake)
-    gr = data['grantReports'][0]
-    check(gr['status'] == 'submitted' and gr['submittedDate'] and gr['outcomes'].startswith('The footage') and len(data['grantReports']) == 1, 'saves the report')
+    gr = next(x for x in data['grantReports'] if x.get('kind') != 'interim')
+    interim = next(x for x in data['grantReports'] if x.get('kind') == 'interim')
+    check(interim['title'] == 'Six-month report' and interim['grantId'] == gr['grantId'] and interim['questions'][0]['limit'] == 5 and 'answer' not in interim['questions'][1] and interim['periodEnd'] == '2026-09-15', 'saves the interim report and its questions')
+    check(gr['status'] == 'submitted' and gr['submittedDate'] and gr['outcomes'].startswith('The footage') and len(data['grantReports']) == 2, 'saves the report')
+    pg.click('[data-edit="%s"]' % interim['id']); pg.click('#deleteBtn'); pg.wait_for_timeout(200)
+    check(pg.locator('#rows .row').count() == 1, 'removes an interim report')
     report_uses = [(n['id'], v['id'], u) for n in data['narratives'] for v in n.get('versions', []) for u in v.get('uses', []) if u.get('use') == 'final report']
     strip = lambda ns: [dict(n, versions=[dict(v, uses=[u for u in v.get('uses', []) if u.get('use') != 'final report']) for v in n.get('versions', [])]) for n in ns]
     clean = lambda ns: [dict(n, versions=[{k: x for k, x in v.items() if not (k == 'uses' and not x)} for v in n['versions']]) for n in ns]

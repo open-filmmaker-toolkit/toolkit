@@ -39,7 +39,9 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **Has a calendar view.** A month at a time, starting at the next open deadline, with grants colored by status.
 - **Adds up where things stand:** open applications, how many are waiting on a decision, the total you've asked for that's still waiting, and the total awarded, in the project's currency.
 - **Links the answers you used.** Tick the versions from the [grant narrative library](../narrative-library/) that went into each application. The library then shows which funder got which version, and when.
-- **Exports a calendar file** (`.ics`) with an all-day event for each deadline and a reminder a week before for open applications. It opens in Google Calendar, Apple Calendar and Outlook. Declined grants are left out.
+- **Reminds you** when you open it: deadlines coming up, deadlines that passed with nothing sent, and decisions that are late. Choose how early each grant reminds you, or turn it off. Dismiss a reminder and it comes back only if its date changes.
+- **Shares funder lists.** **Save a list** writes your funders, their usual deadlines, amounts, eligibility and what they ask for to a small list file, without your notes or answers. **Add from a list** opens one, from your team or an earlier project, and adds the funders you pick with the next deadline coming up. There's a [sample list](../../samples/shared-funder-list.json) of fictional funders to try.
+- **Exports a calendar file** (`.ics`) with an all-day event for each deadline and a reminder before each open application's deadline: two weeks unless you change it in the grant. It opens in Google Calendar, Apple Calendar and Outlook. Declined grants are left out.
 - **Exports CSV and prints** the list. Also exports project data: project details, people, locations, third-party elements, contracts, assets, music cue sheet details or call sheets as separate CSV files.
 
 For anyone who doesn't use the tool, there's a blank [spreadsheet template](../../templates/grant-calendar-template.csv) with the same columns.
@@ -57,15 +59,14 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-A `grants` list. Each grant has an `id` and a `status` (`researching`, `drafting`, `submitted`, `awarded` or `declined`), and optional `funder`, `program`, `deadline` (a date), `deadlineTime` (text, such as "5 pm Eastern"), `amount` (what's available, as text), `requested` and `awarded` (numbers, in the project's currency), `eligibility`, `materials` (each with `name` and `done`), `url`, `contact`, `submittedOn`, `decisionOn` and `notes`.
+A `grants` list. Each grant has an `id` and a `status` (`researching`, `drafting`, `submitted`, `awarded` or `declined`), and optional `funder`, `program`, `deadline` (a date), `deadlineTime` (text, such as "5 pm Eastern"), `amount` (what's available, as text), `requested` and `awarded` (numbers, in the project's currency), `eligibility`, `materials` (each with `name` and `done`), `url`, `contact`, `submittedOn`, `decisionOn`, `notes`, `remindDays` (how many days before the deadline to remind you, `0` for never; two weeks when it's missing) and `dismissedReminders` (the reminders you dismissed).
 
 Which answers went to which grant is kept on the answers, in the library's `narratives`, so there's one record of it. Removing a grant keeps that record, with the funder's name in place of the link. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
-- Reminders inside the tool, beyond the calendar file
 - Importing grants from a funder database
-- A shared list of funders and their usual deadlines
+- A list of funders that the toolkit keeps up to date for everyone. Lists are shared as files instead, so nothing is fetched
 
 ## License
 

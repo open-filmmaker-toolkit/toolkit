@@ -34,8 +34,9 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 ## What it does
 
 - **Starts from the project.** **Start from the project** drafts eight slides: title and logline, the story and characters from the [treatment builder](../treatment-builder/), the look, the team, comps, the ask and contact. Bracketed text marks what's left to write.
-- **Kinds of slide:** title and logline (with a background image), text with an image on either side, the look (a grid of up to six images), a full-page image with a caption, team, and comps.
+- **Kinds of slide:** title and logline (with a background image), text with an image on either side, the look (a grid of up to six images), a full-page image with a caption, a trailer or video link (with its password, and clickable in a saved PDF), team, and comps.
 - **Team and comps follow the project.** The team slide lists the crew in your project with their roles. The comps slide shows the comps ticked "In the pitch" in the [comps tracker](../comps-tracker/), with one sourced figure each and the source as a note. Change them there and the slides follow.
+- **Themes and type.** Pick a theme (paper, night, white or river), a typeface from the fonts most computers already have, and an accent color. The tool warns when an accent is too faint to read on the background.
 - **Arranges the deck.** Move slides up and down, edit them, or leave a slide out without deleting it.
 - **Prints to PDF** with one slide per page, at 13.33 × 7.5 inches for widescreen or 11 × 8.5 inches for letter. Choose **Save as PDF** in the print dialog.
 - **Exports project data.** Save project details, people, locations, third-party elements, contracts, assets, music cue sheet details or call sheets as separate CSV files.
@@ -59,16 +60,16 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 A `pitchDeck` object:
 
 - `size`: `widescreen` or `letter`.
-- `slides`: in order, each with an `id` and a `kind` (`title`, `text`, `look`, `image`, `team` or `comps`), and optional `heading`, `body`, `layout` (`left` or `right`, for text slides), `imageIds` and `hidden`. Team and comps slides are built from `people` and `comps` each time.
+- `theme` (`night`, `white` or `river`; paper when it's missing), `font` (`modern`, `mixed`, `book` or `typewriter`; classic serif when it's missing) and `accent`, a color like `#b3261e`, when it differs from the theme's.
+- `slides`: in order, each with an `id` and a `kind` (`title`, `text`, `look`, `image`, `video`, `team` or `comps`), and optional `heading`, `body`, `layout` (`left` or `right`, for text slides), `link` and `password` (for video slides), `imageIds` and `hidden`. Team and comps slides are built from `people` and `comps` each time.
 - `images`: each with an `id`, `name`, `width`, `height` and `data`, the resized image as a data URL.
 
 Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
-- Themes, fonts and colors to choose from
 - Export to PowerPoint or Keynote
-- Slides with video or a link to a trailer
+- Playing video on a slide
 
 ## License
 

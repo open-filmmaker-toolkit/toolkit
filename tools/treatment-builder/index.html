@@ -122,6 +122,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .wc.over { color: var(--bad); font-weight: 600; }
 .wc.near { color: var(--warn); font-weight: 600; }
 .target { display: inline-flex; align-items: center; gap: 6px; }
+.unit { padding: 3px 6px; border: 1px solid var(--rule); border-radius: 5px; background: var(--paper); color: var(--ink); font: inherit; font-size: inherit; }
 .target input { width: 72px; padding: 3px 6px; border: 1px solid var(--rule); border-radius: 5px; background: var(--paper); }
 .outline { list-style: none; margin: 4px 0 0; padding: 0; }
 .outline li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; padding: 5px 0; font-size: 14px; }
@@ -430,6 +431,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const t = d.treatment;
     if (!t.sections || typeof t.sections !== 'object' || Array.isArray(t.sections)) t.sections = {};
     if (t.targets !== undefined && (typeof t.targets !== 'object' || Array.isArray(t.targets))) delete t.targets;
+    if (t.units !== undefined && (typeof t.units !== 'object' || Array.isArray(t.units))) delete t.units;
     if (t.versions !== undefined && !Array.isArray(t.versions)) delete t.versions;
     d.format = FORMAT;
     d.formatVersion = FORMAT_VERSION;
@@ -440,7 +442,12 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const entries = () => SECTIONS.filter(s => textOf(s.key).trim());
   const versions = () => arr(T().versions).filter(v => v && typeof v === 'object');
   const words = s => (str(s).match(/[^\s—–]+/g) || []).length;
-  const targetOf = s => { const n = Number((T().targets || {})[s.key]); return n > 0 ? n : s.target; };
+  // Some funders limit characters (spaces included) rather than words. A section counts one or the other.
+  const unitOf = s => ((T().units || {})[s.key] === 'characters' ? 'characters' : 'words');
+  const countOf = s => (unitOf(s) === 'characters' ? textOf(s.key).trim().length : words(textOf(s.key)));
+  // About six characters to a word, spaces included.
+  const defaultTarget = s => (unitOf(s) === 'characters' ? s.target * 6 : s.target);
+  const targetOf = s => { const n = Number((T().targets || {})[s.key]); return n > 0 ? n : defaultTarget(s); };
   function countClass(n, target) { return n > target ? 'over' : n > target * 0.9 ? 'near' : ''; }
 
   // ---------- Render ----------
@@ -451,7 +458,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       <p class="hint">${esc(s.hint)}</p>
       <textarea id="t-${s.key}" data-key="${s.key}" rows="${s.target >= 500 ? 10 : s.target >= 250 ? 6 : 3}" aria-labelledby="h-${s.key}"></textarea>
       <div class="sec-foot"><span class="wc" id="wc-${s.key}" aria-live="polite"></span><span class="spacer"></span>
-        <label class="target">Target <input type="number" min="1" step="1" data-target="${s.key}" aria-label="Word target for ${esc(s.title)}"> words</label></div>
+        <label class="target">Target <input type="number" min="1" step="1" data-target="${s.key}" aria-label="Target for ${esc(s.title)}"></label>
+        <select class="unit" data-unit="${s.key}" aria-label="Count words or characters for ${esc(s.title)}"><option value="words">words</option><option value="characters">characters</option></select></div>
     </section>`).join('');
     builtFor = doc;
   }
@@ -466,6 +474,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       if (document.activeElement !== ta && ta.value !== textOf(s.key)) ta.value = textOf(s.key);
       const ti = document.querySelector(`[data-target="${s.key}"]`);
       if (document.activeElement !== ti) ti.value = String(targetOf(s));
+      document.querySelector(`[data-unit="${s.key}"]`).value = unitOf(s);
     }
     renderStatus();
     renderVersions();
@@ -475,9 +484,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('fileState').innerHTML = (fileName ? esc(fileName) : 'Not saved to a file yet') + (dirty ? ' · <span class="dirty">Unsaved changes</span>' : '');
     let total = 0;
     $('outline').innerHTML = SECTIONS.map(s => {
-      const n = words(textOf(s.key)); const t = targetOf(s); total += n;
+      const n = countOf(s); const t = targetOf(s); const u = unitOf(s); total += words(textOf(s.key));
       const cls = countClass(n, t);
-      $(`wc-${s.key}`).textContent = n ? `${n} of ${t} words${n > t ? `, ${n - t} over` : ''}` : `Target ${t} words`;
+      $(`wc-${s.key}`).textContent = n ? `${n} of ${t} ${u}${n > t ? `, ${n - t} over` : ''}` : `Target ${t} ${u}`;
       $(`wc-${s.key}`).className = `wc ${cls}`;
       return `<li><a href="#sec-${s.key}" data-jump="${s.key}">${esc(s.title)}</a><span class="n ${n ? cls : 'none'}">${n ? `${n} / ${t}` : 'Empty'}</span></li>`;
     }).join('');
@@ -506,9 +515,18 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const s = SECTIONS.find(x => x.key === key);
     const n = Math.round(Number(value));
     if (!T().targets) T().targets = {};
-    if (n > 0 && n !== s.target) T().targets[key] = n; else delete T().targets[key];
+    if (n > 0 && n !== defaultTarget(s)) T().targets[key] = n; else delete T().targets[key];
     if (!Object.keys(T().targets).length) delete T().targets;
     dirty = true; saveDraft(); renderStatus();
+  }
+  // Switching a section between words and characters starts it at that unit's typical target.
+  function setUnit(key, value) {
+    const s = SECTIONS.find(x => x.key === key);
+    if (!T().units) T().units = {};
+    if (value === 'characters') T().units[key] = 'characters'; else delete T().units[key];
+    if (!Object.keys(T().units).length) delete T().units;
+    if (T().targets) { delete T().targets[key]; if (!Object.keys(T().targets).length) delete T().targets; }
+    dirty = true; saveDraft(); render();
   }
   const roleText = p => (Array.isArray(p.roles) ? p.roles.join(', ') : str(p.roles));
   const featured = p => p.onCamera === true || /subject|interview|featur|contributor/i.test(roleText(p));
@@ -846,7 +864,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       const ti = ev.target.closest('[data-target]');
       if (ti && ti.value) setTarget(ti.dataset.target, ti.value);
     });
-    $('sections').addEventListener('change', ev => { const ti = ev.target.closest('[data-target]'); if (ti) { setTarget(ti.dataset.target, ti.value); render(); } });
+    $('sections').addEventListener('change', ev => { const ti = ev.target.closest('[data-target]'); if (ti) { setTarget(ti.dataset.target, ti.value); render(); } const u = ev.target.closest('[data-unit]'); if (u) setUnit(u.dataset.unit, u.value); });
     $('sections').addEventListener('click', ev => { const b = ev.target.closest('[data-insert]'); if (b) insertFromProject(b.dataset.insert); });
     $('outline').addEventListener('click', ev => { const a = ev.target.closest('[data-jump]'); if (a) { ev.preventDefault(); $(`sec-${a.dataset.jump}`).scrollIntoView({ behavior: 'smooth' }); $(`t-${a.dataset.jump}`).focus({ preventScroll: true }); } });
     $('mdBtn').onclick = () => exportAs('md');

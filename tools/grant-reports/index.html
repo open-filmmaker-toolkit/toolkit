@@ -151,6 +151,15 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .preview td, .preview th { padding: 3px 6px; text-align: left; border-bottom: 1px solid var(--rule-soft); }
 .preview .n { text-align: right; font-variant-numeric: tabular-nums; }
 .wc { font-size: 12.5px; color: var(--ink-3); }
+.wc.over { color: var(--bad); font-weight: 600; }
+.q-rows { display: grid; gap: 10px; }
+.q-row { display: grid; gap: 4px; }
+.q-top { display: grid; grid-template-columns: 1fr 84px auto; gap: 6px; align-items: center; }
+.q-row input, .q-row textarea { width: 100%; padding: 7px 9px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); color: var(--ink); font: inherit; }
+.icon-btn { width: 32px; height: 32px; padding: 0; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); color: var(--ink); cursor: pointer; }
+.q-acts { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+.q-copy { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; }
+.q-copy select { padding: 5px 8px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); color: var(--ink); font: inherit; }
 
 dialog { border: 0; padding: 0; color: var(--ink); background: var(--sheet); box-shadow: 0 10px 40px rgba(10, 14, 22, 0.25); }
 dialog::backdrop { background: rgba(16, 20, 28, 0.42); }
@@ -193,7 +202,7 @@ pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; b
   .file { align-items: flex-start; }
   .file-state { text-align: left; }
   .toolbar h2 { flex-basis: 100%; order: -2; }
-  .toolbar #addBtn { flex: 1 1 100%; justify-content: center; order: -1; }
+  .toolbar #addBtn, .toolbar #interimBtn { flex: 1 1 100%; justify-content: center; order: -1; }
   .row { grid-template-columns: minmax(0, 1fr); }
   .flags { grid-column: 1; }
 }
@@ -260,10 +269,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   <main class="workspace" id="main">
     <section aria-labelledby="listHead">
       <div class="toolbar">
-        <h2 id="listHead">Final reports</h2>
+        <h2 id="listHead">Reports</h2>
         <span class="count" id="count"></span>
         <span class="spacer"></span>
         <button type="button" class="btn primary" id="addBtn">Write the next report</button>
+        <button type="button" class="btn" id="interimBtn">Add an interim report</button>
         <button type="button" class="btn" id="printBtn">Print</button>
       </div>
       <ol class="rows" id="rows" aria-labelledby="listHead"></ol>
@@ -294,6 +304,14 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   <form id="editorForm" method="dialog" novalidate>
     <div class="dlg-head"><h2 id="editorTitle">Final report</h2></div>
     <div class="dlg-body">
+      <div class="two" id="interimFields">
+        <div class="field"><label for="f-grant">Grant</label><select id="f-grant"></select></div>
+        <div class="field"><label for="f-title">Name of the report</label><input id="f-title" type="text" placeholder="Six-month progress report" autocomplete="off"></div>
+      </div>
+      <div class="two">
+        <div class="field"><label for="f-pstart">Covers from</label><input id="f-pstart" type="date"></div>
+        <div class="field"><label for="f-pend">To</label><input id="f-pend" type="date"></div>
+      </div>
       <div class="three">
         <div class="field"><label for="f-due">Due</label><input id="f-due" type="date"></div>
         <div class="field"><label for="f-status">Status</label><select id="f-status"><option value="todo">Not started</option><option value="drafting">Drafting</option><option value="submitted">Submitted</option></select></div>
@@ -303,6 +321,13 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       <div class="insert"><div class="field"><label for="f-lib">From the narrative library</label><select id="f-lib"></select></div><button type="button" class="btn" id="insertBtn">Insert</button></div>
       <div class="field"><label for="f-outcomes">Outcomes</label><textarea id="f-outcomes" rows="4" placeholder="What changed because of the work"></textarea></div>
       <div class="field"><label for="f-deliverables">Deliverables you promised, one per line</label><textarea id="f-deliverables" rows="4" placeholder="Rough cut by June&#10;Two community screenings"></textarea></div>
+      <div class="group">
+        <h3 id="qHead">The funder's own questions</h3>
+        <p class="hint">If the funder has its own report form, add its questions here in order, with any word limits. The printed report follows them, after the narrative and outcomes if you've written those too.</p>
+        <div class="q-rows" id="qRows" role="group" aria-labelledby="qHead"></div>
+        <div class="q-acts"><button type="button" class="btn small" id="addQBtn">Add a question</button>
+          <label class="q-copy" id="copyQWrap">Copy questions from <select id="f-copyq"></select></label></div>
+      </div>
       <div class="two">
         <div class="field"><label for="f-format">Budget layout</label><select id="f-format"></select></div>
         <label class="chkline" style="align-self:end"><input type="checkbox" id="f-impact"> Include the impact report</label>
@@ -310,6 +335,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       <div class="preview" id="budgetPreview"></div>
     </div>
     <div class="dlg-foot">
+      <button type="button" class="btn danger" id="deleteBtn">Remove this report</button>
       <span class="spacer"></span>
       <button type="button" class="btn" id="editorCancel">Cancel</button>
       <button type="submit" class="btn primary" id="editorSubmit">Save</button>
@@ -553,12 +579,21 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   }
   const STATUS = { todo: 'Not started', drafting: 'Drafting', submitted: 'Submitted' };
   const awarded = () => doc.grants.filter(g => g.status === 'awarded');
-  const report = g => doc.grantReports.find(r => r.grantId === g.id);
+  // Each awarded grant has a final report, and can have interim reports before it. A final report's
+  // row is keyed by its grant's id, so links from other tools still find it; an interim one by its own id.
+  const isInterim = r => !!r && r.kind === 'interim';
+  const report = g => doc.grantReports.find(r => r.grantId === g.id && !isInterim(r));
   const entries = () => doc.grantReports;
   const gname = g => [g.funder, g.program].filter(Boolean).join(', ') || 'Grant';
-  const status = g => (report(g) && STATUS[report(g).status] ? report(g).status : 'todo');
-  const due = g => str((report(g) || {}).dueDate);
-  const sortedGrants = () => [...awarded()].sort((a, b) => (due(a) || '9999').localeCompare(due(b) || '9999'));
+  const items = () => awarded().flatMap(g => [{ id: g.id, g, r: report(g), interim: false }, ...doc.grantReports.filter(r => r.grantId === g.id && isInterim(r)).map(r => ({ id: r.id, g, r, interim: true }))]);
+  const itemOf = id => items().find(i => i.id === id) || items().find(i => i.r && i.r.id === id) || null;
+  const titleOf = i => (i.interim ? str(i.r && i.r.title).trim() || 'Interim report' : 'Final report');
+  const status = i => (i.r && STATUS[i.r.status] ? i.r.status : 'todo');
+  const due = i => str((i.r || {}).dueDate);
+  const sortedItems = () => [...items()].sort((a, b) => (due(a) || '9999').localeCompare(due(b) || '9999') || (a.interim === b.interim ? 0 : a.interim ? -1 : 1));
+  const sortedGrants = () => [...awarded()].sort((a, b) => (due(itemOf(a.id)) || '9999').localeCompare(due(itemOf(b.id)) || '9999'));
+  const questions = r => objs(r && r.questions);
+  const period = r => (r && (r.periodStart || r.periodEnd) ? `Covers ${[r.periodStart && fmtDate(r.periodStart), r.periodEnd && fmtDate(r.periodEnd)].filter(Boolean).join(' to ')}` : '');
   const words = s => str(s).split(/\s+/).filter(Boolean).length;
   const formatFor = (g, r) => { const id = r && r.budgetFormatId; if (id && formats().some(f => f.id === id)) return `format:${id}`; if (id === 'account') return 'account'; const f = formats().find(x => x.grantId === g.id); return f ? `format:${f.id}` : 'top'; };
   function budgetTable(layout) {
@@ -584,25 +619,27 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('filmMeta').textContent = [doc.project.company, doc.project.producer && `Producer: ${doc.project.producer}`].filter(Boolean).join(' · ');
     $('fileState').innerHTML = (fileName ? esc(fileName) : 'Not saved to a file yet') + (dirty ? ' · <span class="dirty">Unsaved changes</span>' : '');
     document.title = `${doc.project.title ? doc.project.title + ' · ' : ''}Grant final reports · Open Filmmaker Toolkit`;
-    const gs = sortedGrants();
-    $('empty').hidden = !!gs.length; $('rows').hidden = $('printBtn').hidden = $('addBtn').hidden = !gs.length;
-    const open = gs.filter(g => status(g) !== 'submitted').length;
-    $('count').textContent = gs.length ? `${gs.length} grant${gs.length === 1 ? '' : 's'}${open ? ` · ${open} to write` : ''}` : '';
-    $('rows').innerHTML = gs.map(g => {
-      const r = report(g) || {}, st = status(g), d = due(g), flags = [];
-      if (g.awarded) flags.push(`<span class="flag linked">Awarded ${esc(money(g.awarded))}</span>`);
+    const gs = sortedGrants(), all = sortedItems();
+    $('empty').hidden = !!gs.length; $('rows').hidden = $('printBtn').hidden = $('addBtn').hidden = $('interimBtn').hidden = !gs.length;
+    const open = all.filter(i => status(i) !== 'submitted').length;
+    $('count').textContent = all.length ? `${all.length} report${all.length === 1 ? '' : 's'} for ${gs.length} grant${gs.length === 1 ? '' : 's'}${open ? ` · ${open} to write` : ''}` : '';
+    $('rows').innerHTML = all.map(i => {
+      const g = i.g, r = i.r || {}, st = status(i), d = due(i), flags = [];
+      if (g.awarded && !i.interim) flags.push(`<span class="flag linked">Awarded ${esc(money(g.awarded))}</span>`);
+      if (period(r)) flags.push(`<span class="flag linked">${esc(period(r))}</span>`);
       if (r.narrative) flags.push(`<span class="flag linked">${words(r.narrative)} words</span>`);
+      const qs = questions(r); if (qs.length) flags.push(`<span class="flag linked">${qs.filter(q => str(q.answer).trim()).length} of ${qs.length} questions answered</span>`);
       const del = str(r.deliverables).split('\n').filter(x => x.trim()).length; if (del) flags.push(`<span class="flag linked">${del} deliverable${del === 1 ? '' : 's'}</span>`);
       if (st !== 'submitted' && d && daysUntil(d) < 0) flags.push('<span class="flag problem">Overdue</span>');
       else if (st !== 'submitted' && !d) flags.push('<span class="flag changed">Due date not set</span>');
-      return `<li class="row" data-id="${esc(g.id)}"><span class="rt">${d ? `Due ${esc(fmtDate(d))}` : 'No due date'}</span>
-        <button type="button" class="what" data-edit="${esc(g.id)}"><span class="nm">${esc(gname(g))}</span>${g.decisionOn ? `<span class="tt">Awarded ${esc(fmtDate(g.decisionOn))}</span>` : ''}</button>
+      return `<li class="row" data-id="${esc(i.id)}"><span class="rt">${d ? `Due ${esc(fmtDate(d))}` : 'No due date'}</span>
+        <button type="button" class="what" data-edit="${esc(i.id)}"><span class="nm">${esc(gname(g))}</span><span class="tt">${esc(titleOf(i))}${!i.interim && g.decisionOn ? ` · Awarded ${esc(fmtDate(g.decisionOn))}` : ''}</span></button>
         <span class="st st-${st === 'submitted' ? 'good' : st === 'drafting' ? 'warn' : ''}">${esc(STATUS[st])}${r.submittedDate ? `<span class="sub">${esc(fmtDate(r.submittedDate))}</span>` : ''}</span>
         <div class="flags">${flags.join('')}</div></li>`; }).join('');
-    const soon = gs.filter(g => status(g) !== 'submitted' && due(g));
-    $('due').innerHTML = soon.length ? soon.map(g => { const n = daysUntil(due(g)); return `<li><span>${esc(g.funder || gname(g))}<span class="sub">${esc(STATUS[status(g)])}</span></span><span class="num ${n < 0 ? 'st-bad' : ''}">${n < 0 ? `${-n} day${n === -1 ? '' : 's'} late` : n === 0 ? 'Today' : `${n} day${n === 1 ? '' : 's'}`}</span></li>`; }).join('') : '<li class="empty-line">Nothing coming due.</li>';
-    if (!gs.some(g => g.id === printId)) printId = gs[0] ? gs[0].id : '';
-    $('printSel').innerHTML = gs.map(g => `<option value="${esc(g.id)}"${g.id === printId ? ' selected' : ''}>${esc(gname(g))}</option>`).join('');
+    const soon = all.filter(i => status(i) !== 'submitted' && due(i));
+    $('due').innerHTML = soon.length ? soon.map(i => { const n = daysUntil(due(i)); return `<li><span>${esc(i.g.funder || gname(i.g))}<span class="sub">${esc(titleOf(i))}, ${esc(STATUS[status(i)].toLowerCase())}</span></span><span class="num ${n < 0 ? 'st-bad' : ''}">${n < 0 ? `${-n} day${n === -1 ? '' : 's'} late` : n === 0 ? 'Today' : `${n} day${n === 1 ? '' : 's'}`}</span></li>`; }).join('') : '<li class="empty-line">Nothing coming due.</li>';
+    if (!all.some(i => i.id === printId)) printId = all[0] ? all[0].id : '';
+    $('printSel').innerHTML = all.map(i => `<option value="${esc(i.id)}"${i.id === printId ? ' selected' : ''}>${esc(gname(i.g))}: ${esc(titleOf(i))}</option>`).join('');
   }
 
   function libraryOptions() {
@@ -612,24 +649,55 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const layout = $('f-format').value, { gs, tb, tf } = budgetTable(layout);
     $('budgetPreview').innerHTML = gs.length ? `<table><thead><tr><th scope="col"><span class="sr-only">Category</span></th><th class="n">Budget</th><th class="n">Final cost</th></tr></thead><tbody>${gs.map(g => `<tr><td>${esc(g.label)}</td><td class="n">${esc(money(g.budget))}</td><td class="n">${esc(money(g.final))}</td></tr>`).join('')}<tr><th>Total</th><th class="n">${esc(money(tb))}</th><th class="n">${esc(money(tf))}</th></tr></tbody></table>` : '<p class="hint">No budget yet.</p>';
   }
-  function openEditor(id) {
-    const g = id ? awarded().find(x => x.id === id) : sortedGrants().find(x => status(x) !== 'submitted') || sortedGrants()[0];
-    if (!g) return;
-    editing = g;
+  function qRow(q) {
+    return `<div class="q-row" data-q="${esc(q.id || newId('question'))}"><div class="q-top"><input type="text" class="q-prompt" aria-label="The funder's question" placeholder="Describe how the grant changed the project" value="${esc(q.prompt)}">
+      <input type="number" class="q-limit" min="1" step="1" aria-label="Word limit" placeholder="Words" value="${esc(q.limit)}"><button type="button" class="icon-btn" data-delq aria-label="Remove this question">×</button></div>
+      <textarea class="q-answer" rows="3" aria-label="Your answer">${esc(q.answer)}</textarea><span class="wc q-wc"></span></div>`;
+  }
+  function countQs() {
+    for (const row of $('qRows').querySelectorAll('.q-row')) {
+      const n = words(row.querySelector('.q-answer').value), lim = Number(row.querySelector('.q-limit').value) || 0;
+      const el = row.querySelector('.q-wc');
+      el.textContent = lim ? `${n} of ${lim} words${n > lim ? `, ${n - lim} over` : ''}` : `${n} words`;
+      el.classList.toggle('over', !!lim && n > lim);
+    }
+  }
+  function copyOptions(current) {
+    const others = items().filter(i => i.r && i.r !== current && questions(i.r).length);
+    $('copyQWrap').hidden = !others.length;
+    $('f-copyq').innerHTML = '<option value="">Pick a report</option>' + others.map(i => `<option value="${esc(i.r.id)}">${esc(gname(i.g))}: ${esc(titleOf(i))}</option>`).join('');
+  }
+  function openEditor(id, newInterim) {
+    let it;
+    if (newInterim) {
+      const g = sortedGrants().find(x => status(itemOf(x.id)) !== 'submitted') || sortedGrants()[0];
+      if (!g) return;
+      it = { id: '', g, r: null, interim: true };
+    } else {
+      it = id ? itemOf(id) : sortedItems().find(i => status(i) !== 'submitted') || sortedItems()[0];
+    }
+    if (!it) return;
+    editing = it.g; editingItem = it;
     inserted.clear();
-    const r = report(g) || {};
-    for (const [k, el] of [['dueDate', 'f-due'], ['submittedDate', 'f-submitted'], ['narrative', 'f-narrative'], ['outcomes', 'f-outcomes'], ['deliverables', 'f-deliverables']]) $(el).value = str(r[k]);
+    const r = it.r || {};
+    for (const [k, el] of [['dueDate', 'f-due'], ['submittedDate', 'f-submitted'], ['narrative', 'f-narrative'], ['outcomes', 'f-outcomes'], ['deliverables', 'f-deliverables'], ['title', 'f-title'], ['periodStart', 'f-pstart'], ['periodEnd', 'f-pend']]) $(el).value = str(r[k]);
+    $('interimFields').hidden = !it.interim;
+    $('f-grant').innerHTML = sortedGrants().map(g => `<option value="${esc(g.id)}">${esc(gname(g))}</option>`).join('');
+    $('f-grant').value = it.g.id; $('f-grant').disabled = !!it.r;
     $('f-status').value = STATUS[r.status] ? r.status : 'todo';
+    $('qRows').innerHTML = questions(r).map(qRow).join(''); countQs(); copyOptions(it.r);
     $('f-lib').innerHTML = libraryOptions();
     $('f-format').innerHTML = '<option value="top">Top sheet</option><option value="account">By account</option>' + formats().map(f => `<option value="format:${esc(f.id)}">${esc(f.name || 'Funder format')}</option>`).join('');
-    $('f-format').value = formatFor(g, r);
+    $('f-format').value = formatFor(it.g, r);
     $('f-impact').checked = r.includeImpact !== false && !!doc.impactReport;
     $('f-impact').disabled = !doc.impactReport;
     $('wc').textContent = `${words($('f-narrative').value)} words`;
     showBudget();
-    $('editorTitle').textContent = `Final report: ${gname(g)}`;
-    $('editor').showModal(); $('f-narrative').focus();
+    $('deleteBtn').hidden = !(it.interim && it.r);
+    $('editorTitle').textContent = it.r || !it.interim ? `${titleOf(it)}: ${gname(it.g)}` : 'Add an interim report';
+    $('editor').showModal(); (it.interim && !it.r ? $('f-title') : $('f-narrative')).focus();
   }
+  let editingItem = null;
   // Answers inserted from the narrative library, recorded on their versions when the report is saved.
   const inserted = new Set();
   function insertAnswer() {
@@ -641,9 +709,18 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   }
   function saveEditor() {
     if ($('f-status').value === 'submitted' && !$('f-submitted').value) $('f-submitted').value = today();
-    let r = report(editing);
-    if (!r) { r = { id: newId('grant-report'), grantId: editing.id }; doc.grantReports.push(r); }
-    for (const [k, el] of [['dueDate', 'f-due'], ['submittedDate', 'f-submitted'], ['narrative', 'f-narrative'], ['outcomes', 'f-outcomes'], ['deliverables', 'f-deliverables']]) { const v = $(el).value.trim(); if (v) r[k] = v; else delete r[k]; }
+    const it = editingItem;
+    if (it.interim && !it.r) editing = awarded().find(g => g.id === $('f-grant').value) || editing;
+    let r = it.r;
+    if (!r) { r = it.interim ? { id: newId('grant-report'), grantId: editing.id, kind: 'interim' } : { id: newId('grant-report'), grantId: editing.id }; doc.grantReports.push(r); }
+    for (const [k, el] of [['dueDate', 'f-due'], ['submittedDate', 'f-submitted'], ['narrative', 'f-narrative'], ['outcomes', 'f-outcomes'], ['deliverables', 'f-deliverables'], ['periodStart', 'f-pstart'], ['periodEnd', 'f-pend']].concat(it.interim ? [['title', 'f-title']] : [])) { const v = $(el).value.trim(); if (v) r[k] = v; else delete r[k]; }
+    const qs = [...$('qRows').querySelectorAll('.q-row')].map(row => {
+      const q = { id: row.dataset.q, prompt: row.querySelector('.q-prompt').value.trim() };
+      const lim = Math.round(Number(row.querySelector('.q-limit').value)); if (lim > 0) q.limit = lim;
+      const ans = row.querySelector('.q-answer').value.trim(); if (ans) q.answer = ans;
+      return q;
+    }).filter(q => q.prompt || q.answer);
+    if (qs.length) r.questions = qs; else delete r.questions;
     if ($('f-status').value === 'todo') delete r.status; else r.status = $('f-status').value;
     const lay = $('f-format').value;
     if (lay === formatFor(editing, {})) delete r.budgetFormatId; else r.budgetFormatId = lay.startsWith('format:') ? lay.slice(7) : lay === 'account' ? 'account' : 'top';
@@ -653,19 +730,22 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       const n = doc.narratives.find(x => x.id === nid), v = n && objs(n.versions).find(x => x.id === vid);
       if (!v) continue;
       if (!Array.isArray(v.uses)) v.uses = [];
-      if (!v.uses.some(u => u && u.grantId === editing.id && u.use === 'final report')) v.uses.push({ grantId: editing.id, date: today(), use: 'final report' });
+      const use = it.interim ? 'interim report' : 'final report';
+      if (!v.uses.some(u => u && u.grantId === editing.id && u.use === use)) v.uses.push({ grantId: editing.id, date: today(), use });
     }
     inserted.clear();
-    printId = editing.id;
+    printId = it.interim ? r.id : editing.id;
     $('editor').close(); changed();
   }
   function renderReport() {
-    const g = awarded().find(x => x.id === printId); if (!g) { $('report').innerHTML = ''; return; }
-    const r = report(g) || {}, { gs, tb, tf } = budgetTable(formatFor(g, r)), im = r.includeImpact !== false ? impact() : null;
+    const it = itemOf(printId); if (!it) { $('report').innerHTML = ''; return; }
+    const g = it.g, qs = questions(it.r);
+    const r = it.r || {}, { gs, tb, tf } = budgetTable(formatFor(g, r)), im = r.includeImpact !== false ? impact() : null;
     const paras = t => str(t).split(/\n\s*\n/).map(p => p.trim()).filter(Boolean).map(p => `<p>${esc(p)}</p>`).join('') || '<p class="r-missing">Not written yet.</p>';
     const dl = str(r.deliverables).split('\n').map(x => x.trim()).filter(Boolean);
-    $('report').innerHTML = `<h1>Final report: ${esc(gname(g))}</h1><p class="r-meta">${esc([doc.project.title, doc.project.company, g.awarded && `Awarded ${money(g.awarded)}`, r.dueDate && `Due ${fmtDate(r.dueDate)}`, `Printed ${fmtDate(today())}`].filter(Boolean).join(' · '))}</p>
-      <h2>Narrative</h2>${paras(r.narrative)}<h2>Outcomes</h2>${paras(r.outcomes)}
+    const answers = qs.map(q => { const n = words(q.answer); return `<h3>${esc(q.prompt || 'Question')}</h3>${paras(q.answer)}${q.limit ? `<p class="r-sub">${n} of ${q.limit} words</p>` : ''}`; }).join('');
+    $('report').innerHTML = `<h1>${esc(titleOf(it))}: ${esc(gname(g))}</h1><p class="r-meta">${esc([doc.project.title, doc.project.company, g.awarded && `Awarded ${money(g.awarded)}`, period(r), r.dueDate && `Due ${fmtDate(r.dueDate)}`, `Printed ${fmtDate(today())}`].filter(Boolean).join(' · '))}</p>
+      ${!qs.length || str(r.narrative).trim() ? `<h2>Narrative</h2>${paras(r.narrative)}` : ''}${!qs.length || str(r.outcomes).trim() ? `<h2>Outcomes</h2>${paras(r.outcomes)}` : ''}${answers}
       ${dl.length ? `<h2>Deliverables</h2><ul>${dl.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
       <h2>Budget and final costs</h2><table><thead><tr><th>Category</th><th class="r-n">Budget</th><th class="r-n">Final cost</th></tr></thead><tbody>${gs.map(x => `<tr><td>${esc(x.label)}${notes()[x.key] ? `<span class="r-sub">${esc(notes()[x.key])}</span>` : ''}</td><td class="r-n">${esc(money(x.budget))}</td><td class="r-n">${esc(money(x.final))}</td></tr>`).join('')}</tbody><tfoot><tr><th>Total</th><th class="r-n">${esc(money(tb))}</th><th class="r-n">${esc(money(tf))}</th></tr></tfoot></table>
       ${im ? `<h2>Impact</h2>${im.summary ? `<p>${esc(im.summary)}</p>` : ''}<p>${im.screenings} screening${im.screenings === 1 ? '' : 's'}, ${im.audience.toLocaleString()} people in the audience.</p>${im.results.length ? `<table><tbody>${im.results.map(x => `<tr><td>${esc(x.text)}</td><td class="r-n">${esc(x.value == null ? 'Not yet' : `${x.value} ${x.unit || ''}`)}${x.target != null ? ` of ${esc(x.target)}` : ''}</td></tr>`).join('')}</tbody></table>` : ''}${im.quotes.map(q => `<blockquote class="r-quote">“${esc(q.quote)}”<span class="r-sub">${esc(q.who || '')}</span></blockquote>`).join('')}` : ''}`;
@@ -895,6 +975,22 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('projectForm').addEventListener('submit', ev => { ev.preventDefault(); saveProjectDialog(); });
     $('projectCancel').onclick = () => $('projectDialog').close();
     $('addBtn').onclick = () => openEditor(null);
+    $('interimBtn').onclick = () => openEditor(null, true);
+    $('addQBtn').onclick = () => { $('qRows').insertAdjacentHTML('beforeend', qRow({})); countQs(); $('qRows').querySelector('.q-row:last-child .q-prompt').focus(); };
+    $('qRows').addEventListener('input', countQs);
+    $('qRows').addEventListener('click', ev => { if (ev.target.closest('[data-delq]')) { ev.target.closest('.q-row').remove(); countQs(); } });
+    $('f-copyq').onchange = () => {
+      const src = entries().find(r => r.id === $('f-copyq').value); $('f-copyq').value = '';
+      if (!src) return;
+      $('qRows').insertAdjacentHTML('beforeend', questions(src).map(q => qRow({ prompt: q.prompt, limit: q.limit })).join('')); countQs();
+      toast(`Copied ${questions(src).length} question${questions(src).length === 1 ? '' : 's'}, without their answers.`);
+    };
+    $('deleteBtn').onclick = () => {
+      const it = editingItem; if (!it || !it.r) return;
+      doc.grantReports = entries().filter(r => r !== it.r);
+      $('editor').close(); changed();
+      toast(`Removed ${titleOf(it).toLowerCase() === 'interim report' ? 'the interim report' : `"${titleOf(it)}"`}.`);
+    };
     $('emptyOpenBtn').onclick = openFile;
     $('printSel').addEventListener('change', () => { printId = $('printSel').value; });
     $('rows').addEventListener('click', ev => { const b = ev.target.closest('[data-edit]'); if (b) openEditor(b.dataset.edit); });
@@ -1118,7 +1214,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       const grants = arr(d.grants).filter(Boolean);
       for (const r of arr(d.grantReports).filter(Boolean)) {
         const g = grants.find(x => x.id === r.grantId);
-        if (g && g.status === 'awarded' && r.status !== 'submitted' && isDay(r.dueDate) && r.dueDate <= addDays(t, 60)) add('grant-reports', g.id, `${g.funder || g.name || 'Grant'} final report`, r.dueDate);
+        if (g && g.status === 'awarded' && r.status !== 'submitted' && isDay(r.dueDate) && r.dueDate <= addDays(t, 60)) add('grant-reports', r.kind === 'interim' ? r.id : g.id, `${g.funder || g.name || 'Grant'} ${r.kind === 'interim' ? (r.title || 'interim report') : 'final report'}`, r.dueDate);
       }
       for (const g of grants) if (['researching', 'drafting'].includes(g.status) && isDay(g.deadline) && g.deadline >= t && g.deadline <= addDays(t, 60)) add('grant-calendar', g.id, `Apply to ${g.name || g.funder || 'a grant'}`, g.deadline);
 
@@ -1189,7 +1285,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       const out = [];
       const add = (kind, slug, id, field, date, title, end) => { if (isDay(date)) out.push({ kind, slug, tool: TOOLS[slug], id, uid: `${id}-${field}`, date, end: isDay(end) && end > date ? end : '', title }); };
       for (const g of arr(d.grants).filter(Boolean)) { add('grants', 'grant-calendar', g.id, 'deadline', g.deadline, `Deadline: ${g.name || g.funder || 'grant'}`); add('grants', 'grant-calendar', g.id, 'decision', g.decisionOn, `Decision expected: ${g.name || g.funder || 'grant'}`); }
-      for (const r of arr(d.grantReports).filter(Boolean)) { const g = arr(d.grants).find(x => x && x.id === r.grantId) || {}; add('grants', 'grant-reports', r.id, 'due', r.dueDate, `Final report due: ${g.funder || g.name || 'grant'}`); }
+      for (const r of arr(d.grantReports).filter(Boolean)) { const g = arr(d.grants).find(x => x && x.id === r.grantId) || {}; add('grants', 'grant-reports', r.id, 'due', r.dueDate, `${r.kind === 'interim' ? (r.title || 'Interim report') : 'Final report'} due: ${g.funder || g.name || 'grant'}`); }
       for (const s of arr(d.shootDays).filter(Boolean)) add('shoot', 'shooting-calendar', s.id, 'date', s.date, `${s.kind === 'travel' ? 'Travel day' : s.kind === 'hold' ? 'Hold' : 'Shoot day'}${s.title || s.label ? `: ${s.title || s.label}` : ''}`);
       const shootDates = new Set(arr(d.shootDays).map(s => s && s.date));
       for (const c of arr(d.callSheets).filter(Boolean)) if (!shootDates.has(c.date)) add('shoot', 'call-sheet', c.id, 'date', c.date, `Call sheet${c.title ? `: ${c.title}` : ''}`);

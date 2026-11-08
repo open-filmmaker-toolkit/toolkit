@@ -133,6 +133,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .stat { padding: 8px 10px; border: 1px solid var(--rule-soft); border-radius: 6px; min-width: 0; }
 .stat b { display: block; font: 600 20px/1.15 var(--serif); overflow-wrap: anywhere; }
 .stat span { font-size: 13px; color: var(--ink-2); }
+.list-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .due-list { list-style: none; margin: 4px 0 0; padding: 0; }
 .due-list li { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; font-size: 14px; }
 .due-list li + li { border-top: 1px solid var(--rule-soft); }
@@ -294,6 +295,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <button type="button" class="btn" id="csvBtn">Export CSV</button>
         <button type="button" class="btn" id="printBtn">Print</button>
       </div>
+      <section id="oftReminders" aria-labelledby="oftRemHead" hidden></section>
       <div class="filters" id="filterBar">
         <span id="filters" role="group" aria-label="Show grants by status" style="display:contents"></span>
         <span class="views" role="group" aria-label="View">
@@ -328,6 +330,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <div class="card-head"><h2 id="dueHead">Next deadlines</h2><span class="count" id="dueCount"></span></div>
         <ul class="due-list" id="dueList"></ul>
       </section>
+      <section class="card" aria-labelledby="listsHead">
+        <div class="card-head"><h2 id="listsHead">Funder lists</h2></div>
+        <p class="hint">Save your funders and their usual deadlines as a list file to share with your team or start the next project from. Adding from a list sets each deadline to the next one coming up.</p>
+        <div class="list-btns"><button type="button" class="btn small" id="listSaveBtn">Save a list</button><button type="button" class="btn small" id="listOpenBtn">Add from a list</button></div>
+      </section>
       <section class="card" aria-labelledby="statsHead">
         <div class="card-head"><h2 id="statsHead">Where things stand</h2></div>
         <div class="stats" id="stats"></div>
@@ -353,6 +360,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <div class="field"><label for="f-time">Time and time zone</label><input id="f-time" type="text" placeholder="5 pm Eastern" autocomplete="off"></div>
         <div class="field"><label for="f-status">Status</label><select id="f-status"></select></div>
       </div>
+      <div class="field"><label for="f-remind">Remind me</label><select id="f-remind"><option value="">Two weeks before</option><option value="30">A month before</option><option value="7">A week before</option><option value="3">Three days before</option><option value="0">Don't remind me</option></select>
+        <p class="hint">Reminders show at the top when you open this tool, and in the calendar file.</p></div>
       <div class="three">
         <div class="field"><label for="f-amount">Amount available</label><input id="f-amount" type="text" placeholder="Up to $50,000" autocomplete="off"></div>
         <div class="field"><label for="f-requested">You asked for</label><input id="f-requested" type="number" min="0" step="any" inputmode="decimal"></div>
@@ -502,6 +511,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const statusLabel = id => (STATUSES.find(s => s.id === id) || STATUSES[0]).label;
   const DEFAULT_MATERIALS = ['Narrative', 'Budget', 'Work sample', 'Bios'];
   const SOON = 14;
+  const remindOf = g => (Number.isInteger(g.remindDays) && g.remindDays >= 0 ? g.remindDays : SOON);
   let filter = 'all';
   let view = 'list';
   let month = null; // [year, monthIndex]
@@ -584,6 +594,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('rows').innerHTML = view === 'list' ? list.map(rowHtml).join('') : '';
     if (view === 'cal') renderCalendar(list);
     renderSide(all);
+    $('listSaveBtn').disabled = !all.length;
+    oftReminders.render();
   }
   function rowHtml(g) {
     const l = left(g);
@@ -665,7 +677,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     isNew = !existing;
     editing = existing ? structuredClone(existing) : { id: newId('grant'), status: 'researching', materials: DEFAULT_MATERIALS.map(name => ({ name })) };
     $('f-status').innerHTML = STATUSES.map(s => `<option value="${s.id}">${esc(s.label)}</option>`).join('');
-    const vals = { 'f-funder': editing.funder, 'f-program': editing.program, 'f-deadline': editing.deadline, 'f-time': editing.deadlineTime, 'f-status': editing.status,
+    const vals = { 'f-remind': [0, 3, 7, 30].includes(editing.remindDays) ? editing.remindDays : '', 'f-funder': editing.funder, 'f-program': editing.program, 'f-deadline': editing.deadline, 'f-time': editing.deadlineTime, 'f-status': editing.status,
       'f-amount': editing.amount, 'f-requested': editing.requested, 'f-awarded': editing.awarded, 'f-eligibility': editing.eligibility, 'f-submitted': editing.submittedOn,
       'f-decision': editing.decisionOn, 'f-url': editing.url, 'f-contact': editing.contact, 'f-notes': editing.notes };
     for (const [k, v] of Object.entries(vals)) $(k).value = v == null ? '' : String(v);
@@ -684,6 +696,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       submittedOn: 'f-submitted', decisionOn: 'f-decision', url: 'f-url', contact: 'f-contact', notes: 'f-notes' };
     for (const [k, id] of Object.entries(text)) { const v = $(id).value.trim(); if (v) e[k] = v; else delete e[k]; }
     e.status = $('f-status').value;
+    if ($('f-remind').value !== '') e.remindDays = Number($('f-remind').value); else delete e.remindDays;
     for (const [k, id] of [['requested', 'f-requested'], ['awarded', 'f-awarded']]) { const v = $(id).value; if (v !== '') e[k] = Number(v); else delete e[k]; }
     const mats = [...$('matRows').querySelectorAll('.mat-row')].map(r => ({ name: r.querySelector('.mat-name').value.trim(), done: r.querySelector('.mat-done').checked }))
       .filter(m => m.name).map(m => (m.done ? m : { name: m.name }));
@@ -725,7 +738,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     download(csv, name, 'text/csv;charset=utf-8');
     toast(`Exported ${rows.length} grant${rows.length === 1 ? '' : 's'} to ${name}`);
   }
-  // Calendar file (RFC 5545): one all-day event per deadline, with a reminder a week before.
+  // Calendar file (RFC 5545): one all-day event per deadline, with a reminder when each grant says (two weeks before unless you change it).
   function icsText(s) { return str(s).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n'); }
   function fold(line) {
     const out = [];
@@ -753,7 +766,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       lines.push('BEGIN:VEVENT', `UID:${g.id}@open-filmmaker-toolkit`, `DTSTAMP:${stamp}`, `DTSTART;VALUE=DATE:${day(g.deadline)}`, `DTEND;VALUE=DATE:${next(g.deadline)}`,
         `SUMMARY:${icsText(`Deadline: ${grantName(g)}`)}`, `DESCRIPTION:${icsText(desc)}`);
       if (/^https?:\/\//i.test(str(g.url))) lines.push(`URL:${g.url}`);
-      if (isOpen(g)) lines.push('BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${icsText(`One week to the ${g.funder || 'grant'} deadline`)}`, 'TRIGGER:-P7D', 'END:VALARM');
+      if (isOpen(g) && remindOf(g)) lines.push('BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${icsText(`${remindOf(g)} days to the ${g.funder || 'grant'} deadline`)}`, `TRIGGER:-P${remindOf(g)}D`, 'END:VALARM');
       lines.push('END:VEVENT');
     }
     lines.push('END:VCALENDAR');
@@ -1002,6 +1015,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('emptyOpenBtn').onclick = openFile;
     $('csvBtn').onclick = exportCsv;
     $('icsBtn').onclick = exportIcs;
+    $('listSaveBtn').onclick = oftLists.save;
+    $('listOpenBtn').onclick = oftLists.open;
     $('filters').addEventListener('click', ev => { const b = ev.target.closest('[data-filter]'); if (b) { filter = b.dataset.filter; render(); } });
     $('listViewBtn').onclick = () => { view = 'list'; render(); };
     $('calViewBtn').onclick = () => { view = 'cal'; render(); };
@@ -1299,7 +1314,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       const grants = arr(d.grants).filter(Boolean);
       for (const r of arr(d.grantReports).filter(Boolean)) {
         const g = grants.find(x => x.id === r.grantId);
-        if (g && g.status === 'awarded' && r.status !== 'submitted' && isDay(r.dueDate) && r.dueDate <= addDays(t, 60)) add('grant-reports', g.id, `${g.funder || g.name || 'Grant'} final report`, r.dueDate);
+        if (g && g.status === 'awarded' && r.status !== 'submitted' && isDay(r.dueDate) && r.dueDate <= addDays(t, 60)) add('grant-reports', r.kind === 'interim' ? r.id : g.id, `${g.funder || g.name || 'Grant'} ${r.kind === 'interim' ? (r.title || 'interim report') : 'final report'}`, r.dueDate);
       }
       for (const g of grants) if (['researching', 'drafting'].includes(g.status) && isDay(g.deadline) && g.deadline >= t && g.deadline <= addDays(t, 60)) add('grant-calendar', g.id, `Apply to ${g.name || g.funder || 'a grant'}`, g.deadline);
 
@@ -1370,7 +1385,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       const out = [];
       const add = (kind, slug, id, field, date, title, end) => { if (isDay(date)) out.push({ kind, slug, tool: TOOLS[slug], id, uid: `${id}-${field}`, date, end: isDay(end) && end > date ? end : '', title }); };
       for (const g of arr(d.grants).filter(Boolean)) { add('grants', 'grant-calendar', g.id, 'deadline', g.deadline, `Deadline: ${g.name || g.funder || 'grant'}`); add('grants', 'grant-calendar', g.id, 'decision', g.decisionOn, `Decision expected: ${g.name || g.funder || 'grant'}`); }
-      for (const r of arr(d.grantReports).filter(Boolean)) { const g = arr(d.grants).find(x => x && x.id === r.grantId) || {}; add('grants', 'grant-reports', r.id, 'due', r.dueDate, `Final report due: ${g.funder || g.name || 'grant'}`); }
+      for (const r of arr(d.grantReports).filter(Boolean)) { const g = arr(d.grants).find(x => x && x.id === r.grantId) || {}; add('grants', 'grant-reports', r.id, 'due', r.dueDate, `${r.kind === 'interim' ? (r.title || 'Interim report') : 'Final report'} due: ${g.funder || g.name || 'grant'}`); }
       for (const s of arr(d.shootDays).filter(Boolean)) add('shoot', 'shooting-calendar', s.id, 'date', s.date, `${s.kind === 'travel' ? 'Travel day' : s.kind === 'hold' ? 'Hold' : 'Shoot day'}${s.title || s.label ? `: ${s.title || s.label}` : ''}`);
       const shootDates = new Set(arr(d.shootDays).map(s => s && s.date));
       for (const c of arr(d.callSheets).filter(Boolean)) if (!shootDates.has(c.date)) add('shoot', 'call-sheet', c.id, 'date', c.date, `Call sheet${c.title ? `: ${c.title}` : ''}`);
@@ -1548,6 +1563,183 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     return { TOOLS, KINDS, PARTS, CONTACT, flags, glance, dates, ics, summary, today, addDays, fmt, calendarDialog, saveText, stem };
   })();
   /* oft-shared:project end */
+    // Reminders: deadlines coming up, deadlines passed with nothing sent, and decisions that are overdue.
+  const OFT_REMINDERS = {
+    records: () => entries(),
+    open: id => openEditor(id),
+    what: 'Deadlines show here from two weeks before, or whenever you set in each grant. Dismiss one and it comes back only if its date changes.',
+    items: () => entries().flatMap(g => {
+      const out = [], n = daysUntil(g.deadline), left = materials(g).filter(m => !m.done).length;
+      if (isOpen(g) && n != null && n >= 0 && n <= remindOf(g)) out.push({ id: g.id, key: `deadline:${g.deadline}`, when: g.deadline,
+        text: `${grantName(g)} is due ${n === 0 ? 'today' : n === 1 ? 'tomorrow' : `in ${n} days`}, on ${fmtDate(g.deadline)}${left ? `, with ${left} item${left === 1 ? '' : 's'} still to finish` : ''}.` });
+      if (isOpen(g) && n != null && n < 0) out.push({ id: g.id, key: `passed:${g.deadline}`, when: g.deadline, late: true,
+        text: `${grantName(g)}'s deadline was ${fmtDate(g.deadline)}. Mark it submitted, or change the deadline if it moved.` });
+      const d = daysUntil(g.decisionOn);
+      if (g.status === 'submitted' && d != null && d < 0) out.push({ id: g.id, key: `decision:${g.decisionOn}`, when: g.decisionOn,
+        text: `A decision from ${grantName(g)} was expected ${fmtDate(g.decisionOn)}. Time to check in.` });
+      return out;
+    }),
+  };
+  // Funder lists: the usual deadline is kept as a month and day, and becomes the next one coming up.
+  const mmdd = iso => (/^\d{4}-(\d{2})-(\d{2})$/.exec(str(iso)) || []).slice(1).join('-');
+  function nextDate(md) {
+    const m = /^(\d{2})-(\d{2})$/.exec(str(md));
+    if (!m) return '';
+    const t = new Date(); let y = t.getFullYear();
+    const iso = yy => `${yy}-${m[1]}-${m[2]}`;
+    if (daysUntil(iso(y)) < 0) y++;
+    return iso(y);
+  }
+  const sameFunder = (a, b) => str(a.funder).trim().toLowerCase() === str(b.funder).trim().toLowerCase() && str(a.program).trim().toLowerCase() === str(b.program).trim().toLowerCase();
+  const OFT_LIST = {
+    kind: 'funders', title: 'Funder list', noun: 'funder', nouns: 'funders',
+    items: () => entries().filter(g => str(g.funder).trim()).reduce((out, g) => {
+      if (out.some(x => sameFunder(x, g))) return out;
+      const it = { funder: g.funder, program: g.program, usualDeadline: mmdd(g.deadline), deadlineTime: g.deadlineTime, amount: g.amount, eligibility: g.eligibility, materials: materials(g).map(m => m.name), url: g.url };
+      for (const k of Object.keys(it)) if (it[k] == null || it[k] === '' || (Array.isArray(it[k]) && !it[k].length)) delete it[k];
+      out.push(it); return out;
+    }, []),
+    label: it => grantName(it),
+    detail: it => [it.usualDeadline ? `Usually due ${fmtDate(nextDate(it.usualDeadline)).replace(/,? \d{4}$/, '')}` : 'No usual deadline', it.amount].filter(Boolean).join(' · '),
+    has: it => entries().some(g => sameFunder(g, it)),
+    add: items => {
+      for (const it of items) {
+        const g = { id: newId('grant'), status: 'researching' };
+        for (const k of ['funder', 'program', 'deadlineTime', 'amount', 'eligibility', 'url']) if (str(it[k]).trim()) g[k] = str(it[k]).trim();
+        const due = nextDate(it.usualDeadline); if (due) g.deadline = due;
+        const mats = (Array.isArray(it.materials) ? it.materials : []).map(m => str(typeof m === 'object' && m ? m.name : m).trim()).filter(Boolean);
+        g.materials = (mats.length ? mats : DEFAULT_MATERIALS).map(name => ({ name }));
+        entries().push(g);
+      }
+      return items.length;
+    },
+  };
+  /* oft-shared:reminders begin. Copied from shared/reminders.js by .github/scripts/sync_shared.py; edit it there. */
+  // Reminders shown when you open a tool: what's coming up or overdue. A tool lists them in
+  // OFT_REMINDERS = { records: () => [...], items: () => [{ id, key, text, when?, late? }], open: id => ..., what? },
+  // puts <section id="oftReminders" hidden></section> where they should show, and calls
+  // oftReminders.render() whenever it renders. Each reminder has a key that changes when its
+  // date does; dismissing one keeps its key in the record's dismissedReminders, so a reminder
+  // comes back if the date moves.
+  const oftReminders = (() => {
+    const str = v => (v == null ? '' : String(v));
+    const e = s => str(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+    const R = () => (typeof OFT_REMINDERS !== 'undefined' ? OFT_REMINDERS : null);
+    const rec = id => (R() ? R().records().find(r => r && r.id === id) : null);
+    const dismissed = (r, key) => !!r && Array.isArray(r.dismissedReminders) && r.dismissedReminders.includes(key);
+    function due() {
+      if (!R()) return [];
+      return R().items().filter(i => i && i.id && i.key && !dismissed(rec(i.id), i.key))
+        .sort((a, b) => (b.late ? 1 : 0) - (a.late ? 1 : 0) || str(a.when).localeCompare(str(b.when)));
+    }
+    function dismiss(id, key) {
+      const r = rec(id);
+      if (!r) return;
+      // Only the reminders still showing are kept, so the list doesn't grow forever.
+      const live = new Set(R().items().filter(i => i.id === id).map(i => i.key));
+      r.dismissedReminders = [...new Set([...(Array.isArray(r.dismissedReminders) ? r.dismissedReminders : []).filter(k => live.has(k)), key])];
+      changed();
+    }
+    function render() {
+      const box = document.getElementById('oftReminders');
+      if (!box || !R()) return;
+      const list = due();
+      box.hidden = !list.length;
+      if (!list.length) { box.innerHTML = ''; return; }
+      box.innerHTML = `<div class="oft-rem-head"><h2 id="oftRemHead">Reminders</h2><span class="oft-rem-n">${list.length}</span></div>
+        <ul class="oft-rem-list" aria-labelledby="oftRemHead">${list.map(i => `<li class="${i.late ? 'late' : ''}"><span class="oft-rem-text">${e(i.text)}</span>
+          <span class="oft-rem-acts"><button type="button" class="btn small" data-rem-open="${e(i.id)}">Open</button><button type="button" class="btn small" data-rem-dismiss="${e(i.id)}" data-rem-key="${e(i.key)}" aria-label="Dismiss: ${e(i.text)}">Dismiss</button></span></li>`).join('')}</ul>
+        <p class="oft-rem-note">${e(R().what || 'Reminders show here when you open this tool. Dismiss one and it comes back only if its date changes.')}</p>`;
+    }
+    document.addEventListener('click', ev => {
+      const o = ev.target.closest('[data-rem-open]');
+      if (o) { R().open(o.dataset.remOpen); return; }
+      const d = ev.target.closest('[data-rem-dismiss]');
+      if (d) { const box = document.getElementById('oftReminders'); dismiss(d.dataset.remDismiss, d.dataset.remKey); const next = box && box.querySelector('[data-rem-dismiss]'); if (next) next.focus(); }
+    });
+    const css = document.createElement('style');
+    css.textContent = '#oftReminders { margin: 0 0 16px; padding: 12px 14px; border: 1px solid var(--rule); border-left: 4px solid var(--warn, #9a6700); border-radius: 8px; background: var(--sheet); }\n.oft-rem-head { display: flex; align-items: center; gap: 8px; }\n.oft-rem-head h2 { margin: 0; font-size: 16px; }\n.oft-rem-n { font-size: 13px; color: var(--ink-2); }\n.oft-rem-list { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; }\n.oft-rem-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; font-size: 14px; }\n.oft-rem-list li.late .oft-rem-text { font-weight: 600; }\n.oft-rem-text { flex: 1 1 240px; min-width: 0; overflow-wrap: anywhere; }\n.oft-rem-acts { display: flex; gap: 6px; }\n.oft-rem-note { margin: 8px 0 0; font-size: 13px; color: var(--ink-2); }\n@media print { #oftReminders { display: none !important; } }';
+    document.head.append(css);
+    return { render, due, dismiss };
+  })();
+  /* oft-shared:reminders end */
+  /* oft-shared:lists begin. Copied from shared/lists.js by .github/scripts/sync_shared.py; edit it there. */
+  // Lists to share between projects: funders and their usual deadlines, festivals, and the like.
+  // A list is a small JSON file, { format: "oft-list", formatVersion: 1, kind, title, savedAt, items },
+  // that a team keeps in a shared folder or passes around; nothing is fetched from anywhere.
+  // A tool describes its list in OFT_LIST = { kind, title, noun, nouns, items: () => [...],
+  // label: item => '', detail: item => '', has: item => bool, add: items => number }
+  // and calls oftLists.save() and oftLists.open() from its own buttons.
+  const oftLists = (() => {
+    const str = v => (v == null ? '' : String(v));
+    const e = s => str(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+    const L = () => OFT_LIST;
+    const plural = (n, a, b) => `${n} ${n === 1 ? a : b}`;
+    function save() {
+      const items = L().items();
+      if (!items.length) { toast(`There are no ${L().nouns} to put in a list yet.`); return; }
+      const out = { format: 'oft-list', formatVersion: 1, kind: L().kind, title: `${L().title}${doc.project && doc.project.title ? `, from ${doc.project.title}` : ''}`, savedAt: new Date().toISOString(), items };
+      const name = `${slug()}-${L().kind}-list.json`;
+      download(JSON.stringify(out, null, 2) + '\n', name, 'application/json');
+      toast(`Saved ${plural(items.length, L().noun, L().nouns)} to ${name}. Open it from another project to add them there.`);
+    }
+    function dialog() {
+      let dlg = document.getElementById('oftListDialog');
+      if (dlg) return dlg;
+      dlg = document.createElement('dialog');
+      dlg.className = 'oft-dialog'; dlg.id = 'oftListDialog'; dlg.setAttribute('aria-labelledby', 'oftListTitle');
+      dlg.innerHTML = `<h2 id="oftListTitle"></h2><p id="oftListIntro"></p>
+    <p><button type="button" class="btn small" id="oftListAll">Tick all</button> <button type="button" class="btn small" id="oftListNone">Untick all</button></p>
+    <fieldset class="oft-list-items" id="oftListItems"><legend class="oft-vh">Pick what to add</legend></fieldset>
+    <div class="oft-actions"><button type="button" class="btn" id="oftListCancel">Cancel</button><button type="button" class="btn primary" id="oftListAdd">Add</button></div>`;
+      document.body.append(dlg);
+      const css = document.createElement('style');
+      css.textContent = '.oft-list-items { border: 0; margin: 0 0 12px; padding: 0; min-width: 0; display: grid; gap: 6px; max-height: 50vh; overflow-y: auto; }\n.oft-list-items label { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; }\n.oft-list-items input { margin-top: 3px; }\n.oft-list-items small { display: block; color: var(--ink-2); }\n.oft-vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }';
+      document.head.append(css);
+      dlg.querySelector('#oftListCancel').onclick = () => dlg.close();
+      dlg.querySelector('#oftListAll').onclick = () => dlg.querySelectorAll('#oftListItems input:not(:disabled)').forEach(i => { i.checked = true; });
+      dlg.querySelector('#oftListNone').onclick = () => dlg.querySelectorAll('#oftListItems input').forEach(i => { i.checked = false; });
+      return dlg;
+    }
+    function show(list, fileName) {
+      const items = (Array.isArray(list.items) ? list.items : []).filter(x => x && typeof x === 'object');
+      const dlg = dialog(), $ = q => dlg.querySelector(q);
+      $('#oftListTitle').textContent = `Add from ${list.title || fileName}`;
+      const fresh = items.filter(i => !L().has(i)).length;
+      $('#oftListIntro').textContent = `${plural(items.length, L().noun, L().nouns)} in the list${items.length - fresh ? `, ${items.length - fresh} already in this project` : ''}. Pick the ones to add. Check their dates and details: a shared list is only as current as whoever saved it.`;
+      $('#oftListItems').innerHTML = '<legend class="oft-vh">Pick what to add</legend>' + items.map((it, k) => {
+        const have = L().has(it);
+        return `<label><input type="checkbox" value="${k}"${have ? ' disabled' : ' checked'}><span>${e(L().label(it))}<small>${e(have ? 'Already in this project' : L().detail(it))}</small></span></label>`;
+      }).join('');
+      $('#oftListAdd').onclick = () => {
+        const picked = [...dlg.querySelectorAll('#oftListItems input:checked')].map(i => items[+i.value]);
+        if (!picked.length) { dlg.close(); return; }
+        const n = L().add(picked);
+        dlg.close();
+        changed();
+        toast(`Added ${plural(n, L().noun, L().nouns)} from the list.`);
+      };
+      dlg.showModal();
+    }
+    function open() {
+      const input = document.createElement('input');
+      input.type = 'file'; input.accept = '.json,application/json'; input.hidden = true;
+      document.body.append(input);
+      input.onchange = async () => {
+        const f = input.files[0];
+        input.remove();
+        if (!f) return;
+        let list;
+        try { list = JSON.parse(await f.text()); } catch { toast(`${f.name} isn't a list file this tool can read.`); return; }
+        if (!list || list.format !== 'oft-list') { toast(`${f.name} isn't a shared list. Save one with "Save a list" in this tool.`); return; }
+        if (list.kind !== L().kind) { toast(`${f.name} is a list of ${str(list.kind) || 'something else'}, not ${L().nouns}.`); return; }
+        show(list, f.name);
+      };
+      input.click();
+    }
+    return { save, open, show };
+  })();
+  /* oft-shared:lists end */
   /* oft-shared:tool begin. Copied from shared/tool.js by .github/scripts/sync_shared.py; edit it there. */
   // Shared by every tool: your name, remembering the open file, who has it open,
   // who changed what, merging two copies and spotting conflicted copies.

@@ -32,11 +32,11 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 
 ## What it does
 
-- **Keeps each answer in versions by length,** such as a 25-word and a 150-character logline. Each version has a limit in words or characters, and a name if the length isn't enough to tell them apart.
+- **Keeps each answer in versions by length,** such as a 25-word and a 150-character logline. Each version has a limit in words or characters, a language if it isn't the film's usual one, and a name if the length isn't enough to tell them apart.
 - **Counts as you write.** The count shows against the limit, in red with how far over when it's too long, along with the other count. Characters include spaces, the way most application forms count them.
 - **Starts a new version from the longest one,** so you can cut it down to the new length.
 - **Starts from the treatment.** If the [treatment builder](../treatment-builder/) has a logline, synopsis, approach, access or why-now section that isn't in the library yet, add it in one click.
-- **Pulls together the answers for one application.** Pick an application from the [grant calendar](../grant-calendar/), or type a funder that isn't in it, then choose a version of each answer. Copy the set, or download it as a text file.
+- **Pulls together the answers for one application.** Pick an application from the [grant calendar](../grant-calendar/), or type a funder that isn't in it, then choose a version of each answer, in one language if you keep answers in more than one. Paste the funder's own question under each answer to keep it with the application. Copy the set, or download it as a text file.
 - **Notes who got which version, and when.** Noting a set as sent records the funder and date on each version. Each version lists where it went, and the side panel shows what was sent most recently. Versions linked from the grant calendar show here too.
 - **Exports CSV and prints** every answer with its versions, counts and where each was sent. Also exports project data: project details, people, locations, third-party elements, contracts, assets, music cue sheet details or call sheets as separate CSV files.
 
@@ -52,13 +52,11 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-A `narratives` list. Each answer has an `id`, a `title`, `versions` and optional `notes`. Each version has an `id`, a `unit` (`words` or `characters`), and optional `limit`, `label`, `text`, `updated` (the date the text last changed) and `uses`. Each use has a `date` and either a `grantId`, pointing to a grant in the grant calendar's `grants`, or a `funder` name. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
+A `narratives` list. Each answer has an `id`, a `title`, `versions` and optional `notes`. Each version has an `id`, a `unit` (`words` or `characters`), and optional `limit`, `label`, `language` (as written, such as `Spanish`), `text`, `updated` (the date the text last changed) and `uses`. Each use has a `date`, an optional `prompt` (the funder's own question), and either a `grantId`, pointing to a grant in the grant calendar's `grants`, or a `funder` name. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
 - Comparing two versions side by side
-- Answers in more than one language
-- Funder-specific prompts saved with each application
 - Spell check beyond what your browser does
 
 ## License
