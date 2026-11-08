@@ -16,6 +16,7 @@ of their own, and the spreadsheet templates are checked against the tools' expor
 The shared code in every tool (shared/tool.js) is checked on the name supers list: merging two copies,
 merging in the save warning, who changed what, who has the file open, conflicted copies, and
 remembering the open file across tools (served over HTTP so the browser gives real file handles).
+The home page dashboard is checked with the sample: its flags against five tools, the calendar file and summaries.
 """
 import base64, datetime, csv, io, json, os, pathlib, re, sys, tempfile
 from playwright.sync_api import sync_playwright
@@ -3063,6 +3064,91 @@ def test_remember_file(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     context.close(); srv.shutdown()
 
+def test_dashboard(browser, fake):
+    ctx = browser.new_context(accept_downloads=True, viewport={'width': 1280, 'height': 900})
+    ctx.add_init_script(STUB_PRINT + NO_PICKERS)
+    pg = ctx.new_page(); errs = []
+    pg.on('pageerror', lambda e: errs.append(str(e)))
+    pg.goto('file://%s/index.html' % root)
+    check(pg.is_visible('#openProject') and not pg.is_visible('#dashboard') and pg.is_visible('#tools'), 'before a file is open, the home page offers to open one and lists the tools')
+    pg.set_input_files('#projectInput', files=[{'name': 'river.oft.json', 'mimeType': 'application/json', 'buffer': sample.encode()}])
+    pg.wait_for_selector('#dashboard .needs')
+    check('The River Keeps' in pg.inner_text('#dashTitle') and not pg.is_visible('#tools') and pg.is_visible('.glance'), 'opening the file shows the dashboard instead of the tool list')
+    items = pg.eval_on_selector_all('#dashboard .needs a[data-tool]', 'els => els.map(a => [a.dataset.tool, a.textContent, a.getAttribute("href")])')
+    by = lambda slug: [i for i in items if i[0] == slug]
+    check(any('Daniel Okafor is on camera with no release' in i[1] for i in items) and any('hasn\'t paid' in i[1] for i in items), 'lists what needs you across tools')
+    check(all(i[2].startswith('tools/%s/index.html#record=' % i[0]) for i in items), 'every item links to its tool, on the record')
+    text = pg.inner_text('#dashboard')
+    check('next 60 days' in text.lower() and 'revenue' in text.lower() and '140 of 500' in text, 'shows the next dates, revenue and impact against its target')
+    # The calendar file
+    pg.click('#calBtn')
+    pg.uncheck('#oftCalDialog input[value="contacts"]')
+    with pg.expect_download() as d:
+        pg.click('#oftCalSave')
+    ics = open(d.value.path(), encoding='utf-8').read()
+    check(d.value.suggested_filename == 'the-river-keeps-dates.ics' and ics.startswith('BEGIN:VCALENDAR') and 'UID:grant-county-heritage-deadline@open-filmmaker-toolkit' in ics and 'From the Grant calendar' in ics, 'the calendar file has every date with a stable id and its tool')
+    check('Follow up with Doris Kemp' not in ics and 'Shoot day' in ics, 'you can leave kinds of dates out')
+    # A read-only summary
+    pg.click('#summaryBtn')
+    pg.check('#summaryParts input[value="budget"]')
+    with pg.expect_download() as d:
+        pg.click('#summaryForm button[type=submit]')
+    html = open(d.value.path(), encoding='utf-8').read()
+    check('Clearance status' in html and 'Budget and costs' in html and 'archives@example.org' not in html and 'Content-Security-Policy' in html and 'http' not in html.split('</head>')[1], 'the summary has the chosen parts, no contact details and no network requests')
+    pg.click('#summaryBtn'); pg.check('#summaryForm input[value="contacts"]')
+    with pg.expect_download() as d:
+        pg.click('#summaryForm button[type=submit]')
+    check('archives@example.org' in open(d.value.path(), encoding='utf-8').read(), 'private details are included only when chosen')
+    # The flags match what each tool shows
+    counts = {}
+    for slug, sel, js in [('release-tracker', None, "document.querySelectorAll('.cov-line.is-missing, .cov-line.is-declined, .cov-line.is-expired').length"),
+                          ('name-supers', None, "document.querySelectorAll('#missing [data-add]').length"),
+                          ('qc-tracker', None, "+(document.getElementById('count').textContent.match(/(\\d+) open issue/) || [0, 0])[1]"),
+                          ('festival-strategy', None, "+(document.getElementById('count').textContent.match(/(\\d+) premiere clash/) || [0, 0])[1]"),
+                          ('contract-archive', None, "+(document.getElementById('count').textContent.match(/(\\d+) missing a signed copy/) || [0, 0])[1]")]:
+        c2, p2, e2 = new_page(browser, slug, False)
+        open_sample(p2, False)
+        counts[slug] = p2.evaluate(js)
+        c2.close()
+    dash = {s: len(by(s)) for s in counts}
+    dash['contract-archive'] = int(re.search(r'(\d+) signed agreement', ' '.join(i[1] for i in by('contract-archive')) or '0 signed agreement').group(1))
+    check(counts == dash, 'the dashboard flags match each tool: %s vs %s' % (dash, counts))
+    # Following an item opens the tool on that record, with the file
+    pg.click('#dashboard a[href*="record=person-daniel-okafor"][data-tool="release-tracker"]')
+    pg.wait_for_function("document.getElementById('filmMeta').textContent.trim() !== ''")
+    pg.wait_for_timeout(300)
+    check('River' in pg.inner_text('#filmTitle') and pg.evaluate("document.activeElement && document.activeElement.dataset.id") == 'person-daniel-okafor', 'the tool opens with the project, on that record')
+    pg.goto('file://%s/index.html' % root); pg.wait_for_selector('#dashboard .needs')
+    check(pg.is_visible('#dashboard') and 'Release tracker' in pg.inner_text('#dashboard .recent'), 'coming back shows the dashboard again, with the tools you used')
+    pg.click('#showTools')
+    check(pg.is_visible('#tools') and not pg.is_visible('#dashboard'), 'the tool list is one click away')
+    pg.click('#navProject')
+    pg.click('#closeProject')
+    check(not pg.is_visible('#dashboard') and pg.is_visible('#tools'), 'closing the file shows the tool list again')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+    for scheme, vp in [('light', PHONE), ('dark', {'width': 1280, 'height': 900})]:
+        c = browser.new_context(viewport=vp, color_scheme=scheme); c.add_init_script(NO_PICKERS); p = c.new_page()
+        p.goto('file://%s/index.html' % root)
+        p.set_input_files('#projectInput', files=[{'name': 'river.oft.json', 'mimeType': 'application/json', 'buffer': sample.encode()}])
+        p.wait_for_selector('#dashboard .needs')
+        check(horizontal_overflow(p) <= 1, 'dashboard (%s): does not scroll sideways' % scheme)
+        for k, (fg, bg) in p.evaluate(COLORS_JS).items():
+            check(contrast(fg, bg) >= 4.5, 'dashboard (%s): %s text contrast %.1f:1' % (scheme, k, contrast(fg, bg)))
+        c.close()
+
+# shared code / the calendar button in a tool with dates
+def test_tool_calendar(browser, fake):
+    ctx, pg, errs = new_page(browser, 'grant-calendar', fake)
+    open_sample(pg, fake)
+    pg.click('#oftCalBtn')
+    with pg.expect_download() as d:
+        pg.click('#oftCalSave')
+    ics = open(d.value.path(), encoding='utf-8').read()
+    check('From the Festival submission tracker' in ics and 'From the Grant calendar' in ics, 'a tool with dates exports every date in the project')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
 def test_template_columns(browser, fake):
     for name, template in TEMPLATE_EXPORTS:
         ctx, pg, errs = new_page(browser, name, fake)
@@ -3221,6 +3307,10 @@ def main():
         test_shared_file(browser, fake)
         print('== shared file / remembering the open file across tools')
         test_remember_file(browser, fake)
+        print('== home page / project dashboard, calendar file and summaries')
+        test_dashboard(browser, fake)
+        print('== shared code / the calendar file in a tool with dates')
+        test_tool_calendar(browser, fake)
         print('== templates / columns match the tools\' exports')
         test_template_columns(browser, fake)
         browser.close()

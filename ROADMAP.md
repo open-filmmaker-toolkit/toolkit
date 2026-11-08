@@ -52,8 +52,10 @@ The home page becomes a place to work, not just a list. Each step gets an issue 
 
 - [x] First version: every tool by stage and phase, workflows that show how the tools connect, search, and planned tools linked to their issues
 - [x] Chrome and Edge remember the open file, so the next tool opens it with one click ([#148](https://github.com/open-filmmaker-toolkit/toolkit/issues/148))
-- [ ] Open a project once in the hub and move between tools without opening and saving the file in each
-- [ ] Show what's in the open project, such as "14 cues, no clearance items yet", from the tools' own checks
+- [x] Open a project once on the home page and move between tools: each item on the dashboard opens its tool with the project, on that record ([#147](https://github.com/open-filmmaker-toolkit/toolkit/issues/147))
+- [x] A project dashboard on the home page: what needs you across every tool, the next 60 days, revenue and impact, from the same rules the tools use ([#147](https://github.com/open-filmmaker-toolkit/toolkit/issues/147))
+- [x] One calendar file for every date in the project, from the dashboard and from each tool with dates ([#149](https://github.com/open-filmmaker-toolkit/toolkit/issues/149))
+- [x] Read-only summaries of chosen parts of the project to share, leaving out contact details, notes and fees unless you include them ([#152](https://github.com/open-filmmaker-toolkit/toolkit/issues/152))
 - [ ] Install the hub as an app for offline use
 
 ## Backlog

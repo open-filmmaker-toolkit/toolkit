@@ -37,6 +37,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **One calendar,** by month: award dates, posts, accepted and pending festival starts and screenings, and the release date. Filter by kind.
 - **Suggested posts** for each accepted festival (four weeks before, a week before, the day and a thank-you) and the release, added as drafts in one click.
 - **Exports a calendar file (.ics)** for your calendar app, and **prints** the calendar and the awards.
+- **A calendar file of every date in the project**, gathered from every tool: choose **Calendar of every date** under the file buttons and pick which kinds of dates to include. Importing a newer file updates the same events instead of adding them twice.
 
 ## Saving and file conflicts
 

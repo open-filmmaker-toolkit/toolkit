@@ -142,6 +142,7 @@ All 62 are first versions: they work, and they're still changing. To ask for ano
 - **One shared project file.** All tools read and write the same project. Add a person once and they show up in your call sheets, releases, name supers and credits; log an archival clip once and it flows from the research log to the clearance log to the credits.
 - **Your file, your copy.** Projects save as a file on disk that you back up and share however you already do (Drive, Dropbox, a hard drive).
 - **Work together without a server.** Keep the file in a folder your sync app shares. The tools say who has it open and who changed what, and merge two copies when people save at once. See [Working on a shared file](docs/sharing-a-project.md).
+- **See the whole project.** Open the project file on the [home page](https://open-filmmaker-toolkit.github.io/toolkit/) to see what needs you across every tool, add every date to your calendar, or make a read-only summary to share.
 - **Plain templates too.** Most tools also have a blank spreadsheet or Word [template](templates/) for people who'd rather not use the tool.
 
 ## Shared project file

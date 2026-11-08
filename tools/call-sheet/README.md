@@ -40,6 +40,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **Exports call sheets as a spreadsheet (CSV).** One day from the editor, or every day at once. The layout matches the blank [call sheet template](../../templates/call-sheet-template.csv), which opens in Excel, Numbers or Google Sheets, so people can fill it in by hand without this tool.  Save it as `.xlsx` from there if you need that format.
 - **Exports a crew list (CSV)** with one row per person per day.
 - **Exports project data.** Save project details, people, locations, third-party elements, contracts, assets, music cue sheet details or call sheets as separate CSV files. Nested values stay as JSON inside their cell.
+- **A calendar file of every date in the project**, gathered from every tool: choose **Calendar of every date** under the file buttons and pick which kinds of dates to include. Importing a newer file updates the same events instead of adding them twice.
 
 ## Saving and file conflicts
 

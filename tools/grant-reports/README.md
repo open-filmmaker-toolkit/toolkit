@@ -37,6 +37,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **Final costs** from the [final cost report](../final-cost-report/), in the funder's categories when the [budget converter](../budget-converter/) has a format for the grant, with your variance notes.
 - **The impact report's** summary, screenings, audience, results and quotes, from the [impact report](../impact-report/).
 - **Prints** the report for the grant you pick.
+- **A calendar file of every date in the project**, gathered from every tool: choose **Calendar of every date** under the file buttons and pick which kinds of dates to include. Importing a newer file updates the same events instead of adding them twice.
 
 ## Saving and file conflicts
 

@@ -42,6 +42,8 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 
 The festival link is stored as plain text. It only becomes a clickable link if it starts with `http://` or `https://`.
 
+- **A calendar file of every date in the project**, gathered from every tool: choose **Calendar of every date** under the file buttons and pick which kinds of dates to include. Importing a newer file updates the same events instead of adding them twice.
+
 ## Saving and file conflicts
 
 Chrome and Edge can save straight back to the file you opened. If it changed on disk since you opened it, the tool warns before saving. You can reload the latest version, save your edits as a separate copy, or explicitly overwrite the changed file. Safari and Firefox download a new copy instead.
@@ -58,7 +60,7 @@ Everything else in the file is preserved, including fields this tool doesn't rec
 
 ## Not yet
 
-- Reminders inside the tool, or a calendar file of deadlines and screenings
+- Reminders inside the tool
 - Importing festivals from a spreadsheet or a submission platform
 - Tracking laurels, screening fees or travel for each festival
 - A shared list of festivals and their usual deadlines
