@@ -236,6 +236,8 @@ pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; b
 .skip-link { position: absolute; left: 12px; top: -80px; z-index: 1000; padding: 8px 14px; border: 2px solid var(--focus, #2f6fdb); border-radius: 6px; background: var(--sheet, #ffffff); color: var(--ink, #1a2130); font-weight: 600; text-decoration: none; }
 .skip-link:focus { top: 12px; }
 input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:focus, input[type="time"]:focus-within { outline: 2px solid var(--focus, #2f6fdb); outline-offset: 2px; }
+.home-link { color: inherit; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.home-link:hover { text-decoration-thickness: 2px; }
 </style>
 </head>
 <body>
@@ -248,7 +250,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
 <div class="page">
   <header class="masthead">
     <div>
-      <p class="tool-name">Press list</p>
+      <p class="tool-name"><a class="home-link" href="../../index.html">Open Filmmaker Toolkit</a> <span aria-hidden="true">/</span> Press list</p>
       <h1 class="film-title" id="filmTitle">Untitled film</h1>
       <p class="film-meta"><span id="filmMeta"></span> <button type="button" class="link-btn" id="editProjectBtn">Edit film details</button></p>
     </div>
@@ -308,7 +310,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   </main>
 
   <footer class="foot">
-    <p>Part of the Open Filmmaker Toolkit. This page makes no network requests: everything stays on this computer until you save or export it. Uses the same project file as the other toolkit tools.</p>
+    <p>Part of the <a href="../../index.html">Open Filmmaker Toolkit</a>. This page makes no network requests: everything stays on this computer until you save or export it. Uses the same project file as the other toolkit tools.</p>
   </footer>
 </div>
 

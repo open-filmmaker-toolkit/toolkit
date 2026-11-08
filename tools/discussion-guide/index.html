@@ -84,13 +84,15 @@ dialog .actions { justify-content: flex-end; }
 .skip-link { position: absolute; left: 12px; top: -80px; z-index: 1000; padding: 8px 14px; border: 2px solid var(--focus, #2f6fdb); border-radius: 6px; background: var(--sheet, #ffffff); color: var(--ink, #1a2130); font-weight: 600; text-decoration: none; }
 .skip-link:focus { top: 12px; }
 input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:focus, input[type="time"]:focus-within { outline: 2px solid var(--focus, #2f6fdb); outline-offset: 2px; }
+.home-link { color: inherit; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.home-link:hover { text-decoration-thickness: 2px; }
 </style>
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to the tool</a>
 <div class="page">
   <header class="masthead">
-    <div><p class="tool-name">Discussion guide builder</p><h1 id="filmTitle">Untitled film</h1><p class="meta" id="filmMeta"></p></div>
+    <div><p class="tool-name"><a class="home-link" href="../../index.html">Open Filmmaker Toolkit</a> <span aria-hidden="true">/</span> Discussion guide builder</p><h1 id="filmTitle">Untitled film</h1><p class="meta" id="filmMeta"></p></div>
     <div class="file">
       <p class="file-state" id="fileState">Not saved to a file yet</p>
       <div class="file-actions">
@@ -139,7 +141,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       </section>
     </div>
   </main>
-  <footer><p>Part of the Open Filmmaker Toolkit. Everything stays on this computer until you save or export it. This page makes no network requests.</p></footer>
+  <footer><p>Part of the <a href="../../index.html">Open Filmmaker Toolkit</a>. Everything stays on this computer until you save or export it. This page makes no network requests.</p></footer>
 </div>
 <div class="report" id="report" aria-hidden="true"></div>
 <input type="file" id="fileInput" accept=".json,application/json" hidden>

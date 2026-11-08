@@ -141,6 +141,8 @@ def test_skip_link(browser, name):
     first = pg.evaluate("() => [document.activeElement.className, document.activeElement.getAttribute('href')]")
     pg.keyboard.press('Enter')
     check(first == ['skip-link', '#main'] and pg.evaluate("() => location.hash === '#main' && !!document.querySelector('main#main')"), 'the first Tab reaches a skip link to the main content')
+    pg.click('a.home-link'); pg.wait_for_load_state('load')
+    check(pg.url.endswith('/index.html') and '/tools/' not in pg.url and pg.locator('#tools').count() == 1, 'the header links back to the toolkit home page')
     ctx.close()
 
 def test_phone(browser, name, fake):
@@ -2956,7 +2958,7 @@ def main():
         for name in TOOLS:
             for label, fn in [('core', lambda: test_core(browser, name, fake)), ('phone', lambda: test_phone(browser, name, fake)),
                               ('dark mode', lambda: test_dark(browser, name, fake)), ('print', lambda: test_print(browser, name, fake, fake)),
-                              ('skip link', lambda: test_skip_link(browser, name))]:
+                              ('skip and home links', lambda: test_skip_link(browser, name))]:
                 print('== %s / %s' % (name, label))
                 fn()
         print('== call-sheet / spreadsheet export')

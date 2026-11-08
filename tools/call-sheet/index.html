@@ -145,6 +145,9 @@ dialog form { display: flex; flex-direction: column; height: 100%; max-height: i
 .skip-link { position: absolute; left: 12px; top: -80px; z-index: 1000; padding: 8px 14px; border: 2px solid var(--focus, #2f6fdb); border-radius: 6px; background: var(--sheet, #ffffff); color: var(--ink, #1a2130); font-weight: 600; text-decoration: none; }
 .skip-link:focus { top: 12px; }
 input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:focus, input[type="time"]:focus-within { outline: 2px solid var(--focus, #2f6fdb); outline-offset: 2px; }
+.home-link { color: inherit; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.home-link:hover { text-decoration-thickness: 2px; }
+.foot { margin: 28px 0 0; color: var(--ink-3); font-size: 13px; }
 </style>
 </head>
 <body>
@@ -157,7 +160,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
 <div class="page">
   <header class="masthead">
     <div>
-      <p class="tool-name">Call sheet</p>
+      <p class="tool-name"><a class="home-link" href="../../index.html">Open Filmmaker Toolkit</a> <span aria-hidden="true">/</span> Call sheet</p>
       <h1 class="film-title" id="filmTitle">Untitled film</h1>
       <p class="film-meta"><span id="filmMeta"></span> <button type="button" class="link-btn" id="editProjectBtn">Edit film details</button></p>
     </div>
@@ -207,6 +210,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     </div>
     <p class="foot">Your project file stays on your computer. To make a PDF, choose "Save as PDF" in your browser's print dialog.</p>
   </main>
+  <footer class="foot"><p>Part of the <a href="../../index.html">Open Filmmaker Toolkit</a>. This page makes no network requests: everything stays on this computer until you save or export it.</p></footer>
 </div>
 
 <dialog class="drawer" id="editor" aria-labelledby="editorTitle">
