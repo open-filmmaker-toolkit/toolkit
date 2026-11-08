@@ -3348,6 +3348,72 @@
       "number": 4
     }
   ],
+  "shots": [
+    {
+      "id": "shot-1a",
+      "sceneId": "scene-1",
+      "number": "1A",
+      "size": "Wide",
+      "angle": "High",
+      "movement": "Crane or jib",
+      "lens": "24mm",
+      "description": "The levee at night, lanterns strung along the sandbag line in the rain",
+      "notes": "Rain towers on before we roll",
+      "done": true
+    },
+    {
+      "id": "shot-1b",
+      "sceneId": "scene-1",
+      "number": "1B",
+      "size": "Medium",
+      "angle": "Eye level",
+      "movement": "Handheld",
+      "lens": "35mm",
+      "description": "Edith at the sand pile, Walt passing behind her with two bags"
+    },
+    {
+      "id": "shot-1c",
+      "sceneId": "scene-1",
+      "number": "1C",
+      "size": "Close-up",
+      "angle": "Low",
+      "movement": "Static",
+      "lens": "50mm",
+      "description": "The water line on Mr. Pryor's post, lantern light on the water",
+      "notes": "Insert; can be shot on the second day"
+    },
+    {
+      "id": "shot-2a",
+      "sceneId": "scene-2",
+      "number": "2A",
+      "size": "Medium wide",
+      "angle": "Eye level",
+      "movement": "Static",
+      "lens": "35mm",
+      "description": "The kitchen by lamplight, Josie asleep under the coat"
+    },
+    {
+      "id": "shot-2b",
+      "sceneId": "scene-2",
+      "number": "2B",
+      "size": "Insert",
+      "angle": "Overhead",
+      "movement": "Static",
+      "lens": "50mm",
+      "description": "Edith’s pen on the diary page",
+      "notes": "Use the prop diary with the real 1952 entry copied in"
+    },
+    {
+      "id": "shot-broll-1",
+      "group": "River b-roll",
+      "number": "1",
+      "size": "Extreme wide",
+      "angle": "Eye level",
+      "movement": "Drone",
+      "description": "The river at dawn from above the levee",
+      "notes": "Check the drone permit"
+    }
+  ],
   "interviews": [
     {
       "id": "interview-ruth",

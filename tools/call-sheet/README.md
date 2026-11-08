@@ -36,6 +36,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **Edits a day:** date, label, general call, wrap, location, parking, weather, sunrise and sunset, nearest hospital, a schedule, and notes.
 - **Picks crew from your project.** Check who's working, set a role and call time for each, or **Use general call for everyone checked**. Add a person or location without leaving the day.
 - **Copies a day to the next one,** keeping crew, location and hospital, and clearing weather and daylight.
+- **Opens the sides** for a day whose scenes are on the [stripboard](../stripboard/): choose **Print sides** in the day's editor, and the [sides](../sides/) tool opens in a new tab with the project and that day.
 - **Prints** one portrait page per day. Choose "Save as PDF" in the print dialog to make a PDF.
 - **Exports call sheets as a spreadsheet (CSV).** One day from the editor, or every day at once. The layout matches the blank [call sheet template](../../templates/call-sheet-template.csv), which opens in Excel, Numbers or Google Sheets, so people can fill it in by hand without this tool.  Save it as `.xlsx` from there if you need that format.
 - **Exports a crew list (CSV)** with one row per person per day.

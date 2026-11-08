@@ -1,6 +1,6 @@
 # Tools
 
-The tools we build, by production phase. Each one is a single page that runs in your browser on the shared project file, with nothing to install and nothing sent anywhere. 65 are ready to use.
+The tools we build, by production phase. Each one is a single page that runs in your browser on the shared project file, with nothing to install and nothing sent anywhere. 67 are ready to use.
 
 - **Ready to use:** linked tools. Each has a README with what it does.
 - **Want another tool?** [Ask for it](https://github.com/open-filmmaker-toolkit/toolkit/issues/new?template=request-a-tool.yml). New tools get an issue and a line here before work starts. Order of work is in [ROADMAP.md](ROADMAP.md).
@@ -37,6 +37,7 @@ Looking for other free, open-source software for filmmaking, such as editing, so
 | [Script breakdown](tools/script-breakdown/) | Break down a script into scenes, cast and props. | First version |
 | [Stripboard](tools/stripboard/) | Arrange the script's scenes into shoot days. | First version |
 | [Day-out-of-days](tools/day-out-of-days/) | See which days each cast member works. | First version |
+| [Shot list and storyboard](tools/shot-list/) | Plan the shots for each scene, with frames. | First version |
 | [Shooting calendar](tools/shooting-calendar/) | Schedule shoot days, travel and holds. | First version |
 | [Interview prep](tools/interview-prep/) | Prepare research and questions for each interview. | First version |
 | [Location scout sheet](tools/location-scout/) | Record scouts with photos for the crew. | First version |
@@ -52,6 +53,7 @@ Looking for other free, open-source software for filmmaking, such as editing, so
 | Tool | Use it for | Status |
 | --- | --- | --- |
 | [Call sheet](tools/call-sheet/) | Build call sheets from your project. | First version |
+| [Sides](tools/sides/) | Print the day's scenes for cast and crew. | First version |
 | [Camera and sound reports](tools/camera-sound-reports/) | Log what's on each camera and sound card. | First version |
 | [Interview log](tools/interview-log/) | Log interviews and their best moments. | First version |
 | [Daily production report](tools/daily-production-report/) | Report each shoot day's hours, footage and problems. | First version |

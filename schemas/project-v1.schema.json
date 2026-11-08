@@ -218,6 +218,13 @@
       },
       "description": "The characters in the script, numbered for the schedule, and who plays each one, kept by the script breakdown."
     },
+    "shots": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/shot"
+      },
+      "description": "Shots for each scene, with a frame for the storyboard, kept by the shot list."
+    },
     "dayOutOfDays": {
       "type": "object",
       "properties": {
@@ -6183,6 +6190,55 @@
         "personId": {
           "$ref": "#/$defs/id",
           "description": "Who plays the part, in people."
+        }
+      },
+      "additionalProperties": true
+    },
+    "shot": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "sceneId": {
+          "$ref": "#/$defs/id",
+          "description": "The scene, in scenes."
+        },
+        "group": {
+          "type": "string",
+          "description": "A group for shots with no scene, such as b-roll."
+        },
+        "number": {
+          "type": "string"
+        },
+        "size": {
+          "type": "string"
+        },
+        "angle": {
+          "type": "string"
+        },
+        "movement": {
+          "type": "string"
+        },
+        "lens": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string",
+          "description": "What we see."
+        },
+        "notes": {
+          "type": "string"
+        },
+        "frame": {
+          "type": "string",
+          "description": "A picture for the storyboard, as a data URL."
+        },
+        "done": {
+          "type": "boolean"
         }
       },
       "additionalProperties": true

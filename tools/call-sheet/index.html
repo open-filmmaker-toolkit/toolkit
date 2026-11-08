@@ -271,6 +271,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       <span class="spacer"></span>
       <button type="button" class="btn" id="sheetCsvDayBtn">Export spreadsheet</button>
       <button type="button" class="btn" id="printBtn">Print</button>
+      <button type="button" class="btn" id="sidesBtn" hidden>Print sides</button>
       <button type="button" class="btn" id="editorCancel">Cancel</button>
       <button type="submit" class="btn primary">Save day</button>
     </div>
@@ -528,7 +529,20 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('deleteBtn').hidden = isNew;
     $('f-date').setCustomValidity('');
     fillForm(s);
+    $('sidesBtn').hidden = !sidesDay(s);
     $('editor').showModal();
+  }
+  // The shoot day this call sheet belongs to, if the stripboard put scenes on it, for printing its sides.
+  function sidesDay(s) {
+    const days = (Array.isArray(doc.shootDays) ? doc.shootDays : []).filter(d => d && Array.isArray(d.sceneIds) && d.sceneIds.length);
+    return days.find(d => d.callSheetId === s.id) || days.find(d => d.date && d.date === s.date) || null;
+  }
+  // Opens the sides tool in a new tab with this project and day.
+  function openSides() {
+    const d = sidesDay(readForm());
+    if (!d) return;
+    try { sessionStorage.setItem('oft-handoff', JSON.stringify({ text: JSON.stringify(doc), name: fileName || suggestedName(), at: Date.now() })); } catch { /* the sides tool will ask for the file */ }
+    window.open(`../sides/index.html#day=${encodeURIComponent(d.id)}`, '_blank');
   }
   function saveEditor() {
     const s = readForm();
@@ -972,6 +986,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('sheetCsvDayBtn').onclick = () => exportSheetCsv([readForm()]);
     $('printAllBtn').onclick = () => printSheets(sheets());
     $('printBtn').onclick = () => printSheets([readForm()]);
+    $('sidesBtn').onclick = openSides;
+    $('f-date').addEventListener('input', () => { $('sidesBtn').hidden = !sidesDay(readForm()); });
     $('fileInput').addEventListener('change', async () => {
       const f = $('fileInput').files[0];
       if (f) loadText(await f.text(), f.name, null);
@@ -1376,7 +1392,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const OFT_SLUG = (window.location.pathname.match(/tools\/([^/]+)\//) || [])[1] || '';
   const OFT_GUIDE = 'https://github.com/open-filmmaker-toolkit/toolkit/blob/main/docs/sharing-a-project.md';
   const OFT_HOURS = 4;
-  const OFT_KEYS = { project: 'Project details', people: 'People', locations: 'Locations', thirdPartyElements: 'Clearance log', contracts: 'Contracts and releases', assets: 'Files and stills', musicCueSheet: 'Music cue sheet', callSheets: 'Call sheets', credits: 'Credits', supers: 'Name supers', subjects: 'Subject tracker', sources: 'Research log', comps: 'Comps tracker', treatment: 'Treatment', pitchDeck: 'Pitch deck', grants: 'Grant calendar', narratives: 'Narrative library', budget: 'Budget', budgetFormats: 'Budget converter', financePlan: 'Finance plan', funders: 'Funder CRM', cashFlow: 'Cash flow', shootDays: 'Shooting calendar', script: 'Script', scenes: 'Script breakdown', characters: 'Cast', dayOutOfDays: 'Day-out-of-days', interviews: 'Interviews', journal: 'Field journal', scouts: 'Location scouts', gear: 'Gear list', trips: 'Travel sheet', riskPlans: 'Risk plans', security: 'Security checklist', mediaReports: 'Camera and sound reports', dailyReports: 'Daily reports', expenses: 'Expense log', festivals: 'Festival submissions', screenings: 'Screenings', pressOutlets: 'Press list', partners: 'Partner CRM', discussionGuide: 'Discussion guide', paperEdit: 'Paper edit', costReport: 'Budget-to-actuals', structure: 'Structure board', cuts: 'Cut tracker', clearanceReport: 'Clearance report', chainOfTitle: 'Chain of title', festivalStrategy: 'Festival strategy', pressNotes: 'Press notes', awards: 'Awards', socialPosts: 'Social posts', deliverables: 'Deliverables', qc: 'QC tracker', waterfall: 'Waterfall', revenueStatements: 'Revenue tracker', bookings: 'Bookings', theoryOfChange: 'Theory of change', screeningKit: 'Screening kit', impactReport: 'Impact report', finalCostReport: 'Final cost report', grantReports: 'Grant reports', contractArchive: 'Contract archive' };
+  const OFT_KEYS = { project: 'Project details', people: 'People', locations: 'Locations', thirdPartyElements: 'Clearance log', contracts: 'Contracts and releases', assets: 'Files and stills', musicCueSheet: 'Music cue sheet', callSheets: 'Call sheets', credits: 'Credits', supers: 'Name supers', subjects: 'Subject tracker', sources: 'Research log', comps: 'Comps tracker', treatment: 'Treatment', pitchDeck: 'Pitch deck', grants: 'Grant calendar', narratives: 'Narrative library', budget: 'Budget', budgetFormats: 'Budget converter', financePlan: 'Finance plan', funders: 'Funder CRM', cashFlow: 'Cash flow', shootDays: 'Shooting calendar', script: 'Script', scenes: 'Script breakdown', characters: 'Cast', dayOutOfDays: 'Day-out-of-days', shots: 'Shot list', interviews: 'Interviews', journal: 'Field journal', scouts: 'Location scouts', gear: 'Gear list', trips: 'Travel sheet', riskPlans: 'Risk plans', security: 'Security checklist', mediaReports: 'Camera and sound reports', dailyReports: 'Daily reports', expenses: 'Expense log', festivals: 'Festival submissions', screenings: 'Screenings', pressOutlets: 'Press list', partners: 'Partner CRM', discussionGuide: 'Discussion guide', paperEdit: 'Paper edit', costReport: 'Budget-to-actuals', structure: 'Structure board', cuts: 'Cut tracker', clearanceReport: 'Clearance report', chainOfTitle: 'Chain of title', festivalStrategy: 'Festival strategy', pressNotes: 'Press notes', awards: 'Awards', socialPosts: 'Social posts', deliverables: 'Deliverables', qc: 'QC tracker', waterfall: 'Waterfall', revenueStatements: 'Revenue tracker', bookings: 'Bookings', theoryOfChange: 'Theory of change', screeningKit: 'Screening kit', impactReport: 'Impact report', finalCostReport: 'Final cost report', grantReports: 'Grant reports', contractArchive: 'Contract archive' };
   const oftStore = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch { /* storage off */ } } };
   const oftMe = () => (oftStore.get('oft-user-name') || '').trim();
   const oftEsc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);

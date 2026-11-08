@@ -27,13 +27,13 @@ from playwright.sync_api import sync_playwright
 
 root = pathlib.Path(__file__).resolve().parents[1]
 sample = (root / 'samples/the-river-keeps.oft.json').read_text()
-TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan', 'funder-crm', 'cash-flow', 'shooting-calendar', 'interview-prep', 'field-journal', 'location-scout', 'deal-memos', 'gear-list', 'coi-permit-tracker', 'travel-sheet', 'risk-plan', 'security-checklist', 'camera-sound-reports', 'interview-log', 'daily-production-report', 'expense-log', 'festival-submissions', 'press-list', 'partner-crm', 'discussion-guide', 'archive-log', 'footage-log', 'paper-edit', 'structure-board', 'cut-tracker', 'budget-to-actuals', 'fair-use-log', 'license-tracker', 'clearance-report', 'chain-of-title', 'festival-strategy', 'press-notes', 'stills-library', 'awards-social', 'rights-matrix', 'deliverables', 'qc-tracker', 'waterfall', 'revenue-tracker', 'bookings', 'theory-of-change', 'screening-kit', 'impact-report', 'final-cost-report', 'grant-reports', 'contract-archive', 'script-breakdown', 'stripboard', 'day-out-of-days']
+TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan', 'funder-crm', 'cash-flow', 'shooting-calendar', 'interview-prep', 'field-journal', 'location-scout', 'deal-memos', 'gear-list', 'coi-permit-tracker', 'travel-sheet', 'risk-plan', 'security-checklist', 'camera-sound-reports', 'interview-log', 'daily-production-report', 'expense-log', 'festival-submissions', 'press-list', 'partner-crm', 'discussion-guide', 'archive-log', 'footage-log', 'paper-edit', 'structure-board', 'cut-tracker', 'budget-to-actuals', 'fair-use-log', 'license-tracker', 'clearance-report', 'chain-of-title', 'festival-strategy', 'press-notes', 'stills-library', 'awards-social', 'rights-matrix', 'deliverables', 'qc-tracker', 'waterfall', 'revenue-tracker', 'bookings', 'theory-of-change', 'screening-kit', 'impact-report', 'final-cost-report', 'grant-reports', 'contract-archive', 'script-breakdown', 'stripboard', 'day-out-of-days', 'sides', 'shot-list']
 COLLECTIONS = ['project', 'people', 'locations', 'thirdPartyElements', 'contracts', 'assets', 'musicCueSheet', 'callSheets']
-PRINT_BTN = {'stripboard': '#printBtn', 'day-out-of-days': '#printBtn', 'script-breakdown': '#printBtn', 'contract-archive': '#printBtn', 'grant-reports': '#printBtn', 'final-cost-report': '#printBtn', 'impact-report': '#printBtn', 'screening-kit': '#printBtn', 'theory-of-change': '#printBtn', 'bookings': '#printBtn', 'revenue-tracker': '#printBtn', 'waterfall': '#printBtn', 'qc-tracker': '#printBtn', 'deliverables': '#printBtn', 'rights-matrix': '#printBtn', 'awards-social': '#printBtn', 'stills-library': '#printBtn', 'press-notes': '#printBtn', 'festival-strategy': '#printBtn', 'clearance-log': '#printBtn', 'music-cue-sheet': '#printBtn', 'call-sheet': '#printAllBtn', 'release-tracker': '#printBtn',
+PRINT_BTN = {'shot-list': '#printBtn', 'sides': '#printBtn', 'stripboard': '#printBtn', 'day-out-of-days': '#printBtn', 'script-breakdown': '#printBtn', 'contract-archive': '#printBtn', 'grant-reports': '#printBtn', 'final-cost-report': '#printBtn', 'impact-report': '#printBtn', 'screening-kit': '#printBtn', 'theory-of-change': '#printBtn', 'bookings': '#printBtn', 'revenue-tracker': '#printBtn', 'waterfall': '#printBtn', 'qc-tracker': '#printBtn', 'deliverables': '#printBtn', 'rights-matrix': '#printBtn', 'awards-social': '#printBtn', 'stills-library': '#printBtn', 'press-notes': '#printBtn', 'festival-strategy': '#printBtn', 'clearance-log': '#printBtn', 'music-cue-sheet': '#printBtn', 'call-sheet': '#printAllBtn', 'release-tracker': '#printBtn',
              'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn', 'treatment-builder': '#printBtn', 'pitch-deck': '#printBtn', 'grant-calendar': '#printBtn', 'narrative-library': '#printBtn', 'budget': '#printBtn', 'budget-converter': '#printBtn', 'finance-plan': '#printBtn', 'funder-crm': '#printBtn', 'cash-flow': '#printBtn', 'shooting-calendar': '#printBtn', 'interview-prep': '#printBtn', 'field-journal': '#printBtn', 'location-scout': '#printBtn', 'deal-memos': '#printBtn', 'gear-list': '#printBtn', 'coi-permit-tracker': '#printBtn', 'travel-sheet': '#printBtn', 'risk-plan': '#printBtn', 'security-checklist': '#printBtn', 'camera-sound-reports': '#printBtn', 'interview-log': '#printBtn', 'daily-production-report': '#printBtn', 'expense-log': '#printBtn', 'festival-submissions': '#printBtn', 'press-list': '#printBtn', 'partner-crm': '#printBtn', 'discussion-guide': '#printBtn', 'archive-log': '#printBtn', 'footage-log': '#printBtn', 'paper-edit': '#printBtn', 'structure-board': '#printBtn', 'cut-tracker': '#printBtn', 'budget-to-actuals': '#printBtn', 'fair-use-log': '#printBtn', 'license-tracker': '#printBtn', 'clearance-report': '#printBtn', 'chain-of-title': '#printBtn'}
 PHONE = {'width': 390, 'height': 844}
 # The button that opens each tool's main dialog, for the phone-width check. Most tools use #addBtn.
-DIALOG_BTN = {'day-out-of-days': '#settingsBtn', 'impact-report': '#addBtn', 'screening-kit': '#addBtn', 'theory-of-change': '#addBtn', 'stills-library': '[data-edit]', 'treatment-builder': '[data-compare]', 'cash-flow': '#settingsBtn', 'discussion-guide': '#projectCsvBtn'}
+DIALOG_BTN = {'sides': '#editProjectBtn', 'day-out-of-days': '#settingsBtn', 'impact-report': '#addBtn', 'screening-kit': '#addBtn', 'theory-of-change': '#addBtn', 'stills-library': '[data-edit]', 'treatment-builder': '[data-compare]', 'cash-flow': '#settingsBtn', 'discussion-guide': '#projectCsvBtn'}
 
 STUB_PRINT = 'window.print = () => { window.__printed = true; };'
 NO_PICKERS = 'delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker;'
@@ -404,7 +404,7 @@ def test_credits_builder(browser, fake):
     ctx.close()
 
 # Each spreadsheet template's columns must appear in its tool's CSV export, in the same order.
-TEMPLATE_EXPORTS = [('script-breakdown', 'script-breakdown-template.csv'), ('contract-archive', 'contract-archive-template.csv'), ('final-cost-report', 'final-cost-report-template.csv'), ('impact-report', 'impact-results-template.csv'), ('theory-of-change', 'theory-of-change-template.csv'), ('bookings', 'bookings-template.csv'), ('revenue-tracker', 'revenue-template.csv'), ('waterfall', 'waterfall-template.csv'), ('qc-tracker', 'qc-issues-template.csv'), ('deliverables', 'deliverables-template.csv'), ('rights-matrix', 'rights-matrix-template.csv'), ('stills-library', 'stills-caption-sheet-template.csv'), ('festival-strategy', 'festival-strategy-template.csv'), ('fair-use-log', 'fair-use-template.csv'), ('license-tracker', 'licenses-template.csv'), ('clearance-report', 'clearance-report-template.csv'), ('chain-of-title', 'chain-of-title-template.csv'), ('structure-board', 'structure-board-template.csv'), ('cut-tracker', 'cut-notes-template.csv'), ('budget-to-actuals', 'cost-report-template.csv'), ('footage-log', 'footage-log-template.csv'), ('paper-edit', 'paper-edit-template.csv'), ('press-list', 'press-list-template.csv'), ('partner-crm', 'partner-crm-template.csv'), ('camera-sound-reports', 'camera-and-sound-reports-template.csv'), ('interview-log', 'interview-moments-template.csv'), ('travel-sheet', 'travel-sheet-template.csv'), ('risk-plan', 'risk-assessment-template.csv'), ('security-checklist', 'security-checklist-template.csv'), ('gear-list', 'gear-list-template.csv'), ('coi-permit-tracker', 'certificates-and-permits-template.csv'), ('location-scout', 'location-scout-template.csv'), ('deal-memos', 'deal-memos-template.csv'), ('shooting-calendar', 'shooting-calendar-template.csv'), ('interview-prep', 'interview-questions-template.csv'), ('funder-crm', 'funder-crm-template.csv'), ('cash-flow', 'cash-flow-template.csv'), ('budget', 'budget-template.csv'), ('finance-plan', 'finance-plan-template.csv'), ('grant-calendar', 'grant-calendar-template.csv'), ('clearance-log', 'clearance-log-template.csv'), ('release-tracker', 'release-log-template.csv'),
+TEMPLATE_EXPORTS = [('shot-list', 'shot-list-template.csv'), ('script-breakdown', 'script-breakdown-template.csv'), ('contract-archive', 'contract-archive-template.csv'), ('final-cost-report', 'final-cost-report-template.csv'), ('impact-report', 'impact-results-template.csv'), ('theory-of-change', 'theory-of-change-template.csv'), ('bookings', 'bookings-template.csv'), ('revenue-tracker', 'revenue-template.csv'), ('waterfall', 'waterfall-template.csv'), ('qc-tracker', 'qc-issues-template.csv'), ('deliverables', 'deliverables-template.csv'), ('rights-matrix', 'rights-matrix-template.csv'), ('stills-library', 'stills-caption-sheet-template.csv'), ('festival-strategy', 'festival-strategy-template.csv'), ('fair-use-log', 'fair-use-template.csv'), ('license-tracker', 'licenses-template.csv'), ('clearance-report', 'clearance-report-template.csv'), ('chain-of-title', 'chain-of-title-template.csv'), ('structure-board', 'structure-board-template.csv'), ('cut-tracker', 'cut-notes-template.csv'), ('budget-to-actuals', 'cost-report-template.csv'), ('footage-log', 'footage-log-template.csv'), ('paper-edit', 'paper-edit-template.csv'), ('press-list', 'press-list-template.csv'), ('partner-crm', 'partner-crm-template.csv'), ('camera-sound-reports', 'camera-and-sound-reports-template.csv'), ('interview-log', 'interview-moments-template.csv'), ('travel-sheet', 'travel-sheet-template.csv'), ('risk-plan', 'risk-assessment-template.csv'), ('security-checklist', 'security-checklist-template.csv'), ('gear-list', 'gear-list-template.csv'), ('coi-permit-tracker', 'certificates-and-permits-template.csv'), ('location-scout', 'location-scout-template.csv'), ('deal-memos', 'deal-memos-template.csv'), ('shooting-calendar', 'shooting-calendar-template.csv'), ('interview-prep', 'interview-questions-template.csv'), ('funder-crm', 'funder-crm-template.csv'), ('cash-flow', 'cash-flow-template.csv'), ('budget', 'budget-template.csv'), ('finance-plan', 'finance-plan-template.csv'), ('grant-calendar', 'grant-calendar-template.csv'), ('clearance-log', 'clearance-log-template.csv'), ('release-tracker', 'release-log-template.csv'),
                     ('music-cue-sheet', 'music-cue-sheet-template.csv'), ('name-supers', 'name-supers-template.csv'),
                     ('subject-tracker', 'subject-tracker-template.csv'), ('research-log', 'research-log-template.csv'),
                     ('comps-tracker', 'comps-tracker-template.csv')]
@@ -3071,6 +3071,80 @@ def test_day_out_of_days(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
+def test_sides(browser, fake):
+    ctx, pg, errs = new_page(browser, 'sides', fake)
+    open_sample(pg, fake)
+    check(pg.input_value('#daySel') == 'shootday-nov-1' and pg.locator('#pages .sp').count() == 2, 'opens on the next day with scenes, one side per script page')
+    pages = pg.inner_text('#pages')
+    check(all(x in pages for x in ['START 2', 'END 2', 'START 4', 'END 4']) and 'START 1' not in pages, 'marks where each of the day\'s scenes starts and ends')
+    check(pg.locator('#pages .out').count() > 5 and pg.locator('#pages .e-scene:not(.out)').count() == 2, 'crosses out the scenes that aren\'t on the day')
+    pg.select_option('#daySel', 'shootday-mar-1'); pg.wait_for_timeout(100)
+    check('START 3' in pg.inner_text('#pages') and '1 scene' in pg.inner_text('#count'), 'another day shows its own scenes')
+    pg.select_option('#daySel', 'shootday-nov-1')
+    pg.check('input[name="size"][value="half"]'); pg.click('#printBtn'); pg.wait_for_timeout(150)
+    check(pg.get_attribute('#report', 'class') == 'report half' and pg.locator('#report .r-sheet').count() == 1 and pg.locator('#report .r-sheet .sp').count() == 2, 'half size puts two pages on a sheet')
+    pg.check('input[name="size"][value="full"]'); pg.click('#printBtn'); pg.wait_for_timeout(150)
+    check(pg.locator('#report .r-sheet').count() == 2, 'full size prints a sheet per page')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+    d = json.loads(sample)
+    d['script']['text'] = d['script']['text'].replace('INT. HAMMOND HOUSE - ATTIC - DAY #4#', 'INT. BARN - DAY #9#')
+    ctx, pg, errs = new_page(browser, 'sides', fake)
+    open_text(pg, fake, json.dumps(d))
+    check('Not in the script text' in pg.inner_text('#onList') and pg.locator('#pages .sp').count() == 1, 'a scheduled scene that isn\'t in the script text is pointed out')
+    ctx.close()
+    # The call sheet for a day with scenes opens its sides, with the project.
+    ctx, pg, errs = new_page(browser, 'call-sheet', fake)
+    open_sample(pg, fake)
+    pg.click('#addBtn'); pg.fill('#f-date', '2026-05-13'); pg.dispatch_event('#f-date', 'change')
+    check(not pg.is_visible('#sidesBtn'), 'a call sheet for a day with no scenes has no sides')
+    pg.fill('#f-date', '2026-11-10')
+    check(pg.is_visible('#sidesBtn'), 'a call sheet for a day with scenes offers its sides')
+    with ctx.expect_page() as pop:
+        pg.click('#sidesBtn')
+    sp = pop.value
+    sp.wait_for_function("document.getElementById('filmMeta').textContent.trim() !== ''")
+    sp.wait_for_timeout(200)
+    check('#day=shootday-nov-1' in sp.url and sp.locator('#pages .sp').count() == 2, 'the sides open in a new tab with the project and the day')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+PNG_1PX = base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAgAAAAFCAIAAAD38zoCAAAAEklEQVR4nGNgYGD4z4AJMIUAAJ4AAf7c5yAAAAAASUVORK5CYII=')
+
+def test_shot_list(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'shot-list', fake)
+    open_sample(pg, fake)
+    heads = pg.locator('.group-head').all_inner_texts()
+    check(len(heads) == 3 and heads[0].startswith('Scene 1: EXT. RIVERSIDE LEVEE') and heads[2].startswith('River b-roll'), 'shots are grouped by scene in script order, then by group')
+    pg.click('#addBtn'); pg.select_option('#f-scene', 'scene-2')
+    check(pg.input_value('#f-number') == '2C' and pg.is_hidden('#groupField'), 'a new shot in a scene is numbered after the others')
+    pg.fill('#f-desc', 'Josie wakes under the coat'); pg.select_option('#f-size', 'Close-up'); pg.select_option('#f-move', 'Push in'); pg.fill('#f-lens', '85mm')
+    pg.set_input_files('#frameInput', files=[{'name': 'frame.png', 'mimeType': 'image/png', 'buffer': PNG_1PX}]); pg.wait_for_timeout(300)
+    check(pg.locator('#framePreview img').count() == 1, 'a picture becomes the shot\'s frame')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(150)
+    pg.click('#addBtn'); pg.select_option('#f-scene', ''); pg.fill('#f-group', 'River b-roll'); pg.dispatch_event('#f-scene', 'change')
+    check(pg.input_value('#f-number') == '2', 'a shot with no scene is numbered within its group')
+    pg.fill('#f-desc', 'Sandbags at the gate'); pg.click('#editorSubmit'); pg.wait_for_timeout(150)
+    pg.check('[data-done="shot-1b"]'); pg.wait_for_timeout(100)
+    check('2 of 8 shots done' in pg.inner_text('#progText'), 'ticking a shot done counts it')
+    pg.check('#hideDone'); pg.wait_for_timeout(100)
+    check(pg.locator('#list .row').count() == 6, 'hides shots already done')
+    pg.uncheck('#hideDone'); pg.click('#boardViewBtn'); pg.wait_for_timeout(100)
+    check(pg.locator('#board .frame').count() == 8 and pg.locator('#board img.pic').count() == 1, 'the storyboard shows a frame for every shot')
+    rows = csv_rows(pg)
+    check(rows[0] == ['Scene', 'Shot', 'Size', 'Angle', 'Movement', 'Lens', 'What we see', 'Notes', 'Done'] and ['2', '2C', 'Close-up', '', 'Push in', '85mm', 'Josie wakes under the coat', '', ''] in rows and any(r[0] == 'River b-roll' and r[1] == '2' for r in rows), 'CSV lists every shot with its scene')
+    pg.click('#printBoardBtn'); pg.wait_for_timeout(150)
+    check(pg.locator('#report .r-frame').count() == 8 and 'Storyboard' in pg.inner_text('#report'), 'prints as a storyboard')
+    pg.click('#printBtn'); pg.wait_for_timeout(150)
+    check(pg.locator('#report table').count() == 3 and 'Shot list' in pg.inner_text('#report'), 'prints as a shot list')
+    data = saved_project(pg, fake)
+    new = next(s for s in data['shots'] if s.get('number') == '2C')
+    check(new['sceneId'] == 'scene-2' and new['frame'].startswith('data:image/jpeg;base64,') and new['movement'] == 'Push in' and next(s for s in data['shots'] if s['id'] == 'shot-1b')['done'] is True, 'shots and frames are saved')
+    check(data['scenes'] == original['scenes'] and data['shootDays'] == original['shootDays'], 'other data is unchanged')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
 def csv_rows(pg, btn='#csvBtn'):
     with pg.expect_download() as d:
         pg.click(btn)
@@ -3687,6 +3761,10 @@ def main():
         test_stripboard(browser, fake)
         print('== day-out-of-days / work, hold, travel, drop and pick up')
         test_day_out_of_days(browser, fake)
+        print('== sides / a day\'s scenes from the script, and from the call sheet')
+        test_sides(browser, fake)
+        print('== shot-list / shots by scene, frames, storyboard and two prints')
+        test_shot_list(browser, fake)
         print('== partner-crm / partners, commitments and screenings')
         test_partner_crm(browser, fake)
         print('== screenings / edit and remove a screening in the press list and partner CRM')
