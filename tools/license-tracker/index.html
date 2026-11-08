@@ -1,0 +1,995 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>License tracker · Open Filmmaker Toolkit</title>
+<meta name="description" content="Track the terms of each archival and music license: media, territory, term, fees and payments, and options and step deals to exercise in time, linked to the clearance log, with what's expiring flagged. Runs in your browser; your data stays on your computer.">
+<style>
+:root {
+  --paper: #f1f3f2; --sheet: #ffffff; --ink: #1a2130; --ink-2: #4b556a; --ink-3: #6d778a;
+  --rule: #d4dad8; --rule-soft: #e6eae8; --hover: #f6f8f7; --focus: #2f6fdb;
+  --good: #2b7a57; --good-bg: #dff1e8; --warn: #8a5a00; --warn-bg: #fbf0d9; --bad: #b3392d; --bad-bg: #f8e1de;
+  --screen: #050506; --screen-ink: #f4f1ea; --screen-dim: #a7a29a;
+  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #141922; --sheet: #1b212b; --ink: #e6e9ee; --ink-2: #a6afbd; --ink-3: #8790a0;
+    --rule: #2f3744; --rule-soft: #262d38; --hover: #212834; --focus: #7aa7ff;
+    --good: #4fb386; --good-bg: #1a3329; --warn: #e2a531; --warn-bg: #3a2f17; --bad: #e26657; --bad-bg: #3b2220;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans); }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+[hidden] { display: none !important; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.foot { margin-top: 28px; font-size: 13px; color: var(--ink-3); }
+.cant-run { display: none; max-width: 640px; margin: 64px auto; padding: 0 24px; }
+.cant-run h1 { margin: 0 0 8px; font: 600 26px/1.2 var(--serif); }
+.cant-run p { margin: 0 0 10px; color: var(--ink-2); }
+.no-js .cant-run { display: block; }
+.no-js .page { display: none; }
+.page { max-width: 1240px; margin: 0 auto; padding: 0 24px 48px; }
+
+.masthead { display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: flex-end; justify-content: space-between; padding: 28px 0 20px; }
+.tool-name { margin: 0 0 2px; font-size: 14px; font-weight: 600; color: var(--ink-2); }
+.film-title { margin: 0; font: 600 32px/1.15 var(--serif); letter-spacing: -0.01em; overflow-wrap: anywhere; cursor: pointer; }
+.film-title.is-empty { color: var(--ink-3); font-style: italic; font-weight: 400; }
+.film-meta { margin: 4px 0 0; color: var(--ink-2); font-size: 14px; }
+.file { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.file-state { margin: 0; font-size: 13px; color: var(--ink-2); text-align: right; }
+.file-state .dirty { color: var(--warn); font-weight: 600; }
+.file-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; }
+.btn:hover { border-color: var(--ink-3); }
+.btn.primary { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.btn.primary:hover { opacity: 0.88; }
+.btn.danger { color: var(--bad); }
+.btn.small { padding: 4px 10px; font-size: 13px; }
+.link-btn { padding: 0; border: 0; background: none; cursor: pointer; color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; font-size: 14px; }
+.link-btn:hover { color: var(--ink); }
+
+.banner { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 0 0 16px; padding: 12px 16px; border-radius: 8px; background: var(--warn-bg); border: 1px solid color-mix(in srgb, var(--warn) 40%, transparent); }
+.banner p { margin: 0; flex: 1 1 280px; }
+.banner .actions { display: flex; gap: 8px; }
+
+.workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr); gap: 24px; align-items: start; }
+.col { display: grid; gap: 18px; min-width: 0; }
+.card { background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 18px; min-width: 0; }
+.card-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; margin: 0 0 6px; }
+.card-head h2 { margin: 0; font: 600 18px/1.3 var(--serif); }
+.card-head .count { font-size: 13px; color: var(--ink-2); }
+.card-head .spacer { flex: 1; }
+.card p.lead { margin: 0 0 8px; font-size: 14px; color: var(--ink-2); }
+
+/* Side cards */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 2px; padding: 0; list-style: none; }
+.chip { display: inline-flex; border: 1px solid var(--rule); border-radius: 999px; overflow: hidden; background: var(--paper); }
+.chip button { padding: 4px 10px; border: 0; background: none; cursor: pointer; font-size: 13px; font-weight: 600; }
+.chip button:hover { background: var(--hover); }
+.chip .sub { font-weight: 400; color: var(--ink-3); margin-left: 4px; }
+.empty-line { margin: 4px 0; color: var(--ink-2); font-size: 14px; }
+.changes { margin: 0; padding-left: 18px; font-size: 14px; }
+.changes li + li { margin-top: 2px; }
+
+/* The supers list */
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 10px; }
+.toolbar h2 { margin: 0 8px 0 0; font: 600 20px/1.2 var(--serif); }
+.toolbar .count { font-size: 13px; color: var(--ink-2); }
+.toolbar .spacer { flex: 1; }
+.rows { list-style: none; margin: 0; padding: 0; background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; }
+.row { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 2px 14px; align-items: start; padding: 10px 14px; }
+.row + .row { border-top: 1px solid var(--rule-soft); }
+.row:hover { background: var(--hover); }
+.row.is-selected { background: var(--hover); box-shadow: inset 3px 0 0 var(--ink); }
+.row .tc { font-variant-numeric: tabular-nums; font-size: 14px; color: var(--ink-2); padding-top: 1px; }
+.row .what { min-width: 0; padding: 0; border: 0; background: none; text-align: left; cursor: pointer; overflow-wrap: anywhere; }
+.row .what:hover .nm { text-decoration: underline; text-underline-offset: 2px; }
+.row .nm { display: block; font-weight: 600; }
+.row .tt { display: block; font-size: 14px; color: var(--ink-2); }
+.flags { grid-column: 2; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.flag { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 999px; font-size: 12.5px; font-weight: 600; }
+.flag.new { background: var(--good-bg); color: var(--good); }
+.flag.changed { background: var(--warn-bg); color: var(--warn); }
+.flag.problem { background: var(--bad-bg); color: var(--bad); }
+.flag.linked { background: var(--paper); color: var(--ink-3); font-weight: 500; border: 1px solid var(--rule); }
+.flag button { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+
+.empty { padding: 36px 24px; text-align: center; background: var(--sheet); border: 1px dashed var(--rule); border-radius: 8px; }
+.empty h2 { margin: 0 0 6px; font: 600 20px/1.3 var(--serif); }
+.empty p { margin: 0 auto 16px; max-width: 52ch; color: var(--ink-2); }
+.empty .actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+
+
+.workspace > * { min-width: 0; }
+.side { position: sticky; top: 16px; display: grid; gap: 18px; }
+.filters { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
+.filter { padding: 4px 11px; border: 1px solid var(--rule); border-radius: 999px; background: var(--sheet); font-size: 13px; cursor: pointer; }
+.filter[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.row { grid-template-columns: 110px minmax(0, 1fr) auto; }
+.row .kd { font-size: 13px; color: var(--ink-2); padding-top: 2px; }
+.row .rt { text-align: right; font-size: 13px; color: var(--ink-2); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.row .rt .sub { display: block; font-size: 12px; color: var(--ink-3); }
+.flags { grid-column: 2 / -1; }
+.todo { list-style: none; margin: 4px 0 0; padding: 0; }
+.todo li { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 6px 0; font-size: 14px; }
+.todo li + li { border-top: 1px solid var(--rule-soft); }
+.todo .sub { display: block; color: var(--ink-3); font-size: 13px; }
+.todo .bad { color: var(--bad); }
+.todo .warn { color: var(--warn); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.three { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.sums { width: 100%; border-collapse: collapse; font-size: 14px; }
+.sums td { padding: 3px 0; }
+.sums td.n { text-align: right; font-variant-numeric: tabular-nums; }
+.print-row { display: grid; gap: 8px; }
+@media (max-width: 720px) {
+  .two, .three { grid-template-columns: 1fr; }
+  .row { grid-template-columns: minmax(0, 1fr) auto; }
+  .row .kd { grid-column: 1 / -1; }
+  .flags { grid-column: 1 / -1; }
+}
+
+.items { display: grid; gap: 10px; }
+.item { margin: 0; padding: 10px 12px 12px; border: 1px solid var(--rule); border-radius: 8px; background: var(--sheet); min-width: 0; }
+.item legend { padding: 0 4px; font-size: 13px; font-weight: 600; color: var(--ink-2); }
+.item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px 10px; }
+.item-grid .wide { grid-column: 1 / -1; }
+.item-grid .check-field { align-self: end; padding-bottom: 8px; }
+.item-foot { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; margin-top: 8px; }
+.item-foot .spacer { flex: 1; }
+.who { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 13.5px; }
+.who label { display: inline-flex; gap: 5px; align-items: center; }
+.who input { width: 15px; height: 15px; margin: 0; }
+.who .sub { color: var(--ink-3); }
+.list-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+.list-head h3 { margin: 0; }
+.picks { display: flex; flex-wrap: wrap; gap: 4px 14px; padding: 2px; }
+.picks label { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; }
+.picks input { width: 16px; height: 16px; margin: 0; flex: none; }
+
+dialog { border: 0; padding: 0; color: var(--ink); background: var(--sheet); box-shadow: 0 10px 40px rgba(10, 14, 22, 0.25); }
+dialog::backdrop { background: rgba(16, 20, 28, 0.42); }
+dialog.drawer { margin: 0 0 0 auto; width: min(600px, 100vw); height: 100dvh; max-height: 100dvh; max-width: 100vw; border-left: 1px solid var(--rule); }
+dialog.modal { width: min(560px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); border-radius: 10px; }
+dialog form { display: flex; flex-direction: column; height: 100%; max-height: inherit; }
+.dlg-head { padding: 20px 24px 12px; border-bottom: 1px solid var(--rule-soft); }
+.dlg-head h2 { margin: 0; font: 600 22px/1.25 var(--serif); }
+.dlg-body { flex: 1; overflow-y: auto; padding: 16px 24px 24px; display: grid; gap: 14px; align-content: start; }
+.dlg-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 14px 24px; border-top: 1px solid var(--rule-soft); }
+.dlg-foot .spacer { flex: 1; }
+.field { display: grid; gap: 4px; }
+.field > label, .field > .label, .group h3 { font-size: 14px; font-weight: 600; margin: 0; }
+.hint { margin: 0; font-size: 13px; color: var(--ink-3); }
+.field input, .field select, .field textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); }
+.group { display: grid; gap: 8px; padding-top: 10px; border-top: 1px solid var(--rule-soft); }
+.checks { display: grid; gap: 2px; max-height: 260px; overflow-y: auto; padding: 2px; }
+.check { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; align-items: start; padding: 5px 4px; border-radius: 6px; cursor: pointer; }
+.check:hover { background: var(--hover); }
+.check input { width: 18px; height: 18px; margin: 2px 0 0; }
+.check .who { overflow-wrap: anywhere; }
+.check .sub { margin-left: 4px; font-size: 13px; color: var(--ink-3); }
+.check .lines { display: block; font-size: 13px; color: var(--ink-3); white-space: pre-line; }
+#songList, #sourceList { max-height: none; }
+.radio-row { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.radio-row label { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; cursor: pointer; }
+pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); font-size: 13px; white-space: pre-wrap; }
+
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); max-width: calc(100vw - 32px); padding: 10px 16px; border-radius: 8px; background: var(--ink); color: var(--paper); font-size: 14px; box-shadow: 0 6px 24px rgba(10, 14, 22, 0.25); z-index: 10; }
+.toast.error { background: var(--bad); color: #ffffff; }
+.report { display: none; }
+
+@media (max-width: 900px) {
+  .workspace { grid-template-columns: 1fr; }
+  .side { position: static; }
+}
+@media (max-width: 720px) {
+  .page { padding: 0 16px 40px; }
+  .film-title { font-size: 26px; }
+  .file { align-items: flex-start; }
+  .file-state { text-align: left; }
+  .toolbar h2 { flex-basis: 100%; order: -2; }
+  .toolbar #addBtn { flex: 1 1 100%; justify-content: center; order: -1; }
+  .row { grid-template-columns: minmax(0, 1fr); }
+  .flags { grid-column: 1; }
+}
+@media print {
+  @page { size: portrait; margin: 16mm; }
+  :root { color-scheme: light; }
+  body { background: #ffffff; color: #000000; font-size: 10pt; }
+  .page, dialog, .toast { display: none !important; }
+  .report { display: block; }
+  .report h1 { margin: 0; font: 700 18pt/1.2 var(--serif); }
+  .report h2 { margin: 14pt 0 4pt; font: 700 12pt/1.2 var(--serif); break-after: avoid; page-break-after: avoid; }
+  .report .r-meta { margin: 2pt 0 10pt; }
+  .report table { width: 100%; border-collapse: collapse; }
+  .report th, .report td { padding: 4pt 5pt; border-bottom: 0.75pt solid #999999; text-align: left; vertical-align: top; }
+  .report th { font-size: 9pt; border-bottom: 1pt solid #000000; }
+  .report tr { break-inside: avoid; page-break-inside: avoid; }
+  .report .r-sub { display: block; font-size: 8.5pt; color: #333333; }
+  .report .r-note { margin-top: 14pt; font-size: 8pt; color: #333333; }
+  .report .r-lic + .r-lic { margin-top: 14pt; }
+  .report h3 { margin: 6pt 0 2pt; font-size: 10.5pt; }
+  .report .r-facts th { width: 22%; }
+  .report .n { text-align: right; white-space: nowrap; }
+  .report .r-alert { margin: 4pt 0 0; padding: 4pt 6pt; border-left: 2pt solid #000000; font-weight: 700; }
+}
+</style>
+</head>
+<body>
+<div class="cant-run" id="cantRun">
+  <h1 id="cantRunTitle">Open this file in a web browser</h1>
+  <p id="cantRunText">This tool runs in Chrome, Edge, Firefox or Safari. You're seeing a preview that doesn't run it, so none of the buttons would work.</p>
+  <p id="cantRunHow">In your browser, choose File, then Open File, and pick this file. Or right-click the file and open it with your browser.</p>
+</div>
+<div class="page">
+  <header class="masthead">
+    <div>
+      <p class="tool-name">License tracker</p>
+      <h1 class="film-title" id="filmTitle">Untitled film</h1>
+      <p class="film-meta"><span id="filmMeta"></span> <button type="button" class="link-btn" id="editProjectBtn">Edit film details</button></p>
+    </div>
+    <div class="file">
+      <p class="file-state" id="fileState">Not saved to a file yet</p>
+      <div class="file-actions">
+        <button type="button" class="btn" id="newBtn">New project</button>
+        <button type="button" class="btn" id="openBtn">Open file</button>
+        <button type="button" class="btn" id="projectCsvBtn">Export project data (CSV)</button>
+        <button type="button" class="btn primary" id="saveBtn">Save file</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="banner" id="recovery" role="region" aria-label="Unsaved work" hidden>
+    <p id="recoveryText"></p>
+    <div class="actions">
+      <button type="button" class="btn primary" id="restoreBtn">Restore it</button>
+      <button type="button" class="btn" id="discardBtn">Discard it</button>
+    </div>
+  </div>
+
+  <main class="workspace">
+    <section aria-labelledby="listHead">
+      <div class="toolbar">
+        <h2 id="listHead">Licenses</h2>
+        <span class="count" id="count"></span>
+        <span class="spacer"></span>
+        <button type="button" class="btn primary" id="addBtn">Add a license</button>
+        <button type="button" class="btn" id="csvBtn">Export CSV</button>
+      </div>
+      <div class="filters" id="filters" role="group" aria-label="Show"></div>
+      <ol class="rows" id="rows" aria-labelledby="listHead"></ol>
+      <p class="empty-line" id="noMatch" hidden>Nothing here.</p>
+      <div class="empty" id="empty" hidden>
+        <h2>No licenses yet</h2>
+        <p>Track the terms of each archival and music license: what it covers, the media, territory and term, the fees and when each payment is due, and the options and step deals you have to exercise in time. Each license links to its elements in the clearance log.</p>
+        <div class="actions">
+          <button type="button" class="btn primary" id="emptyAddBtn">Add a license</button>
+          <button type="button" class="btn" id="emptyOpenBtn">Open file</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="side">
+      <section class="card" aria-labelledby="dueHead">
+        <div class="card-head"><h2 id="dueHead">Coming up</h2><span class="count" id="dueCount"></span></div>
+        <p class="lead">Licenses that expire within 90 days, options to exercise within 60 days, and payments due within 30 days or overdue.</p>
+        <ul class="todo" id="due"></ul>
+      </section>
+      <section class="card" aria-labelledby="needHead">
+        <div class="card-head"><h2 id="needHead">No license recorded</h2><span class="count" id="needCount"></span></div>
+        <p class="lead">Archival and music in the clearance log that's licensed or being negotiated, with no license here.</p>
+        <ul class="todo" id="need"></ul>
+      </section>
+      <section class="card" aria-labelledby="feeHead">
+        <div class="card-head"><h2 id="feeHead">Fees</h2></div>
+        <table class="sums" id="fees"></table>
+      </section>
+      <section class="card" aria-labelledby="printHead">
+        <div class="card-head"><h2 id="printHead">Print</h2></div>
+        <p class="lead">Every license's terms, elements, payments and options.</p>
+        <div><button type="button" class="btn" id="printBtn">Print the license schedule</button></div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="foot">
+    <p>Part of the Open Filmmaker Toolkit. This page makes no network requests: everything stays on this computer until you save or export it. Uses the same project file as the other toolkit tools.</p>
+  </footer>
+</div>
+
+<dialog class="drawer" id="editor" aria-labelledby="editorTitle">
+  <form id="editorForm" method="dialog" novalidate>
+    <div class="dlg-head"><h2 id="editorTitle">License</h2></div>
+    <div class="dlg-body">
+      <div class="two">
+        <div class="field"><label for="f-title">License</label><input id="f-title" type="text" placeholder="Muddy Water Hymn, sync and master" autocomplete="off" required></div>
+        <div class="field"><label for="f-kind">Kind</label><select id="f-kind"><option value="archival">Archival</option><option value="music">Music: sync and master</option><option value="sync">Music: sync only</option><option value="master">Music: master only</option><option value="other">Other</option></select></div>
+      </div>
+      <div class="two">
+        <div class="field"><label for="f-licensor">Licensor</label><input id="f-licensor" type="text" list="licensorList" autocomplete="off"><datalist id="licensorList"></datalist></div>
+        <div class="field"><label for="f-status">Status</label><select id="f-status"><option value="draft">Being negotiated</option><option value="sent">Sent to sign</option><option value="signed">Signed</option></select></div>
+      </div>
+      <div class="group"><h3 id="elHead">Elements it covers</h3><div class="picks" id="elPicks" role="group" aria-labelledby="elHead"></div></div>
+      <div class="three">
+        <div class="field"><label for="f-media">Media</label><input id="f-media" type="text" list="mediaList" placeholder="All media" autocomplete="off"><datalist id="mediaList"><option value="All media, now known or later devised"><option value="Festivals only"><option value="Festivals and educational"><option value="Theatrical"><option value="Television"><option value="Streaming and online"><option value="Educational and nontheatrical"></datalist></div>
+        <div class="field"><label for="f-territory">Territory</label><input id="f-territory" type="text" list="terrList" placeholder="Worldwide" autocomplete="off"><datalist id="terrList"><option value="Worldwide"><option value="United States"><option value="North America"><option value="United States and Canada"></datalist></div>
+        <div class="field"><label for="f-term">Term</label><input id="f-term" type="text" list="termList" placeholder="In perpetuity" autocomplete="off"><datalist id="termList"><option value="In perpetuity"><option value="10 years"><option value="5 years"><option value="2 years"><option value="1 year"></datalist></div>
+      </div>
+      <div class="three">
+        <div class="field"><label for="f-signed">Signed on</label><input id="f-signed" type="date"></div>
+        <div class="field"><label for="f-start">Starts</label><input id="f-start" type="date"></div>
+        <div class="field"><label for="f-end">Ends</label><input id="f-end" type="date"><p class="hint">Leave empty for a license in perpetuity.</p></div>
+      </div>
+      <div class="two">
+        <div class="field"><label for="f-fee">Fee</label><input id="f-fee" type="number" min="0" step="any" inputmode="decimal"></div>
+        <div class="field"><label for="f-credit">Credit it requires</label><input id="f-credit" type="text" placeholder="Courtesy of Riverside County Historical Society" autocomplete="off"></div>
+      </div>
+      <div class="group">
+        <div class="list-head"><h3>Payments</h3><button type="button" class="btn small" data-add="payments">Add a payment</button></div>
+        <div class="items" id="payments"></div>
+      </div>
+      <div class="group">
+        <div class="list-head"><h3>Options and step deals</h3><button type="button" class="btn small" data-add="options">Add an option</button></div>
+        <p class="hint">Rights you can buy later, such as all media after festivals, and the date you have to exercise them by.</p>
+        <div class="items" id="options"></div>
+      </div>
+      <div class="field"><label for="f-doc">The signed license</label><input id="f-doc" type="text" placeholder="licenses/rchs-license-2026-03.pdf" autocomplete="off"><p class="hint">Where it is, relative to your project file. Recorded in the project's files.</p></div>
+      <div class="field"><label for="f-notes">Notes</label><textarea id="f-notes" rows="2"></textarea></div>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn danger" id="deleteBtn">Remove license</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="editorCancel">Cancel</button>
+      <button type="submit" class="btn primary" id="editorSubmit">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="projectDialog" aria-labelledby="projectDialogTitle">
+  <form id="projectForm" method="dialog">
+    <div class="dlg-head"><h2 id="projectDialogTitle">Film details</h2></div>
+    <div class="dlg-body">
+      <div class="field"><label for="p-title">Film title</label><input id="p-title" type="text" placeholder="Working title is fine"></div>
+      <div class="field"><label for="p-company">Production company</label><input id="p-company" type="text"></div>
+      <div class="field"><label for="p-producer">Producer</label><input id="p-producer" type="text"></div>
+    </div>
+    <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn" id="projectCancel">Cancel</button><button type="submit" class="btn primary">Save details</button></div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="projectCsvDialog" aria-labelledby="projectCsvTitle">
+  <form id="projectCsvForm" method="dialog">
+    <div class="dlg-head"><h2 id="projectCsvTitle">Export project data</h2></div>
+    <div class="dlg-body">
+      <div class="field">
+        <label for="projectCsvCollection">Data to export</label>
+        <select id="projectCsvCollection">
+          <option value="project">Project details</option>
+          <option value="people">People</option>
+          <option value="locations">Locations</option>
+          <option value="thirdPartyElements">Third-party elements</option>
+          <option value="contracts">Contracts</option>
+          <option value="assets">Assets</option>
+          <option value="musicCueSheet">Music cue sheet details</option>
+          <option value="callSheets">Call sheets</option>
+        </select>
+      </div>
+      <p class="hint">Exports one CSV file for the selected collection. Nested values are kept as JSON in their cell.</p>
+    </div>
+    <div class="dlg-foot">
+      <button type="submit" class="btn primary">Export CSV</button>
+      <button type="button" class="btn" id="projectCsvCancel">Cancel</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="conflictDialog" aria-labelledby="conflictTitle">
+  <form method="dialog">
+    <div class="dlg-head"><h2 id="conflictTitle">Project file changed</h2></div>
+    <div class="dlg-body">
+      <p id="conflictText">This project file changed after you opened it. Saving will replace those changes.</p>
+      <p class="hint">Your edits are still here. Choose whether to overwrite the changed file, save a separate copy, or load its latest contents. Save in one tool at a time; simultaneous saves can still race.</p>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn" id="conflictReloadBtn">Reload latest</button>
+      <button type="button" class="btn" id="conflictCopyBtn">Save a copy</button>
+      <button type="button" class="btn danger" id="conflictOverwriteBtn">Overwrite file</button>
+      <button type="button" class="btn" id="conflictCancelBtn">Keep editing</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="report" id="report" aria-hidden="true"></div>
+<input type="file" id="fileInput" accept=".json,application/json" hidden>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+(() => {
+  'use strict';
+
+  const FORMAT = 'open-filmmaker-toolkit/project';
+  const FORMAT_VERSION = 1;
+  const TOOL = 'license-tracker 0.1.0';
+  const DRAFT_KEY = 'oft.license-tracker.draft';
+  const PROJECT_TEXT = ['title', 'company', 'producer'];
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const str = v => (v == null ? '' : String(v));
+  const arr = v => (Array.isArray(v) ? v : []);
+  const norm = s => str(s).toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+
+  let doc = blankDoc();
+  let fileHandle = null;
+  let baselineText = null;
+  let fileName = null;
+  let dirty = false;
+
+  function blankDoc() {
+    return { format: FORMAT, formatVersion: FORMAT_VERSION, project: { title: '', company: '', producer: '', frameRate: 24, currency: 'USD' }, people: [], contracts: [], thirdPartyElements: [], assets: [] };
+  }
+  function newId(prefix) {
+    if (window.crypto && crypto.randomUUID) return `${prefix}-${crypto.randomUUID()}`;
+    return `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+  }
+  function today() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  function fmtDate(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str(iso));
+    if (!m) return str(iso);
+    return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+  function daysUntil(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str(iso));
+    if (!m) return null;
+    const t = new Date(); const a = Date.UTC(t.getFullYear(), t.getMonth(), t.getDate());
+    return Math.round((Date.UTC(+m[1], +m[2] - 1, +m[3]) - a) / 86400000);
+  }
+
+
+  // ---------- Clearance rules, as the clearance log and release tracker see them ----------
+  const STATUS_LABEL = { 'not-started': 'Not started', requested: 'Requested', negotiating: 'Negotiating', licensed: 'Licensed', 'fair-use': 'Fair use', 'public-domain': 'Public domain', replace: 'To replace' };
+  const CLEARED = ['licensed', 'fair-use', 'public-domain'];
+  const elements = () => arr(doc.thirdPartyElements).filter(e => e && e.id);
+  const element = id => elements().find(e => e.id === id);
+  const isDay = s => /^\d{4}-\d{2}-\d{2}$/.test(str(s));
+  const isRelease = c => /release/i.test(str(c.type));
+  // Materials releases cover someone's photos or documents, not appearing on camera or a place.
+  const coversAppearance = c => isRelease(c) && !/material/i.test(str(c.type));
+  function releaseState(c) {
+    if (c.status === 'signed') return isDay(c.expirationDate) && c.expirationDate < today() ? 'expired' : 'signed';
+    if (c.status === 'pending' || c.status === 'declined') return c.status;
+    return 'pending';
+  }
+  const RANK = { signed: 0, pending: 1, expired: 2, declined: 3 };
+  // The best standing release for a person or place: signed, then waiting, then expired, then declined.
+  function coverage(kind, id) {
+    const field = kind === 'person' ? 'personIds' : 'locationIds';
+    const list = arr(doc.contracts).filter(c => c && coversAppearance(c) && arr(c[field]).includes(id)).sort((a, b) => RANK[releaseState(a)] - RANK[releaseState(b)] || str(b.signedDate).localeCompare(str(a.signedDate)));
+    if (!list.length) return { state: 'missing', release: null };
+    return { state: releaseState(list[0]), release: list[0] };
+  }
+  const COVER_LABEL = { signed: 'Release signed', pending: 'Release not signed yet', expired: 'Release expired', declined: 'Release declined', missing: 'No release' };
+
+  // ---------- Lists inside the editor ----------
+  const LISTS = {};
+  function listField(name, i, f, r) {
+    const id = `${name}-${i}-${f.k}`, v = r[f.k] == null ? '' : String(r[f.k]);
+    const attrs = `id="${id}" data-k="${f.k}"${f.placeholder ? ` placeholder="${esc(f.placeholder)}"` : ''}`;
+    if (f.type === 'checkbox') return `<div class="field check-field${f.wide ? ' wide' : ''}"><label class="check"><input ${attrs} type="checkbox"${r[f.k] ? ' checked' : ''}> ${esc(f.label)}</label></div>`;
+    const input = f.type === 'select' ? `<select ${attrs}>${(typeof f.options === 'function' ? f.options() : f.options).map(o => `<option value="${esc(o.id)}"${String(o.id) === v ? ' selected' : ''}>${esc(o.label)}</option>`).join('')}</select>`
+      : f.type === 'textarea' ? `<textarea ${attrs} rows="2">${esc(v)}</textarea>`
+      : `<input ${attrs} type="${f.type || 'text'}"${f.type === 'number' ? ' min="0" step="any" inputmode="decimal"' : ''} value="${esc(v)}" autocomplete="off"${f.list ? ` list="${f.list}"` : ''}>`;
+    return `<div class="field${f.wide ? ' wide' : ''}"><label for="${id}">${esc(f.label)}</label>${input}</div>`;
+  }
+  function drawList(name) {
+    const L = LISTS[name], rows = arr(editing[name]);
+    const people = L.who ? L.who() : [];
+    $(L.box).innerHTML = rows.map((r, i) => `<fieldset class="item" data-list="${name}" data-i="${i}"><legend>${esc(L.title(r, i))}</legend>
+      <div class="item-grid">${L.fields.map(f => listField(name, i, f, r)).join('')}</div>
+      <div class="item-foot">${L.who ? `<div class="who" role="group" aria-label="Who">${people.length ? people.map(p => `<label><input type="checkbox" data-who value="${esc(p.id)}"${arr(r.personIds).includes(p.id) ? ' checked' : ''}>${esc(p.name)}</label>`).join('') + '<span class="sub">None ticked means everyone.</span>' : '<span class="sub">Pick people above to say who this is for.</span>'}</div>` : ''}
+        <span class="spacer"></span><button type="button" class="btn small" data-remove aria-label="Remove ${esc(L.title(r, i))}">Remove</button></div></fieldset>`).join('')
+      || `<p class="hint">${esc(L.empty)}</p>`;
+  }
+  function drawLists() { for (const n of Object.keys(LISTS)) drawList(n); }
+  function wireLists(form) {
+    form.addEventListener('input', ev => listInput(ev.target));
+    form.addEventListener('change', ev => listInput(ev.target));
+    form.addEventListener('click', ev => {
+      const add = ev.target.closest('[data-add]');
+      if (add) { const n = add.dataset.add; editing[n] = [...arr(editing[n]), LISTS[n].blank()]; drawList(n); const rows = $(LISTS[n].box).querySelectorAll('.item'); const last = rows[rows.length - 1]; if (last) { const el = last.querySelector('input, select, textarea'); if (el) el.focus(); } return; }
+      const rm = ev.target.closest('[data-remove]');
+      if (rm) { const fs = rm.closest('[data-list]'); editing[fs.dataset.list].splice(Number(fs.dataset.i), 1); drawList(fs.dataset.list); }
+    });
+  }
+  function listInput(el) {
+    const fs = el.closest && el.closest('[data-list]');
+    if (!fs) return;
+    const r = editing[fs.dataset.list][Number(fs.dataset.i)];
+    if (el.hasAttribute('data-who')) { r.personIds = [...fs.querySelectorAll('[data-who]:checked')].map(x => x.value); if (!r.personIds.length) delete r.personIds; return; }
+    const k = el.dataset.k; if (!k) return;
+    if (el.type === 'checkbox') { if (el.checked) r[k] = true; else delete r[k]; }
+    else if (el.type === 'number') { if (el.value === '') delete r[k]; else r[k] = Number(el.value); }
+    else if (el.value.trim()) r[k] = el.tagName === 'SELECT' && /^\d+$/.test(el.value) && LISTS[fs.dataset.list].fields.find(f => f.k === k).numeric ? Number(el.value) : el.value; else delete r[k];
+    const lg = fs.querySelector('legend'); if (lg) lg.textContent = LISTS[fs.dataset.list].title(r, Number(fs.dataset.i));
+  }
+  // Rows with nothing typed in them are dropped on save; text is trimmed.
+  function cleanList(rows, keep) {
+    return arr(rows).map(r => { const o = {}; for (const [k, v] of Object.entries(r)) { if (typeof v === 'string') { if (v.trim()) o[k] = v.trim(); } else if (v != null) o[k] = v; } return o; })
+      .filter(r => Object.keys(r).some(k => !['id', ...(keep || [])].includes(k)));
+  }
+  // Ticks for picking people or places in the editor.
+  function picks(box, list, on, label) {
+    const set = new Set(arr(on));
+    $(box).innerHTML = list.length ? list.map(x => `<label><input type="checkbox" value="${esc(x.id)}"${set.has(x.id) ? ' checked' : ''}>${esc(label(x))}</label>`).join('') : '<span class="hint">None in the project yet.</span>';
+  }
+  const picked = box => [...$(box).querySelectorAll('input:checked')].map(i => i.value);
+
+  const KIND = { archival: 'Archival', music: 'Music', sync: 'Music, sync', master: 'Music, master', other: 'Other' };
+  const STATE = { draft: 'Being negotiated', sent: 'Sent to sign', signed: 'Signed' };
+  let editing = null, isNew = false;
+  let filter = 'all';
+
+  // Fills in only what this tool needs; everything else in the file is left as it was.
+  function normalize(d) {
+    if (!d.project || typeof d.project !== 'object') d.project = {};
+    for (const k of PROJECT_TEXT) if (typeof d.project[k] !== 'string') d.project[k] = str(d.project[k]);
+    for (const k of ['people', 'thirdPartyElements', 'contracts', 'assets']) if (!Array.isArray(d[k])) d[k] = [];
+    for (const c of d.contracts) if (c && c.type === 'license') { if (!c.id) c.id = newId('contract'); for (const k of ['payments', 'options']) if (c[k] !== undefined && !Array.isArray(c[k])) delete c[k]; }
+    d.format = FORMAT;
+    d.formatVersion = FORMAT_VERSION;
+    return d;
+  }
+  const licenses = () => doc.contracts.filter(c => c && c.type === 'license');
+  const entries = licenses;
+  const asset = id => doc.assets.find(a => a && a.id === id);
+  const isMusic = e => /music/i.test(str(e.type));
+  const isArchival = e => /archiv/i.test(str(e.type));
+  const addDays = (iso, n) => { const t = new Date(iso + 'T12:00:00'); t.setDate(t.getDate() + n); return t.toISOString().slice(0, 10); };
+  const kindOf = c => c.licenseKind || (arr(c.thirdPartyElementIds).map(element).some(e => e && isMusic(e)) ? 'music' : 'archival');
+  const paid = c => cents(arr(c.payments).filter(p => p.paid).reduce((t, p) => t + num(p.amount), 0));
+  const scheduled = c => cents(arr(c.payments).reduce((t, p) => t + num(p.amount), 0));
+  const num = v => (v === '' || v == null || !isFinite(Number(v)) ? 0 : Number(v));
+  const cents = n => Math.round(n * 100) / 100;
+  function money(n) {
+    if (n == null || n === '' || !isFinite(Number(n))) return '';
+    const d = Number.isInteger(cents(Number(n))) ? 0 : 2;
+    try { return new Intl.NumberFormat(undefined, { style: 'currency', currency: doc.project.currency || 'USD', minimumFractionDigits: d, maximumFractionDigits: d }).format(Number(n)); }
+    catch (e) { return Number(n).toFixed(d); }
+  }
+  // What needs doing soon, worst first.
+  function alerts(c) {
+    const t = today(), out = [];
+    if (isDay(c.expirationDate)) {
+      if (c.expirationDate < t) out.push({ level: 'bad', text: `Expired ${fmtDate(c.expirationDate)}`, date: c.expirationDate });
+      else if (c.expirationDate <= addDays(t, 90)) out.push({ level: 'warn', text: `Expires ${fmtDate(c.expirationDate)}`, date: c.expirationDate });
+    }
+    for (const o of arr(c.options)) if (!o.exercised && isDay(o.deadline)) {
+      if (o.deadline < t) out.push({ level: 'bad', text: `Option lapsed ${fmtDate(o.deadline)}: ${o.what || 'option'}`, date: o.deadline });
+      else if (o.deadline <= addDays(t, 60)) out.push({ level: 'warn', text: `Exercise by ${fmtDate(o.deadline)}: ${o.what || 'option'}`, date: o.deadline });
+    }
+    for (const p of arr(c.payments)) if (!p.paid && isDay(p.due)) {
+      if (p.due < t) out.push({ level: 'bad', text: `Payment overdue since ${fmtDate(p.due)}: ${money(p.amount)}`, date: p.due });
+      else if (p.due <= addDays(t, 30)) out.push({ level: 'warn', text: `Payment due ${fmtDate(p.due)}: ${money(p.amount)}`, date: p.due });
+    }
+    return out.sort((a, b) => (a.level === b.level ? a.date.localeCompare(b.date) : a.level === 'bad' ? -1 : 1));
+  }
+  // Licensable elements with nothing here yet.
+  const unlicensed = () => elements().filter(e => (isMusic(e) || isArchival(e)) && ['licensed', 'negotiating', 'requested'].includes(e.status) && !licenses().some(c => arr(c.thirdPartyElementIds).includes(e.id))
+    && !/original score|composer agreement/i.test(`${e.source} ${e.rightsHolder}`) && !arr(e.contractIds).some(id => doc.contracts.some(c => c.id === id && c.type !== 'license')));
+
+  LISTS.payments = { box: 'payments', empty: 'No payments yet.', blank: () => ({}),
+    title: (r, i) => `${r.paid ? 'Paid' : 'Payment'} ${i + 1}${r.amount != null ? `: ${money(r.amount)}` : ''}${r.due ? `, due ${fmtDate(r.due)}` : ''}`,
+    fields: [{ k: 'amount', label: 'Amount', type: 'number' }, { k: 'due', label: 'Due', type: 'date' }, { k: 'paid', label: 'Paid', type: 'checkbox' }, { k: 'paidDate', label: 'Paid on', type: 'date' }, { k: 'note', label: 'Note', placeholder: 'On signing', wide: true }] };
+  LISTS.options = { box: 'options', empty: 'No options.', blank: () => ({}),
+    title: (r, i) => `${r.exercised ? 'Exercised' : 'Option'} ${i + 1}${r.what ? `: ${r.what}` : ''}`,
+    fields: [{ k: 'what', label: 'What it adds', placeholder: 'All media, worldwide, in perpetuity', wide: true }, { k: 'fee', label: 'Fee', type: 'number' }, { k: 'deadline', label: 'Exercise by', type: 'date' },
+      { k: 'exercised', label: 'Exercised', type: 'checkbox' }, { k: 'exercisedDate', label: 'Exercised on', type: 'date' }] };
+
+  // ---------- Render ----------
+  function render() {
+    $('filmTitle').textContent = doc.project.title || 'Untitled film';
+    $('filmTitle').classList.toggle('is-empty', !doc.project.title);
+    $('filmMeta').textContent = [doc.project.company, doc.project.producer && `Producer: ${doc.project.producer}`].filter(Boolean).join(' · ');
+    $('fileState').innerHTML = (fileName ? esc(fileName) : 'Not saved to a file yet') + (dirty ? ' · <span class="dirty">Unsaved changes</span>' : '');
+    document.title = `${doc.project.title ? doc.project.title + ' · ' : ''}License tracker · Open Filmmaker Toolkit`;
+    const all = licenses();
+    const FL = [{ id: 'all', label: 'All', f: () => true }, { id: 'music', label: 'Music', f: c => kindOf(c) !== 'archival' && kindOf(c) !== 'other' }, { id: 'archival', label: 'Archival', f: c => kindOf(c) === 'archival' },
+      { id: 'attention', label: 'Needs attention', f: c => alerts(c).length > 0 || c.status !== 'signed' }];
+    $('filters').innerHTML = FL.map(x => `<button type="button" class="filter" data-filter="${x.id}" aria-pressed="${filter === x.id}">${esc(x.label)} ${all.filter(x.f).length}</button>`).join('');
+    const list = all.filter((FL.find(x => x.id === filter) || FL[0]).f).sort((a, b) => str(a.title).localeCompare(str(b.title)));
+    $('count').textContent = all.length ? `${all.length} license${all.length === 1 ? '' : 's'}` : '';
+    $('empty').hidden = !!all.length || !!unlicensed().length;
+    $('rows').hidden = !list.length;
+    $('noMatch').hidden = !all.length || !!list.length;
+    $('filters').hidden = $('csvBtn').hidden = !all.length;
+    $('rows').innerHTML = list.map(c => {
+      const flags = [];
+      for (const e of arr(c.thirdPartyElementIds).map(element)) flags.push(e ? `<span class="flag linked">${esc(e.description || 'Element')}${e.tcIn ? ` · ${esc(e.tcIn)}` : ''}</span>` : '<span class="flag problem">An element no longer in the clearance log</span>');
+      const terms = [c.media, c.territory, c.term].filter(Boolean).join(' · ');
+      if (terms) flags.push(`<span class="flag linked">${esc(terms)}</span>`);
+      if (c.status !== 'signed') flags.push(`<span class="flag changed">${esc(STATE[c.status] || 'Not signed')}</span>`);
+      for (const a of alerts(c)) flags.push(`<span class="flag ${a.level === 'bad' ? 'problem' : 'changed'}">${esc(a.text)}</span>`);
+      const open = arr(c.options).filter(o => !o.exercised).length;
+      if (open) flags.push(`<span class="flag linked">${open} option${open === 1 ? '' : 's'} open</span>`);
+      if (c.status === 'signed' && !arr(c.assetIds).length) flags.push('<span class="flag changed">No signed copy recorded</span>');
+      return `<li class="row" data-id="${esc(c.id)}"><span class="kd">${esc(KIND[kindOf(c)])}</span>
+        <button type="button" class="what" data-edit="${esc(c.id)}"><span class="nm">${esc(c.title || 'Untitled license')}</span>${c.licensor ? `<span class="tt">${esc(c.licensor)}</span>` : ''}</button>
+        <span class="rt">${c.fee != null ? esc(money(c.fee)) : ''}${arr(c.payments).length ? `<span class="sub">${esc(money(paid(c)))} paid of ${esc(money(scheduled(c)))}</span>` : ''}</span>
+        ${flags.length ? `<div class="flags">${flags.join('')}</div>` : ''}</li>`;
+    }).join('');
+    const due = all.flatMap(c => alerts(c).map(a => ({ c, a }))).sort((x, y) => x.a.date.localeCompare(y.a.date));
+    $('dueCount').textContent = due.length ? String(due.length) : '';
+    $('due').innerHTML = due.length ? due.map(({ c, a }) => `<li><span><span class="${a.level}">${esc(a.text)}</span><span class="sub">${esc(c.title || 'License')}</span></span><button type="button" class="btn small" data-edit="${esc(c.id)}">Open</button></li>`).join('') : '<li class="empty-line">Nothing coming up.</li>';
+    const need = unlicensed();
+    $('needCount').textContent = need.length ? String(need.length) : '';
+    $('need').innerHTML = need.length ? need.map(e => `<li><span>${esc(e.description || 'Element')}<span class="sub">${esc([e.type, STATUS_LABEL[e.status], e.rightsHolder].filter(Boolean).join(' · '))}</span></span><button type="button" class="btn small" data-element="${esc(e.id)}">Add a license</button></li>`).join('') : '<li class="empty-line">Every licensed element has a license here.</li>';
+    const fee = cents(all.reduce((t, c) => t + num(c.fee), 0)), pd = cents(all.reduce((t, c) => t + paid(c), 0));
+    const opt = cents(all.reduce((t, c) => t + arr(c.options).filter(o => !o.exercised).reduce((x, o) => x + num(o.fee), 0), 0));
+    $('fees').innerHTML = `<tr><td>Fees agreed</td><td class="n">${esc(money(fee))}</td></tr><tr><td>Paid</td><td class="n">${esc(money(pd))}</td></tr><tr><td>Still to pay</td><td class="n">${esc(money(Math.max(0, cents(fee - pd))))}</td></tr><tr><td>Options not exercised</td><td class="n">${esc(money(opt))}</td></tr>`;
+    $('printBtn').disabled = !all.length;
+  }
+
+  // ---------- Editor ----------
+  function openEditor(id, elementId) {
+    const existing = id && licenses().find(c => c.id === id);
+    isNew = !existing;
+    editing = existing ? structuredClone(existing) : { id: newId('contract'), type: 'license', status: 'draft' };
+    if (isNew && elementId) {
+      const e = element(elementId);
+      Object.assign(editing, { title: e.music && e.music.title ? `${e.music.title}${isMusic(e) ? ', sync and master' : ''}` : e.description, thirdPartyElementIds: [e.id], licensor: e.rightsHolder || undefined, licenseKind: isMusic(e) ? 'music' : 'archival' });
+      if (e.cost != null) editing.fee = e.cost;
+      const m = str(e.rights).match(/(worldwide|united states|north america)/i); if (m) editing.territory = m[1][0].toUpperCase() + m[1].slice(1);
+      if (/perpetuity/i.test(str(e.rights))) editing.term = 'In perpetuity';
+      if (/all media/i.test(str(e.rights))) editing.media = 'All media'; else if (/festival/i.test(str(e.rights))) editing.media = 'Festivals only';
+      if (e.status === 'licensed') editing.status = 'signed';
+      for (const k of Object.keys(editing)) if (editing[k] === undefined) delete editing[k];
+    }
+    for (const k of ['payments', 'options']) editing[k] = arr(editing[k]).map(x => Object.assign({}, x));
+    const a = arr(editing.assetIds).map(asset).find(x => x && x.type === 'license');
+    const vals = { 'f-title': editing.title, 'f-kind': kindOf(editing), 'f-licensor': editing.licensor, 'f-status': editing.status in STATE ? editing.status : 'draft', 'f-media': editing.media, 'f-territory': editing.territory, 'f-term': editing.term,
+      'f-signed': editing.signedDate, 'f-start': editing.effectiveDate, 'f-end': editing.expirationDate, 'f-fee': editing.fee, 'f-credit': editing.requiredCredit, 'f-doc': a ? a.relativePath : '', 'f-notes': editing.notes };
+    for (const [k, v] of Object.entries(vals)) $(k).value = v == null ? '' : String(v);
+    $('licensorList').innerHTML = [...new Set(elements().map(e => e.rightsHolder).filter(Boolean))].map(v => `<option value="${esc(v)}">`).join('');
+    const on = new Set(arr(editing.thirdPartyElementIds));
+    const cands = elements().filter(e => on.has(e.id) || isMusic(e) || isArchival(e) || e.status === 'licensed' || e.status === 'negotiating');
+    picks('elPicks', cands, [...on], e => `${e.description || 'Element'}${e.tcIn ? ` (${e.tcIn})` : ''}`);
+    $('elPicks').style.display = 'grid';
+    drawLists();
+    $('editorTitle').textContent = isNew ? 'Add a license' : editing.title || 'License';
+    $('deleteBtn').hidden = isNew;
+    $('editor').showModal();
+    $('f-title').focus();
+  }
+  function saveEditor() {
+    if (!$('f-title').value.trim()) { $('f-title').setCustomValidity('Name the license.'); $('f-title').reportValidity(); return; }
+    if ($('f-start').value && $('f-end').value && $('f-end').value < $('f-start').value) { $('f-end').setCustomValidity('It ends before it starts.'); $('f-end').reportValidity(); return; }
+    if ($('f-fee').value && !$('f-fee').checkValidity()) { $('f-fee').reportValidity(); return; }
+    const c = editing;
+    const map = { title: 'f-title', licensor: 'f-licensor', status: 'f-status', media: 'f-media', territory: 'f-territory', term: 'f-term', signedDate: 'f-signed', effectiveDate: 'f-start', expirationDate: 'f-end', requiredCredit: 'f-credit', notes: 'f-notes' };
+    for (const [k, id] of Object.entries(map)) { const v = $(id).value.trim(); if (v) c[k] = v; else delete c[k]; }
+    c.licenseKind = $('f-kind').value;
+    if ($('f-fee').value !== '') c.fee = Number($('f-fee').value); else delete c.fee;
+    if (c.status === 'signed' && !c.signedDate) c.signedDate = today();
+    const ids = new Set(picked('elPicks')); const keep = arr(c.thirdPartyElementIds).filter(id => !element(id));
+    c.thirdPartyElementIds = [...keep, ...ids]; if (!c.thirdPartyElementIds.length) delete c.thirdPartyElementIds;
+    const ps = cleanList(c.payments).map(p => { if (!p.id) p.id = newId('payment'); if (p.paid && !p.paidDate) p.paidDate = today(); return p; }); if (ps.length) c.payments = ps; else delete c.payments;
+    const os = cleanList(c.options).map(o => { if (!o.id) o.id = newId('option'); if (o.exercised && !o.exercisedDate) o.exercisedDate = today(); return o; }); if (os.length) c.options = os; else delete c.options;
+    // The signed copy, recorded in the project's files.
+    const path = $('f-doc').value.trim(), a = arr(c.assetIds).map(asset).find(x => x && x.type === 'license');
+    if (path) { if (a) a.relativePath = path; else { const na = { id: newId('asset'), name: c.title, type: 'license', relativePath: path }; doc.assets.push(na); c.assetIds = [...arr(c.assetIds), na.id]; } }
+    else if (a) { doc.assets = doc.assets.filter(x => x.id !== a.id); c.assetIds = arr(c.assetIds).filter(id => id !== a.id); if (!c.assetIds.length) delete c.assetIds; }
+    if (isNew) doc.contracts.push(c); else doc.contracts[doc.contracts.findIndex(x => x.id === c.id)] = c;
+    // The clearance log links each element to its license too.
+    for (const e of elements()) {
+      const linked = arr(c.thirdPartyElementIds).includes(e.id), has = arr(e.contractIds).includes(c.id);
+      if (linked && !has) e.contractIds = [...arr(e.contractIds), c.id];
+      if (!linked && has) { e.contractIds = e.contractIds.filter(id => id !== c.id); if (!e.contractIds.length) delete e.contractIds; }
+    }
+    $('editor').close();
+    changed();
+  }
+  function removeEditing() {
+    if (!confirm(`Remove the license ${editing.title || ''}? The elements stay in the clearance log.`)) return;
+    doc.contracts = doc.contracts.filter(c => c.id !== editing.id);
+    for (const e of elements()) if (arr(e.contractIds).includes(editing.id)) { e.contractIds = e.contractIds.filter(id => id !== editing.id); if (!e.contractIds.length) delete e.contractIds; }
+    $('editor').close();
+    changed();
+  }
+
+  // ---------- CSV and print ----------
+  const CSV_HEAD = ['License', 'Kind', 'Licensor', 'Status', 'Elements', 'Media', 'Territory', 'Term', 'Signed', 'Starts', 'Ends', 'Fee', 'Paid', 'Next payment due', 'Options not exercised', 'Next option deadline', 'Credit', 'Notes'];
+  function exportCsv() {
+    const rows = licenses().map(c => {
+      const np = arr(c.payments).filter(p => !p.paid && isDay(p.due)).sort((a, b) => a.due.localeCompare(b.due))[0];
+      const no = arr(c.options).filter(o => !o.exercised && isDay(o.deadline)).sort((a, b) => a.deadline.localeCompare(b.deadline))[0];
+      return [c.title, KIND[kindOf(c)], c.licensor, STATE[c.status] || c.status, arr(c.thirdPartyElementIds).map(element).filter(Boolean).map(e => e.description).join('; '), c.media, c.territory, c.term, c.signedDate, c.effectiveDate, c.expirationDate,
+        c.fee != null ? cents(c.fee).toFixed(2) : '', paid(c).toFixed(2), np ? `${np.due} (${cents(num(np.amount)).toFixed(2)})` : '', arr(c.options).filter(o => !o.exercised).map(o => o.what).filter(Boolean).join('; '), no ? no.deadline : '', c.requiredCredit, c.notes];
+    });
+    const csv = '﻿' + [CSV_HEAD, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
+    const name = `${slug()}-licenses.csv`;
+    download(csv, name, 'text/csv;charset=utf-8');
+    toast(`Exported ${rows.length} license${rows.length === 1 ? '' : 's'} to ${name}`);
+  }
+  function renderReport() {
+    const list = [...licenses()].sort((a, b) => kindOf(a).localeCompare(kindOf(b)) || str(a.title).localeCompare(str(b.title)));
+    $('report').innerHTML = `<h1>License schedule</h1>
+      <p class="r-meta">${esc([doc.project.title, doc.project.company, `${list.length} license${list.length === 1 ? '' : 's'}`, `Printed ${fmtDate(today())}`].filter(Boolean).join(' · '))}</p>
+      ${list.map(c => { const al = alerts(c); return `<section class="r-lic"><h2>${esc(c.title || 'License')}</h2>
+        <table class="r-facts"><tbody>${[['Kind', KIND[kindOf(c)]], ['Licensor', c.licensor], ['Status', STATE[c.status] || c.status], ['Elements', arr(c.thirdPartyElementIds).map(element).filter(Boolean).map(e => `${e.description}${e.tcIn ? ` (${e.tcIn} to ${e.tcOut || ''})` : ''}`).join('; ')],
+          ['Media', c.media], ['Territory', c.territory], ['Term', c.term], ['Signed', c.signedDate && fmtDate(c.signedDate)], ['Runs', [c.effectiveDate && fmtDate(c.effectiveDate), c.expirationDate ? fmtDate(c.expirationDate) : c.effectiveDate ? 'no end date' : ''].filter(Boolean).join(' to ')],
+          ['Fee', c.fee != null ? money(c.fee) : ''], ['Credit', c.requiredCredit], ['Signed copy', (arr(c.assetIds).map(asset).find(x => x && x.type === 'license') || {}).relativePath], ['Notes', c.notes]].filter(x => str(x[1]).trim()).map(([k, v]) => `<tr><th>${esc(k)}</th><td>${esc(v)}</td></tr>`).join('')}</tbody></table>
+        ${arr(c.payments).length ? `<h3>Payments</h3><table><thead><tr><th>Due</th><th class="n">Amount</th><th>Paid</th><th>Note</th></tr></thead><tbody>${c.payments.map(p => `<tr><td>${esc(p.due ? fmtDate(p.due) : '')}</td><td class="n">${esc(money(p.amount))}</td><td>${p.paid ? `Paid${p.paidDate ? ` ${esc(fmtDate(p.paidDate))}` : ''}` : 'Not yet'}</td><td>${esc(p.note || '')}</td></tr>`).join('')}</tbody></table>` : ''}
+        ${arr(c.options).length ? `<h3>Options and step deals</h3><table><thead><tr><th>What it adds</th><th class="n">Fee</th><th>Exercise by</th><th>Exercised</th></tr></thead><tbody>${c.options.map(o => `<tr><td>${esc(o.what || '')}</td><td class="n">${esc(money(o.fee))}</td><td>${esc(o.deadline ? fmtDate(o.deadline) : '')}</td><td>${o.exercised ? `Yes${o.exercisedDate ? `, ${esc(fmtDate(o.exercisedDate))}` : ''}` : 'No'}</td></tr>`).join('')}</tbody></table>` : ''}
+        ${al.length ? `<p class="r-alert">${al.map(a => esc(a.text)).join('<br>')}</p>` : ''}</section>`; }).join('')}`;
+  }
+
+  // ---------- Project CSV ----------
+  function csvCell(v) {
+    let s = v == null ? '' : String(v);
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+    return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }
+  const csvCollections = {
+    project: 'project details', people: 'people', locations: 'locations', thirdPartyElements: 'third-party elements',
+    contracts: 'contracts', assets: 'assets', musicCueSheet: 'music cue sheet details', callSheets: 'call sheets'
+  };
+  function exportProjectCsv() {
+    const collection = $('projectCsvCollection').value;
+    const value = doc[collection];
+    const rows = Array.isArray(value) ? value : value && typeof value === 'object' ? [value] : [];
+    if (rows.some(row => !row || typeof row !== 'object' || Array.isArray(row))) {
+      toast(`Couldn't export ${csvCollections[collection]}: the project contains an invalid record.`, true);
+      return;
+    }
+    const headers = [...new Set(rows.flatMap(row => Object.keys(row)))];
+    if (!headers.length) headers.push('id');
+    const csvRows = rows.map(row => headers.map(key => { const cell = row[key]; return cell && typeof cell === 'object' ? JSON.stringify(cell) : cell; }));
+    const csv = '﻿' + [headers, ...csvRows].map(row => row.map(csvCell).join(',')).join('\r\n') + '\r\n';
+    const name = suggestedName().replace(/\.oft\.json$/i, `-${collection}.csv`);
+    download(csv, name, 'text/csv;charset=utf-8');
+    toast(`Exported ${rows.length} ${csvCollections[collection]} to ${name}`);
+  }
+
+  // ---------- Film details ----------
+  function openProjectDialog() {
+    for (const k of PROJECT_TEXT) $(`p-${k}`).value = doc.project[k] || '';
+    $('projectDialog').showModal();
+    $('p-title').focus();
+  }
+  function saveProjectDialog() {
+    for (const k of PROJECT_TEXT) doc.project[k] = $(`p-${k}`).value.trim();
+    $('projectDialog').close();
+    changed();
+  }
+
+  // ---------- Dirty state & recovery draft ----------
+  function changed() { dirty = true; saveDraft(); render(); }
+  function saveDraft() {
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ doc, fileName, baselineText, at: new Date().toISOString() })); } catch { /* the file on disk is the real copy */ }
+  }
+  function clearDraft() {
+    try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+    $('recovery').hidden = true;
+  }
+  function checkDraft() {
+    let draft = null;
+    try { draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); } catch { draft = null; }
+    if (!draft || !draft.doc || draft.doc.format !== FORMAT) return;
+    const n = Array.isArray(draft.doc.contracts) ? draft.doc.contracts.filter(c => c && c.type === 'license').length : 0;
+    if (!n && !(draft.doc.project && draft.doc.project.title)) { clearDraft(); return; }
+    const when = draft.at ? new Date(draft.at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'earlier';
+    const title = draft.doc.project && draft.doc.project.title ? `"${draft.doc.project.title}"` : 'an untitled project';
+    $('recoveryText').textContent = `You have unsaved changes to ${title} from ${when} (${n} license${n === 1 ? '' : 's'}). Restore them, or discard them and start fresh.`;
+    $('recovery').hidden = false;
+    $('restoreBtn').onclick = () => {
+      doc = normalize(draft.doc); fileName = draft.fileName || null; fileHandle = null;
+      baselineText = typeof draft.baselineText === 'string' ? draft.baselineText : null; dirty = true;
+      $('recovery').hidden = true; render();
+      toast(fileName ? `Restored. Save to write the changes back to ${fileName}.` : 'Restored. Save to keep it as a file.');
+    };
+    $('discardBtn').onclick = () => { clearDraft(); toast('Discarded the unsaved changes.'); };
+  }
+
+  // ---------- Files ----------
+  const pickerTypes = [{ description: 'Film project file', accept: { 'application/json': ['.json'] } }];
+  function slug() {
+    return (doc.project.title || 'untitled-film').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'untitled-film';
+  }
+  const suggestedName = () => `${slug()}.oft.json`;
+  function serialize() {
+    doc.savedAt = new Date().toISOString();
+    doc.savedBy = TOOL;
+    return JSON.stringify(doc, null, 2) + '\n';
+  }
+  function download(text, name, type) {
+    const url = URL.createObjectURL(new Blob([text], { type }));
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  function afterSave(name, downloaded, content) {
+    fileName = name;
+    if (downloaded) fileHandle = null;
+    baselineText = content;
+    dirty = false; clearDraft(); render();
+    toast(downloaded ? `Downloaded ${name}. Keep it with your project files and open it here next time.` : `Saved to ${name}`);
+  }
+  async function writeProjectFile(handle, content) {
+    try {
+      const writable = await handle.createWritable();
+      await writable.write(content);
+      await writable.close();
+    } catch (err) {
+      if (err.name !== 'AbortError') toast(`Couldn't save the file: ${err.message}`, true);
+      return;
+    }
+    fileHandle = handle;
+    afterSave(handle.name, false, content);
+  }
+  function saveCopy(content) {
+    const base = (fileName || suggestedName()).replace(/\.oft\.json$/i, '');
+    const name = `${base}-copy.oft.json`;
+    download(content, name, 'application/json');
+    afterSave(name, true, content);
+  }
+  async function reloadLatest(handle) {
+    try {
+      const file = await handle.getFile();
+      loadText(await file.text(), handle.name, handle);
+    } catch (err) {
+      toast(`Couldn't reload the file: ${err.message}`, true);
+    }
+  }
+  function showConflictDialog(content, observedText, unknownBaseline = false) {
+    const handle = fileHandle;
+    dirty = true;
+    saveDraft();
+    render();
+    $('conflictText').textContent = unknownBaseline
+      ? `The tool can't verify whether ${handle.name} changed since your recovery copy was made. Your edits are not saved.`
+      : `${handle.name} changed after you opened it. Your edits are not saved. Overwriting replaces the newer file.`;
+    $('conflictDialog').showModal();
+    $('conflictReloadBtn').onclick = () => { $('conflictDialog').close(); reloadLatest(handle); };
+    $('conflictCopyBtn').onclick = () => { $('conflictDialog').close(); saveCopy(content); };
+    $('conflictOverwriteBtn').onclick = async () => {
+      $('conflictDialog').close();
+      let latestText;
+      try { latestText = await (await handle.getFile()).text(); }
+      catch (err) { toast(`Couldn't check the file before overwriting: ${err.message}`, true); return; }
+      if (latestText !== observedText) {
+        toast('The file changed again. Review the updated conflict warning before overwriting.', true);
+        showConflictDialog(content, latestText);
+        return;
+      }
+      await writeProjectFile(handle, content);
+    };
+    $('conflictCancelBtn').onclick = () => $('conflictDialog').close();
+  }
+  async function saveFile() {
+    const out = serialize();
+    if (fileHandle) {
+      let currentText;
+      try { currentText = await (await fileHandle.getFile()).text(); }
+      catch (err) { toast(`Couldn't check the file before saving: ${err.message}`, true); return; }
+      if (baselineText === null || currentText !== baselineText) { showConflictDialog(out, currentText, baselineText === null); return; }
+      await writeProjectFile(fileHandle, out);
+      return;
+    }
+    if (window.showSaveFilePicker && window.self === window.top) {
+      try {
+        const h = await window.showSaveFilePicker({ suggestedName: fileName || suggestedName(), types: pickerTypes });
+        if (h.name === fileName) {
+          const currentText = await (await h.getFile()).text();
+          if (baselineText === null || currentText !== baselineText) { fileHandle = h; showConflictDialog(out, currentText, baselineText === null); return; }
+        }
+        await writeProjectFile(h, out);
+      } catch (err) { if (err.name !== 'AbortError') toast(`Couldn't save the file: ${err.message}`, true); }
+      return;
+    }
+    const name = fileName || suggestedName();
+    download(out, name, 'application/json');
+    afterSave(name, true, out);
+  }
+  function loadText(text, name, handle) {
+    let data;
+    try { data = JSON.parse(text); } catch { toast(`Couldn't open ${name}: it isn't a project file.`, true); return; }
+    if (!data || data.format !== FORMAT) { toast(`Couldn't open ${name}: it isn't an Open Filmmaker Toolkit project file.`, true); return; }
+    if (Number(data.formatVersion) > FORMAT_VERSION) { toast(`Couldn't open ${name}: it was saved by a newer version of the toolkit. Get the latest version of this tool.`, true); return; }
+    doc = normalize(data); fileHandle = handle; baselineText = text; fileName = name; dirty = false;
+    clearDraft(); render();
+    const n = entries().length;
+    toast(`Opened ${name}: ${n ? `${n} license${n === 1 ? '' : 's'}` : 'no licenses yet'}`);
+  }
+  async function openFile() {
+    if (dirty && !confirm('You have unsaved changes. Open another file and lose them?')) return;
+    if (window.showOpenFilePicker && window.self === window.top) {
+      try { const [h] = await window.showOpenFilePicker({ types: pickerTypes }); const f = await h.getFile(); loadText(await f.text(), f.name, h); }
+      catch (err) { if (err.name !== 'AbortError') toast(`Couldn't open the file: ${err.message}`, true); }
+      return;
+    }
+    $('fileInput').click();
+  }
+  function newProject() {
+    if (dirty && !confirm('You have unsaved changes. Start a new project and lose them?')) return;
+    doc = normalize(blankDoc()); fileHandle = null; baselineText = null; fileName = null; dirty = false;
+    clearDraft(); render(); openProjectDialog();
+  }
+
+  let toastTimer = null;
+  function toast(msg, isError) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.classList.toggle('error', !!isError);
+    t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.hidden = true; }, isError ? 7000 : 4200);
+  }
+
+  // ---------- Wiring ----------
+  function init() {
+    doc = normalize(doc);
+    $('newBtn').onclick = newProject;
+    $('openBtn').onclick = openFile;
+    $('saveBtn').onclick = saveFile;
+    $('editProjectBtn').onclick = openProjectDialog;
+    $('filmTitle').onclick = openProjectDialog;
+    $('printBtn').onclick = () => { renderReport(); window.print(); };
+    window.addEventListener('beforeprint', renderReport);
+    $('projectCsvBtn').onclick = () => $('projectCsvDialog').showModal();
+    $('projectCsvCancel').onclick = () => $('projectCsvDialog').close();
+    $('projectCsvForm').addEventListener('submit', ev => { ev.preventDefault(); exportProjectCsv(); $('projectCsvDialog').close(); });
+    $('fileInput').addEventListener('change', async () => {
+      const f = $('fileInput').files[0];
+      if (f) loadText(await f.text(), f.name, null);
+      $('fileInput').value = '';
+    });
+    $('projectForm').addEventListener('submit', ev => { ev.preventDefault(); saveProjectDialog(); });
+    $('projectCancel').onclick = () => $('projectDialog').close();
+    $('addBtn').onclick = () => openEditor(null);
+    $('emptyAddBtn').onclick = () => openEditor(null);
+    $('emptyOpenBtn').onclick = openFile;
+    $('csvBtn').onclick = exportCsv;
+    $('filters').addEventListener('click', ev => { const b = ev.target.closest('[data-filter]'); if (b) { filter = b.dataset.filter; render(); } });
+    for (const id of ['rows', 'due', 'need']) $(id).addEventListener('click', ev => { const b = ev.target.closest('button'); if (!b) return; if (b.dataset.edit) openEditor(b.dataset.edit); else if (b.dataset.element) openEditor(null, b.dataset.element); });
+    wireLists($('editorForm'));
+    $('editorForm').addEventListener('submit', ev => { ev.preventDefault(); saveEditor(); });
+    $('editorForm').addEventListener('input', ev => { if (ev.target.setCustomValidity) ev.target.setCustomValidity(''); });
+    $('editorCancel').onclick = () => $('editor').close();
+    $('deleteBtn').onclick = removeEditing;
+
+    document.addEventListener('keydown', ev => {
+      const mod = ev.metaKey || ev.ctrlKey;
+      if (mod && ev.key.toLowerCase() === 's') { ev.preventDefault(); saveFile(); }
+      else if (mod && ev.key.toLowerCase() === 'o') { ev.preventDefault(); openFile(); }
+    });
+    window.addEventListener('beforeunload', ev => { if (dirty) { ev.preventDefault(); ev.returnValue = ''; } });
+    render();
+    checkDraft();
+  }
+
+  if (typeof HTMLDialogElement !== 'function' || typeof HTMLDialogElement.prototype.showModal !== 'function' || typeof structuredClone !== 'function') {
+    $('cantRunTitle').textContent = 'This browser is too old to run this tool';
+    $('cantRunText').textContent = 'Update to a current version of Chrome, Edge, Firefox or Safari, then open this file again.';
+    $('cantRunHow').hidden = true;
+    return;
+  }
+  document.documentElement.classList.remove('no-js');
+  window.addEventListener('error', ev => toast(`Something went wrong: ${ev.message}. Save your work, then reload the page.`, true));
+  window.addEventListener('unhandledrejection', ev => toast(`Something went wrong: ${ev.reason && ev.reason.message ? ev.reason.message : ev.reason}. Save your work, then reload the page.`, true));
+  init();
+})();
+</script>
+</body>
+</html>

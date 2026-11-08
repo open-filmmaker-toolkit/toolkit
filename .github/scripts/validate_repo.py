@@ -331,6 +331,15 @@ for sample in sorted((ROOT / "samples").glob("*.oft.json")):
         for n in cut.get("notes", []):
             if (n.get("screeningId") and n["screeningId"] not in screens) or (n.get("cardId") and n["cardId"] not in card_ids) or (n.get("carriedToCutId") and n["carriedToCutId"] not in cut_ids):
                 fail(f"{name}: cut {cut.get('id')} note {n.get('id')} points to a missing screening, card or cut")
+    element_ids = {e.get("id") for e in data.get("thirdPartyElements", []) if isinstance(e, dict)}
+    for script in (data.get("clearanceReport") or {}).get("scripts", []):
+        segs = {g.get("id") for g in script.get("segments", [])}
+        for m in script.get("marks", []):
+            if m.get("segId") not in segs or (m.get("personId") and m["personId"] not in ids["people"]) or (m.get("locationId") and m["locationId"] not in ids["locations"]) or (m.get("elementId") and m["elementId"] not in element_ids):
+                fail(f"{name}: clearance report mark {m.get('id')} points to a missing line, person, place or element")
+    for item in (data.get("chainOfTitle") or {}).get("items", []):
+        if set(item.get("contractIds", [])) - {c.get("id") for c in data.get("contracts", [])} or set(item.get("assetIds", [])) - asset_ids:
+            fail(f"{name}: chain-of-title item {item.get('key')} points to missing agreements or files")
     security = data.get("security") if isinstance(data.get("security"), dict) else {}
     if set(security.get("personIds", [])) - ids["people"]:
         fail(f"{name}: security personIds points to missing people")

@@ -314,6 +314,14 @@
         "$ref": "#/$defs/cut"
       },
       "description": "Cuts with their screenings and notes, kept by the cut version tracker."
+    },
+    "clearanceReport": {
+      "$ref": "#/$defs/clearanceReport",
+      "description": "Scripts and transcripts with marked references, kept by the annotated-transcript clearance report. A record rather than a collection."
+    },
+    "chainOfTitle": {
+      "$ref": "#/$defs/chainOfTitle",
+      "description": "Links, statuses and your own items for the chain-of-title binder. A record rather than a collection."
     }
   },
   "additionalProperties": true,
@@ -536,6 +544,60 @@
         },
         "updatedAt": {
           "type": "string"
+        },
+        "fairUse": {
+          "type": "object",
+          "description": "Fair use log: the reasoning for an element marked fair use.",
+          "properties": {
+            "purpose": {
+              "type": "string"
+            },
+            "nature": {
+              "type": "string"
+            },
+            "amount": {
+              "type": "string"
+            },
+            "market": {
+              "type": "string"
+            },
+            "sourced": {
+              "type": "string"
+            },
+            "where": {
+              "type": "string",
+              "enum": [
+                "us",
+                "us-plus",
+                "outside"
+              ]
+            },
+            "countries": {
+              "type": "string"
+            },
+            "otherCountries": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "draft",
+                "ready",
+                "reviewed"
+              ]
+            },
+            "attorney": {
+              "type": "string"
+            },
+            "reviewedDate": {
+              "type": "string",
+              "format": "date"
+            },
+            "advice": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": true
         }
       },
       "additionalProperties": true
@@ -773,6 +835,106 @@
           },
           "uniqueItems": true,
           "description": "Certificates and permits: the shoot days in shootDays they cover."
+        },
+        "licenseKind": {
+          "type": "string",
+          "enum": [
+            "archival",
+            "music",
+            "sync",
+            "master",
+            "other"
+          ],
+          "description": "Licenses: what kind."
+        },
+        "licensor": {
+          "type": "string",
+          "description": "Licenses: who grants it."
+        },
+        "media": {
+          "type": "string",
+          "description": "Licenses: the media covered."
+        },
+        "territory": {
+          "type": "string",
+          "description": "Licenses: where it applies."
+        },
+        "term": {
+          "type": "string",
+          "description": "Licenses: how long, such as \"In perpetuity\"."
+        },
+        "fee": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Licenses: the agreed fee."
+        },
+        "payments": {
+          "type": "array",
+          "description": "Licenses: the payment schedule.",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "amount": {
+                "type": "number",
+                "minimum": 0
+              },
+              "due": {
+                "type": "string",
+                "format": "date"
+              },
+              "paid": {
+                "type": "boolean"
+              },
+              "paidDate": {
+                "type": "string",
+                "format": "date"
+              },
+              "note": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "options": {
+          "type": "array",
+          "description": "Licenses: options and step deals to exercise later.",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "what": {
+                "type": "string"
+              },
+              "fee": {
+                "type": "number",
+                "minimum": 0
+              },
+              "deadline": {
+                "type": "string",
+                "format": "date"
+              },
+              "exercised": {
+                "type": "boolean"
+              },
+              "exercisedDate": {
+                "type": "string",
+                "format": "date"
+              }
+            },
+            "additionalProperties": true
+          }
         }
       },
       "additionalProperties": true
@@ -4321,6 +4483,198 @@
               },
               "carriedFromNoteId": {
                 "$ref": "#/$defs/id"
+              }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "clearanceReport": {
+      "type": "object",
+      "properties": {
+        "scripts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "name": {
+                "type": "string"
+              },
+              "format": {
+                "type": "string",
+                "enum": [
+                  "srt",
+                  "vtt",
+                  "text"
+                ]
+              },
+              "frameRate": {
+                "type": "string"
+              },
+              "startTc": {
+                "type": "string",
+                "description": "The timecode at time zero, HH:MM:SS:FF."
+              },
+              "segments": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "id"
+                  ],
+                  "properties": {
+                    "id": {
+                      "$ref": "#/$defs/id"
+                    },
+                    "start": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "end": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "speaker": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              },
+              "marks": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "id"
+                  ],
+                  "properties": {
+                    "id": {
+                      "$ref": "#/$defs/id"
+                    },
+                    "segId": {
+                      "$ref": "#/$defs/id"
+                    },
+                    "words": {
+                      "type": "string"
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "person",
+                        "place",
+                        "product",
+                        "quote",
+                        "music",
+                        "archival",
+                        "artwork",
+                        "other"
+                      ]
+                    },
+                    "personId": {
+                      "$ref": "#/$defs/id"
+                    },
+                    "locationId": {
+                      "$ref": "#/$defs/id"
+                    },
+                    "elementId": {
+                      "$ref": "#/$defs/id",
+                      "description": "An element in thirdPartyElements."
+                    },
+                    "override": {
+                      "type": "string",
+                      "enum": [
+                        "cleared",
+                        "not"
+                      ]
+                    },
+                    "note": {
+                      "type": "string"
+                    },
+                    "auto": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "chainOfTitle": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "key": {
+                "type": "string",
+                "description": "A built-in item such as \"cr-film\", or \"contract:\", \"person:\" or \"element:\" and an id for one from the project."
+              },
+              "custom": {
+                "type": "boolean"
+              },
+              "title": {
+                "type": "string"
+              },
+              "section": {
+                "type": "string",
+                "enum": [
+                  "underlying",
+                  "agreements",
+                  "copyright",
+                  "releases",
+                  "licenses",
+                  "other"
+                ]
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "have",
+                  "missing",
+                  "na"
+                ]
+              },
+              "contractIds": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/id"
+                },
+                "uniqueItems": true
+              },
+              "assetIds": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/id"
+                },
+                "uniqueItems": true
+              },
+              "note": {
+                "type": "string"
               }
             },
             "additionalProperties": true
