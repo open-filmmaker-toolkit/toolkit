@@ -20,11 +20,11 @@ The tools work offline with a shared `.oft.json` project file, keeping project i
 
 ## Operating Context
 
-Users open individual tools in a browser, work with a shared project file, and save or export records when needed.
+Users open individual tools in a browser, work with a shared project file, and save or export records when needed. Opening the project file on the home page shows a dashboard of what needs attention across the tools. Teams share the file through a folder their sync app keeps in step; the tools warn when someone else has it open and merge copies, without any server.
 
 ## Capabilities and Constraints
 
-Tools are single-file HTML applications with no dependencies or network requests. They must preserve project fields and collections they do not own. The Archive log records copies, storage locations, hash manifests supplied by the user, and manually recorded read-back checks; it does not send background reminders or compute media hashes.
+Tools are single-file HTML applications with no dependencies or network requests. Code several tools need lives in `shared/` and is copied into each page, so each stays a single file. They must preserve project fields and collections they do not own. The Archive log records copies, storage locations, hash manifests supplied by the user, and manually recorded read-back checks; it does not send background reminders or compute media hashes.
 
 ## Product Principles
 
