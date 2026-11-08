@@ -200,6 +200,24 @@
       },
       "description": "Shoot days, travel days and holds, kept by the shooting calendar."
     },
+    "script": {
+      "$ref": "#/$defs/script",
+      "description": "The screenplay the scenes come from, in Fountain, kept by the script breakdown. A record rather than a collection."
+    },
+    "scenes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/scene"
+      },
+      "description": "The script's scenes with their cast, elements and location, kept by the script breakdown."
+    },
+    "characters": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/character"
+      },
+      "description": "The characters in the script, numbered for the schedule, and who plays each one, kept by the script breakdown."
+    },
     "interviews": {
       "type": "array",
       "items": {
@@ -5987,6 +6005,164 @@
             },
             "additionalProperties": true
           }
+        }
+      },
+      "additionalProperties": true
+    },
+    "script": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "fileName": {
+          "type": "string",
+          "description": "The file the script was imported from."
+        },
+        "importedAt": {
+          "type": "string",
+          "format": "date"
+        },
+        "pages": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "About how many pages the script runs."
+        },
+        "text": {
+          "type": "string",
+          "description": "The script itself, in Fountain."
+        }
+      },
+      "additionalProperties": true
+    },
+    "scene": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "number": {
+          "type": "string",
+          "description": "The scene number, such as 12 or 12A."
+        },
+        "heading": {
+          "type": "string",
+          "description": "The scene heading, such as EXT. RIVERSIDE LEVEE - NIGHT."
+        },
+        "intExt": {
+          "type": "string",
+          "enum": [
+            "INT",
+            "EXT",
+            "INT/EXT",
+            "EST",
+            ""
+          ]
+        },
+        "set": {
+          "type": "string"
+        },
+        "time": {
+          "type": "string",
+          "description": "Time of day, such as DAY or NIGHT."
+        },
+        "eighths": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Length in eighths of a page."
+        },
+        "page": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The script page the scene starts on."
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Its place in the script."
+        },
+        "synopsis": {
+          "type": "string"
+        },
+        "characterIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true,
+          "description": "Characters in the scene, in characters."
+        },
+        "elements": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "category": {
+                "type": "string",
+                "enum": [
+                  "extras",
+                  "props",
+                  "wardrobe",
+                  "makeup",
+                  "dressing",
+                  "vehicles",
+                  "animals",
+                  "effects",
+                  "stunts",
+                  "sound",
+                  "equipment",
+                  "other"
+                ]
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "locationId": {
+          "$ref": "#/$defs/id"
+        },
+        "notInScript": {
+          "type": "boolean",
+          "description": "The scene isn't in the script imported last."
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "character": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string"
+        },
+        "number": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The cast number used on the schedule and call sheets."
+        },
+        "personId": {
+          "$ref": "#/$defs/id",
+          "description": "Who plays the part, in people."
         }
       },
       "additionalProperties": true

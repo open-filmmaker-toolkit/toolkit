@@ -27,9 +27,9 @@ from playwright.sync_api import sync_playwright
 
 root = pathlib.Path(__file__).resolve().parents[1]
 sample = (root / 'samples/the-river-keeps.oft.json').read_text()
-TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan', 'funder-crm', 'cash-flow', 'shooting-calendar', 'interview-prep', 'field-journal', 'location-scout', 'deal-memos', 'gear-list', 'coi-permit-tracker', 'travel-sheet', 'risk-plan', 'security-checklist', 'camera-sound-reports', 'interview-log', 'daily-production-report', 'expense-log', 'festival-submissions', 'press-list', 'partner-crm', 'discussion-guide', 'archive-log', 'footage-log', 'paper-edit', 'structure-board', 'cut-tracker', 'budget-to-actuals', 'fair-use-log', 'license-tracker', 'clearance-report', 'chain-of-title', 'festival-strategy', 'press-notes', 'stills-library', 'awards-social', 'rights-matrix', 'deliverables', 'qc-tracker', 'waterfall', 'revenue-tracker', 'bookings', 'theory-of-change', 'screening-kit', 'impact-report', 'final-cost-report', 'grant-reports', 'contract-archive']
+TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan', 'funder-crm', 'cash-flow', 'shooting-calendar', 'interview-prep', 'field-journal', 'location-scout', 'deal-memos', 'gear-list', 'coi-permit-tracker', 'travel-sheet', 'risk-plan', 'security-checklist', 'camera-sound-reports', 'interview-log', 'daily-production-report', 'expense-log', 'festival-submissions', 'press-list', 'partner-crm', 'discussion-guide', 'archive-log', 'footage-log', 'paper-edit', 'structure-board', 'cut-tracker', 'budget-to-actuals', 'fair-use-log', 'license-tracker', 'clearance-report', 'chain-of-title', 'festival-strategy', 'press-notes', 'stills-library', 'awards-social', 'rights-matrix', 'deliverables', 'qc-tracker', 'waterfall', 'revenue-tracker', 'bookings', 'theory-of-change', 'screening-kit', 'impact-report', 'final-cost-report', 'grant-reports', 'contract-archive', 'script-breakdown']
 COLLECTIONS = ['project', 'people', 'locations', 'thirdPartyElements', 'contracts', 'assets', 'musicCueSheet', 'callSheets']
-PRINT_BTN = {'contract-archive': '#printBtn', 'grant-reports': '#printBtn', 'final-cost-report': '#printBtn', 'impact-report': '#printBtn', 'screening-kit': '#printBtn', 'theory-of-change': '#printBtn', 'bookings': '#printBtn', 'revenue-tracker': '#printBtn', 'waterfall': '#printBtn', 'qc-tracker': '#printBtn', 'deliverables': '#printBtn', 'rights-matrix': '#printBtn', 'awards-social': '#printBtn', 'stills-library': '#printBtn', 'press-notes': '#printBtn', 'festival-strategy': '#printBtn', 'clearance-log': '#printBtn', 'music-cue-sheet': '#printBtn', 'call-sheet': '#printAllBtn', 'release-tracker': '#printBtn',
+PRINT_BTN = {'script-breakdown': '#printBtn', 'contract-archive': '#printBtn', 'grant-reports': '#printBtn', 'final-cost-report': '#printBtn', 'impact-report': '#printBtn', 'screening-kit': '#printBtn', 'theory-of-change': '#printBtn', 'bookings': '#printBtn', 'revenue-tracker': '#printBtn', 'waterfall': '#printBtn', 'qc-tracker': '#printBtn', 'deliverables': '#printBtn', 'rights-matrix': '#printBtn', 'awards-social': '#printBtn', 'stills-library': '#printBtn', 'press-notes': '#printBtn', 'festival-strategy': '#printBtn', 'clearance-log': '#printBtn', 'music-cue-sheet': '#printBtn', 'call-sheet': '#printAllBtn', 'release-tracker': '#printBtn',
              'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn', 'treatment-builder': '#printBtn', 'pitch-deck': '#printBtn', 'grant-calendar': '#printBtn', 'narrative-library': '#printBtn', 'budget': '#printBtn', 'budget-converter': '#printBtn', 'finance-plan': '#printBtn', 'funder-crm': '#printBtn', 'cash-flow': '#printBtn', 'shooting-calendar': '#printBtn', 'interview-prep': '#printBtn', 'field-journal': '#printBtn', 'location-scout': '#printBtn', 'deal-memos': '#printBtn', 'gear-list': '#printBtn', 'coi-permit-tracker': '#printBtn', 'travel-sheet': '#printBtn', 'risk-plan': '#printBtn', 'security-checklist': '#printBtn', 'camera-sound-reports': '#printBtn', 'interview-log': '#printBtn', 'daily-production-report': '#printBtn', 'expense-log': '#printBtn', 'festival-submissions': '#printBtn', 'press-list': '#printBtn', 'partner-crm': '#printBtn', 'discussion-guide': '#printBtn', 'archive-log': '#printBtn', 'footage-log': '#printBtn', 'paper-edit': '#printBtn', 'structure-board': '#printBtn', 'cut-tracker': '#printBtn', 'budget-to-actuals': '#printBtn', 'fair-use-log': '#printBtn', 'license-tracker': '#printBtn', 'clearance-report': '#printBtn', 'chain-of-title': '#printBtn'}
 PHONE = {'width': 390, 'height': 844}
 # The button that opens each tool's main dialog, for the phone-width check. Most tools use #addBtn.
@@ -404,7 +404,7 @@ def test_credits_builder(browser, fake):
     ctx.close()
 
 # Each spreadsheet template's columns must appear in its tool's CSV export, in the same order.
-TEMPLATE_EXPORTS = [('contract-archive', 'contract-archive-template.csv'), ('final-cost-report', 'final-cost-report-template.csv'), ('impact-report', 'impact-results-template.csv'), ('theory-of-change', 'theory-of-change-template.csv'), ('bookings', 'bookings-template.csv'), ('revenue-tracker', 'revenue-template.csv'), ('waterfall', 'waterfall-template.csv'), ('qc-tracker', 'qc-issues-template.csv'), ('deliverables', 'deliverables-template.csv'), ('rights-matrix', 'rights-matrix-template.csv'), ('stills-library', 'stills-caption-sheet-template.csv'), ('festival-strategy', 'festival-strategy-template.csv'), ('fair-use-log', 'fair-use-template.csv'), ('license-tracker', 'licenses-template.csv'), ('clearance-report', 'clearance-report-template.csv'), ('chain-of-title', 'chain-of-title-template.csv'), ('structure-board', 'structure-board-template.csv'), ('cut-tracker', 'cut-notes-template.csv'), ('budget-to-actuals', 'cost-report-template.csv'), ('footage-log', 'footage-log-template.csv'), ('paper-edit', 'paper-edit-template.csv'), ('press-list', 'press-list-template.csv'), ('partner-crm', 'partner-crm-template.csv'), ('camera-sound-reports', 'camera-and-sound-reports-template.csv'), ('interview-log', 'interview-moments-template.csv'), ('travel-sheet', 'travel-sheet-template.csv'), ('risk-plan', 'risk-assessment-template.csv'), ('security-checklist', 'security-checklist-template.csv'), ('gear-list', 'gear-list-template.csv'), ('coi-permit-tracker', 'certificates-and-permits-template.csv'), ('location-scout', 'location-scout-template.csv'), ('deal-memos', 'deal-memos-template.csv'), ('shooting-calendar', 'shooting-calendar-template.csv'), ('interview-prep', 'interview-questions-template.csv'), ('funder-crm', 'funder-crm-template.csv'), ('cash-flow', 'cash-flow-template.csv'), ('budget', 'budget-template.csv'), ('finance-plan', 'finance-plan-template.csv'), ('grant-calendar', 'grant-calendar-template.csv'), ('clearance-log', 'clearance-log-template.csv'), ('release-tracker', 'release-log-template.csv'),
+TEMPLATE_EXPORTS = [('script-breakdown', 'script-breakdown-template.csv'), ('contract-archive', 'contract-archive-template.csv'), ('final-cost-report', 'final-cost-report-template.csv'), ('impact-report', 'impact-results-template.csv'), ('theory-of-change', 'theory-of-change-template.csv'), ('bookings', 'bookings-template.csv'), ('revenue-tracker', 'revenue-template.csv'), ('waterfall', 'waterfall-template.csv'), ('qc-tracker', 'qc-issues-template.csv'), ('deliverables', 'deliverables-template.csv'), ('rights-matrix', 'rights-matrix-template.csv'), ('stills-library', 'stills-caption-sheet-template.csv'), ('festival-strategy', 'festival-strategy-template.csv'), ('fair-use-log', 'fair-use-template.csv'), ('license-tracker', 'licenses-template.csv'), ('clearance-report', 'clearance-report-template.csv'), ('chain-of-title', 'chain-of-title-template.csv'), ('structure-board', 'structure-board-template.csv'), ('cut-tracker', 'cut-notes-template.csv'), ('budget-to-actuals', 'cost-report-template.csv'), ('footage-log', 'footage-log-template.csv'), ('paper-edit', 'paper-edit-template.csv'), ('press-list', 'press-list-template.csv'), ('partner-crm', 'partner-crm-template.csv'), ('camera-sound-reports', 'camera-and-sound-reports-template.csv'), ('interview-log', 'interview-moments-template.csv'), ('travel-sheet', 'travel-sheet-template.csv'), ('risk-plan', 'risk-assessment-template.csv'), ('security-checklist', 'security-checklist-template.csv'), ('gear-list', 'gear-list-template.csv'), ('coi-permit-tracker', 'certificates-and-permits-template.csv'), ('location-scout', 'location-scout-template.csv'), ('deal-memos', 'deal-memos-template.csv'), ('shooting-calendar', 'shooting-calendar-template.csv'), ('interview-prep', 'interview-questions-template.csv'), ('funder-crm', 'funder-crm-template.csv'), ('cash-flow', 'cash-flow-template.csv'), ('budget', 'budget-template.csv'), ('finance-plan', 'finance-plan-template.csv'), ('grant-calendar', 'grant-calendar-template.csv'), ('clearance-log', 'clearance-log-template.csv'), ('release-tracker', 'release-log-template.csv'),
                     ('music-cue-sheet', 'music-cue-sheet-template.csv'), ('name-supers', 'name-supers-template.csv'),
                     ('subject-tracker', 'subject-tracker-template.csv'), ('research-log', 'research-log-template.csv'),
                     ('comps-tracker', 'comps-tracker-template.csv')]
@@ -2958,6 +2958,66 @@ def test_contract_archive(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
+def import_script(pg, name, text):
+    pg.set_input_files('#scriptInput', files=[{'name': name, 'mimeType': 'text/plain', 'buffer': text.encode('utf-8')}])
+    pg.wait_for_timeout(250)
+
+def test_script_breakdown(browser, fake):
+    script = (root / 'samples/the-river-keeps-reenactments.fountain').read_text()
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'script-breakdown', fake)
+    import_script(pg, 'reenactments.fountain', script)
+    check(pg.locator('#rows .row').count() == 5 and 'EXT. RIVERSIDE LEVEE - NIGHT' in pg.inner_text('#rows'), 'a Fountain script imports as scenes')
+    cast = pg.inner_text('#castList')
+    check(cast.index('1. EDITH') < cast.index('2. MR. PRYOR') < cast.index('3. WALT') and '4. JOSIE' in cast, 'characters are found and numbered by how many scenes they speak in')
+    check('5 scenes, 1 7/8 pages' in pg.inner_text('#count'), 'counts scenes and pages in eighths (%s)' % pg.inner_text('#count'))
+    import_script(pg, 'notes.txt', 'Just some notes, no scenes here.\n')
+    check('Couldn\'t find any scenes' in pg.inner_text('#toast'), 'a file with no scene headings says so')
+    ctx.close()
+    ctx, pg, errs = new_page(browser, 'script-breakdown', fake)
+    open_sample(pg, fake)
+    check(pg.locator('#rows .row').count() == 5 and 'Riverside levee' in pg.inner_text('[data-id="scene-1"]') and 'Props: 4' in pg.inner_text('[data-id="scene-1"]'), 'the sample shows its scenes with locations and elements')
+    pg.click('[data-edit="scene-2"]')
+    pg.click('#addElBtn'); row = pg.locator('#elRows .el-row').last
+    row.locator('.e-cat').select_option('animals'); row.locator('.e-name').fill('Barn cat')
+    pg.fill('#newCast', 'Doctor Lind'); pg.click('#newCastBtn')
+    check(pg.is_checked('#castChecks input:last-of-type') and 'DOCTOR LIND' in pg.inner_text('#castChecks'), 'a new character can be added from a scene')
+    pg.fill('#f-eighths', 'one page'); pg.click('#editorSubmit')
+    check(pg.is_visible('#editor'), 'a length that isn\'t in eighths is refused')
+    pg.fill('#f-eighths', '1 2/8'); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    t = pg.inner_text('[data-id="scene-2"]')
+    check('1 2/8 pg' in t and 'Animals: 1' in t and '5. DOCTOR LIND' in t, 'saves the length, elements and cast of a scene')
+    pg.click('[data-cast="character-edith"]')
+    pg.select_option('#c-person', '__new'); pg.fill('#c-new', 'Clara Voss'); pg.click('#castForm button[type=submit]'); pg.wait_for_timeout(200)
+    check('Played by Clara Voss' in pg.inner_text('#castList'), 'casting a character adds the actor')
+    pg.select_option('[data-set="1"]', '__new'); pg.wait_for_timeout(200)
+    check('Hammond House - Attic' in pg.inner_text('[data-id="scene-4"]'), 'a set can get a new location named after it')
+    rows = csv_rows(pg)
+    check(rows[0][:8] == ['Scene', 'Heading', 'Int/Ext', 'Set', 'Time', 'Pages', 'Script page', 'Cast'] and any(r[0] == '1' and 'Sandbags' in r[9] and r[-3] == 'Riverside levee' for r in rows), 'CSV has a row per scene with its elements by kind')
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    rep = pg.inner_text('#report')
+    check(pg.locator('#report .r-sheet').count() == 5 and 'Clara Voss' in rep and 'Rain towers' in rep, 'prints a breakdown sheet for each scene')
+    # A newer draft: scene 5 cut, a scene 6 added. Tags on the scenes that stay are kept.
+    newer = script.replace('EXT. RIVERSIDE LEVEE - DAY #5#', 'EXT. MAIN STREET - DAY #6#')
+    import_script(pg, 'reenactments-v2.fountain', newer)
+    check(pg.locator('#rows .row.is-gone').count() == 1 and 'Not in the current script' in pg.inner_text('[data-id="scene-5"]') and 'MAIN STREET' in pg.inner_text('#rows'), 'a newer draft adds new scenes and flags the ones that were cut')
+    check('Props: 4' in pg.inner_text('[data-id="scene-1"]') and 'Animals: 1' in pg.inner_text('[data-id="scene-2"]'), 'what you tagged stays on the scenes that are still there')
+    pg.click('[data-edit="scene-5"]'); pg.click('#deleteBtn'); pg.wait_for_timeout(200)
+    data = saved_project(pg, fake)
+    s2 = next(s for s in data['scenes'] if s['id'] == 'scene-2')
+    edith = next(c for c in data['characters'] if c['id'] == 'character-edith')
+    clara = next(p for p in data['people'] if p['name'] == 'Clara Voss')
+    check(s2['eighths'] == 3 and any(e['category'] == 'animals' and e['name'] == 'Barn cat' for e in s2['elements']) and edith['personId'] == clara['id'] and clara['role'] == 'Cast', 'scenes, cast and the actor are saved, with lengths from the newer draft')
+    check(len(data['scenes']) == 5 and not any(s['id'] == 'scene-5' for s in data['scenes']) and 'MAIN STREET' in data['script']['text'] and data['script']['fileName'] == 'reenactments-v2.fountain', 'the removed scene is gone and the newer script is kept')
+    check(data['shootDays'] == original['shootDays'] and data['callSheets'] == original['callSheets'], 'other data is unchanged')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+def csv_rows(pg, btn='#csvBtn'):
+    with pg.expect_download() as d:
+        pg.click(btn)
+    return list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+
 def test_roundtrip(browser, fake):
     original = json.loads(sample)
     changed_by = []
@@ -3563,6 +3623,8 @@ def main():
         test_security_checklist(browser, fake)
         print('== press-list / outlets, beats, screeners, RSVPs and coverage')
         test_press_list(browser, fake)
+        print('== script-breakdown / a Fountain script, cast, sets, elements and a newer draft')
+        test_script_breakdown(browser, fake)
         print('== partner-crm / partners, commitments and screenings')
         test_partner_crm(browser, fake)
         print('== screenings / edit and remove a screening in the press list and partner CRM')

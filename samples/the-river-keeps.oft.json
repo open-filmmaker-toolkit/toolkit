@@ -3086,6 +3086,261 @@
       ]
     }
   ],
+  "script": {
+    "title": "The River Keeps",
+    "fileName": "the-river-keeps-reenactments.fountain",
+    "importedAt": "2026-10-20",
+    "pages": 2,
+    "text": "Title: The River Keeps\nCredit: Reenactment scenes\nAuthor: Lowwater Films\nDraft date: October 2026\nContact: Fictional sample script for the Open Filmmaker Toolkit\n\n[[Fictional sample. The people, places and events are made up.]]\n\nEXT. RIVERSIDE LEVEE - NIGHT #1#\n\n= 1952. Neighbors fill sandbags as the river rises.\n\nRain in sheets. Lanterns swing along the top of the levee. A line of NEIGHBORS passes sandbags hand to hand.\n\nEDITH HAMMOND, 34, a scarf over her hair, works the shovel at the sand pile. Her husband WALT, 36, carries two bags at a time.\n\nWALT\nThat's the last of the sand from the yard.\n\nEDITH\nThen we dig the garden.\n\nMR. PRYOR, 60s, holds a lantern over the water line painted on a post.\n\nMR. PRYOR\n(quietly)\nIt's past the mark. Up a foot since supper.\n\nEdith looks at the black water, then back toward town.\n\nEDITH\nJosie's alone at the house.\n\nWALT\nGo. I'll stay with the line.\n\nINT. HAMMOND HOUSE - KITCHEN - NIGHT #2#\n\n= Edith writes the first diary entry by lamplight.\n\nA kerosene lamp on the table. JOSIE, 9, asleep on the bench under a coat. Edith, soaked, opens a small cloth-bound diary.\n\nEDITH (V.O.)\nApril the ninth. The river is over the mark at Pryor's post. Walt is on the levee with the others. I have moved the flour and the photographs upstairs.\n\nShe stops writing. Listens. Rain on the roof, and under it, a low rushing.\n\nJOSIE\n(waking)\nIs it coming in?\n\nEDITH\nNot tonight. Go back to sleep.\n\nEXT. GRAIN ELEVATOR - DAWN #3#\n\n= The men watch the water from the loading dock.\n\nGray light. Water to the second rung of the loading ladder. Walt and Mr. Pryor stand on the dock with a few other MEN, mud to the knees.\n\nMR. PRYOR\nThe south levee went at four.\n\nWALT\nAnd ours?\n\nMR. PRYOR\nHolding. For now.\n\nA rowboat drifts past, empty, turning slowly in the current.\n\nINT. HAMMOND HOUSE - ATTIC - DAY #4#\n\n= Edith and Josie carry what they can save up the attic stairs.\n\nEdith hands a crate of jars up the narrow stairs to Josie. Water stands an inch deep on the floor below.\n\nJOSIE\nWhat about the piano?\n\nEDITH\nThe piano can swim.\n\nJosie laughs despite herself. Edith sets the diary on the top beam, where it will stay dry.\n\nEXT. RIVERSIDE LEVEE - DAY #5#\n\n= After the water goes down, the neighbors walk the levee.\n\nSun. Mud everywhere. The sandbag wall stands, slumped but whole. Edith, Walt and Josie walk the top of the levee with the NEIGHBORS.\n\nMr. Pryor paints a new line on his post, a foot above the old one.\n\nMR. PRYOR\nFor the next ones.\n\nEDITH (V.O.)\nApril the fourteenth. The levee held. We are all of us tired, and all of us here.\n\nFADE OUT.\n"
+  },
+  "scenes": [
+    {
+      "id": "scene-1",
+      "number": "1",
+      "heading": "EXT. RIVERSIDE LEVEE - NIGHT",
+      "intExt": "EXT",
+      "set": "RIVERSIDE LEVEE",
+      "time": "NIGHT",
+      "eighths": 5,
+      "page": 1,
+      "order": 0,
+      "synopsis": "1952. Neighbors fill sandbags as the river rises.",
+      "characterIds": [
+        "character-walt",
+        "character-edith",
+        "character-pryor"
+      ],
+      "elements": [
+        {
+          "id": "element-1-1",
+          "category": "extras",
+          "name": "Neighbors on the sandbag line (8)"
+        },
+        {
+          "id": "element-1-2",
+          "category": "props",
+          "name": "Sandbags"
+        },
+        {
+          "id": "element-1-3",
+          "category": "props",
+          "name": "Lanterns"
+        },
+        {
+          "id": "element-1-4",
+          "category": "props",
+          "name": "Shovel"
+        },
+        {
+          "id": "element-1-5",
+          "category": "props",
+          "name": "Water-mark post"
+        },
+        {
+          "id": "element-1-6",
+          "category": "wardrobe",
+          "name": "Edith's head scarf, 1950s rain coats"
+        },
+        {
+          "id": "element-1-7",
+          "category": "effects",
+          "name": "Rain towers"
+        },
+        {
+          "id": "element-1-8",
+          "category": "effects",
+          "name": "Wind"
+        }
+      ],
+      "locationId": "location-riverside-levee",
+      "notes": "Fictional sample. Shoot the wide on the levee first, before the rain towers soak the bank."
+    },
+    {
+      "id": "scene-2",
+      "number": "2",
+      "heading": "INT. HAMMOND HOUSE - KITCHEN - NIGHT",
+      "intExt": "INT",
+      "set": "HAMMOND HOUSE - KITCHEN",
+      "time": "NIGHT",
+      "eighths": 3,
+      "page": 1,
+      "order": 1,
+      "synopsis": "Edith writes the first diary entry by lamplight.",
+      "characterIds": [
+        "character-edith",
+        "character-josie"
+      ],
+      "elements": [
+        {
+          "id": "element-2-1",
+          "category": "props",
+          "name": "Kerosene lamp"
+        },
+        {
+          "id": "element-2-2",
+          "category": "props",
+          "name": "Cloth-bound diary"
+        },
+        {
+          "id": "element-2-3",
+          "category": "dressing",
+          "name": "1950s farmhouse kitchen"
+        },
+        {
+          "id": "element-2-4",
+          "category": "wardrobe",
+          "name": "Wet clothes for Edith"
+        },
+        {
+          "id": "element-2-5",
+          "category": "sound",
+          "name": "Rain on the roof, rushing water"
+        }
+      ],
+      "locationId": "location-hammond-house"
+    },
+    {
+      "id": "scene-3",
+      "number": "3",
+      "heading": "EXT. GRAIN ELEVATOR - DAWN",
+      "intExt": "EXT",
+      "set": "GRAIN ELEVATOR",
+      "time": "DAWN",
+      "eighths": 2,
+      "page": 1,
+      "order": 2,
+      "synopsis": "The men watch the water from the loading dock.",
+      "characterIds": [
+        "character-pryor",
+        "character-walt"
+      ],
+      "elements": [
+        {
+          "id": "element-3-1",
+          "category": "extras",
+          "name": "Men on the loading dock (4)"
+        },
+        {
+          "id": "element-3-2",
+          "category": "props",
+          "name": "Rowboat"
+        },
+        {
+          "id": "element-3-3",
+          "category": "makeup",
+          "name": "Mud to the knees"
+        },
+        {
+          "id": "element-3-4",
+          "category": "effects",
+          "name": "Flood water at the dock"
+        }
+      ],
+      "locationId": "location-grain-elevator"
+    },
+    {
+      "id": "scene-4",
+      "number": "4",
+      "heading": "INT. HAMMOND HOUSE - ATTIC - DAY",
+      "intExt": "INT",
+      "set": "HAMMOND HOUSE - ATTIC",
+      "time": "DAY",
+      "eighths": 2,
+      "page": 2,
+      "order": 3,
+      "synopsis": "Edith and Josie carry what they can save up the attic stairs.",
+      "characterIds": [
+        "character-josie",
+        "character-edith"
+      ],
+      "elements": [
+        {
+          "id": "element-4-1",
+          "category": "props",
+          "name": "Crate of jars"
+        },
+        {
+          "id": "element-4-2",
+          "category": "props",
+          "name": "Cloth-bound diary"
+        },
+        {
+          "id": "element-4-3",
+          "category": "dressing",
+          "name": "Attic stairs and beams"
+        },
+        {
+          "id": "element-4-4",
+          "category": "effects",
+          "name": "An inch of water on the floor"
+        }
+      ],
+      "locationId": "location-hammond-house"
+    },
+    {
+      "id": "scene-5",
+      "number": "5",
+      "heading": "EXT. RIVERSIDE LEVEE - DAY",
+      "intExt": "EXT",
+      "set": "RIVERSIDE LEVEE",
+      "time": "DAY",
+      "eighths": 3,
+      "page": 2,
+      "order": 4,
+      "synopsis": "After the water goes down, the neighbors walk the levee.",
+      "characterIds": [
+        "character-pryor",
+        "character-edith",
+        "character-walt",
+        "character-josie"
+      ],
+      "elements": [
+        {
+          "id": "element-5-1",
+          "category": "extras",
+          "name": "Neighbors walking the levee (12)"
+        },
+        {
+          "id": "element-5-2",
+          "category": "props",
+          "name": "Paint and brush"
+        },
+        {
+          "id": "element-5-3",
+          "category": "props",
+          "name": "Water-mark post"
+        },
+        {
+          "id": "element-5-4",
+          "category": "makeup",
+          "name": "Mud on everyone"
+        }
+      ],
+      "locationId": "location-riverside-levee"
+    }
+  ],
+  "characters": [
+    {
+      "id": "character-edith",
+      "name": "EDITH",
+      "number": 1
+    },
+    {
+      "id": "character-pryor",
+      "name": "MR. PRYOR",
+      "number": 2
+    },
+    {
+      "id": "character-walt",
+      "name": "WALT",
+      "number": 3
+    },
+    {
+      "id": "character-josie",
+      "name": "JOSIE",
+      "number": 4
+    }
+  ],
   "interviews": [
     {
       "id": "interview-ruth",

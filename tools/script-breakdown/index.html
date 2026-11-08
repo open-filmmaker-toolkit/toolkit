@@ -1,0 +1,1964 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Script breakdown · Open Filmmaker Toolkit</title>
+<meta name="description" content="Break down a script: scenes, cast, locations, props, wardrobe and everything else each scene needs, read from a Fountain screenplay, with breakdown sheets to print. Runs in your browser; your data stays on your computer.">
+<style>
+:root {
+  --paper: #f1f3f2; --sheet: #ffffff; --ink: #1a2130; --ink-2: #4b556a; --ink-3: #5d6677;
+  --rule: #d4dad8; --rule-soft: #e6eae8; --hover: #f6f8f7; --focus: #2f6fdb;
+  --good: #236b4b; --good-bg: #dff1e8; --warn: #8a5a00; --warn-bg: #fbf0d9; --bad: #b3392d; --bad-bg: #f8e1de;
+  --screen: #050506; --screen-ink: #f4f1ea; --screen-dim: #a7a29a;
+  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #141922; --sheet: #1b212b; --ink: #e6e9ee; --ink-2: #a6afbd; --ink-3: #8790a0;
+    --rule: #2f3744; --rule-soft: #262d38; --hover: #212834; --focus: #7aa7ff;
+    --good: #4fb386; --good-bg: #1a3329; --warn: #e2a531; --warn-bg: #3a2f17; --bad: #ef7a6c; --bad-bg: #3b2220;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans); }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+[hidden] { display: none !important; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.foot { margin-top: 28px; font-size: 13px; color: var(--ink-3); }
+.cant-run { display: none; max-width: 640px; margin: 64px auto; padding: 0 24px; }
+.cant-run h1 { margin: 0 0 8px; font: 600 26px/1.2 var(--serif); }
+.cant-run p { margin: 0 0 10px; color: var(--ink-2); }
+.no-js .cant-run { display: block; }
+.no-js .page { display: none; }
+.page { max-width: 1240px; margin: 0 auto; padding: 0 24px 48px; }
+
+.masthead { display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: flex-end; justify-content: space-between; padding: 28px 0 20px; }
+.tool-name { margin: 0 0 2px; font-size: 14px; font-weight: 600; color: var(--ink-2); }
+.film-title { margin: 0; font: 600 32px/1.15 var(--serif); letter-spacing: -0.01em; overflow-wrap: anywhere; cursor: pointer; }
+.film-title.is-empty { color: var(--ink-3); font-style: italic; font-weight: 400; }
+.film-meta { margin: 4px 0 0; color: var(--ink-2); font-size: 14px; }
+.file { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.file-state { margin: 0; font-size: 13px; color: var(--ink-2); text-align: right; }
+.file-state .dirty { color: var(--warn); font-weight: 600; }
+.file-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; }
+.btn:hover { border-color: var(--ink-3); }
+.btn.primary { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.btn.primary:hover { opacity: 0.88; }
+.btn.danger { color: var(--bad); }
+.btn.small { padding: 4px 10px; font-size: 13px; }
+.link-btn { padding: 0; border: 0; background: none; cursor: pointer; color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; font-size: 14px; }
+.link-btn:hover { color: var(--ink); }
+
+.banner { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 0 0 16px; padding: 12px 16px; border-radius: 8px; background: var(--warn-bg); border: 1px solid color-mix(in srgb, var(--warn) 40%, transparent); }
+.banner p { margin: 0; flex: 1 1 280px; }
+.banner .actions { display: flex; gap: 8px; }
+
+.workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr); gap: 24px; align-items: start; }
+.col { display: grid; gap: 18px; min-width: 0; }
+.card { background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 18px; min-width: 0; }
+.card-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; margin: 0 0 6px; }
+.card-head h2 { margin: 0; font: 600 18px/1.3 var(--serif); }
+.card-head .count { font-size: 13px; color: var(--ink-2); }
+.card-head .spacer { flex: 1; }
+.card p.lead { margin: 0 0 8px; font-size: 14px; color: var(--ink-2); }
+
+/* Side cards */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 2px; padding: 0; list-style: none; }
+.chip { display: inline-flex; border: 1px solid var(--rule); border-radius: 999px; overflow: hidden; background: var(--paper); }
+.chip button { padding: 4px 10px; border: 0; background: none; cursor: pointer; font-size: 13px; font-weight: 600; }
+.chip button:hover { background: var(--hover); }
+.chip .sub { font-weight: 400; color: var(--ink-3); margin-left: 4px; }
+.empty-line { margin: 4px 0; color: var(--ink-2); font-size: 14px; }
+.changes { margin: 0; padding-left: 18px; font-size: 14px; }
+.changes li + li { margin-top: 2px; }
+
+/* The list */
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 10px; }
+.toolbar h2 { margin: 0 8px 0 0; font: 600 20px/1.2 var(--serif); }
+.toolbar .count { font-size: 13px; color: var(--ink-2); }
+.toolbar .spacer { flex: 1; }
+.rows { list-style: none; margin: 0; padding: 0; background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; }
+.row { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 2px 14px; align-items: start; padding: 10px 14px; }
+.row + .row { border-top: 1px solid var(--rule-soft); }
+.row:hover { background: var(--hover); }
+.row.is-selected { background: var(--hover); box-shadow: inset 3px 0 0 var(--ink); }
+.row .tc { font-variant-numeric: tabular-nums; font-size: 14px; color: var(--ink-2); padding-top: 1px; }
+.row .what { min-width: 0; padding: 0; border: 0; background: none; text-align: left; cursor: pointer; overflow-wrap: anywhere; }
+.row .what:hover .nm { text-decoration: underline; text-underline-offset: 2px; }
+.row .nm { display: block; font-weight: 600; }
+.row .tt { display: block; font-size: 14px; color: var(--ink-2); }
+.flags { grid-column: 2; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.flag { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 999px; font-size: 12.5px; font-weight: 600; }
+.flag.new { background: var(--good-bg); color: var(--good); }
+.flag.changed { background: var(--warn-bg); color: var(--warn); }
+.flag.problem { background: var(--bad-bg); color: var(--bad); }
+.flag.linked { background: var(--paper); color: var(--ink-3); font-weight: 500; border: 1px solid var(--rule); }
+.flag button { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+
+.empty { padding: 36px 24px; text-align: center; background: var(--sheet); border: 1px dashed var(--rule); border-radius: 8px; }
+.empty h2 { margin: 0 0 6px; font: 600 20px/1.3 var(--serif); }
+.empty p { margin: 0 auto 16px; max-width: 52ch; color: var(--ink-2); }
+.empty .actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+
+.workspace > * { min-width: 0; }
+.side { position: sticky; top: 16px; display: grid; gap: 18px; }
+.filters { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; align-items: center; }
+.views { display: inline-flex; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+.views button { padding: 4px 12px; border: 0; background: var(--sheet); font-size: 13px; cursor: pointer; }
+.views button + button { border-left: 1px solid var(--rule); }
+.views button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.check-inline { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; color: var(--ink-2); margin-left: auto; }
+.due-list { list-style: none; margin: 4px 0 0; padding: 0; }
+.due-list li { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; font-size: 14px; }
+.due-list li + li { border-top: 1px solid var(--rule-soft); }
+.due-list button { padding: 0; border: 0; background: none; cursor: pointer; text-align: left; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; min-width: 0; overflow-wrap: anywhere; }
+.due-list .when { color: var(--ink-2); white-space: nowrap; }
+.who-list { list-style: none; margin: 4px 0 0; padding: 0; font-size: 14px; display: grid; gap: 4px; }
+.who-list li { display: flex; justify-content: space-between; gap: 10px; }
+.who-list .n { color: var(--ink-2); white-space: nowrap; }
+.people { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 12px; max-height: 240px; overflow: auto; padding: 2px; }
+.people label { display: flex; gap: 8px; align-items: baseline; font-size: 14px; min-width: 0; }
+.people input { width: 16px; height: 16px; margin: 0; flex: none; }
+.people .sub { color: var(--ink-3); font-size: 12.5px; }
+.cs-note { margin: 0; padding: 8px 10px; border-radius: 6px; background: var(--good-bg); color: var(--good); font-size: 14px; }
+.cs-note.warn { background: var(--warn-bg); color: var(--warn); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.three { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+dialog { border: 0; padding: 0; color: var(--ink); background: var(--sheet); box-shadow: 0 10px 40px rgba(10, 14, 22, 0.25); }
+dialog::backdrop { background: rgba(16, 20, 28, 0.42); }
+dialog.drawer { margin: 0 0 0 auto; width: min(600px, 100vw); height: 100dvh; max-height: 100dvh; max-width: 100vw; border-left: 1px solid var(--rule); }
+dialog.modal { width: min(560px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); border-radius: 10px; }
+dialog form { display: flex; flex-direction: column; height: 100%; max-height: inherit; }
+.dlg-head { padding: 20px 24px 12px; border-bottom: 1px solid var(--rule-soft); }
+.dlg-head h2 { margin: 0; font: 600 22px/1.25 var(--serif); }
+.dlg-body { flex: 1; overflow-y: auto; padding: 16px 24px 24px; display: grid; gap: 14px; align-content: start; }
+.dlg-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 14px 24px; border-top: 1px solid var(--rule-soft); }
+.dlg-foot .spacer { flex: 1; }
+.field { display: grid; gap: 4px; }
+.field > label, .field > .label, .group h3 { font-size: 14px; font-weight: 600; margin: 0; }
+.hint { margin: 0; font-size: 13px; color: var(--ink-3); }
+.field input, .field select, .field textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); }
+.group { display: grid; gap: 8px; padding-top: 10px; border-top: 1px solid var(--rule-soft); }
+.checks { display: grid; gap: 2px; max-height: 260px; overflow-y: auto; padding: 2px; }
+.check { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; align-items: start; padding: 5px 4px; border-radius: 6px; cursor: pointer; }
+.check:hover { background: var(--hover); }
+.check input { width: 18px; height: 18px; margin: 2px 0 0; }
+.check .who { overflow-wrap: anywhere; }
+.check .sub { margin-left: 4px; font-size: 13px; color: var(--ink-3); }
+.check .lines { display: block; font-size: 13px; color: var(--ink-3); white-space: pre-line; }
+#songList, #sourceList { max-height: none; }
+.radio-row { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.radio-row label { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; cursor: pointer; }
+pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); font-size: 13px; white-space: pre-wrap; }
+
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); max-width: calc(100vw - 32px); padding: 10px 16px; border-radius: 8px; background: var(--ink); color: var(--paper); font-size: 14px; box-shadow: 0 6px 24px rgba(10, 14, 22, 0.25); z-index: 10; }
+.toast.error { background: var(--bad); color: #ffffff; }
+.report { display: none; }
+
+@media (max-width: 900px) {
+  .workspace { grid-template-columns: 1fr; }
+  .side { position: static; }
+}
+@media (max-width: 720px) {
+  .page { padding: 0 16px 40px; }
+  .film-title { font-size: 26px; }
+  .file { align-items: flex-start; }
+  .file-state { text-align: left; }
+  .toolbar h2 { flex-basis: 100%; order: -2; }
+  .toolbar #addBtn { flex: 1 1 100%; justify-content: center; order: -1; }
+  .row { grid-template-columns: minmax(0, 1fr); }
+  .flags { grid-column: 1; }
+}
+@media print {
+  :root { color-scheme: light; }
+  body { background: #ffffff; color: #000000; font-size: 10pt; }
+  .page, dialog, .toast { display: none !important; }
+  .report { display: block; }
+  .report h1 { margin: 0; font: 700 18pt/1.2 var(--serif); }
+  .report h2 { margin: 14pt 0 4pt; font: 700 12pt/1.2 var(--serif); break-after: avoid; page-break-after: avoid; }
+  .report .r-meta { margin: 2pt 0 10pt; }
+  .report table { width: 100%; border-collapse: collapse; }
+  .report th, .report td { padding: 4pt 5pt; border-bottom: 0.75pt solid #999999; text-align: left; vertical-align: top; }
+  .report th { font-size: 9pt; border-bottom: 1pt solid #000000; }
+  .report tr { break-inside: avoid; page-break-inside: avoid; }
+  .report .r-sub { display: block; font-size: 8.5pt; color: #333333; }
+  .report .r-note { margin-top: 14pt; font-size: 8pt; color: #333333; }
+  @page { size: landscape; margin: 12mm; }
+  .report .r-month { break-after: page; page-break-after: always; }
+  .report .r-month:last-child { break-after: auto; page-break-after: auto; }
+}
+.skip-link { position: absolute; left: 12px; top: -80px; z-index: 1000; padding: 8px 14px; border: 2px solid var(--focus, #2f6fdb); border-radius: 6px; background: var(--sheet, #ffffff); color: var(--ink, #1a2130); font-weight: 600; text-decoration: none; }
+.skip-link:focus { top: 12px; }
+input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:focus, input[type="time"]:focus-within { outline: 2px solid var(--focus, #2f6fdb); outline-offset: 2px; }
+.home-link { color: inherit; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.home-link:hover { text-decoration-thickness: 2px; }
+.search { flex: 1 1 260px; min-width: 0; padding: 7px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); }
+.script-line { margin: 0 0 10px; font-size: 14px; color: var(--ink-2); }
+.row { grid-template-columns: 76px minmax(0, 1fr) auto; }
+.row .tc b { display: block; font: 600 20px/1.1 var(--serif); color: var(--ink); }
+.row .tc span { font-size: 13px; }
+.row .kd { font-size: 13px; font-weight: 600; padding-top: 2px; white-space: nowrap; color: var(--ink-2); text-align: right; }
+.row.is-gone .nm { color: var(--ink-3); text-decoration: line-through; }
+.flags { grid-column: 2 / -1; }
+.side-list { list-style: none; margin: 4px 0 0; padding: 0; font-size: 14px; }
+.side-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; align-items: baseline; padding: 6px 0; }
+.side-list li + li { border-top: 1px solid var(--rule-soft); }
+.side-list .nm { font-weight: 600; overflow-wrap: anywhere; }
+.side-list .sub { grid-column: 1 / -1; color: var(--ink-2); font-size: 13px; }
+.side-list .n { color: var(--ink-2); white-space: nowrap; }
+.side-list select { grid-column: 1 / -1; width: 100%; padding: 4px 8px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); font-size: 13px; }
+.side-list .link-btn { min-height: 24px; }
+.el-rows { display: grid; gap: 6px; }
+.el-row { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr) 32px; gap: 6px; align-items: center; }
+.el-row select, .el-row input { width: 100%; padding: 6px 8px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); }
+.icon-btn { width: 32px; height: 32px; padding: 0; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); cursor: pointer; font-size: 18px; line-height: 1; }
+.add-inline { display: flex; gap: 6px; }
+.add-inline input { flex: 1; min-width: 0; padding: 6px 8px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); }
+.counts { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 4px; font-size: 14px; }
+.counts li { display: flex; justify-content: space-between; gap: 10px; }
+.counts .n { color: var(--ink-2); }
+@media (max-width: 720px) {
+  .two, .three, .people { grid-template-columns: 1fr; }
+  .row { grid-template-columns: minmax(0, 1fr) auto; }
+  .row .tc { grid-column: 1 / -1; display: flex; gap: 8px; align-items: baseline; }
+  .flags { grid-column: 1 / -1; }
+  .el-row { grid-template-columns: minmax(0, 1fr) 32px; }
+  .el-row select { grid-column: 1 / -1; }
+}
+@media print {
+  @page { size: portrait; margin: 12mm; }
+  .report .r-sheet { break-before: page; page-break-before: always; }
+  .report .r-head { display: flex; justify-content: space-between; gap: 12pt; border-bottom: 1.5pt solid #000000; padding-bottom: 4pt; }
+  .report .r-num { font: 700 22pt/1 var(--serif); }
+  .report .r-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6pt; margin-top: 8pt; }
+  .report .r-box { border: 0.75pt solid #000000; padding: 4pt 6pt; min-height: 22mm; break-inside: avoid; }
+  .report .r-box h3 { margin: 0 0 2pt; font-size: 8.5pt; text-transform: uppercase; letter-spacing: 0.04em; }
+  .report .r-box ul { margin: 0; padding-left: 12pt; font-size: 9.5pt; }
+  .report .r-wide { grid-column: 1 / -1; }
+}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to the tool</a>
+<div class="cant-run" id="cantRun">
+  <h1 id="cantRunTitle">Open this file in a web browser</h1>
+  <p id="cantRunText">This tool runs in Chrome, Edge, Firefox or Safari. You're seeing a preview that doesn't run it, so none of the buttons would work.</p>
+  <p id="cantRunHow">In your browser, choose File, then Open File, and pick this file. Or right-click the file and open it with your browser.</p>
+</div>
+<div class="page">
+  <header class="masthead">
+    <div>
+      <p class="tool-name"><a class="home-link" href="../../index.html">Open Filmmaker Toolkit</a> <span aria-hidden="true">/</span> Script breakdown</p>
+      <h1 class="film-title" id="filmTitle">Untitled film</h1>
+      <p class="film-meta"><span id="filmMeta"></span> <button type="button" class="link-btn" id="editProjectBtn">Edit film details</button></p>
+    </div>
+    <div class="file">
+      <p class="file-state" id="fileState">Not saved to a file yet</p>
+      <div class="file-actions">
+        <button type="button" class="btn" id="newBtn">New project</button>
+        <button type="button" class="btn" id="openBtn">Open file</button>
+        <button type="button" class="btn" id="projectCsvBtn">Export project data (CSV)</button>
+        <button type="button" class="btn primary" id="saveBtn">Save file</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="banner" id="recovery" role="region" aria-label="Unsaved work" hidden>
+    <p id="recoveryText"></p>
+    <div class="actions">
+      <button type="button" class="btn primary" id="restoreBtn">Restore it</button>
+      <button type="button" class="btn" id="discardBtn">Discard it</button>
+    </div>
+  </div>
+
+  <main id="main" class="workspace">
+    <section aria-labelledby="listHead">
+      <div class="toolbar">
+        <h2 id="listHead">Script breakdown</h2>
+        <span class="count" id="count"></span>
+        <span class="spacer"></span>
+        <button type="button" class="btn primary" id="importScriptBtn">Import a script</button>
+        <button type="button" class="btn" id="addBtn">Add a scene</button>
+        <button type="button" class="btn" id="csvBtn">Export CSV</button>
+        <button type="button" class="btn" id="printBtn">Print breakdown sheets</button>
+      </div>
+      <p class="script-line" id="scriptLine" hidden></p>
+      <div class="filters" id="filterBar"><input type="search" class="search" id="search" placeholder="Search scenes, cast and elements" aria-label="Search scenes, cast and elements"></div>
+      <ul class="rows" id="rows"></ul>
+      <p class="empty-line" id="noMatch" hidden>No scenes match.</p>
+      <div class="empty" id="empty" hidden>
+        <h2>No scenes yet</h2>
+        <p>Import a script in Fountain, the plain-text screenplay format most screenwriting apps export, and each scene is listed with who speaks in it and its length in eighths of a page. Then tag the props, wardrobe, extras and everything else each scene needs. No script? Add scenes by hand.</p>
+        <div class="actions">
+          <button type="button" class="btn primary" id="emptyImportBtn">Import a script</button>
+          <button type="button" class="btn" id="emptyAddBtn">Add a scene</button>
+          <button type="button" class="btn" id="emptyOpenBtn">Open file</button>
+        </div>
+        <p class="hint">To try it, import the <a href="../../samples/the-river-keeps-reenactments.fountain" download>sample script</a>.</p>
+      </div>
+    </section>
+
+    <div class="side">
+      <section class="card" aria-labelledby="castHead">
+        <div class="card-head"><h2 id="castHead">Cast</h2><span class="count" id="castCount"></span><span class="spacer"></span><button type="button" class="link-btn" id="addCastBtn">Add a character</button></div>
+        <p class="lead">Numbered for the schedule and call sheets. Say who plays each part to add them to the project's people.</p>
+        <ul class="side-list" id="castList"></ul>
+      </section>
+      <section class="card" aria-labelledby="setHead">
+        <div class="card-head"><h2 id="setHead">Sets</h2><span class="count" id="setCount"></span></div>
+        <p class="lead">Link each set to a location in the project, so the schedule and call sheets know where you're shooting.</p>
+        <ul class="side-list" id="setList"></ul>
+      </section>
+      <section class="card" aria-labelledby="elHead">
+        <div class="card-head"><h2 id="elHead">Elements</h2></div>
+        <ul class="counts" id="elList"></ul>
+      </section>
+    </div>
+  </main>
+
+  <footer class="foot">
+    <p>Part of the <a href="../../index.html">Open Filmmaker Toolkit</a>. This page makes no network requests: everything stays on this computer until you save or export it. Uses the same project file as the other toolkit tools.</p>
+  </footer>
+</div>
+
+<dialog class="drawer" id="editor" aria-labelledby="editorTitle">
+  <form id="editorForm" method="dialog" novalidate>
+    <div class="dlg-head"><h2 id="editorTitle">Scene</h2></div>
+    <div class="dlg-body">
+      <p class="cs-note warn" id="goneNote" hidden>This scene isn't in the script you imported last. Remove it if it was cut.</p>
+      <div class="three">
+        <div class="field"><label for="f-number">Scene number</label><input id="f-number" type="text" autocomplete="off" placeholder="12A"></div>
+        <div class="field"><label for="f-intext">Interior or exterior</label><select id="f-intext"><option value="">Not set</option><option value="INT">Interior (INT.)</option><option value="EXT">Exterior (EXT.)</option><option value="INT/EXT">Both (INT./EXT.)</option><option value="EST">Establishing (EST.)</option></select></div>
+        <div class="field"><label for="f-eighths">Length in pages</label><input id="f-eighths" type="text" inputmode="decimal" placeholder="1 3/8" autocomplete="off" aria-describedby="eighthsHint"></div>
+      </div>
+      <p class="hint" id="eighthsHint">In eighths of a page, as "3/8" or "1 3/8".</p>
+      <div class="two">
+        <div class="field"><label for="f-set">Set</label><input id="f-set" type="text" list="setNames" placeholder="HAMMOND HOUSE - KITCHEN" autocomplete="off"><datalist id="setNames"></datalist></div>
+        <div class="field"><label for="f-time">Time of day</label><input id="f-time" type="text" list="times" placeholder="NIGHT" autocomplete="off"><datalist id="times"><option value="DAY"><option value="NIGHT"><option value="DAWN"><option value="DUSK"><option value="MORNING"><option value="EVENING"><option value="CONTINUOUS"><option value="LATER"></datalist></div>
+      </div>
+      <div class="field"><label for="f-location">Location</label><select id="f-location"></select></div>
+      <div class="field"><label for="f-synopsis">What happens</label><textarea id="f-synopsis" rows="2" placeholder="Neighbors fill sandbags as the river rises"></textarea></div>
+      <div class="group">
+        <h3 id="castGroupHead">Cast</h3>
+        <div class="people" id="castChecks" role="group" aria-labelledby="castGroupHead"></div>
+        <div class="add-inline"><input id="newCast" type="text" placeholder="New character" aria-label="New character name" autocomplete="off"><button type="button" class="btn small" id="newCastBtn">Add character</button></div>
+      </div>
+      <div class="group">
+        <h3 id="elGroupHead">Elements</h3>
+        <p class="hint">Extras, props, wardrobe, vehicles and anything else the scene needs.</p>
+        <div class="el-rows" id="elRows" role="group" aria-labelledby="elGroupHead"></div>
+        <div><button type="button" class="btn small" id="addElBtn">Add an element</button></div>
+      </div>
+      <div class="field"><label for="f-notes">Notes</label><textarea id="f-notes" rows="2" placeholder="Rain towers; shoot the wide first"></textarea></div>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn danger" id="deleteBtn">Remove scene</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="editorCancel">Cancel</button>
+      <button type="submit" class="btn primary" id="editorSubmit">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="castDialog" aria-labelledby="castDialogTitle">
+  <form id="castForm" method="dialog" novalidate>
+    <div class="dlg-head"><h2 id="castDialogTitle">Character</h2></div>
+    <div class="dlg-body">
+      <div class="two">
+        <div class="field"><label for="c-name">Character</label><input id="c-name" type="text" autocomplete="off" required></div>
+        <div class="field"><label for="c-number">Cast number</label><input id="c-number" type="number" min="1" step="1" inputmode="numeric"></div>
+      </div>
+      <div class="field"><label for="c-person">Played by</label><select id="c-person"></select></div>
+      <div class="field" id="c-newField" hidden><label for="c-new">Name of the actor</label><input id="c-new" type="text" autocomplete="off"></div>
+      <p class="hint">The actor is added to the project's people, so the call sheet, deal memos and credits can use them.</p>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn danger" id="castDelete">Remove character</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="castCancel">Cancel</button>
+      <button type="submit" class="btn primary">Save</button>
+    </div>
+  </form>
+</dialog>
+<input type="file" id="scriptInput" accept=".fountain,.spmd,.txt,text/plain" hidden>
+
+<dialog class="modal" id="projectDialog" aria-labelledby="projectDialogTitle">
+  <form id="projectForm" method="dialog">
+    <div class="dlg-head"><h2 id="projectDialogTitle">Film details</h2></div>
+    <div class="dlg-body">
+      <div class="field"><label for="p-title">Film title</label><input id="p-title" type="text" placeholder="Working title is fine"></div>
+      <div class="field"><label for="p-company">Production company</label><input id="p-company" type="text"></div>
+      <div class="field"><label for="p-producer">Producer</label><input id="p-producer" type="text"></div>
+    </div>
+    <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn" id="projectCancel">Cancel</button><button type="submit" class="btn primary">Save details</button></div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="projectCsvDialog" aria-labelledby="projectCsvTitle">
+  <form id="projectCsvForm" method="dialog">
+    <div class="dlg-head"><h2 id="projectCsvTitle">Export project data</h2></div>
+    <div class="dlg-body">
+      <div class="field">
+        <label for="projectCsvCollection">Data to export</label>
+        <select id="projectCsvCollection">
+          <option value="project">Project details</option>
+          <option value="people">People</option>
+          <option value="locations">Locations</option>
+          <option value="thirdPartyElements">Third-party elements</option>
+          <option value="contracts">Contracts</option>
+          <option value="assets">Assets</option>
+          <option value="musicCueSheet">Music cue sheet details</option>
+          <option value="callSheets">Call sheets</option>
+          <option value="scenes">Scenes</option>
+          <option value="characters">Cast</option>
+        </select>
+      </div>
+      <p class="hint">Exports one CSV file for the selected collection. Nested values are kept as JSON in their cell.</p>
+    </div>
+    <div class="dlg-foot">
+      <button type="submit" class="btn primary">Export CSV</button>
+      <button type="button" class="btn" id="projectCsvCancel">Cancel</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="conflictDialog" aria-labelledby="conflictTitle">
+  <form method="dialog">
+    <div class="dlg-head"><h2 id="conflictTitle">Project file changed</h2></div>
+    <div class="dlg-body">
+      <p id="conflictText">This project file changed after you opened it. Saving will replace those changes.</p>
+      <p class="hint">Your edits are still here. Choose whether to overwrite the changed file, save a separate copy, or load its latest contents. Save in one tool at a time; simultaneous saves can still race.</p>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn" id="conflictReloadBtn">Reload latest</button>
+      <button type="button" class="btn" id="conflictCopyBtn">Save a copy</button>
+      <button type="button" class="btn danger" id="conflictOverwriteBtn">Overwrite file</button>
+      <button type="button" class="btn" id="conflictCancelBtn">Keep editing</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="report" id="report" aria-hidden="true"></div>
+<input type="file" id="fileInput" accept=".json,application/json" hidden>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+(() => {
+  'use strict';
+
+  const FORMAT = 'open-filmmaker-toolkit/project';
+  const FORMAT_VERSION = 1;
+  const TOOL = 'script-breakdown 0.1.0';
+  const DRAFT_KEY = 'oft.script-breakdown.draft';
+  const PROJECT_TEXT = ['title', 'company', 'producer'];
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const str = v => (v == null ? '' : String(v));
+  const arr = v => (Array.isArray(v) ? v : []);
+  const norm = s => str(s).toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+
+  let doc = blankDoc();
+  let fileHandle = null;
+  let baselineText = null;
+  let fileName = null;
+  let dirty = false;
+  let editing = null;
+
+  function blankDoc() {
+    return { format: FORMAT, formatVersion: FORMAT_VERSION, project: { title: '', company: '', producer: '', frameRate: 24, currency: 'USD' }, people: [], locations: [], callSheets: [], script: {}, scenes: [], characters: [] };
+  }
+  function newId(prefix) {
+    if (window.crypto && crypto.randomUUID) return `${prefix}-${crypto.randomUUID()}`;
+    return `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+  }
+  function today() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  function fmtDate(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str(iso));
+    if (!m) return str(iso);
+    return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+  function daysUntil(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str(iso));
+    if (!m) return null;
+    const t = new Date(); const a = Date.UTC(t.getFullYear(), t.getMonth(), t.getDate());
+    return Math.round((Date.UTC(+m[1], +m[2] - 1, +m[3]) - a) / 86400000);
+  }
+
+  const CATS = [
+    { id: 'extras', label: 'Extras' }, { id: 'props', label: 'Props' }, { id: 'wardrobe', label: 'Wardrobe' }, { id: 'makeup', label: 'Makeup and hair' },
+    { id: 'dressing', label: 'Set dressing' }, { id: 'vehicles', label: 'Vehicles' }, { id: 'animals', label: 'Animals' }, { id: 'effects', label: 'Special effects' },
+    { id: 'stunts', label: 'Stunts' }, { id: 'sound', label: 'Sound and music' }, { id: 'equipment', label: 'Special equipment' }, { id: 'other', label: 'Other' }
+  ];
+  const INTEXT = [{ id: 'INT', label: 'INT.' }, { id: 'EXT', label: 'EXT.' }, { id: 'INT/EXT', label: 'INT./EXT.' }, { id: 'EST', label: 'EST.' }];
+  const catLabel = id => (CATS.find(c => c.id === id) || CATS[CATS.length - 1]).label;
+  let castEditing = null;
+  let pendingCast = [];
+
+  // Fills in only what this tool needs; everything else in the file is left as it was.
+  function normalize(d) {
+    if (!d.project || typeof d.project !== 'object') d.project = {};
+    for (const k of PROJECT_TEXT) if (typeof d.project[k] !== 'string') d.project[k] = str(d.project[k]);
+    for (const k of ['people', 'locations', 'callSheets', 'scenes', 'characters']) if (!Array.isArray(d[k])) d[k] = [];
+    if (!d.script || typeof d.script !== 'object' || Array.isArray(d.script)) d.script = {};
+    d.scenes = d.scenes.filter(x => x && typeof x === 'object');
+    d.characters = d.characters.filter(x => x && typeof x === 'object');
+    for (const s of d.scenes) {
+      if (!s.id) s.id = newId('scene');
+      for (const k of ['characterIds', 'elements']) if (s[k] !== undefined && !Array.isArray(s[k])) delete s[k];
+      if (Array.isArray(s.elements)) s.elements = s.elements.filter(e => e && typeof e === 'object');
+    }
+    for (const c of d.characters) if (!c.id) c.id = newId('character');
+    d.format = FORMAT;
+    d.formatVersion = FORMAT_VERSION;
+    return d;
+  }
+  const entries = () => doc.scenes;
+  const person = id => doc.people.find(p => p && p.id === id);
+  const place = id => doc.locations.find(l => l && l.id === id);
+  const character = id => doc.characters.find(c => c.id === id) || pendingCast.find(c => c.id === id);
+  const castOrder = () => [...doc.characters].sort((a, b) => (Number(a.number) || 999) - (Number(b.number) || 999) || str(a.name).localeCompare(str(b.name)));
+  const castName = c => `${c.number ? c.number + '. ' : ''}${c.name || 'Unnamed'}`;
+  const sceneOrder = list => [...list].sort((a, b) => (a.notInScript ? 1 : 0) - (b.notInScript ? 1 : 0) || (Number.isFinite(a.order) ? a.order : 9999) - (Number.isFinite(b.order) ? b.order : 9999) || str(a.number).localeCompare(str(b.number), undefined, { numeric: true }));
+  const headingOf = s => s.heading || [s.intExt && `${(INTEXT.find(x => x.id === s.intExt) || { label: s.intExt }).label}`, [s.set, s.time].filter(Boolean).join(' - ')].filter(Boolean).join(' ') || 'Untitled scene';
+  const scenesFor = cid => doc.scenes.filter(s => arr(s.characterIds).includes(cid));
+  const sets = () => {
+    const m = new Map();
+    for (const s of doc.scenes) { const k = str(s.set).trim(); if (!k) continue; const key = k.toUpperCase(); if (!m.has(key)) m.set(key, { name: k, scenes: [] }); m.get(key).scenes.push(s); }
+    return [...m.values()].sort((a, b) => a.name.localeCompare(b.name));
+  };
+  const pages = list => list.reduce((n, s) => n + (Number(s.eighths) || 0), 0);
+  // A set that starts with a location's name belongs to it: "HAMMOND HOUSE - KITCHEN" is at the Hammond house.
+  function guessLocation(set) {
+    const n = norm(set);
+    if (!n) return null;
+    return doc.locations.filter(l => l && norm(l.name)).sort((a, b) => norm(b.name).length - norm(a.name).length).find(l => n === norm(l.name) || n.startsWith(norm(l.name) + ' ')) || null;
+  }
+  function matches(s, q) {
+    if (!q) return true;
+    return norm([s.number, headingOf(s), s.synopsis, s.notes, ...arr(s.characterIds).map(character).filter(Boolean).map(c => c.name), ...arr(s.elements).map(e => e.name)].join(' ')).includes(q);
+  }
+
+  // ---------- Render ----------
+  function render() {
+    $('filmTitle').textContent = doc.project.title || 'Untitled film';
+    $('filmTitle').classList.toggle('is-empty', !doc.project.title);
+    $('filmMeta').textContent = [doc.project.company, doc.project.producer && `Producer: ${doc.project.producer}`].filter(Boolean).join(' · ');
+    $('fileState').innerHTML = (fileName ? esc(fileName) : 'Not saved to a file yet') + (dirty ? ' · <span class="dirty">Unsaved changes</span>' : '');
+    document.title = `${doc.project.title ? doc.project.title + ' · ' : ''}Script breakdown · Open Filmmaker Toolkit`;
+    const all = sceneOrder(entries());
+    const live = all.filter(s => !s.notInScript);
+    $('count').textContent = all.length ? `${live.length} scene${live.length === 1 ? '' : 's'}, ${oftFountain.eighths(pages(live))} pages` : '';
+    const sc = doc.script || {};
+    $('scriptLine').hidden = !sc.text && !sc.fileName;
+    $('scriptLine').textContent = sc.fileName || sc.text ? `From ${sc.fileName || 'the script'}${sc.importedAt ? `, imported ${fmtDate(sc.importedAt)}` : ''}${sc.pages ? `, about ${sc.pages} page${sc.pages === 1 ? '' : 's'}` : ''}. Import a newer draft to update the scenes and keep what you've tagged.` : '';
+    const q = norm($('search').value);
+    const shown = all.filter(s => matches(s, q));
+    $('empty').hidden = !!all.length;
+    $('rows').hidden = !shown.length;
+    $('filterBar').hidden = !all.length;
+    $('noMatch').hidden = !all.length || !!shown.length;
+    for (const id of ['csvBtn', 'printBtn']) $(id).hidden = !all.length;
+    $('rows').innerHTML = shown.map(s => {
+      const cast = arr(s.characterIds).map(character).filter(Boolean).sort((a, b) => (Number(a.number) || 999) - (Number(b.number) || 999));
+      const els = arr(s.elements);
+      const flags = [];
+      if (cast.length) flags.push(`<span class="flag linked">${esc(cast.map(castName).join(', '))}</span>`);
+      for (const c of CATS) { const n = els.filter(e => (e.category || 'other') === c.id).length; if (n) flags.push(`<span class="flag linked">${esc(`${c.label}: ${n}`)}</span>`); }
+      const l = place(s.locationId);
+      if (l) flags.push(`<span class="flag new">${esc(l.name || 'Location')}</span>`);
+      if (s.notInScript) flags.push('<span class="flag problem">Not in the current script</span>');
+      return `<li class="row${s.notInScript ? ' is-gone' : ''}" data-id="${esc(s.id)}">
+        <span class="tc"><b>${esc(s.number || '–')}</b><span>${esc(oftFountain.eighths(s.eighths))} pg</span></span>
+        <button type="button" class="what" data-edit="${esc(s.id)}"><span class="nm">${esc(headingOf(s))}</span>${s.synopsis ? `<span class="tt">${esc(s.synopsis)}</span>` : ''}</button>
+        <span class="kd">${esc([s.intExt, s.time].filter(Boolean).join(' · '))}</span>
+        ${flags.length ? `<div class="flags">${flags.join('')}</div>` : ''}
+      </li>`;
+    }).join('');
+
+    const cast = castOrder();
+    $('castCount').textContent = cast.length ? String(cast.length) : '';
+    $('castList').innerHTML = cast.length ? cast.map(c => {
+      const n = scenesFor(c.id).filter(s => !s.notInScript).length, p = person(c.personId);
+      return `<li><span class="nm">${esc(castName(c))}</span><span class="n">${n} scene${n === 1 ? '' : 's'}</span><span class="sub">${p ? `Played by ${esc(p.name || 'someone')}` : 'Not cast yet'} · <button type="button" class="link-btn" data-cast="${esc(c.id)}" aria-label="Edit ${esc(c.name || 'character')}">Edit</button></span></li>`;
+    }).join('') : '<li class="empty-line">No characters yet. They\'re found when you import a script.</li>';
+    const st = sets();
+    $('setCount').textContent = st.length ? String(st.length) : '';
+    const locOpts = sel => `<option value="">Not linked</option>${doc.locations.filter(l => l && l.id).map(l => `<option value="${esc(l.id)}"${l.id === sel ? ' selected' : ''}>${esc(l.name || 'Unnamed location')}</option>`).join('')}<option value="__new">New location named after the set</option>`;
+    $('setList').innerHTML = st.length ? st.map((x, i) => {
+      const ids = [...new Set(x.scenes.map(s => s.locationId || ''))];
+      return `<li><span class="nm">${esc(x.name)}</span><span class="n">${x.scenes.length} scene${x.scenes.length === 1 ? '' : 's'}, ${esc(oftFountain.eighths(pages(x.scenes)))} pg</span><select data-set="${i}" aria-label="Location for ${esc(x.name)}">${ids.length > 1 ? '<option value="__mixed" selected>Several locations</option>' : ''}${locOpts(ids.length === 1 ? ids[0] : '__mixed')}</select></li>`;
+    }).join('') : '<li class="empty-line">No sets yet.</li>';
+    const counts = CATS.map(c => [c, entries().flatMap(s => arr(s.elements)).filter(e => (e.category || 'other') === c.id)]).filter(x => x[1].length);
+    $('elList').innerHTML = counts.length ? counts.map(([c, list]) => `<li><span>${esc(c.label)}</span><span class="n">${list.length}</span></li>`).join('') : '<li class="empty-line">Nothing tagged yet. Open a scene to add props, wardrobe, extras and more.</li>';
+  }
+
+  // ---------- Importing a script ----------
+  async function importScript(file) {
+    let text;
+    try { text = await file.text(); } catch (err) { toast(`Couldn't read ${file.name}: ${err.message}`, true); return; }
+    const parsed = oftFountain.parse(text);
+    if (!parsed.scenes.length) { toast(`Couldn't find any scenes in ${file.name}. Scene headings start with INT. or EXT., on a line of their own after a blank line. Export the script as Fountain and try again.`, true); return; }
+    const first = !doc.scenes.length && !doc.characters.length;
+    const byName = new Map(doc.characters.map(c => [norm(c.name), c]));
+    // Number new characters by how many scenes they're in, the usual order for cast numbers.
+    const names = [];
+    for (const p of parsed.scenes) for (const n of p.characters) if (!names.includes(n)) names.push(n);
+    const inScenes = n => parsed.scenes.filter(p => p.characters.includes(n)).length;
+    const fresh = names.filter(n => !byName.has(norm(n)));
+    if (first) fresh.sort((a, b) => inScenes(b) - inScenes(a) || names.indexOf(a) - names.indexOf(b));
+    let next = Math.max(0, ...doc.characters.map(c => Number(c.number) || 0)) + 1;
+    for (const n of fresh) { const c = { id: newId('character'), name: n, number: next++ }; doc.characters.push(c); byName.set(norm(n), c); }
+    const used = new Set();
+    const matchOf = new Map();
+    for (const s of doc.scenes) { const p = oftFountain.match(s, parsed.scenes.filter(x => !used.has(x.order))); if (p) { used.add(p.order); matchOf.set(p.order, s); } }
+    let added = 0, gone = 0;
+    const out = [];
+    for (const p of parsed.scenes) {
+      const s = matchOf.get(p.order) || { id: newId('scene') };
+      if (!matchOf.has(p.order)) added++;
+      Object.assign(s, { heading: p.heading, intExt: p.intExt, set: p.set, time: p.time, eighths: p.eighths, page: p.page, order: p.order });
+      if (p.number) s.number = p.number; else if (!s.number) s.number = String(p.order + 1);
+      if (p.synopsis && !s.synopsis) s.synopsis = p.synopsis;
+      const ids = new Set(arr(s.characterIds));
+      for (const n of p.characters) ids.add(byName.get(norm(n)).id);
+      if (ids.size) s.characterIds = [...ids];
+      if (!s.locationId) { const l = guessLocation(p.set); if (l) s.locationId = l.id; }
+      delete s.notInScript;
+      out.push(s);
+    }
+    for (const s of doc.scenes) if (!out.includes(s)) { s.notInScript = true; gone++; out.push(s); }
+    doc.scenes = out;
+    doc.script = Object.assign(doc.script || {}, { fileName: file.name, importedAt: today(), pages: parsed.pages, text });
+    if (parsed.title.title) doc.script.title = parsed.title.title;
+    changed();
+    toast(`Imported ${file.name}: ${parsed.scenes.length} scene${parsed.scenes.length === 1 ? '' : 's'}${added && !first ? `, ${added} new` : ''}, ${doc.characters.length} in the cast.${gone ? ` ${gone} scene${gone === 1 ? '' : 's'} from before ${gone === 1 ? "isn't" : "aren't"} in this draft, and ${gone === 1 ? 'is' : 'are'} flagged so you can remove ${gone === 1 ? 'it' : 'them'}.` : ''}`);
+  }
+
+  // ---------- Editor ----------
+  function elRow(e) {
+    return `<div class="el-row" data-id="${esc(e.id || '')}"><select class="e-cat" aria-label="Kind of element">${CATS.map(c => `<option value="${c.id}"${c.id === (e.category || 'props') ? ' selected' : ''}>${esc(c.label)}</option>`).join('')}</select>
+      <input class="e-name" type="text" value="${esc(e.name)}" placeholder="Lantern" aria-label="Element" autocomplete="off"><button type="button" class="icon-btn" data-delrow aria-label="Remove this element">×</button></div>`;
+  }
+  function renderCastChecks(picked) {
+    const all = [...castOrder(), ...pendingCast];
+    $('castChecks').innerHTML = all.length ? all.map(c => `<label><input type="checkbox" value="${esc(c.id)}"${picked.has(c.id) ? ' checked' : ''}> <span>${esc(castName(c))}</span></label>`).join('') : '<p class="hint">No characters yet. Add one below.</p>';
+  }
+  function openEditor(id) {
+    const existing = id && entries().find(s => s.id === id);
+    isNew = !existing;
+    editing = existing ? structuredClone(existing) : { id: newId('scene') };
+    pendingCast = [];
+    $('editorTitle').textContent = isNew ? 'Add a scene' : `Scene ${editing.number || ''}`.trim();
+    $('goneNote').hidden = !editing.notInScript;
+    $('f-number').value = str(editing.number);
+    $('f-intext').value = INTEXT.some(x => x.id === editing.intExt) ? editing.intExt : '';
+    $('f-eighths').value = editing.eighths ? oftFountain.eighths(editing.eighths) : '';
+    $('f-set').value = str(editing.set);
+    $('f-time').value = str(editing.time);
+    $('f-synopsis').value = str(editing.synopsis);
+    $('f-notes').value = str(editing.notes);
+    $('setNames').innerHTML = sets().map(x => `<option value="${esc(x.name)}">`).join('');
+    $('f-location').innerHTML = `<option value="">Not linked</option>${doc.locations.filter(l => l && l.id).map(l => `<option value="${esc(l.id)}">${esc(l.name || 'Unnamed location')}</option>`).join('')}`;
+    $('f-location').value = editing.locationId && place(editing.locationId) ? editing.locationId : '';
+    renderCastChecks(new Set(arr(editing.characterIds)));
+    $('newCast').value = '';
+    $('elRows').innerHTML = arr(editing.elements).map(elRow).join('');
+    $('deleteBtn').hidden = isNew;
+    $('editor').showModal();
+    $('f-number').focus();
+  }
+  let isNew = false;
+  function addCastInline() {
+    const name = $('newCast').value.trim();
+    if (!name) { $('newCast').focus(); return; }
+    const picked = new Set([...$('castChecks').querySelectorAll('input:checked')].map(i => i.value));
+    let c = [...doc.characters, ...pendingCast].find(x => norm(x.name) === norm(name));
+    if (!c) { c = { id: newId('character'), name: name.toUpperCase(), number: Math.max(0, ...[...doc.characters, ...pendingCast].map(x => Number(x.number) || 0)) + 1 }; pendingCast.push(c); }
+    picked.add(c.id);
+    $('newCast').value = '';
+    renderCastChecks(picked);
+  }
+  function saveEditor() {
+    const e = editing;
+    const len = $('f-eighths').value.trim();
+    const n = len ? oftFountain.toEighths(len) : null;
+    if (len && n == null) { $('f-eighths').setCustomValidity('Write the length as 3/8, 1 3/8 or 1.5.'); $('f-eighths').reportValidity(); return; }
+    if (!$('f-set').value.trim() && !$('f-synopsis').value.trim() && !$('f-number').value.trim()) { $('f-set').setCustomValidity('Name the set or say what happens.'); $('f-set').reportValidity(); return; }
+    if ($('newCast').value.trim()) addCastInline();
+    for (const [k, id] of [['number', 'f-number'], ['set', 'f-set'], ['time', 'f-time'], ['synopsis', 'f-synopsis'], ['notes', 'f-notes'], ['intExt', 'f-intext'], ['locationId', 'f-location']]) {
+      const v = $(id).value.trim(); if (v) e[k] = k === 'set' || k === 'time' ? v.toUpperCase() : v; else delete e[k];
+    }
+    if (n) e.eighths = n; else delete e.eighths;
+    // The heading follows the fields, so it reads right on the schedule and sides.
+    e.heading = [e.intExt && (INTEXT.find(x => x.id === e.intExt) || { label: e.intExt }).label, [e.set, e.time].filter(Boolean).join(' - ')].filter(Boolean).join(' ') || e.heading || '';
+    if (!e.heading) delete e.heading;
+    const ids = [...$('castChecks').querySelectorAll('input:checked')].map(i => i.value);
+    const usedNew = pendingCast.filter(c => ids.includes(c.id));
+    doc.characters.push(...usedNew);
+    if (ids.length) e.characterIds = ids; else delete e.characterIds;
+    const els = [...$('elRows').querySelectorAll('.el-row')].map(r => ({ id: r.dataset.id || newId('element'), category: r.querySelector('.e-cat').value, name: r.querySelector('.e-name').value.trim() })).filter(x => x.name);
+    if (els.length) e.elements = els; else delete e.elements;
+    if (isNew) { e.order = Math.max(-1, ...entries().map(s => Number.isFinite(s.order) ? s.order : -1)) + 1; entries().push(e); }
+    else entries()[entries().findIndex(x => x.id === e.id)] = e;
+    $('editor').close();
+    changed();
+  }
+  function removeEditing() {
+    doc.scenes = entries().filter(s => s.id !== editing.id);
+    for (const d of arr(doc.shootDays)) if (d && Array.isArray(d.sceneIds) && d.sceneIds.includes(editing.id)) d.sceneIds = d.sceneIds.filter(x => x !== editing.id);
+    $('editor').close();
+    changed();
+    toast(`Removed scene ${editing.number || headingOf(editing)}.`);
+  }
+
+  // ---------- Cast ----------
+  function openCast(id) {
+    const c = id && doc.characters.find(x => x.id === id);
+    castEditing = c ? structuredClone(c) : { id: newId('character'), number: Math.max(0, ...doc.characters.map(x => Number(x.number) || 0)) + 1 };
+    $('castDialogTitle').textContent = c ? 'Character' : 'Add a character';
+    $('c-name').value = str(castEditing.name);
+    $('c-number').value = castEditing.number || '';
+    $('c-person').innerHTML = `<option value="">Not cast yet</option>${doc.people.filter(p => p && p.id).map(p => `<option value="${esc(p.id)}">${esc(p.name || 'Unnamed')}${p.role ? ` (${esc(p.role)})` : ''}</option>`).join('')}<option value="__new">Someone new…</option>`;
+    $('c-person').value = castEditing.personId && person(castEditing.personId) ? castEditing.personId : '';
+    $('c-new').value = '';
+    $('c-newField').hidden = true;
+    $('castDelete').hidden = !c;
+    $('castDialog').showModal();
+    $('c-name').focus();
+  }
+  function saveCast() {
+    const c = castEditing;
+    const name = $('c-name').value.trim();
+    if (!name) { $('c-name').setCustomValidity('Name the character.'); $('c-name').reportValidity(); return; }
+    c.name = name.toUpperCase();
+    const num = parseInt($('c-number').value, 10);
+    if (num > 0) c.number = num; else delete c.number;
+    let pid = $('c-person').value;
+    if (pid === '__new') {
+      const who = $('c-new').value.trim();
+      if (!who) { $('c-new').setCustomValidity('Name the actor, or choose Not cast yet.'); $('c-new').reportValidity(); return; }
+      let p = doc.people.find(x => x && norm(x.name) === norm(who));
+      if (!p) { p = { id: newId('person'), name: who, role: 'Cast', notes: `Plays ${c.name}` }; doc.people.push(p); }
+      pid = p.id;
+    }
+    if (pid) c.personId = pid; else delete c.personId;
+    const i = doc.characters.findIndex(x => x.id === c.id);
+    if (i >= 0) doc.characters[i] = c; else doc.characters.push(c);
+    $('castDialog').close();
+    changed();
+  }
+  function removeCast() {
+    const id = castEditing.id;
+    doc.characters = doc.characters.filter(c => c.id !== id);
+    for (const s of doc.scenes) if (Array.isArray(s.characterIds) && s.characterIds.includes(id)) { s.characterIds = s.characterIds.filter(x => x !== id); if (!s.characterIds.length) delete s.characterIds; }
+    $('castDialog').close();
+    changed();
+    toast(`Removed ${castEditing.name || 'the character'} from the cast.`);
+  }
+  function setLocation(i, value) {
+    const x = sets()[i];
+    if (!x || value === '__mixed') return;
+    let id = value;
+    if (value === '__new') {
+      const name = x.name.toLowerCase().replace(/(^|[\s-])\w/g, m => m.toUpperCase());
+      let l = doc.locations.find(y => y && norm(y.name) === norm(name));
+      if (!l) { l = { id: newId('location'), name }; doc.locations.push(l); }
+      id = l.id;
+    }
+    for (const s of x.scenes) { if (id) s.locationId = id; else delete s.locationId; }
+    changed();
+    toast(id ? `Linked ${x.name} to ${(place(id) || {}).name || 'the location'}.` : `Unlinked ${x.name}.`);
+  }
+
+  // ---------- Exports and print ----------
+  const CSV_HEAD = ['Scene', 'Heading', 'Int/Ext', 'Set', 'Time', 'Pages', 'Script page', 'Cast', ...CATS.map(c => c.label), 'Location', 'What happens', 'Notes'];
+  function csvRow(s) {
+    const els = arr(s.elements);
+    return [s.number, headingOf(s), s.intExt, s.set, s.time, s.eighths ? oftFountain.eighths(s.eighths) : '', s.page, arr(s.characterIds).map(character).filter(Boolean).map(c => c.name).join('; '),
+      ...CATS.map(c => els.filter(e => (e.category || 'other') === c.id).map(e => e.name).join('; ')), (place(s.locationId) || {}).name, s.synopsis, s.notes];
+  }
+  function exportCsv() {
+    const rows = sceneOrder(entries()).map(csvRow);
+    const csv = '﻿' + [CSV_HEAD, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
+    const name = `${slug()}-script-breakdown.csv`;
+    download(csv, name, 'text/csv;charset=utf-8');
+    toast(`Exported ${rows.length} scene${rows.length === 1 ? '' : 's'} to ${name}`);
+  }
+  // A summary page, then one breakdown sheet for each scene.
+  function renderReport() {
+    const all = sceneOrder(entries()).filter(s => !s.notInScript);
+    const meta = [doc.project.title, doc.project.company, doc.script && doc.script.fileName, `Printed ${fmtDate(today())}`].filter(Boolean);
+    const box = (title, items, wide) => `<div class="r-box${wide ? ' r-wide' : ''}"><h3>${esc(title)}</h3>${items.length ? `<ul>${items.map(i => `<li>${esc(i)}</li>`).join('')}</ul>` : ''}</div>`;
+    $('report').innerHTML = `<h1>${esc(doc.project.title || 'Untitled film')}: script breakdown</h1><p class="r-meta">${esc(meta.slice(1).join(' · '))}</p>
+      <table><thead><tr><th>Scene</th><th>Heading</th><th>Pages</th><th>Cast</th><th>Location</th></tr></thead><tbody>${all.map(s => `<tr><td>${esc(s.number)}</td><td>${esc(headingOf(s))}${s.synopsis ? `<span class="r-sub">${esc(s.synopsis)}</span>` : ''}</td><td>${esc(oftFountain.eighths(s.eighths))}</td><td>${esc(arr(s.characterIds).map(character).filter(Boolean).map(c => c.number || c.name).join(', '))}</td><td>${esc((place(s.locationId) || {}).name || '')}</td></tr>`).join('')}</tbody></table>
+      <p class="r-note">${esc(`${all.length} scenes, ${oftFountain.eighths(pages(all))} pages. Cast by number: ${castOrder().map(c => `${castName(c)}${person(c.personId) ? ` (${person(c.personId).name})` : ''}`).join(', ')}`)}</p>
+      ${all.map(s => {
+        const els = arr(s.elements);
+        const cast = arr(s.characterIds).map(character).filter(Boolean).sort((a, b) => (Number(a.number) || 999) - (Number(b.number) || 999)).map(c => `${castName(c)}${person(c.personId) ? ` (${person(c.personId).name})` : ''}`);
+        return `<section class="r-sheet"><div class="r-head"><div><p class="r-meta">${esc(meta.join(' · '))} · Breakdown sheet</p><h2>${esc(headingOf(s))}</h2>${s.synopsis ? `<p>${esc(s.synopsis)}</p>` : ''}</div><div class="r-num">${esc(s.number || '')}</div></div>
+          <p class="r-meta">${esc([s.intExt, s.time, s.eighths && `${oftFountain.eighths(s.eighths)} pages`, s.page && `Script page ${s.page}`, place(s.locationId) && `Location: ${place(s.locationId).name}`].filter(Boolean).join(' · '))}</p>
+          <div class="r-grid">${box('Cast', cast)}${CATS.map(c => box(c.label, els.filter(e => (e.category || 'other') === c.id).map(e => e.name))).join('')}${box('Notes', s.notes ? [s.notes] : [], true)}</div></section>`;
+      }).join('')}`;
+  }
+
+  // ---------- Project CSV ----------
+  function csvCell(v) {
+    let s = v == null ? '' : String(v);
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+    return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }
+  const csvCollections = {
+    project: 'project details', people: 'people', locations: 'locations', thirdPartyElements: 'third-party elements',
+    contracts: 'contracts', assets: 'assets', musicCueSheet: 'music cue sheet details', callSheets: 'call sheets', scenes: 'scenes', characters: 'cast'
+  };
+  function exportProjectCsv() {
+    const collection = $('projectCsvCollection').value;
+    const value = doc[collection];
+    const rows = Array.isArray(value) ? value : value && typeof value === 'object' ? [value] : [];
+    if (rows.some(row => !row || typeof row !== 'object' || Array.isArray(row))) {
+      toast(`Couldn't export ${csvCollections[collection]}: the project contains an invalid record.`, true);
+      return;
+    }
+    const headers = [...new Set(rows.flatMap(row => Object.keys(row)))];
+    if (!headers.length) headers.push('id');
+    const csvRows = rows.map(row => headers.map(key => { const cell = row[key]; return cell && typeof cell === 'object' ? JSON.stringify(cell) : cell; }));
+    const csv = '﻿' + [headers, ...csvRows].map(row => row.map(csvCell).join(',')).join('\r\n') + '\r\n';
+    const name = suggestedName().replace(/\.oft\.json$/i, `-${collection}.csv`);
+    download(csv, name, 'text/csv;charset=utf-8');
+    toast(`Exported ${rows.length} ${csvCollections[collection]} to ${name}`);
+  }
+
+  // ---------- Film details ----------
+  function openProjectDialog() {
+    for (const k of PROJECT_TEXT) $(`p-${k}`).value = doc.project[k] || '';
+    $('projectDialog').showModal();
+    $('p-title').focus();
+  }
+  function saveProjectDialog() {
+    for (const k of PROJECT_TEXT) doc.project[k] = $(`p-${k}`).value.trim();
+    $('projectDialog').close();
+    changed();
+  }
+
+  // ---------- Dirty state & recovery draft ----------
+  function changed() { dirty = true; saveDraft(); render(); }
+  function saveDraft() {
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ doc, fileName, baselineText, at: new Date().toISOString() })); } catch { /* the file on disk is the real copy */ }
+  }
+  function clearDraft() {
+    try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+    $('recovery').hidden = true;
+  }
+  function checkDraft() {
+    let draft = null;
+    try { draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); } catch { draft = null; }
+    if (!draft || !draft.doc || draft.doc.format !== FORMAT) return;
+    const n = Array.isArray(draft.doc.scenes) ? draft.doc.scenes.length : 0;
+    if (!n && !(draft.doc.project && draft.doc.project.title)) { clearDraft(); return; }
+    const when = draft.at ? new Date(draft.at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'earlier';
+    const title = draft.doc.project && draft.doc.project.title ? `"${draft.doc.project.title}"` : 'an untitled project';
+    $('recoveryText').textContent = `You have unsaved changes to ${title} from ${when} (${n} ${n === 1 ? 'scene' : 'scenes'}). Restore them, or discard them and start fresh.`;
+    $('recovery').hidden = false;
+    $('restoreBtn').onclick = () => {
+      doc = normalize(draft.doc); fileName = draft.fileName || null; fileHandle = null;
+      baselineText = typeof draft.baselineText === 'string' ? draft.baselineText : null; dirty = true;
+      $('recovery').hidden = true; render();
+      toast(fileName ? `Restored. Save to write the changes back to ${fileName}.` : 'Restored. Save to keep it as a file.');
+    };
+    $('discardBtn').onclick = () => { clearDraft(); toast('Discarded the unsaved changes.'); };
+  }
+
+  // ---------- Files ----------
+  const pickerTypes = [{ description: 'Film project file', accept: { 'application/json': ['.json'] } }];
+  function slug() {
+    return (doc.project.title || 'untitled-film').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'untitled-film';
+  }
+  const suggestedName = () => `${slug()}.oft.json`;
+  function serialize() {
+    doc.savedAt = new Date().toISOString();
+    doc.savedBy = TOOL;
+    return JSON.stringify(doc, null, 2) + '\n';
+  }
+  function download(text, name, type) {
+    const url = URL.createObjectURL(new Blob([text], { type }));
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  function afterSave(name, downloaded, content) {
+    fileName = name;
+    if (downloaded) fileHandle = null;
+    baselineText = content;
+    dirty = false; clearDraft(); render();
+    toast(downloaded ? `Downloaded ${name}. Keep it with your project files and open it here next time.` : `Saved to ${name}`);
+  }
+  async function writeProjectFile(handle, content) {
+    try {
+      const writable = await handle.createWritable();
+      await writable.write(content);
+      await writable.close();
+    } catch (err) {
+      if (err.name !== 'AbortError') toast(`Couldn't save the file: ${err.message}`, true);
+      return;
+    }
+    fileHandle = handle;
+    afterSave(handle.name, false, content);
+  }
+  function saveCopy(content) {
+    const base = (fileName || suggestedName()).replace(/\.oft\.json$/i, '');
+    const name = `${base}-copy.oft.json`;
+    download(content, name, 'application/json');
+    afterSave(name, true, content);
+  }
+  async function reloadLatest(handle) {
+    try {
+      const file = await handle.getFile();
+      loadText(await file.text(), handle.name, handle);
+    } catch (err) {
+      toast(`Couldn't reload the file: ${err.message}`, true);
+    }
+  }
+  function showConflictDialog(content, observedText, unknownBaseline = false) {
+    const handle = fileHandle;
+    dirty = true;
+    saveDraft();
+    render();
+    $('conflictText').textContent = unknownBaseline
+      ? `The tool can't verify whether ${handle.name} changed since your recovery copy was made. Your edits are not saved.`
+      : `${handle.name} changed after you opened it. Your edits are not saved. Overwriting replaces the newer file.`;
+    $('conflictDialog').showModal();
+    $('conflictReloadBtn').onclick = () => { $('conflictDialog').close(); reloadLatest(handle); };
+    $('conflictCopyBtn').onclick = () => { $('conflictDialog').close(); saveCopy(content); };
+    $('conflictOverwriteBtn').onclick = async () => {
+      $('conflictDialog').close();
+      let latestText;
+      try { latestText = await (await handle.getFile()).text(); }
+      catch (err) { toast(`Couldn't check the file before overwriting: ${err.message}`, true); return; }
+      if (latestText !== observedText) {
+        toast('The file changed again. Review the updated conflict warning before overwriting.', true);
+        showConflictDialog(content, latestText);
+        return;
+      }
+      await writeProjectFile(handle, content);
+    };
+    $('conflictCancelBtn').onclick = () => $('conflictDialog').close();
+  }
+  async function saveFile() {
+    const out = serialize();
+    if (fileHandle) {
+      let currentText;
+      try { currentText = await (await fileHandle.getFile()).text(); }
+      catch (err) { toast(`Couldn't check the file before saving: ${err.message}`, true); return; }
+      if (baselineText === null || currentText !== baselineText) { showConflictDialog(out, currentText, baselineText === null); return; }
+      await writeProjectFile(fileHandle, out);
+      return;
+    }
+    if (window.showSaveFilePicker && window.self === window.top) {
+      try {
+        const h = await window.showSaveFilePicker({ suggestedName: fileName || suggestedName(), types: pickerTypes });
+        if (h.name === fileName) {
+          const currentText = await (await h.getFile()).text();
+          if (baselineText === null || currentText !== baselineText) { fileHandle = h; showConflictDialog(out, currentText, baselineText === null); return; }
+        }
+        await writeProjectFile(h, out);
+      } catch (err) { if (err.name !== 'AbortError') toast(`Couldn't save the file: ${err.message}`, true); }
+      return;
+    }
+    const name = fileName || suggestedName();
+    download(out, name, 'application/json');
+    afterSave(name, true, out);
+  }
+  function loadText(text, name, handle) {
+    let data;
+    try { data = JSON.parse(text); } catch { toast(`Couldn't open ${name}: it isn't a project file.`, true); return; }
+    if (!data || data.format !== FORMAT) { toast(`Couldn't open ${name}: it isn't an Open Filmmaker Toolkit project file.`, true); return; }
+    if (Number(data.formatVersion) > FORMAT_VERSION) { toast(`Couldn't open ${name}: it was saved by a newer version of the toolkit. Get the latest version of this tool.`, true); return; }
+    doc = normalize(data); fileHandle = handle; baselineText = text; fileName = name; dirty = false;
+    clearDraft(); render();
+    const n = entries().length;
+    toast(`Opened ${name}: ${n ? `${n} ${n === 1 ? 'scene' : 'scenes'}` : 'no scenes yet'}`);
+  }
+  async function openFile() {
+    if (dirty && !confirm('You have unsaved changes. Open another file and lose them?')) return;
+    if (window.showOpenFilePicker && window.self === window.top) {
+      try { const [h] = await window.showOpenFilePicker({ types: pickerTypes }); const f = await h.getFile(); loadText(await f.text(), f.name, h); }
+      catch (err) { if (err.name !== 'AbortError') toast(`Couldn't open the file: ${err.message}`, true); }
+      return;
+    }
+    $('fileInput').click();
+  }
+  function newProject() {
+    if (dirty && !confirm('You have unsaved changes. Start a new project and lose them?')) return;
+    doc = normalize(blankDoc()); fileHandle = null; baselineText = null; fileName = null; dirty = false;
+    clearDraft(); render(); openProjectDialog();
+  }
+
+  let toastTimer = null;
+  function toast(msg, isError) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.classList.toggle('error', !!isError);
+    t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.hidden = true; }, isError ? 7000 : 4200);
+  }
+
+  // ---------- Wiring ----------
+  function init() {
+    doc = normalize(doc);
+    $('newBtn').onclick = newProject;
+    $('openBtn').onclick = openFile;
+    $('saveBtn').onclick = saveFile;
+    $('editProjectBtn').onclick = openProjectDialog;
+    $('filmTitle').onclick = openProjectDialog;
+    $('printBtn').onclick = () => { renderReport(); window.print(); };
+    window.addEventListener('beforeprint', renderReport);
+    $('projectCsvBtn').onclick = () => $('projectCsvDialog').showModal();
+    $('projectCsvCancel').onclick = () => $('projectCsvDialog').close();
+    $('projectCsvForm').addEventListener('submit', ev => { ev.preventDefault(); exportProjectCsv(); $('projectCsvDialog').close(); });
+    $('fileInput').addEventListener('change', async () => {
+      const f = $('fileInput').files[0];
+      if (f) loadText(await f.text(), f.name, null);
+      $('fileInput').value = '';
+    });
+    $('projectForm').addEventListener('submit', ev => { ev.preventDefault(); saveProjectDialog(); });
+    $('projectCancel').onclick = () => $('projectDialog').close();
+    $('addBtn').onclick = () => openEditor(null);
+    $('emptyAddBtn').onclick = () => openEditor(null);
+    $('emptyOpenBtn').onclick = openFile;
+    $('importScriptBtn').onclick = () => $('scriptInput').click();
+    $('emptyImportBtn').onclick = () => $('scriptInput').click();
+    $('scriptInput').addEventListener('change', async () => { const f = $('scriptInput').files[0]; if (f) await importScript(f); $('scriptInput').value = ''; });
+    $('csvBtn').onclick = exportCsv;
+    $('search').addEventListener('input', render);
+    $('rows').addEventListener('click', ev => { const e = ev.target.closest('[data-edit]'); if (e) openEditor(e.dataset.edit); });
+    $('castList').addEventListener('click', ev => { const e = ev.target.closest('[data-cast]'); if (e) openCast(e.dataset.cast); });
+    $('setList').addEventListener('change', ev => { const s = ev.target.closest('[data-set]'); if (s) setLocation(+s.dataset.set, s.value); });
+    $('addCastBtn').onclick = () => openCast(null);
+    $('newCastBtn').onclick = addCastInline;
+    $('newCast').addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.preventDefault(); addCastInline(); } });
+    $('addElBtn').onclick = () => { $('elRows').insertAdjacentHTML('beforeend', elRow({ category: 'props', name: '' })); $('elRows').lastElementChild.querySelector('.e-name').focus(); };
+    $('elRows').addEventListener('click', ev => { const b = ev.target.closest('[data-delrow]'); if (b) b.closest('.el-row').remove(); });
+    $('editorForm').addEventListener('submit', ev => { ev.preventDefault(); saveEditor(); });
+    $('editorForm').addEventListener('input', ev => { if (ev.target.setCustomValidity) ev.target.setCustomValidity(''); });
+    $('editorCancel').onclick = () => $('editor').close();
+    $('deleteBtn').onclick = removeEditing;
+    $('castForm').addEventListener('submit', ev => { ev.preventDefault(); saveCast(); });
+    $('castForm').addEventListener('input', ev => { if (ev.target.setCustomValidity) ev.target.setCustomValidity(''); });
+    $('c-person').addEventListener('change', () => { $('c-newField').hidden = $('c-person').value !== '__new'; if (!$('c-newField').hidden) $('c-new').focus(); });
+    $('castCancel').onclick = () => $('castDialog').close();
+    $('castDelete').onclick = removeCast;
+
+    document.addEventListener('keydown', ev => {
+      const mod = ev.metaKey || ev.ctrlKey;
+      if (mod && ev.key.toLowerCase() === 's') { ev.preventDefault(); saveFile(); }
+      else if (mod && ev.key.toLowerCase() === 'o') { ev.preventDefault(); openFile(); }
+    });
+    window.addEventListener('beforeunload', ev => { if (dirty) { ev.preventDefault(); ev.returnValue = ''; } });
+    render();
+    checkDraft();
+  }
+
+  if (typeof HTMLDialogElement !== 'function' || typeof HTMLDialogElement.prototype.showModal !== 'function' || typeof structuredClone !== 'function') {
+    $('cantRunTitle').textContent = 'This browser is too old to run this tool';
+    $('cantRunText').textContent = 'Update to a current version of Chrome, Edge, Firefox or Safari, then open this file again.';
+    $('cantRunHow').hidden = true;
+    return;
+  }
+  document.documentElement.classList.remove('no-js');
+  window.addEventListener('error', ev => toast(`Something went wrong: ${ev.message}. Save your work, then reload the page.`, true));
+  window.addEventListener('unhandledrejection', ev => toast(`Something went wrong: ${ev.reason && ev.reason.message ? ev.reason.message : ev.reason}. Save your work, then reload the page.`, true));
+
+  // Columns for importing from a spreadsheet, named as in this tool's template.
+  const OFT_IMPORT = { noun: 'scene', nouns: 'scenes', key: 'heading', list: () => doc.scenes, prefix: 'scene',
+    make: raw => { const r = {}; if (!raw.Heading) { const h = [raw['Int/Ext'] && `${raw['Int/Ext'].replace(/\.$/, '')}.`, [raw.Set, raw.Time].filter(Boolean).join(' - ')].filter(Boolean).join(' '); if (h) r.heading = h.toUpperCase(); } return r; },
+    put: (rec, ctx) => {
+      const raw = ctx.raw;
+      const len = oftFountain.toEighths(raw.Pages); if (len) rec.eighths = len;
+      const pg = parseInt(raw['Script page'], 10); if (pg > 0) rec.page = pg;
+      if (rec.intExt) rec.intExt = str(rec.intExt).toUpperCase().replace(/\.$/, '').replace('INT./EXT', 'INT/EXT');
+      for (const k of ['set', 'time']) if (rec[k]) rec[k] = str(rec[k]).toUpperCase();
+      const names = str(raw.Cast).split(';').map(x => x.trim()).filter(Boolean);
+      if (names.length) rec.characterIds = names.map(n => { let c = doc.characters.find(x => norm(x.name) === norm(n)); if (!c) { c = { id: newId('character'), name: n.toUpperCase(), number: Math.max(0, ...doc.characters.map(x => Number(x.number) || 0)) + 1 }; doc.characters.push(c); } return c.id; });
+      const els = CATS.flatMap(c => str(raw[c.label]).split(';').map(x => x.trim()).filter(Boolean).map(name => ({ id: newId('element'), category: c.id, name })));
+      if (els.length) rec.elements = els;
+      rec.order = Math.max(-1, ...doc.scenes.map(s => Number.isFinite(s.order) ? s.order : -1)) + 1;
+      doc.scenes.push(rec);
+    },
+    fields: [['Scene', 'number'], ['Heading', 'heading'], ['Int/Ext', 'intExt'], ['Set', 'set'], ['Time', 'time'], ['Pages', '', 'skip'], ['Script page', '', 'skip'], ['Cast', '', 'skip'],
+      ...CATS.map(c => [c.label, '', 'skip']), ['Location', 'locationId', 'place'], ['What happens', 'synopsis'], ['Notes', 'notes']] };
+  /* oft-shared:fountain begin. Copied from shared/fountain.js by .github/scripts/sync_shared.py; edit it there. */
+  // Reading a screenplay in Fountain, the open plain-text screenplay format most screenwriting
+  // apps export (https://fountain.io). It finds the scenes, who speaks in each, and lays the
+  // script out on pages the way a screenplay prints, about 55 lines a page, so page counts in
+  // eighths and sides come out close to what a screenwriting app shows.
+  const oftFountain = (() => {
+    const str = v => (v == null ? '' : String(v));
+    const LINES = 55;
+    const HEAD = /^(?:INT\.?\/EXT|INT\/EXT|I\/E|INT|EXT|EST)[.\s]/i;
+    const upper = t => /[A-Z]/.test(t) && t === t.toUpperCase();
+    // Notes ([[...]]) and boneyard (/* ... */) aren't part of the script.
+    const strip = text => str(text).replace(/\r\n?/g, '\n').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\[\[[\s\S]*?\]\]/g, '').replace(/\t/g, '    ');
+    const wrap = (t, w) => Math.max(1, Math.ceil(t.length / w));
+    // "EXT. RIVERSIDE LEVEE - NIGHT" → { intExt: 'EXT', set: 'RIVERSIDE LEVEE', time: 'NIGHT' }
+    function heading(h) {
+      const m = str(h).trim().match(/^(INT\.?\/EXT|INT\/EXT|I\/E|INT|EXT|EST)\.?\s*(.*)$/i);
+      const kind = m ? m[1].toUpperCase().replace('.', '').replace('I/E', 'INT/EXT') : '';
+      const rest = m ? m[2] : str(h).trim();
+      const i = rest.lastIndexOf(' - ');
+      return { intExt: kind === 'INTEXT' ? 'INT/EXT' : kind, set: (i > 0 ? rest.slice(0, i) : rest).trim(), time: i > 0 ? rest.slice(i + 3).trim() : '' };
+    }
+    // A character name without (V.O.), (CONT'D), @ or ^.
+    const who = t => str(t).replace(/^@/, '').replace(/\^\s*$/, '').replace(/\s*\(.*?\)\s*/g, ' ').trim();
+    function parse(text) {
+      const lines = strip(text).split('\n');
+      const title = {};
+      let i = 0;
+      if (/^[A-Za-z][A-Za-z ]*:/.test(lines[0] || '')) {
+        let key = '';
+        for (; i < lines.length && lines[i].trim(); i++) {
+          const m = lines[i].match(/^([A-Za-z][A-Za-z ]*):\s*(.*)$/);
+          if (m) { key = m[1].trim().toLowerCase(); title[key] = m[2].trim(); } else if (key) title[key] = `${title[key] ? title[key] + '\n' : ''}${lines[i].trim()}`;
+        }
+      }
+      const els = [];
+      const blank = n => n < 0 || n >= lines.length || !lines[n].trim();
+      let speaking = false;
+      for (; i < lines.length; i++) {
+        const raw = lines[i], t = raw.trim();
+        if (!t) { speaking = false; els.push({ type: 'blank', line: i }); continue; }
+        if (speaking) { els.push({ type: /^\(.*\)$/.test(t) ? 'parenthetical' : 'dialogue', text: t, line: i }); continue; }
+        if (t === '===' || /^={3,}$/.test(t)) { els.push({ type: 'page', line: i }); continue; }
+        if (/^#/.test(t)) { els.push({ type: 'section', text: t.replace(/^#+\s*/, ''), line: i }); continue; }
+        if (/^=(?!=)/.test(t)) { els.push({ type: 'synopsis', text: t.replace(/^=\s*/, ''), line: i }); continue; }
+        if (blank(i - 1) && ((t[0] === '.' && t[1] !== '.' && /\w/.test(t[1] || '')) || HEAD.test(t))) {
+          let h = t.replace(/^\./, ''), number = '';
+          const n = h.match(/\s*#([^#]+)#\s*$/);
+          if (n) { number = n[1].trim(); h = h.slice(0, n.index).trim(); }
+          els.push({ type: 'scene', text: h, number, line: i });
+          continue;
+        }
+        if (/^>.*<$/.test(t)) { els.push({ type: 'centered', text: t.slice(1, -1).trim(), line: i }); continue; }
+        if (t[0] === '>' || (blank(i - 1) && blank(i + 1) && upper(t) && /TO:$/.test(t))) { els.push({ type: 'transition', text: t.replace(/^>\s*/, ''), line: i }); continue; }
+        if (t[0] === '~') { els.push({ type: 'lyric', text: t.slice(1).trim(), line: i }); continue; }
+        if (blank(i - 1) && !blank(i + 1) && (t[0] === '@' || (upper(who(t)) && !/[.!?:]$/.test(who(t)) && who(t).length <= 40 && t[0] !== '!'))) {
+          els.push({ type: 'character', text: t.replace(/^@/, ''), name: who(t), line: i });
+          speaking = true;
+          continue;
+        }
+        els.push({ type: 'action', text: t.replace(/^!/, ''), line: i });
+      }
+      // Lay out pages: count printed lines for each element.
+      let page = 1, on = 0, lastBlank = true;
+      for (const e of els) {
+        let n;
+        if (e.type === 'page') { if (on) { page++; on = 0; } e.page = page; continue; }
+        if (e.type === 'section' || e.type === 'synopsis') { n = 0; }
+        else if (e.type === 'blank') { n = lastBlank ? 0 : 1; lastBlank = true; }
+        else {
+          lastBlank = false;
+          n = e.type === 'dialogue' ? wrap(e.text, 35) : e.type === 'parenthetical' ? wrap(e.text, 25) : e.type === 'action' || e.type === 'lyric' || e.type === 'centered' ? wrap(e.text, 61) : 1;
+        }
+        if (on + n > LINES && on > 0) { page++; on = 0; if (e.type === 'blank') n = 0; }
+        e.page = page; e.rows = n; on += n;
+      }
+      // Scenes: heading, what's in it, who speaks, and how long it runs.
+      const scenes = [];
+      let cur = null;
+      els.forEach((e, k) => {
+        if (e.type === 'scene') {
+          cur = Object.assign({ heading: e.text, number: e.number, order: scenes.length, start: k, end: k, page: e.page, rows: 0, characters: [], synopsis: '', action: '' }, heading(e.text));
+          scenes.push(cur);
+        }
+        if (!cur) return;
+        cur.end = k; cur.rows += e.rows || 0;
+        e.scene = cur.order;
+        if (e.type === 'character' && e.name && !cur.characters.includes(e.name)) cur.characters.push(e.name);
+        if (e.type === 'synopsis' && !cur.synopsis) cur.synopsis = e.text;
+        if (e.type === 'action' && cur.action.length < 160) cur.action = `${cur.action ? cur.action + ' ' : ''}${e.text}`.slice(0, 160);
+      });
+      for (const s of scenes) { s.eighths = Math.max(1, Math.round(s.rows / (LINES / 8))); s.endPage = els[s.end].page || s.page; }
+      return { title, elements: els, scenes, pages: els.length ? els[els.length - 1].page || page : 0 };
+    }
+    // Eighths of a page as a screenplay shows them: 11 → "1 3/8".
+    function eighths(n) {
+      n = Math.round(Number(n) || 0);
+      if (n <= 0) return '0';
+      const w = Math.floor(n / 8), r = n % 8;
+      return `${w ? w : ''}${w && r ? ' ' : ''}${r ? `${r}/8` : ''}`;
+    }
+    // "1 3/8", "3/8", "2" or "1.5" → eighths.
+    function toEighths(v) {
+      const s = str(v).trim();
+      let m = s.match(/^(\d+)\s+(\d+)\/8$/);
+      if (m) return +m[1] * 8 + +m[2];
+      m = s.match(/^(\d+)\/8$/);
+      if (m) return +m[1];
+      if (/^\d+(\.\d+)?$/.test(s)) return Math.round(parseFloat(s) * 8);
+      return null;
+    }
+    // Which parsed scene a saved scene is: by scene number, then by heading and position.
+    function match(saved, parsed) {
+      const norm = s => str(s).toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim();
+      if (saved.number) { const hit = parsed.find(p => p.number && p.number === str(saved.number)); if (hit) return hit; }
+      const same = parsed.filter(p => norm(p.heading) === norm(saved.heading));
+      if (!same.length) return null;
+      return same.find(p => p.order === saved.order) || same[0];
+    }
+    return { parse, heading, eighths, toEighths, match, LINES };
+  })();
+  /* oft-shared:fountain end */
+  /* oft-shared:import begin. Copied from shared/import.js by .github/scripts/sync_shared.py; edit it there. */
+  // Import rows from a spreadsheet (CSV) into a tool. Each tool describes its
+  // columns in OFT_IMPORT, using the same column names as its spreadsheet template,
+  // so a filled-in template imports without any matching. Importing only adds.
+  const oftImport = (() => {
+    const str = v => (v == null ? '' : String(v));
+    const norm = s => str(s).toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9%]+/g, '');
+    const esc = s => str(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+    const store = { get(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* storage off */ } } };
+    function parse(text) {
+      text = str(text).replace(/^﻿/, '');
+      const first = text.split(/\r?\n/)[0] || '';
+      const sep = [',', ';', '\t'].map(s => [s, first.split(s).length]).sort((a, b) => b[1] - a[1])[0][0];
+      const rows = []; let row = [], cell = '', q = false;
+      for (let i = 0; i < text.length; i++) {
+        const c = text[i];
+        if (q) { if (c === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; } else cell += c; continue; }
+        if (c === '"' && cell === '') q = true;
+        else if (c === sep) { row.push(cell); cell = ''; }
+        else if (c === '\n' || c === '\r') { if (c === '\r' && text[i + 1] === '\n') i++; row.push(cell); rows.push(row); row = []; cell = ''; }
+        else cell += c;
+      }
+      if (cell !== '' || row.length) { row.push(cell); rows.push(row); }
+      return rows.filter(r => r.some(c => c.trim() !== ''));
+    }
+    // Values are written back as the tool stores them: undo the "'" a CSV export adds before = + - @.
+    const clean = v => str(v).trim().replace(/^'(?=[=+\-@])/, '');
+    function date(v) {
+      const s = clean(v);
+      if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+      let m = s.match(/^(\d{4})[/.](\d{1,2})[/.](\d{1,2})$/);
+      if (m) return `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}`;
+      m = s.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})$/);
+      if (m) { const y = m[3].length === 2 ? `20${m[3]}` : m[3]; return `${y}-${m[1].padStart(2, '0')}-${m[2].padStart(2, '0')}`; }
+      const d = new Date(s);
+      if (/[a-z]/i.test(s) && /\d{4}/.test(s) && !isNaN(d)) return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      return null;
+    }
+    function number(v) {
+      let s = clean(v).replace(/[\s$€£¥]|[A-Z]{3}$|^[A-Z]{3}/g, '');
+      if (/^-?\d{1,3}(\.\d{3})+(,\d+)?$/.test(s)) s = s.replace(/\./g, '').replace(',', '.');
+      s = s.replace(/,/g, '');
+      return s !== '' && isFinite(Number(s)) ? Number(s) : null;
+    }
+    const yes = v => /^(yes|y|true|1|x|✓|done)$/i.test(clean(v));
+    const list = v => clean(v).split(/\s*[;\n]\s*|\s*,\s*(?![^()]*\))/).map(x => x.trim()).filter(Boolean);
+    function values(spec) {
+      if (!spec) return [];
+      if (Array.isArray(spec)) return spec.map(x => typeof x === 'string' ? [x, x] : [x.id != null ? x.id : x.value, x.label]);
+      return Object.entries(spec);
+    }
+    function pick(spec, v) {
+      if (typeof spec === 'function') return spec(v);
+      const s = norm(v);
+      const hit = values(spec).find(([id, label]) => norm(id) === s || norm(label) === s) || values(spec).find(([id, label]) => s && (norm(label).startsWith(s) || s.startsWith(norm(label))));
+      return hit ? hit[0] : undefined;
+    }
+    function setPath(o, key, v) { const parts = key.split('.'); let t = o; for (const p of parts.slice(0, -1)) t = t[p] = t[p] && typeof t[p] === 'object' ? t[p] : {}; t[parts[parts.length - 1]] = v; }
+    const many = type => type === 'people' || type === 'places';
+    const newId = p => `${p}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+
+    let S = null, state = null;
+    const fields = () => S.fields.filter(f => f[2] !== 'skip');
+    const known = col => S.fields.find(f => norm(f[0]) === norm(col) || (f[3] && f[3].alt && f[3].alt.some(a => norm(a) === norm(col))));
+    function guess(col) {
+      const saved = (store.get(`oft-import:${OFT_SLUG}`) || {})[norm(col)];
+      if (saved !== undefined) return saved;
+      const f = known(col);
+      if (f) return f[2] === 'skip' ? '' : f[0];
+      const g = fields().find(x => norm(x[1].split('.').pop()) === norm(col));
+      return g ? g[0] : '';
+    }
+    function build() {
+      const { head, rows, map } = state;
+      const out = [];
+      rows.forEach((cells, n) => {
+        const raw = {}; head.forEach((h, i) => { raw[h] = clean(cells[i]); });
+        if (S.skipRow && S.skipRow(raw)) return;
+        const rec = S.make ? S.make(raw) : {}, problems = [], refs = [];
+        head.forEach((h, i) => {
+          const f = map[i] && S.fields.find(x => x[0] === map[i]);
+          const v = clean(cells[i]);
+          if (!f || v === '') return;
+          const [label, key, type, extra] = f;
+          let val = v;
+          if (type === 'date') { val = date(v); if (val == null) { problems.push(`${label} "${v}" isn't a date, so it's left blank`); return; } }
+          else if (type === 'num' || type === 'int') { val = number(v); if (val == null) { problems.push(`${label} "${v}" isn't a number, so it's left blank`); return; } }
+          else if (type === 'yes') val = yes(v);
+          else if (type === 'list') val = list(v);
+          else if (type === 'enum') { val = pick(extra.values, v); if (val === undefined) { if (extra.free) val = v; else { problems.push(typeof extra.values === 'function' ? `${label} "${v}" isn't one the tool knows, so it's left as the default` : `${label} "${v}" isn't one of ${values(extra.values).map(x => x[1]).join(', ')}, so it's left as the default`); return; } } }
+          else if (type === 'people' || type === 'places' || type === 'person' || type === 'place') { refs.push([key, type, many(type) ? list(v) : [v]]); return; }
+          setPath(rec, key, val);
+        });
+        const keyField = S.fields.find(x => x[1] === S.key);
+        const kv = S.key.split('.').reduce((o, k) => (o || {})[k], rec);
+        if (S.key && (kv == null || str(kv).trim() === '') && !refs.some(x => x[0] === S.key && x[2].length)) { out.push({ n: n + 2, skip: true, problems: [`No ${keyField ? keyField[0].toLowerCase() : S.key}, so it's skipped`] }); return; }
+        out.push({ n: n + 2, rec, refs, raw, problems, label: str(kv) || (refs.find(x => x[0] === S.key) || [0, 0, []])[2].join(', ') });
+      });
+      return out;
+    }
+    function preview() {
+      const list = build(), add = list.filter(r => !r.skip), skipped = list.length - add.length;
+      const flagged = list.filter(r => r.problems.length);
+      $map();
+      oftEl('oftImpSummary').textContent = `${add.length} ${add.length === 1 ? S.noun : S.nouns} to add${skipped ? `, ${skipped} row${skipped === 1 ? '' : 's'} skipped` : ''}.`;
+      oftEl('oftImpRows').innerHTML = flagged.length ? `<h3>Check these rows</h3><ul>${flagged.slice(0, 50).map(r => `<li><b>Row ${r.n}${r.label ? `, ${esc(r.label)}` : ''}:</b> ${r.problems.map(esc).join('. ')}.</li>`).join('')}</ul>${flagged.length > 50 ? `<p>And ${flagged.length - 50} more.</p>` : ''}`
+        : add.length ? `<h3>First rows</h3><ul>${add.slice(0, 5).map(r => `<li>${esc(r.label || `Row ${r.n}`)}</li>`).join('')}</ul>` : '';
+      oftEl('oftImpAdd').disabled = !add.length;
+      oftEl('oftImpAdd').textContent = add.length ? `Add ${add.length} ${add.length === 1 ? S.noun : S.nouns}` : 'Nothing to add';
+      state.list = add;
+    }
+    function $map() {
+      const box = oftEl('oftImpMap');
+      if (box.dataset.ready === '1') return;
+      box.dataset.ready = '1';
+      const opts = c => `<option value="">Don't import</option>${fields().map(f => `<option value="${esc(f[0])}"${f[0] === c ? ' selected' : ''}>${esc(f[0])}</option>`).join('')}`;
+      box.innerHTML = `<table><thead><tr><th scope="col">Column in the file</th><th scope="col">Goes to</th></tr></thead><tbody>${state.head.map((h, i) => `<tr><td>${esc(h || `Column ${i + 1}`)}${!state.map[i] && !(known(h) && known(h)[2] === 'skip') ? ' <small class="oft-unmatched">Not matched</small>' : ''}</td><td><select data-col="${i}" aria-label="Where ${esc(h || `column ${i + 1}`)} goes">${opts(state.map[i])}</select></td></tr>`).join('')}</tbody></table>`;
+      box.querySelectorAll('select').forEach(s => s.addEventListener('change', () => { state.map[+s.dataset.col] = s.value; box.dataset.ready = ''; preview(); }));
+    }
+    function load(name, text) {
+      const rows = parse(text);
+      if (!rows.length) { oftEl('oftImpSummary').textContent = `${name} is empty.`; return; }
+      const head = rows[0].map(h => h.trim());
+      state = { name, head, rows: rows.slice(1), map: head.map(guess) };
+      oftEl('oftImpFile').textContent = `${name}: ${state.rows.length} row${state.rows.length === 1 ? '' : 's'}`;
+      oftEl('oftImpMap').dataset.ready = '';
+      oftEl('oftImpStep').hidden = false;
+      preview();
+    }
+    function commit() {
+      const remember = store.get(`oft-import:${OFT_SLUG}`) || {};
+      state.head.forEach((h, i) => { const f = known(h); if (!f || f[0] !== state.map[i]) remember[norm(h)] = state.map[i]; });
+      store.set(`oft-import:${OFT_SLUG}`, remember);
+      const people = () => (doc.people = Array.isArray(doc.people) ? doc.people : []);
+      const places = () => (doc.locations = Array.isArray(doc.locations) ? doc.locations : []);
+      const find = (arr, field, value, make) => { const v = str(value).trim(); let x = arr.find(r => r && norm(r[field]) === norm(v)); if (!x) { x = Object.assign({ id: newId(make && make.prefix || 'item') }, (make && make.fields) || {}, { [field]: v }); arr.push(x); } return x; };
+      const ref = (type, name) => type.startsWith('person') || type === 'people' ? find(people(), 'name', name, { prefix: 'person' }).id : find(places(), 'name', name, { prefix: 'location' }).id;
+      let added = 0;
+      for (const r of state.list) {
+        const rec = r.rec;
+        rec.id = rec.id || newId(S.prefix || S.noun.replace(/\s+/g, '-'));
+        for (const [key, type, names] of r.refs) { const ids = names.map(n => ref(type, n)); setPath(rec, key, many(type) ? ids : ids[0]); }
+        const ctx = { raw: r.raw, find, ref, newId };
+        if (S.put) { if (S.put(rec, ctx) === false) continue; } else S.list().push(rec);
+        added++;
+      }
+      oftEl('oftImportDialog').close();
+      if (typeof changed === 'function') changed(); else { dirty = true; render(); }
+      toast(`Added ${added} ${added === 1 ? S.noun : S.nouns} from ${state.name}`);
+    }
+    function open(spec) {
+      S = spec; state = null;
+      let dlg = oftEl('oftImportDialog');
+      if (!dlg) {
+        dlg = document.createElement('dialog');
+        dlg.id = 'oftImportDialog'; dlg.className = 'oft-dialog'; dlg.setAttribute('aria-labelledby', 'oftImpTitle');
+        dlg.innerHTML = `<h2 id="oftImpTitle"></h2><p id="oftImpIntro"></p>
+          <p class="oft-files"><span id="oftImpFile">No file chosen</span> <button type="button" class="btn" id="oftImpChoose">Choose a CSV file</button></p>
+          <input type="file" id="oftImpInput" accept=".csv,.tsv,.txt,text/csv" hidden>
+          <div id="oftImpStep" hidden><h3>Match the columns</h3><div class="oft-map" id="oftImpMap"></div><p id="oftImpSummary" aria-live="polite"></p><div id="oftImpRows"></div></div>
+          <div class="oft-actions"><button type="button" class="btn" id="oftImpCancel">Cancel</button><button type="button" class="btn primary" id="oftImpAdd" disabled>Add</button></div>`;
+        document.body.append(dlg);
+        oftEl('oftImpChoose').onclick = () => { oftEl('oftImpInput').value = ''; oftEl('oftImpInput').click(); };
+        oftEl('oftImpInput').addEventListener('change', async ev => { const f = ev.target.files[0]; if (f) load(f.name, await f.text()); });
+        oftEl('oftImpCancel').onclick = () => dlg.close();
+        oftEl('oftImpAdd').onclick = commit;
+      }
+      oftEl('oftImpTitle').textContent = `Import ${S.nouns} from a spreadsheet`;
+      oftEl('oftImpIntro').textContent = `Choose a CSV file. Columns named as in this tool's spreadsheet template are matched for you; match any others below. Importing adds ${S.nouns} and never changes or removes what's already here.`;
+      oftEl('oftImpFile').textContent = 'No file chosen';
+      oftEl('oftImpStep').hidden = true;
+      oftEl('oftImpAdd').disabled = true; oftEl('oftImpAdd').textContent = 'Add';
+      dlg.showModal();
+    }
+    return { open, parse, date, number };
+  })();
+  /* oft-shared:import end */
+  /* oft-shared:tool begin. Copied from shared/tool.js by .github/scripts/sync_shared.py; edit it there. */
+  // Shared by every tool: your name, remembering the open file, who has it open,
+  // who changed what, merging two copies and spotting conflicted copies.
+  // Runs inside each tool's script and uses its doc, fileHandle, baselineText,
+  // fileName, dirty, loadText, saveFile, serialize, render and toast.
+  const OFT_SLUG = (window.location.pathname.match(/tools\/([^/]+)\//) || [])[1] || '';
+  const OFT_GUIDE = 'https://github.com/open-filmmaker-toolkit/toolkit/blob/main/docs/sharing-a-project.md';
+  const OFT_HOURS = 4;
+  const OFT_KEYS = { project: 'Project details', people: 'People', locations: 'Locations', thirdPartyElements: 'Clearance log', contracts: 'Contracts and releases', assets: 'Files and stills', musicCueSheet: 'Music cue sheet', callSheets: 'Call sheets', credits: 'Credits', supers: 'Name supers', subjects: 'Subject tracker', sources: 'Research log', comps: 'Comps tracker', treatment: 'Treatment', pitchDeck: 'Pitch deck', grants: 'Grant calendar', narratives: 'Narrative library', budget: 'Budget', budgetFormats: 'Budget converter', financePlan: 'Finance plan', funders: 'Funder CRM', cashFlow: 'Cash flow', shootDays: 'Shooting calendar', script: 'Script', scenes: 'Script breakdown', characters: 'Cast', interviews: 'Interviews', journal: 'Field journal', scouts: 'Location scouts', gear: 'Gear list', trips: 'Travel sheet', riskPlans: 'Risk plans', security: 'Security checklist', mediaReports: 'Camera and sound reports', dailyReports: 'Daily reports', expenses: 'Expense log', festivals: 'Festival submissions', screenings: 'Screenings', pressOutlets: 'Press list', partners: 'Partner CRM', discussionGuide: 'Discussion guide', paperEdit: 'Paper edit', costReport: 'Budget-to-actuals', structure: 'Structure board', cuts: 'Cut tracker', clearanceReport: 'Clearance report', chainOfTitle: 'Chain of title', festivalStrategy: 'Festival strategy', pressNotes: 'Press notes', awards: 'Awards', socialPosts: 'Social posts', deliverables: 'Deliverables', qc: 'QC tracker', waterfall: 'Waterfall', revenueStatements: 'Revenue tracker', bookings: 'Bookings', theoryOfChange: 'Theory of change', screeningKit: 'Screening kit', impactReport: 'Impact report', finalCostReport: 'Final cost report', grantReports: 'Grant reports', contractArchive: 'Contract archive' };
+  const oftStore = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch { /* storage off */ } } };
+  const oftMe = () => (oftStore.get('oft-user-name') || '').trim();
+  const oftEsc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const oftEl = id => document.getElementById(id);
+  function oftIdb(op, key, val) {
+    return new Promise(res => {
+      try {
+        const r = indexedDB.open('open-filmmaker-toolkit', 1);
+        r.onupgradeneeded = () => r.result.createObjectStore('handles');
+        r.onerror = () => res(null);
+        r.onsuccess = () => {
+          const db = r.result;
+          try {
+            const tx = db.transaction('handles', op === 'get' ? 'readonly' : 'readwrite');
+            const s = tx.objectStore('handles');
+            const q = op === 'get' ? s.get(key) : op === 'del' ? s.delete(key) : s.put(val, key);
+            tx.oncomplete = () => { db.close(); res(op === 'get' ? q.result || null : true); };
+            tx.onerror = tx.onabort = () => { db.close(); res(null); };
+          } catch { db.close(); res(null); }
+        };
+      } catch { res(null); }
+    });
+  }
+  function oftWhen(iso) {
+    const d = new Date(iso);
+    if (isNaN(d)) return '';
+    const time = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    return d.toDateString() === new Date().toDateString() ? time : `${d.toLocaleDateString([], { month: 'short', day: 'numeric' })}, ${time}`;
+  }
+  const oftDay = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString([], { month: 'short', day: 'numeric' }); };
+  const oftChangedText = r => r && r.changedAt ? `Changed ${r.changedBy ? `by ${r.changedBy}, ` : ''}${oftDay(r.changedAt)}` : '';
+
+  // ---------- Who changed what ----------
+  const OFT_META = new Set(['changedAt', 'changedBy']);
+  const oftStrip = (k, v) => OFT_META.has(k) ? undefined : v && typeof v === 'object' && !Array.isArray(v) ? Object.fromEntries(Object.keys(v).sort().map(x => [x, v[x]])) : v;
+  const oftSame = (a, b) => JSON.stringify(a, oftStrip) === JSON.stringify(b, oftStrip);
+  const oftIsObj = v => !!v && typeof v === 'object' && !Array.isArray(v);
+  // Calls fn(record, key) for every object with an id. The key adds the path, because
+  // snapshots (saved versions, the last export) repeat ids from the live records.
+  function oftWalk(x, fn, path = '') {
+    if (Array.isArray(x)) x.forEach(v => oftWalk(v, fn, path));
+    else if (oftIsObj(x)) {
+      if (typeof x.id === 'string' && x.id) fn(x, `${path}#${x.id}`);
+      for (const [k, v] of Object.entries(x)) if (v && typeof v === 'object') oftWalk(v, fn, `${path}.${k}`);
+    }
+  }
+  function oftStamp() {
+    const me = oftMe();
+    if (!me || !doc) return;
+    let before = {};
+    try { if (baselineText) before = JSON.parse(baselineText); } catch { /* keep empty */ }
+    const old = new Map();
+    oftWalk(before, (r, key) => old.set(key, r));
+    const now = new Date().toISOString();
+    oftWalk(doc, (r, key) => { const o = old.get(key); if (!o || !oftSame(o, r)) { r.changedBy = me; r.changedAt = now; } });
+  }
+
+  // ---------- Who has it open ----------
+  const oftFresh = p => p && p.name && p.since && Date.now() - new Date(p.since).getTime() < OFT_HOURS * 3600e3;
+  const oftOpenList = data => (Array.isArray(data && data.openBy) ? data.openBy : []).filter(oftFresh);
+  function oftWithout(text, me) {
+    const data = JSON.parse(text);
+    const list = oftOpenList(data).filter(p => p.name !== me);
+    if (list.length) data.openBy = list; else delete data.openBy;
+    return data;
+  }
+  async function oftWritable(handle) {
+    if (!handle || !handle.queryPermission) return !!handle;
+    try { return (await handle.queryPermission({ mode: 'readwrite' })) === 'granted' || (await handle.requestPermission({ mode: 'readwrite' })) === 'granted'; } catch { return false; }
+  }
+  async function oftWrite(handle, text) {
+    const w = await handle.createWritable();
+    await w.write(text);
+    await w.close();
+  }
+  async function oftMarkOpen(text, handle) {
+    const me = oftMe();
+    if (!me || !handle || !(await oftWritable(handle))) return;
+    try {
+      const current = await (await handle.getFile()).text();
+      if (current !== text || fileHandle !== handle) return;
+      const data = oftWithout(current, me);
+      data.openBy = (data.openBy || []).concat([{ name: me, since: new Date().toISOString(), tool: OFT_SLUG }]);
+      const out = JSON.stringify(data, null, 2) + '\n';
+      await oftWrite(handle, out);
+      if (baselineText === text) baselineText = out;
+      if (doc) doc.openBy = data.openBy;
+    } catch { /* the note is optional */ }
+  }
+  async function oftClearOpen() {
+    const me = oftMe(), handle = fileHandle;
+    if (!me || !handle || dirty) return;
+    try {
+      if (handle.queryPermission && (await handle.queryPermission({ mode: 'readwrite' })) !== 'granted') return;
+      const current = await (await handle.getFile()).text();
+      if (!oftOpenList(JSON.parse(current)).some(p => p.name === me)) return;
+      await oftWrite(handle, JSON.stringify(oftWithout(current, me), null, 2) + '\n');
+    } catch { /* best effort */ }
+  }
+  function oftWarnOpen(text) {
+    let list = [];
+    try { list = oftOpenList(JSON.parse(text)).filter(p => p.name !== oftMe()); } catch { /* not JSON */ }
+    const bar = oftEl('oftPresence');
+    if (!bar) return;
+    bar.hidden = !list.length;
+    if (list.length) oftEl('oftPresenceText').textContent = `${list.map(p => `${p.name} has had this file open since ${oftWhen(p.since)}`).join('. ')}. If you both change it, whoever saves second gets a warning and can merge the two.`;
+  }
+
+  // ---------- Merging ----------
+  const OFT_SKIP = new Set(['savedAt', 'savedBy', 'openBy']);
+  const oftClone = v => v === undefined ? undefined : JSON.parse(JSON.stringify(v));
+  const oftLabel = r => { if (!oftIsObj(r)) return ''; const v = r.name || r.title || r.label || r.element || r.description || r.text || r.id; return String(v).slice(0, 70); };
+  const oftRecList = v => Array.isArray(v) && v.length > 0 && v.every(x => oftIsObj(x) && typeof x.id === 'string' && x.id);
+  const oftNewer = (a, b) => String((b && b.changedAt) || '') > String((a && a.changedAt) || '') ? 'b' : 'a';
+  function oftMerge(base, a, b) {
+    const res = { conflicts: [], changes: [] };
+    const tool = path => OFT_KEYS[path[0]] || String(path[0] || 'Project');
+    const note = (side, kind, path, rec) => res.changes.push({ side, kind, tool: tool(path), label: oftLabel(rec) || path.slice(1).join(' ') || tool(path) });
+    const conflict = (path, rec, av, bv, recA, recB, put) => {
+      const pick = base === undefined ? oftNewer(recA, recB) : 'a';
+      const c = { tool: tool(path), label: oftLabel(rec), field: String(path[path.length - 1]), a: av, b: bv, byA: oftChangedText(recA), byB: oftChangedText(recB), pick, put };
+      res.conflicts.push(c);
+      put(oftClone(pick === 'a' ? av : bv));
+    };
+    function recChanges(bs, av, bv, path) {
+      if (bs === undefined) return;
+      if (!oftSame(av, bs)) note('a', 'changed', path, av);
+      if (!oftSame(bv, bs)) note('b', 'changed', path, bv);
+    }
+    function m(bs, av, bv, path, recA, recB, put) {
+      if (oftSame(av, bv)) { put(oftClone(oftNewer(av, bv) === 'b' ? bv : av)); return; }
+      if (bs !== undefined && base !== undefined) {
+        if (oftSame(av, bs)) { put(oftClone(bv)); return; }
+        if (oftSame(bv, bs)) { put(oftClone(av)); return; }
+      }
+      if (oftIsObj(av) && oftIsObj(bv)) {
+        const out = {};
+        put(out);
+        const isRec = typeof av.id === 'string';
+        const ra = isRec ? av : recA, rb = isRec ? bv : recB;
+        const keys = [...new Set([...Object.keys(av), ...Object.keys(bv)])];
+        for (const k of keys) {
+          if (OFT_META.has(k)) continue;
+          if (OFT_SKIP.has(k) && path.length === 0) { if (k in av) out[k] = oftClone(av[k]); continue; }
+          const inA = k in av, inB = k in bv, bk = oftIsObj(bs) ? bs[k] : undefined, inBase = oftIsObj(bs) && k in bs;
+          const p = path.concat(k);
+          if (inA && inB) m(bk, av[k], bv[k], p, ra, rb, v => { out[k] = v; });
+          else if (inA) {
+            if (inBase && base !== undefined) { if (!oftSame(av[k], bk)) conflict(p, ra, av[k], undefined, ra, rb, v => { if (v === undefined) delete out[k]; else out[k] = v; }); }
+            else out[k] = oftClone(av[k]);
+          } else {
+            if (inBase && base !== undefined) { if (!oftSame(bv[k], bk)) conflict(p, rb, undefined, bv[k], ra, rb, v => { if (v === undefined) delete out[k]; else out[k] = v; }); }
+            else out[k] = oftClone(bv[k]);
+          }
+        }
+        const src = oftNewer(av, bv) === 'b' ? bv : av;
+        for (const k of OFT_META) if (k in src) out[k] = src[k];
+        if (isRec) recChanges(bs, av, bv, path);
+        return;
+      }
+      if (Array.isArray(av) && Array.isArray(bv) && (oftRecList(av) || oftRecList(bv)) && av.concat(bv).every(x => oftIsObj(x) && typeof x.id === 'string')) {
+        const out = [];
+        put(out);
+        const ba = new Map(bv.map(x => [x.id, x])), aa = new Map(av.map(x => [x.id, x]));
+        const bb = new Map((Array.isArray(bs) ? bs : []).filter(oftIsObj).map(x => [x.id, x]));
+        const order = av.map(x => x.id);
+        bv.forEach((x, i) => { if (!aa.has(x.id)) { const prev = i ? bv[i - 1].id : null; const at = prev ? order.indexOf(prev) : -1; order.splice(at + 1, 0, x.id); } });
+        const slots = order.map(() => undefined);
+        order.forEach((id, i) => {
+          const x = aa.get(id), y = ba.get(id), z = bb.get(id), p = path.concat(oftLabel(x || y));
+          const set = v => { slots[i] = v; };
+          if (x && y) m(z, x, y, p, x, y, set);
+          else if (x) {
+            if (z && base !== undefined) { if (oftSame(x, z)) { note('b', 'removed', path, x); set(undefined); } else conflict(p, x, x, undefined, x, null, set); }
+            else { note('a', 'added', path, x); set(oftClone(x)); }
+          } else {
+            if (z && base !== undefined) { if (oftSame(y, z)) { note('a', 'removed', path, y); set(undefined); } else conflict(p, y, undefined, y, null, y, set); }
+            else { note('b', 'added', path, y); set(oftClone(y)); }
+          }
+        });
+        res.finish = (res.finish || []).concat(() => { out.splice(0, out.length, ...slots.filter(v => v !== undefined)); });
+        return;
+      }
+      conflict(path, recA || recB, av, bv, recA, recB, put);
+    }
+    let value;
+    m(base, a, b, [], null, null, v => { value = v; });
+    res.value = value;
+    res.build = () => { (res.finish || []).forEach(f => f()); return value; };
+    return res;
+  }
+  const oftShow = v => v === undefined ? 'Not there' : typeof v === 'string' ? v || 'Empty' : JSON.stringify(v);
+
+  let oftMergeState = null;
+  function oftOpenMerge(mode) {
+    oftMergeState = { mode, a: null, b: null, base: undefined };
+    const dlg = oftEl('oftMergeDialog');
+    oftEl('oftMergeIntro').textContent = mode === 'conflict'
+      ? `${fileName} changed after you opened it. These are the changes on each side. Where you both changed the same thing, choose which to keep.`
+      : 'Choose two copies of the project file. Changes that don\'t clash are combined. Where both copies changed the same thing, you choose. The result is saved as a new file, so neither copy is changed.';
+    oftEl('oftMergePick').hidden = mode === 'conflict';
+    oftEl('oftMergeA').textContent = doc && fileName ? `The open file, ${fileName}` : 'Not chosen';
+    if (mode !== 'conflict' && doc && fileName) oftMergeState.a = { name: fileName, data: JSON.parse(serialize()) };
+    oftEl('oftMergeB').textContent = 'Not chosen';
+    oftEl('oftMergeResult').innerHTML = '';
+    oftEl('oftMergeSave').disabled = true;
+    if (!dlg.open) dlg.showModal();
+  }
+  function oftReadCopy(side) {
+    const input = oftEl('oftMergeFile');
+    input.dataset.side = side;
+    input.value = '';
+    input.click();
+  }
+  async function oftTakeCopy(side, name, text) {
+    let data;
+    try { data = JSON.parse(text); } catch { toast(`Couldn't read ${name}: it isn't a project file.`, true); return; }
+    if (!data || data.format !== 'open-filmmaker-toolkit/project') { toast(`Couldn't read ${name}: it isn't an Open Filmmaker Toolkit project file.`, true); return; }
+    oftMergeState[side] = { name, data };
+    oftEl(side === 'a' ? 'oftMergeA' : 'oftMergeB').textContent = name;
+    if (oftMergeState.a && oftMergeState.b) oftCompare();
+  }
+  function oftCompare() {
+    const s = oftMergeState;
+    const r = oftMerge(s.base, s.a.data, s.b.data);
+    s.result = r;
+    const nameA = s.mode === 'conflict' ? 'Your changes' : s.a.name, nameB = s.mode === 'conflict' ? 'In the file now' : s.b.name;
+    const tools = {};
+    r.changes.forEach(c => { (tools[c.tool] = tools[c.tool] || []).push(c); });
+    const verb = { added: 'Added', changed: 'Changed', removed: 'Removed' };
+    const changeHtml = Object.keys(tools).length ? Object.entries(tools).map(([t, list]) => `<h4>${oftEsc(t)}</h4><ul>${list.map(c => `<li>${oftEsc(verb[c.kind])} in ${oftEsc(c.side === 'a' ? nameA : nameB)}: ${oftEsc(c.label)}</li>`).join('')}</ul>`).join('') : '<p>No records were added, changed or removed on just one side.</p>';
+    const conflictHtml = r.conflicts.map((c, i) => `<fieldset class="oft-conflict"><legend>${oftEsc(c.tool)}${c.label ? `: ${oftEsc(c.label)}` : ''}, ${oftEsc(c.field)}</legend>
+      <label><input type="radio" name="oftC${i}" value="a"${c.pick === 'a' ? ' checked' : ''}> <span><b>${oftEsc(nameA)}</b>${c.byA ? ` <small>${oftEsc(c.byA)}</small>` : ''}<br>${oftEsc(oftShow(c.a))}</span></label>
+      <label><input type="radio" name="oftC${i}" value="b"${c.pick === 'b' ? ' checked' : ''}> <span><b>${oftEsc(nameB)}</b>${c.byB ? ` <small>${oftEsc(c.byB)}</small>` : ''}<br>${oftEsc(oftShow(c.b))}</span></label></fieldset>`).join('');
+    oftEl('oftMergeResult').innerHTML = `<h3>What changed</h3>${changeHtml}<h3>${r.conflicts.length ? `${r.conflicts.length} thing${r.conflicts.length === 1 ? '' : 's'} changed in both` : 'Nothing clashes'}</h3>${r.conflicts.length ? conflictHtml : '<p>Everything can be combined as it is.</p>'}`;
+    oftEl('oftMergeSave').disabled = false;
+  }
+  async function oftSaveMerged() {
+    const s = oftMergeState, r = s.result;
+    r.conflicts.forEach((c, i) => { const v = (document.querySelector(`input[name="oftC${i}"]:checked`) || {}).value || c.pick; c.put(oftClone(v === 'a' ? c.a : c.b)); });
+    const data = r.build();
+    delete data.openBy;
+    data.savedAt = new Date().toISOString();
+    const text = JSON.stringify(data, null, 2) + '\n';
+    oftEl('oftMergeDialog').close();
+    if (s.mode === 'conflict') {
+      const handle = fileHandle;
+      try {
+        const now = await (await handle.getFile()).text();
+        if (now !== s.observed) { toast('The file changed again while you were merging. Save again to see the newest changes.', true); return; }
+        await oftWrite(handle, text);
+      } catch (err) { toast(`Couldn't save the merged file: ${err.message}`, true); return; }
+      loadText(text, handle.name, handle);
+      toast(`Merged your changes into ${handle.name}`);
+      return;
+    }
+    const name = (s.a.name || 'project').replace(/\.oft\.json$|\.json$/i, '') + '-merged.oft.json';
+    if (window.showSaveFilePicker && window.self === window.top) {
+      try { const h = await window.showSaveFilePicker({ suggestedName: name, types: [{ description: 'Film project file', accept: { 'application/json': ['.json'] } }] }); await oftWrite(h, text); loadText(text, h.name, h); toast(`Saved the merged file as ${h.name}`); }
+      catch (err) { if (err.name !== 'AbortError') toast(`Couldn't save the merged file: ${err.message}`, true); }
+      return;
+    }
+    const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+    const a = document.createElement('a'); a.href = url; a.download = name; document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    loadText(text, name, null);
+    toast(`Downloaded the merged file as ${name}. Open it from now on.`);
+  }
+  async function oftMergeConflict() {
+    const handle = fileHandle;
+    if (!handle) return;
+    oftEl('conflictDialog') && oftEl('conflictDialog').close();
+    let observed, theirs, base;
+    try { observed = await (await handle.getFile()).text(); theirs = JSON.parse(observed); } catch (err) { toast(`Couldn't read ${handle.name}: ${err.message}`, true); return; }
+    try { base = baselineText ? JSON.parse(baselineText) : undefined; } catch { base = undefined; }
+    oftStamp();
+    const mine = JSON.parse(serialize());
+    oftOpenMerge('conflict');
+    Object.assign(oftMergeState, { base, observed, a: { name: 'Your changes', data: mine }, b: { name: handle.name, data: theirs } });
+    oftCompare();
+    if (!oftMergeState.result.conflicts.length) await oftSaveMerged();
+  }
+
+  // ---------- Conflicted copies from sync apps ----------
+  let oftFolder = null;
+  function oftIsCopy(name, of) {
+    const stem = of.replace(/\.oft\.json$|\.json$/i, ''), m = name.match(/^(.*?)(\.oft)?\.json$/i);
+    if (!m || name === of || !m[1].startsWith(stem)) return false;
+    const rest = m[1].slice(stem.length);
+    return /conflict/i.test(rest) || /^ ?\(\d+\)$/.test(rest) || /^ \d+$/.test(rest) || /^-[A-Z0-9][A-Z0-9-]*$/.test(rest);
+  }
+  async function oftScanFolder() {
+    const bar = oftEl('oftCopies');
+    if (!bar || !fileHandle || !fileName) return;
+    const dir = oftFolder || await oftIdb('get', 'folder');
+    if (!dir || !dir.values) return;
+    try {
+      if (dir.queryPermission && (await dir.queryPermission({ mode: 'read' })) !== 'granted') return;
+      const inside = dir.resolve ? await dir.resolve(fileHandle) : [fileName];
+      if (!inside || inside.length !== 1) return;
+      const found = [];
+      for await (const h of dir.values()) if (h.kind !== 'directory' && oftIsCopy(h.name, fileName)) found.push(h);
+      bar.hidden = !found.length;
+      if (!found.length) return;
+      oftEl('oftCopiesText').textContent = `Your sync app made ${found.length === 1 ? 'a conflicted copy' : `${found.length} conflicted copies`} of this file: ${found.map(h => h.name).join(', ')}. Merge ${found.length === 1 ? 'it' : 'them one at a time'} so no one's changes are lost.`;
+      oftEl('oftCopiesBtn').onclick = async () => { oftOpenMerge('copies'); const h = found[0]; await oftTakeCopy('b', h.name, await (await h.getFile()).text()); };
+    } catch { /* folder unavailable */ }
+  }
+  async function oftPickFolder() {
+    if (!window.showDirectoryPicker) return;
+    try {
+      const dir = await window.showDirectoryPicker({ id: 'oft-project', mode: 'read', startIn: fileHandle || undefined });
+      if (fileHandle && dir.resolve) { const inside = await dir.resolve(fileHandle); if (!inside || inside.length !== 1) { toast(`${fileName} isn't in that folder. Choose the folder the project file is in.`, true); return; } }
+      oftFolder = dir;
+      await oftIdb('put', 'folder', dir);
+      oftEl('oftFolderText').textContent = `Checking ${dir.name} for conflicted copies.`;
+      await oftScanFolder();
+      if (oftEl('oftCopies').hidden) toast(`No conflicted copies in ${dir.name}`);
+    } catch (err) { if (err.name !== 'AbortError') toast(`Couldn't use that folder: ${err.message}`, true); }
+  }
+
+  // ---------- Opening the same file in the next tool ----------
+  function oftRecent() {
+    let list = [];
+    try { list = JSON.parse(oftStore.get('oft-recent-tools') || '[]'); } catch { /* reset */ }
+    list = [{ slug: OFT_SLUG, at: new Date().toISOString() }].concat(list.filter(t => t && t.slug !== OFT_SLUG)).slice(0, 12);
+    oftStore.set('oft-recent-tools', JSON.stringify(list));
+  }
+  async function oftOffer() {
+    const bar = oftEl('oftReopen');
+    if (!bar || !window.showOpenFilePicker || fileName || dirty) return;
+    const saved = await oftIdb('get', 'file');
+    if (!saved || !saved.handle || fileName || dirty) return;
+    if (oftEl('recovery') && !oftEl('recovery').hidden) return;
+    oftEl('oftReopenText').textContent = `Open ${saved.name} again? It's the project file you last used in this browser.`;
+    bar.hidden = false;
+    oftEl('oftReopenBtn').onclick = async () => {
+      const h = saved.handle;
+      try {
+        if (h.requestPermission && (await h.requestPermission({ mode: 'readwrite' })) !== 'granted') { toast(`The browser didn't allow opening ${saved.name}. Use Open file instead.`, true); return; }
+        const f = await h.getFile();
+        loadText(await f.text(), f.name, h);
+      } catch (err) { toast(`Couldn't open ${saved.name}: ${err.message}. It may have been moved or renamed. Use Open file instead.`, true); }
+    };
+    oftEl('oftForgetBtn').onclick = oftForget;
+  }
+  async function oftForget() {
+    await oftIdb('del', 'file');
+    await oftIdb('del', 'folder');
+    oftFolder = null;
+    if (oftEl('oftReopen')) oftEl('oftReopen').hidden = true;
+    oftSettingsText();
+    toast('This browser no longer remembers the project file.');
+  }
+  function oftShowRecord(id) {
+    if (!id) return;
+    const sel = ['data-edit', 'data-id', 'data-open'].map(a => `[${a}="${CSS.escape(id)}"]`).join(', ');
+    const el = [...document.querySelectorAll(sel)].find(e => e.offsetParent !== null) || document.querySelector(sel);
+    if (!el) return;
+    el.scrollIntoView({ block: 'center' });
+    el.classList.add('oft-flash');
+    setTimeout(() => el.classList.remove('oft-flash'), 2500);
+    if (el.dataset.edit === id && el.matches('button, a, [role="button"]')) el.click();
+    else if (el.matches('button, a, input, select, textarea, [tabindex]')) el.focus();
+  }
+  const oftRecordFromHash = () => { const m = window.location.hash.match(/record=([^&]+)/); return m ? decodeURIComponent(m[1]) : ''; };
+  function oftOpened(text, name, handle) {
+    oftRecent();
+    if (oftEl('oftReopen')) oftEl('oftReopen').hidden = true;
+    if (oftEl('oftCopies')) oftEl('oftCopies').hidden = true;
+    if (handle) oftIdb('put', 'file', { handle, name, at: new Date().toISOString() });
+    oftWarnOpen(text);
+    if (handle) oftMarkOpen(text, handle).then(oftScanFolder);
+    const rec = oftRecordFromHash();
+    if (rec) setTimeout(() => oftShowRecord(rec), 60);
+  }
+  async function oftHandoff() {
+    let h = null;
+    try { h = JSON.parse(sessionStorage.getItem('oft-handoff') || 'null'); sessionStorage.removeItem('oft-handoff'); } catch { /* none */ }
+    if (!h || !h.text || fileName || dirty || Date.now() - (h.at || 0) > 10 * 60e3) return false;
+    const saved = window.showOpenFilePicker ? await oftIdb('get', 'file') : null;
+    loadText(h.text, h.name, saved && saved.name === h.name ? saved.handle : null);
+    return true;
+  }
+
+  // ---------- Settings dialog: your name, the remembered file, the folder ----------
+  async function oftSettingsText() {
+    const saved = await oftIdb('get', 'file');
+    if (oftEl('oftFileText')) oftEl('oftFileText').textContent = saved && saved.name ? `This browser remembers ${saved.name}, so the next tool you open can offer it.` : 'This browser doesn\'t remember a project file.';
+    if (oftEl('oftForgetFile')) oftEl('oftForgetFile').hidden = !saved;
+    const nameBtn = oftEl('oftNameBtn');
+    if (nameBtn) nameBtn.textContent = oftMe() ? `You're ${oftMe()}` : 'Add your name';
+  }
+  function oftChangedNote() {
+    let rec = null;
+    try { rec = editing; } catch { rec = null; } // eslint-disable-line no-undef
+    return rec && typeof rec === 'object' ? oftChangedText(rec) : '';
+  }
+  function oftWatchDialogs() {
+    const seen = new WeakSet();
+    const show = dlg => {
+      if (dlg.id.startsWith('oft') || dlg.id === 'conflictDialog') return;
+      setTimeout(() => {
+        const text = oftChangedNote();
+        let p = dlg.querySelector('.oft-changed');
+        if (!text) { if (p) p.remove(); return; }
+        if (!p) { p = document.createElement('p'); p.className = 'oft-changed'; const h = dlg.querySelector('h2, h3'); if (h) h.after(p); else dlg.prepend(p); }
+        p.textContent = text;
+      }, 0);
+    };
+    const watch = () => document.querySelectorAll('dialog').forEach(d => { if (seen.has(d)) return; seen.add(d); new MutationObserver(() => { if (d.open) show(d); }).observe(d, { attributes: true, attributeFilter: ['open'] }); });
+    watch();
+  }
+  function oftBuild() {
+    const style = document.createElement('style');
+    style.textContent = `.oft-links { margin: 8px 0 0; display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 13px; }
+  .oft-links .link-btn, .oft-links a { padding: 0; border: 0; background: none; cursor: pointer; font: inherit; font-size: 13px; color: var(--ink-2); min-height: 24px; text-decoration: underline; text-underline-offset: 2px; }
+  .oft-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 0 0 16px; padding: 12px 16px; border-radius: 8px; background: var(--warn-bg, #fbf0d9); border: 1px solid var(--rule); color: var(--ink); }
+  .oft-bar.quiet { background: var(--sheet); }
+  .oft-bar p { margin: 0; flex: 1 1 280px; }
+  .oft-bar .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  .oft-dialog { width: min(680px, calc(100vw - 32px)); max-height: calc(100vh - 48px); padding: 20px; border: 1px solid var(--rule); border-radius: 10px; background: var(--sheet); color: var(--ink); overflow: auto; }
+  .oft-dialog::backdrop { background: rgba(10, 14, 20, 0.45); }
+  .oft-dialog h2 { margin: 0 0 8px; font-size: 20px; }
+  .oft-dialog h3 { margin: 18px 0 6px; font-size: 16px; }
+  .oft-dialog h4 { margin: 10px 0 4px; font-size: 14px; }
+  .oft-dialog ul { margin: 0; padding-left: 20px; }
+  .oft-dialog p { margin: 0 0 10px; }
+  .oft-dialog label.oft-field { display: block; font-weight: 600; margin: 8px 0 4px; }
+  .oft-dialog input[type="text"] { width: 100%; box-sizing: border-box; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); color: var(--ink); font: inherit; }
+  .oft-dialog .oft-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+  .oft-dialog .oft-files { display: grid; gap: 8px; margin: 8px 0; }
+  .oft-dialog .oft-files div { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .oft-dialog .oft-files span { flex: 1 1 200px; color: var(--ink-2); overflow-wrap: anywhere; }
+  .oft-kinds { margin: 8px 0; padding: 8px 12px; border: 1px solid var(--rule); border-radius: 8px; }
+  .oft-kinds label { display: flex; gap: 8px; align-items: flex-start; padding: 3px 0; }
+  .oft-kinds small { color: var(--ink-3); }
+  .oft-map { overflow-x: auto; }
+  .oft-map table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .oft-map th, .oft-map td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--rule); vertical-align: middle; }
+  .oft-map select { max-width: 100%; padding: 4px 6px; font: inherit; color: var(--ink); background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; }
+  .oft-unmatched { color: var(--bad); font-weight: 600; }
+  .oft-rate { display: grid; grid-template-columns: 70px minmax(0, 1fr) minmax(0, 1fr) auto; gap: 6px; align-items: center; margin: 0 0 6px; }
+  .oft-rate input { min-width: 0; padding: 6px 8px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); color: var(--ink); font: inherit; }
+  .oft-rates-note { margin: 0 0 12px; font-size: 13px; color: var(--ink-2); }
+  .oft-review { list-style: none; margin: 0 0 8px; padding: 0; }
+  .oft-review li { padding: 5px 0; border-bottom: 1px solid var(--rule-soft, var(--rule)); }
+  .oft-review label { display: flex; gap: 8px; align-items: flex-start; }
+  .oft-review small { color: var(--ink-3); }
+  .oft-review select { margin: 4px 0 0 26px; max-width: calc(100% - 26px); padding: 4px 6px; font: inherit; color: var(--ink); background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; }
+  .oft-conflict { margin: 8px 0; padding: 8px 12px; border: 1px solid var(--rule); border-radius: 8px; }
+  .oft-conflict legend { font-weight: 600; padding: 0 4px; }
+  .oft-conflict label { display: flex; gap: 8px; align-items: flex-start; padding: 4px 0; overflow-wrap: anywhere; }
+  .oft-conflict input { margin-top: 4px; }
+  .oft-conflict small, .oft-changed { color: var(--ink-3); font-size: 13px; }
+  .oft-changed { margin: -4px 0 10px; }
+  .oft-flash { outline: 3px solid var(--focus) !important; outline-offset: 2px; }
+  @media print { .oft-bar, .oft-links { display: none !important; } }`;
+    document.head.append(style);
+    const bars = document.createElement('div');
+    bars.innerHTML = `<div class="oft-bar quiet" id="oftReopen" role="region" aria-label="Open the last project file" hidden><p id="oftReopenText"></p><div class="actions"><button type="button" class="btn primary" id="oftReopenBtn">Open it</button><button type="button" class="btn" id="oftForgetBtn">Forget it</button></div></div>
+  <div class="oft-bar" id="oftPresence" role="status" hidden><p id="oftPresenceText"></p><div class="actions"><button type="button" class="btn" id="oftPresenceBtn">Dismiss</button></div></div>
+  <div class="oft-bar" id="oftCopies" role="region" aria-label="Conflicted copies" hidden><p id="oftCopiesText"></p><div class="actions"><button type="button" class="btn primary" id="oftCopiesBtn">Merge it</button><button type="button" class="btn" id="oftCopiesHide">Not now</button></div></div>`;
+    const main = document.querySelector('main#main') || document.querySelector('main');
+    const recovery = oftEl('recovery');
+    if (recovery && recovery.parentElement) recovery.before(...bars.children);
+    else if (main) main.prepend(...bars.children);
+    const links = document.createElement('p');
+    links.className = 'oft-links';
+    links.innerHTML = `<button type="button" class="link-btn" id="oftNameBtn">Add your name</button><button type="button" class="link-btn" id="oftMergeBtn">Merge two copies</button><a href="${OFT_GUIDE}">Working on a shared file</a>`;
+    if (typeof oftImport !== 'undefined' && typeof OFT_IMPORT !== 'undefined') {
+      const imp = document.createElement('button');
+      imp.type = 'button'; imp.className = 'link-btn'; imp.id = 'oftImportBtn'; imp.textContent = 'Import from a spreadsheet';
+      imp.onclick = () => oftImport.open(OFT_IMPORT);
+      links.prepend(imp);
+    }
+    if (typeof oftMoney !== 'undefined') {
+      const fx = document.createElement('button');
+      fx.type = 'button'; fx.className = 'link-btn'; fx.id = 'oftRatesBtn'; fx.textContent = 'Exchange rates';
+      fx.onclick = () => oftMoney.dialog();
+      links.prepend(fx);
+    }
+    if (typeof oftProject !== 'undefined') {
+      const cal = document.createElement('button');
+      cal.type = 'button'; cal.className = 'link-btn'; cal.id = 'oftCalBtn'; cal.textContent = 'Calendar of every date';
+      cal.onclick = () => oftProject.calendarDialog(() => JSON.parse(serialize()));
+      links.prepend(cal);
+    }
+    const state = oftEl('fileState');
+    if (state && state.parentElement) state.parentElement.append(links);
+    const dlgs = document.createElement('div');
+    dlgs.innerHTML = `<dialog class="oft-dialog" id="oftSettings" aria-labelledby="oftSettingsTitle"><form method="dialog" id="oftSettingsForm">
+    <h2 id="oftSettingsTitle">You and this browser</h2>
+    <label class="oft-field" for="oftNameInput">Your name</label>
+    <input type="text" id="oftNameInput" autocomplete="name" maxlength="60">
+    <p class="oft-changed">Kept in this browser only. The tools note it on the records you change, and warn others who open the file while you have it open.</p>
+    <h3>Remembered file</h3><p id="oftFileText"></p><p><button type="button" class="btn" id="oftForgetFile">Forget it</button></p>
+    <div id="oftFolderBox"><h3>Conflicted copies</h3><p id="oftFolderText">Let the tools look in the project file's folder for conflicted copies made by your sync app.</p><p><button type="button" class="btn" id="oftFolderBtn">Choose the folder</button></p></div>
+    <div class="oft-actions"><button type="button" class="btn" id="oftSettingsCancel">Cancel</button><button type="submit" class="btn primary">Save</button></div></form></dialog>
+  <dialog class="oft-dialog" id="oftMergeDialog" aria-labelledby="oftMergeTitle"><h2 id="oftMergeTitle">Merge two copies</h2><p id="oftMergeIntro"></p>
+    <div class="oft-files" id="oftMergePick"><div><span id="oftMergeA">Not chosen</span><button type="button" class="btn" id="oftMergeABtn">Choose the first copy</button></div><div><span id="oftMergeB">Not chosen</span><button type="button" class="btn" id="oftMergeBBtn">Choose the second copy</button></div></div>
+    <input type="file" id="oftMergeFile" accept=".json,application/json" hidden>
+    <div id="oftMergeResult" aria-live="polite"></div>
+    <div class="oft-actions"><button type="button" class="btn" id="oftMergeCancel">Cancel</button><button type="button" class="btn primary" id="oftMergeSave" disabled>Save the merged file</button></div></dialog>`;
+    document.body.append(...dlgs.children);
+    oftEl('oftFolderBox').hidden = !window.showDirectoryPicker;
+    oftEl('oftNameBtn').onclick = () => { oftEl('oftNameInput').value = oftMe(); oftSettingsText(); oftEl('oftSettings').showModal(); oftEl('oftNameInput').focus(); };
+    oftEl('oftSettingsCancel').onclick = () => oftEl('oftSettings').close();
+    oftEl('oftSettingsForm').addEventListener('submit', () => { oftStore.set('oft-user-name', oftEl('oftNameInput').value.trim() || null); oftSettingsText(); if (fileHandle && baselineText && !dirty) oftMarkOpen(baselineText, fileHandle); });
+    oftEl('oftForgetFile').onclick = oftForget;
+    oftEl('oftFolderBtn').onclick = oftPickFolder;
+    oftEl('oftMergeBtn').onclick = () => oftOpenMerge('copies');
+    oftEl('oftMergeABtn').onclick = () => oftReadCopy('a');
+    oftEl('oftMergeBBtn').onclick = () => oftReadCopy('b');
+    oftEl('oftMergeFile').addEventListener('change', async ev => { const f = ev.target.files[0]; if (f) await oftTakeCopy(ev.target.dataset.side || 'b', f.name, await f.text()); });
+    oftEl('oftMergeCancel').onclick = () => oftEl('oftMergeDialog').close();
+    oftEl('oftMergeSave').onclick = oftSaveMerged;
+    oftEl('oftPresenceBtn').onclick = () => { oftEl('oftPresence').hidden = true; };
+    oftEl('oftCopiesHide').onclick = () => { oftEl('oftCopies').hidden = true; };
+    const cancel = oftEl('conflictCancelBtn');
+    if (cancel) { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn primary'; b.id = 'conflictMergeBtn'; b.textContent = 'Merge both'; b.onclick = oftMergeConflict; cancel.parentElement.prepend(b); }
+    oftWatchDialogs();
+    oftSettingsText();
+  }
+  const oftLoadText = loadText;
+  loadText = function (text, name, handle) {
+    const out = oftLoadText.apply(this, arguments);
+    if (fileName === name && baselineText === text) oftOpened(text, name, handle || null);
+    return out;
+  };
+  const oftSaveFile = saveFile;
+  saveFile = async function () {
+    if (fileHandle) {
+      if (!(await oftWritable(fileHandle))) { toast(`The browser didn't allow saving to ${fileHandle.name}. Try again and allow it, or open the file again.`, true); return; }
+      try {
+        const current = await (await fileHandle.getFile()).text();
+        if (baselineText != null && current !== baselineText) {
+          const a = JSON.parse(current), b = JSON.parse(baselineText);
+          const others = oftOpenList(a).filter(p => p.name !== oftMe());
+          delete a.openBy; delete b.openBy;
+          if (JSON.stringify(a) === JSON.stringify(b)) { baselineText = current; if (others.length) doc.openBy = others; else delete doc.openBy; }
+        }
+      } catch { /* the tool's own check reports it */ }
+    }
+    if (doc && Array.isArray(doc.openBy)) { const others = doc.openBy.filter(p => oftFresh(p) && p.name !== oftMe()); if (others.length) doc.openBy = others; else delete doc.openBy; }
+    oftStamp();
+    return oftSaveFile.apply(this, arguments);
+  };
+  window.addEventListener('pagehide', oftClearOpen);
+  setTimeout(async () => { oftBuild(); oftRecent(); if (!(await oftHandoff())) oftOffer(); }, 0);
+  /* oft-shared:tool end */
+  init();
+})();
+</script>
+</body>
+</html>
