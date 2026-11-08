@@ -322,6 +322,102 @@
     "chainOfTitle": {
       "$ref": "#/$defs/chainOfTitle",
       "description": "Links, statuses and your own items for the chain-of-title binder. A record rather than a collection."
+    },
+    "festivalStrategy": {
+      "type": "object",
+      "description": "Where the film is from, for the festival strategy map.",
+      "properties": {
+        "homeCountry": {
+          "type": "string"
+        },
+        "homeRegion": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "pressNotes": {
+      "type": "object",
+      "description": "Press notes and EPK sections, kept by the EPK and press notes builder.",
+      "properties": {
+        "logline": {
+          "type": "string"
+        },
+        "shortSynopsis": {
+          "type": "string"
+        },
+        "longSynopsis": {
+          "type": "string"
+        },
+        "directorStatement": {
+          "type": "string"
+        },
+        "aboutProduction": {
+          "type": "string"
+        },
+        "bioIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true,
+          "description": "People whose bios are in the press notes, in order."
+        },
+        "stillIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true,
+          "description": "Stills in the press notes, in order: assets with an image in data. The first is used on the title page."
+        },
+        "specs": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Technical details: year, country, language, subtitles, format, aspectRatio, sound."
+        },
+        "contacts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "role": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "company": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string"
+              },
+              "phone": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "hidden": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true,
+          "description": "Sections left out of the press notes, by key."
+        }
+      },
+      "additionalProperties": true
     }
   },
   "additionalProperties": true,
@@ -416,6 +512,10 @@
         "onCamera": {
           "type": "boolean",
           "description": "True if this person appears or is heard on camera and needs a release. False excludes them even if a release names them."
+        },
+        "bio": {
+          "type": "string",
+          "description": "A short biography, for press notes and pitch materials."
         }
       },
       "additionalProperties": true
@@ -1043,6 +1143,10 @@
         "clipId": {
           "type": "string",
           "description": "Footage log clips: the clip in that report."
+        },
+        "photoCredit": {
+          "type": "string",
+          "description": "Stills: who took the photo, for the credit line."
         }
       },
       "additionalProperties": true
@@ -2695,6 +2799,46 @@
             },
             "additionalProperties": true
           }
+        },
+        "tier": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4,
+          "description": "Festival strategy map: 1 for the top festivals down to 4 for local or small ones."
+        },
+        "premiere": {
+          "enum": [
+            "world",
+            "international",
+            "regional",
+            "national",
+            "city",
+            "none"
+          ],
+          "description": "Festival strategy map: the premiere status the festival asks for."
+        },
+        "city": {
+          "type": "string"
+        },
+        "country": {
+          "type": "string"
+        },
+        "region": {
+          "type": "string",
+          "description": "Festival strategy map: the world region, such as North America or Europe."
+        },
+        "startDate": {
+          "type": "string",
+          "format": "date"
+        },
+        "endDate": {
+          "type": "string",
+          "format": "date"
+        },
+        "notifyDate": {
+          "type": "string",
+          "format": "date",
+          "description": "Festival strategy map: when the festival tells you whether you got in."
         }
       },
       "additionalProperties": true

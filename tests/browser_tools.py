@@ -19,9 +19,9 @@ from playwright.sync_api import sync_playwright
 
 root = pathlib.Path(__file__).resolve().parents[1]
 sample = (root / 'samples/the-river-keeps.oft.json').read_text()
-TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan', 'funder-crm', 'cash-flow', 'shooting-calendar', 'interview-prep', 'field-journal', 'location-scout', 'deal-memos', 'gear-list', 'coi-permit-tracker', 'travel-sheet', 'risk-plan', 'security-checklist', 'camera-sound-reports', 'interview-log', 'daily-production-report', 'expense-log', 'festival-submissions', 'press-list', 'partner-crm', 'discussion-guide', 'archive-log', 'footage-log', 'paper-edit', 'structure-board', 'cut-tracker', 'budget-to-actuals', 'fair-use-log', 'license-tracker', 'clearance-report', 'chain-of-title']
+TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan', 'funder-crm', 'cash-flow', 'shooting-calendar', 'interview-prep', 'field-journal', 'location-scout', 'deal-memos', 'gear-list', 'coi-permit-tracker', 'travel-sheet', 'risk-plan', 'security-checklist', 'camera-sound-reports', 'interview-log', 'daily-production-report', 'expense-log', 'festival-submissions', 'press-list', 'partner-crm', 'discussion-guide', 'archive-log', 'footage-log', 'paper-edit', 'structure-board', 'cut-tracker', 'budget-to-actuals', 'fair-use-log', 'license-tracker', 'clearance-report', 'chain-of-title', 'festival-strategy', 'press-notes']
 COLLECTIONS = ['project', 'people', 'locations', 'thirdPartyElements', 'contracts', 'assets', 'musicCueSheet', 'callSheets']
-PRINT_BTN = {'clearance-log': '#printBtn', 'music-cue-sheet': '#printBtn', 'call-sheet': '#printAllBtn', 'release-tracker': '#printBtn',
+PRINT_BTN = {'press-notes': '#printBtn', 'festival-strategy': '#printBtn', 'clearance-log': '#printBtn', 'music-cue-sheet': '#printBtn', 'call-sheet': '#printAllBtn', 'release-tracker': '#printBtn',
              'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn', 'treatment-builder': '#printBtn', 'pitch-deck': '#printBtn', 'grant-calendar': '#printBtn', 'narrative-library': '#printBtn', 'budget': '#printBtn', 'budget-converter': '#printBtn', 'finance-plan': '#printBtn', 'funder-crm': '#printBtn', 'cash-flow': '#printBtn', 'shooting-calendar': '#printBtn', 'interview-prep': '#printBtn', 'field-journal': '#printBtn', 'location-scout': '#printBtn', 'deal-memos': '#printBtn', 'gear-list': '#printBtn', 'coi-permit-tracker': '#printBtn', 'travel-sheet': '#printBtn', 'risk-plan': '#printBtn', 'security-checklist': '#printBtn', 'camera-sound-reports': '#printBtn', 'interview-log': '#printBtn', 'daily-production-report': '#printBtn', 'expense-log': '#printBtn', 'festival-submissions': '#printBtn', 'press-list': '#printBtn', 'partner-crm': '#printBtn', 'discussion-guide': '#printBtn', 'archive-log': '#printBtn', 'footage-log': '#printBtn', 'paper-edit': '#printBtn', 'structure-board': '#printBtn', 'cut-tracker': '#printBtn', 'budget-to-actuals': '#printBtn', 'fair-use-log': '#printBtn', 'license-tracker': '#printBtn', 'clearance-report': '#printBtn', 'chain-of-title': '#printBtn'}
 PHONE = {'width': 390, 'height': 844}
 # The button that opens each tool's main dialog, for the phone-width check. Most tools use #addBtn.
@@ -385,7 +385,7 @@ def test_credits_builder(browser, fake):
     ctx.close()
 
 # Each spreadsheet template's columns must appear in its tool's CSV export, in the same order.
-TEMPLATE_EXPORTS = [('fair-use-log', 'fair-use-template.csv'), ('license-tracker', 'licenses-template.csv'), ('clearance-report', 'clearance-report-template.csv'), ('chain-of-title', 'chain-of-title-template.csv'), ('structure-board', 'structure-board-template.csv'), ('cut-tracker', 'cut-notes-template.csv'), ('budget-to-actuals', 'cost-report-template.csv'), ('footage-log', 'footage-log-template.csv'), ('paper-edit', 'paper-edit-template.csv'), ('press-list', 'press-list-template.csv'), ('partner-crm', 'partner-crm-template.csv'), ('camera-sound-reports', 'camera-and-sound-reports-template.csv'), ('interview-log', 'interview-moments-template.csv'), ('travel-sheet', 'travel-sheet-template.csv'), ('risk-plan', 'risk-assessment-template.csv'), ('security-checklist', 'security-checklist-template.csv'), ('gear-list', 'gear-list-template.csv'), ('coi-permit-tracker', 'certificates-and-permits-template.csv'), ('location-scout', 'location-scout-template.csv'), ('deal-memos', 'deal-memos-template.csv'), ('shooting-calendar', 'shooting-calendar-template.csv'), ('interview-prep', 'interview-questions-template.csv'), ('funder-crm', 'funder-crm-template.csv'), ('cash-flow', 'cash-flow-template.csv'), ('budget', 'budget-template.csv'), ('finance-plan', 'finance-plan-template.csv'), ('grant-calendar', 'grant-calendar-template.csv'), ('clearance-log', 'clearance-log-template.csv'), ('release-tracker', 'release-log-template.csv'),
+TEMPLATE_EXPORTS = [('festival-strategy', 'festival-strategy-template.csv'), ('fair-use-log', 'fair-use-template.csv'), ('license-tracker', 'licenses-template.csv'), ('clearance-report', 'clearance-report-template.csv'), ('chain-of-title', 'chain-of-title-template.csv'), ('structure-board', 'structure-board-template.csv'), ('cut-tracker', 'cut-notes-template.csv'), ('budget-to-actuals', 'cost-report-template.csv'), ('footage-log', 'footage-log-template.csv'), ('paper-edit', 'paper-edit-template.csv'), ('press-list', 'press-list-template.csv'), ('partner-crm', 'partner-crm-template.csv'), ('camera-sound-reports', 'camera-and-sound-reports-template.csv'), ('interview-log', 'interview-moments-template.csv'), ('travel-sheet', 'travel-sheet-template.csv'), ('risk-plan', 'risk-assessment-template.csv'), ('security-checklist', 'security-checklist-template.csv'), ('gear-list', 'gear-list-template.csv'), ('coi-permit-tracker', 'certificates-and-permits-template.csv'), ('location-scout', 'location-scout-template.csv'), ('deal-memos', 'deal-memos-template.csv'), ('shooting-calendar', 'shooting-calendar-template.csv'), ('interview-prep', 'interview-questions-template.csv'), ('funder-crm', 'funder-crm-template.csv'), ('cash-flow', 'cash-flow-template.csv'), ('budget', 'budget-template.csv'), ('finance-plan', 'finance-plan-template.csv'), ('grant-calendar', 'grant-calendar-template.csv'), ('clearance-log', 'clearance-log-template.csv'), ('release-tracker', 'release-log-template.csv'),
                     ('music-cue-sheet', 'music-cue-sheet-template.csv'), ('name-supers', 'name-supers-template.csv'),
                     ('subject-tracker', 'subject-tracker-template.csv'), ('research-log', 'research-log-template.csv'),
                     ('comps-tracker', 'comps-tracker-template.csv')]
@@ -2412,6 +2412,77 @@ def test_archive_log(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
+def test_festival_strategy(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'festival-strategy', fake)
+    open_sample(pg, fake)
+    rows = pg.locator('#rows .row').all_inner_texts()
+    check(len(rows) == 4 and 'Prairie Docs' in rows[0] and 'Riverbend' in rows[2], 'lists festivals in date order')
+    nl = pg.inner_text('[data-id="festival-northern-light"]')
+    check('World premiere' in nl and 'Prairie Docs screens first and ends this premiere' in nl, 'flags a premiere lost to an earlier festival')
+    check('Ends the premiere at Northern Light' in pg.inner_text('[data-id="festival-prairie"]'), 'flags the earlier festival too')
+    check('Northern Light' in pg.inner_text('#hear') and '$105.00' in pg.inner_text('#fees') and '$165.00' in pg.inner_text('#fees'), 'lists whose answer to wait for, and totals the fees')
+    pg.click('[data-edit="festival-riverbend"]'); pg.select_option('#f-premiere', 'city')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check('screens first' not in pg.inner_text('[data-id="festival-riverbend"]') and 'Riverbend premiere' in pg.inner_text('[data-id="festival-riverbend"]'), 'a city premiere in another city has no clash')
+    pg.click('#addBtn'); pg.fill('#f-name', 'Harbor Lights'); pg.select_option('#f-premiere', 'international'); pg.fill('#f-country', 'France'); pg.select_option('#f-region', 'Europe')
+    pg.fill('#f-start', '2027-06-01'); pg.fill('#f-end', '2027-05-01')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check(pg.is_visible('#editor'), 'an end date before the start is refused')
+    pg.fill('#f-end', '2027-06-07'); pg.fill('#f-fee', '50')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    harbor = pg.locator('#rows .row').filter(has=pg.locator('.nm', has_text='Harbor Lights')).inner_text()
+    check('Harbor Lights' in harbor and 'If Northern Light Film Festival takes it, you lose this premiere' in harbor, 'warns that a festival abroad could cost an international premiere')
+    pg.fill('#homeCountry', 'Canada'); pg.locator('#homeCountry').dispatch_event('change'); pg.wait_for_timeout(100)
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    check('Festival strategy' in pg.inner_text('#report') and 'Harbor Lights' in pg.inner_text('#report'), 'prints the run')
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    check(rows[0][:3] == ['Festival', 'Tier', 'Premiere'] and len(rows) == 6 and rows[1][0] == 'Prairie Docs', 'CSV lists the run in date order')
+    data = saved_project(pg, fake)
+    f = {x['name']: x for x in data['festivals']}
+    check(f['Harbor Lights']['fee'] == 50 and f['Harbor Lights']['premiere'] == 'international' and f['Riverbend Documentary Festival']['premiere'] == 'city'
+          and f['Riverbend Documentary Festival']['waiverCode'] == 'RIVER-WAIVE' and data['festivalStrategy']['homeCountry'] == 'Canada', 'saves festivals and keeps the submission tracker fields')
+    check(data['people'] == original['people'] and data['screenings'] == original['screenings'], 'other data is unchanged')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+def test_press_notes(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'press-notes', fake)
+    open_sample(pg, fake)
+    check('From the project' in pg.inner_text('[data-key="logline"]') and 'Written' in pg.inner_text('[data-key="directorStatement"]') and 'Not done yet' in pg.inner_text('[data-key="aboutProduction"]'), 'marks what is written, from the project or still to do')
+    check('Directed by Lena Ward' in pg.inner_text('[data-key="credits"]') and 'Prairie Docs' in pg.inner_text('[data-key="festivals"]') and 'Priya Nair (no bio yet)' in pg.inner_text('[data-key="bios"]'), 'pulls credits, festivals and bios from the project')
+    pg.click('[data-edit="bios"]'); pg.fill('[data-bio="person-priya-nair"]', 'Priya Nair edits documentaries.'); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check('Written' in pg.inner_text('[data-key="bios"]'), 'writes a bio')
+    pg.click('[data-edit="shortSynopsis"]'); pg.click('#useTreatment')
+    check(pg.input_value('#f-text').startswith('Riverside has flooded'), 'copies the treatment synopsis')
+    pg.fill('#f-text', 'A town remembers its floods.'); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    pg.click('[data-edit="aboutProduction"]'); pg.check('#f-hide'); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check('Left out' in pg.inner_text('[data-key="aboutProduction"]'), 'leaves a section out')
+    pg.click('#addBtn')
+    pg.set_input_files('#stillInput', files=[{'name': 'porch.png', 'mimeType': 'image/png', 'buffer': TINY_PNG}])
+    pg.wait_for_function("document.querySelectorAll('#stillList [data-still]').length === 2")
+    pg.fill('#still-cap-1', 'Ruth on her porch'); pg.fill('#still-cred-1', 'Lena Ward'); pg.click('[data-up="1"]')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check(pg.locator('#thumbs img').count() == 2 and pg.get_attribute('#thumbs img >> nth=0', 'alt') == 'Ruth on her porch', 'adds and orders stills')
+    pg.click('[data-edit="contacts"]'); pg.click('#addContactBtn'); pg.fill('#c-role-1', 'Publicist'); pg.fill('#c-name-1', 'Jo Park'); pg.fill('#c-email-1', 'jo@example.com')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    r = pg.inner_text('#report')
+    check('Press notes' in r and 'A town remembers its floods.' in r and 'Directed by' in r and 'Priya Nair edits documentaries.' in r and 'Photo: Lena Ward' in r and 'Jo Park' in r and 'About the production' not in r and '1.85:1' in r, 'prints the press notes')
+    data = saved_project(pg, fake)
+    pn = data['pressNotes']
+    new = next(a for a in data['assets'] if a['id'] == pn['stillIds'][0])
+    check(len(pn['stillIds']) == 2 and new['type'] == 'still' and new['photoCredit'] == 'Lena Ward' and new['data'].startswith('data:image/jpeg') and pn['hidden'] == ['aboutProduction']
+          and pn['shortSynopsis'] == 'A town remembers its floods.' and pn['contacts'][1]['name'] == 'Jo Park', 'saves the press notes and stills')
+    priya = next(p for p in data['people'] if p['id'] == 'person-priya-nair')
+    check(priya['bio'] == 'Priya Nair edits documentaries.' and [p for p in data['people'] if p['id'] != 'person-priya-nair'] == [p for p in original['people'] if p['id'] != 'person-priya-nair'], 'saves the bio with the person')
+    check(data['credits'] == original['credits'] and data['festivals'] == original['festivals'], 'other data is unchanged')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
 def test_template_columns(browser, fake):
     for name, template in TEMPLATE_EXPORTS:
         ctx, pg, errs = new_page(browser, name, fake)
@@ -2531,6 +2602,10 @@ def main():
         test_clearance_report(browser, fake)
         print('== chain-of-title / checklist, links and the binder')
         test_chain_of_title(browser, fake)
+        print('== festival-strategy / premiere clashes, fees and the run')
+        test_festival_strategy(browser, fake)
+        print('== press-notes / sections, bios, stills and print')
+        test_press_notes(browser, fake)
         print('== templates / columns match the tools\' exports')
         test_template_columns(browser, fake)
         browser.close()
