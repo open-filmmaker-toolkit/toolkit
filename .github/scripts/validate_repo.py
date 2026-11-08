@@ -340,6 +340,9 @@ for sample in sorted((ROOT / "samples").glob("*.oft.json")):
     for item in (data.get("chainOfTitle") or {}).get("items", []):
         if set(item.get("contractIds", [])) - {c.get("id") for c in data.get("contracts", [])} or set(item.get("assetIds", [])) - asset_ids:
             fail(f"{name}: chain-of-title item {item.get('key')} points to missing agreements or files")
+    press = data.get("pressNotes") if isinstance(data.get("pressNotes"), dict) else {}
+    if set(press.get("bioIds", [])) - ids["people"] or set(press.get("stillIds", [])) - asset_ids:
+        fail(f"{name}: press notes point to missing people or stills")
     security = data.get("security") if isinstance(data.get("security"), dict) else {}
     if set(security.get("personIds", [])) - ids["people"]:
         fail(f"{name}: security personIds points to missing people")

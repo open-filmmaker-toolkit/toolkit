@@ -95,7 +95,6 @@ The toolkit has two halves:
 | [Interview log](tools/interview-log/) | Production | Log interviews and their best moments. |
 | [Daily production report](tools/daily-production-report/) | Production | Report each shoot day's hours, footage and problems. |
 | [Expense log](tools/expense-log/) | Production | Log spending against the budget, with receipts. |
-| [Festival submission tracker](tools/festival-submissions/) | Launch | Track festival deadlines, fees and results. |
 | [Release tracker](tools/release-tracker/) | Production | Track who's signed a release and who hasn't. |
 | [Field journal](tools/field-journal/) | Production | Keep a dated production journal. |
 | [Footage log](tools/footage-log/) | Post-production | Catalog every clip so the editor can find it. |
@@ -111,12 +110,15 @@ The toolkit has two halves:
 | [License tracker](tools/license-tracker/) | Legal and clearances | Track license terms, payments and expiry dates. |
 | [Annotated-transcript clearance report](tools/clearance-report/) | Legal and clearances | Annotate the script for your E&O insurer. |
 | [Chain-of-title binder](tools/chain-of-title/) | Legal and clearances | Gather the rights documents a distributor needs. |
+| [Festival submission tracker](tools/festival-submissions/) | Marketing and festivals | Track festival deadlines, fees and results. |
 | [Press list](tools/press-list/) | Marketing and festivals | Track press contacts, screeners and coverage. |
+| [Festival strategy map](tools/festival-strategy/) | Marketing and festivals | Plan a festival run that protects your premiere. |
+| [EPK and press notes builder](tools/press-notes/) | Marketing and festivals | Build press notes from your project and print them. |
 | [Partner CRM](tools/partner-crm/) | Impact and outreach | Track impact partners and shared screenings. |
 | [Discussion guide builder](tools/discussion-guide/) | Impact and outreach | Make a screening handout with discussion questions. |
 | [Archive log](tools/archive-log/) | Close-out and archive | Track where each copy of your project lives. |
 
-All 46 are first versions: they work, and they're still changing. Everything else we plan to build is listed by production phase in [TOOLS.md](TOOLS.md).
+All 48 are first versions: they work, and they're still changing. Everything else we plan to build is listed by production phase in [TOOLS.md](TOOLS.md).
 
 ## How our tools work
 

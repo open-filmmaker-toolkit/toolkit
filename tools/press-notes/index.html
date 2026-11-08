@@ -1,0 +1,924 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EPK and press notes builder · Open Filmmaker Toolkit</title>
+<meta name="description" content="Build press notes and an electronic press kit: logline, synopses, director's statement, bios, credits, festivals, technical details, stills and press contacts, in the usual order, printed as a PDF. Pulls credits, people and festivals from your project. Runs in your browser; your data stays on your computer.">
+<style>
+:root {
+  --paper: #f1f3f2; --sheet: #ffffff; --ink: #1a2130; --ink-2: #4b556a; --ink-3: #6d778a;
+  --rule: #d4dad8; --rule-soft: #e6eae8; --hover: #f6f8f7; --focus: #2f6fdb;
+  --good: #2b7a57; --good-bg: #dff1e8; --warn: #8a5a00; --warn-bg: #fbf0d9; --bad: #b3392d; --bad-bg: #f8e1de;
+  --screen: #050506; --screen-ink: #f4f1ea; --screen-dim: #a7a29a;
+  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #141922; --sheet: #1b212b; --ink: #e6e9ee; --ink-2: #a6afbd; --ink-3: #8790a0;
+    --rule: #2f3744; --rule-soft: #262d38; --hover: #212834; --focus: #7aa7ff;
+    --good: #4fb386; --good-bg: #1a3329; --warn: #e2a531; --warn-bg: #3a2f17; --bad: #e26657; --bad-bg: #3b2220;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans); }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+[hidden] { display: none !important; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.foot { margin-top: 28px; font-size: 13px; color: var(--ink-3); }
+.cant-run { display: none; max-width: 640px; margin: 64px auto; padding: 0 24px; }
+.cant-run h1 { margin: 0 0 8px; font: 600 26px/1.2 var(--serif); }
+.cant-run p { margin: 0 0 10px; color: var(--ink-2); }
+.no-js .cant-run { display: block; }
+.no-js .page { display: none; }
+.page { max-width: 1240px; margin: 0 auto; padding: 0 24px 48px; }
+
+.masthead { display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: flex-end; justify-content: space-between; padding: 28px 0 20px; }
+.tool-name { margin: 0 0 2px; font-size: 14px; font-weight: 600; color: var(--ink-2); }
+.film-title { margin: 0; font: 600 32px/1.15 var(--serif); letter-spacing: -0.01em; overflow-wrap: anywhere; cursor: pointer; }
+.film-title.is-empty { color: var(--ink-3); font-style: italic; font-weight: 400; }
+.film-meta { margin: 4px 0 0; color: var(--ink-2); font-size: 14px; }
+.file { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.file-state { margin: 0; font-size: 13px; color: var(--ink-2); text-align: right; }
+.file-state .dirty { color: var(--warn); font-weight: 600; }
+.file-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; }
+.btn:hover { border-color: var(--ink-3); }
+.btn.primary { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.btn.primary:hover { opacity: 0.88; }
+.btn.danger { color: var(--bad); }
+.btn.small { padding: 4px 10px; font-size: 13px; }
+.link-btn { padding: 0; border: 0; background: none; cursor: pointer; color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; font-size: 14px; }
+.link-btn:hover { color: var(--ink); }
+
+.banner { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 0 0 16px; padding: 12px 16px; border-radius: 8px; background: var(--warn-bg); border: 1px solid color-mix(in srgb, var(--warn) 40%, transparent); }
+.banner p { margin: 0; flex: 1 1 280px; }
+.banner .actions { display: flex; gap: 8px; }
+
+.workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr); gap: 24px; align-items: start; }
+.col { display: grid; gap: 18px; min-width: 0; }
+.card { background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 18px; min-width: 0; }
+.card-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; margin: 0 0 6px; }
+.card-head h2 { margin: 0; font: 600 18px/1.3 var(--serif); }
+.card-head .count { font-size: 13px; color: var(--ink-2); }
+.card-head .spacer { flex: 1; }
+.card p.lead { margin: 0 0 8px; font-size: 14px; color: var(--ink-2); }
+
+/* Side cards */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 2px; padding: 0; list-style: none; }
+.chip { display: inline-flex; border: 1px solid var(--rule); border-radius: 999px; overflow: hidden; background: var(--paper); }
+.chip button { padding: 4px 10px; border: 0; background: none; cursor: pointer; font-size: 13px; font-weight: 600; }
+.chip button:hover { background: var(--hover); }
+.chip .sub { font-weight: 400; color: var(--ink-3); margin-left: 4px; }
+.empty-line { margin: 4px 0; color: var(--ink-2); font-size: 14px; }
+.changes { margin: 0; padding-left: 18px; font-size: 14px; }
+.changes li + li { margin-top: 2px; }
+
+/* The supers list */
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 10px; }
+.toolbar h2 { margin: 0 8px 0 0; font: 600 20px/1.2 var(--serif); }
+.toolbar .count { font-size: 13px; color: var(--ink-2); }
+.toolbar .spacer { flex: 1; }
+.rows { list-style: none; margin: 0; padding: 0; background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; }
+.row { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 2px 14px; align-items: start; padding: 10px 14px; }
+.row + .row { border-top: 1px solid var(--rule-soft); }
+.row:hover { background: var(--hover); }
+.row.is-selected { background: var(--hover); box-shadow: inset 3px 0 0 var(--ink); }
+.row .tc { font-variant-numeric: tabular-nums; font-size: 14px; color: var(--ink-2); padding-top: 1px; }
+.row .what { min-width: 0; padding: 0; border: 0; background: none; text-align: left; cursor: pointer; overflow-wrap: anywhere; }
+.row .what:hover .nm { text-decoration: underline; text-underline-offset: 2px; }
+.row .nm { display: block; font-weight: 600; }
+.row .tt { display: block; font-size: 14px; color: var(--ink-2); }
+.flags { grid-column: 2; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.flag { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 999px; font-size: 12.5px; font-weight: 600; }
+.flag.new { background: var(--good-bg); color: var(--good); }
+.flag.changed { background: var(--warn-bg); color: var(--warn); }
+.flag.problem { background: var(--bad-bg); color: var(--bad); }
+.flag.linked { background: var(--paper); color: var(--ink-3); font-weight: 500; border: 1px solid var(--rule); }
+.flag button { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+
+.empty { padding: 36px 24px; text-align: center; background: var(--sheet); border: 1px dashed var(--rule); border-radius: 8px; }
+.empty h2 { margin: 0 0 6px; font: 600 20px/1.3 var(--serif); }
+.empty p { margin: 0 auto 16px; max-width: 52ch; color: var(--ink-2); }
+.empty .actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+
+
+.workspace > * { min-width: 0; }
+.side { position: sticky; top: 16px; display: grid; gap: 18px; }
+.row { grid-template-columns: 34px minmax(0, 1fr) auto; }
+.row .rt { font-size: 13px; color: var(--ink-3); font-variant-numeric: tabular-nums; padding-top: 2px; }
+.row .st { font-size: 13px; font-weight: 600; white-space: nowrap; padding-top: 2px; }
+.row .tt { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.st-done { color: var(--good); }
+.st-from { color: var(--ink-2); }
+.st-todo { color: var(--warn); }
+.st-off { color: var(--ink-3); }
+.flags { grid-column: 2 / -1; }
+.todo { list-style: none; margin: 4px 0 0; padding: 0; }
+.todo li { padding: 6px 0; font-size: 14px; }
+.todo li + li { border-top: 1px solid var(--rule-soft); }
+.thumbs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 6px 0 0; }
+.thumbs img { display: block; width: 100%; aspect-ratio: 3 / 2; object-fit: cover; border-radius: 4px; background: var(--hover); }
+.pick { border: 1px solid var(--rule); border-radius: 8px; padding: 10px 12px; background: var(--sheet); display: grid; gap: 6px; }
+.pick + .pick { margin-top: 8px; }
+.pick label.chk { display: flex; gap: 8px; align-items: baseline; font-weight: 600; }
+.pick .sub { font-weight: 400; color: var(--ink-3); font-size: 13px; }
+.still { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 10px; align-items: start; }
+.still img { width: 100%; border-radius: 4px; display: block; }
+.still .acts { display: flex; gap: 6px; flex-wrap: wrap; }
+.contact { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.preview { margin: 0; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 8px; font-size: 14px; white-space: pre-wrap; max-height: 300px; overflow: auto; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.chkline { display: flex; gap: 8px; align-items: center; font-size: 14px; }
+@media (max-width: 720px) {
+  .two, .contact { grid-template-columns: 1fr; }
+  .still { grid-template-columns: 1fr; }
+  .row { grid-template-columns: 28px minmax(0, 1fr); }
+  .row .st { grid-column: 2; }
+  .flags { grid-column: 1 / -1; }
+}
+
+dialog { border: 0; padding: 0; color: var(--ink); background: var(--sheet); box-shadow: 0 10px 40px rgba(10, 14, 22, 0.25); }
+dialog::backdrop { background: rgba(16, 20, 28, 0.42); }
+dialog.drawer { margin: 0 0 0 auto; width: min(600px, 100vw); height: 100dvh; max-height: 100dvh; max-width: 100vw; border-left: 1px solid var(--rule); }
+dialog.modal { width: min(560px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); border-radius: 10px; }
+dialog form { display: flex; flex-direction: column; height: 100%; max-height: inherit; }
+.dlg-head { padding: 20px 24px 12px; border-bottom: 1px solid var(--rule-soft); }
+.dlg-head h2 { margin: 0; font: 600 22px/1.25 var(--serif); }
+.dlg-body { flex: 1; overflow-y: auto; padding: 16px 24px 24px; display: grid; gap: 14px; align-content: start; }
+.dlg-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 14px 24px; border-top: 1px solid var(--rule-soft); }
+.dlg-foot .spacer { flex: 1; }
+.field { display: grid; gap: 4px; }
+.field > label, .field > .label, .group h3 { font-size: 14px; font-weight: 600; margin: 0; }
+.hint { margin: 0; font-size: 13px; color: var(--ink-3); }
+.field input, .field select, .field textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); }
+.group { display: grid; gap: 8px; padding-top: 10px; border-top: 1px solid var(--rule-soft); }
+.checks { display: grid; gap: 2px; max-height: 260px; overflow-y: auto; padding: 2px; }
+.check { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; align-items: start; padding: 5px 4px; border-radius: 6px; cursor: pointer; }
+.check:hover { background: var(--hover); }
+.check input { width: 18px; height: 18px; margin: 2px 0 0; }
+.check .who { overflow-wrap: anywhere; }
+.check .sub { margin-left: 4px; font-size: 13px; color: var(--ink-3); }
+.check .lines { display: block; font-size: 13px; color: var(--ink-3); white-space: pre-line; }
+#songList, #sourceList { max-height: none; }
+.radio-row { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.radio-row label { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; cursor: pointer; }
+pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); font-size: 13px; white-space: pre-wrap; }
+
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); max-width: calc(100vw - 32px); padding: 10px 16px; border-radius: 8px; background: var(--ink); color: var(--paper); font-size: 14px; box-shadow: 0 6px 24px rgba(10, 14, 22, 0.25); z-index: 10; }
+.toast.error { background: var(--bad); color: #ffffff; }
+.report { display: none; }
+
+@media (max-width: 900px) {
+  .workspace { grid-template-columns: 1fr; }
+  .side { position: static; }
+}
+@media (max-width: 720px) {
+  .page { padding: 0 16px 40px; }
+  .film-title { font-size: 26px; }
+  .file { align-items: flex-start; }
+  .file-state { text-align: left; }
+  .toolbar h2 { flex-basis: 100%; order: -2; }
+  .toolbar #addBtn { flex: 1 1 100%; justify-content: center; order: -1; }
+  .row { grid-template-columns: minmax(0, 1fr); }
+  .flags { grid-column: 1; }
+}
+@media print {
+  @page { size: portrait; margin: 16mm; }
+  :root { color-scheme: light; }
+  body { background: #ffffff; color: #000000; font-size: 10pt; }
+  .page, dialog, .toast { display: none !important; }
+  .report { display: block; }
+  .report h1 { margin: 0; font: 700 18pt/1.2 var(--serif); }
+  .report h2 { margin: 14pt 0 4pt; font: 700 12pt/1.2 var(--serif); break-after: avoid; page-break-after: avoid; }
+  .report .r-meta { margin: 2pt 0 10pt; }
+  .report table { width: 100%; border-collapse: collapse; }
+  .report th, .report td { padding: 4pt 5pt; border-bottom: 0.75pt solid #999999; text-align: left; vertical-align: top; }
+  .report th { font-size: 9pt; border-bottom: 1pt solid #000000; }
+  .report tr { break-inside: avoid; page-break-inside: avoid; }
+  .report .r-sub { display: block; font-size: 8.5pt; color: #333333; }
+  .report .r-note { margin-top: 14pt; font-size: 8pt; color: #333333; }
+  .report .r-cover { text-align: center; padding-top: 30mm; break-after: page; page-break-after: always; }
+  .report .r-cover h1 { font-size: 30pt; }
+  .report .r-kind { margin: 4pt 0 14pt; font-size: 11pt; letter-spacing: 0.15em; text-transform: uppercase; }
+  .report .r-key { display: block; max-width: 100%; max-height: 95mm; margin: 0 auto 12pt; }
+  .report .r-logline { max-width: 130mm; margin: 0 auto 10pt; font-size: 12pt; font-style: italic; }
+  .report .r-contacts { display: flex; flex-wrap: wrap; justify-content: center; gap: 6pt 20pt; margin-top: 16pt; font-size: 9pt; text-align: left; }
+  .report .r-contacts p { margin: 0; }
+  .report .r-sec { break-inside: auto; }
+  .report .r-sec p { margin: 0 0 6pt; line-height: 1.45; }
+  .report h3 { margin: 8pt 0 2pt; font-size: 10.5pt; }
+  .report .r-credits th, .report .r-specs th { width: 38%; font-weight: 600; border-bottom: 0.75pt solid #999999; }
+  .report .r-credits .r-head { padding-top: 10pt; text-transform: uppercase; letter-spacing: 0.06em; }
+  .report .r-stills-sec { break-before: page; page-break-before: always; }
+  .report .r-stills { display: grid; grid-template-columns: 1fr 1fr; gap: 10pt; }
+  .report figure { margin: 0; break-inside: avoid; page-break-inside: avoid; }
+  .report figure img { display: block; width: 100%; }
+  .report figcaption { font-size: 8.5pt; margin-top: 2pt; }
+}
+</style>
+</head>
+<body>
+<div class="cant-run" id="cantRun">
+  <h1 id="cantRunTitle">Open this file in a web browser</h1>
+  <p id="cantRunText">This tool runs in Chrome, Edge, Firefox or Safari. You're seeing a preview that doesn't run it, so none of the buttons would work.</p>
+  <p id="cantRunHow">In your browser, choose File, then Open File, and pick this file. Or right-click the file and open it with your browser.</p>
+</div>
+<div class="page">
+  <header class="masthead">
+    <div>
+      <p class="tool-name">EPK and press notes builder</p>
+      <h1 class="film-title" id="filmTitle">Untitled film</h1>
+      <p class="film-meta"><span id="filmMeta"></span> <button type="button" class="link-btn" id="editProjectBtn">Edit film details</button></p>
+    </div>
+    <div class="file">
+      <p class="file-state" id="fileState">Not saved to a file yet</p>
+      <div class="file-actions">
+        <button type="button" class="btn" id="newBtn">New project</button>
+        <button type="button" class="btn" id="openBtn">Open file</button>
+        <button type="button" class="btn" id="projectCsvBtn">Export project data (CSV)</button>
+        <button type="button" class="btn primary" id="saveBtn">Save file</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="banner" id="recovery" role="region" aria-label="Unsaved work" hidden>
+    <p id="recoveryText"></p>
+    <div class="actions">
+      <button type="button" class="btn primary" id="restoreBtn">Restore it</button>
+      <button type="button" class="btn" id="discardBtn">Discard it</button>
+    </div>
+  </div>
+
+  <main class="workspace">
+    <section aria-labelledby="listHead">
+      <div class="toolbar">
+        <h2 id="listHead">Press notes</h2>
+        <span class="count" id="count"></span>
+        <span class="spacer"></span>
+        <button type="button" class="btn primary" id="addBtn">Add stills</button>
+      </div>
+      <ol class="rows" id="rows" aria-labelledby="listHead"></ol>
+    </section>
+
+    <div class="side">
+      <section class="card" aria-labelledby="printHead">
+        <div class="card-head"><h2 id="printHead">Print</h2></div>
+        <p class="lead">Print the press notes, or save them as a PDF from the print dialog. Sections you leave out, or that are empty, aren't printed.</p>
+        <div><button type="button" class="btn" id="printBtn">Print the press notes</button></div>
+      </section>
+      <section class="card" aria-labelledby="missHead">
+        <div class="card-head"><h2 id="missHead">Still to do</h2></div>
+        <ul class="todo" id="missing"></ul>
+      </section>
+      <section class="card" aria-labelledby="stillsHead">
+        <div class="card-head"><h2 id="stillsHead">Stills</h2><span class="count" id="stillCount"></span></div>
+        <div class="thumbs" id="thumbs"></div>
+        <p class="hint">The first still is used on the title page. Stills are kept in the project file.</p>
+      </section>
+    </div>
+  </main>
+
+  <footer class="foot">
+    <p>Part of the Open Filmmaker Toolkit. This page makes no network requests: everything stays on this computer until you save or export it. Uses the same project file as the other toolkit tools.</p>
+  </footer>
+</div>
+
+<dialog class="drawer" id="editor" aria-labelledby="editorTitle">
+  <form id="editorForm" method="dialog" novalidate>
+    <div class="dlg-head"><h2 id="editorTitle">Section</h2></div>
+    <div class="dlg-body">
+      <p class="hint" id="secHint"></p>
+      <div id="secBody"></div>
+      <label class="chkline"><input type="checkbox" id="f-hide"> Leave this section out</label>
+    </div>
+    <div class="dlg-foot">
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="editorCancel">Cancel</button>
+      <button type="submit" class="btn primary" id="editorSubmit">Save</button>
+    </div>
+  </form>
+</dialog>
+<input type="file" id="stillInput" accept="image/*" multiple hidden>
+
+<dialog class="modal" id="projectDialog" aria-labelledby="projectDialogTitle">
+  <form id="projectForm" method="dialog">
+    <div class="dlg-head"><h2 id="projectDialogTitle">Film details</h2></div>
+    <div class="dlg-body">
+      <div class="field"><label for="p-title">Film title</label><input id="p-title" type="text" placeholder="Working title is fine"></div>
+      <div class="field"><label for="p-company">Production company</label><input id="p-company" type="text"></div>
+      <div class="field"><label for="p-producer">Producer</label><input id="p-producer" type="text"></div>
+    </div>
+    <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn" id="projectCancel">Cancel</button><button type="submit" class="btn primary">Save details</button></div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="projectCsvDialog" aria-labelledby="projectCsvTitle">
+  <form id="projectCsvForm" method="dialog">
+    <div class="dlg-head"><h2 id="projectCsvTitle">Export project data</h2></div>
+    <div class="dlg-body">
+      <div class="field">
+        <label for="projectCsvCollection">Data to export</label>
+        <select id="projectCsvCollection">
+          <option value="project">Project details</option>
+          <option value="people">People</option>
+          <option value="locations">Locations</option>
+          <option value="thirdPartyElements">Third-party elements</option>
+          <option value="contracts">Contracts</option>
+          <option value="assets">Assets</option>
+          <option value="musicCueSheet">Music cue sheet details</option>
+          <option value="callSheets">Call sheets</option>
+        </select>
+      </div>
+      <p class="hint">Exports one CSV file for the selected collection. Nested values are kept as JSON in their cell.</p>
+    </div>
+    <div class="dlg-foot">
+      <button type="submit" class="btn primary">Export CSV</button>
+      <button type="button" class="btn" id="projectCsvCancel">Cancel</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="conflictDialog" aria-labelledby="conflictTitle">
+  <form method="dialog">
+    <div class="dlg-head"><h2 id="conflictTitle">Project file changed</h2></div>
+    <div class="dlg-body">
+      <p id="conflictText">This project file changed after you opened it. Saving will replace those changes.</p>
+      <p class="hint">Your edits are still here. Choose whether to overwrite the changed file, save a separate copy, or load its latest contents. Save in one tool at a time; simultaneous saves can still race.</p>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn" id="conflictReloadBtn">Reload latest</button>
+      <button type="button" class="btn" id="conflictCopyBtn">Save a copy</button>
+      <button type="button" class="btn danger" id="conflictOverwriteBtn">Overwrite file</button>
+      <button type="button" class="btn" id="conflictCancelBtn">Keep editing</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="report" id="report" aria-hidden="true"></div>
+<input type="file" id="fileInput" accept=".json,application/json" hidden>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+(() => {
+  'use strict';
+
+  const FORMAT = 'open-filmmaker-toolkit/project';
+  const FORMAT_VERSION = 1;
+  const TOOL = 'press-notes 0.1.0';
+  const DRAFT_KEY = 'oft.press-notes.draft';
+  const PROJECT_TEXT = ['title', 'company', 'producer'];
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const str = v => (v == null ? '' : String(v));
+  const arr = v => (Array.isArray(v) ? v : []);
+  const norm = s => str(s).toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+
+  let doc = blankDoc();
+  let fileHandle = null;
+  let baselineText = null;
+  let fileName = null;
+  let dirty = false;
+
+  function blankDoc() {
+    return { format: FORMAT, formatVersion: FORMAT_VERSION, project: { title: '', company: '', producer: '', frameRate: 24, currency: 'USD' }, people: [], assets: [] };
+  }
+  function newId(prefix) {
+    if (window.crypto && crypto.randomUUID) return `${prefix}-${crypto.randomUUID()}`;
+    return `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+  }
+  function today() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  function fmtDate(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str(iso));
+    if (!m) return str(iso);
+    return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+  function daysUntil(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str(iso));
+    if (!m) return null;
+    const t = new Date(); const a = Date.UTC(t.getFullYear(), t.getMonth(), t.getDate());
+    return Math.round((Date.UTC(+m[1], +m[2] - 1, +m[3]) - a) / 86400000);
+  }
+
+
+  // The sections, in the usual press notes order.
+  const SECTIONS = [
+    { key: 'logline', title: 'Logline', kind: 'text', from: 'logline', hint: 'One or two sentences, for the title page.' },
+    { key: 'shortSynopsis', title: 'Short synopsis', kind: 'text', from: 'shortSynopsis', hint: 'About 100 words, for programs and listings.' },
+    { key: 'longSynopsis', title: 'Long synopsis', kind: 'text', from: 'longSynopsis', hint: 'A page or so, for press.' },
+    { key: 'directorStatement', title: 'Director’s statement', kind: 'text', hint: 'Why you made the film, in your own voice.' },
+    { key: 'aboutProduction', title: 'About the production', kind: 'text', hint: 'How the film was made: access, the shoot, the archive, the music.' },
+    { key: 'bios', title: 'Key creatives', kind: 'bios', hint: 'Pick who to include. Bios are saved with each person, so other tools can use them.' },
+    { key: 'credits', title: 'Credits', kind: 'credits', hint: 'From the credits builder. Change the credits there.' },
+    { key: 'festivals', title: 'Festivals and screenings', kind: 'festivals', hint: 'Festivals marked accepted in the festival submission tracker, with their screenings.' },
+    { key: 'specs', title: 'Technical details', kind: 'specs', hint: 'The running time comes from the project.' },
+    { key: 'stills', title: 'Stills', kind: 'stills', hint: 'Add production stills. Give each a caption and a photo credit. The first one goes on the title page.' },
+    { key: 'contacts', title: 'Press contacts', kind: 'contacts', hint: 'Publicists, sales agents and the production.' },
+  ];
+  const SPECS = [['year', 'Year'], ['country', 'Country'], ['language', 'Language'], ['subtitles', 'Subtitles'], ['format', 'Shooting format'], ['aspectRatio', 'Aspect ratio'], ['sound', 'Sound']];
+  let editing = null;
+  let draftStills = [];
+  let draftContacts = [];
+
+  // Fills in only what this tool needs; everything else in the file is left as it was.
+  function normalize(d) {
+    if (!d.project || typeof d.project !== 'object') d.project = {};
+    for (const k of PROJECT_TEXT) if (typeof d.project[k] !== 'string') d.project[k] = str(d.project[k]);
+    for (const k of ['people', 'assets', 'festivals']) if (!Array.isArray(d[k])) d[k] = [];
+    if (d.pressNotes !== undefined && (typeof d.pressNotes !== 'object' || Array.isArray(d.pressNotes))) delete d.pressNotes;
+    d.format = FORMAT;
+    d.formatVersion = FORMAT_VERSION;
+    return d;
+  }
+  const P = () => (doc.pressNotes && typeof doc.pressNotes === 'object' ? doc.pressNotes : {});
+  function setP(k, v) {
+    const p = Object.assign({}, P());
+    const empty = v == null || v === '' || (Array.isArray(v) && !v.length) || (typeof v === 'object' && !Array.isArray(v) && !Object.keys(v).length);
+    if (empty) delete p[k]; else p[k] = v;
+    if (Object.keys(p).length) doc.pressNotes = p; else delete doc.pressNotes;
+  }
+  const hidden = key => arr(P().hidden).includes(key);
+  const T = () => (doc.treatment && doc.treatment.sections && typeof doc.treatment.sections === 'object' ? doc.treatment.sections : {});
+  const person = id => doc.people.find(p => p && p.id === id);
+  const asset = id => doc.assets.find(a => a && a.id === id);
+  // Text for a section: what you wrote here, or the treatment's as a starting point.
+  function textOf(s) { const own = str(P()[s.key]).trim(); if (own) return { text: own, from: false }; const t = s.from ? str(T()[s.from]).trim() : ''; return { text: t, from: !!t }; }
+  const bioPeople = () => arr(P().bioIds).map(person).filter(Boolean);
+  const stills = () => arr(P().stillIds).map(asset).filter(a => a && /^data:image\//.test(str(a.data)));
+  const contacts = () => arr(P().contacts).filter(c => c && (str(c.name).trim() || str(c.email).trim()));
+  // The credits builder's lines, as role and names. Music and archival blocks are left to the end credits.
+  function creditLines() {
+    const c = doc.credits && typeof doc.credits === 'object' ? arr(doc.credits.entries) : [];
+    return c.map(e => {
+      if (!e) return null;
+      if (e.kind === 'heading') return { heading: str(e.text) };
+      if (e.kind === 'text') return str(e.text).trim() ? { text: str(e.text) } : null;
+      if (e.kind === 'credit') { const names = [...arr(e.personIds).map(id => (person(id) || {}).name), ...arr(e.names)].filter(Boolean); return names.length ? { role: str(e.role), names } : null; }
+      return null;
+    }).filter(Boolean);
+  }
+  function festivalsIn() {
+    return doc.festivals.filter(f => f && f.status === 'accepted').map(f => ({ name: str(f.name), screenings: arr(f.screenings).filter(s => s && s.date).sort((a, b) => str(a.date).localeCompare(str(b.date))) }))
+      .sort((a, b) => str((a.screenings[0] || {}).date || '9999').localeCompare(str((b.screenings[0] || {}).date || '9999')));
+  }
+  const specs = () => Object.assign({}, P().specs && typeof P().specs === 'object' ? P().specs : {});
+  // What a section holds, for the list and the print: 'done', 'from' (the treatment or another tool), 'todo' or 'off'.
+  function state(s) {
+    if (hidden(s.key)) return 'off';
+    if (s.kind === 'text') { const t = textOf(s); return !t.text ? 'todo' : t.from ? 'from' : 'done'; }
+    if (s.kind === 'bios') return bioPeople().length ? (bioPeople().every(p => str(p.bio).trim()) ? 'done' : 'todo') : 'todo';
+    if (s.kind === 'credits') return creditLines().length ? 'from' : 'todo';
+    if (s.kind === 'festivals') return festivalsIn().length ? 'from' : 'todo';
+    if (s.kind === 'specs') return Object.values(specs()).some(v => str(v).trim()) || doc.project.runningTime ? 'done' : 'todo';
+    if (s.kind === 'stills') return stills().length ? 'done' : 'todo';
+    if (s.kind === 'contacts') return contacts().length ? 'done' : 'todo';
+    return 'todo';
+  }
+  const STATE = { done: 'Written', from: 'From the project', todo: 'Not done yet', off: 'Left out' };
+  function summary(s) {
+    if (s.kind === 'text') return textOf(s).text;
+    if (s.kind === 'bios') return bioPeople().map(p => p.name + (str(p.bio).trim() ? '' : ' (no bio yet)')).join(', ');
+    if (s.kind === 'credits') return creditLines().filter(l => l.role).slice(0, 4).map(l => `${l.role} ${l.names.join(', ')}`).join(' · ');
+    if (s.kind === 'festivals') return festivalsIn().map(f => f.name).join(', ');
+    if (s.kind === 'specs') { const v = specs(); return [doc.project.runningTime && `Running time ${doc.project.runningTime}`, ...SPECS.filter(([k]) => str(v[k]).trim()).map(([k, l]) => `${l} ${v[k]}`)].filter(Boolean).join(' · '); }
+    if (s.kind === 'stills') { const n = stills().length; return n ? `${n} still${n === 1 ? '' : 's'}${stills().some(a => !str(a.photoCredit).trim()) ? ', some without a photo credit' : ''}` : ''; }
+    if (s.kind === 'contacts') return contacts().map(c => [c.role, c.name].filter(Boolean).join(': ')).join(' · ');
+    return '';
+  }
+  const entries = () => SECTIONS.filter(s => state(s) === 'done' || state(s) === 'from');
+
+  // ---------- Render ----------
+  function render() {
+    $('filmTitle').textContent = doc.project.title || 'Untitled film';
+    $('filmTitle').classList.toggle('is-empty', !doc.project.title);
+    $('filmMeta').textContent = [doc.project.company, doc.project.producer && `Producer: ${doc.project.producer}`].filter(Boolean).join(' · ');
+    $('fileState').innerHTML = (fileName ? esc(fileName) : 'Not saved to a file yet') + (dirty ? ' · <span class="dirty">Unsaved changes</span>' : '');
+    document.title = `${doc.project.title ? doc.project.title + ' · ' : ''}EPK and press notes builder · Open Filmmaker Toolkit`;
+    const ready = entries().length, on = SECTIONS.filter(s => !hidden(s.key)).length;
+    $('count').textContent = `${ready} of ${on} section${on === 1 ? '' : 's'} ready`;
+    $('rows').innerHTML = SECTIONS.map((s, i) => {
+      const st = state(s), sum = summary(s), flags = [];
+      if (st === 'from' && s.kind === 'text') flags.push('<span class="flag linked">From the treatment</span>');
+      if (st === 'from' && s.kind === 'credits') flags.push('<span class="flag linked">From the credits builder</span>');
+      if (st === 'from' && s.kind === 'festivals') flags.push('<span class="flag linked">From the festival submission tracker</span>');
+      if (s.kind === 'text' && !hidden(s.key) && textOf(s).text) { const w = textOf(s).text.split(/\s+/).filter(Boolean).length; flags.push(`<span class="flag linked">${w} word${w === 1 ? '' : 's'}</span>`); }
+      return `<li class="row" data-key="${s.key}"><span class="rt">${i + 1}</span>
+        <button type="button" class="what" data-edit="${s.key}"><span class="nm">${esc(s.title)}</span>${sum && st !== 'off' ? `<span class="tt">${esc(sum)}</span>` : ''}</button>
+        <span class="st st-${st}">${STATE[st]}</span>${flags.length ? `<div class="flags">${flags.join('')}</div>` : ''}</li>`;
+    }).join('');
+    const miss = SECTIONS.filter(s => state(s) === 'todo');
+    $('missing').innerHTML = miss.length ? miss.map(s => `<li>${esc(s.title)}</li>`).join('') : '<li class="empty-line">Every section is ready or left out.</li>';
+    const st = stills();
+    $('stillCount').textContent = st.length ? String(st.length) : '';
+    $('thumbs').innerHTML = st.length ? st.map(a => `<img src="${esc(a.data)}" alt="${esc(a.caption || a.name)}">`).join('') : '<p class="hint" style="grid-column: 1 / -1">No stills yet.</p>';
+  }
+
+  // ---------- Editor ----------
+  const field = (id, label, value, rows) => rows
+    ? `<div class="field"><label for="${id}">${label}</label><textarea id="${id}" rows="${rows}">${esc(value)}</textarea></div>`
+    : `<div class="field"><label for="${id}">${label}</label><input id="${id}" type="text" autocomplete="off" value="${esc(value)}"></div>`;
+  function drawStills() {
+    $('stillList').innerHTML = draftStills.length ? draftStills.map((a, i) => `<div class="pick still" data-still="${i}"><img src="${esc(a.data)}" alt="">
+      <div>${field(`still-cap-${i}`, 'Caption', a.caption)}${field(`still-cred-${i}`, 'Photo credit', a.photoCredit)}
+      <div class="acts"><button type="button" class="btn" data-up="${i}"${i ? '' : ' disabled'}>Move up</button><button type="button" class="btn danger" data-del="${i}">Remove</button></div></div></div>`).join('') : '<p class="hint">No stills yet.</p>';
+  }
+  function keepStillText() { draftStills.forEach((a, i) => { if ($(`still-cap-${i}`)) { a.caption = $(`still-cap-${i}`).value; a.photoCredit = $(`still-cred-${i}`).value; } }); }
+  function drawContacts() {
+    $('contactList').innerHTML = draftContacts.map((c, i) => `<div class="pick"><div class="contact">${field(`c-role-${i}`, 'Role', c.role)}${field(`c-name-${i}`, 'Name', c.name)}${field(`c-org-${i}`, 'Company', c.company)}${field(`c-email-${i}`, 'Email', c.email)}${field(`c-phone-${i}`, 'Phone', c.phone)}</div>
+      <div class="acts"><button type="button" class="btn danger" data-cdel="${i}">Remove</button></div></div>`).join('') || '<p class="hint">No contacts yet.</p>';
+  }
+  function keepContactText() { draftContacts.forEach((c, i) => { if ($(`c-name-${i}`)) for (const [k, p] of [['role', 'c-role'], ['name', 'c-name'], ['company', 'c-org'], ['email', 'c-email'], ['phone', 'c-phone']]) c[k] = $(`${p}-${i}`).value; }); }
+  function openEditor(key) {
+    const s = SECTIONS.find(x => x.key === key); if (!s) return;
+    editing = s;
+    $('editorTitle').textContent = s.title;
+    $('secHint').textContent = s.hint;
+    $('f-hide').checked = hidden(s.key);
+    let body = '';
+    if (s.kind === 'text') {
+      const t = s.from ? str(T()[s.from]).trim() : '';
+      body = field('f-text', s.title, str(P()[s.key]), s.key === 'logline' ? 3 : 10) + (t ? `<p class="hint">The treatment has one. <button type="button" class="btn" id="useTreatment">Use the treatment’s</button></p>` : '');
+    } else if (s.kind === 'bios') {
+      const picked = arr(P().bioIds);
+      const ppl = [...doc.people.filter(p => p && p.id && picked.includes(p.id)).sort((a, b) => picked.indexOf(a.id) - picked.indexOf(b.id)), ...doc.people.filter(p => p && p.id && !picked.includes(p.id))];
+      body = ppl.length ? ppl.map(p => `<div class="pick"><label class="chk"><input type="checkbox" data-pick="${esc(p.id)}"${picked.includes(p.id) ? ' checked' : ''}> ${esc(p.name)} <span class="sub">${esc(arr(p.roles).join(', '))}</span></label>
+        <label class="sr-only" for="bio-${esc(p.id)}">Bio of ${esc(p.name)}</label><textarea id="bio-${esc(p.id)}" data-bio="${esc(p.id)}" rows="3" placeholder="A short bio">${esc(p.bio)}</textarea></div>`).join('') : '<p class="hint">Add people to the project first.</p>';
+    } else if (s.kind === 'credits') {
+      const l = creditLines();
+      body = `<pre class="preview">${esc(l.length ? l.map(x => x.heading ? `\n${x.heading.toUpperCase()}` : x.text ? x.text : `${x.role}: ${x.names.join(', ')}`).join('\n').trim() : 'No credits yet.')}</pre><p class="hint"><a href="../credits-builder/index.html">Open the credits builder</a></p>`;
+    } else if (s.kind === 'festivals') {
+      const f = festivalsIn();
+      body = `<pre class="preview">${esc(f.length ? f.map(x => [x.name, ...x.screenings.map(sc => `  ${fmtDate(sc.date)}${sc.venue ? `, ${sc.venue}` : ''}`)].join('\n')).join('\n') : 'No accepted festivals yet.')}</pre><p class="hint"><a href="../festival-submissions/index.html">Open the festival submission tracker</a></p>`;
+    } else if (s.kind === 'specs') {
+      const v = specs();
+      body = `<p class="hint">Running time: ${esc(doc.project.runningTime || 'not set; set it in the project details')}</p><div class="two">${SPECS.map(([k, l]) => field(`spec-${k}`, l, v[k])).join('')}</div>`;
+    } else if (s.kind === 'stills') {
+      draftStills = stills().map(a => ({ id: a.id, data: a.data, caption: str(a.caption), photoCredit: str(a.photoCredit) }));
+      body = '<div id="stillList"></div><p><button type="button" class="btn" id="addStillBtn">Add stills</button></p>';
+    } else if (s.kind === 'contacts') {
+      draftContacts = arr(P().contacts).filter(Boolean).map(c => Object.assign({}, c));
+      if (!draftContacts.length) draftContacts.push({ id: newId('press-contact') });
+      body = '<div id="contactList"></div><p><button type="button" class="btn" id="addContactBtn">Add a contact</button></p>';
+    }
+    $('secBody').innerHTML = body;
+    if (s.kind === 'stills') drawStills();
+    if (s.kind === 'contacts') drawContacts();
+    $('editor').showModal();
+  }
+  function saveEditor() {
+    const s = editing;
+    const h = arr(P().hidden).filter(k => k !== s.key);
+    if ($('f-hide').checked) h.push(s.key);
+    setP('hidden', h);
+    if (s.kind === 'text') setP(s.key, $('f-text').value.trim());
+    if (s.kind === 'bios') {
+      const ids = [];
+      for (const b of $('secBody').querySelectorAll('[data-pick]')) if (b.checked) ids.push(b.dataset.pick);
+      setP('bioIds', ids);
+      for (const t of $('secBody').querySelectorAll('[data-bio]')) {
+        const p = person(t.dataset.bio); if (!p) continue;
+        const v = t.value.trim();
+        if (v !== str(p.bio).trim()) { if (v) p.bio = v; else delete p.bio; }
+      }
+    }
+    if (s.kind === 'specs') { const v = specs(); for (const [k] of SPECS) { const x = $(`spec-${k}`).value.trim(); if (x) v[k] = x; else delete v[k]; } setP('specs', v); }
+    if (s.kind === 'stills') {
+      keepStillText();
+      const keep = new Set(draftStills.map(a => a.id));
+      const old = arr(P().stillIds);
+      doc.assets = doc.assets.filter(a => !(a && old.includes(a.id) && a.type === 'still' && !keep.has(a.id)));
+      for (const d of draftStills) {
+        let a = asset(d.id);
+        if (!a) { a = { id: d.id, name: d.name, type: 'still', mimeType: d.mimeType, data: d.data, width: d.width, height: d.height }; doc.assets.push(a); }
+        for (const k of ['caption', 'photoCredit']) { const v = str(d[k]).trim(); if (v) a[k] = v; else delete a[k]; }
+      }
+      setP('stillIds', draftStills.map(a => a.id));
+    }
+    if (s.kind === 'contacts') {
+      keepContactText();
+      const list = draftContacts.map(c => { const o = { id: c.id || newId('press-contact') }; for (const k of ['role', 'name', 'company', 'email', 'phone']) { const v = str(c[k]).trim(); if (v) o[k] = v; } return o; }).filter(c => c.name || c.email);
+      setP('contacts', list);
+    }
+    $('editor').close();
+    changed();
+  }
+  // Resizes an image to at most 1600 pixels on its long side, so the project file stays small enough to share.
+  function loadImage(file) {
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onerror = () => reject(r.error);
+      r.onload = () => {
+        const img = new Image();
+        img.onerror = () => reject(new Error('Not an image'));
+        img.onload = () => {
+          const scale = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight));
+          const w = Math.max(1, Math.round(img.naturalWidth * scale)), h = Math.max(1, Math.round(img.naturalHeight * scale));
+          const c = document.createElement('canvas'); c.width = w; c.height = h;
+          c.getContext('2d').drawImage(img, 0, 0, w, h);
+          resolve({ id: newId('still'), name: file.name, mimeType: 'image/jpeg', data: c.toDataURL('image/jpeg', 0.85), width: w, height: h, caption: '', photoCredit: '' });
+        };
+        img.src = r.result;
+      };
+      r.readAsDataURL(file);
+    });
+  }
+  async function addStills(files) {
+    keepStillText();
+    let bad = 0;
+    for (const f of files) { try { draftStills.push(await loadImage(f)); } catch (e) { bad++; } }
+    drawStills();
+    if (bad) toast(`${bad} file${bad === 1 ? '' : 's'} couldn't be read as an image`, true);
+  }
+
+  // ---------- Print ----------
+  const paras = t => str(t).split(/\n\s*\n/).map(p => p.trim()).filter(Boolean).map(p => `<p>${esc(p)}</p>`).join('');
+  function renderReport() {
+    const on = s => !hidden(s.key) && ['done', 'from'].includes(state(s));
+    const sec = Object.fromEntries(SECTIONS.map(s => [s.key, s]));
+    const st = stills(), v = specs(), pr = doc.project;
+    const facts = [pr.runningTime && `${pr.runningTime}`, v.year, v.country, v.language].filter(x => str(x).trim());
+    let h = `<section class="r-cover"><h1>${esc(pr.title || 'Untitled film')}</h1><p class="r-kind">Press notes</p>
+      ${on(sec.stills) && st[0] ? `<img class="r-key" src="${esc(st[0].data)}" alt="">` : ''}
+      ${on(sec.logline) ? `<p class="r-logline">${esc(textOf(sec.logline).text)}</p>` : ''}
+      ${facts.length ? `<p class="r-meta">${esc(facts.join(' · '))}</p>` : ''}
+      ${on(sec.contacts) ? `<div class="r-contacts">${contacts().map(c => `<p><b>${esc(c.role || 'Contact')}</b><br>${esc([c.name, c.company].filter(Boolean).join(', '))}${c.email ? `<br>${esc(c.email)}` : ''}${c.phone ? `<br>${esc(c.phone)}` : ''}</p>`).join('')}</div>` : ''}</section>`;
+    for (const k of ['shortSynopsis', 'longSynopsis', 'directorStatement', 'aboutProduction']) if (on(sec[k])) h += `<section class="r-sec"><h2>${esc(sec[k].title)}</h2>${paras(textOf(sec[k]).text)}</section>`;
+    if (on(sec.bios)) h += `<section class="r-sec"><h2>Key creatives</h2>${bioPeople().map(p => `<h3>${esc(p.name)}${arr(p.roles).length ? `, ${esc(arr(p.roles).join(', '))}` : ''}</h3>${paras(p.bio)}`).join('')}</section>`;
+    if (on(sec.credits)) h += `<section class="r-sec"><h2>Credits</h2><table class="r-credits"><tbody>${creditLines().map(l => l.heading ? `<tr><th colspan="2" class="r-head">${esc(l.heading)}</th></tr>` : l.text ? `<tr><td colspan="2">${esc(l.text)}</td></tr>` : `<tr><th>${esc(l.role)}</th><td>${esc(l.names.join(', '))}</td></tr>`).join('')}</tbody></table></section>`;
+    if (on(sec.festivals)) h += `<section class="r-sec"><h2>Festivals and screenings</h2>${festivalsIn().map(f => `<p><b>${esc(f.name)}</b>${f.screenings.map(s => `<br>${esc([fmtDate(s.date), s.time, s.venue].filter(Boolean).join(', '))}`).join('')}</p>`).join('')}</section>`;
+    if (on(sec.specs)) h += `<section class="r-sec"><h2>Technical details</h2><table class="r-specs"><tbody>${pr.runningTime ? `<tr><th>Running time</th><td>${esc(pr.runningTime)}</td></tr>` : ''}${SPECS.filter(([k]) => str(v[k]).trim()).map(([k, l]) => `<tr><th>${esc(l)}</th><td>${esc(v[k])}</td></tr>`).join('')}</tbody></table></section>`;
+    if (on(sec.stills)) h += `<section class="r-sec r-stills-sec"><h2>Stills</h2><div class="r-stills">${st.map(a => `<figure><img src="${esc(a.data)}" alt=""><figcaption>${esc(a.caption || '')}${a.photoCredit ? ` <i>Photo: ${esc(a.photoCredit)}</i>` : ''}</figcaption></figure>`).join('')}</div></section>`;
+    $('report').innerHTML = h;
+  }
+
+  // ---------- Project CSV ----------
+  function csvCell(v) {
+    let s = v == null ? '' : String(v);
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+    return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }
+  const csvCollections = {
+    project: 'project details', people: 'people', locations: 'locations', thirdPartyElements: 'third-party elements',
+    contracts: 'contracts', assets: 'assets', musicCueSheet: 'music cue sheet details', callSheets: 'call sheets'
+  };
+  function exportProjectCsv() {
+    const collection = $('projectCsvCollection').value;
+    const value = doc[collection];
+    const rows = Array.isArray(value) ? value : value && typeof value === 'object' ? [value] : [];
+    if (rows.some(row => !row || typeof row !== 'object' || Array.isArray(row))) {
+      toast(`Couldn't export ${csvCollections[collection]}: the project contains an invalid record.`, true);
+      return;
+    }
+    const headers = [...new Set(rows.flatMap(row => Object.keys(row)))];
+    if (!headers.length) headers.push('id');
+    const csvRows = rows.map(row => headers.map(key => { const cell = row[key]; return cell && typeof cell === 'object' ? JSON.stringify(cell) : cell; }));
+    const csv = '﻿' + [headers, ...csvRows].map(row => row.map(csvCell).join(',')).join('\r\n') + '\r\n';
+    const name = suggestedName().replace(/\.oft\.json$/i, `-${collection}.csv`);
+    download(csv, name, 'text/csv;charset=utf-8');
+    toast(`Exported ${rows.length} ${csvCollections[collection]} to ${name}`);
+  }
+
+  // ---------- Film details ----------
+  function openProjectDialog() {
+    for (const k of PROJECT_TEXT) $(`p-${k}`).value = doc.project[k] || '';
+    $('projectDialog').showModal();
+    $('p-title').focus();
+  }
+  function saveProjectDialog() {
+    for (const k of PROJECT_TEXT) doc.project[k] = $(`p-${k}`).value.trim();
+    $('projectDialog').close();
+    changed();
+  }
+
+  // ---------- Dirty state & recovery draft ----------
+  function changed() { dirty = true; saveDraft(); render(); }
+  function saveDraft() {
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ doc, fileName, baselineText, at: new Date().toISOString() })); } catch { /* the file on disk is the real copy */ }
+  }
+  function clearDraft() {
+    try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+    $('recovery').hidden = true;
+  }
+  function checkDraft() {
+    let draft = null;
+    try { draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); } catch { draft = null; }
+    if (!draft || !draft.doc || draft.doc.format !== FORMAT) return;
+    const n = draft.doc.pressNotes && typeof draft.doc.pressNotes === 'object' ? Object.values(draft.doc.pressNotes).filter(v => typeof v === 'string' && v.trim()).length : 0;
+    if (!n && !(draft.doc.project && draft.doc.project.title)) { clearDraft(); return; }
+    const when = draft.at ? new Date(draft.at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'earlier';
+    const title = draft.doc.project && draft.doc.project.title ? `"${draft.doc.project.title}"` : 'an untitled project';
+    $('recoveryText').textContent = `You have unsaved changes to ${title} from ${when} (${n} section${n === 1 ? '' : 's'}). Restore them, or discard them and start fresh.`;
+    $('recovery').hidden = false;
+    $('restoreBtn').onclick = () => {
+      doc = normalize(draft.doc); fileName = draft.fileName || null; fileHandle = null;
+      baselineText = typeof draft.baselineText === 'string' ? draft.baselineText : null; dirty = true;
+      $('recovery').hidden = true; render();
+      toast(fileName ? `Restored. Save to write the changes back to ${fileName}.` : 'Restored. Save to keep it as a file.');
+    };
+    $('discardBtn').onclick = () => { clearDraft(); toast('Discarded the unsaved changes.'); };
+  }
+
+  // ---------- Files ----------
+  const pickerTypes = [{ description: 'Film project file', accept: { 'application/json': ['.json'] } }];
+  function slug() {
+    return (doc.project.title || 'untitled-film').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'untitled-film';
+  }
+  const suggestedName = () => `${slug()}.oft.json`;
+  function serialize() {
+    doc.savedAt = new Date().toISOString();
+    doc.savedBy = TOOL;
+    return JSON.stringify(doc, null, 2) + '\n';
+  }
+  function download(text, name, type) {
+    const url = URL.createObjectURL(new Blob([text], { type }));
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  function afterSave(name, downloaded, content) {
+    fileName = name;
+    if (downloaded) fileHandle = null;
+    baselineText = content;
+    dirty = false; clearDraft(); render();
+    toast(downloaded ? `Downloaded ${name}. Keep it with your project files and open it here next time.` : `Saved to ${name}`);
+  }
+  async function writeProjectFile(handle, content) {
+    try {
+      const writable = await handle.createWritable();
+      await writable.write(content);
+      await writable.close();
+    } catch (err) {
+      if (err.name !== 'AbortError') toast(`Couldn't save the file: ${err.message}`, true);
+      return;
+    }
+    fileHandle = handle;
+    afterSave(handle.name, false, content);
+  }
+  function saveCopy(content) {
+    const base = (fileName || suggestedName()).replace(/\.oft\.json$/i, '');
+    const name = `${base}-copy.oft.json`;
+    download(content, name, 'application/json');
+    afterSave(name, true, content);
+  }
+  async function reloadLatest(handle) {
+    try {
+      const file = await handle.getFile();
+      loadText(await file.text(), handle.name, handle);
+    } catch (err) {
+      toast(`Couldn't reload the file: ${err.message}`, true);
+    }
+  }
+  function showConflictDialog(content, observedText, unknownBaseline = false) {
+    const handle = fileHandle;
+    dirty = true;
+    saveDraft();
+    render();
+    $('conflictText').textContent = unknownBaseline
+      ? `The tool can't verify whether ${handle.name} changed since your recovery copy was made. Your edits are not saved.`
+      : `${handle.name} changed after you opened it. Your edits are not saved. Overwriting replaces the newer file.`;
+    $('conflictDialog').showModal();
+    $('conflictReloadBtn').onclick = () => { $('conflictDialog').close(); reloadLatest(handle); };
+    $('conflictCopyBtn').onclick = () => { $('conflictDialog').close(); saveCopy(content); };
+    $('conflictOverwriteBtn').onclick = async () => {
+      $('conflictDialog').close();
+      let latestText;
+      try { latestText = await (await handle.getFile()).text(); }
+      catch (err) { toast(`Couldn't check the file before overwriting: ${err.message}`, true); return; }
+      if (latestText !== observedText) {
+        toast('The file changed again. Review the updated conflict warning before overwriting.', true);
+        showConflictDialog(content, latestText);
+        return;
+      }
+      await writeProjectFile(handle, content);
+    };
+    $('conflictCancelBtn').onclick = () => $('conflictDialog').close();
+  }
+  async function saveFile() {
+    const out = serialize();
+    if (fileHandle) {
+      let currentText;
+      try { currentText = await (await fileHandle.getFile()).text(); }
+      catch (err) { toast(`Couldn't check the file before saving: ${err.message}`, true); return; }
+      if (baselineText === null || currentText !== baselineText) { showConflictDialog(out, currentText, baselineText === null); return; }
+      await writeProjectFile(fileHandle, out);
+      return;
+    }
+    if (window.showSaveFilePicker && window.self === window.top) {
+      try {
+        const h = await window.showSaveFilePicker({ suggestedName: fileName || suggestedName(), types: pickerTypes });
+        if (h.name === fileName) {
+          const currentText = await (await h.getFile()).text();
+          if (baselineText === null || currentText !== baselineText) { fileHandle = h; showConflictDialog(out, currentText, baselineText === null); return; }
+        }
+        await writeProjectFile(h, out);
+      } catch (err) { if (err.name !== 'AbortError') toast(`Couldn't save the file: ${err.message}`, true); }
+      return;
+    }
+    const name = fileName || suggestedName();
+    download(out, name, 'application/json');
+    afterSave(name, true, out);
+  }
+  function loadText(text, name, handle) {
+    let data;
+    try { data = JSON.parse(text); } catch { toast(`Couldn't open ${name}: it isn't a project file.`, true); return; }
+    if (!data || data.format !== FORMAT) { toast(`Couldn't open ${name}: it isn't an Open Filmmaker Toolkit project file.`, true); return; }
+    if (Number(data.formatVersion) > FORMAT_VERSION) { toast(`Couldn't open ${name}: it was saved by a newer version of the toolkit. Get the latest version of this tool.`, true); return; }
+    doc = normalize(data); fileHandle = handle; baselineText = text; fileName = name; dirty = false;
+    clearDraft(); render();
+    const n = entries().length;
+    toast(`Opened ${name}: ${n ? `${n} section${n === 1 ? '' : 's'} ready` : 'no sections ready yet'}`);
+  }
+  async function openFile() {
+    if (dirty && !confirm('You have unsaved changes. Open another file and lose them?')) return;
+    if (window.showOpenFilePicker && window.self === window.top) {
+      try { const [h] = await window.showOpenFilePicker({ types: pickerTypes }); const f = await h.getFile(); loadText(await f.text(), f.name, h); }
+      catch (err) { if (err.name !== 'AbortError') toast(`Couldn't open the file: ${err.message}`, true); }
+      return;
+    }
+    $('fileInput').click();
+  }
+  function newProject() {
+    if (dirty && !confirm('You have unsaved changes. Start a new project and lose them?')) return;
+    doc = normalize(blankDoc()); fileHandle = null; baselineText = null; fileName = null; dirty = false;
+    clearDraft(); render(); openProjectDialog();
+  }
+
+  let toastTimer = null;
+  function toast(msg, isError) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.classList.toggle('error', !!isError);
+    t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.hidden = true; }, isError ? 7000 : 4200);
+  }
+
+  // ---------- Wiring ----------
+  function init() {
+    doc = normalize(doc);
+    $('newBtn').onclick = newProject;
+    $('openBtn').onclick = openFile;
+    $('saveBtn').onclick = saveFile;
+    $('editProjectBtn').onclick = openProjectDialog;
+    $('filmTitle').onclick = openProjectDialog;
+    $('printBtn').onclick = () => { renderReport(); window.print(); };
+    window.addEventListener('beforeprint', renderReport);
+    $('projectCsvBtn').onclick = () => $('projectCsvDialog').showModal();
+    $('projectCsvCancel').onclick = () => $('projectCsvDialog').close();
+    $('projectCsvForm').addEventListener('submit', ev => { ev.preventDefault(); exportProjectCsv(); $('projectCsvDialog').close(); });
+    $('fileInput').addEventListener('change', async () => {
+      const f = $('fileInput').files[0];
+      if (f) loadText(await f.text(), f.name, null);
+      $('fileInput').value = '';
+    });
+    $('projectForm').addEventListener('submit', ev => { ev.preventDefault(); saveProjectDialog(); });
+    $('projectCancel').onclick = () => $('projectDialog').close();
+    $('addBtn').onclick = () => openEditor('stills');
+    $('rows').addEventListener('click', ev => { const b = ev.target.closest('[data-edit]'); if (b) openEditor(b.dataset.edit); });
+    $('secBody').addEventListener('click', ev => {
+      const t = ev.target;
+      if (t.id === 'useTreatment') { $('f-text').value = str(T()[editing.from]); return; }
+      if (t.id === 'addStillBtn') { $('stillInput').click(); return; }
+      if (t.id === 'addContactBtn') { keepContactText(); draftContacts.push({ id: newId('press-contact') }); drawContacts(); return; }
+      if (t.dataset.del != null) { keepStillText(); draftStills.splice(+t.dataset.del, 1); drawStills(); return; }
+      if (t.dataset.up != null) { keepStillText(); const i = +t.dataset.up; if (i > 0) [draftStills[i - 1], draftStills[i]] = [draftStills[i], draftStills[i - 1]]; drawStills(); return; }
+      if (t.dataset.cdel != null) { keepContactText(); draftContacts.splice(+t.dataset.cdel, 1); drawContacts(); }
+    });
+    $('stillInput').addEventListener('change', async () => { const files = [...$('stillInput').files]; $('stillInput').value = ''; if (files.length) await addStills(files); });
+    $('editorForm').addEventListener('submit', ev => { ev.preventDefault(); saveEditor(); });
+    $('editorCancel').onclick = () => $('editor').close();
+
+    document.addEventListener('keydown', ev => {
+      const mod = ev.metaKey || ev.ctrlKey;
+      if (mod && ev.key.toLowerCase() === 's') { ev.preventDefault(); saveFile(); }
+      else if (mod && ev.key.toLowerCase() === 'o') { ev.preventDefault(); openFile(); }
+    });
+    window.addEventListener('beforeunload', ev => { if (dirty) { ev.preventDefault(); ev.returnValue = ''; } });
+    render();
+    checkDraft();
+  }
+
+  if (typeof HTMLDialogElement !== 'function' || typeof HTMLDialogElement.prototype.showModal !== 'function' || typeof structuredClone !== 'function') {
+    $('cantRunTitle').textContent = 'This browser is too old to run this tool';
+    $('cantRunText').textContent = 'Update to a current version of Chrome, Edge, Firefox or Safari, then open this file again.';
+    $('cantRunHow').hidden = true;
+    return;
+  }
+  document.documentElement.classList.remove('no-js');
+  window.addEventListener('error', ev => toast(`Something went wrong: ${ev.message}. Save your work, then reload the page.`, true));
+  window.addEventListener('unhandledrejection', ev => toast(`Something went wrong: ${ev.reason && ev.reason.message ? ev.reason.message : ev.reason}. Save your work, then reload the page.`, true));
+  init();
+})();
+</script>
+</body>
+</html>

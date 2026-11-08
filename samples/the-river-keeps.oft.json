@@ -23,7 +23,8 @@
         "Producer"
       ],
       "email": "ana@example.org",
-      "notes": "Fictional sample contact."
+      "notes": "Fictional sample contact.",
+      "bio": "Ana Reyes produces documentaries through Lowwater Films."
     },
     {
       "id": "person-daniel-okafor",
@@ -67,7 +68,8 @@
       "roles": [
         "Director"
       ],
-      "notes": "Fictional sample crew."
+      "notes": "Fictional sample crew.",
+      "bio": "Lena Ward is a documentary director from the river valley. The River Keeps is her first feature."
     },
     {
       "id": "person-priya-nair",
@@ -923,6 +925,17 @@
       "name": "E&O certificate",
       "type": "chain of title document",
       "relativePath": "legal/eo-certificate-2026.pdf"
+    },
+    {
+      "id": "asset-still-levee",
+      "name": "still-levee.jpg",
+      "type": "still",
+      "mimeType": "image/jpeg",
+      "data": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAA0JCgsKCA0LCgsODg0PEyAVExISEyccHhcgLikxMC4pLSwzOko+MzZGNywtQFdBRkxOUlNSMj5aYVpQYEpRUk//2wBDAQ4ODhMREyYVFSZPNS01T09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0//wAARCAGrAoADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDp6KSitzEWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAKKKKQHitFFaOgaRLrmsQafC4jMhJZyM7VAyTisTYzqK7G+0rwbp+pPpt1f6sJom2yTKiGMH6YzXMX1vFFqc9tYyG5iWQrE4GS4zweKAKtFXZdH1SCEzTabeRxAZLvAw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ikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAKKSikMWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAKKKKQBRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRSUUDFopKKAFopKKAFopKKAFopKKAFopKKAFopKKAFopKKAFopKKAFopKKAFopKKAFopKKAFopKKAFopKKAFopKKAFopKKAFopKKAFopKKAFopKKAFopKKAFopKKAFopKKAFopKKAFopKKAFopKKAFopKKAFopKKAFopKKAFopKKAFopKKAFopKKAFopKKAFopKKAFopKKAFopKKAFopKKAFopKKAFopKKAFopKKAFopKKACiiikAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAlFFFIAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigBKKKKQwooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigBKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACikopDFopKKAFopKKAFopKKAFopKKAFopKKAFopKKAFopKKAFopKKAFopKKAFopKKAFopKKAFopKKAFoqOSaOLHmyImem5gM1W/tSz3AeacY67TQBdoqtHfWsi5WdAM4+Y7f51YoAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAWikooAKKSikAtFJRQAtFJRQAtFJRQAtFJRQAtFJRQAtFJRQAtFJRQAtFJRQAtFRySxxY8yREz03MBmqkmrWiY2l3z/dXp+eKAL9FYkmtSHHlwovruJP+FVJL+7kxuncY/u/L/KgVzo5JYoseZIiZ6bmAzVOTVrRMbS75/ur0/PFc/RQFzVk1uU48qFF9dxJ/wqnJf3cmN07jH935f5VWooEFFFFABTkdkYMjFWHQg4NNooAsx393HnbO5z/e+b+dWI9YuVCh1RwDySME1nUUAbUetoW/eQMox1Vs/wCFTx6taOuWdkOejKf6ZrnqKB3OqS4gdgqTRsx6AMCalrkKfHLJFny5HTPXaxGaAudZRXNx6ldxhQJSwHZgDn8etWU1qYN+8iRh6Lkf40Bc26Ky01qEr+8idT6Lg/4VZTUbN2CicZPqCB+ZoGW6Kjjljlz5ciPjrtYHFPoAWikooAWikooAWikooAWikooAWikooAWikooAWiko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AooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKXFGKw9vA19lISilxRij28A9lISilxRij28A9lISilxRij28A9lISilxRij28A9lISilxRij28A9lISilxRij28A9lISilxRij28A9lISilxRij28A9lISilxRij28A9lISilxRij28A9lISilxRij28A9lISilxRij28A9lISilxRij28A9lISilxRij28A9lISilxRij28A9lISilxRij28A9lISilxRij28A9lISilxRij28A9lISilxRij28A9lISilxRij28A9lISilxRij28A9lISilxRij28A9lISilxRij28A9lISilxRij28A9lISilxRij28A9lISilxRij28A9lISilxRij28A9lISilxRij28A9lISilxRij28A9lISilxRij28A9lISilxRij28A9lISilxRij28A9lISilxRij28A9lISilxRij28A9lISilxRij28A9lISilxRij28A9lISilxRij28A9lISilxRij28A9lISilxRij28A9lIKKKK4jqCiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigQUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFJRQAtFJRQAtFJRQAtFJRQAtFJRQAtFJRQAtFJRQAtFJRQAtFJRQAtFJRQAtFJRQAtFJRQAtFJRQAtFJRQAtFJRQAtFJRQAtFJRQAtFJRQAtFJRQAtFJRQAtFJRQAtFJRQAtFJRQAtFJRQAtFJRQAtFJRQAtFJRQAtFJRQAtFJRQAtFJRQAtFJRQAtFJRQAtFJRQAtFJRQAtFJRQAtFJRQAtFJRQAtFJRQAtFJRQAtFJRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFAH/9k=",
+      "width": 640,
+      "height": 427,
+      "caption": "The levee road at dusk",
+      "photoCredit": "Teo Ramirez"
     }
   ],
   "musicCueSheet": {
@@ -3781,7 +3794,15 @@
       "fee": 60,
       "waiverCode": "RIVER-WAIVE",
       "status": "planned",
-      "notes": "Fictional sample festival."
+      "notes": "Fictional sample festival.",
+      "tier": 2,
+      "premiere": "national",
+      "city": "Riverbend",
+      "country": "United States",
+      "region": "North America",
+      "startDate": "2027-05-12",
+      "endDate": "2027-05-16",
+      "notifyDate": "2027-03-20"
     },
     {
       "id": "festival-northern-light",
@@ -3790,7 +3811,15 @@
       "deadline": "2026-12-01",
       "fee": 45,
       "status": "submitted",
-      "submittedOn": "2026-10-20"
+      "submittedOn": "2026-10-20",
+      "tier": 1,
+      "premiere": "world",
+      "city": "Northfield",
+      "country": "Canada",
+      "region": "North America",
+      "startDate": "2027-04-22",
+      "endDate": "2027-05-02",
+      "notifyDate": "2027-02-15"
     },
     {
       "id": "festival-prairie",
@@ -3808,7 +3837,14 @@
           "venue": "Prairie Theater (fictional)",
           "note": "Q&A after"
         }
-      ]
+      ],
+      "tier": 3,
+      "premiere": "none",
+      "city": "Prairie City",
+      "country": "United States",
+      "region": "North America",
+      "startDate": "2027-03-10",
+      "endDate": "2027-03-14"
     },
     {
       "id": "festival-eastgate",
@@ -3816,7 +3852,12 @@
       "deadline": "2026-08-15",
       "fee": 25,
       "status": "declined",
-      "submittedOn": "2026-08-01"
+      "submittedOn": "2026-08-01",
+      "tier": 4,
+      "premiere": "none",
+      "city": "Eastgate",
+      "country": "United States",
+      "region": "North America"
     }
   ],
   "screenings": [
@@ -4442,6 +4483,38 @@
         "assetIds": [
           "asset-eo-certificate"
         ]
+      }
+    ]
+  },
+  "festivalStrategy": {
+    "homeCountry": "United States",
+    "homeRegion": "North America"
+  },
+  "pressNotes": {
+    "directorStatement": "I grew up downstream from Riverside. This film is about what a town remembers, and who does the remembering.",
+    "bioIds": [
+      "person-lena-ward",
+      "person-ana-reyes",
+      "person-priya-nair"
+    ],
+    "stillIds": [
+      "asset-still-levee"
+    ],
+    "specs": {
+      "year": "2026",
+      "country": "United States",
+      "language": "English",
+      "format": "Digital, color",
+      "aspectRatio": "1.85:1",
+      "sound": "5.1"
+    },
+    "contacts": [
+      {
+        "id": "press-contact-lowwater",
+        "role": "Production",
+        "name": "Ana Reyes",
+        "company": "Lowwater Films",
+        "email": "ana@example.com"
       }
     ]
   }
