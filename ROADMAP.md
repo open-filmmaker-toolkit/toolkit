@@ -27,6 +27,8 @@ Each milestone below is a [GitHub milestone](https://github.com/open-filmmaker-t
 - [x] Publish it as a JSON Schema with a sample project ([#14](https://github.com/open-filmmaker-toolkit/toolkit/issues/14))
 - [x] Build save and load to a file on disk, with export to CSV ([#15](https://github.com/open-filmmaker-toolkit/toolkit/issues/15))
 - [x] Decide how tools handle a file edited by two people: warn on conflict, with reload, save a copy or explicit overwrite ([#16](https://github.com/open-filmmaker-toolkit/toolkit/issues/16))
+- [x] Work together on a file in a synced folder: a [guide](docs/sharing-a-project.md), a warning when someone else has the file open, merging two copies or your changes with the file's, and spotting conflicted copies ([#151](https://github.com/open-filmmaker-toolkit/toolkit/issues/151))
+- [x] Record who changed each record and when ([#153](https://github.com/open-filmmaker-toolkit/toolkit/issues/153))
 
 ## Milestone 3: The clearances core
 
@@ -49,6 +51,7 @@ Three tools on one data model. This is the documentary-specific gap.
 The home page becomes a place to work, not just a list. Each step gets an issue before work starts.
 
 - [x] First version: every tool by stage and phase, workflows that show how the tools connect, search, and planned tools linked to their issues
+- [x] Chrome and Edge remember the open file, so the next tool opens it with one click ([#148](https://github.com/open-filmmaker-toolkit/toolkit/issues/148))
 - [ ] Open a project once in the hub and move between tools without opening and saving the file in each
 - [ ] Show what's in the open project, such as "14 cues, no clearance items yet", from the tools' own checks
 - [ ] Install the hub as an app for offline use

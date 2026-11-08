@@ -13,6 +13,9 @@ file picker API; its handles are faked in memory) and renders a real PDF.
 chromium-fallback, Firefox and WebKit (Safari's engine) use the download/upload fallback instead.
 The call sheet, release tracker, credits builder, name supers list, subject tracker, research and archival log, comps tracker, treatment builder, pitch deck builder and archive log also get end-to-end checks
 of their own, and the spreadsheet templates are checked against the tools' exports.
+The shared code in every tool (shared/tool.js) is checked on the name supers list: merging two copies,
+merging in the save warning, who changed what, who has the file open, conflicted copies, and
+remembering the open file across tools (served over HTTP so the browser gives real file handles).
 """
 import base64, datetime, csv, io, json, os, pathlib, re, sys, tempfile
 from playwright.sync_api import sync_playwright
@@ -2931,6 +2934,135 @@ def test_roundtrip(browser, fake):
         ctx.close()
     check(not changed_by, 'opening and saving the sample without changes keeps it as it was, in every tool %s' % changed_by)
 
+def copy_with(**changes):
+    d = json.loads(sample)
+    for k, v in changes.items():
+        if k == 'title':
+            d['project']['title'] = v
+        elif k == 'person':
+            d['people'].append(v)
+        elif k == 'openBy':
+            d['openBy'] = v
+    return json.dumps(d, indent=2) + '\n'
+
+def choose_copy(pg, button, name, text):
+    with pg.expect_file_chooser() as fc:
+        pg.click(button)
+    fc.value.set_files(files=[{'name': name, 'mimeType': 'application/json', 'buffer': text.encode()}])
+    pg.wait_for_timeout(200)
+
+def merged_result(pg, fake):
+    if fake:
+        pg.click('#oftMergeSave'); pg.wait_for_timeout(300)
+        return json.loads(pg.evaluate('window.__file.text'))
+    with pg.expect_download() as d:
+        pg.click('#oftMergeSave')
+    return json.loads(open(d.value.path(), encoding='utf-8').read())
+
+def test_shared_file(browser, fake):
+    newcomer = {'id': 'person-new-merge', 'name': 'Teodora Vance', 'roles': ['Editor']}
+    ctx, pg, errs = new_page(browser, 'name-supers', fake)
+    open_sample(pg, fake)
+    check(pg.is_visible('#oftNameBtn') and pg.is_visible('#oftMergeBtn'), 'name and merge buttons sit with the file buttons')
+    pg.click('#oftMergeBtn')
+    check('The open file' in pg.inner_text('#oftMergeA'), 'merging starts from the open file')
+    choose_copy(pg, '#oftMergeBBtn', 'other.oft.json', copy_with(person=newcomer))
+    text = pg.inner_text('#oftMergeResult')
+    check('Added in other.oft.json: Teodora Vance' in text and 'Nothing clashes' in text, 'a merge without conflicts lists what the other copy added')
+    out = merged_result(pg, fake)
+    check(any(p['id'] == 'person-new-merge' for p in out['people']) and out['project']['title'] == 'The River Keeps' and 'supers' in out, 'the merged file keeps both copies')
+    pg.click('#oftMergeBtn')
+    choose_copy(pg, '#oftMergeABtn', 'mine.oft.json', copy_with(title='Mine'))
+    choose_copy(pg, '#oftMergeBBtn', 'theirs.oft.json', copy_with(title='Theirs', person=newcomer))
+    text = pg.inner_text('#oftMergeResult')
+    check('1 thing changed in both' in text and 'Mine' in text and 'Theirs' in text, 'a conflict shows both versions side by side')
+    pg.check('.oft-conflict input[value="b"]')
+    out = merged_result(pg, fake)
+    check(out['project']['title'] == 'Theirs' and any(p['id'] == 'person-new-merge' for p in out['people']), 'the chosen version and the other copy\'s additions are saved')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+    if not fake:
+        return
+    # Who changed what, and merging in the save-conflict warning
+    ctx, pg, errs = new_page(browser, 'name-supers', fake, "localStorage.setItem('oft-user-name', 'Sam');")
+    open_sample(pg, fake)
+    pg.click('[data-edit="super-ruth"]')
+    pg.fill('#f-title', 'Retired teacher, Riverside'); pg.click('#editorSubmit'); pg.wait_for_timeout(100)
+    ext = json.loads(pg.evaluate('window.__file.text')); ext['project']['title'] = 'Renamed elsewhere'
+    pg.evaluate('t => window.__file.text = t', json.dumps(ext, indent=2) + '\n')
+    pg.click('#saveBtn'); pg.wait_for_timeout(300)
+    check(pg.is_visible('#conflictDialog') and pg.is_visible('#conflictMergeBtn'), 'the save conflict offers to merge')
+    pg.click('#conflictMergeBtn'); pg.wait_for_timeout(400)
+    out = json.loads(pg.evaluate('window.__file.text'))
+    ruth = next(e for e in out['supers']['entries'] if e['id'] == 'super-ruth')
+    check(out['project']['title'] == 'Renamed elsewhere' and ruth['title'] == 'Retired teacher, Riverside', 'merging keeps your change and theirs')
+    check(ruth.get('changedBy') == 'Sam' and ruth.get('changedAt') and not next(e for e in out['supers']['entries'] if e['id'] == 'super-daniel').get('changedBy'), 'only the changed record gets your name')
+    pg.click('[data-edit="super-ruth"]'); pg.wait_for_timeout(100)
+    check('Changed by Sam' in pg.inner_text('#editor'), 'the editor says who changed the record')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+    # Someone else has it open
+    since = (datetime.datetime.utcnow() - datetime.timedelta(minutes=20)).strftime('%Y-%m-%dT%H:%M:%S.000Z')
+    old = (datetime.datetime.utcnow() - datetime.timedelta(hours=9)).strftime('%Y-%m-%dT%H:%M:%S.000Z')
+    busy = copy_with(openBy=[{'name': 'Ana', 'since': since, 'tool': 'budget'}, {'name': 'Old', 'since': old}])
+    ctx, pg, errs = new_page(browser, 'name-supers', fake, "localStorage.setItem('oft-user-name', 'Sam'); window.__file.text = %s;" % json.dumps(busy))
+    open_sample(pg, fake); pg.wait_for_timeout(300)
+    check(pg.is_visible('#oftPresence') and 'Ana has had this file open since' in pg.inner_text('#oftPresence') and 'Old' not in pg.inner_text('#oftPresence'), 'warns when someone else has the file open, ignoring old notes')
+    names = [p['name'] for p in json.loads(pg.evaluate('window.__file.text')).get('openBy', [])]
+    check(names == ['Ana', 'Sam'], 'opening the file notes who has it open')
+    pg.click('#saveBtn'); pg.wait_for_timeout(300)
+    check(not pg.is_visible('#conflictDialog') and [p['name'] for p in json.loads(pg.evaluate('window.__file.text')).get('openBy', [])] == ['Ana'], 'saving clears your note and keeps theirs')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+    # A conflicted copy next to the file
+    copy = copy_with(person=newcomer)
+    folder = """window.showDirectoryPicker = async () => ({name: 'River', kind: 'directory', queryPermission: async () => 'granted', resolve: async () => ['proj.oft.json'],
+      values: async function* () { for (const [n, t] of [['proj.oft.json', window.__file.text], ["proj (Ana's conflicted copy).oft.json", %s], ['notes.json', '{}']]) yield {kind: 'file', name: n, getFile: async () => ({text: async () => t, name: n})}; }});""" % json.dumps(copy)
+    ctx, pg, errs = new_page(browser, 'name-supers', fake, folder)
+    open_sample(pg, fake)
+    pg.click('#oftNameBtn'); pg.click('#oftFolderBtn'); pg.wait_for_timeout(300)
+    pg.click('#oftSettingsCancel')
+    check(pg.is_visible('#oftCopies') and "Ana's conflicted copy" in pg.inner_text('#oftCopies') and 'notes.json' not in pg.inner_text('#oftCopies'), 'finds a conflicted copy in the folder')
+    pg.click('#oftCopiesBtn'); pg.wait_for_timeout(300)
+    check('Teodora Vance' in pg.inner_text('#oftMergeResult'), 'merging the conflicted copy shows what it added')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+def test_remember_file(browser, fake):
+    import http.server, threading, functools
+    handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(root))
+    handler.log_message = lambda *a: None
+    srv = http.server.ThreadingHTTPServer(('127.0.0.1', 0), handler)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    base = 'http://127.0.0.1:%d' % srv.server_address[1]
+    real = """window.showOpenFilePicker = async () => { const d = await navigator.storage.getDirectory(); const h = await d.getFileHandle('river.oft.json', {create: true});
+      const w = await h.createWritable(); await w.write(%s); await w.close(); return [h]; };""" % json.dumps(sample)
+    context = browser.new_context()
+    context.add_init_script(STUB_PRINT + (NO_PICKERS if FALLBACK else real))
+    errs = []
+    pg = context.new_page(); pg.on('pageerror', lambda e: errs.append(str(e)))
+    pg.goto(base + '/tools/name-supers/index.html')
+    if FALLBACK:
+        pg.set_input_files('#fileInput', files=[{'name': 'river.oft.json', 'mimeType': 'application/json', 'buffer': sample.encode()}])
+    else:
+        pg.click('#openBtn')
+    pg.wait_for_function("document.getElementById('filmMeta').textContent.trim() !== ''")
+    pg.wait_for_timeout(300)
+    pg.goto(base + '/tools/budget/index.html'); pg.wait_for_timeout(500)
+    if FALLBACK:
+        check(not pg.is_visible('#oftReopen'), 'without the file picker API, tools don\'t offer to reopen the file')
+    else:
+        check(pg.is_visible('#oftReopen') and 'river.oft.json' in pg.inner_text('#oftReopen'), 'the next tool offers the file you had open')
+        pg.click('#oftReopenBtn')
+        pg.wait_for_function("document.getElementById('filmMeta').textContent.trim() !== ''")
+        check('River' in pg.inner_text('#filmTitle') and not pg.is_visible('#oftReopen'), 'one click opens it')
+        pg.goto(base + '/tools/gear-list/index.html'); pg.wait_for_timeout(500)
+        pg.click('#oftForgetBtn'); pg.wait_for_timeout(200)
+        pg.goto(base + '/tools/gear-list/index.html'); pg.wait_for_timeout(500)
+        check(not pg.is_visible('#oftReopen'), 'forgetting the file stops the offer')
+    check(not errs, 'no page errors %s' % errs)
+    context.close(); srv.shutdown()
+
 def test_template_columns(browser, fake):
     for name, template in TEMPLATE_EXPORTS:
         ctx, pg, errs = new_page(browser, name, fake)
@@ -3085,6 +3217,10 @@ def main():
         test_contract_archive(browser, fake)
         print('== every tool / saving without changes keeps the project as it was')
         test_roundtrip(browser, fake)
+        print('== shared file / merging, names, who has it open and conflicted copies')
+        test_shared_file(browser, fake)
+        print('== shared file / remembering the open file across tools')
+        test_remember_file(browser, fake)
         print('== templates / columns match the tools\' exports')
         test_template_columns(browser, fake)
         browser.close()

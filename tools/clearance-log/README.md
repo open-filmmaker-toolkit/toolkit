@@ -52,6 +52,8 @@ Your log lives in a project file on your computer (`your-film.oft.json`).
 - **Safari and Firefox** download a new copy each time you save. Keep the latest one with your project files.
 - If the file changed on disk since you opened it, Chrome or Edge warns before saving. You can reload the latest version, save your edits as a copy, or explicitly overwrite the changed file.
 
+Choose **Merge both** in that warning to combine your changes with the ones in the file instead. Chrome and Edge also remember the file you opened, so the next tool can open it with one click. To work on the file with other people, choose **Add your name**: the tools then note who has the file open and who changed each record, and **Merge two copies** combines copies made by a sync app. See [Working on a shared file](../../docs/sharing-a-project.md).
+
 If you close the tab without saving, the page keeps a recovery copy in this browser and offers to restore it next time. That copy is a safety net, not a substitute for saving the file: clearing browser data deletes it.
 
 ## Project file format

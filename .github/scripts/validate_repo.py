@@ -438,7 +438,8 @@ for tool in sorted((ROOT / "tools").iterdir()):
             if EXTERNAL.search(line) and not (allowed and re.search(r"\bfetch\s*\(", line) and not re.search(r"XMLHttpRequest|sendBeacon|WebSocket|importScripts|(?:src|action|poster)\s*=|@import|url\(", line, re.I)):
                 fail(f"{rel}/index.html:{number}: possible network request or external resource")
             for host in URL_HOST.findall(line) if allowed else []:
-                if host.lower() not in allowed:
+                # github.com is only linked to (the guide to shared files), never fetched.
+                if host.lower() not in allowed and host.lower() != "github.com":
                     fail(f"{rel}/index.html:{number}: link to {host} is not an allowed host for this tool")
 
 # Plain templates: spreadsheets and Word documents only, each listed in templates/README.md.
@@ -509,6 +510,16 @@ else:
     for href in re.findall(r'href="((?:tools|templates|samples|docs)/[^"#]*)"', hub):
         if not (ROOT / href).exists():
             fail(f"index.html: links to {href}, which doesn't exist")
+
+# Shared code is copied into each page; the copies must match shared/.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import sync_shared  # noqa: E402
+
+for page in sync_shared.check():
+    fail(f"{page}: its copy of the shared code is out of date. Run python3 .github/scripts/sync_shared.py")
+for tool in sorted((ROOT / "tools").glob("*/index.html")):
+    if "/* oft-shared:tool begin." not in tool.read_text(encoding="utf-8"):
+        fail(f"{tool.relative_to(ROOT)}: doesn't include the shared tool code from shared/tool.js")
 
 if errors:
     print("\n".join(errors))

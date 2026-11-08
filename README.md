@@ -141,6 +141,7 @@ All 62 are first versions: they work, and they're still changing. To ask for ano
 - **Works offline.** Each tool is one HTML file. Keep a copy on your laptop and it works on set with no signal.
 - **One shared project file.** All tools read and write the same project. Add a person once and they show up in your call sheets, releases, name supers and credits; log an archival clip once and it flows from the research log to the clearance log to the credits.
 - **Your file, your copy.** Projects save as a file on disk that you back up and share however you already do (Drive, Dropbox, a hard drive).
+- **Work together without a server.** Keep the file in a folder your sync app shares. The tools say who has it open and who changed what, and merge two copies when people save at once. See [Working on a shared file](docs/sharing-a-project.md).
 - **Plain templates too.** Most tools also have a blank spreadsheet or Word [template](templates/) for people who'd rather not use the tool.
 
 ## Shared project file
@@ -161,10 +162,11 @@ toolkit/
 |-- samples/              # Fictional sample project to try the tools with
 |-- templates/            # Blank templates for people who don't use the tools
 |-- tests/                # Browser tests CI runs in Chromium
-|-- docs/                 # Directory of other open-source tools; logo and artwork in docs/assets/
+|-- shared/               # Code every tool needs, copied into each page by .github/scripts/sync_shared.py
+|-- docs/                 # Guides, the directory of other open-source tools; logo and artwork in docs/assets/
 |-- .github/
 |   |-- workflows/        # DCO and CI checks
-|   `-- scripts/          # validate_repo.py, the check CI runs
+|   `-- scripts/          # validate_repo.py, the check CI runs, and sync_shared.py
 |-- TOOLS.md              # Every tool we build or plan to, by production phase
 |-- ROADMAP.md            # Milestones, each linked to its issue
 |-- GOVERNANCE.md         # How decisions get made
