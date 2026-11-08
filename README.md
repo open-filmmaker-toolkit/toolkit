@@ -84,6 +84,7 @@ The toolkit has two halves:
 | [Script breakdown](tools/script-breakdown/) | Pre-production | Break down a script into scenes, cast and props. |
 | [Stripboard](tools/stripboard/) | Pre-production | Arrange the script's scenes into shoot days. |
 | [Day-out-of-days](tools/day-out-of-days/) | Pre-production | See which days each cast member works. |
+| [Shot list and storyboard](tools/shot-list/) | Pre-production | Plan the shots for each scene, with frames. |
 | [Shooting calendar](tools/shooting-calendar/) | Pre-production | Schedule shoot days, travel and holds. |
 | [Interview prep](tools/interview-prep/) | Pre-production | Prepare research and questions for each interview. |
 | [Location scout sheet](tools/location-scout/) | Pre-production | Record scouts with photos for the crew. |
@@ -94,6 +95,7 @@ The toolkit has two halves:
 | [Risk and hostile-environment plans](tools/risk-plan/) | Pre-production | Plan for what could go wrong on a shoot. |
 | [Security checklist](tools/security-checklist/) | Pre-production | Protect footage, sources and devices. |
 | [Call sheet](tools/call-sheet/) | Production | Build call sheets from your project. |
+| [Sides](tools/sides/) | Production | Print the day's scenes for cast and crew. |
 | [Camera and sound reports](tools/camera-sound-reports/) | Production | Log what's on each camera and sound card. |
 | [Interview log](tools/interview-log/) | Production | Log interviews and their best moments. |
 | [Daily production report](tools/daily-production-report/) | Production | Report each shoot day's hours, footage and problems. |
@@ -135,7 +137,7 @@ The toolkit has two halves:
 | [Grant final reports](tools/grant-reports/) | Close-out and archive | Write each grant's final report before it's due. |
 | [Contract and release archive](tools/contract-archive/) | Close-out and archive | Index every signed contract and release for the long term. |
 
-All 65 are first versions: they work, and they're still changing. To ask for another tool, use the [request form](https://github.com/open-filmmaker-toolkit/toolkit/issues/new?template=request-a-tool.yml).
+All 67 are first versions: they work, and they're still changing. To ask for another tool, use the [request form](https://github.com/open-filmmaker-toolkit/toolkit/issues/new?template=request-a-tool.yml).
 
 ## How our tools work
 

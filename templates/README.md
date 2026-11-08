@@ -18,6 +18,7 @@ Started in a spreadsheet and want to move to the tool? Most tools can import a f
 | Funder CRM | [funder-crm-template.csv](funder-crm-template.csv) | | [Funder CRM](../tools/funder-crm/) |
 | Cash flow | [cash-flow-template.csv](cash-flow-template.csv) | | [Cash flow](../tools/cash-flow/) |
 | Script breakdown | [script-breakdown-template.csv](script-breakdown-template.csv) | | [Script breakdown](../tools/script-breakdown/) |
+| Shot list | [shot-list-template.csv](shot-list-template.csv) | | [Shot list and storyboard](../tools/shot-list/) |
 | Shooting calendar | [shooting-calendar-template.csv](shooting-calendar-template.csv) | | [Shooting calendar](../tools/shooting-calendar/) |
 | Location scout sheet | [location-scout-template.csv](location-scout-template.csv) | [location-scout-template.docx](location-scout-template.docx) | [Location scout sheet](../tools/location-scout/) |
 | Deal memos | [deal-memos-template.csv](deal-memos-template.csv) | | [Deal memos](../tools/deal-memos/) |
@@ -61,6 +62,7 @@ Started in a spreadsheet and want to move to the tool? Most tools can import a f
 - **Funder CRM.** One row for each funder, investor or broadcaster: kind, stage, the people there, the last contact, the next step and when it's due, and applications.
 - **Cash flow.** One row for each month or week: money out, money in, the net and the running balance, and whether it's short.
 - **Script breakdown.** One row for each scene: its number and heading, length in eighths of a page, the cast, a column for each kind of element (extras, props, wardrobe and the rest, separated by semicolons), the location and what happens.
+- **Shot list.** One row for each shot: the scene number or a group such as b-roll, the shot number, size, angle, movement, lens, what we see, notes and whether it's done. Frames stay in the tool.
 - **Shooting calendar.** One row for each shoot day, travel day or hold: the trip, what you're filming, where, who's needed, and whether the call sheet is started.
 - **Location scout sheet.** One row for each scout: the place, when and who, the verdict, who to call, and access, power, sound, light, parking, restrooms, signal and permits. The document is a sheet to print and fill in on the visit.
 - **Deal memos.** One row for each crew deal memo: role, dates, rate, guarantee, kit fee, overtime, payment terms, credit and status. To sign one, use the deal memo form under legal forms.
