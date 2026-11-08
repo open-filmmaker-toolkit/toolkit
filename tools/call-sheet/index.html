@@ -148,6 +148,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
 .home-link { color: inherit; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
 .home-link:hover { text-decoration-thickness: 2px; }
 .foot { margin: 28px 0 0; color: var(--ink-3); font-size: 13px; }
+.scene-list { list-style: none; margin: 0; padding: 0; font-size: 14px; }
+.scene-list li { padding: 5px 0; }
+.scene-list li + li { border-top: 1px solid var(--rule-soft); }
+.scene-list span { display: block; color: var(--ink-2); font-size: 13px; }
 </style>
 </head>
 <body>
@@ -249,6 +253,12 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
           <div class="field"><label for="f-hospAddress">Address</label><input id="f-hospAddress" type="text"></div>
           <div class="field"><label for="f-hospPhone">Phone</label><input id="f-hospPhone" type="text"></div>
         </div>
+      </div>
+
+      <div class="group" id="scenesBox" hidden>
+        <div class="group-head"><h3>Scenes</h3></div>
+        <p class="hint">From the stripboard, in shooting order, with the shots from the shot list. Change them there.</p>
+        <ul class="scene-list" id="sceneList"></ul>
       </div>
 
       <div class="group">
@@ -530,6 +540,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('f-date').setCustomValidity('');
     fillForm(s);
     $('sidesBtn').hidden = !sidesDay(s);
+    showScenes(s);
     $('editor').showModal();
   }
   // The shoot day this call sheet belongs to, if the stripboard put scenes on it, for printing its sides.
@@ -655,11 +666,29 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       <p class="sub">Call sheet · ${esc(fmtDate(s.date, true))}${s.dayLabel ? ` · ${esc(s.dayLabel)}` : ''}</p>
       <p class="call">General call ${esc(fmtTime(s.generalCall) || 'to be confirmed')}${s.wrapTime ? `<span>Estimated wrap ${esc(fmtTime(s.wrapTime))}</span>` : ''}</p>
       ${dl([['Location', loc ? [loc.name, placeOf(loc)].filter(Boolean).join(', ') : ''], ['Parking', s.parking], ['Weather', s.weather], ['Sunrise', s.sunrise && fmtTime(s.sunrise)], ['Sunset', s.sunset && fmtTime(s.sunset)], ['Nearest hospital', [h.name, h.address, h.phone].filter(Boolean).join(' · ')]])}
+      ${scenesHtml(s)}
       ${s.schedule.length ? `<h2>Schedule</h2><table><thead><tr><th scope="col">Time</th><th scope="col">What happens</th></tr></thead><tbody>${s.schedule.map(x => `<tr><td>${esc(fmtTime(x.time))}</td><td>${esc(x.description)}</td></tr>`).join('')}</tbody></table>` : ''}
       ${crew.length ? `<h2>Crew and cast</h2><table><thead><tr><th scope="col">Name</th><th scope="col">Role</th><th scope="col">Call</th><th scope="col">Phone</th><th scope="col">Email</th></tr></thead><tbody>${crew.map(({ c, p: q }) => `<tr><td>${esc(q.name)}</td><td>${esc(c.role != null ? c.role : roleOf(q))}</td><td>${esc(fmtTime(c.callTime || s.generalCall))}</td><td>${esc(q.phone)}</td><td>${esc(q.email)}</td></tr>`).join('')}</tbody></table>` : ''}
       ${s.notes ? `<h2>Notes</h2><p>${esc(s.notes).replace(/\n/g, '<br>')}</p>` : ''}
       <p class="foot">${esc([p.company, p.preparedBy && `Prepared by ${p.preparedBy}`, p.preparedContact].filter(Boolean).join(' · '))}</p>
     </section>`;
+  }
+  // The day's scenes from the stripboard and their shots from the shot list.
+  function dayScenes(s) {
+    const d = sidesDay(s);
+    const all = Array.isArray(doc.scenes) ? doc.scenes : [], shots = Array.isArray(doc.shots) ? doc.shots : [], chars = Array.isArray(doc.characters) ? doc.characters : [];
+    return d ? d.sceneIds.map(id => all.find(x => x && x.id === id)).filter(Boolean).map(sc => ({ sc, shots: shots.filter(x => x && x.sceneId === sc.id), cast: (Array.isArray(sc.characterIds) ? sc.characterIds : []).map(id => chars.find(c => c && c.id === id)).filter(Boolean) })) : [];
+  }
+  const eighths = n => { n = Math.round(Number(n) || 0); if (n <= 0) return ''; const w = Math.floor(n / 8), r = n % 8; return `${w || ''}${w && r ? ' ' : ''}${r ? `${r}/8` : ''}`; };
+  function scenesHtml(s) {
+    const list = dayScenes(s);
+    if (!list.length) return '';
+    return `<h2>Scenes</h2><table><thead><tr><th scope="col">Scene</th><th scope="col">Set and description</th><th scope="col">Day or night</th><th scope="col">Pages</th><th scope="col">Cast</th><th scope="col">Shots</th></tr></thead><tbody>${list.map(({ sc, shots, cast }) => `<tr><td>${esc(sc.number || '')}</td><td>${esc([sc.intExt, sc.set].filter(Boolean).join(' '))}${sc.synopsis ? `<br>${esc(sc.synopsis)}` : ''}</td><td>${esc(sc.time || '')}</td><td>${esc(eighths(sc.eighths))}</td><td>${esc(cast.map(c => c.number || c.name).join(', '))}</td><td>${esc(shots.map(x => x.number).filter(Boolean).join(', '))}</td></tr>`).join('')}</tbody></table>`;
+  }
+  function showScenes(s) {
+    const list = dayScenes(s);
+    $('scenesBox').hidden = !list.length;
+    $('sceneList').innerHTML = list.map(({ sc, shots, cast }) => `<li><b>${esc(`${sc.number ? sc.number + '. ' : ''}${sc.heading || sc.set || 'Untitled scene'}`)}</b><span>${esc([eighths(sc.eighths) && `${eighths(sc.eighths)} pages`, cast.length && `Cast ${cast.map(c => c.number || c.name).join(', ')}`, shots.length && `Shots ${shots.map(x => x.number).filter(Boolean).join(', ')}`].filter(Boolean).join(' · '))}</span></li>`).join('');
   }
   function printSheets(list) {
     if (!list.length) { toast('There are no shoot days to print yet.', true); return; }
@@ -987,7 +1016,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('printAllBtn').onclick = () => printSheets(sheets());
     $('printBtn').onclick = () => printSheets([readForm()]);
     $('sidesBtn').onclick = openSides;
-    $('f-date').addEventListener('input', () => { $('sidesBtn').hidden = !sidesDay(readForm()); });
+    $('f-date').addEventListener('input', () => { const f = readForm(); $('sidesBtn').hidden = !sidesDay(f); showScenes(f); });
     $('fileInput').addEventListener('change', async () => {
       const f = $('fileInput').files[0];
       if (f) loadText(await f.text(), f.name, null);

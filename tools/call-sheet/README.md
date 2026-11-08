@@ -36,6 +36,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **Edits a day:** date, label, general call, wrap, location, parking, weather, sunrise and sunset, nearest hospital, a schedule, and notes.
 - **Picks crew from your project.** Check who's working, set a role and call time for each, or **Use general call for everyone checked**. Add a person or location without leaving the day.
 - **Copies a day to the next one,** keeping crew, location and hospital, and clearing weather and daylight.
+- **Lists the day's scenes** when the [stripboard](../stripboard/) has put scenes on the shoot day: each scene's number, set, day or night, pages and cast numbers, with its shots from the [shot list](../shot-list/). They show in the editor and on the printed sheet; change them in those tools.
 - **Opens the sides** for a day whose scenes are on the [stripboard](../stripboard/): choose **Print sides** in the day's editor, and the [sides](../sides/) tool opens in a new tab with the project and that day.
 - **Prints** one portrait page per day. Choose "Save as PDF" in the print dialog to make a PDF.
 - **Exports call sheets as a spreadsheet (CSV).** One day from the editor, or every day at once. The layout matches the blank [call sheet template](../../templates/call-sheet-template.csv), which opens in Excel, Numbers or Google Sheets, so people can fill it in by hand without this tool.  Save it as `.xlsx` from there if you need that format.
@@ -65,7 +66,7 @@ A `callSheets` array. Each entry has an `id` and `date`, and optionally times, a
 ## Not yet
 
 - A DOCX export (the spreadsheet export and blank template cover plain-file use)
-- Scene and shot lists, and sending the sheet to the crew
+- Sending the sheet to the crew
 
 ## License
 
