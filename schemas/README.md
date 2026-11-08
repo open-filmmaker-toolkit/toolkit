@@ -95,7 +95,12 @@ The credits builder keeps the end credits in a `credits` record: `entries` in th
 
 ## Concurrent edits
 
-When a browser supports direct file access, a tool compares the opened file with the last version it read or saved before writing. If the file changed, the user can reload the latest version, save their edits to a separate copy, or explicitly overwrite the newer file. The check cannot lock the file against a simultaneous write, so teams should save in one tool at a time. Download-based save flows cannot check the source file and instead produce a new download; users should open the latest shared copy before continuing.
+When a browser supports direct file access, a tool compares the opened file with the last version it read or saved before writing. If the file changed, the user can reload the latest version, save their edits to a separate copy, or explicitly overwrite the newer file. The user can also merge: records are matched by `id`, changes to different records or fields are combined, and fields changed on both sides are shown for the user to choose. The check cannot lock the file against a simultaneous write, so teams should save in one tool at a time. See [Working on a shared file](../docs/sharing-a-project.md).
+
+Two optional fields support shared files. Every tool shares this code, copied from [`shared/tool.js`](../shared/tool.js):
+
+- `openBy` at the top level lists who has the file open: each entry has a `name`, `since` (date and time) and the `tool` slug. A tool adds the user's entry when it opens the file (only if the user has added their name), removes it on save, and ignores entries older than four hours.
+- `changedBy` and `changedAt` on any record with an `id`, set when a user who has added their name saves a change to that record. Merging uses them to explain each side's changes, and editors show "Changed by Ana, Nov 6". Download-based save flows cannot check the source file and instead produce a new download; users should open the latest shared copy before continuing.
 
 Do not change `formatVersion` or make a breaking change to this model without a maintainer decision. Additive fields and collections can be introduced in version 1 while they remain optional and compatible with tools that preserve unknown data.
 

@@ -45,6 +45,8 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 
 Chrome and Edge can save straight back to the file you opened. If it changed on disk since you opened it, the tool warns before saving. You can reload the latest version, save your edits as a separate copy, or explicitly overwrite the changed file. Safari and Firefox download a new copy instead of checking or overwriting the original file.
 
+Choose **Merge both** in that warning to combine your changes with the ones in the file instead. Chrome and Edge also remember the file you opened, so the next tool can open it with one click. To work on the file with other people, choose **Add your name**: the tools then note who has the file open and who changed each record, and **Merge two copies** combines copies made by a sync app. See [Working on a shared file](../../docs/sharing-a-project.md).
+
 ## Optional online lookup
 
 Everything works offline. The **Look up weather and daylight** button is the only thing that uses the network, and nothing is sent unless you click it and confirm.

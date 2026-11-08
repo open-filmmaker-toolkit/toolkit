@@ -46,6 +46,8 @@ For anyone who doesn't use the tool, there's a blank [Word template](../../templ
 
 Chrome and Edge can save straight back to the file you opened. If it changed on disk since you opened it, the tool warns before saving. You can reload the latest version, save your edits as a separate copy, or explicitly overwrite the changed file. Safari and Firefox download a new copy instead.
 
+Choose **Merge both** in that warning to combine your changes with the ones in the file instead. Chrome and Edge also remember the file you opened, so the next tool can open it with one click. To work on the file with other people, choose **Add your name**: the tools then note who has the file open and who changed each record, and **Merge two copies** combines copies made by a sync app. See [Working on a shared file](../../docs/sharing-a-project.md).
+
 If you close the tab without saving, the page keeps a recovery copy in this browser and offers to restore it next time.
 
 ## What it adds to the project file

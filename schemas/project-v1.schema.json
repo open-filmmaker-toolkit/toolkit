@@ -1397,6 +1397,29 @@
         }
       },
       "additionalProperties": true
+    },
+    "openBy": {
+      "type": "array",
+      "description": "Who has the file open. Tools ignore entries older than four hours.",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "since"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "since": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "tool": {
+            "type": "string"
+          }
+        }
+      }
     }
   },
   "additionalProperties": true,

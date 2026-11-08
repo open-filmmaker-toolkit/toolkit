@@ -45,6 +45,8 @@ Cues you add here appear in the clearance log as Music with status Not started. 
 
 If the same project is open in multiple tools, save one tool before saving another. Chrome and Edge warn if the file changed since it was opened; you can reload the latest version, save your edits as a copy, or explicitly overwrite the changed file. Safari and Firefox download a new copy instead of checking or overwriting the original file.
 
+Choose **Merge both** in that warning to combine your changes with the ones in the file instead. Chrome and Edge also remember the file you opened, so the next tool can open it with one click. To work on the file with other people, choose **Add your name**: the tools then note who has the file open and who changed each record, and **Merge two copies** combines copies made by a sync app. See [Working on a shared file](../../docs/sharing-a-project.md).
+
 ## What it does
 
 - **Lists cues in timecode order** with sequence numbers and durations rounded to the second (a cue that plays at all gets at least one second).
