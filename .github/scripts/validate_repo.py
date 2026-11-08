@@ -507,6 +507,16 @@ else:
     for issue in re.findall(r"Planned, \[#(\d+)\]", tools_md):
         if f"/issues/{issue}\"" not in hub:
             fail(f"index.html: planned tool #{issue} from TOOLS.md is missing")
+    # Each stage's count, and the total, match the tool cards on the page.
+    for stage in re.findall(r'<section[^>]*>\s*<div class="stage-head">.*?</section>', hub, re.S):
+        cards = stage.count('<li class="tool"')
+        m = re.search(r'<span class="tally">(\d+) tools?</span>', stage)
+        name = re.search(r'<h2[^>]*>([^<]+)</h2>', stage)
+        if not m or int(m.group(1)) != cards:
+            fail(f"index.html: the {name.group(1) if name else 'stage'} count should say {cards} tool{'' if cards == 1 else 's'}")
+    total = len(re.findall(r'<li class="tool"', hub))
+    if f"<p>{total} tools.</p>" not in hub:
+        fail(f"index.html: the tool count above the stages should say {total} tools.")
     for href in re.findall(r'href="((?:tools|templates|samples|docs)/[^"#]*)"', hub):
         if not (ROOT / href).exists():
             fail(f"index.html: links to {href}, which doesn't exist")
