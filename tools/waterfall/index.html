@@ -156,6 +156,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .results td.n, .results th.n { text-align: right; font-variant-numeric: tabular-nums; }
 .results tfoot td { font-weight: 700; border-top: 1px solid var(--rule); }
 .split-row { display: grid; grid-template-columns: minmax(0, 1fr) 110px auto; gap: 8px; align-items: end; }
+.split-row.pari { grid-template-columns: minmax(0, 1fr) 110px 90px auto; }
+.split-row.pari .field[hidden] + .btn { grid-column: 4; }
 
 dialog { border: 0; padding: 0; color: var(--ink); background: var(--sheet); box-shadow: 0 10px 40px rgba(10, 14, 22, 0.25); }
 dialog::backdrop { background: rgba(16, 20, 28, 0.42); }
@@ -319,7 +321,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
           <option value="gross">A percentage of gross receipts, off the top</option>
           <option value="percent">A percentage of what's left</option>
           <option value="fixed">A fixed amount, until it's paid</option>
-          <option value="split">Split what's left between parties</option></select></div>
+          <option value="pari">Several parties share it at once (pari passu)</option>
+          <option value="split">Split what's left between parties</option>
+          <option value="corridor">A corridor: a share of gross alongside the tiers</option></select></div>
       </div>
       <div id="oneParty">
         <div class="field"><label for="f-party">Paid to</label><input id="f-party" type="text" autocomplete="off" list="partyList"></div>
@@ -328,6 +332,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
           <div class="field" id="amtField"><label for="f-amt" id="amtLabel">Amount</label><input id="f-amt" type="number" min="0" step="any" inputmode="decimal"></div>
         </div>
       </div>
+      <div class="two" id="intBox" hidden>
+        <div class="field"><label for="f-int">Simple interest a year, %</label><input id="f-int" type="number" min="0" step="any" inputmode="decimal" placeholder="None"></div>
+        <div class="field"><label for="f-intfrom">Interest runs from</label><input id="f-intfrom" type="date"></div>
+      </div>
+      <div class="field" id="shareByBox" hidden><label for="f-shareby">Pay each party</label><select id="f-shareby"><option value="amount">Pro rata to what each is owed</option><option value="share">By set shares</option></select></div>
       <div id="splitBox" hidden>
         <div id="splits"></div>
         <p><button type="button" class="btn" id="splitAdd">Add a party</button></p>
@@ -469,7 +478,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     return d;
   }
 
-  const KIND = { gross: '% of gross, off the top', percent: "% of what's left", fixed: 'Fixed amount', split: 'Split' };
+  const KIND = { gross: '% of gross, off the top', percent: "% of what's left", fixed: 'Fixed amount', pari: 'Shared pari passu', split: 'Split', corridor: 'Corridor' };
   const W = () => { if (!doc.waterfall || typeof doc.waterfall !== 'object' || Array.isArray(doc.waterfall)) doc.waterfall = {}; for (const k of ['tiers', 'scenarios']) if (!Array.isArray(doc.waterfall[k])) doc.waterfall[k] = []; return doc.waterfall; };
   const tiers = () => arr(doc.waterfall && doc.waterfall.tiers).filter(t => t && t.id);
   const scenarios = () => arr(doc.waterfall && doc.waterfall.scenarios).filter(s => s && s.id);
@@ -477,26 +486,58 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const actualGross = () => doc.revenueStatements.reduce((s, r) => s + num(r.gross), 0);
   let scen = '', gross = 0, editing = null, draftSplits = [];
   // Runs gross receipts down the tiers. Returns what each tier pays, and to whom.
-  function run(g) {
+  // Simple interest on a fixed tier, such as recoupment, from its start date to today.
+  function years(from, to) { if (!/^\d{4}-\d{2}-\d{2}$/.test(str(from))) return 0; const ms = new Date(`${to}T00:00:00Z`) - new Date(`${from}T00:00:00Z`); return Math.max(0, ms / (365.25 * 864e5)); }
+  const interestOn = (t, asOf) => (t.kind === 'fixed' && num(t.interest) > 0 ? num(t.amount) * num(t.interest) / 100 * years(t.interestFrom, asOf || today()) : 0);
+  const owedOf = (t, asOf) => num(t.amount) + interestOn(t, asOf);
+  // Pari passu: parties in one tier are paid at the same time, pro rata by what each is owed, or by set shares.
+  function pariPay(t, pay) {
+    const ps = arr(t.parties).filter(x => x && num(x.amount) > 0).map(x => ({ party: x.party || 'Unnamed', owed: num(x.amount), share: t.shareBy === 'share' ? num(x.share) : num(x.amount), amount: 0 }));
+    let rest = pay;
+    for (let i = 0; i < 20 && rest > 0.005; i++) {
+      const open = ps.filter(x => x.owed - x.amount > 0.005), tot = open.reduce((a, x) => a + x.share, 0);
+      if (!open.length || !tot) break;
+      let used = 0;
+      for (const x of open) { const give = Math.min(x.owed - x.amount, rest * x.share / tot); x.amount += give; used += give; }
+      rest -= used;
+    }
+    return ps.map(x => ({ party: x.party, amount: x.amount }));
+  }
+  // Corridors take their share of gross receipts above their starting point, alongside the tiers; the tiers share what's left.
+  const corridors = () => tiers().filter(t => t.kind === 'corridor');
+  const corridorPay = (t, g) => Math.max(0, num(g) - num(t.from)) * num(t.percent) / 100;
+  function run(g, asOf) {
     let left = Math.max(0, num(g));
+    for (const t of corridors()) left -= corridorPay(t, g);
+    left = Math.max(0, left);
     return tiers().map(t => {
       let pay = 0, owed = null, to = [];
+      if (t.kind === 'corridor') { const c = corridorPay(t, g); return { t, pay: c, owed: null, to: [{ party: t.party || t.name || 'Unnamed', amount: c }], left, corridor: true }; }
       if (t.kind === 'gross') pay = Math.min(left, num(g) * num(t.percent) / 100);
       else if (t.kind === 'percent') pay = left * num(t.percent) / 100;
-      else if (t.kind === 'fixed') { pay = Math.min(left, num(t.amount)); owed = num(t.amount) - pay; }
+      else if (t.kind === 'fixed') { const due = owedOf(t, asOf); pay = Math.min(left, due); owed = due - pay; }
+      else if (t.kind === 'pari') { const due = arr(t.parties).reduce((a, x) => a + num(x && x.amount), 0); pay = Math.min(left, due); owed = due - pay; to = pariPay(t, pay); }
       else if (t.kind === 'split') { pay = left; const sp = arr(t.splits).filter(s => s && num(s.share) > 0); const tot = sp.reduce((s, x) => s + num(x.share), 0) || 1; to = sp.map(s => ({ party: s.party || 'Unnamed', amount: left * num(s.share) / tot })); }
-      if (t.kind !== 'split') to = [{ party: t.party || t.name || 'Unnamed', amount: pay }];
+      if (t.kind !== 'split' && t.kind !== 'pari') to = [{ party: t.party || t.name || 'Unnamed', amount: pay }];
       left -= pay;
       return { t, pay, owed, to, left };
     });
   }
+  // How a tier is paid, in words, for the list and the printed summary.
+  function howPaid(t) {
+    if (t.kind === 'fixed') return `${money(t.amount)}${num(t.interest) > 0 ? ` plus ${num(t.interest)}% simple interest a year${t.interestFrom ? ` from ${fmtDate(t.interestFrom)}` : ''}` : ''}`;
+    if (t.kind === 'pari') return `Pari passu, ${t.shareBy === 'share' ? 'by set shares' : 'pro rata to what each is owed'}: ${arr(t.parties).map(x => `${x.party} ${money(x.amount)}${t.shareBy === 'share' ? ` (${num(x.share)}%)` : ''}`).join(', ')}`;
+    if (t.kind === 'split') return arr(t.splits).map(x => `${x.party} ${num(x.share)}%`).join(', ');
+    if (t.kind === 'corridor') return `${num(t.percent)}% of gross${num(t.from) ? ` above ${money(t.from)}` : ''}, alongside the tiers`;
+    return `${num(t.percent)}% ${t.kind === 'gross' ? 'of gross' : "of what's left"}`;
+  }
   function byParty(g) { const m = new Map(); for (const r of run(g)) for (const x of r.to) m.set(x.party, (m.get(x.party) || 0) + x.amount); return [...m.entries()].sort((a, b) => b[1] - a[1]); }
   // The gross at which every fixed tier is paid in full.
   function breakEven() {
-    const fixed = tiers().filter(t => t.kind === 'fixed' && num(t.amount) > 0);
+    const fixed = tiers().filter(t => (t.kind === 'fixed' && num(t.amount) > 0) || (t.kind === 'pari' && arr(t.parties).some(x => x && num(x.amount) > 0)));
     if (!fixed.length) return null;
-    const ok = g => run(g).every(r => r.t.kind !== 'fixed' || r.owed <= 0.005);
-    let hi = fixed.reduce((s, t) => s + num(t.amount), 0) || 1;
+    const ok = g => run(g).every(r => (r.t.kind !== 'fixed' && r.t.kind !== 'pari') || r.owed <= 0.005);
+    let hi = fixed.reduce((s, t) => s + (t.kind === 'pari' ? arr(t.parties).reduce((a, x) => a + num(x && x.amount), 0) : owedOf(t)), 0) || 1;
     for (let i = 0; i < 60 && !ok(hi); i++) hi *= 2;
     if (!ok(hi)) return Infinity;
     let lo = 0;
@@ -527,14 +568,18 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       const t = r.t, flags = [`<span class="flag linked">${esc(KIND[t.kind] || 'Fixed amount')}</span>`];
       if (t.kind === 'gross' || t.kind === 'percent') flags.push(`<span class="flag linked">${esc(num(t.percent))}%</span>`);
       if (t.kind === 'fixed') flags.push(`<span class="flag linked">${esc(money(t.amount))}</span>`);
+      if (t.kind === 'fixed' && num(t.interest) > 0) flags.push(`<span class="flag linked">${esc(num(t.interest))}% interest${t.interestFrom ? ` from ${esc(fmtDate(t.interestFrom))}` : ''}: ${esc(money(interestOn(t)))} so far</span>`);
+      if (t.kind === 'pari') flags.push(...arr(t.parties).map(x => `<span class="flag linked">${esc(x.party || 'Unnamed')} ${esc(money(x.amount))}</span>`));
+      if (t.kind === 'corridor') flags.push(`<span class="flag linked">${esc(num(t.percent))}% of gross${num(t.from) ? ` above ${esc(money(t.from))}` : ''}</span>`);
       if (t.kind === 'split') flags.push(...arr(t.splits).map(s => `<span class="flag linked">${esc(s.party || 'Unnamed')} ${esc(num(s.share))}%</span>`));
       if (t.kind === 'split' && i !== res.length - 1) flags.push('<span class="flag problem">A split takes everything left, so tiers after it get nothing</span>');
-      const share = t.kind === 'fixed' && num(t.amount) ? Math.min(1, r.pay / num(t.amount)) : null;
+      const due = t.kind === 'fixed' ? owedOf(t) : t.kind === 'pari' ? r.pay + r.owed : 0;
+      const share = due ? Math.min(1, r.pay / due) : null;
       return `<li class="row" data-id="${esc(t.id)}"><span class="rt">${i + 1}</span>
         <button type="button" class="what" data-edit="${esc(t.id)}"><span class="nm">${esc(t.name || 'Tier')}</span><span class="tt">${esc([t.kind !== 'split' && t.party, t.note].filter(Boolean).join(' · '))}</span>${share != null ? `<span class="bar" aria-hidden="true"><span style="width:${Math.round(share * 100)}%"></span></span>` : ''}</button>
         <span class="st">${esc(money(r.pay))}${r.owed > 0.005 ? `<span class="sub">${esc(money(r.owed))} still owed</span>` : ''}<span class="moves"><button type="button" data-up="${i}" aria-label="Move up"${i ? '' : ' disabled'}>&uarr;</button><button type="button" data-down="${i}" aria-label="Move down"${i < res.length - 1 ? '' : ' disabled'}>&darr;</button></span></span>
         <div class="flags">${flags.join('')}</div></li>`; }).join('');
-    $('results').innerHTML = ts.length ? `<thead><tr><th>Tier</th><th>Paid to</th><th class="n">Paid</th><th class="n">Left after</th></tr></thead><tbody>${res.map(r => r.to.map((x, j) => `<tr><td>${j ? '' : esc(r.t.name || 'Tier')}</td><td>${esc(x.party)}</td><td class="n">${esc(money(x.amount))}</td><td class="n">${j ? '' : esc(money(r.left))}</td></tr>`).join('')).join('')}</tbody><tfoot><tr><td colspan="2">Gross receipts</td><td class="n">${esc(money(gross))}</td><td class="n">${esc(money(res.length ? res[res.length - 1].left : gross))}</td></tr></tfoot>` : '';
+    $('results').innerHTML = ts.length ? `<thead><tr><th>Tier</th><th>Paid to</th><th class="n">Paid</th><th class="n">Left after</th></tr></thead><tbody>${res.map(r => r.to.map((x, j) => `<tr><td>${j ? '' : esc((r.t.name || 'Tier') + (r.corridor ? ' (corridor)' : ''))}</td><td>${esc(x.party)}</td><td class="n">${esc(money(x.amount))}</td><td class="n">${j ? '' : esc(money(r.left))}</td></tr>`).join('')).join('')}</tbody><tfoot><tr><td colspan="2">Gross receipts</td><td class="n">${esc(money(gross))}</td><td class="n">${esc(money(res.length ? res[res.length - 1].left : gross))}</td></tr></tfoot>` : '';
     const bp = byParty(gross);
     $('parties').innerHTML = bp.length ? bp.map(([p, a]) => `<dt>${esc(p)}</dt><dd>${esc(money(a))}</dd>`).join('') + `<dt class="sum">Gross receipts</dt><dd class="sum">${esc(money(gross))}</dd>` : '<dt>No tiers yet</dt><dd></dd>';
     const be = breakEven();
@@ -543,24 +588,30 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   }
 
   function drawSplits() {
-    $('splits').innerHTML = draftSplits.map((s, i) => `<div class="split-row"><div class="field"><label for="sp-p-${i}">Party</label><input id="sp-p-${i}" type="text" list="partyList" value="${esc(s.party)}"></div><div class="field"><label for="sp-s-${i}">Share %</label><input id="sp-s-${i}" type="number" min="0" max="100" step="any" value="${esc(s.share)}"></div><button type="button" class="btn" data-spdel="${i}">Remove</button></div>`).join('');
+    const pari = $('f-kind').value === 'pari', byShare = $('f-shareby').value === 'share';
+    $('splits').innerHTML = draftSplits.map((s, i) => `<div class="split-row${pari ? ' pari' : ''}"><div class="field"><label for="sp-p-${i}">Party</label><input id="sp-p-${i}" type="text" list="partyList" value="${esc(s.party)}"></div>${pari ? `<div class="field"><label for="sp-a-${i}">Owed</label><input id="sp-a-${i}" type="number" min="0" step="any" value="${esc(s.amount)}"></div>` : ''}<div class="field"${pari && !byShare ? ' hidden' : ''}><label for="sp-s-${i}">Share %</label><input id="sp-s-${i}" type="number" min="0" max="100" step="any" value="${esc(s.share)}"></div><button type="button" class="btn" data-spdel="${i}">Remove</button></div>`).join('');
     sumSplits();
   }
-  const keepSplits = () => draftSplits.forEach((s, i) => { if ($(`sp-p-${i}`)) { s.party = $(`sp-p-${i}`).value; s.share = $(`sp-s-${i}`).value; } });
-  function sumSplits() { keepSplits(); const t = draftSplits.reduce((s, x) => s + num(x.share), 0); $('splitSum').textContent = `Shares add up to ${Math.round(t * 100) / 100}%${Math.abs(t - 100) > 0.001 ? '. They should add up to 100%; the tool scales them so they do.' : '.'}`; }
+  const keepSplits = () => draftSplits.forEach((s, i) => { if ($(`sp-p-${i}`)) { s.party = $(`sp-p-${i}`).value; s.share = $(`sp-s-${i}`).value; if ($(`sp-a-${i}`)) s.amount = $(`sp-a-${i}`).value; } });
+  function sumSplits() { keepSplits(); if ($('f-kind').value === 'pari' && $('f-shareby').value !== 'share') { const t = draftSplits.reduce((s, x) => s + num(x.amount), 0); $('splitSum').textContent = `Owed together: ${money(t)}. Each party gets the same proportion of what it's owed until all are paid.`; return; } const t = draftSplits.reduce((s, x) => s + num(x.share), 0); $('splitSum').textContent = `Shares add up to ${Math.round(t * 100) / 100}%${Math.abs(t - 100) > 0.001 ? '. They should add up to 100%; the tool scales them so they do.' : '.'}`; }
   function showKind() {
     const k = $('f-kind').value;
-    $('splitBox').hidden = k !== 'split'; $('oneParty').hidden = k === 'split';
-    $('pctField').hidden = k === 'fixed'; $('amtField').hidden = k !== 'fixed';
+    $('splitBox').hidden = k !== 'split' && k !== 'pari'; $('oneParty').hidden = k === 'split' || k === 'pari';
+    $('pctField').hidden = k === 'fixed'; $('amtField').hidden = k !== 'fixed' && k !== 'corridor';
+    $('amtLabel').textContent = k === 'corridor' ? 'Starts once gross receipts reach' : 'Amount';
+    $('intBox').hidden = k !== 'fixed'; $('shareByBox').hidden = k !== 'pari';
+    if (!$('splitBox').hidden) { keepSplits(); drawSplits(); }
   }
   function openEditor(id) {
     editing = id ? tiers().find(t => t.id === id) || null : null;
     const t = editing || { kind: 'fixed' };
     $('f-name').value = str(t.name); $('f-kind').value = KIND[t.kind] ? t.kind : 'fixed'; $('f-party').value = str(t.party);
     $('f-pct').value = t.percent == null ? '' : String(t.percent); $('f-amt').value = t.amount == null ? '' : String(t.amount); $('f-note').value = str(t.note);
-    draftSplits = arr(t.splits).map(s => ({ party: str(s.party), share: s.share == null ? '' : String(s.share) }));
+    draftSplits = (t.kind === 'pari' ? arr(t.parties) : arr(t.splits)).map(s => ({ party: str(s.party), share: s.share == null ? '' : String(s.share), amount: s.amount == null ? '' : String(s.amount) }));
+    $('f-int').value = t.interest == null ? '' : String(t.interest); $('f-intfrom').value = str(t.interestFrom); $('f-shareby').value = t.shareBy === 'share' ? 'share' : 'amount';
+    if (t.kind === 'corridor') $('f-amt').value = t.from == null ? '' : String(t.from);
     if (!draftSplits.length) draftSplits = [{ party: 'Investors', share: '50' }, { party: 'Producers', share: '50' }];
-    $('partyList').innerHTML = [...new Set(tiers().flatMap(x => [x.party, ...arr(x.splits).map(s => s.party)]).filter(Boolean))].map(p => `<option value="${esc(p)}">`).join('');
+    $('partyList').innerHTML = [...new Set(tiers().flatMap(x => [x.party, ...arr(x.splits).map(s => s.party), ...arr(x.parties).map(s => s.party)]).filter(Boolean))].map(p => `<option value="${esc(p)}">`).join('');
     drawSplits(); showKind();
     $('deleteBtn').hidden = !editing;
     $('editorTitle').textContent = editing ? editing.name || 'Tier' : 'Add a tier';
@@ -569,15 +620,18 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   function saveEditor() {
     if (!$('f-name').value.trim()) { $('f-name').setCustomValidity('Name the tier.'); $('f-name').reportValidity(); return; }
     const k = $('f-kind').value;
-    if (k !== 'split' && k !== 'fixed' && ($('f-pct').value === '' || num($('f-pct').value) > 100)) { $('f-pct').setCustomValidity('Enter a percentage from 0 to 100.'); $('f-pct').reportValidity(); return; }
+    if (k !== 'split' && k !== 'fixed' && k !== 'pari' && ($('f-pct').value === '' || num($('f-pct').value) > 100)) { $('f-pct').setCustomValidity('Enter a percentage from 0 to 100.'); $('f-pct').reportValidity(); return; }
     if (k === 'fixed' && $('f-amt').value === '') { $('f-amt').setCustomValidity('Enter the amount.'); $('f-amt').reportValidity(); return; }
     keepSplits();
     const t = editing || { id: newId('tier') };
     t.name = $('f-name').value.trim(); t.kind = k;
-    for (const x of ['party', 'percent', 'amount', 'splits', 'note']) delete t[x];
+    for (const x of ['party', 'percent', 'amount', 'splits', 'parties', 'shareBy', 'from', 'interest', 'interestFrom', 'note']) delete t[x];
     if (k !== 'split' && $('f-party').value.trim()) t.party = $('f-party').value.trim();
-    if (k === 'gross' || k === 'percent') t.percent = num($('f-pct').value);
+    if (k === 'gross' || k === 'percent' || k === 'corridor') t.percent = num($('f-pct').value);
     if (k === 'fixed') t.amount = num($('f-amt').value);
+    if (k === 'fixed' && num($('f-int').value) > 0) { t.interest = num($('f-int').value); if ($('f-intfrom').value) t.interestFrom = $('f-intfrom').value; }
+    if (k === 'corridor' && num($('f-amt').value) > 0) t.from = num($('f-amt').value);
+    if (k === 'pari') { t.shareBy = $('f-shareby').value; t.parties = draftSplits.filter(x => str(x.party).trim() || num(x.amount)).map(x => Object.assign({ party: str(x.party).trim(), amount: num(x.amount) }, t.shareBy === 'share' ? { share: num(x.share) } : {})); if (t.shareBy !== 'share') delete t.shareBy; }
     if (k === 'split') t.splits = draftSplits.filter(s => str(s.party).trim() || num(s.share)).map(s => ({ party: str(s.party).trim(), share: num(s.share) }));
     if ($('f-note').value.trim()) t.note = $('f-note').value.trim();
     if (!editing) W().tiers.push(t);
@@ -612,7 +666,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const results = sl.map(s => run(s.gross));
     $('report').innerHTML = `<h1>Recoupment waterfall</h1><p class="r-meta">${esc([doc.project.title, `Printed ${fmtDate(today())}`].filter(Boolean).join(' · '))}</p>
       <table><thead><tr><th>#</th><th>Tier</th><th>How it's paid</th>${sl.map(s => `<th class="r-n">${esc(s.name)}<span class="r-sub">${esc(money(s.gross))}</span></th>`).join('')}</tr></thead><tbody>
-      ${tiers().map((t, i) => `<tr><td>${i + 1}</td><td>${esc(t.name)}${t.party ? `<span class="r-sub">${esc(t.party)}</span>` : ''}</td><td>${esc(t.kind === 'fixed' ? money(t.amount) : t.kind === 'split' ? arr(t.splits).map(s => `${s.party} ${num(s.share)}%`).join(', ') : `${num(t.percent)}% ${t.kind === 'gross' ? 'of gross' : "of what's left"}`)}</td>${results.map(r => `<td class="r-n">${esc(money(r[i].pay))}${r[i].owed > 0.005 ? `<span class="r-sub">${esc(money(r[i].owed))} owed</span>` : ''}</td>`).join('')}</tr>`).join('')}
+      ${tiers().map((t, i) => `<tr><td>${i + 1}</td><td>${esc(t.name)}${t.party ? `<span class="r-sub">${esc(t.party)}</span>` : ''}</td><td>${esc(howPaid(t))}</td>${results.map(r => `<td class="r-n">${esc(money(r[i].pay))}${r[i].owed > 0.005 ? `<span class="r-sub">${esc(money(r[i].owed))} owed</span>` : ''}</td>`).join('')}</tr>`).join('')}
       </tbody></table>
       <h2>By party</h2><table><thead><tr><th>Party</th>${sl.map(s => `<th class="r-n">${esc(s.name)}</th>`).join('')}</tr></thead><tbody>${[...new Set(sl.flatMap(s => byParty(s.gross).map(x => x[0])))].map(p => `<tr><td>${esc(p)}</td>${sl.map(s => `<td class="r-n">${esc(money((byParty(s.gross).find(x => x[0] === p) || [0, 0])[1]))}</td>`).join('')}</tr>`).join('')}</tbody></table>
       <p class="r-note">A model, not an accounting. Your agreements decide the order and the amounts.</p>`;
@@ -850,6 +904,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('scenGross').addEventListener('input', () => { scen = ''; gross = num($('scenGross').value); $('scenSel').value = ''; render(); });
     $('rows').addEventListener('click', ev => { const u = ev.target.closest('[data-up]'), d = ev.target.closest('[data-down]'); if (u) return move(+u.dataset.up, -1); if (d) return move(+d.dataset.down, 1); const b = ev.target.closest('[data-edit]'); if (b) openEditor(b.dataset.edit); });
     $('f-kind').addEventListener('change', showKind);
+    $('f-shareby').addEventListener('change', () => { keepSplits(); drawSplits(); });
     $('splitAdd').onclick = () => { keepSplits(); draftSplits.push({ party: '', share: '' }); drawSplits(); };
     $('splits').addEventListener('click', ev => { const b = ev.target.closest('[data-spdel]'); if (b) { keepSplits(); draftSplits.splice(+b.dataset.spdel, 1); drawSplits(); } });
     $('splits').addEventListener('input', sumSplits);

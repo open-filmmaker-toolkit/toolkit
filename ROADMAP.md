@@ -122,6 +122,7 @@ Every tool in [TOOLS.md](TOOLS.md), built in the order contributors asked for. E
 - [x] Contract and release archive: every contract and release in the project, in folders by kind with a tab number, its signed copy, anything signed without a copy flagged, where the archive is kept and when it was checked, the index as CSV, a suggested folder layout as a text file, and a printed index ([#97](https://github.com/open-filmmaker-toolkit/toolkit/issues/97))
 - [x] Money in several currencies, at exchange rates you type in ([#154](https://github.com/open-filmmaker-toolkit/toolkit/issues/154))
 - [x] Budget lines with several fringes and capped fringes, and deal memos with several rates ([#155](https://github.com/open-filmmaker-toolkit/toolkit/issues/155))
+- [x] Waterfall pari passu tiers, corridors and simple interest on recoupment ([#156](https://github.com/open-filmmaker-toolkit/toolkit/issues/156))
 
 Finding a third maintainer is on hold. Basil and Alex maintain the project for now ([#8](https://github.com/open-filmmaker-toolkit/toolkit/issues/8), closed).
 

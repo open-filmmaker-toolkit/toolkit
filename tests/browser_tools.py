@@ -18,9 +18,10 @@ merging in the save warning, who changed what, who has the file open, conflicted
 remembering the open file across tools (served over HTTP so the browser gives real file handles).
 The home page dashboard is checked with the sample: its flags against five tools, the calendar file and summaries.
 Every tool whose template lists records imports its template without matching, and imports its own export.
-Money in other currencies, several and capped fringes, and several rates in a deal memo are checked across the budget tools.
+Money in other currencies, several and capped fringes, and several rates in a deal memo are checked across the budget tools,
+and the waterfall's pari passu tiers, corridors and interest against a worked example.
 """
-import base64, datetime, csv, io, json, os, pathlib, re, sys, tempfile
+import base64, datetime, csv, io, json, math, os, pathlib, re, sys, tempfile
 from playwright.sync_api import sync_playwright
 
 root = pathlib.Path(__file__).resolve().parents[1]
@@ -3302,6 +3303,42 @@ def test_money(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
+# waterfall / pari passu, corridors and interest, against a worked example
+def test_waterfall_terms(browser, fake):
+    d = json.loads(sample)
+    start = (datetime.date.today() - datetime.timedelta(days=731)).isoformat()
+    d['waterfall'] = {'tiers': [
+        {'id': 't-corr', 'name': 'Investor corridor', 'kind': 'corridor', 'percent': 10, 'party': 'Investors'},
+        {'id': 't-fee', 'name': 'Sales fee', 'kind': 'gross', 'percent': 15, 'party': 'Sales agent'},
+        {'id': 't-eq', 'name': 'Equity', 'kind': 'pari', 'parties': [{'party': 'Equity A', 'amount': 60000}, {'party': 'Equity B', 'amount': 40000}]},
+        {'id': 't-loan', 'name': 'Gap loan', 'kind': 'fixed', 'amount': 50000, 'party': 'Lender', 'interest': 10, 'interestFrom': start},
+        {'id': 't-net', 'name': 'Net profits', 'kind': 'split', 'splits': [{'party': 'Investors', 'share': 50}, {'party': 'Producers', 'share': 50}]}],
+        'scenarios': [{'id': 's-300', 'name': 'Worked example', 'gross': 300000}, {'id': 's-120', 'name': 'Short', 'gross': 120000}]}
+    d['revenueStatements'] = []
+    ctx, pg, errs = new_page(browser, 'waterfall', fake)
+    open_text(pg, fake, json.dumps(d, indent=2))
+    rows = csv_of(pg)
+    paid = lambda scen, party: round(sum(float(r[4]) for r in rows[1:] if r[0] == scen and r[3] == party), 2)
+    loan = round(50000 + 50000 * 0.10 * 731 / 365.25, 2)
+    split = round((300000 * 0.75 - 100000 - loan) / 2, 2)
+    check(paid('Worked example', 'Sales agent') == 45000 and paid('Worked example', 'Equity A') == 60000 and paid('Worked example', 'Equity B') == 40000,
+          'corridor off the gross, fee off the top, then equity pari passu pro rata')
+    check(abs(paid('Worked example', 'Lender') - loan) < 0.02 and abs(paid('Worked example', 'Producers') - split) < 0.02 and abs(paid('Worked example', 'Investors') - (30000 + split)) < 0.02,
+          'the loan earns simple interest, and the corridor is paid alongside the split (%s, %s)' % (paid('Worked example', 'Lender'), paid('Worked example', 'Investors')))
+    check(paid('Short', 'Equity A') == 54000 and paid('Short', 'Equity B') == 36000 and paid('Short', 'Lender') == 0, 'short of recoupment, pari passu parties share pro rata')
+    be = math.ceil((100000 + loan) / 0.75)
+    check(('$%s' % format(be, ',')) in pg.inner_text('#breakeven') or ('$%s' % format(be + 1, ',')) in pg.inner_text('#breakeven'), 'the break-even counts the corridor, the pari passu tier and interest (%s)' % pg.inner_text('#breakeven'))
+    pg.click('[data-edit="t-eq"]'); pg.select_option('#f-shareby', 'share')
+    pg.fill('#sp-s-0', '50'); pg.fill('#sp-s-1', '50'); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    rows = csv_of(pg)
+    check(paid('Short', 'Equity A') == 50000 and paid('Short', 'Equity B') == 40000, 'by set shares, a party paid in full passes the rest to the others')
+    pg.evaluate('renderReport()') if False else None
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    rep = pg.inner_text('#report')
+    check('Pari passu' in rep and 'alongside the tiers' in rep and 'simple interest' in rep, 'the printed summary explains all three')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
 def test_template_columns(browser, fake):
     for name, template in TEMPLATE_EXPORTS:
         ctx, pg, errs = new_page(browser, name, fake)
@@ -3468,6 +3505,8 @@ def main():
         test_imports(browser, fake)
         print('== money / currencies, fringes with caps and several rates in a deal memo')
         test_money(browser, fake)
+        print('== waterfall / pari passu, corridors and interest')
+        test_waterfall_terms(browser, fake)
         print('== templates / columns match the tools\' exports')
         test_template_columns(browser, fake)
         browser.close()
