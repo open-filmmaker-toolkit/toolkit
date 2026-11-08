@@ -36,6 +36,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **Keeps the people** at each one, with title, email and phone.
 - **Tracks commitments and next steps** with due dates, marked as what you will do or what they will do. Partners with an overdue step come first, then the soonest. The side panel lists every open step; tick one to mark it done.
 - **Links partners to screenings.** Screenings are shared with the [press list](../press-list/), and you can add one right in the partner. The side panel shows how many partners are part of each.
+- **Edits and removes screenings** from the Screenings list in the side panel. Before removing one, it says which partners link to it and how many press RSVPs name it, and removes those links with it. Changes show in the press list too.
 - **Filters by stage** and searches names, people, commitments and screenings.
 - **Exports CSV and prints** one row per partner. Also exports project data: project details, people, locations, third-party elements, contracts, assets, music cue sheet details, call sheets or screenings as separate CSV files.
 
@@ -62,7 +63,6 @@ It also adds screenings to a shared `screenings` list, each with an `id` and opt
 
 ## Not yet
 
-- Editing or removing a screening once it's added (for now, edit the project file)
 - Importing contacts from an address book
 
 ## License

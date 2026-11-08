@@ -84,7 +84,7 @@ Each item has [its own issue](https://github.com/open-filmmaker-toolkit/toolkit/
 
 ### Fixes
 
-- [ ] Edit or remove a screening once it's added, in the partner CRM and press list ([#181](https://github.com/open-filmmaker-toolkit/toolkit/issues/181))
+- [x] Edit or remove a screening once it's added, in the partner CRM and press list ([#181](https://github.com/open-filmmaker-toolkit/toolkit/issues/181))
 
 ### Money
 
