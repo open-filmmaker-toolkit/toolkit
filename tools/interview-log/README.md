@@ -45,6 +45,7 @@ For anyone who doesn't use the tool, there's a [spreadsheet template](../../temp
 
 - **Imports from a spreadsheet:** choose **Import from a spreadsheet** under the file buttons and pick a CSV file. One with the columns of the [spreadsheet template](../../templates/interview-moments-template.csv) imports as it is; match any other columns once and the tool remembers. Problems, such as a date it can't read, show row by row before anything is added, and importing only adds.
 - **Imports a transcript with timecodes:** an SRT, WebVTT or timecoded text file from a transcription app such as Buzz or noScribe, keeping the timecodes and speakers. Mark the moments worth finding again straight from it. The transcript is kept with the paper edit's, so the paper edit uses it without importing it twice.
+- **Links each moment to its clip** on the interview's cards, from the [camera reports](../camera-sound-reports/). The [paper edit](../paper-edit/) brings favorite moments in as bites, with their clips.
 
 ## Saving and file conflicts
 
@@ -56,14 +57,13 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-It adds to `interviews`, the same list interview prep keeps: optional `locationId` (when it differs from the shoot day's), `mediaReportIds` (in `mediaReports`), `cards`, `transcriptAssetId` (an asset with `type` "transcript" and a `relativePath`), `moments` (each with an `id` and optional `tc`, `text`, `fav` and `beatId`) and `logNotes`. Logging moments marks a planned interview done.
+It adds to `interviews`, the same list interview prep keeps: optional `locationId` (when it differs from the shoot day's), `mediaReportIds` (in `mediaReports`), `cards`, `transcriptAssetId` (an asset with `type` "transcript" and a `relativePath`), `moments` (each with an `id` and optional `tc`, `text`, `fav`, `beatId` and `clipId`, a clip in `mediaReports`) and `logNotes`. Logging moments marks a planned interview done.
 
 It reads `people`, `locations`, `contracts`, `shootDays` and `mediaReports`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
 - Selects and string-outs across interviews
-- Linking moments to clips in the camera reports
 
 ## License
 

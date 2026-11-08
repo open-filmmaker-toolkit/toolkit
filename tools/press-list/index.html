@@ -238,6 +238,8 @@ pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; b
 input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:focus, input[type="time"]:focus-within { outline: 2px solid var(--focus, #2f6fdb); outline-offset: 2px; }
 .home-link { color: inherit; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
 .home-link:hover { text-decoration-thickness: 2px; }
+.kit-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.kit-actions a.btn { text-decoration: none; color: inherit; }
 </style>
 </head>
 <body>
@@ -305,6 +307,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       <section class="card" aria-labelledby="scrHead">
         <div class="card-head"><h2 id="scrHead">Screenings</h2><span class="count" id="scrCount"></span></div>
         <ul class="steps" id="scrList"></ul>
+      </section>
+      <section class="card" aria-labelledby="kitHead">
+        <div class="card-head"><h2 id="kitHead">Press kit</h2></div>
+        <p class="lead" id="kitText"></p>
+        <div class="kit-actions"><button type="button" class="btn small" id="kitCopyBtn">Copy the press notes</button><a class="btn small" href="../press-notes/index.html">Open the press notes</a></div>
       </section>
       <section class="card" aria-labelledby="statsHead">
         <div class="card-head"><h2 id="statsHead">Where things stand</h2></div>
@@ -541,6 +548,28 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       (!q || norm([o.name, o.notes, ...list(o, 'contacts').map(c => `${c.name} ${c.beat} ${c.email}`), ...list(o, 'coverage').map(c => `${c.headline} ${c.url}`)].join(' ')).includes(q)));
   }
 
+  // The press notes from the EPK and press notes builder, as text to paste into an email.
+  function pressKit() {
+    const P = doc.pressNotes && typeof doc.pressNotes === 'object' ? doc.pressNotes : {};
+    const T = doc.treatment && doc.treatment.sections && typeof doc.treatment.sections === 'object' ? doc.treatment.sections : {};
+    const txt = k => str(P[k]).trim() || str(T[k]).trim();
+    const parts = [], blocks = [];
+    const add = (label, text) => { if (text) { parts.push(label.toLowerCase()); blocks.push(`${label}\n${text}`); } };
+    add('Logline', txt('logline')); add('Synopsis', txt('shortSynopsis') || txt('longSynopsis')); add("Director's statement", txt('directorStatement'));
+    const specs = P.specs && typeof P.specs === 'object' ? Object.values(P.specs).filter(Boolean).join(' · ') : '';
+    add('Technical details', [doc.project.runningTime && `Running time ${doc.project.runningTime}`, specs].filter(Boolean).join(' · '));
+    const stills = arr(P.stillIds).length;
+    if (stills) parts.push(`${stills} still${stills === 1 ? '' : 's'}`);
+    const contacts = arr(P.contacts).filter(c => c && (c.name || c.email)).map(c => [c.role, c.name, c.company, c.email, c.phone].filter(Boolean).join(', '));
+    add('Press contacts', contacts.join('\n'));
+    return { parts, text: blocks.length ? `${doc.project.title || 'Untitled film'}\n\n${blocks.join('\n\n')}\n` : '' };
+  }
+  async function copyKit() {
+    const k = pressKit();
+    try { await navigator.clipboard.writeText(k.text); toast('Copied the press notes. Paste them into your email.'); }
+    catch { toast("Couldn't copy here. Open the press notes and copy them from there.", true); }
+  }
+
   // ---------- Render ----------
   function render() {
     $('filmTitle').textContent = doc.project.title || 'Untitled film';
@@ -584,6 +613,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
 
     const cov = all.flatMap(o => list(o, 'coverage').map(c => ({ o, c }))).sort((a, b) => str(b.c.date).localeCompare(str(a.c.date)));
     $('stepsCount').textContent = cov.length ? String(cov.length) : '';
+    const kit = pressKit();
+    $('kitText').textContent = kit.parts.length ? `From the EPK and press notes builder: ${kit.parts.join(', ')}. Copy the text to paste into an email with a screener link.` : 'Nothing in the press notes yet. Write them in the EPK and press notes builder, then copy them from here.';
+    $('kitCopyBtn').disabled = !kit.text;
     const scr = oftScreenings.sorted();
     $('scrCount').textContent = scr.length ? String(scr.length) : '';
     $('scrList').innerHTML = oftScreenings.listHtml(fmtDate, sc => { const n = all.reduce((k, o) => k + list(o, 'rsvps').filter(r => r.screeningId === sc.id).length, 0); return ` · ${n} RSVP${n === 1 ? '' : 's'}`; }) || '<li class="empty-line">No screenings yet. Add one from an outlet.</li>';
@@ -974,6 +1006,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('rvAddBtn').onclick = addRsvp;
     $('cvAddBtn').onclick = logCoverage;
     $('scrAddBtn').onclick = addScreening;
+    $('kitCopyBtn').onclick = copyKit;
     $('scrList').addEventListener('click', ev => { const b = ev.target.closest('[data-edit-screening]'); if (b) oftScreenings.edit(b.dataset.editScreening, msg => { changed(); toast(msg); }); });
     $('cRows').addEventListener('change', () => { renderWho(); renderLogs(); });
     for (const lg of ['shLog', 'rvLog', 'cvLog']) $(lg).addEventListener('click', ev => { const b = ev.target.closest('[data-dellog]'); if (b) { const li = b.closest('li'); editing[li.dataset.k] = list(editing, li.dataset.k).filter(x => x.id !== li.dataset.id); renderLogs(); } });

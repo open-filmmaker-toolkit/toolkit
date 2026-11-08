@@ -43,6 +43,8 @@ For anyone who doesn't use the tool, there's a [spreadsheet template](../../temp
 
 - **A calendar file of every date in the project**, gathered from every tool: choose **Calendar of every date** under the file buttons and pick which kinds of dates to include. Importing a newer file updates the same events instead of adding them twice.
 - **Imports from a spreadsheet:** choose **Import from a spreadsheet** under the file buttons and pick a CSV file. One with the columns of the [spreadsheet template](../../templates/cut-notes-template.csv) imports as it is; match any other columns once and the tool remembers. Problems, such as a date it can't read, show row by row before anything is added, and importing only adds.
+- **QC issues for each cut,** from the [QC tracker](../qc-tracker/): the open issues found in it and the fixes it made.
+- **The exported file** for each cut: where it is, relative to the project file, or its name on the review site.
 
 ## Saving and file conflicts
 
@@ -58,11 +60,10 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 Each note has an `id`, a `status` (`open`, `done`, `deferred` or `carried`), and optional `screeningId`, `tc` and `tcOut` (time in the cut), `cardId` (a card in `structure`), `shot`, `from`, `text`, `carriedToCutId`, and `carriedFromCutId` and `carriedFromNoteId` for a carried copy.
 
-Locking a cut sets `project.cutVersion` to its name and date, and `project.runningTime` to its running time. It reads `structure`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
+Locking a cut sets `project.cutVersion` to its name and date, and `project.runningTime` to its running time. It reads `structure`. A cut can have an `exportFile`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
-- Linking a cut to its exported file
 - Shifting carried notes' times when scenes move
 - Notes from people who fill in a form, rather than typed in by you
 

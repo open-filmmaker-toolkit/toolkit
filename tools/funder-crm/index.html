@@ -535,6 +535,15 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       (!q || norm([f.name, f.notes, ...list(f, 'contacts').map(c => `${c.name} ${c.title} ${c.email}`), ...list(f, 'interactions').map(i => i.note)].join(' ')).includes(q)));
   }
 
+  // Money in the finance plan from this organization: sources linked to it, or to one of its applications.
+  const KIND_WORD = { grant: 'grant', equity: 'investment', presale: 'presale', license: 'license', loan: 'loan', donation: 'donations', 'in-kind': 'in kind', deferral: 'deferral' };
+  function financeFor(f) {
+    const fp = doc.financePlan && typeof doc.financePlan === 'object' ? doc.financePlan : {};
+    const fmt = n => { try { return Number(n).toLocaleString(undefined, { style: 'currency', currency: (doc.project && doc.project.currency) || 'USD', maximumFractionDigits: 0 }); } catch { return String(n); } };
+    return arr(fp.sources).filter(s => s && typeof s === 'object' && (s.funderId === f.id || (!s.funderId && s.grantId && arr(f.grantIds).includes(s.grantId))))
+      .map(s => ({ status: s.status, label: [KIND_WORD[s.kind] || s.kind || 'source', s.status, s.amount != null && s.amount !== '' ? `${s.currency && s.currency !== ((doc.project && doc.project.currency) || 'USD') ? `${s.currency} ` : ''}${fmt(s.amount)}` : ''].filter(Boolean).join(', ') }));
+  }
+
   // ---------- Render ----------
   function render() {
     $('filmTitle').textContent = doc.project.title || 'Untitled film';
@@ -565,6 +574,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       if (lastContact(f)) flags.push(`<span class="flag linked">Last contact ${esc(fmtDate(lastContact(f)))}</span>`);
       const people = list(f, 'contacts');
       if (people.length) flags.push(`<span class="flag linked">${esc(people.map(c => c.name).filter(Boolean).slice(0, 3).join(', '))}${people.length > 3 ? ` and ${people.length - 3} more` : ''}</span>`);
+      for (const s of financeFor(f)) flags.push(`<span class="flag ${s.status === 'confirmed' ? 'new' : 'linked'}">${esc(`Finance plan: ${s.label}`)}</span>`);
       for (const g of linkedGrants(f)) flags.push(`<span class="flag ${g.status === 'awarded' ? 'new' : 'linked'}">${esc(g.program || 'Application')}: ${esc(g.status)}</span>`);
       if (arr(f.grantIds).length > linkedGrants(f).length) flags.push('<span class="flag problem">An application is no longer in the grant calendar</span>');
       return `<li class="row${f.stage === 'passed' ? ' is-passed' : ''}" data-id="${esc(f.id)}">

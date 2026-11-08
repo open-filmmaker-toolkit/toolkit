@@ -46,6 +46,7 @@ Lengths are worked out from timecode at the film's frame rate (also set in **Edi
 
 - **Imports from a spreadsheet:** choose **Import from a spreadsheet** under the file buttons and pick a CSV file. One with the columns of the [spreadsheet template](../../templates/clearance-log-template.csv) imports as it is; match any other columns once and the tool remembers. Problems, such as a date it can't read, show row by row before anything is added, and importing only adds.
 - **Finds archive and music in the edit:** import the locked cut's CMX 3600 edit list. Each source clip is matched to the clearance log, by clip names it has matched before or by the element's license file, description or source, and to your own footage in the footage log. It shows new material that isn't in the log yet, elements that are no longer in the cut, and updates each element's uses with the timecodes from the edit, for the clearance report and cue sheet.
+- **People and places in an element,** with their release status from the [release tracker](../release-tracker/): signed, not signed yet, expired, declined or no release. Open **People and places in it** in the element's editor.
 
 ## Saving
 
@@ -77,7 +78,8 @@ The file is plain JSON. The shared [version 1 schema](../../schemas/project-v1.s
       "id": "…", "description": "…", "type": "Music", "status": "negotiating",
       "source": "…", "rightsHolder": "…", "contact": "…",
       "tcIn": "00:11:02:00", "tcOut": "00:12:30:00",
-      "use": "…", "rights": "…", "cost": 3500, "licenseRef": "…", "notes": "…"
+      "use": "…", "rights": "…", "cost": 3500, "licenseRef": "…", "notes": "…",
+      "personIds": ["…"], "locationIds": ["…"]
     }
   ]
 }
@@ -90,7 +92,6 @@ Status values are `not-started`, `requested`, `negotiating`, `licensed`, `fair-u
 ## Not yet
 
 - Attaching license PDFs to an element
-- Linking to people and locations from the release tracker
 - Installing as an offline app (works offline now as a saved file; installable once the site is published)
 
 ## License

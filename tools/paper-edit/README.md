@@ -45,6 +45,7 @@ For anyone who doesn't use the tool, there's a [spreadsheet template](../../temp
 Test the edit list with a few bites in your editing app before you depend on it. Apps differ in how they match an EDL's reels and clip names to media.
 
 - **Shares transcripts with the interview log.** A transcript imported in either tool shows in both, linked to its interview.
+- **Brings in favorite moments** from the [interview log](../interview-log/) as bites: choose **Add favorite moments** in Scenes. A moment marked from a transcript in the paper edit keeps its timecodes; the others come in with the clip they're linked to, to time later. Each bite keeps its `momentId`, so a moment isn't brought in twice.
 
 ## Saving and file conflicts
 
@@ -61,14 +62,13 @@ A `paperEdit` record with `frameRate`, `recordStart` (where the sequence starts)
 - Each transcript has an `id`, `name`, `format` (`srt`, `vtt` or `text`), `segments` (each with an `id`, `text`, and optional `start` and `end` in seconds from the start of the clip, and `speaker`), and optional `interviewId`, `personId`, `clipId` (a clip in the footage log), `clipName`, `reel` and `startTc`.
 - Each scene has an `id`, `title` and `bites`. Each bite has an `id`, `transcriptId`, `segmentIds`, `text`, and optional `in` and `out` in seconds, `speaker`, `note`, and `clipName`, `reel`, `sourceName`, `tcIn` and `tcOut`, kept so a bite keeps its source if its transcript is removed.
 
-It reads `people`, `interviews` and the clips in `assets`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
+It reads `people`, `interviews` and the clips in `assets`. A bite brought in from the interview log has a `momentId`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
 - Drop-frame timecode
 - FCPXML and AAF exports, and separate audio tracks in the edit list
 - Reading transcripts from Word documents or noScribe's HTML; export VTT or text from those apps instead
-- Bringing in the interview log's favorite moments as bites
 
 ## License
 

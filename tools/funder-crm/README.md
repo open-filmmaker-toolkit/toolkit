@@ -46,6 +46,7 @@ This tool holds other people's contact details. Keep the project file somewhere 
 
 - **A calendar file of every date in the project**, gathered from every tool: choose **Calendar of every date** under the file buttons and pick which kinds of dates to include. Importing a newer file updates the same events instead of adding them twice.
 - **Imports from a spreadsheet:** choose **Import from a spreadsheet** under the file buttons and pick a CSV file. One with the columns of the [spreadsheet template](../../templates/funder-crm-template.csv) imports as it is; match any other columns once and the tool remembers. Problems, such as a date it can't read, show row by row before anything is added, and importing only adds.
+- **Shows the money in the [finance plan](../finance-plan/)** from each organization: sources linked to it, and sources from its applications, with their kind, status and amount.
 
 ## Saving and file conflicts
 
@@ -62,7 +63,6 @@ A `funders` list. Each organization has an `id`, a `type` and a `stage`, and opt
 ## Not yet
 
 - Importing contacts from an address book
-- Linking investors and broadcasters to sources in the finance plan
 
 ## License
 

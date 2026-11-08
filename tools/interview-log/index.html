@@ -565,7 +565,13 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     fields: [{ k: 'tc', label: 'Timecode', placeholder: '00:14:32' },
       { k: 'beatId', label: 'Story beat', type: 'select', options: () => [{ id: '', label: 'None' }, ...arr(editing.beats).map(b => ({ id: b.id, label: b.text || 'Beat' }))] },
       { k: 'fav', label: 'Favorite', type: 'checkbox' },
+      { k: 'clipId', label: 'Clip', type: 'select', options: () => [{ id: '', label: 'None' }, ...clipsFor(editing).map(c => ({ id: c.id, label: c.label }))] },
       { k: 'text', label: 'What they say or do', type: 'textarea', wide: true }] };
+  // Camera clips on the interview's cards, for linking a moment to the clip it's in.
+  function clipsFor(i) {
+    return arr(i && i.mediaReportIds).map(report).filter(r => r && r.kind !== 'sound').flatMap(r => arr(r.clips).filter(c => c && c.id).map(c => ({ id: c.id, label: [r.roll, c.clip, c.subject].filter(Boolean).join(' · '), clip: c, report: r })));
+  }
+  const clipName = (i, id) => { const c = id && clipsFor(i).find(x => x.id === id); return c ? [c.report.roll, c.clip.clip].filter(Boolean).join(' ') : ''; };
 
   // ---------- Render ----------
   function render() {
@@ -762,7 +768,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         const r = release(i.personId);
         return `<section class="r-int"><h2>${esc(who(i))}</h2>
           <p class="r-meta">${esc([dateOf(i) && fmtDate(dateOf(i)), (locOf(i) || {}).name, cardsOf(i).length && `Cards ${cardsOf(i).join(', ')}`, r && r.text, transcriptOf(i) && `Transcript: ${transcriptOf(i)}`].filter(Boolean).join(' · '))}</p>
-          ${ms.length ? `<table><thead><tr><th class="r-tc">Timecode</th><th class="r-c">★</th><th>Moment</th><th>Beat</th></tr></thead><tbody>${ms.map(m => `<tr><td class="r-tc">${esc(m.tc || '')}</td><td class="r-c">${m.fav ? '★' : ''}</td><td class="r-notes">${esc(m.text || '')}</td><td>${esc(beatText(i, m.beatId))}</td></tr>`).join('')}</tbody></table>` : '<p>No favorites marked.</p>'}
+          ${ms.length ? `<table><thead><tr><th class="r-tc">Timecode</th><th class="r-c">★</th><th>Moment</th><th>Beat</th></tr></thead><tbody>${ms.map(m => `<tr><td class="r-tc">${esc(m.tc || '')}</td><td class="r-c">${m.fav ? '★' : ''}</td><td class="r-notes">${esc(m.text || '')}${m.clipId && clipName(i, m.clipId) ? `<br><i>${esc(`Clip ${clipName(i, m.clipId)}`)}</i>` : ''}</td><td>${esc(beatText(i, m.beatId))}</td></tr>`).join('')}</tbody></table>` : '<p>No favorites marked.</p>'}
         </section>`;
       }).join('')}`;
   }

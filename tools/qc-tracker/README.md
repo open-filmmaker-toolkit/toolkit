@@ -41,6 +41,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 For anyone who doesn't use the tool, there's a [spreadsheet template](../../templates/qc-issues-template.csv) with the same columns as the export.
 
 - **Imports from a spreadsheet:** choose **Import from a spreadsheet** under the file buttons and pick a CSV file. One with the columns of the [spreadsheet template](../../templates/qc-issues-template.csv) imports as it is; match any other columns once and the tool remembers. Problems, such as a date it can't read, show row by row before anything is added, and importing only adds.
+- **Links issues to cuts** in the [cut version tracker](../cut-tracker/): the cut an issue was found in and the cut that fixed it. The cut tracker shows each cut's open QC issues and fixes.
 
 ## Saving and file conflicts
 
@@ -52,7 +53,7 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-A `qc` record with `versions` (`name`, `date`, `notes`) and `reports` (`versionId`, `vendor`, `date`, `result` of `pending`, `fail` or `pass`, `notes`, and `issues`). Each issue has `tc`, `tcOut`, `description`, `severity`, `area`, `owner`, `fix` and `fixedInId` (a version).
+A `qc` record with `versions` (`name`, `date`, `notes`) and `reports` (`versionId`, `vendor`, `date`, `result` of `pending`, `fail` or `pass`, `notes`, and `issues`). Each issue has `tc`, `tcOut`, `description`, `severity`, `area`, `owner`, `fix`, `fixedInId` (a version), and `cutId` and `fixedCutId` (in `cuts`).
 
 Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
@@ -60,7 +61,6 @@ Everything else in the file is preserved. See the [data model notes](../../schem
 
 - Importing QC reports from a QC house's file
 - Markers for an editing app
-- Linking issues to the cut version tracker
 
 ## License
 

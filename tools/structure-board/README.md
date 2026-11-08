@@ -43,6 +43,7 @@ The [cut version tracker](../cut-tracker/) ties screening notes to these cards.
 For anyone who doesn't use the tool, there's a [spreadsheet template](../../templates/structure-board-template.csv) with the same columns as the export.
 
 - **Imports from a spreadsheet:** choose **Import from a spreadsheet** under the file buttons and pick a CSV file. One with the columns of the [spreadsheet template](../../templates/structure-board-template.csv) imports as it is; match any other columns once and the tool remembers. Problems, such as a date it can't read, show row by row before anything is added, and importing only adds.
+- **Links cards to clips** in the [footage log](../footage-log/).
 
 ## Saving and file conflicts
 
@@ -58,13 +59,12 @@ A `structure` record with `acts` (each an `id` and `title`, in order), `sequence
 
 Each card has an `id`, a `title`, and optional `summary`, `seconds` (running time), `timeFromPaperEdit`, `sequenceId` or `actId` (where it sits; neither means it's not on the board yet), `threadIds`, `paperEditSceneId` and `notes`.
 
-It reads `people` and `paperEdit`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
+It reads `people` and `paperEdit`. Cards can have `assetIds`, clips in `assets`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
 - Index-card print layout, to cut out and pin up
 - Several versions of the structure to compare
-- Linking cards to clips in the footage log
 
 ## License
 

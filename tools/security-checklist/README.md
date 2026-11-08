@@ -41,6 +41,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 For anyone who doesn't use the tool, there's a [spreadsheet template](../../templates/security-checklist-template.csv) with the same columns as the export.
 
 This is a starting point, not a full security plan. For a high-risk shoot, get advice from a digital-security or press-freedom organization, and write a [risk plan](../risk-plan/) too.
+- **Links items to devices** in the [gear list](../gear-list/), such as the laptops and drives to encrypt.
 
 ## Saving and file conflicts
 
@@ -54,13 +55,12 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 A `security` record with `level` (`standard` or `high`), `personIds` (who's on the checklist), `items` (your own items, each with an `id`, `section`, `text` and optional `high`), `hidden` (the ids of built-in items set aside), `done` (each item's id mapped to the people who have done it) and optional `notes`.
 
-It reads `people`, `callSheets` and `shootDays`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
+It reads `people`, `callSheets` and `shootDays`. Items can have `gearIds`, in the gear list's `items`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
 - Checklists for a specific country or border
 - Reminders to check again before each trip
-- Linking items to a person's devices in the gear list
 
 ## License
 

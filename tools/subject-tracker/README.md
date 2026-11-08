@@ -46,6 +46,7 @@ The list holds contact details. Keep the project file and any printouts private.
 
 - **A calendar file of every date in the project**, gathered from every tool: choose **Calendar of every date** under the file buttons and pick which kinds of dates to include. Importing a newer file updates the same events instead of adding them twice.
 - **Imports from a spreadsheet:** choose **Import from a spreadsheet** under the file buttons and pick a CSV file. One with the columns of the [spreadsheet template](../../templates/subject-tracker-template.csv) imports as it is; match any other columns once and the tool remembers. Problems, such as a date it can't read, show row by row before anything is added, and importing only adds.
+- **Links subjects to locations,** and shows the research sources about them from the [research and archival log](../research-log/).
 
 ## Saving and file conflicts
 
@@ -59,11 +60,10 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 A `subjects` list. Each subject has an `id`, and optional `name`, `about`, `foundVia`, `phone`, `email`, `status` (`researching`, `in-conversation`, `agreed` or `declined`), `lastContact` and `nextFollowUp` (dates as YYYY-MM-DD), `nextFollowUpNote`, `notes`, a `log` of `{ date, note }` entries, and `personId` once they're in `people`.
 
-**Add to the project** adds a person to `people` with `name`, `roles` ("Interview subject"), `onCamera: true`, and `phone` and `email` if you have them. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
+**Add to the project** adds a person to `people` with `name`, `roles` ("Interview subject"), `onCamera: true`, and `phone` and `email` if you have them. Subjects can have `locationIds`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
-- Linking subjects to research sources and locations
 - Importing contacts from an address book
 
 ## License

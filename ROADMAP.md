@@ -76,11 +76,11 @@ Each item has [its own issue](https://github.com/open-filmmaker-toolkit/toolkit/
 - [x] Rental costs from the gear list, per diems and travel from the travel sheet, and permit fees go into the budget ([#173](https://github.com/open-filmmaker-toolkit/toolkit/issues/173))
 - [x] Actual spending from the expense log against the plan in cash flow ([#174](https://github.com/open-filmmaker-toolkit/toolkit/issues/174))
 - [x] Committed costs, such as signed deal memos and purchase orders, separate from what's spent, in budget-to-actuals ([#175](https://github.com/open-filmmaker-toolkit/toolkit/issues/175))
-- [ ] Release status shown in the clearance log and call sheet, and the clearance log linked to the release tracker's people and locations ([#176](https://github.com/open-filmmaker-toolkit/toolkit/issues/176))
-- [ ] The interview log's favorite moments as bites in the paper edit, and moments linked to clips in the camera reports ([#177](https://github.com/open-filmmaker-toolkit/toolkit/issues/177))
-- [ ] QC issues linked to the cut in the cut version tracker ([#178](https://github.com/open-filmmaker-toolkit/toolkit/issues/178))
-- [ ] Investors and broadcasters in the finance plan linked to their organizations in the funder CRM ([#179](https://github.com/open-filmmaker-toolkit/toolkit/issues/179))
-- [ ] Smaller links between tools, from the risk plan and travel sheet to bookings and screenings ([#180](https://github.com/open-filmmaker-toolkit/toolkit/issues/180))
+- [x] Release status shown in the clearance log and call sheet, and the clearance log linked to the release tracker's people and locations ([#176](https://github.com/open-filmmaker-toolkit/toolkit/issues/176))
+- [x] The interview log's favorite moments as bites in the paper edit, and moments linked to clips in the camera reports ([#177](https://github.com/open-filmmaker-toolkit/toolkit/issues/177))
+- [x] QC issues linked to the cut in the cut version tracker ([#178](https://github.com/open-filmmaker-toolkit/toolkit/issues/178))
+- [x] Investors and broadcasters in the finance plan linked to their organizations in the funder CRM ([#179](https://github.com/open-filmmaker-toolkit/toolkit/issues/179))
+- [x] Smaller links between tools, from the risk plan and travel sheet to bookings and screenings ([#180](https://github.com/open-filmmaker-toolkit/toolkit/issues/180))
 
 ### Fixes
 

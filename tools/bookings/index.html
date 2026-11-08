@@ -323,6 +323,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <div class="field"><label for="f-paid">Paid on</label><input id="f-paid" type="date"></div>
       </div>
       <fieldset class="field"><legend>Materials sent</legend><div class="mat" id="f-mat"></div></fieldset>
+      <div id="oftLinks"></div>
       <div class="field"><label for="f-notes">Notes</label><textarea id="f-notes" rows="2"></textarea></div>
     </div>
     <div class="dlg-foot">
@@ -488,6 +489,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       if (w.length && live(b)) flags.push(`<span class="flag changed">To send: ${esc(w.map(k => MATERIALS[k] || k).join(', '))}</span>`);
       else if (Object.keys(sent(b)).length) flags.push('<span class="flag new">Materials sent</span>');
       if (pay(b) === 'invoiced' && b.invoicedDate && daysUntil(b.invoicedDate) < -30) flags.push('<span class="flag problem">Invoice over 30 days old</span>');
+      for (const l of oftLinks.labels(b)) flags.push(`<span class="flag linked">${esc(l)}</span>`);
       const st = b.status || 'inquiry';
       return `<li class="row" data-id="${esc(b.id)}"><span class="rt">${esc([b.startDate && fmtDate(b.startDate), b.endDate && b.endDate !== b.startDate && `to ${fmtDate(b.endDate)}`].filter(Boolean).join(' ') || 'No date')}</span>
         <button type="button" class="what" data-edit="${esc(b.id)}"><span class="nm">${esc(b.venue || 'Unnamed venue')}</span><span class="tt">${esc([STATUS[st], b.contact].filter(Boolean).join(' · '))}</span></button>
@@ -512,6 +514,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('f-mat').innerHTML = Object.entries(MATERIALS).map(([k, v]) => `<label><input type="checkbox" data-need="${k}"${need.includes(k) ? ' checked' : ''}> ${esc(v)}</label><input type="date" data-sent="${k}" aria-label="${esc(v)} sent on" value="${esc(s[k] || '')}">`).join('');
     $('deleteBtn').hidden = !editing;
     $('editorTitle').textContent = editing ? editing.venue || 'Booking' : 'Add a booking';
+    oftLinks.fill(editing || {});
     $('editor').showModal(); $('f-venue').focus();
   }
   function saveEditor() {
@@ -519,6 +522,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     if ($('f-start').value && $('f-end').value && $('f-end').value < $('f-start').value) { $('f-end').setCustomValidity('This ends before it starts.'); $('f-end').reportValidity(); return; }
     const b = editing || { id: newId('booking') };
     for (const [k, el] of Object.entries(BF)) { const v = $(el).value.trim(); if (v === '') delete b[k]; else b[k] = k === 'fee' || k === 'splitPercent' ? Number(v) : v; }
+    oftLinks.save(b);
     if (b.paidDate && b.payment !== 'paid') b.payment = 'paid';
     const need = [...$('f-mat').querySelectorAll('[data-need]:checked')].map(i => i.dataset.need), s = {};
     for (const i of $('f-mat').querySelectorAll('[data-sent]')) if (i.value) s[i.dataset.sent] = i.value;
@@ -1304,6 +1308,71 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     return { TOOLS, KINDS, PARTS, CONTACT, flags, glance, dates, ics, summary, today, addDays, fmt, calendarDialog, saveText, stem };
   })();
   /* oft-shared:project end */
+  // Links to records other tools keep.
+  const OFT_LINKS = [{ key: 'screeningId', label: 'Screening in the press list and partner CRM', short: 'Screening', from: 'screenings', hint: 'Add screenings in the press list or the partner CRM.' }];
+  /* oft-shared:links begin. Copied from shared/links.js by .github/scripts/sync_shared.py; edit it there. */
+  // Links from a record in one tool to records another tool keeps: a trip, a shoot day, an interview,
+  // clips, subjects, a card on the structure board, a screening or gear. A tool lists its links in
+  // OFT_LINKS, as [{ key, label, from, many?, hint? }], puts <div id="oftLinks"></div> in its editor,
+  // and calls oftLinks.fill(record) when the editor opens, oftLinks.save(record) when it saves, and
+  // oftLinks.labels(record) for what to show in the list.
+  const oftLinks = (() => {
+    const str = v => (v == null ? '' : String(v));
+    const list = v => (Array.isArray(v) ? v.filter(x => x && typeof x === 'object' && x.id) : []);
+    const e = s => str(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+    const day = iso => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str(iso)); return m ? new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : ''; };
+    const person = id => list(doc.people).find(p => p.id === id);
+    const SOURCES = {
+      trips: () => list(doc.trips).map(t => ({ id: t.id, label: [t.name || 'Untitled trip', day(t.startDate)].filter(Boolean).join(', ') })),
+      shootDays: () => list(doc.shootDays).slice().sort((a, b) => str(a.date).localeCompare(str(b.date))).map(d => ({ id: d.id, label: [day(d.date), d.title || (d.kind === 'travel' ? 'Travel day' : d.kind === 'hold' ? 'Hold' : 'Shoot day')].filter(Boolean).join(': ') })),
+      interviews: () => list(doc.interviews).map(i => ({ id: i.id, label: [(person(i.personId) || {}).name || 'Interview', day(i.date || (list(doc.shootDays).find(d => d.id === i.shootDayId) || {}).date)].filter(Boolean).join(', ') })),
+      clips: () => list(doc.assets).filter(a => a.type === 'clip').map(a => ({ id: a.id, label: a.title || a.name || str(a.relativePath).split('/').pop() || 'Clip' })),
+      subjects: () => list(doc.subjects).map(s => ({ id: s.id, label: s.name || (person(s.personId) || {}).name || 'Unnamed subject' })),
+      locations: () => list(doc.locations).map(l => ({ id: l.id, label: l.name || 'Unnamed location' })),
+      cards: () => list(doc.structure && doc.structure.cards).map(c => ({ id: c.id, label: c.title || 'Untitled card' })),
+      screenings: () => list(doc.screenings).slice().sort((a, b) => str(a.date).localeCompare(str(b.date))).map(s => ({ id: s.id, label: [s.title || 'Untitled screening', day(s.date)].filter(Boolean).join(', ') })),
+      gear: () => list(doc.gear && doc.gear.items).map(g => ({ id: g.id, label: [g.name || 'Unnamed item', g.serial && `serial ${g.serial}`].filter(Boolean).join(', ') })),
+    };
+    const specs = () => (typeof OFT_LINKS !== 'undefined' ? OFT_LINKS : []);
+    const fid = s => `oftLink-${s.key}`;
+    function fill(rec) {
+      const box = document.getElementById('oftLinks');
+      if (!box) return;
+      box.innerHTML = specs().map(s => {
+        const opts = SOURCES[s.from]();
+        const have = s.many ? (Array.isArray(rec[s.key]) ? rec[s.key] : []) : [rec[s.key]].filter(Boolean);
+        // A link to something no longer in the project stays, so nothing is lost.
+        const gone = have.filter(id => !opts.some(o => o.id === id)).map(id => ({ id, label: 'No longer in the project' }));
+        const all = [...opts, ...gone];
+        if (s.many) return `<fieldset class="oft-link-checks"><legend>${e(s.label)}</legend>${all.length ? all.map(o => `<label><input type="checkbox" name="${fid(s)}" value="${e(o.id)}"${have.includes(o.id) ? ' checked' : ''}> ${e(o.label)}</label>`).join('') : `<p class="oft-link-none">${e(s.none || 'None in the project yet.')}</p>`}${s.hint ? `<p class="oft-link-none">${e(s.hint)}</p>` : ''}</fieldset>`;
+        return `<div class="oft-link-one"><label for="${fid(s)}">${e(s.label)}</label><select id="${fid(s)}"><option value="">None</option>${all.map(o => `<option value="${e(o.id)}"${have[0] === o.id ? ' selected' : ''}>${e(o.label)}</option>`).join('')}</select>${s.hint ? `<p class="oft-link-none">${e(s.hint)}</p>` : ''}</div>`;
+      }).join('');
+    }
+    function save(rec) {
+      if (!document.getElementById('oftLinks')) return;
+      for (const s of specs()) {
+        if (s.many) { const v = [...document.querySelectorAll(`input[name="${fid(s)}"]:checked`)].map(x => x.value); if (v.length) rec[s.key] = v; else delete rec[s.key]; }
+        else { const el = document.getElementById(fid(s)); if (!el) continue; if (el.value) rec[s.key] = el.value; else delete rec[s.key]; }
+      }
+    }
+    // What a record links to, for its row: "Trip: Spring flood trip".
+    function labels(rec, short) {
+      const out = [];
+      for (const s of specs()) {
+        const ids = s.many ? (Array.isArray(rec[s.key]) ? rec[s.key] : []) : [rec[s.key]].filter(Boolean);
+        if (!ids.length) continue;
+        const opts = SOURCES[s.from]();
+        const names = ids.map(id => (opts.find(o => o.id === id) || { label: 'missing' }).label);
+        out.push(`${s.short || s.label}: ${names.length > 3 && !short ? `${names.slice(0, 3).join(', ')} and ${names.length - 3} more` : names.join(', ')}`);
+      }
+      return out;
+    }
+    const css = document.createElement('style');
+    css.textContent = '#oftLinks { display: grid; gap: 12px; }\n#oftLinks:empty { display: none; }\n.oft-link-one { display: grid; gap: 4px; }\n.oft-link-one label, .oft-link-checks legend { font-size: 14px; font-weight: 600; }\n.oft-link-one select { width: 100%; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); color: var(--ink); font: inherit; }\n.oft-link-checks { border: 0; margin: 0; padding: 0; min-width: 0; display: grid; gap: 2px; max-height: 200px; overflow-y: auto; }\n.oft-link-checks legend { padding: 0; margin-bottom: 4px; }\n.oft-link-checks label { display: flex; gap: 8px; align-items: center; font-size: 14px; min-height: 24px; }\n.oft-link-none { margin: 0; font-size: 13px; color: var(--ink-2); }';
+    document.head.append(css);
+    return { fill, save, labels, SOURCES };
+  })();
+  /* oft-shared:links end */
   /* oft-shared:tool begin. Copied from shared/tool.js by .github/scripts/sync_shared.py; edit it there. */
   // Shared by every tool: your name, remembering the open file, who has it open,
   // who changed what, merging two copies and spotting conflicted copies.
