@@ -44,6 +44,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 For anyone who doesn't use the tool, there's a [spreadsheet template](../../templates/interview-moments-template.csv) with the same columns as the export.
 
 - **Imports from a spreadsheet:** choose **Import from a spreadsheet** under the file buttons and pick a CSV file. One with the columns of the [spreadsheet template](../../templates/interview-moments-template.csv) imports as it is; match any other columns once and the tool remembers. Problems, such as a date it can't read, show row by row before anything is added, and importing only adds.
+- **Imports a transcript with timecodes:** an SRT, WebVTT or timecoded text file from a transcription app such as Buzz or noScribe, keeping the timecodes and speakers. Mark the moments worth finding again straight from it. The transcript is kept with the paper edit's, so the paper edit uses it without importing it twice.
 
 ## Saving and file conflicts
 
@@ -61,7 +62,6 @@ It reads `people`, `locations`, `contracts`, `shootDays` and `mediaReports`. Eve
 
 ## Not yet
 
-- Importing a transcript and its timecodes
 - Selects and string-outs across interviews
 - Linking moments to clips in the camera reports
 

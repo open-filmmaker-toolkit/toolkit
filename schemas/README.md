@@ -99,6 +99,10 @@ The credits builder keeps the end credits in a `credits` record: `entries` in th
 
 Budget lines can have several fringes in `fringeIds`; `fringeId` stays the first, for tools that read one. A fringe's optional `cap` limits it to wages up to that amount for each person on a line (the line's multiplier). A deal memo's other `rates`, such as prep or travel days, each keep their own budget line in `budgetLineId`. The budget math is shared code, copied from [`shared/budget.js`](../shared/budget.js).
 
+## From the edit
+
+The [clearance log](../tools/clearance-log/README.md) reads an edit list and gives each third-party element `uses` (each with `tcIn`, `tcOut`, `sourceIn` and `sourceOut` from the edit) and `clipNames`, the source clip names it matched, so the next edit list matches them again; `tcIn` and `tcOut` are set to the first use. The [interview log](../tools/interview-log/README.md) imports transcripts into `paperEdit.transcripts`, linked to the interview by `interviewId`, and moments marked from one have a `segmentId`. Name supers imported from markers record `supers.markerImport` (`file` and `at`). Reading edit lists, markers and transcripts is shared code, in [`shared/markers.js`](../shared/markers.js) and [`shared/transcript.js`](../shared/transcript.js).
+
 ## Concurrent edits
 
 When a browser supports direct file access, a tool compares the opened file with the last version it read or saved before writing. If the file changed, the user can reload the latest version, save their edits to a separate copy, or explicitly overwrite the newer file. The user can also merge: records are matched by `id`, changes to different records or fields are combined, and fields changed on both sides are shown for the user to choose. The check cannot lock the file against a simultaneous write, so teams should save in one tool at a time. See [Working on a shared file](../docs/sharing-a-project.md).
