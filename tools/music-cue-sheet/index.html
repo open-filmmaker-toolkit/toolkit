@@ -11,7 +11,7 @@
   --sheet: #ffffff;
   --ink: #1a2130;
   --ink-2: #4b556a;
-  --ink-3: #6d778a;
+  --ink-3: #5d6677;
   --rule: #d4dad8;
   --rule-soft: #e6eae8;
   --hover: #f6f8f7;
@@ -19,7 +19,7 @@
   --film: #2a2520;
   --track: #3a342e;
   --tick: #9a9187;
-  --s-ready: #2b7a57;
+  --s-ready: #236b4b;
   --s-info: #b97d0c;
   --s-replace: #b3392d;
   --s-ready-bg: #dff1e8;
@@ -42,10 +42,10 @@
     --focus: #7aa7ff;
     --film: #0d0b09;
     --track: #1f1b17;
-    --tick: #7c746b;
+    --tick: #a39a90;
     --s-ready: #4fb386;
     --s-info: #e2a531;
-    --s-replace: #e26657;
+    --s-replace: #ef7a6c;
     --s-ready-bg: #1a3329;
     --s-info-bg: #3a2f17;
     --s-replace-bg: #3b2220;
@@ -263,9 +263,13 @@ dialog form { display: flex; flex-direction: column; height: 100%; max-height: i
   .report .legends { margin-top: 8pt; font-size: 8pt; color: #333333; }
   .report .legends p { margin: 0 0 2pt; }
 }
+.skip-link { position: absolute; left: 12px; top: -80px; z-index: 1000; padding: 8px 14px; border: 2px solid var(--focus, #2f6fdb); border-radius: 6px; background: var(--sheet, #ffffff); color: var(--ink, #1a2130); font-weight: 600; text-decoration: none; }
+.skip-link:focus { top: 12px; }
+input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:focus, input[type="time"]:focus-within { outline: 2px solid var(--focus, #2f6fdb); outline-offset: 2px; }
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to the tool</a>
 <div class="cant-run" id="cantRun">
   <h1 id="cantRunTitle">Open this file in a web browser</h1>
   <p id="cantRunText">This tool runs in Chrome, Edge, Firefox or Safari. You're seeing a preview that doesn't run it, so none of the buttons would work.</p>
@@ -298,7 +302,7 @@ dialog form { display: flex; flex-direction: column; height: 100%; max-height: i
     </div>
   </div>
 
-  <main>
+  <main id="main">
     <section class="overview" aria-labelledby="headline">
       <div class="reel" id="reel"></div>
       <div class="tally">

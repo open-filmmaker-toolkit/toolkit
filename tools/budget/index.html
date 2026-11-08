@@ -7,9 +7,9 @@
 <meta name="description" content="Build a documentary or indie budget with detail lines that roll up to a top sheet, with fringes, contingency and versions to compare. Runs in your browser; your data stays on your computer.">
 <style>
 :root {
-  --paper: #f1f3f2; --sheet: #ffffff; --ink: #1a2130; --ink-2: #4b556a; --ink-3: #6d778a;
+  --paper: #f1f3f2; --sheet: #ffffff; --ink: #1a2130; --ink-2: #4b556a; --ink-3: #5d6677;
   --rule: #d4dad8; --rule-soft: #e6eae8; --hover: #f6f8f7; --focus: #2f6fdb;
-  --good: #2b7a57; --good-bg: #dff1e8; --warn: #8a5a00; --warn-bg: #fbf0d9; --bad: #b3392d; --bad-bg: #f8e1de;
+  --good: #236b4b; --good-bg: #dff1e8; --warn: #8a5a00; --warn-bg: #fbf0d9; --bad: #b3392d; --bad-bg: #f8e1de;
   --screen: #050506; --screen-ink: #f4f1ea; --screen-dim: #a7a29a;
   --serif: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
   --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -19,7 +19,7 @@
   :root {
     --paper: #141922; --sheet: #1b212b; --ink: #e6e9ee; --ink-2: #a6afbd; --ink-3: #8790a0;
     --rule: #2f3744; --rule-soft: #262d38; --hover: #212834; --focus: #7aa7ff;
-    --good: #4fb386; --good-bg: #1a3329; --warn: #e2a531; --warn-bg: #3a2f17; --bad: #e26657; --bad-bg: #3b2220;
+    --good: #4fb386; --good-bg: #1a3329; --warn: #e2a531; --warn-bg: #3a2f17; --bad: #ef7a6c; --bad-bg: #3b2220;
   }
 }
 * { box-sizing: border-box; }
@@ -127,7 +127,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .ln + .ln { border-top: 1px solid var(--rule-soft); }
 .ln input, .ln select { width: 100%; min-width: 0; padding: 5px 7px; border: 1px solid var(--rule-soft); border-radius: 5px; background: var(--paper); font-size: 14px; }
 .ln input[type="number"] { text-align: right; font-variant-numeric: tabular-nums; }
-.ln input:focus, .ln select:focus { border-color: var(--ink-2); outline: none; }
+.ln input:focus, .ln select:focus { border-color: var(--ink-2); outline: 2px solid var(--focus); outline-offset: -1px; }
 .ln .tot { font-variant-numeric: tabular-nums; font-size: 14px; }
 .ln .tot .fr { display: block; font-size: 11.5px; color: var(--ink-3); }
 .acct-foot { padding: 6px 12px 10px; }
@@ -233,9 +233,13 @@ pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; b
   .report .r-grand td { font-weight: 700; font-size: 12pt; border-top: 2pt solid #000000; }
   .report .r-detail { break-before: page; page-break-before: always; }
 }
+.skip-link { position: absolute; left: 12px; top: -80px; z-index: 1000; padding: 8px 14px; border: 2px solid var(--focus, #2f6fdb); border-radius: 6px; background: var(--sheet, #ffffff); color: var(--ink, #1a2130); font-weight: 600; text-decoration: none; }
+.skip-link:focus { top: 12px; }
+input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:focus, input[type="time"]:focus-within { outline: 2px solid var(--focus, #2f6fdb); outline-offset: 2px; }
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to the tool</a>
 <div class="cant-run" id="cantRun">
   <h1 id="cantRunTitle">Open this file in a web browser</h1>
   <p id="cantRunText">This tool runs in Chrome, Edge, Firefox or Safari. You're seeing a preview that doesn't run it, so none of the buttons would work.</p>
@@ -267,7 +271,7 @@ pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; b
     </div>
   </div>
 
-  <main class="workspace">
+  <main id="main" class="workspace">
     <section aria-labelledby="listHead">
       <div class="toolbar">
         <h2 id="listHead">Budget</h2>

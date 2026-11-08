@@ -104,23 +104,27 @@ footer p { margin: 0 0 8px; max-width: 80ch; }
   .stage-head .tally { grid-column: 2; grid-row: auto; }
 }
 @media print { .finder, .bar nav { display: none; } }
+.skip-link { position: absolute; left: 12px; top: -80px; z-index: 1000; padding: 8px 14px; border: 2px solid var(--focus); border-radius: 6px; background: var(--sheet); color: var(--ink); font-weight: 600; text-decoration: none; }
+.skip-link:focus { top: 12px; }
+input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:focus, input[type="time"]:focus-within { outline: 2px solid var(--focus, #2f6fdb); outline-offset: 2px; }
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to the tools</a>
 <div class="page">
   <header class="bar">
     <a href="./" aria-label="Open Filmmaker Toolkit home"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/logo-dark.svg"><img src="docs/assets/logo.svg" alt="Open Filmmaker Toolkit" width="220" height="44"></picture></a>
     <nav aria-label="On this page"><a href="#tools">Tools</a><a href="#workflows">How they connect</a><a href="#other">Other software</a><a href="#help">Help out</a><a href="https://github.com/open-filmmaker-toolkit/toolkit">GitHub</a></nav>
   </header>
 
-  <main>
+  <main id="main">
     <section class="intro" aria-labelledby="intro-h">
       <div>
         <h1 id="intro-h">Free tools for documentary and indie filmmakers</h1>
         <p>These tools handle the business side of a film: budgets, releases, grants, call sheets, clearances and credits.</p>
         <p>They run in your browser with nothing to install. Every tool reads the same project file on your computer, so you enter things once.</p>
       </div>
-      <aside class="start" aria-labelledby="start-h">
+      <section class="start" aria-labelledby="start-h">
         <h2 id="start-h">Start here</h2>
         <ol>
           <li><a href="samples/the-river-keeps.oft.json" download>Download the sample project</a>, a made-up documentary.</li>
@@ -128,7 +132,7 @@ footer p { margin: 0 0 8px; max-width: 80ch; }
           <li>For your own film, choose <b>New project</b> and save the file.</li>
         </ol>
         <p class="dl">To work offline, <a href="https://github.com/open-filmmaker-toolkit/toolkit/archive/refs/heads/main.zip">download the toolkit</a> and open <code>index.html</code>.</p>
-      </aside>
+      </section>
     </section>
 
     <div class="finder" id="finder" hidden>
