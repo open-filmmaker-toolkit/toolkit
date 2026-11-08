@@ -227,6 +227,10 @@ pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; b
 input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:focus, input[type="time"]:focus-within { outline: 2px solid var(--focus, #2f6fdb); outline-offset: 2px; }
 .home-link { color: inherit; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
 .home-link:hover { text-decoration-thickness: 2px; }
+.tr-list { list-style: none; margin: 8px 0 0; padding: 0; max-height: 280px; overflow-y: auto; border: 1px solid var(--rule); border-radius: 6px; }
+.tr-list li { display: grid; grid-template-columns: 72px minmax(0, 1fr) auto; gap: 8px; align-items: start; padding: 6px 8px; border-bottom: 1px solid var(--rule-soft); font-size: 14px; }
+.tr-tc { font-variant-numeric: tabular-nums; color: var(--ink-3); }
+@media (max-width: 600px) { .tr-list li { grid-template-columns: minmax(0, 1fr) auto; } .tr-tc { grid-column: 1 / -1; } }
 </style>
 </head>
 <body>
@@ -326,6 +330,12 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <div class="field"><label for="f-cards">Other cards or files</label><input id="f-cards" type="text" placeholder="A002, B001, S002" autocomplete="off"></div>
       </div>
       <div class="field"><label for="f-transcript">Transcript</label><input id="f-transcript" type="text" placeholder="transcripts/daniel-okafor.docx" autocomplete="off"><p class="hint">Where the transcript is, relative to your project file, or a link to it.</p></div>
+      <div class="group" id="trBox">
+        <div class="list-head"><h3 id="trHead">Transcript with timecodes</h3><button type="button" class="btn small" id="trImportBtn">Import a transcript</button></div>
+        <p class="hint" id="trNote">Import an SRT, WebVTT or text file with timecodes from a transcription app such as Buzz or noScribe. Timecodes and speakers are kept, and the paper edit uses the same transcript.</p>
+        <input type="file" id="trFile" accept=".srt,.vtt,.txt,text/plain,text/vtt" hidden>
+        <ol class="tr-list" id="trList" aria-labelledby="trHead"></ol>
+      </div>
       <div class="group">
         <div class="list-head"><h3>Moments</h3><button type="button" class="btn small" data-add="moments">Add a moment</button></div>
         <p class="hint">Timecode as hours, minutes and seconds, such as 00:14:32, or with frames.</p>
@@ -625,7 +635,53 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     if (d) { $('f-date').value = d.date; if (d.locationId && place(d.locationId)) $('f-loc').value = d.locationId; }
     showCards();
   }
+  // ---------- The transcript, shared with the paper edit ----------
+  let pendingTranscript = null;
+  const PE = () => (doc.paperEdit && typeof doc.paperEdit === 'object' ? doc.paperEdit : null);
+  const transcriptFor = i => (PE() ? arr(PE().transcripts).find(t => t && t.interviewId === i.id) : null) || null;
+  function drawTranscript() {
+    const t = pendingTranscript || transcriptFor(editing);
+    const segs = t ? arr(t.segments) : [];
+    const marked = new Set(arr(editing.moments).map(m => m.segmentId).filter(Boolean));
+    $('trImportBtn').textContent = t ? 'Replace the transcript' : 'Import a transcript';
+    $('trNote').textContent = t ? `${segs.length} passage${segs.length === 1 ? '' : 's'}${pendingTranscript ? `, from ${pendingTranscript.file}. Save to keep it` : ''}. Mark the moments worth finding again. The paper edit uses this transcript too.`
+      : 'Import an SRT, WebVTT or text file with timecodes from a transcription app such as Buzz or noScribe. Timecodes and speakers are kept, and the paper edit uses the same transcript.';
+    $('trList').innerHTML = segs.map(g => `<li><span class="tr-tc">${typeof g.start === 'number' ? esc(oftTranscript.hms(g.start)) : ''}</span><span class="tr-text">${g.speaker ? `<b>${esc(g.speaker)}:</b> ` : ''}${esc(g.text)}</span>
+      <button type="button" class="btn small" data-mark="${esc(g.id)}"${marked.has(g.id) ? ' disabled' : ''}>${marked.has(g.id) ? 'Marked' : 'Mark'}</button></li>`).join('');
+    $('trList').hidden = !segs.length;
+  }
+  async function importTranscript(f) {
+    const parsed = oftTranscript.parse(await f.text(), f.name, newId);
+    if (!parsed.segments.length) { toast(`Couldn't find any text in ${f.name}.`, true); return; }
+    const old = transcriptFor(editing);
+    const used = old && arr(PE().scenes).some(sc => arr(sc.bites).some(b => b.transcriptId === old.id));
+    if (used && !confirm('The paper edit has bites from the current transcript. Replace it anyway? Those bites keep their words but lose their place in the transcript.')) return;
+    pendingTranscript = { file: f.name, format: parsed.format, segments: parsed.segments };
+    if (!parsed.timed) toast(`${f.name} has no timecodes, so moments marked from it won't have a time.`);
+    drawTranscript();
+  }
+  function markSegment(id) {
+    const t = pendingTranscript || transcriptFor(editing);
+    const g = t && arr(t.segments).find(x => x.id === id);
+    if (!g) return;
+    const m = { id: newId('moment'), text: g.speaker && g.speaker !== who(editing) ? `${g.speaker}: ${g.text}` : g.text, segmentId: g.id };
+    if (typeof g.start === 'number') m.tc = oftTranscript.hms(g.start);
+    editing.moments = [...arr(editing.moments), m].sort((a, b) => secs(a.tc) - secs(b.tc));
+    drawLists(); drawTranscript();
+  }
+  function saveTranscript(i) {
+    if (!pendingTranscript) return;
+    if (!PE()) doc.paperEdit = {};
+    doc.paperEdit.transcripts = arr(doc.paperEdit.transcripts);
+    let t = transcriptFor(i);
+    if (!t) { t = { id: newId('transcript'), interviewId: i.id }; doc.paperEdit.transcripts.push(t); }
+    t.name = [who(i), dateOf(i) && fmtDate(dateOf(i))].filter(Boolean).join(', ');
+    if (i.personId) t.personId = i.personId;
+    t.format = pendingTranscript.format; t.segments = pendingTranscript.segments;
+    pendingTranscript = null;
+  }
   function openEditor(id) {
+    pendingTranscript = null;
     const existing = id && interviews().find(i => i.id === id);
     isNew = !existing;
     editing = existing ? structuredClone(existing) : { id: newId('interview'), status: 'done' };
@@ -637,7 +693,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const vals = { 'f-person': editing.personId && person(editing.personId) ? editing.personId : editing.name ? '__name' : '', 'f-name': editing.name, 'f-status': editing.status, 'f-day': dayOf(editing) ? editing.shootDayId : '',
       'f-date': dateOf(editing), 'f-loc': l ? l.id : '', 'f-cards': editing.cards, 'f-transcript': transcriptOf(editing), 'f-lognotes': editing.logNotes };
     for (const [k, v] of Object.entries(vals)) $(k).value = v == null ? '' : String(v);
-    showPerson(); showCards(true); drawLists();
+    showPerson(); showCards(true); drawLists(); drawTranscript();
     $('editorTitle').textContent = isNew ? 'Log an interview' : `Interview: ${who(editing)}`;
     $('deleteBtn').hidden = isNew;
     $('editor').showModal();
@@ -664,6 +720,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const ms = cleanList(i.moments).map(m => { if (!m.id) m.id = newId('moment'); return m; });
     if (ms.length) i.moments = ms; else delete i.moments;
     if (ms.length && i.status === 'planned') i.status = 'done';
+    saveTranscript(i);
     // The transcript, recorded in the project's files.
     const path = $('f-transcript').value.trim(), a = asset(i.transcriptAssetId);
     if (path) {
@@ -923,6 +980,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('filmTitle').onclick = openProjectDialog;
     $('printBtn').onclick = () => { renderReport(); window.print(); };
     window.addEventListener('beforeprint', renderReport);
+    $('trImportBtn').onclick = () => { $('trFile').value = ''; $('trFile').click(); };
+    $('trFile').addEventListener('change', () => { const f = $('trFile').files[0]; if (f) importTranscript(f); });
+    $('trList').addEventListener('click', ev => { const b = ev.target.closest('[data-mark]'); if (b) markSegment(b.dataset.mark); });
     $('projectCsvBtn').onclick = () => $('projectCsvDialog').showModal();
     $('projectCsvCancel').onclick = () => $('projectCsvDialog').close();
     $('projectCsvForm').addEventListener('submit', ev => { ev.preventDefault(); exportProjectCsv(); $('projectCsvDialog').close(); });
@@ -968,6 +1028,77 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   document.documentElement.classList.remove('no-js');
   window.addEventListener('error', ev => toast(`Something went wrong: ${ev.message}. Save your work, then reload the page.`, true));
   window.addEventListener('unhandledrejection', ev => toast(`Something went wrong: ${ev.reason && ev.reason.message ? ev.reason.message : ev.reason}. Save your work, then reload the page.`, true));
+  /* oft-shared:transcript begin. Copied from shared/transcript.js by .github/scripts/sync_shared.py; edit it there. */
+  // Reading transcripts from transcription apps: SRT, WebVTT, or text with timestamps.
+  // Shared by the paper edit and the interview log, which keep transcripts in paperEdit.transcripts.
+  const oftTranscript = (() => {
+    const str = v => (v == null ? '' : String(v));
+    const isNum = n => typeof n === 'number' && isFinite(n);
+    // A time such as 01:02:03,456, 01:02:03.4, 02:03.456 or 01:02:03, in seconds.
+    function secs(s) {
+      const m = str(s).trim().match(/^(?:(\d{1,2}):)?(\d{1,2}):(\d{2})(?:[.,](\d{1,3}))?$/);
+      if (!m) return null;
+      return (Number(m[1] || 0) * 3600) + Number(m[2]) * 60 + Number(m[3]) + (m[4] ? Number(`0.${m[4]}`) : 0);
+    }
+    const clean = s => str(s).replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+    // A speaker at the start of a line: "Ruth Hammond: ...", "SPEAKER_01: ...", "S01: ...".
+    function speakerOf(text) {
+      const m = text.match(/^((?:[A-Z][\w'.-]*)(?: [A-Z][\w'.-]*){0,3}|SPEAKER[_ ]?\d+|S\d{1,2}):\s+(.*)$/);
+      return m && m[1].length <= 30 ? { speaker: m[1], text: m[2] } : { text };
+    }
+    function parseCues(text) {
+      const segs = [];
+      for (const block of text.replace(/\r/g, '').split(/\n\s*\n/)) {
+        const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+        const i = lines.findIndex(l => l.includes('-->'));
+        if (i < 0) continue;
+        const [a, b] = lines[i].split('-->').map(x => x.trim().split(/\s+/)[0]);
+        const start = secs(a), end = secs(b);
+        if (start == null) continue;
+        let raw = lines.slice(i + 1).join(' ');
+        let speaker = '';
+        const v = raw.match(/<v(?:\.[^ >]*)?\s+([^>]+)>/);
+        if (v) speaker = v[1].trim();
+        raw = clean(raw);
+        if (!raw) continue;
+        const sp = speaker ? { speaker, text: raw } : speakerOf(raw);
+        segs.push(Object.assign({ start, end: end != null && end > start ? end : start + 2 }, sp));
+      }
+      return segs;
+    }
+    // Text with a timestamp at the start of each paragraph, or no timestamps at all.
+    function parseText(text) {
+      const TS = /^\s*[\[(]?((?:\d{1,2}:)?\d{1,2}:\d{2}(?:[.,]\d{1,3})?)[\])]?(?:\s*(?:-->|–|-)\s*[\[(]?((?:\d{1,2}:)?\d{1,2}:\d{2}(?:[.,]\d{1,3})?)[\])]?)?\s*(.*)$/;
+      const lines = text.replace(/\r/g, '').split('\n');
+      const segs = [];
+      let cur = null, any = false;
+      for (const line of lines) {
+        const m = line.match(TS);
+        if (m && secs(m[1]) != null) {
+          any = true;
+          if (cur) segs.push(cur);
+          cur = { start: secs(m[1]), end: m[2] ? secs(m[2]) : null, text: m[3] || '' };
+        } else if (line.trim()) {
+          if (!cur || (!any && cur.text)) { if (cur) segs.push(cur); cur = { start: null, end: null, text: '' }; }
+          cur.text = `${cur.text} ${line.trim()}`.trim();
+        } else if (cur && !any && cur.text) { segs.push(cur); cur = null; }
+      }
+      if (cur) segs.push(cur);
+      const out = segs.map(s => Object.assign(s, speakerOf(clean(s.text)))).filter(s => s.text);
+      // Paragraphs without an end run to the start of the next one.
+      out.forEach((s, i) => { if (isNum(s.start) && !isNum(s.end)) { const n = out[i + 1]; s.end = n && isNum(n.start) && n.start > s.start ? n.start : s.start + Math.max(2, s.text.split(/\s+/).length / 2.5); } });
+      return out;
+    }
+    function parse(text, name, newId) {
+      const isCue = /-->/.test(text) && (/^﻿?WEBVTT/.test(text) || /\.(srt|vtt)$/i.test(name) || /^\s*\d+\s*\n\s*[\d:,.]+\s*-->/m.test(text));
+      const segs = (isCue ? parseCues(text) : parseText(text)).map(s => { const o = { id: newId('seg'), text: s.text }; if (isNum(s.start)) { o.start = Math.round(s.start * 1000) / 1000; o.end = Math.round(s.end * 1000) / 1000; } if (s.speaker) o.speaker = s.speaker; return o; });
+      return { segments: segs, format: isCue ? (/WEBVTT/.test(text) ? 'vtt' : 'srt') : 'text', timed: segs.some(s => isNum(s.start)) };
+    }
+    // Seconds as hours, minutes and seconds, such as 00:03:12.
+    const hms = s => { s = Math.max(0, Math.floor(s)); return [Math.floor(s / 3600), Math.floor(s / 60) % 60, s % 60].map(n => String(n).padStart(2, '0')).join(':'); };
+    return { parse, secs, hms };
+  })();
+  /* oft-shared:transcript end */
   // Columns for importing from a spreadsheet, named as in this tool's template.
   const OFT_IMPORT = { noun: 'moment', nouns: 'moments', key: 'text',
     fields: [['Interview', 'who'], ['Date', 'date', 'date'], ['Location', 'place'], ['Cards', '', 'skip'], ['Timecode', 'tc'], ['Moment', 'text'], ['Favorite', 'fav', 'yes'], ['Story beat', '', 'skip'], ['Release', '', 'skip'], ['Transcript', '', 'skip']],
@@ -1610,6 +1741,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   .oft-rate { display: grid; grid-template-columns: 70px minmax(0, 1fr) minmax(0, 1fr) auto; gap: 6px; align-items: center; margin: 0 0 6px; }
   .oft-rate input { min-width: 0; padding: 6px 8px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); color: var(--ink); font: inherit; }
   .oft-rates-note { margin: 0 0 12px; font-size: 13px; color: var(--ink-2); }
+  .oft-review { list-style: none; margin: 0 0 8px; padding: 0; }
+  .oft-review li { padding: 5px 0; border-bottom: 1px solid var(--rule-soft, var(--rule)); }
+  .oft-review label { display: flex; gap: 8px; align-items: flex-start; }
+  .oft-review small { color: var(--ink-3); }
+  .oft-review select { margin: 4px 0 0 26px; max-width: calc(100% - 26px); padding: 4px 6px; font: inherit; color: var(--ink); background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; }
   .oft-conflict { margin: 8px 0; padding: 8px 12px; border: 1px solid var(--rule); border-radius: 8px; }
   .oft-conflict legend { font-weight: 600; padding: 0 4px; }
   .oft-conflict label { display: flex; gap: 8px; align-items: flex-start; padding: 4px 0; overflow-wrap: anywhere; }

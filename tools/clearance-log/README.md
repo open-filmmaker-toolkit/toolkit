@@ -45,6 +45,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 Lengths are worked out from timecode at the film's frame rate (also set in **Edit film details**). Drop-frame timecode is treated as non-drop, so long 29.97 segments can be off by a frame or two.
 
 - **Imports from a spreadsheet:** choose **Import from a spreadsheet** under the file buttons and pick a CSV file. One with the columns of the [spreadsheet template](../../templates/clearance-log-template.csv) imports as it is; match any other columns once and the tool remembers. Problems, such as a date it can't read, show row by row before anything is added, and importing only adds.
+- **Finds archive and music in the edit:** import the locked cut's CMX 3600 edit list. Each source clip is matched to the clearance log, by clip names it has matched before or by the element's license file, description or source, and to your own footage in the footage log. It shows new material that isn't in the log yet, elements that are no longer in the cut, and updates each element's uses with the timecodes from the edit, for the clearance report and cue sheet.
 
 ## Saving
 

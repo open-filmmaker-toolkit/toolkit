@@ -123,6 +123,9 @@ Every tool in [TOOLS.md](TOOLS.md), built in the order contributors asked for. E
 - [x] Money in several currencies, at exchange rates you type in ([#154](https://github.com/open-filmmaker-toolkit/toolkit/issues/154))
 - [x] Budget lines with several fringes and capped fringes, and deal memos with several rates ([#155](https://github.com/open-filmmaker-toolkit/toolkit/issues/155))
 - [x] Waterfall pari passu tiers, corridors and simple interest on recoupment ([#156](https://github.com/open-filmmaker-toolkit/toolkit/issues/156))
+- [x] Import transcripts with timecodes into the interview log, shared with the paper edit ([#157](https://github.com/open-filmmaker-toolkit/toolkit/issues/157))
+- [x] Import markers from the edit into name supers and the music cue sheet ([#158](https://github.com/open-filmmaker-toolkit/toolkit/issues/158))
+- [x] Find archive and music in the edit from an edit list, in the clearance log ([#159](https://github.com/open-filmmaker-toolkit/toolkit/issues/159))
 
 Finding a third maintainer is on hold. Basil and Alex maintain the project for now ([#8](https://github.com/open-filmmaker-toolkit/toolkit/issues/8), closed).
 

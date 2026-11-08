@@ -1725,6 +1725,34 @@
             }
           },
           "additionalProperties": true
+        },
+        "uses": {
+          "type": "array",
+          "description": "Where the element is in the edit, from an edit list.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "tcIn": {
+                "type": "string"
+              },
+              "tcOut": {
+                "type": "string"
+              },
+              "sourceIn": {
+                "type": "string"
+              },
+              "sourceOut": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "clipNames": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Source clip names in edit lists that are this element."
         }
       },
       "additionalProperties": true

@@ -44,6 +44,8 @@ For anyone who doesn't use the tool, there's a [spreadsheet template](../../temp
 
 Test the edit list with a few bites in your editing app before you depend on it. Apps differ in how they match an EDL's reels and clip names to media.
 
+- **Shares transcripts with the interview log.** A transcript imported in either tool shows in both, linked to its interview.
+
 ## Saving and file conflicts
 
 Chrome and Edge can save straight back to the file you opened. If it changed on disk since you opened it, the tool warns before saving. You can reload the latest version, save your edits as a separate copy, or explicitly overwrite the changed file. Safari and Firefox download a new copy instead.

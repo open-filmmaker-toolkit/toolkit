@@ -19,7 +19,8 @@ remembering the open file across tools (served over HTTP so the browser gives re
 The home page dashboard is checked with the sample: its flags against five tools, the calendar file and summaries.
 Every tool whose template lists records imports its template without matching, and imports its own export.
 Money in other currencies, several and capped fringes, and several rates in a deal memo are checked across the budget tools,
-and the waterfall's pari passu tiers, corridors and interest against a worked example.
+and the waterfall's pari passu tiers, corridors and interest against a worked example. Transcripts, markers and edit lists
+import into the interview log, name supers, music cue sheet and clearance log.
 """
 import base64, datetime, csv, io, json, math, os, pathlib, re, sys, tempfile
 from playwright.sync_api import sync_playwright
@@ -3339,6 +3340,111 @@ def test_waterfall_terms(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
+def saved_json(pg, fake):
+    if fake:
+        pg.click('#saveBtn'); pg.wait_for_timeout(300)
+        return json.loads(pg.evaluate('window.__file.text'))
+    with pg.expect_download() as d:
+        pg.click('#saveBtn')
+    return json.loads(open(d.value.path(), encoding='utf-8').read())
+
+def pick_file(pg, button, name, data):
+    with pg.expect_file_chooser() as fc:
+        pg.click(button)
+    fc.value.set_files(files=[{'name': name, 'mimeType': 'text/plain', 'buffer': data}])
+    pg.wait_for_timeout(250)
+
+RESOLVE_MARKERS = """TITLE: Supers
+FCM: NON-DROP FRAME
+
+001  001      V     C        01:02:20:00 01:02:20:01 01:02:20:00 01:02:20:01
+ |C:ResolveColorBlue |M:Ruth Hammond - Retired schoolteacher, Riverside |D:1
+002  001      V     C        01:10:00:00 01:10:00:01 01:10:00:00 01:10:00:01
+ |C:ResolveColorBlue |M:Marcus Bell - Levee engineer |D:1
+"""
+PREMIERE_MARKERS = 'Marker Name\tDescription\tIn\tOut\tDuration\tMarker Type\n1M5 Muddy Water Hymn\t\t00:11:05:00\t00:12:40:00\t00:01:35:00\tComment\nRiver Song\t\t00:20:00:00\t00:21:00:00\t00:01:00:00\tComment\n'
+LOCK_EDL = """TITLE: Locked cut
+FCM: NON-DROP FRAME
+
+001  A001     V     C        08:04:20:00 08:04:30:00 01:00:00:00 01:00:10:00
+* FROM CLIP NAME: A001C001.mov
+002  RCHS14   V     C        00:12:30:00 00:12:44:00 01:00:10:00 01:00:24:00
+* FROM CLIP NAME: RCHS-license-2026-03.pdf
+003  NEWS     V     C        00:00:00:00 00:00:05:00 01:00:24:00 01:00:29:00
+* FROM CLIP NAME: newsreel_1966.mov
+004  NEWS     A     C        00:00:00:00 00:00:05:00 01:00:24:00 01:00:29:00
+* FROM CLIP NAME: newsreel_1966.mov
+"""
+
+# edit imports / transcripts, markers and edit lists
+def test_edit_imports(browser, fake):
+    vtt = 'WEBVTT\n\n00:00:01.000 --> 00:00:04.000\n<v Lena Ward>What do you remember about the night?\n\n00:00:05.000 --> 00:00:12.500\n<v Ruth Hammond>The water came up the stairs before anyone woke.\n'
+    ctx, pg, errs = new_page(browser, 'interview-log', fake)
+    open_sample(pg, fake)
+    pg.click('[data-edit="interview-daniel"]')
+    check(pg.locator('#trList li').count() > 3 and 'Replace the transcript' in pg.inner_text('#trImportBtn'), 'an interview shows the transcript the paper edit already has')
+    pg.click('#editorCancel') if pg.locator('#editorCancel').count() else pg.keyboard.press('Escape')
+    pg.evaluate("document.querySelectorAll('dialog[open]').forEach(d => d.close())")
+    pg.click('[data-edit="interview-ruth"]')
+    pick_file(pg, '#trImportBtn', 'ruth.vtt', vtt.encode())
+    check(pg.locator('#trList li').count() == 2 and '00:00:05' in pg.inner_text('#trList') and 'Ruth Hammond:' in pg.inner_text('#trList'), 'imports a WebVTT transcript with its timecodes and speakers')
+    pg.click('#trList li:nth-child(2) [data-mark]'); pg.wait_for_timeout(100)
+    check(pg.locator('#trList li:nth-child(2) [data-mark]').is_disabled(), 'marks a moment from the transcript')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    data = saved_json(pg, fake)
+    ruth = next(i for i in data['interviews'] if i['id'] == 'interview-ruth')
+    tr = next((t for t in data['paperEdit']['transcripts'] if t.get('interviewId') == 'interview-ruth'), None)
+    check(tr is not None and len(tr['segments']) == 2 and tr['segments'][1]['speaker'] == 'Ruth Hammond' and tr['segments'][1]['start'] == 5, 'the transcript is kept where the paper edit reads it')
+    check(any(m.get('tc') == '00:00:05' and m.get('segmentId') == tr['segments'][1]['id'] for m in ruth.get('moments', [])), 'the marked moment has its timecode and points to the passage')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+    ctx, pg, errs = new_page(browser, 'paper-edit', fake)
+    open_text(pg, fake, json.dumps(data, indent=2))
+    check(any('Ruth Hammond' in o for o in pg.locator('#tSel option').all_inner_texts()), 'the paper edit has the transcript without importing it again')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+    # Supers from Resolve markers
+    ctx, pg, errs = new_page(browser, 'name-supers', fake)
+    open_sample(pg, fake)
+    pick_file(pg, '#markersBtn', 'supers.edl', RESOLVE_MARKERS.encode())
+    rev = pg.inner_text('#oftReviewList')
+    check('Moves from 01:02:14:08 to 01:02:20:00' in rev and 'Marcus Bell' in rev and 'Matched to someone in the project' in rev and 'Not in this file' in rev, 'markers show what changes before anything is applied')
+    pg.click('#oftReviewApply'); pg.wait_for_timeout(200)
+    data = saved_json(pg, fake)
+    es = data['supers']['entries']
+    check(next(e for e in es if e['id'] == 'super-ruth')['firstAppears'] == '01:02:20:00' and any(e.get('personId') == 'person-marcus-bell' and e['firstAppears'] == '01:10:00:00' and e.get('title') == 'Levee engineer' for e in es) and len(es) >= 4,
+          'applies the markers, matching names to people, and keeps supers that weren\'t in the file')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+    # Music cue timings from Premiere markers (UTF-16)
+    ctx, pg, errs = new_page(browser, 'music-cue-sheet', fake)
+    open_sample(pg, fake)
+    pick_file(pg, '#markersBtn', 'cues.csv', b'\xff\xfe' + PREMIERE_MARKERS.encode('utf-16-le'))
+    rev = pg.inner_text('#oftReviewList')
+    check('00:11:02:00 to 00:12:30:00 becomes 00:11:05:00 to 00:12:40:00' in rev and 'River Song' in rev, 'cue markers match music in the clearance log by cue number')
+    pg.click('#oftReviewApply'); pg.wait_for_timeout(200)
+    data = saved_json(pg, fake)
+    hymn = next(e for e in data['thirdPartyElements'] if e['id'] == 'sample-03')
+    check(hymn['tcIn'] == '00:11:05:00' and hymn['tcOut'] == '00:12:40:00' and any(e.get('music', {}).get('title') == 'River Song' for e in data['thirdPartyElements']), 'applies the cue timings and adds music that isn\'t in the log')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+    # Archive and music in a locked cut
+    ctx, pg, errs = new_page(browser, 'clearance-log', fake)
+    open_sample(pg, fake)
+    pick_file(pg, '#edlBtn', 'lock.edl', LOCK_EDL.encode())
+    rev = pg.inner_text('#oftReviewList'); intro = pg.inner_text('#oftReviewIntro')
+    check('1 of them your own footage' in intro and 'newsreel_1966.mov' in rev and 'Flood of 1965' in rev and 'A001C001' not in rev, 'the edit list separates own footage, known elements and new material')
+    pg.click('#oftReviewApply'); pg.wait_for_timeout(200)
+    data = saved_json(pg, fake)
+    el = next(e for e in data['thirdPartyElements'] if e['id'] == 'sample-01')
+    new = next((e for e in data['thirdPartyElements'] if e.get('description') == 'newsreel_1966.mov'), None)
+    check(el.get('uses') == [{'tcIn': '01:00:10:00', 'tcOut': '01:00:24:00', 'sourceIn': '00:12:30:00', 'sourceOut': '00:12:44:00'}] and el['tcIn'] == '01:00:10:00' and new and len(new['uses']) == 1, 'updates each element\'s uses from the edit and adds new material')
+    pick_file(pg, '#edlBtn', 'lock2.edl', LOCK_EDL.split('002')[0].encode())
+    check('Flood of 1965' in pg.inner_text('#oftReviewList') and 'Not in this file' in pg.inner_text('#oftReviewList'), 'shows elements that are no longer in the cut')
+    pg.click('#oftReviewCancel')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
 def test_template_columns(browser, fake):
     for name, template in TEMPLATE_EXPORTS:
         ctx, pg, errs = new_page(browser, name, fake)
@@ -3507,6 +3613,8 @@ def main():
         test_money(browser, fake)
         print('== waterfall / pari passu, corridors and interest')
         test_waterfall_terms(browser, fake)
+        print('== edit imports / transcripts, markers and edit lists')
+        test_edit_imports(browser, fake)
         print('== templates / columns match the tools\' exports')
         test_template_columns(browser, fake)
         browser.close()

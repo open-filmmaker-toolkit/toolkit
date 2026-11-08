@@ -44,6 +44,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 For anyone who doesn't use the tool, there's a blank [spreadsheet template](../../templates/name-supers-template.csv) with the same columns.
 
 - **Imports from a spreadsheet:** choose **Import from a spreadsheet** under the file buttons and pick a CSV file. One with the columns of the [spreadsheet template](../../templates/name-supers-template.csv) imports as it is; match any other columns once and the tool remembers. Problems, such as a date it can't read, show row by row before anything is added, and importing only adds.
+- **Imports markers from the edit:** DaVinci Resolve markers exported as an EDL, Premiere Pro's marker list, Avid's marker text, or a CSV with a timecode and a name. A marker named "Ruth Hammond - Retired schoolteacher" becomes her super, matched to the person in the project. What would change, such as a super that moved, shows before anything is applied.
 
 ## Saving and file conflicts
 
@@ -64,7 +65,6 @@ Fixing a spelling in the editor changes that person's `name` in `people`. Everyt
 
 ## Not yet
 
-- Importing supers from an edit, such as markers or an edit decision list
 - More than one appearance per super, and supers for places or dates
 - Exports for specific titling tools, beyond CSV
 
