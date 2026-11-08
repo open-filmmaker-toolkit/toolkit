@@ -40,6 +40,10 @@ Part of the [Open Filmmaker Toolkit](../README.md).
 | Structure board | [structure-board-template.csv](structure-board-template.csv) | | [Structure board](../tools/structure-board/) |
 | Cut notes | [cut-notes-template.csv](cut-notes-template.csv) | | [Cut version tracker](../tools/cut-tracker/) |
 | Cost report | [cost-report-template.csv](cost-report-template.csv) | | [Budget-to-actuals](../tools/budget-to-actuals/) |
+| Fair use | [fair-use-template.csv](fair-use-template.csv) | | [Fair use log](../tools/fair-use-log/) |
+| Licenses | [licenses-template.csv](licenses-template.csv) | | [License tracker](../tools/license-tracker/) |
+| Annotated clearance report | [clearance-report-template.csv](clearance-report-template.csv) | | [Annotated-transcript clearance report](../tools/clearance-report/) |
+| Chain of title | [chain-of-title-template.csv](chain-of-title-template.csv) | | [Chain-of-title binder](../tools/chain-of-title/) |
 | Name supers | [name-supers-template.csv](name-supers-template.csv) | | [Name supers list](../tools/name-supers/) |
 
 ## What's in each one
@@ -76,6 +80,10 @@ Part of the [Open Filmmaker Toolkit](../README.md).
 - **Structure board.** One row for each scene card, in order: act, sequence, scene, summary, running time, story threads and notes.
 - **Cut notes.** One row for each note on a cut: the cut, its date and running time, the screening and who saw it, the time or range in the cut, scene, shot, who gave the note, the note and its status.
 - **Cost report.** One row for each budget line: section, account, budget, spent, estimate to complete, estimated final cost, variance and a note.
+- **Fair use.** One row for each element used under fair use: what it is and where it's from, where it's used in the film, the four factors (purpose, nature, amount and market effect), where the film will be shown, and the attorney's review. Not legal advice.
+- **Licenses.** One row for each archival or music license: licensor, elements, media, territory, term, dates, fee and what's paid, the next payment due, options not exercised and the next deadline, and the credit it requires.
+- **Annotated clearance report.** One row for each marked reference in the script: timecode, speaker, the line, the marked words, what kind of reference it is, and how it's cleared.
+- **Chain of title.** One row for each document in the binder, in order: tab number, section, document, status, the agreements and files it links to, and a note.
 - **Name supers.** One row for each on-screen name and title, in the order they appear, with the timecode where each first appears.
 - **End credits.** Credits in the usual order, with placeholders to replace, and music, archival, thanks and copyright lines. The document adds a table of the credits your contracts require, to tick off before you lock, and a checklist.
 
@@ -83,7 +91,7 @@ Part of the [Open Filmmaker Toolkit](../README.md).
 
 - **Spreadsheets** (`.csv`) open in Excel, Numbers, Google Sheets (**File > Import**) and LibreOffice. Save a copy as `.xlsx` from there if you need that format.
 - **Documents** (`.docx`) open in Word, Google Docs, Pages and LibreOffice. They're US Letter; switch to A4 in your page setup if you need to. To add a row to a table, put the cursor in the last cell and press Tab. To fill them in by hand, print them; the logs repeat their column headings on every page.
-- **Same columns as the tools.** The subject tracker, research and archival log, comps tracker, grant calendar, budget, finance plan, funder CRM, cash flow, shooting calendar, interview questions, location scout sheet, deal memos, gear list, certificates and permits, travel sheet, risk assessment, security checklist, camera and sound reports, interview moments, press list, partner CRM, footage log, paper edit, structure board, cut notes, cost report, clearance log, release log, music cue sheet and name supers spreadsheets have the same columns, in the same order, as each tool's CSV export, and the call sheet matches the call sheet's spreadsheet export. Some exports add columns the tool works out for you, such as a cue's duration in seconds or what's still missing.
+- **Same columns as the tools.** The subject tracker, research and archival log, comps tracker, grant calendar, budget, finance plan, funder CRM, cash flow, shooting calendar, interview questions, location scout sheet, deal memos, gear list, certificates and permits, travel sheet, risk assessment, security checklist, camera and sound reports, interview moments, press list, partner CRM, fair use, licenses, annotated clearance report, chain of title, footage log, paper edit, structure board, cut notes, cost report, clearance log, release log, music cue sheet and name supers spreadsheets have the same columns, in the same order, as each tool's CSV export, and the call sheet matches the call sheet's spreadsheet export. Some exports add columns the tool works out for you, such as a cue's duration in seconds or what's still missing.
 
 These templates are working records, not legal advice, and you use them at your own risk: see [Not legal advice](../README.md#not-legal-advice). Check what your distributor, broadcaster and E&O insurer need.
 

@@ -51,6 +51,10 @@ body:
         - Credits builder
         - Budget-to-actuals
         - Clearance log
+        - Fair use log
+        - License tracker
+        - Annotated-transcript clearance report
+        - Chain-of-title binder
         - A template or form
         - The tool list (TOOLS.md)
         - The directory of other open-source tools

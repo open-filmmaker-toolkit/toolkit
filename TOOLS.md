@@ -1,6 +1,6 @@
 # Tools
 
-The tools we build, by production phase. Each one is a single page that runs in your browser on the shared project file, with nothing to install and nothing sent anywhere. 42 are ready to use and 20 are planned.
+The tools we build, by production phase. Each one is a single page that runs in your browser on the shared project file, with nothing to install and nothing sent anywhere. 46 are ready to use and 16 are planned.
 
 - **Ready to use:** linked tools. Each has a README with what it does.
 - **Planned:** each has an issue. Comment there if you need the tool or want to help build it. Order of work is in [ROADMAP.md](ROADMAP.md).
@@ -74,10 +74,10 @@ Looking for other free, open-source software for filmmaking, such as editing, so
 | Tool | Use it for | Status |
 | --- | --- | --- |
 | [Clearance log](tools/clearance-log/) | Tracking every piece of third-party material until it's cleared, then printing a report for your E&O attorney | First version |
-| Fair use log and memo builder | Document fair use decisions element by element, with the reasoning your E&O attorney will ask for. | Planned, [#73](https://github.com/open-filmmaker-toolkit/toolkit/issues/73) |
-| Archival and music license trackers | Track the terms of each license: media, territory, term, fees, payments, and options you have to exercise in time. | Planned, [#74](https://github.com/open-filmmaker-toolkit/toolkit/issues/74) |
-| Annotated-transcript clearance report | Produce the annotated script or transcript an E&O insurer asks for, with each reference marked with how it's cleared. | Planned, [#75](https://github.com/open-filmmaker-toolkit/toolkit/issues/75) |
-| Chain-of-title binder | Gather the chain-of-title documents a distributor asks for, in order, with anything missing flagged. | Planned, [#76](https://github.com/open-filmmaker-toolkit/toolkit/issues/76) |
+| [Fair use log](tools/fair-use-log/) | Documenting fair use decisions element by element: purpose, how much is used and why, the nature of the original and the market effect, where the film will be shown, and a draft memo for your attorney | First version |
+| [License tracker](tools/license-tracker/) | Tracking the terms of each archival and music license: media, territory, term, fees and payments, and options and step deals to exercise in time, with what's expiring flagged | First version |
+| [Annotated-transcript clearance report](tools/clearance-report/) | Marking every reference to a person, place, product, quote, music or archival material in a script or transcript, with how each is cleared, for your E&O insurer | First version |
+| [Chain-of-title binder](tools/chain-of-title/) | Gathering the chain-of-title documents a distributor asks for, in order, each linked to its document in the project, with what's missing flagged, and an index and cover sheets | First version |
 
 ## Marketing & Festivals
 

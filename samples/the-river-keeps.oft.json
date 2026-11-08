@@ -212,7 +212,10 @@
             "share": 100
           }
         ]
-      }
+      },
+      "contractIds": [
+        "contract-muddy-water-license"
+      ]
     },
     {
       "id": "sample-04",
@@ -228,7 +231,18 @@
       "rights": "",
       "cost": null,
       "licenseRef": "fair-use-memo-draft.docx",
-      "notes": "Attorney to review the fair use memo before picture lock."
+      "notes": "Attorney to review the fair use memo before picture lock.",
+      "fairUse": {
+        "purpose": "The film shows the front page while Ruth Hammond reads the headline aloud and says it got the night wrong. The page is the subject of her criticism, not decoration.",
+        "nature": "A factual news report, published in 1965.",
+        "amount": "Four seconds of the front page, only the headline and the photo she talks about. Less than the whole page.",
+        "market": "The Courier closed in 1979 and its archive isn’t licensed. A few seconds of a front page under commentary doesn’t replace the paper or any license for it.",
+        "sourced": "Photographed from county library microfilm; the paper is named on screen",
+        "where": "us-plus",
+        "countries": "Canada and festivals in Europe",
+        "status": "ready",
+        "attorney": "Counsel to be named"
+      }
     },
     {
       "id": "sample-05",
@@ -437,7 +451,10 @@
             "share": 100
           }
         ]
-      }
+      },
+      "contractIds": [
+        "contract-fieldtone-license"
+      ]
     },
     {
       "id": "sample-13",
@@ -481,7 +498,10 @@
             "share": 100
           }
         ]
-      }
+      },
+      "contractIds": [
+        "contract-muddy-water-license"
+      ]
     }
   ],
   "contracts": [
@@ -558,7 +578,23 @@
       ],
       "signedDate": "2026-03-02",
       "requiredCredit": "Footage courtesy of the Riverside County Historical Society",
-      "notes": "Fictional example."
+      "notes": "Fictional example.",
+      "licenseKind": "archival",
+      "licensor": "Riverside County Historical Society",
+      "media": "All media, now known or later devised",
+      "territory": "Worldwide",
+      "term": "In perpetuity",
+      "fee": 1200,
+      "payments": [
+        {
+          "id": "payment-rchs-1",
+          "amount": 1200,
+          "due": "2026-03-20",
+          "paid": true,
+          "paidDate": "2026-03-18",
+          "note": "On signing"
+        }
+      ]
     },
     {
       "id": "contract-deal-teo",
@@ -664,6 +700,72 @@
       "receivedDate": "2026-04-21",
       "effectiveDate": "2026-05-12",
       "expirationDate": "2026-05-13"
+    },
+    {
+      "id": "contract-muddy-water-license",
+      "title": "Muddy Water Hymn, sync and master",
+      "type": "license",
+      "status": "draft",
+      "licenseKind": "music",
+      "licensor": "Bluff Records (master), Delta Song Publishing (sync)",
+      "thirdPartyElementIds": [
+        "sample-03",
+        "sample-13"
+      ],
+      "media": "Festivals only",
+      "territory": "Worldwide",
+      "term": "2 years",
+      "effectiveDate": "2026-12-01",
+      "expirationDate": "2028-11-30",
+      "fee": 3500,
+      "payments": [
+        {
+          "id": "payment-muddy-1",
+          "amount": 1750,
+          "due": "2026-11-20",
+          "note": "On signing"
+        },
+        {
+          "id": "payment-muddy-2",
+          "amount": 1750,
+          "due": "2027-01-15",
+          "note": "Before the first festival screening"
+        }
+      ],
+      "options": [
+        {
+          "id": "option-muddy-all-media",
+          "what": "All media, worldwide, in perpetuity",
+          "fee": 6000,
+          "deadline": "2027-12-01"
+        }
+      ],
+      "notes": "Step deal: festival license now, with an option for all media."
+    },
+    {
+      "id": "contract-fieldtone-license",
+      "title": "Fieldtone Music blanket license",
+      "type": "license",
+      "status": "signed",
+      "licenseKind": "music",
+      "licensor": "Fieldtone Music",
+      "thirdPartyElementIds": [
+        "sample-12"
+      ],
+      "media": "All media",
+      "territory": "Worldwide",
+      "term": "In perpetuity",
+      "signedDate": "2026-07-02",
+      "fee": 150,
+      "payments": [
+        {
+          "id": "payment-fieldtone-1",
+          "amount": 150,
+          "due": "2026-07-02",
+          "paid": true,
+          "paidDate": "2026-07-02"
+        }
+      ]
     }
   ],
   "assets": [
@@ -815,6 +917,12 @@
         "sandbags"
       ],
       "rating": 3
+    },
+    {
+      "id": "asset-eo-certificate",
+      "name": "E&O certificate",
+      "type": "chain of title document",
+      "relativePath": "legal/eo-certificate-2026.pdf"
     }
   ],
   "musicCueSheet": {
@@ -4194,5 +4302,147 @@
       "changes": "Picture lock.",
       "locked": true
     }
-  ]
+  ],
+  "clearanceReport": {
+    "scripts": [
+      {
+        "id": "script-locked-12",
+        "name": "Locked cut v12, act one",
+        "format": "text",
+        "frameRate": "23.976",
+        "startTc": "01:00:00:00",
+        "segments": [
+          {
+            "id": "cr-seg-1",
+            "start": 0.0,
+            "end": 8.0,
+            "speaker": "Narrator",
+            "text": "In the spring of 1965 the river came over the levee at Riverside."
+          },
+          {
+            "id": "cr-seg-2",
+            "start": 8.5,
+            "end": 19.0,
+            "speaker": "Ruth Hammond",
+            "text": "My mother kept a diary that whole week. She wrote down every sound."
+          },
+          {
+            "id": "cr-seg-3",
+            "start": 19.5,
+            "end": 27.0,
+            "speaker": "Ruth Hammond",
+            "text": "The Riverside Courier said the water stopped at Mill Road. It didn’t. It came right into the Hammond house."
+          },
+          {
+            "id": "cr-seg-4",
+            "start": 27.5,
+            "end": 40.0,
+            "speaker": "Daniel Okafor",
+            "text": "My grandmother climbed onto the roof with a box camera and took pictures of the water."
+          },
+          {
+            "id": "cr-seg-5",
+            "start": 40.5,
+            "end": 52.0,
+            "text": "(Music: Muddy Water Hymn, The Low Waters, under the montage)"
+          },
+          {
+            "id": "cr-seg-6",
+            "start": 52.5,
+            "end": 63.0,
+            "speaker": "Leon Pryor",
+            "text": "At the grain elevator we lost two years of seed. Nobody wrote that down."
+          }
+        ],
+        "marks": [
+          {
+            "id": "mark-ruth",
+            "segId": "cr-seg-2",
+            "words": "My mother kept a diary",
+            "kind": "quote",
+            "override": "cleared",
+            "note": "Ruth’s own family diary; covered by her appearance release"
+          },
+          {
+            "id": "mark-courier",
+            "segId": "cr-seg-3",
+            "words": "The Riverside Courier",
+            "kind": "archival",
+            "elementId": "sample-04"
+          },
+          {
+            "id": "mark-hammond-house",
+            "segId": "cr-seg-3",
+            "words": "Hammond house",
+            "kind": "place",
+            "locationId": "location-hammond-house"
+          },
+          {
+            "id": "mark-daniel",
+            "segId": "cr-seg-4",
+            "words": "My grandmother",
+            "kind": "person",
+            "personId": "person-daniel-okafor",
+            "note": "Daniel speaks about his grandmother; he appears on camera"
+          },
+          {
+            "id": "mark-hymn",
+            "segId": "cr-seg-5",
+            "words": "Muddy Water Hymn",
+            "kind": "music",
+            "elementId": "sample-03"
+          },
+          {
+            "id": "mark-leon",
+            "segId": "cr-seg-6",
+            "words": "Leon Pryor",
+            "kind": "person",
+            "personId": "person-leon-pryor"
+          },
+          {
+            "id": "mark-elevator",
+            "segId": "cr-seg-6",
+            "words": "grain elevator",
+            "kind": "place",
+            "locationId": "location-grain-elevator"
+          }
+        ]
+      }
+    ]
+  },
+  "chainOfTitle": {
+    "items": [
+      {
+        "id": "binder-ul-option",
+        "key": "ul-option",
+        "status": "na",
+        "note": "The film isn’t based on an earlier work."
+      },
+      {
+        "id": "binder-ul-life",
+        "key": "ul-life",
+        "status": "na",
+        "note": "A documentary; no dramatized life stories."
+      },
+      {
+        "id": "binder-ag-composer",
+        "key": "ag-composer",
+        "status": "missing",
+        "note": "Mira’s deal memo is still a draft; the composer agreement follows it."
+      },
+      {
+        "id": "binder-cr-film",
+        "key": "cr-film",
+        "status": "missing",
+        "note": "File after picture lock."
+      },
+      {
+        "id": "binder-ot-eo",
+        "key": "ot-eo",
+        "assetIds": [
+          "asset-eo-certificate"
+        ]
+      }
+    ]
+  }
 }

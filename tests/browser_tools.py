@@ -19,10 +19,10 @@ from playwright.sync_api import sync_playwright
 
 root = pathlib.Path(__file__).resolve().parents[1]
 sample = (root / 'samples/the-river-keeps.oft.json').read_text()
-TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan', 'funder-crm', 'cash-flow', 'shooting-calendar', 'interview-prep', 'field-journal', 'location-scout', 'deal-memos', 'gear-list', 'coi-permit-tracker', 'travel-sheet', 'risk-plan', 'security-checklist', 'camera-sound-reports', 'interview-log', 'daily-production-report', 'expense-log', 'festival-submissions', 'press-list', 'partner-crm', 'discussion-guide', 'archive-log', 'footage-log', 'paper-edit', 'structure-board', 'cut-tracker', 'budget-to-actuals']
+TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan', 'funder-crm', 'cash-flow', 'shooting-calendar', 'interview-prep', 'field-journal', 'location-scout', 'deal-memos', 'gear-list', 'coi-permit-tracker', 'travel-sheet', 'risk-plan', 'security-checklist', 'camera-sound-reports', 'interview-log', 'daily-production-report', 'expense-log', 'festival-submissions', 'press-list', 'partner-crm', 'discussion-guide', 'archive-log', 'footage-log', 'paper-edit', 'structure-board', 'cut-tracker', 'budget-to-actuals', 'fair-use-log', 'license-tracker', 'clearance-report', 'chain-of-title']
 COLLECTIONS = ['project', 'people', 'locations', 'thirdPartyElements', 'contracts', 'assets', 'musicCueSheet', 'callSheets']
 PRINT_BTN = {'clearance-log': '#printBtn', 'music-cue-sheet': '#printBtn', 'call-sheet': '#printAllBtn', 'release-tracker': '#printBtn',
-             'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn', 'treatment-builder': '#printBtn', 'pitch-deck': '#printBtn', 'grant-calendar': '#printBtn', 'narrative-library': '#printBtn', 'budget': '#printBtn', 'budget-converter': '#printBtn', 'finance-plan': '#printBtn', 'funder-crm': '#printBtn', 'cash-flow': '#printBtn', 'shooting-calendar': '#printBtn', 'interview-prep': '#printBtn', 'field-journal': '#printBtn', 'location-scout': '#printBtn', 'deal-memos': '#printBtn', 'gear-list': '#printBtn', 'coi-permit-tracker': '#printBtn', 'travel-sheet': '#printBtn', 'risk-plan': '#printBtn', 'security-checklist': '#printBtn', 'camera-sound-reports': '#printBtn', 'interview-log': '#printBtn', 'daily-production-report': '#printBtn', 'expense-log': '#printBtn', 'festival-submissions': '#printBtn', 'press-list': '#printBtn', 'partner-crm': '#printBtn', 'discussion-guide': '#printBtn', 'archive-log': '#printBtn', 'footage-log': '#printBtn', 'paper-edit': '#printBtn', 'structure-board': '#printBtn', 'cut-tracker': '#printBtn', 'budget-to-actuals': '#printBtn'}
+             'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn', 'treatment-builder': '#printBtn', 'pitch-deck': '#printBtn', 'grant-calendar': '#printBtn', 'narrative-library': '#printBtn', 'budget': '#printBtn', 'budget-converter': '#printBtn', 'finance-plan': '#printBtn', 'funder-crm': '#printBtn', 'cash-flow': '#printBtn', 'shooting-calendar': '#printBtn', 'interview-prep': '#printBtn', 'field-journal': '#printBtn', 'location-scout': '#printBtn', 'deal-memos': '#printBtn', 'gear-list': '#printBtn', 'coi-permit-tracker': '#printBtn', 'travel-sheet': '#printBtn', 'risk-plan': '#printBtn', 'security-checklist': '#printBtn', 'camera-sound-reports': '#printBtn', 'interview-log': '#printBtn', 'daily-production-report': '#printBtn', 'expense-log': '#printBtn', 'festival-submissions': '#printBtn', 'press-list': '#printBtn', 'partner-crm': '#printBtn', 'discussion-guide': '#printBtn', 'archive-log': '#printBtn', 'footage-log': '#printBtn', 'paper-edit': '#printBtn', 'structure-board': '#printBtn', 'cut-tracker': '#printBtn', 'budget-to-actuals': '#printBtn', 'fair-use-log': '#printBtn', 'license-tracker': '#printBtn', 'clearance-report': '#printBtn', 'chain-of-title': '#printBtn'}
 PHONE = {'width': 390, 'height': 844}
 # The button that opens each tool's main dialog, for the phone-width check. Most tools use #addBtn.
 DIALOG_BTN = {'treatment-builder': '[data-compare]', 'cash-flow': '#settingsBtn', 'discussion-guide': '#projectCsvBtn'}
@@ -385,7 +385,7 @@ def test_credits_builder(browser, fake):
     ctx.close()
 
 # Each spreadsheet template's columns must appear in its tool's CSV export, in the same order.
-TEMPLATE_EXPORTS = [('structure-board', 'structure-board-template.csv'), ('cut-tracker', 'cut-notes-template.csv'), ('budget-to-actuals', 'cost-report-template.csv'), ('footage-log', 'footage-log-template.csv'), ('paper-edit', 'paper-edit-template.csv'), ('press-list', 'press-list-template.csv'), ('partner-crm', 'partner-crm-template.csv'), ('camera-sound-reports', 'camera-and-sound-reports-template.csv'), ('interview-log', 'interview-moments-template.csv'), ('travel-sheet', 'travel-sheet-template.csv'), ('risk-plan', 'risk-assessment-template.csv'), ('security-checklist', 'security-checklist-template.csv'), ('gear-list', 'gear-list-template.csv'), ('coi-permit-tracker', 'certificates-and-permits-template.csv'), ('location-scout', 'location-scout-template.csv'), ('deal-memos', 'deal-memos-template.csv'), ('shooting-calendar', 'shooting-calendar-template.csv'), ('interview-prep', 'interview-questions-template.csv'), ('funder-crm', 'funder-crm-template.csv'), ('cash-flow', 'cash-flow-template.csv'), ('budget', 'budget-template.csv'), ('finance-plan', 'finance-plan-template.csv'), ('grant-calendar', 'grant-calendar-template.csv'), ('clearance-log', 'clearance-log-template.csv'), ('release-tracker', 'release-log-template.csv'),
+TEMPLATE_EXPORTS = [('fair-use-log', 'fair-use-template.csv'), ('license-tracker', 'licenses-template.csv'), ('clearance-report', 'clearance-report-template.csv'), ('chain-of-title', 'chain-of-title-template.csv'), ('structure-board', 'structure-board-template.csv'), ('cut-tracker', 'cut-notes-template.csv'), ('budget-to-actuals', 'cost-report-template.csv'), ('footage-log', 'footage-log-template.csv'), ('paper-edit', 'paper-edit-template.csv'), ('press-list', 'press-list-template.csv'), ('partner-crm', 'partner-crm-template.csv'), ('camera-sound-reports', 'camera-and-sound-reports-template.csv'), ('interview-log', 'interview-moments-template.csv'), ('travel-sheet', 'travel-sheet-template.csv'), ('risk-plan', 'risk-assessment-template.csv'), ('security-checklist', 'security-checklist-template.csv'), ('gear-list', 'gear-list-template.csv'), ('coi-permit-tracker', 'certificates-and-permits-template.csv'), ('location-scout', 'location-scout-template.csv'), ('deal-memos', 'deal-memos-template.csv'), ('shooting-calendar', 'shooting-calendar-template.csv'), ('interview-prep', 'interview-questions-template.csv'), ('funder-crm', 'funder-crm-template.csv'), ('cash-flow', 'cash-flow-template.csv'), ('budget', 'budget-template.csv'), ('finance-plan', 'finance-plan-template.csv'), ('grant-calendar', 'grant-calendar-template.csv'), ('clearance-log', 'clearance-log-template.csv'), ('release-tracker', 'release-log-template.csv'),
                     ('music-cue-sheet', 'music-cue-sheet-template.csv'), ('name-supers', 'name-supers-template.csv'),
                     ('subject-tracker', 'subject-tracker-template.csv'), ('research-log', 'research-log-template.csv'),
                     ('comps-tracker', 'comps-tracker-template.csv')]
@@ -1826,6 +1826,154 @@ def test_budget_actuals(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
+def test_fair_use(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'fair-use-log', fake, fixed_today('2026-11-07'))
+    open_sample(pg, fake)
+    row = pg.inner_text('[data-id="sample-04"]')
+    check(pg.locator('#rows .row').count() == 1 and 'Ready for the attorney' in row and '4 of 4 factors written' in row and '4 seconds' in row, 'lists the elements marked fair use in the clearance log')
+    check(pg.locator('#maybe li').count() == 4, 'lists elements not cleared another way')
+    pg.click('#addBtn')
+    check('Riverside Courier (defunct)' in pg.inner_text('#facts') and pg.is_visible('#whereWarn'), 'opens the next element with its clearance log details, and warns about countries outside the US')
+    pg.select_option('#f-where', 'us')
+    check(not pg.is_visible('#whereWarn'), 'no warning for the US only')
+    pg.select_option('#f-where', 'outside'); pg.select_option('#f-status', 'reviewed'); pg.fill('#f-attorney', '')
+    pg.click('#editorSubmit')
+    check(pg.is_visible('#editor'), 'a reviewed memo needs the attorney')
+    pg.fill('#f-attorney', 'J. Rivera, Esq.'); pg.fill('#f-advice', 'Comfortable with the use as cut')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check('Reviewed' in pg.inner_text('[data-id="sample-04"]'), 'saves the review')
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    r = pg.inner_text('#report')
+    check(r.startswith('Not legal advice.') and 'Purpose and character of the use' in r and 'Outside the United States only' in r and 'J. Rivera, Esq.' in r, 'prints a draft memo with the notice first')
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    check(rows[0][:3] == ['Element', 'Type', 'Source'] and len(rows) == 2, 'CSV lists the fair use elements')
+    data = saved_project(pg, fake)
+    e = next(x for x in data['thirdPartyElements'] if x['id'] == 'sample-04')
+    o = next(x for x in original['thirdPartyElements'] if x['id'] == 'sample-04')
+    check(e['fairUse']['status'] == 'reviewed' and e['fairUse']['reviewedDate'] == '2026-11-07' and e['fairUse']['where'] == 'outside' and e['fairUse']['purpose'] == o['fairUse']['purpose'], 'the review is saved on the element')
+    check({k: v for k, v in e.items() if k not in ('fairUse', 'updatedAt')} == {k: v for k, v in o.items() if k != 'fairUse'} and data['contracts'] == original['contracts'], 'the element and other data are otherwise unchanged')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+def test_license_tracker(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'license-tracker', fake, fixed_today('2026-11-07'))
+    pg.on('dialog', lambda d: d.accept())
+    open_sample(pg, fake)
+    check(pg.locator('#rows .row').count() == 3 and 'Payment due Nov 20, 2026' in pg.inner_text('#due') and '$4,850' in pg.inner_text('#fees'), 'lists licenses, what is coming up and the fees')
+    pg.click('[data-filter="music"]')
+    check(pg.locator('#rows .row').count() == 2, 'filters to music')
+    pg.click('[data-filter="all"]')
+    pg.click('#addBtn')
+    pg.fill('#f-title', 'Channel 6, 1993 flood report'); pg.select_option('#f-kind', 'archival'); pg.fill('#f-licensor', 'Channel 6')
+    pg.check('#elPicks input[value="sample-08"]')
+    pg.fill('#f-media', 'All media'); pg.fill('#f-territory', 'Worldwide'); pg.fill('#f-term', '10 years'); pg.fill('#f-start', '2026-12-01'); pg.fill('#f-end', '2036-11-30'); pg.fill('#f-fee', '900')
+    pg.click('[data-add="payments"]'); pg.fill('#payments-0-amount', '450'); pg.fill('#payments-0-due', '2026-11-01')
+    pg.click('[data-add="options"]'); pg.fill('#options-0-what', 'Add educational use'); pg.fill('#options-0-fee', '200'); pg.fill('#options-0-deadline', '2026-12-20')
+    pg.fill('#f-doc', 'licenses/channel6.pdf')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    due = pg.inner_text('#due')
+    check('Payment overdue since Nov 1, 2026: $450' in due and 'Exercise by Dec 20, 2026: Add educational use' in due, 'flags an overdue payment and an option to exercise soon')
+    pg.click('[data-edit="contract-muddy-water-license"]'); pg.check('#payments-0-paid'); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check('Nov 20' not in pg.inner_text('#due') and '$1,750 paid of $3,500' in pg.inner_text('[data-id="contract-muddy-water-license"]'), 'marks a payment paid')
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    r = pg.inner_text('#report')
+    check('License schedule' in r and 'Channel 6, 1993 flood report' in r and 'Add educational use' in r and 'Payments' in r, 'prints the license schedule')
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    check(rows[0][:3] == ['License', 'Kind', 'Licensor'] and len(rows) == 5, 'CSV lists every license')
+    data = saved_project(pg, fake)
+    lic = next(c for c in data['contracts'] if c.get('title') == 'Channel 6, 1993 flood report')
+    el = next(e for e in data['thirdPartyElements'] if e['id'] == 'sample-08')
+    mw = next(c for c in data['contracts'] if c['id'] == 'contract-muddy-water-license')
+    a = next(x for x in data['assets'] if x['id'] in lic['assetIds'])
+    check(lic['type'] == 'license' and lic['thirdPartyElementIds'] == ['sample-08'] and lic['payments'][0]['amount'] == 450 and lic['options'][0]['deadline'] == '2026-12-20' and lic['id'] in el['contractIds']
+          and a['type'] == 'license' and a['relativePath'] == 'licenses/channel6.pdf', 'the license is saved and linked to its element')
+    check(mw['payments'][0]['paid'] is True and mw['payments'][0]['paidDate'] == '2026-11-07', 'the payment is saved as paid')
+    check([c for c in data['contracts'] if c.get('type') != 'license'] == [c for c in original['contracts'] if c.get('type') != 'license'], 'other contracts are unchanged')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+VTT_CLEAR = 'WEBVTT\n\n00:00:01.000 --> 00:00:05.000\nWe spoke with Ruth Hammond at the Hammond house.\n\n00:00:06.000 --> 00:00:10.000\nThen Muddy Water Hymn came on the radio.\n'
+
+def test_clearance_report(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'clearance-report', fake)
+    open_sample(pg, fake)
+    check(pg.locator('#lines > li').count() == 6 and '7 marks · 4 not cleared' in pg.inner_text('#count') and pg.locator('#open li').count() == 4, 'shows the script, its marks and what is not cleared')
+    check('Riverside Courier (defunct)' not in pg.inner_text('#open') and 'Leon Pryor: Release not signed yet' in pg.inner_text('#open'), 'reads clearances from the clearance log and releases')
+    pg.click('#addBtn')
+    pg.set_input_files('#f-file', files=[{'name': 'act-two.vtt', 'mimeType': 'text/vtt', 'buffer': VTT_CLEAR.encode()}]); pg.wait_for_timeout(200)
+    check('2 lines read from act-two.vtt, with timecodes' in pg.inner_text('#parseNote'), 'reads a VTT script')
+    pg.fill('#f-start', '01:10:00:00')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check(pg.locator('#lines > li').count() == 2 and pg.locator('#lines > li').first.inner_text().startswith('01:10:01:00'), 'shows program timecode for each line')
+    pg.click('#findBtn'); pg.wait_for_timeout(200)
+    check(pg.locator('#lines .chip').count() == 3, 'finds the names of people, places and music from the project')
+    pg.locator('#lines [data-mark]').nth(1).click()
+    pg.fill('#m-words', 'television'); pg.select_option('#m-kind', 'product')
+    pg.click('#markForm button[type="submit"]')
+    check(pg.is_visible('#markDialog'), 'refuses words that are not in the line')
+    pg.fill('#m-words', 'the radio'); pg.select_option('#m-override', 'cleared'); pg.fill('#m-note', 'A generic radio, no brand visible')
+    check('Cleared: A generic radio' in pg.inner_text('#markStatus'), 'shows the clearance as you mark')
+    pg.click('#markForm button[type="submit"]'); pg.wait_for_timeout(200)
+    check(pg.locator('#lines .chip').count() == 4 and pg.locator('#open li').count() == 2 and 'Ruth Hammond' not in pg.inner_text('#open'), 'a signed release clears a person; a pending one does not')
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    r = pg.inner_text('#report')
+    check('Annotated script: clearance report' in r and '[1] Person: Ruth Hammond: Release signed' in r and 'NOT CLEARED' in r and 'Not cleared yet' in r and '01:10:06:00' in r, 'prints the report')
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    check(rows[0][:4] == ['Timecode', 'Speaker', 'Line', 'Marked words'] and len(rows) == 5, 'CSV has a row for each mark')
+    data = saved_project(pg, fake)
+    sc = data['clearanceReport']['scripts']
+    new = next(x for x in sc if x['name'] == 'act-two')
+    ruth = next(m for m in new['marks'] if m['words'] == 'Ruth Hammond')
+    radio = next(m for m in new['marks'] if m['words'] == 'the radio')
+    check(new['startTc'] == '01:10:00:00' and len(new['marks']) == 4 and ruth['personId'] == 'person-ruth-hammond' and ruth['auto'] is True and radio['override'] == 'cleared' and radio['kind'] == 'product', 'the script and marks are saved')
+    check(sc[0] == original['clearanceReport']['scripts'][0] and data['contracts'] == original['contracts'], 'other data is unchanged')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+def test_chain_of_title(browser, fake):
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'chain-of-title', fake)
+    open_sample(pg, fake)
+    miss = pg.inner_text('#missing')
+    check('Composer agreement' in miss and 'Appearance release: Daniel Okafor' in miss and 'Fair use opinion letter' in miss and 'Muddy Water Hymn' in miss, 'flags what is missing, from the project and the checklist')
+    check('In hand' in pg.inner_text('[data-key="ot-eo"]') and 'legal/eo-certificate-2026.pdf' in pg.inner_text('[data-key="ot-eo"]') and 'Not needed' in pg.inner_text('[data-key="ul-option"]'), 'shows linked documents and items not needed')
+    check('2 of 3 deal memos not signed' in pg.inner_text('[data-key="ag-crew"]'), 'works out the crew deal memos from the project')
+    before = pg.inner_text('#count')
+    pg.click('[data-edit="contract:contract-pryor-appearance"]')
+    check('Missing, from the project: Not signed yet' in pg.inner_text('#autoNote'), 'explains a status from the project')
+    pg.click('#editorCancel')
+    pg.click('[data-edit="cr-film"]'); pg.select_option('#f-status', ''); pg.fill('#f-path', 'legal/copyright-certificate.pdf'); pg.fill('#f-note', 'Registered Nov 2026')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check('In hand' in pg.inner_text('[data-key="cr-film"]'), 'linking a document puts an item in hand')
+    pg.click('[data-edit="ag-finance"]'); pg.select_option('#f-status', 'na'); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    pg.click('#addBtn'); pg.fill('#f-title', 'Distribution agreement'); pg.select_option('#f-section', 'agreements'); pg.fill('#f-path', 'legal/distribution.pdf')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check(pg.locator('[data-key] .nm:has-text("Distribution agreement")').count() == 1 and pg.inner_text('#count') != before, 'adds your own item')
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    r = pg.inner_text('#report')
+    check('Chain of title' in r and 'Tab' in r and 'MISSING' in r and 'Distribution agreement' in r and 'legal/copyright-certificate.pdf' in r and 'Co-production' not in r, 'prints the index and cover sheets, without items not needed')
+    with pg.expect_download() as d:
+        pg.click('#csvBtn')
+    rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    check(rows[0][:4] == ['Tab', 'Section', 'Document', 'Status'] and len(rows) == pg.locator('#sections .row').count() + 1, 'CSV lists every item')
+    data = saved_project(pg, fake)
+    it = {x['key']: x for x in data['chainOfTitle']['items']}
+    a = next(x for x in data['assets'] if x['id'] == it['cr-film']['assetIds'][0])
+    custom = next(x for x in data['chainOfTitle']['items'] if x.get('custom'))
+    check(a['type'] == 'chain of title document' and a['relativePath'] == 'legal/copyright-certificate.pdf' and 'status' not in it['cr-film'] and it['ag-finance']['status'] == 'na' and custom['title'] == 'Distribution agreement' and custom['section'] == 'agreements', 'the binder is saved')
+    check(data['contracts'] == original['contracts'] and data['people'] == original['people'], 'other data is unchanged')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
 def test_deal_memos(browser, fake):
     original = json.loads(sample)
     ctx, pg, errs = new_page(browser, 'deal-memos', fake)
@@ -2375,6 +2523,14 @@ def main():
         test_cut_tracker(browser, fake)
         print('== budget-to-actuals / lines, estimates and the cost report')
         test_budget_actuals(browser, fake)
+        print('== fair-use-log / factors, countries and the memo')
+        test_fair_use(browser, fake)
+        print('== license-tracker / terms, payments and options')
+        test_license_tracker(browser, fake)
+        print('== clearance-report / scripts, marks and clearances')
+        test_clearance_report(browser, fake)
+        print('== chain-of-title / checklist, links and the binder')
+        test_chain_of_title(browser, fake)
         print('== templates / columns match the tools\' exports')
         test_template_columns(browser, fake)
         browser.close()

@@ -45,6 +45,8 @@ The file is a JSON object with a `project` record and collections for reusable e
 | `structure` | Acts, sequences, scene cards and story threads, kept by the [structure board](../tools/structure-board/README.md#what-it-adds-to-the-project-file); cards can point to scenes in `paperEdit`, and threads to `people`. A record rather than a collection |
 | `cuts` | Cuts with their feedback screenings and notes, kept by the [cut version tracker](../tools/cut-tracker/README.md#what-it-adds-to-the-project-file); notes can point to cards in `structure`. Locking a cut sets `project.cutVersion` and `project.runningTime` |
 | `costReport` | Estimates to complete and the report date, kept by [budget-to-actuals](../tools/budget-to-actuals/README.md#what-it-adds-to-the-project-file), which also adds `budgetLineId` to `expenses`. A record rather than a collection |
+| `clearanceReport` | Scripts and transcripts with marked references, kept by the [annotated-transcript clearance report](../tools/clearance-report/README.md#what-it-adds-to-the-project-file); marks refer to `people`, `locations` and `thirdPartyElements`. A record rather than a collection |
+| `chainOfTitle` | Links, statuses and your own items for the [chain-of-title binder](../tools/chain-of-title/README.md#what-it-adds-to-the-project-file); refers to `contracts` and `assets`. A record rather than a collection |
 | `pitchDeck` | A pitch deck or lookbook: page size, slides in order, and the images, resized and stored as data URLs. A record rather than a collection; see the [pitch deck builder](../tools/pitch-deck/README.md#what-it-adds-to-the-project-file) |
 | `credits` | The end credits, in order. A record rather than a collection; see [Credits](#credits) |
 | `supers` | On-screen names and titles (supers and lower thirds), and the list as it was last exported for graphics. A record rather than a collection; entries refer to `people` by `personId`, whose `name` is the spelling used. See the [name supers list](../tools/name-supers/README.md#what-it-adds-to-the-project-file) |
@@ -60,6 +62,7 @@ The release tracker treats a contract as a release when its `type` contains "rel
 - `onCamera: false` takes someone or somewhere off the list even if a release or call sheet names them.
 - Materials releases cover clearance-log items through `thirdPartyElementIds`; each item records the release in `contractIds`. They don't cover a person's appearance.
 - Certificates of insurance and permits are contracts too, with `type` "certificate of insurance" or "permit", and refer to `locations` and `shootDays`. See the [COI and permit tracker](../tools/coi-permit-tracker/README.md#what-it-adds-to-the-project-file).
+- Licenses are contracts with `type` "license". The [license tracker](../tools/license-tracker/README.md#what-it-adds-to-the-project-file) adds their terms, payments and options, and links them to `thirdPartyElements` both ways. The [fair use log](../tools/fair-use-log/README.md#what-it-adds-to-the-project-file) adds `fairUse` to elements marked fair use.
 - Deal memos are contracts too, with `type` "deal memo"; they aren't releases. See the [deal memos](../tools/deal-memos/README.md#what-it-adds-to-the-project-file) for their fields.
 - Signed copies are `assets` with `type` "release scan" and a `relativePath` under `releases/`, relative to the project file.
 
