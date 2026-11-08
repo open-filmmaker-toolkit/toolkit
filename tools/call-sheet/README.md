@@ -43,6 +43,8 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **Exports a crew list (CSV)** with one row per person per day.
 - **Exports project data.** Save project details, people, locations, third-party elements, contracts, assets, music cue sheet details or call sheets as separate CSV files. Nested values stay as JSON inside their cell.
 - **A calendar file of every date in the project**, gathered from every tool: choose **Calendar of every date** under the file buttons and pick which kinds of dates to include. Importing a newer file updates the same events instead of adding them twice.
+- **Release status** for people on camera and the location, from the [release tracker](../release-tracker/), in the editor and on the printed sheet.
+- **The day's permits and insurance certificates** from the [certificate and permit tracker](../coi-permit-tracker/): the ones that name the shoot day, or its location when they name no days.
 
 ## Saving and file conflicts
 

@@ -152,6 +152,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
 .scene-list li { padding: 5px 0; }
 .scene-list li + li { border-top: 1px solid var(--rule-soft); }
 .scene-list span { display: block; color: var(--ink-2); font-size: 13px; }
+.crew-line .rel { display: block; font-size: 12.5px; font-weight: 600; }
+.crew-line .rel.ok { color: var(--good); }
+.crew-line .rel.bad { color: var(--bad); }
 </style>
 </head>
 <body>
@@ -253,6 +256,12 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
           <div class="field"><label for="f-hospAddress">Address</label><input id="f-hospAddress" type="text"></div>
           <div class="field"><label for="f-hospPhone">Phone</label><input id="f-hospPhone" type="text"></div>
         </div>
+      </div>
+
+      <div class="group" id="permitBox" hidden>
+        <div class="group-head"><h3>Permits and insurance</h3></div>
+        <p class="hint">From the certificate and permit tracker, for this day or its location.</p>
+        <ul class="scene-list" id="permitList"></ul>
       </div>
 
       <div class="group" id="scenesBox" hidden>
@@ -515,14 +524,22 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       const id = esc(p.id);
       return `<div class="crew-line" data-person="${id}">
         <input type="checkbox" id="c-${id}" ${c ? 'checked' : ''} aria-label="Working this day: ${esc(p.name)}">
-        <label class="who" for="c-${id}"><strong>${esc(p.name)}</strong></label>
+        <label class="who" for="c-${id}"><strong>${esc(p.name)}</strong>${relNote('person', p)}</label>
         <input type="text" class="c-role role" value="${esc(c && c.role != null ? c.role : roleOf(p))}" aria-label="Role for ${esc(p.name)}" placeholder="Role">
         <input type="time" class="c-call" value="${esc((c && c.callTime) || '')}" aria-label="Call time for ${esc(p.name)}"></div>`;
     }).join('') : '<p class="hint">No people yet. Use "Add a person", or open a project file that already has them.</p>';
   }
+  // Release status from the release tracker, for people on camera and filmed places.
+  function relOf(kind, x) {
+    if (!x) return null;
+    const r = oftReleases.status(kind, x.id);
+    return x.onCamera === true || r.state !== 'missing' ? r : null;
+  }
+  const relNote = (kind, x) => { const r = relOf(kind, x); return r ? ` <span class="rel ${r.ok ? 'ok' : 'bad'}">${esc(r.label)}</span>` : ''; };
   function showLocationHint() {
     const l = location($('f-locationId').value);
-    $('locationHint').textContent = l ? (placeOf(l) || 'This location has no address yet.') : 'Choose a location from your project, or add a new one.';
+    const r = relOf('location', l);
+    $('locationHint').textContent = l ? [placeOf(l) || 'This location has no address yet.', r && `Location release: ${r.label.replace(/^Release /, '').replace(/^No release$/, 'none')}.`].filter(Boolean).join(' ') : 'Choose a location from your project, or add a new one.';
   }
   function addScheduleLine(line) {
     const div = document.createElement('div');
@@ -665,10 +682,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       <h1>${esc(p.title || 'Untitled film')}</h1>
       <p class="sub">Call sheet · ${esc(fmtDate(s.date, true))}${s.dayLabel ? ` · ${esc(s.dayLabel)}` : ''}</p>
       <p class="call">General call ${esc(fmtTime(s.generalCall) || 'to be confirmed')}${s.wrapTime ? `<span>Estimated wrap ${esc(fmtTime(s.wrapTime))}</span>` : ''}</p>
-      ${dl([['Location', loc ? [loc.name, placeOf(loc)].filter(Boolean).join(', ') : ''], ['Parking', s.parking], ['Weather', s.weather], ['Sunrise', s.sunrise && fmtTime(s.sunrise)], ['Sunset', s.sunset && fmtTime(s.sunset)], ['Nearest hospital', [h.name, h.address, h.phone].filter(Boolean).join(' · ')]])}
+      ${dl([['Location', loc ? [loc.name, placeOf(loc)].filter(Boolean).join(', ') : ''], ['Location release', (relOf('location', loc) || {}).label], ['Parking', s.parking], ['Weather', s.weather], ['Sunrise', s.sunrise && fmtTime(s.sunrise)], ['Sunset', s.sunset && fmtTime(s.sunset)], ['Nearest hospital', [h.name, h.address, h.phone].filter(Boolean).join(' · ')]])}
       ${scenesHtml(s)}
+      ${permitsHtml(s)}
       ${s.schedule.length ? `<h2>Schedule</h2><table><thead><tr><th scope="col">Time</th><th scope="col">What happens</th></tr></thead><tbody>${s.schedule.map(x => `<tr><td>${esc(fmtTime(x.time))}</td><td>${esc(x.description)}</td></tr>`).join('')}</tbody></table>` : ''}
-      ${crew.length ? `<h2>Crew and cast</h2><table><thead><tr><th scope="col">Name</th><th scope="col">Role</th><th scope="col">Call</th><th scope="col">Phone</th><th scope="col">Email</th></tr></thead><tbody>${crew.map(({ c, p: q }) => `<tr><td>${esc(q.name)}</td><td>${esc(c.role != null ? c.role : roleOf(q))}</td><td>${esc(fmtTime(c.callTime || s.generalCall))}</td><td>${esc(q.phone)}</td><td>${esc(q.email)}</td></tr>`).join('')}</tbody></table>` : ''}
+      ${crew.length ? `<h2>Crew and cast</h2><table><thead><tr><th scope="col">Name</th><th scope="col">Role</th><th scope="col">Call</th><th scope="col">Phone</th><th scope="col">Email</th></tr></thead><tbody>${crew.map(({ c, p: q }) => `<tr><td>${esc(q.name)}${relOf('person', q) && !relOf('person', q).ok ? `<br><i>${esc(relOf('person', q).label)}</i>` : ''}</td><td>${esc(c.role != null ? c.role : roleOf(q))}</td><td>${esc(fmtTime(c.callTime || s.generalCall))}</td><td>${esc(q.phone)}</td><td>${esc(q.email)}</td></tr>`).join('')}</tbody></table>` : ''}
       ${s.notes ? `<h2>Notes</h2><p>${esc(s.notes).replace(/\n/g, '<br>')}</p>` : ''}
       <p class="foot">${esc([p.company, p.preparedBy && `Prepared by ${p.preparedBy}`, p.preparedContact].filter(Boolean).join(' · '))}</p>
     </section>`;
@@ -685,7 +703,23 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     if (!list.length) return '';
     return `<h2>Scenes</h2><table><thead><tr><th scope="col">Scene</th><th scope="col">Set and description</th><th scope="col">Day or night</th><th scope="col">Pages</th><th scope="col">Cast</th><th scope="col">Shots</th></tr></thead><tbody>${list.map(({ sc, shots, cast }) => `<tr><td>${esc(sc.number || '')}</td><td>${esc([sc.intExt, sc.set].filter(Boolean).join(' '))}${sc.synopsis ? `<br>${esc(sc.synopsis)}` : ''}</td><td>${esc(sc.time || '')}</td><td>${esc(eighths(sc.eighths))}</td><td>${esc(cast.map(c => c.number || c.name).join(', '))}</td><td>${esc(shots.map(x => x.number).filter(Boolean).join(', '))}</td></tr>`).join('')}</tbody></table>`;
   }
+  // Certificates and permits for the day: ones naming its shoot day, or its location when they name no days.
+  function permitsFor(s) {
+    const days = (Array.isArray(doc.shootDays) ? doc.shootDays : []).filter(d => d && (d.callSheetId === s.id || (d.date && d.date === s.date))).map(d => d.id);
+    return (Array.isArray(doc.contracts) ? doc.contracts : []).filter(c => c && (c.type === 'permit' || c.type === 'certificate of insurance')).filter(c => {
+      const sd = Array.isArray(c.shootDayIds) ? c.shootDayIds : [], li = Array.isArray(c.locationIds) ? c.locationIds : [];
+      return sd.some(id => days.includes(id)) || (!sd.length && s.locationId && li.includes(s.locationId));
+    });
+  }
+  const permitLine = c => [c.type === 'permit' ? 'Permit' : 'Insurance certificate', c.issuer || c.vendor, c.reference && `no. ${c.reference}`, c.status, c.expirationDate && `expires ${fmtDate(c.expirationDate)}`].filter(Boolean).join(' · ');
+  function permitsHtml(s) {
+    const list = permitsFor(s);
+    return list.length ? `<h2>Permits and insurance</h2><ul>${list.map(c => `<li>${esc(permitLine(c))}${c.conditions ? `<br>${esc(c.conditions)}` : ''}</li>`).join('')}</ul>` : '';
+  }
   function showScenes(s) {
+    const pm = permitsFor(s);
+    $('permitBox').hidden = !pm.length;
+    $('permitList').innerHTML = pm.map(c => `<li><b>${esc(c.type === 'permit' ? 'Permit' : 'Insurance certificate')}</b><span>${esc(permitLine(c).split(' · ').slice(1).join(' · '))}</span>${c.conditions ? `<span>${esc(c.conditions)}</span>` : ''}</li>`).join('');
     const list = dayScenes(s);
     $('scenesBox').hidden = !list.length;
     $('sceneList').innerHTML = list.map(({ sc, shots, cast }) => `<li><b>${esc(`${sc.number ? sc.number + '. ' : ''}${sc.heading || sc.set || 'Untitled scene'}`)}</b><span>${esc([eighths(sc.eighths) && `${eighths(sc.eighths)} pages`, cast.length && `Cast ${cast.map(c => c.number || c.name).join(', ')}`, shots.length && `Shots ${shots.map(x => x.number).filter(Boolean).join(', ')}`].filter(Boolean).join(' · '))}</span></li>`).join('');
@@ -1413,6 +1447,33 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     return { TOOLS, KINDS, PARTS, CONTACT, flags, glance, dates, ics, summary, today, addDays, fmt, calendarDialog, saveText, stem };
   })();
   /* oft-shared:project end */
+  /* oft-shared:releases begin. Copied from shared/releases.js by .github/scripts/sync_shared.py; edit it there. */
+  // Release status for a person or a location, worked out the way the release tracker does it, so
+  // the clearance log and call sheet say the same thing. Releases are contracts whose type contains
+  // "release" (but not materials releases), covering people in personIds and places in locationIds.
+  const oftReleases = (() => {
+    const str = v => (v == null ? '' : String(v));
+    const list = v => (Array.isArray(v) ? v.filter(x => x && typeof x === 'object') : []);
+    const day = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+    const covers = c => /release/i.test(str(c.type)) && !/material/i.test(str(c.type));
+    function stateOf(c) {
+      if (c.status === 'signed') return /^\d{4}-\d{2}-\d{2}$/.test(str(c.expirationDate)) && c.expirationDate < day() ? 'expired' : 'signed';
+      if (c.status === 'pending' || c.status === 'declined') return c.status;
+      return 'pending';
+    }
+    const RANK = { signed: 0, pending: 1, expired: 2, declined: 3 };
+    const LABEL = { signed: 'Release signed', pending: 'Release not signed yet', expired: 'Release expired', declined: 'Release declined', missing: 'No release' };
+    // The best standing release: signed beats waiting, beats expired, beats declined.
+    function status(kind, id) {
+      const field = kind === 'person' ? 'personIds' : 'locationIds';
+      const all = list(doc.contracts).filter(c => covers(c) && Array.isArray(c[field]) && c[field].includes(id))
+        .sort((a, b) => RANK[stateOf(a)] - RANK[stateOf(b)] || str(b.signedDate).localeCompare(str(a.signedDate)));
+      const state = all.length ? stateOf(all[0]) : 'missing';
+      return { state, label: LABEL[state], ok: state === 'signed', release: all[0] || null };
+    }
+    return { status, LABEL };
+  })();
+  /* oft-shared:releases end */
   /* oft-shared:tool begin. Copied from shared/tool.js by .github/scripts/sync_shared.py; edit it there. */
   // Shared by every tool: your name, remembering the open file, who has it open,
   // who changed what, merging two copies and spotting conflicted copies.

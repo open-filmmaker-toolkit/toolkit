@@ -38,6 +38,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **Search across entries.** Type words to find them in titles, text, tags and shoot days, ignoring capitals and accents. Narrow the list to one person, one location or one kind.
 - **Exports Markdown** of the entries shown, oldest first, with each entry's kind, shoot day, people and locations under its heading. Clear the search and filters to export everything.
 - **Prints** the same entries as a plain journal. Also exports project data: project details, people, locations, third-party elements, contracts, assets, music cue sheet details or call sheets as separate CSV files.
+- **Links an entry to a day** in the [shooting calendar](../shooting-calendar/), and to an interview.
 
 ## Saving and file conflicts
 
@@ -49,13 +50,12 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-A `journal` list. Each entry has an `id` and optional `date` (YYYY-MM-DD), `kind` (`happened`, `learned` or `idea`), `title`, `text`, `personIds` (pointing to `people`), `locationIds` (pointing to `locations`) and `callSheetId` (pointing to `callSheets`). The tool reads `people`, `locations` and `callSheets` and doesn't change them. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
+A `journal` list. Each entry has an `id` and optional `date` (YYYY-MM-DD), `kind` (`happened`, `learned` or `idea`), `title`, `text`, `personIds` (pointing to `people`), `locationIds` (pointing to `locations`) and `callSheetId` (pointing to `callSheets`). The tool reads `people`, `locations` and `callSheets` and doesn't change them. An entry can have a `shootDayId` and an `interviewId`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
 - Photos or audio notes attached to an entry
 - Tags of your own beyond people and locations
-- Linking an entry to a shoot day in the shooting calendar, or to an interview
 - Rich text; entries are plain text, and Markdown you type is kept as written
 
 ## License

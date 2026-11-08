@@ -315,6 +315,13 @@ dialog form { display: flex; flex-direction: column; height: 100%; }
 input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:focus, input[type="time"]:focus-within { outline: 2px solid var(--focus, #2f6fdb); outline-offset: 2px; }
 .home-link { color: inherit; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
 .home-link:hover { text-decoration-thickness: 2px; }
+.who-where { border-top: 1px solid var(--rule-soft); padding-top: 10px; }
+.who-where summary { cursor: pointer; font-weight: 600; font-size: 14px; min-height: 24px; }
+.picks { border: 0; margin: 0; padding: 0; min-width: 0; }
+.picks legend { font-size: 13px; font-weight: 600; padding: 0; margin-bottom: 4px; }
+.picks .pick { display: flex; gap: 6px; align-items: center; font-size: 14px; min-height: 24px; }
+.rels .ok { color: var(--g-clear); }
+.rels .bad { color: var(--g-cut); }
 </style>
 </head>
 <body>
@@ -473,6 +480,14 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
           <input id="f-licenseRef" name="licenseRef" placeholder="File name or reference">
         </div>
       </div>
+      <details class="who-where" id="whoWhere">
+        <summary>People and places in it</summary>
+        <p class="hint">Link the people and locations seen or heard in this element to see their release status from the release tracker.</p>
+        <div class="row-2">
+          <fieldset class="picks"><legend>People</legend><div id="f-people"></div></fieldset>
+          <fieldset class="picks"><legend>Locations</legend><div id="f-places"></div></fieldset>
+        </div>
+      </details>
       <div class="field">
         <label for="f-notes">Notes</label>
         <textarea id="f-notes" name="notes"></textarea>
@@ -848,7 +863,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       const tc = (e.tcIn || e.tcOut) ? `${esc(e.tcIn || '?')}&ndash;${esc(e.tcOut || '?')}` : '';
       const bad = Number.isNaN(fi) || Number.isNaN(fo);
       return `<tr data-id="${esc(e.id)}">
-        <td><button type="button" class="el-name">${esc(e.description || 'Untitled element')}</button>${e.source ? `<span class="sub">${esc(e.source)}</span>` : ''}</td>
+        <td><button type="button" class="el-name">${esc(e.description || 'Untitled element')}</button>${e.source ? `<span class="sub">${esc(e.source)}</span>` : ''}${relLine(e)}</td>
         <td>${esc(e.type)}</td>
         <td>${esc(e.rightsHolder)}${e.contact ? `<span class="sub">${esc(e.contact)}</span>` : ''}</td>
         <td class="tc num">${tc}${bad ? '<span class="sub">Check timecode</span>' : ''}</td>
@@ -857,6 +872,17 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <td class="right num">${money(e.cost)}</td>
       </tr>`;
     }).join('');
+  }
+
+  // The people and places in an element, with their release status from the release tracker.
+  function rels(e) {
+    const people = (e.personIds || []).map(id => (doc.people || []).find(x => x && x.id === id)).filter(Boolean).map(x => ({ name: x.name || 'Unnamed', r: oftReleases.status('person', x.id) }));
+    const places = (e.locationIds || []).map(id => (doc.locations || []).find(x => x && x.id === id)).filter(Boolean).map(x => ({ name: x.name || 'Unnamed location', r: oftReleases.status('location', x.id) }));
+    return [...people, ...places];
+  }
+  function relLine(e) {
+    const list = rels(e);
+    return list.length ? `<span class="sub rels">${list.map(x => `<span class="${x.r.ok ? 'ok' : 'bad'}">${esc(`${x.name}: ${x.r.label.toLowerCase()}`)}</span>`).join(' · ')}</span>` : '';
   }
 
   // ---------- Report (print) ----------
@@ -931,6 +957,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       form.elements.type.value = e.type;
     }
     form.elements.cost.value = src.cost ?? '';
+    const pick = (box, list, on, name) => { $(box).innerHTML = list.length ? list.map(x => `<label class="pick"><input type="checkbox" value="${esc(x.id)}"${(on || []).includes(x.id) ? ' checked' : ''}> ${esc(name(x))}</label>`).join('') : '<p class="hint">None in the project yet.</p>'; };
+    pick('f-people', (doc.people || []).filter(x => x && x.id), src.personIds, x => x.name || 'Unnamed');
+    pick('f-places', (doc.locations || []).filter(x => x && x.id), src.locationIds, x => x.name || 'Unnamed location');
+    $('whoWhere').open = !!((src.personIds || []).length || (src.locationIds || []).length);
     $('tcHint').textContent = doc.project.cutVersion
       ? `Where it sits in the cut (${doc.project.cutVersion}), as hours:minutes:seconds:frames.`
       : 'Where it sits in your current cut, as hours:minutes:seconds:frames.';
@@ -969,13 +999,17 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       values[k] = f[k].value.trim();
     }
     values.cost = f.cost.value === '' ? null : Number(f.cost.value);
+    const picked = box => [...$(box).querySelectorAll('input:checked')].map(i => i.value);
     let label;
     if (editingId) {
       const e = els().find(x => x.id === editingId);
       Object.assign(e, values, { updatedAt: now });
+      for (const [k, box] of [['personIds', 'f-people'], ['locationIds', 'f-places']]) { const v = picked(box); if (v.length) e[k] = v; else delete e[k]; }
       label = 'Updated';
     } else {
-      els().push({ id: newId(), ...values, createdAt: now, updatedAt: now });
+      const add = { id: newId(), ...values, createdAt: now, updatedAt: now };
+      for (const [k, box] of [['personIds', 'f-people'], ['locationIds', 'f-places']]) { const v = picked(box); if (v.length) add[k] = v; }
+      els().push(add);
       label = 'Added';
     }
     $('editor').close();
@@ -1715,6 +1749,33 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     return { open, parse, date, number };
   })();
   /* oft-shared:import end */
+  /* oft-shared:releases begin. Copied from shared/releases.js by .github/scripts/sync_shared.py; edit it there. */
+  // Release status for a person or a location, worked out the way the release tracker does it, so
+  // the clearance log and call sheet say the same thing. Releases are contracts whose type contains
+  // "release" (but not materials releases), covering people in personIds and places in locationIds.
+  const oftReleases = (() => {
+    const str = v => (v == null ? '' : String(v));
+    const list = v => (Array.isArray(v) ? v.filter(x => x && typeof x === 'object') : []);
+    const day = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+    const covers = c => /release/i.test(str(c.type)) && !/material/i.test(str(c.type));
+    function stateOf(c) {
+      if (c.status === 'signed') return /^\d{4}-\d{2}-\d{2}$/.test(str(c.expirationDate)) && c.expirationDate < day() ? 'expired' : 'signed';
+      if (c.status === 'pending' || c.status === 'declined') return c.status;
+      return 'pending';
+    }
+    const RANK = { signed: 0, pending: 1, expired: 2, declined: 3 };
+    const LABEL = { signed: 'Release signed', pending: 'Release not signed yet', expired: 'Release expired', declined: 'Release declined', missing: 'No release' };
+    // The best standing release: signed beats waiting, beats expired, beats declined.
+    function status(kind, id) {
+      const field = kind === 'person' ? 'personIds' : 'locationIds';
+      const all = list(doc.contracts).filter(c => covers(c) && Array.isArray(c[field]) && c[field].includes(id))
+        .sort((a, b) => RANK[stateOf(a)] - RANK[stateOf(b)] || str(b.signedDate).localeCompare(str(a.signedDate)));
+      const state = all.length ? stateOf(all[0]) : 'missing';
+      return { state, label: LABEL[state], ok: state === 'signed', release: all[0] || null };
+    }
+    return { status, LABEL };
+  })();
+  /* oft-shared:releases end */
   /* oft-shared:tool begin. Copied from shared/tool.js by .github/scripts/sync_shared.py; edit it there. */
   // Shared by every tool: your name, remembering the open file, who has it open,
   // who changed what, merging two copies and spotting conflicted copies.

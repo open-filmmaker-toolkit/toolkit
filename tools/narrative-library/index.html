@@ -482,7 +482,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const grant = id => grants().find(g => g.id === id);
   const grantName = g => [g.funder || 'Unnamed funder', g.program].filter(Boolean).join(': ');
   const uses = v => arr(v.uses).filter(u => u && typeof u === 'object');
-  const useName = u => (u.grantId && grant(u.grantId) ? grantName(grant(u.grantId)) : u.funder || 'A funder no longer in the grant calendar');
+  const useName = u => `${u.grantId && grant(u.grantId) ? grantName(grant(u.grantId)) : u.funder || 'A funder no longer in the grant calendar'}${u.use ? `, ${u.use}` : ''}`;
   const words = t => (str(t).trim() ? str(t).trim().split(/\s+/).length : 0);
   const chars = t => [...str(t)].length;
   const versionLabel = v => v.label || (Number(v.limit) > 0 ? `${Number(v.limit).toLocaleString()} ${v.unit === 'characters' ? 'characters' : 'words'}` : 'No limit');
@@ -655,7 +655,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('setFunderField').hidden = !!gid;
     $('setList').innerHTML = entries().filter(a => versionsOf(a).length).map(a => {
       const vs = byLimit(versionsOf(a));
-      const sent = gid && vs.find(v => uses(v).some(u => u.grantId === gid));
+      const sent = gid && vs.find(v => uses(v).some(u => u.grantId === gid && !u.use));
       return `<label class="set-row"><span>${esc(a.title || 'Untitled answer')}</span><select data-answer="${esc(a.id)}"><option value="">Leave out</option>${vs.map(v => `<option value="${esc(v.id)}"${sent && sent.id === v.id ? ' selected' : ''}>${esc(versionLabel(v))}: ${esc(measure(v).text)}</option>`).join('')}</select></label>`;
     }).join('');
     setText();
@@ -694,8 +694,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const date = $('setDate').value || today();
     for (const { a, v } of list) {
       // One version of each answer per application: sending a different length replaces the earlier one.
-      if (gid) for (const other of versionsOf(a)) if (other !== v && Array.isArray(other.uses)) { other.uses = other.uses.filter(u => !(u && u.grantId === gid)); if (!other.uses.length) delete other.uses; }
-      const rest = uses(v).filter(u => !(gid ? u.grantId === gid : !u.grantId && norm(u.funder) === norm(funder)));
+      if (gid) for (const other of versionsOf(a)) if (other !== v && Array.isArray(other.uses)) { other.uses = other.uses.filter(u => !(u && u.grantId === gid && !u.use)); if (!other.uses.length) delete other.uses; }
+      const rest = uses(v).filter(u => u.use || !(gid ? u.grantId === gid : !u.grantId && norm(u.funder) === norm(funder)));
       v.uses = [...rest, gid ? { grantId: gid, date } : { funder, date }];
     }
     changed();

@@ -616,6 +616,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const g = id ? awarded().find(x => x.id === id) : sortedGrants().find(x => status(x) !== 'submitted') || sortedGrants()[0];
     if (!g) return;
     editing = g;
+    inserted.clear();
     const r = report(g) || {};
     for (const [k, el] of [['dueDate', 'f-due'], ['submittedDate', 'f-submitted'], ['narrative', 'f-narrative'], ['outcomes', 'f-outcomes'], ['deliverables', 'f-deliverables']]) $(el).value = str(r[k]);
     $('f-status').value = STATUS[r.status] ? r.status : 'todo';
@@ -629,9 +630,12 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('editorTitle').textContent = `Final report: ${gname(g)}`;
     $('editor').showModal(); $('f-narrative').focus();
   }
+  // Answers inserted from the narrative library, recorded on their versions when the report is saved.
+  const inserted = new Set();
   function insertAnswer() {
     const [nid, vid] = $('f-lib').value.split('|'); if (!nid) return;
     const n = doc.narratives.find(x => x.id === nid), v = n && objs(n.versions).find(x => x.id === vid); if (!v) return;
+    inserted.add(`${nid}|${vid}`);
     const t = $('f-narrative'); t.value = t.value.trim() ? `${t.value.trim()}\n\n${v.text}` : v.text;
     $('wc').textContent = `${words(t.value)} words`;
   }
@@ -644,6 +648,14 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const lay = $('f-format').value;
     if (lay === formatFor(editing, {})) delete r.budgetFormatId; else r.budgetFormatId = lay.startsWith('format:') ? lay.slice(7) : lay === 'account' ? 'account' : 'top';
     if (doc.impactReport && !$('f-impact').checked) r.includeImpact = false; else delete r.includeImpact;
+    for (const key of inserted) {
+      const [nid, vid] = key.split('|');
+      const n = doc.narratives.find(x => x.id === nid), v = n && objs(n.versions).find(x => x.id === vid);
+      if (!v) continue;
+      if (!Array.isArray(v.uses)) v.uses = [];
+      if (!v.uses.some(u => u && u.grantId === editing.id && u.use === 'final report')) v.uses.push({ grantId: editing.id, date: today(), use: 'final report' });
+    }
+    inserted.clear();
     printId = editing.id;
     $('editor').close(); changed();
   }

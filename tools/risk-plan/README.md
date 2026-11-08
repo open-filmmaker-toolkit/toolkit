@@ -45,6 +45,7 @@ For anyone who doesn't use the tool, there's a [spreadsheet template](../../temp
 This tool helps you write a plan down. It doesn't replace hostile-environment training, a security adviser or what your insurer requires.
 
 - **Imports from a spreadsheet:** choose **Import from a spreadsheet** under the file buttons and pick a CSV file. One with the columns of the [spreadsheet template](../../templates/risk-assessment-template.csv) imports as it is; match any other columns once and the tool remembers. Problems, such as a date it can't read, show row by row before anything is added, and importing only adds.
+- **Links a plan to its trip** on the [travel sheet](../travel-sheet/).
 
 ## Saving and file conflicts
 
@@ -62,14 +63,13 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 - Each contact has an `id` and optional `name`, `role`, `phone` and `notes`. Each hospital has an `id` and optional `name`, `address`, `phone` and `notes`.
 - `checkIns` has optional `times` (separated by commas), `contact`, `method` and `escalation`, the steps in order, each with `after` and `action`.
 
-It reads `people`, `locations`, `shootDays` and the hospitals on `callSheets`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
+It reads `people`, `locations`, `shootDays` and the hospitals on `callSheets`. A plan can have a `tripId`, a trip in `trips`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
 - A check-in log during the shoot
 - Medical details for each person, kept separately and privately
 - Maps and routes
-- Linking a plan to a trip on the travel sheet
 
 ## License
 

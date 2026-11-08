@@ -321,6 +321,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <div class="field"><label for="f-fix">Fix</label><select id="f-fix"><option value="open">Open</option><option value="fixed">Fixed</option><option value="waived">Waived</option><option value="disputed">Disputed</option></select></div>
         <div class="field"><label for="f-fixedIn">Fixed in</label><select id="f-fixedIn"></select></div>
       </div>
+      <div class="two" id="cutFields">
+        <div class="field"><label for="f-cut">Found in cut</label><select id="f-cut"></select></div>
+        <div class="field"><label for="f-fixedCut">Fixed in cut</label><select id="f-fixedCut"></select></div>
+      </div>
       <div class="field"><label for="f-note">Note</label><textarea id="f-note" rows="2"></textarea></div>
     </div>
     <div class="dlg-foot">
@@ -514,6 +518,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('rows').innerHTML = list.length ? list.map(i => {
       const flags = [`<span class="flag linked">${esc(AREA[i.area] || 'Other')}</span>`, `<span class="flag linked">${esc(OWNER[i.owner] || 'Someone else')}</span>`];
       if (i.fixedInId && version(i.fixedInId)) flags.push(`<span class="flag new">Fixed in ${esc(version(i.fixedInId).name)}</span>`);
+      if (cutName(i.cutId)) flags.push(`<span class="flag linked">Found in ${esc(cutName(i.cutId))}</span>`);
+      if (cutName(i.fixedCutId)) flags.push(`<span class="flag new">Fixed in ${esc(cutName(i.fixedCutId))}</span>`);
       if (i.note) flags.push(`<span class="flag linked">${esc(i.note)}</span>`);
       const fx = i.fix || 'open';
       return `<li class="row" data-id="${esc(i.id)}"><span class="rt">${esc([i.tc, i.tcOut].filter(Boolean).join(' to ') || 'No timecode')}</span>
@@ -527,13 +533,19 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       return `<li><span>${esc(v.name)}<span class="sub">${esc([v.date && fmtDate(v.date), rr.length ? `${rr.length} report${rr.length === 1 ? '' : 's'}` : 'Not checked yet'].filter(Boolean).join(' · '))}</span></span><span class="num ${pass ? 'st-good' : ''}">${pass ? 'Passed' : ''}</span></li>`; }).join('') : '<li class="empty-line">No versions yet.</li>';
   }
 
-  const IF = { tc: 'f-tc', tcOut: 'f-tcOut', description: 'f-desc', severity: 'f-sev', area: 'f-area', owner: 'f-owner', fix: 'f-fix', fixedInId: 'f-fixedIn', note: 'f-note' };
+  const IF = { tc: 'f-tc', tcOut: 'f-tcOut', description: 'f-desc', severity: 'f-sev', area: 'f-area', owner: 'f-owner', fix: 'f-fix', fixedInId: 'f-fixedIn', cutId: 'f-cut', fixedCutId: 'f-fixedCut', note: 'f-note' };
+  // Cuts from the cut version tracker, newest first, to say which cut an issue was found in and which fixed it.
+  const cuts = () => arr(doc.cuts).filter(c => c && c.id).sort((a, b) => str(b.date).localeCompare(str(a.date)));
+  const cutName = id => { const c = cuts().find(x => x.id === id); return c ? c.name || 'Untitled cut' : ''; };
   function openEditor(id) {
     const r = reports().find(x => x.id === current);
     if (!r) { openReport(null); return; }
     editing = id ? issues(r).find(i => i.id === id) || null : null;
     const i = editing || { severity: 'minor', area: 'picture', owner: 'editor', fix: 'open' };
     $('f-fixedIn').innerHTML = '<option value="">Not yet</option>' + versions().map(v => `<option value="${esc(v.id)}">${esc(v.name)}</option>`).join('');
+    const cutOpts = none => `<option value="">${none}</option>` + cuts().map(c => `<option value="${esc(c.id)}">${esc(c.name || 'Untitled cut')}</option>`).join('');
+    $('f-cut').innerHTML = cutOpts('Not linked'); $('f-fixedCut').innerHTML = cutOpts('Not yet');
+    $('cutFields').hidden = !cuts().length;
     for (const [k, el] of Object.entries(IF)) $(el).value = str(i[k] || '');
     $('deleteBtn').hidden = !editing;
     $('editorTitle').textContent = editing ? `Issue at ${editing.tc || 'no timecode'}` : 'Add an issue';
@@ -574,10 +586,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     changed();
   }
 
-  const CSV_HEAD = ['Report', 'Version', 'Result', 'Timecode', 'To', 'Severity', 'Area', 'Issue', 'Who fixes it', 'Fix', 'Fixed in', 'Note'];
+  const CSV_HEAD = ['Report', 'Version', 'Result', 'Timecode', 'To', 'Severity', 'Area', 'Issue', 'Who fixes it', 'Fix', 'Fixed in', 'Note', 'Found in cut', 'Fixed in cut'];
   function exportCsv() {
     exportRows(CSV_HEAD, allIssues().sort((a, b) => str(a.r.date).localeCompare(str(b.r.date)) || tcKey(a.i.tc) - tcKey(b.i.tc)).map(({ i, r }) => [[r.vendor, r.date].filter(Boolean).join(' '), (version(r.versionId) || {}).name, RESULT[r.result] || 'Waiting',
-      i.tc, i.tcOut, SEV[i.severity] || 'Minor', AREA[i.area] || 'Other', i.description, OWNER[i.owner] || '', FIX[i.fix || 'open'], (version(i.fixedInId) || {}).name, i.note]), 'qc-issues', 'issue');
+      i.tc, i.tcOut, SEV[i.severity] || 'Minor', AREA[i.area] || 'Other', i.description, OWNER[i.owner] || '', FIX[i.fix || 'open'], (version(i.fixedInId) || {}).name, i.note, cutName(i.cutId), cutName(i.fixedCutId)]), 'qc-issues', 'issue');
   }
   function renderReport() {
     const list = allIssues().filter(x => openFix(x.i) && (!owner || x.i.owner === owner)).sort((a, b) => tcKey(a.i.tc) - tcKey(b.i.tc));
@@ -848,7 +860,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   // Columns for importing from a spreadsheet, named as in this tool's template.
   const OFT_IMPORT = { noun: 'issue', nouns: 'issues', key: 'description', prefix: 'qc',
     fields: [['Report', 'report'], ['Version', 'version'], ['Result', 'result', 'enum', { values: RESULT }], ['Timecode', 'tc'], ['To', 'tcOut'], ['Severity', 'severity', 'enum', { values: SEV }], ['Area', 'area', 'enum', { values: AREA }],
-      ['Issue', 'description'], ['Who fixes it', 'owner', 'enum', { values: OWNER }], ['Fix', 'fix', 'enum', { values: FIX }], ['Fixed in', 'fixedIn'], ['Note', 'note']],
+      ['Issue', 'description'], ['Who fixes it', 'owner', 'enum', { values: OWNER }], ['Fix', 'fix', 'enum', { values: FIX }], ['Fixed in', 'fixedIn'], ['Note', 'note'], ['Found in cut', 'foundCut'], ['Fixed in cut', 'fixedCut']],
     put: (r, x) => {
       const q = doc.qc = doc.qc && typeof doc.qc === 'object' ? doc.qc : {}; q.versions = arr(q.versions); q.reports = arr(q.reports);
       const ver = n => n ? x.find(q.versions, 'name', n, { prefix: 'master' }).id : undefined;
@@ -856,7 +868,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       let rep = q.reports.find(p => [p.vendor, p.date].filter(Boolean).join(' ') === String(r.report || '').trim());
       if (!rep) { rep = { id: x.newId('qc-report'), vendor: m[1] || 'QC report', issues: [] }; if (m[2]) rep.date = m[2]; if (r.version) rep.versionId = ver(r.version); if (r.result) rep.result = r.result; q.reports.push(rep); }
       rep.issues = arr(rep.issues);
-      const fixedIn = ver(r.fixedIn); ['report', 'version', 'result', 'fixedIn'].forEach(k => delete r[k]); if (fixedIn) r.fixedInId = fixedIn;
+      const fixedIn = ver(r.fixedIn); const cutOf = n => n && (cuts().find(c => norm(c.name) === norm(n)) || {}).id;
+      const cutId = cutOf(r.foundCut), fixedCutId = cutOf(r.fixedCut);
+      ['report', 'version', 'result', 'fixedIn', 'foundCut', 'fixedCut'].forEach(k => delete r[k]); if (fixedIn) r.fixedInId = fixedIn; if (cutId) r.cutId = cutId; if (fixedCutId) r.fixedCutId = fixedCutId;
       rep.issues.push(r);
     } };
   /* oft-shared:import begin. Copied from shared/import.js by .github/scripts/sync_shared.py; edit it there. */

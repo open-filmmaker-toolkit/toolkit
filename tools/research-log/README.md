@@ -44,6 +44,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 For anyone who doesn't use the tool, there's a blank [spreadsheet template](../../templates/research-log-template.csv) with the same columns.
 
 - **Imports from a spreadsheet:** choose **Import from a spreadsheet** under the file buttons and pick a CSV file. One with the columns of the [spreadsheet template](../../templates/research-log-template.csv) imports as it is; match any other columns once and the tool remembers. Problems, such as a date it can't read, show row by row before anything is added, and importing only adds.
+- **Links sources to subjects** in the [subject tracker](../subject-tracker/), and to the card on the [structure board](../structure-board/) where they're used in the cut.
 
 ## Sending to the clearance log
 
@@ -65,13 +66,12 @@ A `sources` list. Each source has an `id`, a `kind` (`archival` or `research`), 
 
 Archival statuses are `found`, `screener-requested`, `screener-received`, `ready-to-license` and `not-using`. Research statuses are `to-check`, `checked`, `using` and `not-using`.
 
-Sending to the clearance log adds an element to `thirdPartyElements`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
+Sending to the clearance log adds an element to `thirdPartyElements`. Sources can have `subjectIds`, in `subjects`, and a `cardId`, a card on the structure board. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
 - Attaching screeners and documents
 - Citations in a standard style for research sources
-- Linking sources to subjects and to places in the cut
 
 ## License
 

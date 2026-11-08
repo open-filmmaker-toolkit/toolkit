@@ -327,6 +327,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       </div>
       <div class="field"><label for="f-cur">Currency</label><input id="f-cur" type="text" maxlength="3" list="f-curlist" autocomplete="off" style="max-width: 8em; text-transform: uppercase"><datalist id="f-curlist"></datalist>
         <p class="hint">For money in another currency. Leave it blank for the project currency; set the rates under Exchange rates.</p></div>
+      <div class="field"><label for="f-funder">Organization in the funder CRM</label><select id="f-funder"></select><p class="hint" id="funderHint">The investor, broadcaster or funder behind this money, so the funder CRM shows it too.</p></div>
       <div class="field"><label for="f-terms">Terms</label><textarea id="f-terms" rows="3" placeholder="Recoupment, rights granted, repayment, conditions, credit"></textarea></div>
       <div class="group">
         <h3 id="payHead">When it arrives</h3>
@@ -651,6 +652,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       const flags = [];
       if (v.linked) flags.push(`<span class="flag new">From the grant calendar: ${esc(v.grant.status)}</span>`);
       if (v.lost) flags.push('<span class="flag problem">Its grant is no longer in the grant calendar</span>');
+      if (funderOf(s)) flags.push(`<span class="flag linked">${esc(funderOf(s).name || 'Funder')}</span>`);
       if (ps.length) flags.push(`<span class="flag linked">${ps.length === 1 ? `Arrives ${esc(fmtDate(ps[0].date))}` : `${ps.length} payments, from ${esc(fmtDate(ps.map(p => p.date).sort()[0]))}`}</span>`);
       else if (['confirmed', 'pending'].includes(v.status) && !NON_CASH.includes(s.kind)) flags.push('<span class="flag changed">No date for the money yet</span>');
       if (NON_CASH.includes(s.kind)) flags.push('<span class="flag linked">Not cash</span>');
@@ -690,6 +692,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   function payRow(p) {
     return `<div class="pay-row"><input type="date" class="p-date" value="${esc(p.date)}" aria-label="Date"><input type="number" class="p-amount" min="0" step="any" value="${esc(p.amount ?? '')}" placeholder="Amount" aria-label="Amount"><button type="button" class="icon-btn" data-delpay aria-label="Remove this payment">×</button></div>`;
   }
+  // The organization in the funder CRM behind a source: picked here, or the one whose application the source's grant is.
+  function funderOf(s) {
+    const fs = objs(doc.funders);
+    return (s.funderId && fs.find(f => f.id === s.funderId)) || (s.grantId && fs.find(f => arr(f.grantIds).includes(s.grantId))) || null;
+  }
   function openEditor(id) {
     const existing = id && entries().find(s => s.id === id);
     isNew = !existing;
@@ -700,6 +707,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('f-cur').placeholder = oftMoney.home(); $('f-curlist').innerHTML = oftMoney.currencies().map(c => `<option value="${esc(c)}">`).join('');
     for (const [k, v] of Object.entries(vals)) $(k).value = v == null ? '' : String(v);
     $('payRows').innerHTML = objs(editing.payments).map(payRow).join('');
+    $('f-funder').innerHTML = '<option value="">None</option>' + objs(doc.funders).filter(f => f.id).map(f => `<option value="${esc(f.id)}">${esc(f.name || 'Unnamed organization')}</option>`).join('');
+    $('f-funder').value = editing.funderId && funderOf(editing) && funderOf(editing).id === editing.funderId ? editing.funderId : '';
+    const viaGrant = !editing.funderId && funderOf(editing);
+    $('funderHint').textContent = viaGrant ? `Through its grant, this is ${viaGrant.name || 'an organization'} in the funder CRM.` : 'The investor, broadcaster or funder behind this money, so the funder CRM shows it too.';
     showLink();
     $('editorTitle').textContent = isNew ? 'Add a source' : 'Edit source';
     $('deleteBtn').hidden = isNew;
@@ -724,7 +735,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const cur = $('f-cur').value.trim().toUpperCase();
     if (cur && !/^[A-Z]{3}$/.test(cur)) { $('f-cur').setCustomValidity('Use a three-letter currency code, such as EUR.'); $('f-cur').reportValidity(); return; }
     if (cur && cur !== oftMoney.home()) e.currency = cur; else delete e.currency;
-    for (const [k, id] of [['name', 'f-name'], ['terms', 'f-terms'], ['notes', 'f-notes']]) { const v = $(id).value.trim(); if (v) e[k] = v; else delete e[k]; }
+    for (const [k, id] of [['name', 'f-name'], ['terms', 'f-terms'], ['notes', 'f-notes'], ['funderId', 'f-funder']]) { const v = $(id).value.trim(); if (v) e[k] = v; else delete e[k]; }
     e.kind = $('f-kind').value;
     if (!linked) {
       e.status = $('f-status').value;

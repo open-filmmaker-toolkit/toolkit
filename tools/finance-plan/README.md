@@ -46,6 +46,7 @@ A finance plan isn't an offering to investors. Talk to a lawyer before you raise
 - **A calendar file of every date in the project**, gathered from every tool: choose **Calendar of every date** under the file buttons and pick which kinds of dates to include. Importing a newer file updates the same events instead of adding them twice.
 - **Imports from a spreadsheet:** choose **Import from a spreadsheet** under the file buttons and pick a CSV file. One with the columns of the [spreadsheet template](../../templates/finance-plan-template.csv) imports as it is; match any other columns once and the tool remembers. Problems, such as a date it can't read, show row by row before anything is added, and importing only adds.
 - **Money in other currencies.** A source can have its own currency. Totals and the timeline convert it at the exchange rates you type in under **Exchange rates**, using the rate for each payment's date, and say which rates they used.
+- **Links a source to its organization** in the [funder CRM](../funder-crm/), so the funder CRM shows the money too. A grant's source is linked through its application.
 
 ## Saving and file conflicts
 
@@ -57,11 +58,10 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-A `financePlan` record with `sources`, and an optional `budgetTotal` used when the project has no budget. Each source has an `id`, a `kind` (`grant`, `equity`, `presale`, `in-kind`, `deferral`, `loan`, `donation` or `other`) and a `status` (`confirmed`, `pending` or `prospective`), and optional `name`, `amount`, `terms`, `payments` (each with `date` and `amount`), `notes`, and `grantId`, pointing to a grant in `grants`. A linked source takes its amount and status from the grant. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
+A `financePlan` record with `sources`, and an optional `budgetTotal` used when the project has no budget. Each source has an `id`, a `kind` (`grant`, `equity`, `presale`, `in-kind`, `deferral`, `loan`, `donation` or `other`) and a `status` (`confirmed`, `pending` or `prospective`), and optional `name`, `amount`, `terms`, `payments` (each with `date` and `amount`), `notes`, and `grantId`, pointing to a grant in `grants`. A linked source takes its amount and status from the grant. A source can have a `funderId`, in `funders`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
-- Linking investors and broadcasters to their organization in the funder CRM
 
 ## License
 

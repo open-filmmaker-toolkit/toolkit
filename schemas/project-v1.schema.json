@@ -770,6 +770,14 @@
                     },
                     "note": {
                       "type": "string"
+                    },
+                    "cutId": {
+                      "$ref": "#/$defs/id",
+                      "description": "The cut it was found in, in cuts."
+                    },
+                    "fixedCutId": {
+                      "$ref": "#/$defs/id",
+                      "description": "The cut that fixed it."
                     }
                   },
                   "additionalProperties": true
@@ -1057,6 +1065,9 @@
           "attendance": {
             "type": "integer",
             "minimum": 0
+          },
+          "screeningId": {
+            "$ref": "#/$defs/id"
           }
         },
         "additionalProperties": true
@@ -1803,6 +1814,21 @@
             "type": "string"
           },
           "description": "Source clip names in edit lists that are this element."
+        },
+        "personIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true,
+          "description": "People seen or heard in the element."
+        },
+        "locationIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true
         }
       },
       "additionalProperties": true
@@ -2770,6 +2796,13 @@
         "personId": {
           "$ref": "#/$defs/id",
           "description": "The person in people this subject became."
+        },
+        "locationIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true
         }
       },
       "additionalProperties": true
@@ -2845,6 +2878,17 @@
         "elementId": {
           "$ref": "#/$defs/id",
           "description": "The third-party element this source became in the clearance log."
+        },
+        "subjectIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true
+        },
+        "cardId": {
+          "$ref": "#/$defs/id",
+          "description": "The card on the structure board where it's used."
         }
       },
       "additionalProperties": true
@@ -3285,6 +3329,10 @@
                     "date": {
                       "type": "string",
                       "format": "date"
+                    },
+                    "use": {
+                      "type": "string",
+                      "description": "What it was used for when it isn't the application, such as \"final report\"."
                     }
                   },
                   "additionalProperties": true
@@ -3625,6 +3673,9 @@
           "type": "string",
           "pattern": "^[A-Z]{3}$",
           "description": "The amount's currency, when it isn't the project currency. Totals convert it at the project's exchange rates."
+        },
+        "funderId": {
+          "$ref": "#/$defs/id"
         }
       },
       "additionalProperties": true
@@ -4603,6 +4654,10 @@
               "beatId": {
                 "$ref": "#/$defs/id",
                 "description": "A beat in this interview's beats."
+              },
+              "clipId": {
+                "$ref": "#/$defs/id",
+                "description": "The clip, in mediaReports."
               }
             },
             "additionalProperties": true
@@ -4660,6 +4715,12 @@
         "callSheetId": {
           "$ref": "#/$defs/id",
           "description": "The shoot day: a call sheet in callSheets."
+        },
+        "shootDayId": {
+          "$ref": "#/$defs/id"
+        },
+        "interviewId": {
+          "$ref": "#/$defs/id"
         }
       },
       "additionalProperties": true
@@ -5239,6 +5300,9 @@
         },
         "notes": {
           "type": "string"
+        },
+        "tripId": {
+          "$ref": "#/$defs/id"
         }
       },
       "additionalProperties": true
@@ -5289,6 +5353,13 @@
               "high": {
                 "type": "boolean",
                 "description": "Only for a high-risk shoot."
+              },
+              "gearIds": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/id"
+                },
+                "uniqueItems": true
               }
             },
             "additionalProperties": true
@@ -5618,6 +5689,10 @@
                     },
                     "tcOut": {
                       "type": "string"
+                    },
+                    "momentId": {
+                      "$ref": "#/$defs/id",
+                      "description": "The moment in the interview log it came from."
                     }
                   },
                   "additionalProperties": true
@@ -5803,6 +5878,13 @@
               },
               "notes": {
                 "type": "string"
+              },
+              "assetIds": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/id"
+                },
+                "uniqueItems": true
               }
             },
             "additionalProperties": true
@@ -5950,6 +6032,10 @@
             },
             "additionalProperties": true
           }
+        },
+        "exportFile": {
+          "type": "string",
+          "description": "Where the export is, relative to the project file, or its name on a review site."
         }
       },
       "additionalProperties": true

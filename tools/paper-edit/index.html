@@ -295,7 +295,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
 
     <div class="side">
       <section class="card" aria-labelledby="scenesHead">
-        <div class="card-head scenes-head"><h2 id="scenesHead">Scenes</h2><span class="count" id="runTime"></span><span class="spacer"></span><button type="button" class="btn small" id="addSceneBtn">Add a scene</button></div>
+        <div class="card-head scenes-head"><h2 id="scenesHead">Scenes</h2><span class="count" id="runTime"></span><span class="spacer"></span><button type="button" class="btn small" id="favBtn">Add favorite moments</button><button type="button" class="btn small" id="addSceneBtn">Add a scene</button></div>
         <div id="scenes" style="display:grid; gap:10px; margin-top:10px"></div>
       </section>
       <section class="card" aria-labelledby="exportHead">
@@ -368,6 +368,18 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       <button type="button" class="btn" id="biteCancel">Cancel</button>
       <button type="submit" class="btn primary">Save</button>
     </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="favDialog" aria-labelledby="favTitle">
+  <form id="favForm" method="dialog" novalidate>
+    <div class="dlg-head"><h2 id="favTitle">Add favorite moments</h2></div>
+    <div class="dlg-body">
+      <p class="hint">The moments starred in the interview log that aren't in the paper edit yet. A moment marked from a transcript keeps its timecodes; the others come in as notes to time later.</p>
+      <div class="checks" id="favList"></div>
+      <div class="field"><label for="favScene">Add them to</label><select id="favScene"></select></div>
+    </div>
+    <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn" id="favCancel">Cancel</button><button type="submit" class="btn primary" id="favAdd">Add as bites</button></div>
   </form>
 </dialog>
 
@@ -681,6 +693,50 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     if (t) { if (t.clipName) b.clipName = t.clipName; else delete b.clipName; if (t.reel) b.reel = t.reel; else delete b.reel; b.sourceName = t.name; }
     if (timed(b)) { b.tcIn = srcTc(t, b.in); b.tcOut = srcTc(t, b.out); } else { delete b.tcIn; delete b.tcOut; }
     return b;
+  }
+  // Favorite moments from the interview log, as bites. One marked from a transcript in the paper edit becomes that transcript's lines.
+  function favorites() {
+    const used = new Set(bites().map(b => b.momentId).filter(Boolean));
+    return arr(doc.interviews).filter(i => i && i.id).flatMap(i => arr(i.moments).filter(m => m && m.id && m.fav && !used.has(m.id)).map(m => ({ i, m })));
+  }
+  const personName = id => (arr(doc.people).find(p => p && p.id === id) || {}).name || '';
+  function openFavs() {
+    const list = favorites();
+    $('favList').innerHTML = list.length ? list.map(({ i, m }) => `<label class="check"><input type="checkbox" value="${esc(m.id)}" checked><span class="who">${esc(m.text || 'Moment')}<span class="sub"> · ${esc([personName(i.personId), m.tc].filter(Boolean).join(', '))}</span></span></label>`).join('') : '<p class="hint">No favorite moments left to add. Star moments in the interview log.</p>';
+    $('favScene').innerHTML = scenes().map(s => `<option value="${esc(s.id)}">${esc(s.title || 'Untitled scene')}</option>`).join('') + '<option value="__new">A new scene</option>';
+    $('favAdd').disabled = !list.length;
+    $('favDialog').showModal();
+  }
+  function addFavs() {
+    const ids = new Set([...$('favList').querySelectorAll('input:checked')].map(x => x.value));
+    const list = favorites().filter(x => ids.has(x.m.id));
+    if (!list.length) { $('favDialog').close(); return; }
+    let sid = $('favScene').value;
+    if (sid === '__new' || !scenes().some(s => s.id === sid)) { const s = { id: newId('scene'), title: 'Favorite moments', bites: [] }; scenes().push(s); sid = s.id; }
+    const scene = scenes().find(s => s.id === sid);
+    for (const { i, m } of list) {
+      const t = m.segmentId && transcripts().find(x => x.interviewId === i.id && arr(x.segments).some(g => g.id === m.segmentId));
+      const g = t && t.segments.find(x => x.id === m.segmentId);
+      const b = { id: newId('bite'), momentId: m.id };
+      if (g) {
+        Object.assign(b, { transcriptId: t.id, segmentIds: [g.id], text: g.text });
+        const sp = speakerName(t, g); if (sp) b.speaker = sp;
+        if (isNum(g.start) && isNum(g.end)) { b.in = g.start; b.out = g.end; }
+        stamp(b);
+      } else {
+        b.text = m.text || '';
+        const sp = personName(i.personId); if (sp) b.speaker = sp;
+        b.sourceName = [sp, i.date].filter(Boolean).join(', ') || 'Interview log';
+        if (m.tc) b.note = `at ${m.tc} in the interview`;
+        const rep = arr(doc.mediaReports).find(r => r && arr(r.clips).some(c => c && c.id === m.clipId));
+        const c = rep && rep.clips.find(x => x.id === m.clipId);
+        if (c) { if (c.clip) b.clipName = c.clip; if (rep.roll) b.reel = rep.roll; }
+      }
+      scene.bites.push(b);
+    }
+    $('favDialog').close();
+    changed();
+    toast(`Added ${list.length} favorite moment${list.length === 1 ? '' : 's'} to ${scene.title}.`);
   }
   function addBites() {
     const t = tr(current); if (!t || !sel.size) return;
@@ -1092,6 +1148,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('addBiteBtn').onclick = addBites;
     $('clearSelBtn').onclick = () => { sel.clear(); drawSegments(); };
     $('sceneSel').addEventListener('change', () => { $('sceneSel').dataset.last = $('sceneSel').value; });
+    $('favBtn').onclick = openFavs;
+    $('favForm').addEventListener('submit', ev => { ev.preventDefault(); addFavs(); });
+    $('favCancel').onclick = () => $('favDialog').close();
     $('addSceneBtn').onclick = () => { scenes().push({ id: newId('scene'), title: `Scene ${scenes().length + 1}`, bites: [] }); changed(); };
     $('scenes').addEventListener('click', sceneClick);
     $('scenes').addEventListener('change', ev => { const i = ev.target.closest('[data-title]'); if (!i) return; const s = scenes().find(x => x.id === i.dataset.title); if (s) { s.title = i.value.trim() || s.title; changed(); } });

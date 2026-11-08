@@ -43,6 +43,7 @@ For anyone who doesn't use the tool, there's a [spreadsheet template](../../temp
 
 - **A calendar file of every date in the project**, gathered from every tool: choose **Calendar of every date** under the file buttons and pick which kinds of dates to include. Importing a newer file updates the same events instead of adding them twice.
 - **Imports from a spreadsheet:** choose **Import from a spreadsheet** under the file buttons and pick a CSV file. One with the columns of the [spreadsheet template](../../templates/bookings-template.csv) imports as it is; match any other columns once and the tool remembers. Problems, such as a date it can't read, show row by row before anything is added, and importing only adds.
+- **Links a booking to its screening** from the [press list](../press-list/) and [partner CRM](../partner-crm/).
 
 ## Saving and file conflicts
 
@@ -56,12 +57,11 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 A `bookings` collection: `venue`, `kind`, `contact`, `email`, `city`, `startDate`, `endDate`, `status`, `license`, `fee`, `splitPercent`, `payment` (`unpaid`, `invoiced` or `paid`), `invoicedDate`, `paidDate`, `materialsNeeded`, `materials` (the date each was sent) and `notes`.
 
-Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
+A booking can have a `screeningId`, in `screenings`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
 - Invoices to print
-- Linking bookings to screenings in the press list and partner CRM
 - Box office reports for split deals
 
 ## License

@@ -39,6 +39,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **Prints** the report for the grant you pick.
 - **A calendar file of every date in the project**, gathered from every tool: choose **Calendar of every date** under the file buttons and pick which kinds of dates to include. Importing a newer file updates the same events instead of adding them twice.
 - **Other currencies.** Costs in other currencies convert at the project's exchange rates, as in the final cost report.
+- **Records the answers you use:** an answer inserted from the [grant narrative library](../narrative-library/) is noted on its version there, as used for this grant's final report.
 
 ## Saving and file conflicts
 
@@ -52,13 +53,12 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 A `grantReports` collection: `grantId`, `dueDate`, `status` (`drafting` or `submitted`), `submittedDate`, `narrative`, `outcomes`, `deliverables`, `budgetFormatId` and `includeImpact`.
 
-It reads `grants`, `narratives`, `budget`, `expenses`, `costReport`, `finalCostReport`, `budgetFormats`, `impactReport`, `theoryOfChange`, `screenings` and `bookings`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
+It reads `grants`, `narratives`, `budget`, `expenses`, `costReport`, `finalCostReport`, `budgetFormats`, `impactReport`, `theoryOfChange`, `screenings` and `bookings`. Inserting an answer adds a use with `grantId`, `date` and `use` "final report" to its version in `narratives`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
 - Interim reports
 - Each funder's own report form
-- Recording who used which narrative version in the narrative library
 
 ## License
 

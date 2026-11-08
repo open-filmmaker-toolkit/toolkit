@@ -2924,7 +2924,10 @@ def test_grant_reports(browser, fake):
     data = saved_project(pg, fake)
     gr = data['grantReports'][0]
     check(gr['status'] == 'submitted' and gr['submittedDate'] and gr['outcomes'].startswith('The footage') and len(data['grantReports']) == 1, 'saves the report')
-    check(data['grants'] == original['grants'] and data['narratives'] == original['narratives'], 'grants and narratives are unchanged')
+    report_uses = [(n['id'], v['id'], u) for n in data['narratives'] for v in n.get('versions', []) for u in v.get('uses', []) if u.get('use') == 'final report']
+    strip = lambda ns: [dict(n, versions=[dict(v, uses=[u for u in v.get('uses', []) if u.get('use') != 'final report']) for v in n.get('versions', [])]) for n in ns]
+    clean = lambda ns: [dict(n, versions=[{k: x for k, x in v.items() if not (k == 'uses' and not x)} for v in n['versions']]) for n in ns]
+    check(data['grants'] == original['grants'] and len(report_uses) == 1 and report_uses[0][2]['grantId'] == gr['grantId'] and clean(strip(data['narratives'])) == clean(original['narratives']), 'the answer used is recorded on its version in the narrative library, and nothing else changes')
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
@@ -3258,6 +3261,91 @@ def test_spent_and_committed(browser, fake):
     check(data['costReport']['purchaseOrders'][0]['lineId'] == line and data['costReport']['purchaseOrders'][0]['amount'] == 1500, 'the purchase order is saved')
     check(not errs and not errs2, 'no page errors %s %s' % (errs, errs2))
     ctx.close()
+
+def test_shared_links(browser, fake):
+    # Release status in the clearance log and call sheet
+    ctx, pg, errs = new_page(browser, 'clearance-log', fake)
+    open_sample(pg, fake)
+    pg.click('tr[data-id="sample-01"] .el-name'); pg.click('#whoWhere summary')
+    pg.check('#f-people input[value="person-ruth-hammond"]'); pg.check('#f-people input[value="person-leon-pryor"]')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(150)
+    row = pg.inner_text('tr[data-id="sample-01"]')
+    check('Ruth Hammond: release signed' in row and 'Leon Pryor: release not signed yet' in row, 'the clearance log shows the release status of the people in an element')
+    data = saved_project(pg, fake)
+    check(next(e for e in data['thirdPartyElements'] if e['id'] == 'sample-01')['personIds'] == ['person-ruth-hammond', 'person-leon-pryor'], 'the people in an element are saved')
+    ctx.close()
+    ctx, pg, errs2 = new_page(browser, 'call-sheet', fake)
+    open_sample(pg, fake)
+    pg.click('tr[data-id="callsheet-day-1"]'); pg.wait_for_timeout(150)
+    check('Release signed' in pg.inner_text('[data-person="person-ruth-hammond"]') and pg.is_visible('#permitBox') and 'Riverside film office' in pg.inner_text('#permitList'), 'the call sheet shows releases and the day\'s permits')
+    ctx.close()
+    # Favorite moments into the paper edit, and moments linked to clips
+    d = json.loads(sample)
+    for i in d['interviews']:
+        if i['id'] == 'interview-daniel': i['moments'][1]['clipId'] = 'clip-a001-2'
+    ctx, pg, errs3 = new_page(browser, 'paper-edit', fake)
+    open_text(pg, fake, json.dumps(d))
+    pg.click('#favBtn')
+    check(pg.locator('#favList input').count() == 2, 'the paper edit offers the interview log\'s favorite moments')
+    pg.select_option('#favScene', '__new'); pg.click('#favAdd'); pg.wait_for_timeout(150)
+    data = saved_project(pg, fake)
+    sc = next(s for s in data['paperEdit']['scenes'] if s['title'] == 'Favorite moments')
+    check(len(sc['bites']) == 2 and all(b.get('momentId') for b in sc['bites']) and any(b.get('clipName') == 'A001C002' for b in sc['bites']), 'they become bites, with the clip a moment is linked to')
+    pg.click('#favBtn')
+    check(pg.locator('#favList input').count() == 0, 'moments already brought in aren\'t offered again')
+    ctx.close()
+    # QC issues and cuts
+    ctx, pg, errs4 = new_page(browser, 'qc-tracker', fake)
+    open_sample(pg, fake)
+    pg.click('[data-edit="qc-2"]'); pg.select_option('#f-cut', 'cut-locked-12'); pg.click('#editorSubmit'); pg.wait_for_timeout(150)
+    check('Found in Locked cut v12' in pg.inner_text('[data-id="qc-2"]'), 'a QC issue names the cut it was found in')
+    text = json.dumps(saved_project(pg, fake))
+    ctx.close()
+    ctx, pg, errs5 = new_page(browser, 'cut-tracker', fake)
+    open_text(pg, fake, text)
+    check('open QC issue' in pg.inner_text('[data-id="cut-locked-12"]'), 'the cut tracker shows the open QC issues found in a cut')
+    pg.click('[data-edit="cut-locked-12"]'); pg.fill('#f-file', 'exports/locked-v12.mov'); pg.click('#editorSubmit'); pg.wait_for_timeout(150)
+    check('File: exports/locked-v12.mov' in pg.inner_text('[data-id="cut-locked-12"]'), 'a cut links to its exported file')
+    ctx.close()
+    # The finance plan and the funder CRM
+    ctx, pg, errs6 = new_page(browser, 'finance-plan', fake)
+    open_sample(pg, fake)
+    pg.click('[data-edit="source-public-tv"]'); pg.select_option('#f-funder', 'funder-public-tv'); pg.click('#editorForm button[type=submit]'); pg.wait_for_timeout(150)
+    check('Regional public television' in pg.inner_text('[data-id="source-public-tv"]'), 'a finance plan source names its organization')
+    text = json.dumps(saved_project(pg, fake))
+    ctx.close()
+    ctx, pg, errs7 = new_page(browser, 'funder-crm', fake)
+    open_text(pg, fake, text)
+    check('Finance plan: presale, pending, $40,000' in pg.inner_text('[data-id="funder-public-tv"]') and 'Finance plan: grant, prospective' in pg.inner_text('[data-id="funder-riverbend"]'), 'the funder CRM shows the money in the finance plan from each organization')
+    ctx.close()
+    # The smaller links, each through the shared picker
+    links = [('risk-plan', 'risk-spring-flood', 'tripId', 'trip-spring-flood', 'Trip: Spring flood trip'), ('bookings', 'booking-riverside-library', 'screeningId', 'screening-library', 'Screening: Library premiere'),
+             ('field-journal', 'journal-levee-dawn', 'interviewId', 'interview-daniel', 'Interview: Daniel Okafor'), ('research-log', 'source-rchs-aerial', 'cardId', 'card-roof', 'In the cut: ')]
+    errs8 = []
+    for tool, rec, key, val, label in links:
+        ctx, pg, e = new_page(browser, tool, fake)
+        open_sample(pg, fake)
+        pg.click('[data-edit="%s"]' % rec); pg.select_option('#oftLink-%s' % key, val)
+        pg.locator('dialog[open] button[type=submit]').first.click(); pg.wait_for_timeout(150)
+        saved = saved_project(pg, fake)
+        flat = json.dumps(saved)
+        check(label in pg.inner_text('#main') and ('"%s": "%s"' % (key, val)) in flat, '%s links to another tool: %s' % (tool, label))
+        errs8 += e
+        ctx.close()
+    for tool, rec, key, val, label in [('structure-board', 'card-roof', 'assetIds', 'clip-a001c001', 'Clips:'), ('subject-tracker', 'subject-ruth', 'locationIds', 'location-hammond-house', 'Locations: Hammond house'), ('security-checklist', 'check-diary-scans', 'gearIds', 'gear-camera-body', 'Devices: Cinema camera body')]:
+        ctx, pg, e = new_page(browser, tool, fake)
+        open_sample(pg, fake)
+        pg.click('[data-edit="%s"]' % rec); pg.check('input[name="oftLink-%s"][value="%s"]' % (key, val))
+        pg.locator('dialog[open] button[type=submit]').first.click(); pg.wait_for_timeout(150)
+        flat = json.dumps(saved_project(pg, fake))
+        check(label in pg.inner_text('#main') and ('"%s": ["%s"]' % (key, val)) in flat, '%s links to another tool: %s' % (tool, label))
+        errs8 += e
+        ctx.close()
+    ctx, pg, errs9 = new_page(browser, 'press-list', fake)
+    open_sample(pg, fake)
+    check("director's statement" in pg.inner_text('#kitText') and pg.is_enabled('#kitCopyBtn'), 'the press list shows what\'s in the press notes, ready to copy')
+    ctx.close()
+    check(not (errs + errs2 + errs3 + errs4 + errs5 + errs6 + errs7 + errs8 + errs9), 'no page errors %s' % (errs + errs2 + errs3 + errs4 + errs5 + errs6 + errs7 + errs8 + errs9))
 
 def csv_rows(pg, btn='#csvBtn'):
     with pg.expect_download() as d:
@@ -3885,6 +3973,8 @@ def main():
         test_budget_links(browser, fake)
         print('== spent and committed / cash flow and budget-to-actuals')
         test_spent_and_committed(browser, fake)
+        print('== links between tools / releases, moments, QC and cuts, funders and the smaller links')
+        test_shared_links(browser, fake)
         print('== partner-crm / partners, commitments and screenings')
         test_partner_crm(browser, fake)
         print('== screenings / edit and remove a screening in the press list and partner CRM')
