@@ -91,12 +91,15 @@ Part of the [Open Filmmaker Toolkit](../README.md).
 - **Rights availability.** One row for each territory and media: whether it is sold, on hold or available, who holds it, until when, and any overlap.
 - **Deliverables.** One row for each deliverable: section, deliverable, status, due date, who's responsible, specs, file, note and what the project already has.
 - **QC issues.** One row for each issue: report, version, result, timecode, severity, area, the issue, who fixes it, fix status, the version it was fixed in and a note.
+- **Waterfall.** One row for each tier and party in each scenario: the scenario, gross receipts, tier, who is paid, what they are paid and what is still owed.
+- **Revenue.** One row for each statement: source, period, statement date, territory, media, gross receipts, fees, expenses, what's due to you, when it was paid, reference and notes.
+- **Bookings.** One row for each booking: venue or institution, kind, contact, dates, status, license or terms, fee, box office share, payment, invoice and payment dates, materials needed and sent, and notes.
 
 ## Using them
 
 - **Spreadsheets** (`.csv`) open in Excel, Numbers, Google Sheets (**File > Import**) and LibreOffice. Save a copy as `.xlsx` from there if you need that format.
 - **Documents** (`.docx`) open in Word, Google Docs, Pages and LibreOffice. They're US Letter; switch to A4 in your page setup if you need to. To add a row to a table, put the cursor in the last cell and press Tab. To fill them in by hand, print them; the logs repeat their column headings on every page.
-- **Same columns as the tools.** The subject tracker, research and archival log, comps tracker, grant calendar, budget, finance plan, funder CRM, cash flow, shooting calendar, interview questions, location scout sheet, deal memos, gear list, certificates and permits, travel sheet, risk assessment, security checklist, camera and sound reports, interview moments, press list, partner CRM, fair use, licenses, annotated clearance report, chain of title, festival strategy, stills caption sheet, rights availability, deliverables, qc issues, footage log, paper edit, structure board, cut notes, cost report, clearance log, release log, music cue sheet and name supers spreadsheets have the same columns, in the same order, as each tool's CSV export, and the call sheet matches the call sheet's spreadsheet export. Some exports add columns the tool works out for you, such as a cue's duration in seconds or what's still missing.
+- **Same columns as the tools.** The subject tracker, research and archival log, comps tracker, grant calendar, budget, finance plan, funder CRM, cash flow, shooting calendar, interview questions, location scout sheet, deal memos, gear list, certificates and permits, travel sheet, risk assessment, security checklist, camera and sound reports, interview moments, press list, partner CRM, fair use, licenses, annotated clearance report, chain of title, festival strategy, stills caption sheet, rights availability, deliverables, qc issues, waterfall, revenue, bookings, footage log, paper edit, structure board, cut notes, cost report, clearance log, release log, music cue sheet and name supers spreadsheets have the same columns, in the same order, as each tool's CSV export, and the call sheet matches the call sheet's spreadsheet export. Some exports add columns the tool works out for you, such as a cue's duration in seconds or what's still missing.
 
 These templates are working records, not legal advice, and you use them at your own risk: see [Not legal advice](../README.md#not-legal-advice). Check what your distributor, broadcaster and E&O insurer need.
 
@@ -112,6 +115,9 @@ Forms you sign, in [legal-forms](legal-forms/). They're under [CC0 1.0](../LICEN
 | Rights availability | [rights-matrix-template.csv](rights-matrix-template.csv) | | [Rights availability matrix](../tools/rights-matrix/) |
 | Deliverables | [deliverables-template.csv](deliverables-template.csv) | | [Deliverables checklist](../tools/deliverables/) |
 | QC issues | [qc-issues-template.csv](qc-issues-template.csv) | | [QC tracker](../tools/qc-tracker/) |
+| Waterfall | [waterfall-template.csv](waterfall-template.csv) | | [Recoupment waterfall model](../tools/waterfall/) |
+| Revenue | [revenue-template.csv](revenue-template.csv) | | [Revenue tracker](../tools/revenue-tracker/) |
+| Bookings | [bookings-template.csv](bookings-template.csv) | | [Educational and theatrical booking trackers](../tools/bookings/) |
 
 Each form starts with a not-legal-advice notice and a "Written for" line. Fill in where you are, have a lawyer licensed there review the form, and only then delete the notice. Blank release forms aren't here yet.
 

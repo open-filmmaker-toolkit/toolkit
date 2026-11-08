@@ -4721,5 +4721,147 @@
         ]
       }
     ]
-  }
+  },
+  "waterfall": {
+    "tiers": [
+      {
+        "id": "tier-sales-fee",
+        "name": "Sales agent fee",
+        "kind": "gross",
+        "percent": 15,
+        "party": "Sales agent"
+      },
+      {
+        "id": "tier-sales-expenses",
+        "name": "Sales agent expenses",
+        "kind": "fixed",
+        "amount": 20000,
+        "party": "Sales agent",
+        "note": "Capped at $20,000"
+      },
+      {
+        "id": "tier-recoup",
+        "name": "Investor recoupment",
+        "kind": "fixed",
+        "amount": 150000,
+        "party": "Investors"
+      },
+      {
+        "id": "tier-premium",
+        "name": "Investor premium (20%)",
+        "kind": "fixed",
+        "amount": 30000,
+        "party": "Investors"
+      },
+      {
+        "id": "tier-deferrals",
+        "name": "Deferred fees",
+        "kind": "fixed",
+        "amount": 25000,
+        "party": "Deferred crew"
+      },
+      {
+        "id": "tier-profits",
+        "name": "Net profits",
+        "kind": "split",
+        "splits": [
+          {
+            "party": "Investors",
+            "share": 50
+          },
+          {
+            "party": "Producers",
+            "share": 50
+          }
+        ]
+      }
+    ],
+    "scenarios": [
+      {
+        "id": "scenario-low",
+        "name": "Low",
+        "gross": 120000
+      },
+      {
+        "id": "scenario-high",
+        "name": "High",
+        "gross": 400000
+      }
+    ]
+  },
+  "revenueStatements": [
+    {
+      "id": "statement-riverside-q3",
+      "contractId": "contract-dist-riverside-streaming",
+      "periodStart": "2026-07-01",
+      "periodEnd": "2026-09-30",
+      "statementDate": "2026-10-31",
+      "territory": "United States",
+      "media": "svod",
+      "gross": 52000,
+      "fees": 13000,
+      "expenses": 4000,
+      "paidDate": "2026-11-05",
+      "reference": "RS-2026-Q3"
+    },
+    {
+      "id": "statement-skyway-1",
+      "contractId": "contract-dist-skyway",
+      "periodStart": "2026-09-01",
+      "periodEnd": "2026-10-31",
+      "statementDate": "2026-11-03",
+      "territory": "Worldwide",
+      "media": "airline",
+      "gross": 3500,
+      "net": 3500
+    }
+  ],
+  "bookings": [
+    {
+      "id": "booking-state-university",
+      "venue": "State University library (fictional)",
+      "kind": "educational",
+      "contact": "Media librarian",
+      "startDate": "2026-09-01",
+      "endDate": "2029-08-31",
+      "status": "confirmed",
+      "license": "three-year",
+      "fee": 450,
+      "payment": "paid",
+      "paidDate": "2026-09-20",
+      "materialsNeeded": [
+        "file"
+      ],
+      "materials": {
+        "file": "2026-09-02"
+      }
+    },
+    {
+      "id": "booking-riverside-library",
+      "venue": "Riverside Public Library",
+      "kind": "community",
+      "city": "Riverside",
+      "startDate": "2026-12-05",
+      "status": "confirmed",
+      "license": "flat",
+      "fee": 250,
+      "payment": "invoiced",
+      "invoicedDate": "2026-10-01",
+      "materialsNeeded": [
+        "bluray",
+        "guide"
+      ]
+    },
+    {
+      "id": "booking-prairie-cinema",
+      "venue": "Prairie Cinema (fictional)",
+      "kind": "theatrical",
+      "city": "Prairie City",
+      "startDate": "2027-03-20",
+      "endDate": "2027-03-26",
+      "status": "inquiry",
+      "license": "split",
+      "splitPercent": 35
+    }
+  ]
 }

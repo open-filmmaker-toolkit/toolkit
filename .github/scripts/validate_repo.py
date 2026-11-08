@@ -348,6 +348,10 @@ for sample in sorted((ROOT / "samples").glob("*.oft.json")):
     for report in qc.get("reports", []):
         if report.get("versionId") not in master_ids or any(i.get("fixedInId") and i["fixedInId"] not in master_ids for i in report.get("issues", [])):
             fail(f"{name}: QC report {report.get('id')} points to a missing master version")
+    contract_ids = {c.get("id") for c in data.get("contracts", [])}
+    for statement in data.get("revenueStatements", []):
+        if statement.get("contractId") and statement["contractId"] not in contract_ids:
+            fail(f"{name}: revenue statement {statement.get('id')} contractId points to a missing contract")
     security = data.get("security") if isinstance(data.get("security"), dict) else {}
     if set(security.get("personIds", [])) - ids["people"]:
         fail(f"{name}: security personIds points to missing people")
