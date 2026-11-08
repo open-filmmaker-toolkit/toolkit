@@ -7,9 +7,9 @@
 <meta name="description" content="Write the final report for each awarded grant before it's due: narrative with answers from your grant narrative library, outcomes, deliverables, final costs in the funder's categories, and the impact report, printed as a PDF. Runs in your browser; your data stays on your computer.">
 <style>
 :root {
-  --paper: #f1f3f2; --sheet: #ffffff; --ink: #1a2130; --ink-2: #4b556a; --ink-3: #6d778a;
+  --paper: #f1f3f2; --sheet: #ffffff; --ink: #1a2130; --ink-2: #4b556a; --ink-3: #5d6677;
   --rule: #d4dad8; --rule-soft: #e6eae8; --hover: #f6f8f7; --focus: #2f6fdb;
-  --good: #2b7a57; --good-bg: #dff1e8; --warn: #8a5a00; --warn-bg: #fbf0d9; --bad: #b3392d; --bad-bg: #f8e1de;
+  --good: #236b4b; --good-bg: #dff1e8; --warn: #8a5a00; --warn-bg: #fbf0d9; --bad: #b3392d; --bad-bg: #f8e1de;
   --screen: #050506; --screen-ink: #f4f1ea; --screen-dim: #a7a29a;
   --serif: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
   --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -19,7 +19,7 @@
   :root {
     --paper: #141922; --sheet: #1b212b; --ink: #e6e9ee; --ink-2: #a6afbd; --ink-3: #8790a0;
     --rule: #2f3744; --rule-soft: #262d38; --hover: #212834; --focus: #7aa7ff;
-    --good: #4fb386; --good-bg: #1a3329; --warn: #e2a531; --warn-bg: #3a2f17; --bad: #e26657; --bad-bg: #3b2220;
+    --good: #4fb386; --good-bg: #1a3329; --warn: #e2a531; --warn-bg: #3a2f17; --bad: #ef7a6c; --bad-bg: #3b2220;
   }
 }
 * { box-sizing: border-box; }
@@ -217,9 +217,15 @@ pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; b
   .report .r-missing { font-style: italic; }
   .report .r-quote { margin: 0 0 6pt; padding-left: 8pt; border-left: 2pt solid #000000; font-style: italic; }
 }
+.skip-link { position: absolute; left: 12px; top: -80px; z-index: 1000; padding: 8px 14px; border: 2px solid var(--focus); border-radius: 6px; background: var(--sheet); color: var(--ink); font-weight: 600; text-decoration: none; }
+.skip-link:focus { top: 12px; }
+input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:focus, input[type="time"]:focus-within { outline: 2px solid var(--focus, #2f6fdb); outline-offset: 2px; }
+.home-link { color: inherit; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.home-link:hover { text-decoration-thickness: 2px; }
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to the tool</a>
 <div class="cant-run" id="cantRun">
   <h1 id="cantRunTitle">Open this file in a web browser</h1>
   <p id="cantRunText">This tool runs in Chrome, Edge, Firefox or Safari. You're seeing a preview that doesn't run it, so none of the buttons would work.</p>
@@ -228,7 +234,7 @@ pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; b
 <div class="page">
   <header class="masthead">
     <div>
-      <p class="tool-name">Grant final reports</p>
+      <p class="tool-name"><a class="home-link" href="../../index.html">Open Filmmaker Toolkit</a> <span aria-hidden="true">/</span> Grant final reports</p>
       <h1 class="film-title" id="filmTitle">Untitled film</h1>
       <p class="film-meta"><span id="filmMeta"></span> <button type="button" class="link-btn" id="editProjectBtn">Edit film details</button></p>
     </div>
@@ -251,7 +257,7 @@ pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; b
     </div>
   </div>
 
-  <main class="workspace">
+  <main class="workspace" id="main">
     <section aria-labelledby="listHead">
       <div class="toolbar">
         <h2 id="listHead">Final reports</h2>
@@ -280,7 +286,7 @@ pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; b
   </main>
 
   <footer class="foot">
-    <p>Part of the Open Filmmaker Toolkit. This page makes no network requests: everything stays on this computer until you save or export it. Uses the same project file as the other toolkit tools.</p>
+    <p>Part of the <a href="../../index.html">Open Filmmaker Toolkit</a>. This page makes no network requests: everything stays on this computer until you save or export it. Uses the same project file as the other toolkit tools.</p>
   </footer>
 </div>
 
@@ -588,7 +594,7 @@ pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; b
   }
   function showBudget() {
     const layout = $('f-format').value, { gs, tb, tf } = budgetTable(layout);
-    $('budgetPreview').innerHTML = gs.length ? `<table><thead><tr><th></th><th class="n">Budget</th><th class="n">Final cost</th></tr></thead><tbody>${gs.map(g => `<tr><td>${esc(g.label)}</td><td class="n">${esc(money(g.budget))}</td><td class="n">${esc(money(g.final))}</td></tr>`).join('')}<tr><th>Total</th><th class="n">${esc(money(tb))}</th><th class="n">${esc(money(tf))}</th></tr></tbody></table>` : '<p class="hint">No budget yet.</p>';
+    $('budgetPreview').innerHTML = gs.length ? `<table><thead><tr><th scope="col"><span class="sr-only">Category</span></th><th class="n">Budget</th><th class="n">Final cost</th></tr></thead><tbody>${gs.map(g => `<tr><td>${esc(g.label)}</td><td class="n">${esc(money(g.budget))}</td><td class="n">${esc(money(g.final))}</td></tr>`).join('')}<tr><th>Total</th><th class="n">${esc(money(tb))}</th><th class="n">${esc(money(tf))}</th></tr></tbody></table>` : '<p class="hint">No budget yet.</p>';
   }
   function openEditor(id) {
     const g = id ? awarded().find(x => x.id === id) : sortedGrants().find(x => status(x) !== 'submitted') || sortedGrants()[0];
@@ -633,7 +639,7 @@ pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; b
     $('report').innerHTML = `<h1>Final report: ${esc(gname(g))}</h1><p class="r-meta">${esc([doc.project.title, doc.project.company, g.awarded && `Awarded ${money(g.awarded)}`, r.dueDate && `Due ${fmtDate(r.dueDate)}`, `Printed ${fmtDate(today())}`].filter(Boolean).join(' · '))}</p>
       <h2>Narrative</h2>${paras(r.narrative)}<h2>Outcomes</h2>${paras(r.outcomes)}
       ${dl.length ? `<h2>Deliverables</h2><ul>${dl.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
-      <h2>Budget and final costs</h2><table><thead><tr><th></th><th class="r-n">Budget</th><th class="r-n">Final cost</th></tr></thead><tbody>${gs.map(x => `<tr><td>${esc(x.label)}${notes()[x.key] ? `<span class="r-sub">${esc(notes()[x.key])}</span>` : ''}</td><td class="r-n">${esc(money(x.budget))}</td><td class="r-n">${esc(money(x.final))}</td></tr>`).join('')}</tbody><tfoot><tr><th>Total</th><th class="r-n">${esc(money(tb))}</th><th class="r-n">${esc(money(tf))}</th></tr></tfoot></table>
+      <h2>Budget and final costs</h2><table><thead><tr><th>Category</th><th class="r-n">Budget</th><th class="r-n">Final cost</th></tr></thead><tbody>${gs.map(x => `<tr><td>${esc(x.label)}${notes()[x.key] ? `<span class="r-sub">${esc(notes()[x.key])}</span>` : ''}</td><td class="r-n">${esc(money(x.budget))}</td><td class="r-n">${esc(money(x.final))}</td></tr>`).join('')}</tbody><tfoot><tr><th>Total</th><th class="r-n">${esc(money(tb))}</th><th class="r-n">${esc(money(tf))}</th></tr></tfoot></table>
       ${im ? `<h2>Impact</h2>${im.summary ? `<p>${esc(im.summary)}</p>` : ''}<p>${im.screenings} screening${im.screenings === 1 ? '' : 's'}, ${im.audience.toLocaleString()} people in the audience.</p>${im.results.length ? `<table><tbody>${im.results.map(x => `<tr><td>${esc(x.text)}</td><td class="r-n">${esc(x.value == null ? 'Not yet' : `${x.value} ${x.unit || ''}`)}${x.target != null ? ` of ${esc(x.target)}` : ''}</td></tr>`).join('')}</tbody></table>` : ''}${im.quotes.map(q => `<blockquote class="r-quote">“${esc(q.quote)}”<span class="r-sub">${esc(q.who || '')}</span></blockquote>`).join('')}` : ''}`;
   }
 

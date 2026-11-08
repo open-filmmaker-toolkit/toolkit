@@ -63,7 +63,7 @@ COLORS_JS = """() => {
   const rgb = v => { c.clearRect(0,0,1,1); c.fillStyle = '#000'; c.fillStyle = v; c.fillRect(0,0,1,1); const d = c.getImageData(0,0,1,1).data; return [d[0],d[1],d[2],d[3]/255]; };
   const bg = el => { for (let e = el; e; e = e.parentElement) { const v = rgb(getComputedStyle(e).backgroundColor); if (v[3] > 0.99) return v.slice(0,3); } return [255,255,255]; };
   const pairs = {};
-  for (const [k, sel] of Object.entries({page: 'body', heading: 'h1', button: '.btn:not(.primary):not(.danger)', primary: '.btn.primary'})) {
+  for (const [k, sel] of Object.entries({page: 'body', heading: 'h1', button: '.btn:not(.primary):not(.danger)', primary: '.btn.primary', footer: 'footer p'})) {
     const el = document.querySelector(sel);
     if (el && (sel === 'body' || el.offsetParent !== null)) pairs[k] = [rgb(getComputedStyle(el).color).slice(0,3), bg(el)];
   }
@@ -132,6 +132,17 @@ def test_core(browser, name, fake):
         pg.wait_for_timeout(300)
         check('River' in pg.inner_text('#filmTitle'), 'saved file reopens')
     check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+def test_skip_link(browser, name):
+    ctx = browser.new_context(); pg = ctx.new_page()
+    pg.goto('file://%s/tools/%s/index.html' % (root, name))
+    pg.keyboard.press('Tab')
+    first = pg.evaluate("() => [document.activeElement.className, document.activeElement.getAttribute('href')]")
+    pg.keyboard.press('Enter')
+    check(first == ['skip-link', '#main'] and pg.evaluate("() => location.hash === '#main' && !!document.querySelector('main#main')"), 'the first Tab reaches a skip link to the main content')
+    pg.click('a.home-link'); pg.wait_for_load_state('load')
+    check(pg.url.endswith('/index.html') and '/tools/' not in pg.url and pg.locator('#tools').count() == 1, 'the header links back to the toolkit home page')
     ctx.close()
 
 def test_phone(browser, name, fake):
@@ -2946,7 +2957,8 @@ def main():
         print('#### %s %s' % (mode, browser.version))
         for name in TOOLS:
             for label, fn in [('core', lambda: test_core(browser, name, fake)), ('phone', lambda: test_phone(browser, name, fake)),
-                              ('dark mode', lambda: test_dark(browser, name, fake)), ('print', lambda: test_print(browser, name, fake, fake))]:
+                              ('dark mode', lambda: test_dark(browser, name, fake)), ('print', lambda: test_print(browser, name, fake, fake)),
+                              ('skip and home links', lambda: test_skip_link(browser, name))]:
                 print('== %s / %s' % (name, label))
                 fn()
         print('== call-sheet / spreadsheet export')

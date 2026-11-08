@@ -7,9 +7,9 @@
 <meta name="description" content="Track who signed what: appearance, location and materials releases, linked to the people and places in your project file. Runs in your browser; your data stays on your computer.">
 <style>
 :root {
-  --paper: #f1f3f2; --sheet: #ffffff; --ink: #1a2130; --ink-2: #4b556a; --ink-3: #6d778a;
+  --paper: #f1f3f2; --sheet: #ffffff; --ink: #1a2130; --ink-2: #4b556a; --ink-3: #5d6677;
   --rule: #d4dad8; --rule-soft: #e6eae8; --hover: #f6f8f7; --focus: #2f6fdb;
-  --good: #2b7a57; --good-bg: #dff1e8; --warn: #8a5a00; --warn-bg: #fbf0d9; --bad: #b3392d; --bad-bg: #f8e1de; --none-bg: #eceef2;
+  --good: #236b4b; --good-bg: #dff1e8; --warn: #8a5a00; --warn-bg: #fbf0d9; --bad: #b3392d; --bad-bg: #f8e1de; --none-bg: #eceef2;
   --serif: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
   --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   color-scheme: light dark;
@@ -18,7 +18,7 @@
   :root {
     --paper: #141922; --sheet: #1b212b; --ink: #e6e9ee; --ink-2: #a6afbd; --ink-3: #8790a0;
     --rule: #2f3744; --rule-soft: #262d38; --hover: #212834; --focus: #7aa7ff;
-    --good: #4fb386; --good-bg: #1a3329; --warn: #e2a531; --warn-bg: #3a2f17; --bad: #e26657; --bad-bg: #3b2220; --none-bg: #2a303b;
+    --good: #4fb386; --good-bg: #1a3329; --warn: #e2a531; --warn-bg: #3a2f17; --bad: #ef7a6c; --bad-bg: #3b2220; --none-bg: #2a303b;
   }
 }
 * { box-sizing: border-box; }
@@ -193,9 +193,15 @@ details.group > summary { cursor: pointer; font-size: 14px; font-weight: 600; }
   .report .small { font-size: 8pt; color: #333333; }
   .report .note { margin-top: 12pt; font-size: 8pt; color: #333333; }
 }
+.skip-link { position: absolute; left: 12px; top: -80px; z-index: 1000; padding: 8px 14px; border: 2px solid var(--focus, #2f6fdb); border-radius: 6px; background: var(--sheet, #ffffff); color: var(--ink, #1a2130); font-weight: 600; text-decoration: none; }
+.skip-link:focus { top: 12px; }
+input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:focus, input[type="time"]:focus-within { outline: 2px solid var(--focus, #2f6fdb); outline-offset: 2px; }
+.home-link { color: inherit; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.home-link:hover { text-decoration-thickness: 2px; }
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to the tool</a>
 <div class="cant-run" id="cantRun">
   <h1 id="cantRunTitle">Open this file in a web browser</h1>
   <p id="cantRunText">This tool runs in Chrome, Edge, Firefox or Safari. You're seeing a preview that doesn't run it, so none of the buttons would work.</p>
@@ -204,7 +210,7 @@ details.group > summary { cursor: pointer; font-size: 14px; font-weight: 600; }
 <div class="page">
   <header class="masthead">
     <div>
-      <p class="tool-name">Release tracker</p>
+      <p class="tool-name"><a class="home-link" href="../../index.html">Open Filmmaker Toolkit</a> <span aria-hidden="true">/</span> Release tracker</p>
       <h1 class="film-title" id="filmTitle">Untitled film</h1>
       <p class="film-meta"><span id="filmMeta"></span> <button type="button" class="link-btn" id="editProjectBtn">Edit film details</button></p>
     </div>
@@ -227,7 +233,7 @@ details.group > summary { cursor: pointer; font-size: 14px; font-weight: 600; }
     </div>
   </div>
 
-  <main>
+  <main id="main">
     <section class="overview" id="overview" aria-labelledby="covHeadline">
       <div class="tally">
         <p class="headline" id="covHeadline"></p>
@@ -285,7 +291,7 @@ details.group > summary { cursor: pointer; font-size: 14px; font-weight: 600; }
   </main>
 
   <footer class="foot">
-    <p>Part of the Open Filmmaker Toolkit. This page makes no network requests: everything stays on this computer until you save or export it. Uses the same project file as the clearance log, music cue sheet and call sheet. Not legal advice.</p>
+    <p>Part of the <a href="../../index.html">Open Filmmaker Toolkit</a>. This page makes no network requests: everything stays on this computer until you save or export it. Uses the same project file as the clearance log, music cue sheet and call sheet. Not legal advice.</p>
   </footer>
 </div>
 

@@ -430,6 +430,9 @@ for tool in sorted((ROOT / "tools").iterdir()):
             fail(f"{rel}: missing {required}")
     page = tool / "index.html"
     if page.is_file():
+        text = page.read_text(encoding="utf-8")
+        if 'class="home-link" href="../../index.html"' not in text or 'class="skip-link" href="#main"' not in text:
+            fail(f"{rel}/index.html: needs the link back to the toolkit home page and the skip link; copy them from another tool")
         allowed = OPTIONAL_HOSTS.get(rel.as_posix(), set())
         for number, line in enumerate(page.read_text(encoding="utf-8").splitlines(), 1):
             if EXTERNAL.search(line) and not (allowed and re.search(r"\bfetch\s*\(", line) and not re.search(r"XMLHttpRequest|sendBeacon|WebSocket|importScripts|(?:src|action|poster)\s*=|@import|url\(", line, re.I)):

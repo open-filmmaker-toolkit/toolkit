@@ -7,9 +7,9 @@
 <meta name="description" content="Build a shoot-day call sheet from the people and locations in your project file. Runs in your browser; your data stays on your computer.">
 <style>
 :root {
-  --paper: #f1f3f2; --sheet: #ffffff; --ink: #1a2130; --ink-2: #4b556a; --ink-3: #6d778a;
+  --paper: #f1f3f2; --sheet: #ffffff; --ink: #1a2130; --ink-2: #4b556a; --ink-3: #5d6677;
   --rule: #d4dad8; --rule-soft: #e6eae8; --hover: #f6f8f7; --focus: #2f6fdb;
-  --warn: #8a5a00; --warn-bg: #fbf0d9; --bad: #b3392d; --good: #2b7a57;
+  --warn: #8a5a00; --warn-bg: #fbf0d9; --bad: #b3392d; --good: #236b4b;
   --serif: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
   --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   color-scheme: light dark;
@@ -18,7 +18,7 @@
   :root {
     --paper: #141922; --sheet: #1b212b; --ink: #e6e9ee; --ink-2: #a6afbd; --ink-3: #8790a0;
     --rule: #2f3744; --rule-soft: #262d38; --hover: #212834; --focus: #7aa7ff;
-    --warn: #e2a531; --warn-bg: #3a2f17; --bad: #e26657; --good: #4fb386;
+    --warn: #e2a531; --warn-bg: #3a2f17; --bad: #ef7a6c; --good: #4fb386;
   }
 }
 * { box-sizing: border-box; }
@@ -64,7 +64,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .toolbar .spacer { flex: 1; }
 .headline { margin: 0; font: 600 22px/1.2 var(--serif); }
 
-.table-wrap { overflow-x: auto; background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; }
+.table-wrap { position: relative; overflow-x: auto; background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; }
 table { width: 100%; border-collapse: collapse; }
 th, td { padding: 10px 12px; text-align: left; vertical-align: middle; border-bottom: 1px solid var(--rule-soft); }
 th { font-size: 13px; color: var(--ink-2); font-weight: 600; white-space: nowrap; }
@@ -142,9 +142,16 @@ dialog form { display: flex; flex-direction: column; height: 100%; max-height: i
   .report tr { page-break-inside: avoid; }
   .report .foot { margin-top: 12pt; font-size: 8pt; color: #333333; }
 }
+.skip-link { position: absolute; left: 12px; top: -80px; z-index: 1000; padding: 8px 14px; border: 2px solid var(--focus, #2f6fdb); border-radius: 6px; background: var(--sheet, #ffffff); color: var(--ink, #1a2130); font-weight: 600; text-decoration: none; }
+.skip-link:focus { top: 12px; }
+input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:focus, input[type="time"]:focus-within { outline: 2px solid var(--focus, #2f6fdb); outline-offset: 2px; }
+.home-link { color: inherit; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.home-link:hover { text-decoration-thickness: 2px; }
+.foot { margin: 28px 0 0; color: var(--ink-3); font-size: 13px; }
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to the tool</a>
 <div class="cant-run" id="cantRun">
   <h1 id="cantRunTitle">Open this file in a web browser</h1>
   <p id="cantRunText">This tool runs in Chrome, Edge, Firefox or Safari. You're seeing a preview that doesn't run it, so none of the buttons would work.</p>
@@ -153,7 +160,7 @@ dialog form { display: flex; flex-direction: column; height: 100%; max-height: i
 <div class="page">
   <header class="masthead">
     <div>
-      <p class="tool-name">Call sheet</p>
+      <p class="tool-name"><a class="home-link" href="../../index.html">Open Filmmaker Toolkit</a> <span aria-hidden="true">/</span> Call sheet</p>
       <h1 class="film-title" id="filmTitle">Untitled film</h1>
       <p class="film-meta"><span id="filmMeta"></span> <button type="button" class="link-btn" id="editProjectBtn">Edit film details</button></p>
     </div>
@@ -176,7 +183,7 @@ dialog form { display: flex; flex-direction: column; height: 100%; max-height: i
     </div>
   </div>
 
-  <main>
+  <main id="main">
     <div id="empty" class="empty" hidden>
       <h2>No shoot days yet</h2>
       <p>Open your project file to use the crew and locations you already have, or add your first shoot day and add people as you go.</p>
@@ -203,6 +210,7 @@ dialog form { display: flex; flex-direction: column; height: 100%; max-height: i
     </div>
     <p class="foot">Your project file stays on your computer. To make a PDF, choose "Save as PDF" in your browser's print dialog.</p>
   </main>
+  <footer class="foot"><p>Part of the <a href="../../index.html">Open Filmmaker Toolkit</a>. This page makes no network requests: everything stays on this computer until you save or export it.</p></footer>
 </div>
 
 <dialog class="drawer" id="editor" aria-labelledby="editorTitle">
