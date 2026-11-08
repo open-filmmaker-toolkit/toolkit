@@ -3,532 +3,211 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Open Filmmaker Toolkit: free tools for documentary and independent filmmakers</title>
-<meta name="description" content="Free, open-source tools for the paperwork behind a documentary or independent film: clearances, releases, budgets, grants, call sheets and more. They run in your browser, work offline, and share one project file. No accounts, no cloud.">
+<title>Open Filmmaker Toolkit: free tools for documentary and indie filmmakers</title>
+<meta name="description" content="Small, free tools for the business side of making a documentary or indie film: budgets, releases, grant deadlines, call sheets, clearances and credits. They run in your browser and keep your project on your computer.">
 <style>
 :root {
-  --paper: #f1f3f2; --sheet: #ffffff; --ink: #1a2130; --ink-2: #4b556a; --ink-3: #6d778a;
-  --rule: #d4dad8; --rule-soft: #e6eae8; --hover: #f6f8f7; --focus: #2f6fdb; --good: #2b7a57; --good-bg: #dff1e8;
-  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --paper: #f3f2ee; --sheet: #fbfaf7; --ink: #1c1c1a; --ink-2: #45453f; --ink-3: #5f5f57; --rule: #cfccc2; --rule-soft: #e2dfd6;
+  --tape: #1c1c1a; --tape-ink: #f3f2ee; --mark: #e2a72e; --focus: #1f5fd1; --hover: #ecebe5;
   --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
   color-scheme: light dark;
 }
 @media (prefers-color-scheme: dark) {
-  :root { --paper: #141922; --sheet: #1b212b; --ink: #e6e9ee; --ink-2: #a6afbd; --ink-3: #8790a0; --rule: #2f3744; --rule-soft: #262d38; --hover: #212834; --focus: #7aa7ff; --good: #4fb386; --good-bg: #1a3329; }
+  :root { --paper: #161614; --sheet: #1d1d1a; --ink: #ecebe5; --ink-2: #c4c3ba; --ink-3: #a3a298; --rule: #3a3a35; --rule-soft: #2b2b27; --tape: #ecebe5; --tape-ink: #161614; --mark: #e2a72e; --focus: #7aa7ff; --hover: #24241f; }
 }
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
 body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.55 var(--sans); }
-a { color: inherit; text-underline-offset: 2px; }
+a { color: inherit; text-underline-offset: 3px; }
+a:hover { text-decoration-thickness: 2px; }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 [hidden] { display: none !important; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.page { max-width: 1120px; margin: 0 auto; padding: 0 24px 56px; }
-.top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; padding: 22px 0; }
-.top img { display: block; width: 220px; height: auto; }
-.top nav { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; }
-.top nav a { color: var(--ink-2); }
-.hero { padding: 28px 0 8px; max-width: 760px; }
-.hero h1 { margin: 0 0 12px; font: 600 42px/1.1 var(--serif); letter-spacing: -0.015em; }
-.hero .lede { margin: 0 0 18px; font-size: 19px; color: var(--ink-2); }
-.promises { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 22px; padding: 0; list-style: none; }
-.promises li { padding: 4px 12px; border: 1px solid var(--rule); border-radius: 999px; background: var(--sheet); font-size: 14px; }
-.cta { display: flex; flex-wrap: wrap; gap: 10px; }
-.btn { display: inline-flex; align-items: center; padding: 10px 16px; border: 1px solid var(--rule); border-radius: 8px; background: var(--sheet); font-weight: 600; text-decoration: none; }
-.btn:hover { background: var(--hover); }
-.btn.primary { background: var(--ink); border-color: var(--ink); color: var(--paper); }
-.how { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin: 36px 0 8px; padding: 0; list-style: none; counter-reset: how; }
-.how li { position: relative; padding: 16px 16px 16px 52px; background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px; }
-.how li::before { counter-increment: how; content: counter(how); position: absolute; left: 16px; top: 16px; width: 24px; height: 24px; border-radius: 50%; background: var(--ink); color: var(--paper); font: 700 13px/24px var(--sans); text-align: center; }
-.how b { display: block; }
-.how span { color: var(--ink-2); font-size: 15px; }
-.finder { position: sticky; top: 0; z-index: 2; margin: 32px -24px 0; padding: 12px 24px; background: var(--paper); border-bottom: 1px solid var(--rule-soft); display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; }
-.finder input { flex: 1 1 280px; min-width: 0; padding: 10px 14px; border: 1px solid var(--rule); border-radius: 8px; background: var(--sheet); font: inherit; color: inherit; }
-.finder nav { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 14px; }
-.finder nav a { color: var(--ink-2); }
+.page { max-width: 1080px; margin: 0 auto; padding: 0 24px 56px; }
+.bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px 20px; padding: 18px 0 16px; border-bottom: 3px solid var(--ink); }
+.bar img { display: block; width: 200px; height: auto; }
+.bar nav { display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: 14px; }
+.intro { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 32px; padding: 28px 0 8px; align-items: start; }
+.intro h1 { margin: 0 0 12px; font-size: 30px; line-height: 1.2; letter-spacing: -0.01em; }
+.intro p { margin: 0 0 12px; font-size: 17px; color: var(--ink-2); max-width: 60ch; }
+.start { border: 1px solid var(--ink); background: var(--sheet); }
+.start h2 { margin: 0; padding: 6px 12px; background: var(--tape); color: var(--tape-ink); font: 600 13px/1.5 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; }
+.start ol { margin: 0; padding: 12px 14px 12px 34px; font-size: 15px; }
+.start li + li { margin-top: 6px; }
+.start .dl { display: block; margin: 0; padding: 10px 14px; border-top: 1px solid var(--rule); font-size: 14px; }
+.btn { display: inline-flex; align-items: center; padding: 8px 14px; border: 1px solid var(--ink); border-radius: 3px; background: var(--sheet); color: var(--ink); font-weight: 600; text-decoration: none; }
+.btn.primary { background: var(--ink); color: var(--paper); }
+.finder { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; margin: 24px -24px 0; padding: 10px 24px; background: var(--paper); border-bottom: 1px solid var(--rule); }
+.finder input { flex: 1 1 260px; min-width: 0; padding: 9px 12px; border: 1px solid var(--ink); border-radius: 3px; background: var(--sheet); font: inherit; color: inherit; }
+.finder nav { display: flex; flex-wrap: wrap; gap: 2px 14px; font: 13px/1.6 var(--mono); }
+.finder nav a { text-decoration: none; color: var(--ink-2); }
+.finder nav a:hover { text-decoration: underline; }
+.finder nav b { font-weight: 600; color: var(--ink-3); }
 .no-match { margin: 18px 0 0; color: var(--ink-2); }
-h2 { margin: 0; font: 600 28px/1.2 var(--serif); }
-.section-head { margin: 44px 0 14px; }
-.section-head p { margin: 4px 0 0; color: var(--ink-2); }
-.flows { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin: 0; padding: 0; list-style: none; }
-.flow { padding: 16px; background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px; }
-.flow h3 { margin: 0 0 8px; font-size: 16px; }
-.flow p { margin: 8px 0 0; font-size: 14px; color: var(--ink-2); }
-.steps { display: flex; flex-wrap: wrap; gap: 4px; margin: 0; padding: 0; list-style: none; font-size: 14px; }
-.steps li { display: inline-flex; align-items: center; gap: 4px; }
-.steps li + li::before { content: "→"; color: var(--ink-3); }
-.steps a { padding: 2px 8px; border-radius: 6px; background: var(--hover); border: 1px solid var(--rule-soft); text-decoration: none; }
-.steps a:hover { border-color: var(--ink-3); }
-.stage { margin: 48px 0 0; scroll-margin-top: 80px; }
-.stage-head { padding-bottom: 10px; border-bottom: 2px solid var(--ink); margin-bottom: 4px; }
-.stage-head p { margin: 4px 0 0; color: var(--ink-2); }
-.tally { margin-left: 6px; font-size: 13px; color: var(--ink-3); white-space: nowrap; }
-.phase { margin: 18px 0 0; }
-.phase h3 { margin: 0 0 8px; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
-.tools { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; margin: 0; padding: 0; list-style: none; }
-.tool { display: flex; flex-direction: column; padding: 16px; background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px; }
-.tool:hover { border-color: var(--ink-3); }
-.tool h4 { margin: 0 0 4px; font: 600 19px/1.25 var(--serif); }
-.tool h4 a { text-decoration: none; }
-.tool h4 a:hover { text-decoration: underline; }
-.tool .use { margin: 0 0 10px; font-size: 15px; color: var(--ink-2); flex: 1; }
-.tool .ww { margin: 0 0 10px; font-size: 13px; color: var(--ink-3); }
-.tool .ww span { font-weight: 600; margin-right: 4px; }
-.tool .links { margin: 0; font-size: 14px; color: var(--ink-3); }
-.tool .links .go { font-weight: 700; color: var(--ink); }
-.none { margin: 0 0 6px; color: var(--ink-3); font-style: italic; }
-.planned { margin: 10px 0 0; font-size: 14px; }
-.planned summary { cursor: pointer; color: var(--ink-2); }
-.planned ul { margin: 8px 0 0; padding: 0; list-style: none; display: grid; gap: 6px; }
-.planned li { padding-left: 14px; border-left: 2px solid var(--rule); }
-.planned li a { font-weight: 600; }
-.planned li span { display: block; color: var(--ink-2); }
-.others { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 18px; align-items: start; margin-top: 48px; padding: 22px; background: var(--sheet); border: 1px solid var(--rule); border-radius: 12px; }
-.others p { margin: 6px 0 0; color: var(--ink-2); }
-.others ul { margin: 0; padding-left: 18px; color: var(--ink-2); font-size: 15px; }
-.help { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin: 0; padding: 0; list-style: none; }
-.help li { padding: 16px; border: 1px solid var(--rule); border-radius: 10px; }
-.help b { display: block; margin-bottom: 4px; }
-.help span { color: var(--ink-2); font-size: 15px; }
-footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--rule); font-size: 13px; color: var(--ink-3); }
+.lead-h { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin: 30px 0 0; }
+.lead-h h2 { margin: 0; font-size: 22px; }
+.lead-h p { margin: 0; color: var(--ink-2); font-size: 15px; }
+.stage { margin: 26px 0 0; scroll-margin-top: 70px; }
+.section, #tools, #other, #help { scroll-margin-top: 70px; }
+.stage-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 0 12px; align-items: baseline; padding-bottom: 8px; border-bottom: 2px solid var(--ink); }
+.stage-head .num { grid-row: span 2; align-self: start; padding: 2px 7px; background: var(--tape); color: var(--tape-ink); font: 600 15px/1.4 var(--mono); }
+.stage-head h2 { margin: 0; font-size: 21px; }
+.stage-head p { grid-column: 2; margin: 0; color: var(--ink-2); font-size: 15px; }
+.stage-head .tally { grid-column: 3; grid-row: 1; font: 12.5px/1.6 var(--mono); color: var(--ink-3); white-space: nowrap; }
+.phase { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 0 18px; padding: 12px 0; border-bottom: 1px solid var(--rule); }
+.phase h3 { margin: 4px 0 0; font: 600 12.5px/1.5 var(--mono); letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-3); }
+.tools { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 24px; }
+.tool { padding: 8px 0 10px; border-top: 1px dotted var(--rule); }
+.tool:nth-child(-n+2) { border-top: 0; }
+.tool h4 { margin: 0; font-size: 16px; line-height: 1.35; }
+.tool h4 a { text-decoration: none; border-bottom: 2px solid var(--mark); }
+.tool h4 a:hover { background: var(--hover); }
+.tool .use { margin: 2px 0 0; font-size: 15px; color: var(--ink-2); }
+.tool .more { margin: 3px 0 0; font-size: 13px; color: var(--ink-3); }
+.planned, .none { grid-column: 2; }
+.none { margin: 4px 0 0; color: var(--ink-3); font-size: 15px; }
+.planned { margin: 8px 0 0; }
+.planned-h { margin: 0 0 2px; font: 12px/1.5 var(--mono); color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.05em; }
+.planned ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; font-size: 14px; }
+.planned li a { color: var(--ink-2); font-weight: 600; }
+.planned li span { color: var(--ink-3); }
+.section { margin: 44px 0 0; }
+.section > h2 { margin: 0 0 4px; font-size: 22px; }
+.section > p { margin: 0 0 14px; color: var(--ink-2); max-width: 70ch; }
+.flows { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 28px; border-top: 2px solid var(--ink); }
+.flow { padding: 10px 0 12px; border-bottom: 1px solid var(--rule); }
+.flow h3 { margin: 0 0 2px; font-size: 16px; }
+.flow p { margin: 0; font-size: 14.5px; color: var(--ink-2); }
+.flow .steps { margin: 2px 0 4px; color: var(--ink); }
+.flow .steps span { color: var(--ink-3); }
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px; margin: 44px 0 0; }
+.cols h2 { margin: 0 0 4px; font-size: 20px; }
+.cols p { margin: 0 0 10px; color: var(--ink-2); }
+.cols ul { margin: 0; padding-left: 18px; color: var(--ink-2); }
+.cols li + li { margin-top: 4px; }
+footer { margin-top: 48px; padding-top: 16px; border-top: 3px solid var(--ink); font-size: 13.5px; color: var(--ink-2); }
 footer p { margin: 0 0 8px; max-width: 80ch; }
 @media (max-width: 860px) {
-  .how, .flows, .help { grid-template-columns: 1fr; }
-  .others { grid-template-columns: 1fr; }
+  .intro, .cols { grid-template-columns: 1fr; }
+  .phase { grid-template-columns: 1fr; }
+  .planned, .none { grid-column: 1; }
+  .tools, .flows { grid-template-columns: 1fr; }
+  .tool:nth-child(2) { border-top: 1px dotted var(--rule); }
 }
 @media (max-width: 600px) {
   .page { padding: 0 16px 40px; }
-  .finder { margin: 24px -16px 0; padding: 10px 16px; }
-  .hero h1 { font-size: 32px; }
-  .hero .lede { font-size: 17px; }
-  .tools { grid-template-columns: 1fr; }
-  .top img { width: 180px; }
+  .finder { margin: 20px -16px 0; padding: 10px 16px; }
+  .intro h1 { font-size: 25px; }
+  .bar img { width: 170px; }
+  .stage-head { grid-template-columns: auto minmax(0, 1fr); }
+  .stage-head .tally { grid-column: 2; grid-row: auto; }
 }
-@media print { .finder, .cta, .top nav { display: none; } }
+@media print { .finder, .bar nav { display: none; } }
 </style>
 </head>
 <body>
 <div class="page">
-  <header class="top">
+  <header class="bar">
     <a href="./" aria-label="Open Filmmaker Toolkit home"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/logo-dark.svg"><img src="docs/assets/logo.svg" alt="Open Filmmaker Toolkit" width="220" height="44"></picture></a>
-    <nav aria-label="Project"><a href="#workflows">How they connect</a><a href="#help">Get involved</a><a href="https://github.com/open-filmmaker-toolkit/toolkit">GitHub</a></nav>
+    <nav aria-label="On this page"><a href="#tools">Tools</a><a href="#workflows">How they connect</a><a href="#other">Other software</a><a href="#help">Help out</a><a href="https://github.com/open-filmmaker-toolkit/toolkit">GitHub</a></nav>
   </header>
 
   <main>
-    <section class="hero" aria-labelledby="hero-h">
-      <h1 id="hero-h">Free tools for the paperwork behind your film.</h1>
-      <p class="lede">Clearances, releases, budgets, grants, call sheets and credits, for documentary and independent filmmakers. Each tool runs in your browser, and they all share one project file, so you enter things once.</p>
-      <ul class="promises" aria-label="What we promise">
-        <li>Free, forever</li><li>No accounts, no cloud</li><li>Your data stays on your computer</li><li>Works offline</li><li>Open source</li>
-      </ul>
-      <div class="cta">
-        <a class="btn primary" href="#develop">Browse the 46 tools</a>
-        <a class="btn" href="samples/the-river-keeps.oft.json" download>Download a sample project</a>
-        <a class="btn" href="https://github.com/open-filmmaker-toolkit/toolkit/archive/refs/heads/main.zip">Download everything to use offline</a>
+    <section class="intro" aria-labelledby="intro-h">
+      <div>
+        <h1 id="intro-h">Free tools for documentary and indie filmmakers</h1>
+        <p>For the business side of making a film: budgets, releases, grant deadlines, call sheets, clearances, credits. The stuff that usually ends up scattered across a dozen spreadsheets.</p>
+        <p>Each tool opens in your browser. There's nothing to install and no account to make. Your project is one file on your computer, and every tool reads the same file, so the people and places you add in one show up in the rest.</p>
+        <p>We're filmmakers building this in the open, and it's free.</p>
       </div>
+      <aside class="start" aria-labelledby="start-h">
+        <h2 id="start-h">Start here</h2>
+        <ol>
+          <li><a href="samples/the-river-keeps.oft.json" download>Download the sample project</a>, a made-up documentary called The River Keeps.</li>
+          <li>Open any tool below and choose <b>Open file</b> to see it with real-looking data.</li>
+          <li>When you start your own film, choose <b>New project</b> and save the file somewhere you'll find it again.</li>
+        </ol>
+        <p class="dl">Working offline? <a href="https://github.com/open-filmmaker-toolkit/toolkit/archive/refs/heads/main.zip">Download the whole toolkit</a> and open <code>index.html</code>.</p>
+      </aside>
     </section>
-
-    <ol class="how" aria-label="How it works">
-      <li><b>Open a tool.</b><span>Click any tool below. It opens in your browser, with nothing to install and no sign-up.</span></li>
-      <li><b>Open or start a project.</b><span>Your project is one file on your computer. Try the sample project to see the tools with data.</span></li>
-      <li><b>Save, then open it anywhere.</b><span>The same file opens in every tool, so the people, places and music you enter once show up everywhere.</span></li>
-    </ol>
 
     <div class="finder" id="finder" hidden>
       <label class="sr-only" for="q">Find a tool</label>
-      <input id="q" type="search" placeholder="What do you need to do? Try “releases” or “grant”" autocomplete="off">
-      <nav aria-label="Stages"><a href="#develop">Develop and fund</a><a href="#prep">Prep and shoot</a><a href="#finish">Edit and clear</a><a href="#launch">Launch</a><a href="#impact">Impact and wrap</a></nav>
+      <input id="q" type="search" placeholder="Find a tool: try “release” or “grant”" autocomplete="off">
+      <nav aria-label="Stages"><b>Jump to</b><a href="#develop">Develop and fund</a><a href="#prep">Prep and shoot</a><a href="#finish">Edit and clear</a><a href="#launch">Launch</a><a href="#impact">Impact and wrap</a></nav>
     </div>
-    <p class="no-match" id="noMatch" hidden>Nothing matches yet. <a href="https://github.com/open-filmmaker-toolkit/toolkit/issues/new?template=request-a-tool.yml">Ask for a tool</a>; that's how we decide what to build next.</p>
+    <p class="no-match" id="noMatch" hidden>Nothing matches that. <a href="https://github.com/open-filmmaker-toolkit/toolkit/issues/new?template=request-a-tool.yml">Tell us what you need</a>; requests are how we decide what to build next.</p>
 
-    <section aria-labelledby="workflows-h" id="workflows" data-block>
-      <div class="section-head"><h2 id="workflows-h">How the tools connect</h2><p>Because they share one project file, each tool picks up where the last one left off.</p></div>
-      <ul class="flows"><li class="flow" data-search="pitch the film subjects become people; the treatment, comps and team fill the deck. subject tracker treatment builder comps tracker pitch deck builder">
-        <h3>Pitch the film</h3>
-        <ol class="steps"><li><a href="tools/subject-tracker/index.html">Subject tracker</a></li><li><a href="tools/treatment-builder/index.html">Treatment builder</a></li><li><a href="tools/comps-tracker/index.html">Comps tracker</a></li><li><a href="tools/pitch-deck/index.html">Pitch deck builder</a></li></ol>
-        <p>Subjects become people; the treatment, comps and team fill the deck.</p>
-      </li><li class="flow" data-search="raise the money deadlines, the answers each application used, and every funder conversation, counted in the finance plan. grant calendar grant narrative library funder crm finance plan">
-        <h3>Raise the money</h3>
-        <ol class="steps"><li><a href="tools/grant-calendar/index.html">Grant calendar</a></li><li><a href="tools/narrative-library/index.html">Grant narrative library</a></li><li><a href="tools/funder-crm/index.html">Funder CRM</a></li><li><a href="tools/finance-plan/index.html">Finance plan</a></li></ol>
-        <p>Deadlines, the answers each application used, and every funder conversation, counted in the finance plan.</p>
-      </li><li class="flow" data-search="budget and cash one budget, converted for each funder, measured against what you’ve raised, and spread across the calendar. budget budget converter finance plan cash flow">
-        <h3>Budget and cash</h3>
-        <ol class="steps"><li><a href="tools/budget/index.html">Budget</a></li><li><a href="tools/budget-converter/index.html">Budget converter</a></li><li><a href="tools/finance-plan/index.html">Finance plan</a></li><li><a href="tools/cash-flow/index.html">Cash flow</a></li></ol>
-        <p>One budget, converted for each funder, measured against what you’ve raised, and spread across the calendar.</p>
-      </li><li class="flow" data-search="plan the shoot scouts add the places, interviews and shoot days use the same people, and each day starts its call sheet. location scout sheet interview prep shooting calendar call sheet release tracker">
-        <h3>Plan the shoot</h3>
-        <ol class="steps"><li><a href="tools/location-scout/index.html">Location scout sheet</a></li><li><a href="tools/interview-prep/index.html">Interview prep</a></li><li><a href="tools/shooting-calendar/index.html">Shooting calendar</a></li><li><a href="tools/call-sheet/index.html">Call sheet</a></li><li><a href="tools/release-tracker/index.html">Release tracker</a></li></ol>
-        <p>Scouts add the places, interviews and shoot days use the same people, and each day starts its call sheet.</p>
-      </li><li class="flow" data-search="hire the crew agreed rates go into the budget, the crew onto call sheets, and the credits they were promised into the end credits. deal memos budget call sheet credits builder">
-        <h3>Hire the crew</h3>
-        <ol class="steps"><li><a href="tools/deal-memos/index.html">Deal memos</a></li><li><a href="tools/budget/index.html">Budget</a></li><li><a href="tools/call-sheet/index.html">Call sheet</a></li><li><a href="tools/credits-builder/index.html">Credits builder</a></li></ol>
-        <p>Agreed rates go into the budget, the crew onto call sheets, and the credits they were promised into the end credits.</p>
-      </li><li class="flow" data-search="ready each day gear is packed for each shoot day, rental houses and locations send their certificates, permits come through, and anything missing is flagged before the day. shooting calendar gear list coi and permit tracker call sheet">
-        <h3>Ready each day</h3>
-        <ol class="steps"><li><a href="tools/shooting-calendar/index.html">Shooting calendar</a></li><li><a href="tools/gear-list/index.html">Gear list</a></li><li><a href="tools/coi-permit-tracker/index.html">COI and permit tracker</a></li><li><a href="tools/call-sheet/index.html">Call sheet</a></li></ol>
-        <p>Gear is packed for each shoot day, rental houses and locations send their certificates, permits come through, and anything missing is flagged before the day.</p>
-      </li><li class="flow" data-search="travel safely trips come from the shooting calendar; the risk plan uses the same people, places and hospitals; the checklist covers devices and footage. shooting calendar travel sheet risk and hostile-environment plans security checklist">
-        <h3>Travel safely</h3>
-        <ol class="steps"><li><a href="tools/shooting-calendar/index.html">Shooting calendar</a></li><li><a href="tools/travel-sheet/index.html">Travel sheet</a></li><li><a href="tools/risk-plan/index.html">Risk and hostile-environment plans</a></li><li><a href="tools/security-checklist/index.html">Security checklist</a></li></ol>
-        <p>Trips come from the shooting calendar; the risk plan uses the same people, places and hospitals; the checklist covers devices and footage.</p>
-      </li><li class="flow" data-search="from shoot to edit each day’s cards are logged, every clip is cataloged, interviews are logged with their best moments, and the transcripts become a paper edit and an edit list. camera and sound reports footage log interview log paper edit">
-        <h3>From shoot to edit</h3>
-        <ol class="steps"><li><a href="tools/camera-sound-reports/index.html">Camera and sound reports</a></li><li><a href="tools/footage-log/index.html">Footage log</a></li><li><a href="tools/interview-log/index.html">Interview log</a></li><li><a href="tools/paper-edit/index.html">Paper edit</a></li></ol>
-        <p>Each day’s cards are logged, every clip is cataloged, interviews are logged with their best moments, and the transcripts become a paper edit and an edit list.</p>
-      </li><li class="flow" data-search="edit to lock bites become scenes on the board, each cut’s notes are tied to those scenes, and the locked cut’s version and running time go to the clearance log and cue sheet. paper edit structure board cut version tracker clearance log music cue sheet">
-        <h3>Edit to lock</h3>
-        <ol class="steps"><li><a href="tools/paper-edit/index.html">Paper edit</a></li><li><a href="tools/structure-board/index.html">Structure board</a></li><li><a href="tools/cut-tracker/index.html">Cut version tracker</a></li><li><a href="tools/clearance-log/index.html">Clearance log</a></li><li><a href="tools/music-cue-sheet/index.html">Music cue sheet</a></li></ol>
-        <p>Bites become scenes on the board, each cut’s notes are tied to those scenes, and the locked cut’s version and running time go to the clearance log and cue sheet.</p>
-      </li><li class="flow" data-search="track the spending spending is logged against the budget’s accounts as it happens, and the cost report shows each line’s variance and what’s left to spend. budget expense log budget-to-actuals">
-        <h3>Track the spending</h3>
-        <ol class="steps"><li><a href="tools/budget/index.html">Budget</a></li><li><a href="tools/expense-log/index.html">Expense log</a></li><li><a href="tools/budget-to-actuals/index.html">Budget-to-actuals</a></li></ol>
-        <p>Spending is logged against the budget’s accounts as it happens, and the cost report shows each line’s variance and what’s left to spend.</p>
-      </li><li class="flow" data-search="clear the film archival leads become clearance items; music and archive flow into the cue sheet and credits. research and archival log clearance log music cue sheet credits builder">
-        <h3>Clear the film</h3>
-        <ol class="steps"><li><a href="tools/research-log/index.html">Research and archival log</a></li><li><a href="tools/clearance-log/index.html">Clearance log</a></li><li><a href="tools/music-cue-sheet/index.html">Music cue sheet</a></li><li><a href="tools/credits-builder/index.html">Credits builder</a></li></ol>
-        <p>Archival leads become clearance items; music and archive flow into the cue sheet and credits.</p>
-      </li><li class="flow" data-search="ready for e&amp;o and delivery each element is licensed, written up as fair use or replaced; the script is annotated for the e&amp;o insurer, and the documents go into the binder for the distributor. clearance log license tracker fair use log annotated-transcript clearance report chain-of-title binder">
-        <h3>Ready for E&amp;O and delivery</h3>
-        <ol class="steps"><li><a href="tools/clearance-log/index.html">Clearance log</a></li><li><a href="tools/license-tracker/index.html">License tracker</a></li><li><a href="tools/fair-use-log/index.html">Fair use log</a></li><li><a href="tools/clearance-report/index.html">Annotated-transcript clearance report</a></li><li><a href="tools/chain-of-title/index.html">Chain-of-title binder</a></li></ol>
-        <p>Each element is licensed, written up as fair use or replaced; the script is annotated for the E&amp;O insurer, and the documents go into the binder for the distributor.</p>
-      </li><li class="flow" data-search="get the names right people added once are spelled the same in the supers on screen and in the end credits. subject tracker name supers list credits builder">
-        <h3>Get the names right</h3>
-        <ol class="steps"><li><a href="tools/subject-tracker/index.html">Subject tracker</a></li><li><a href="tools/name-supers/index.html">Name supers list</a></li><li><a href="tools/credits-builder/index.html">Credits builder</a></li></ol>
-        <p>People added once are spelled the same in the supers on screen and in the end credits.</p>
-      </li></ul>
+    <section aria-labelledby="tools-h" id="tools" data-block>
+      <div class="lead-h"><h2 id="tools-h">The tools</h2><p>46 ready, in roughly the order you'll need them. The planned ones link to their plans; say hello there if you want one sooner.</p></div>
     </section>
-
     <section class="stage" id="develop" aria-labelledby="develop-h">
-      <div class="stage-head"><h2 id="develop-h">Develop and fund</h2><p>From the first research to the money to make it. <span class="tally">10 ready</span></p></div>
-      <div class="phase" data-phase>
-        <h3>Development</h3>
-        <ul class="tools"><li class="tool" data-search="subject tracker keeping track of the people you might film, where access stands and when to follow up, then adding them to your project people subjects">
-          <h4><a href="tools/subject-tracker/index.html">Subject tracker</a></h4>
-          <p class="use">Keeping track of the people you might film, where access stands and when to follow up, then adding them to your project</p>
-          <p class="ww"><span>Works with</span> people, subjects</p>
-          <p class="links"><a class="go" href="tools/subject-tracker/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/subject-tracker/README.md">How it works</a> · <a href="templates/subject-tracker-template.csv" download>Blank spreadsheet</a></p>
-        </li><li class="tool" data-search="research and archival log logging archival leads and research sources as you find them, and sending leads to the clearance log when they&#x27;re ready third-party material research sources">
-          <h4><a href="tools/research-log/index.html">Research and archival log</a></h4>
-          <p class="use">Logging archival leads and research sources as you find them, and sending leads to the clearance log when they&#x27;re ready</p>
-          <p class="ww"><span>Works with</span> third-party material, research sources</p>
-          <p class="links"><a class="go" href="tools/research-log/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/research-log/README.md">How it works</a> · <a href="templates/research-log-template.csv" download>Blank spreadsheet</a></p>
-        </li><li class="tool" data-search="comps tracker tracking comparable films for pitches and sales, with a source for every figure, and printing a comps page comps">
-          <h4><a href="tools/comps-tracker/index.html">Comps tracker</a></h4>
-          <p class="use">Tracking comparable films for pitches and sales, with a source for every figure, and printing a comps page</p>
-          <p class="ww"><span>Works with</span> comps</p>
-          <p class="links"><a class="go" href="tools/comps-tracker/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/comps-tracker/README.md">How it works</a> · <a href="templates/comps-tracker-template.csv" download>Blank spreadsheet</a></p>
-        </li><li class="tool" data-search="treatment builder writing a treatment section by section, with word counts against your targets and versions you can compare people subjects treatment">
-          <h4><a href="tools/treatment-builder/index.html">Treatment builder</a></h4>
-          <p class="use">Writing a treatment section by section, with word counts against your targets and versions you can compare</p>
-          <p class="ww"><span>Works with</span> people, subjects, treatment</p>
-          <p class="links"><a class="go" href="tools/treatment-builder/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/treatment-builder/README.md">How it works</a> · <a href="templates/treatment-template.docx" download>Blank Word doc</a></p>
-        </li><li class="tool" data-search="pitch deck builder putting together a pitch deck or lookbook from your project and your own stills, for screen or print people comps treatment pitch deck">
-          <h4><a href="tools/pitch-deck/index.html">Pitch deck builder</a></h4>
-          <p class="use">Putting together a pitch deck or lookbook from your project and your own stills, for screen or print</p>
-          <p class="ww"><span>Works with</span> people, comps, treatment, pitch deck</p>
-          <p class="links"><a class="go" href="tools/pitch-deck/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/pitch-deck/README.md">How it works</a> · <a href="templates/pitch-deck-template.docx" download>Blank Word doc</a></p>
-        </li></ul>
-        
-      </div><div class="phase" data-phase>
-        <h3>Funding</h3>
-        <ul class="tools"><li class="tool" data-search="grant calendar seeing every grant and fund deadline in one place, with what each application needs and where it stands, and sending the deadlines to your calendar grants grant answers">
-          <h4><a href="tools/grant-calendar/index.html">Grant calendar</a></h4>
-          <p class="use">Seeing every grant and fund deadline in one place, with what each application needs and where it stands, and sending the deadlines to your calendar</p>
-          <p class="ww"><span>Works with</span> grants, grant answers</p>
-          <p class="links"><a class="go" href="tools/grant-calendar/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/grant-calendar/README.md">How it works</a> · <a href="templates/grant-calendar-template.csv" download>Blank spreadsheet</a></p>
-        </li><li class="tool" data-search="grant narrative library keeping your application answers in every length funders ask for, with live counts, and noting which funder got which version treatment grants grant answers">
-          <h4><a href="tools/narrative-library/index.html">Grant narrative library</a></h4>
-          <p class="use">Keeping your application answers in every length funders ask for, with live counts, and noting which funder got which version</p>
-          <p class="ww"><span>Works with</span> treatment, grants, grant answers</p>
-          <p class="links"><a class="go" href="tools/narrative-library/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/narrative-library/README.md">How it works</a> · <a href="templates/grant-narrative-library-template.docx" download>Blank Word doc</a></p>
-        </li><li class="tool" data-search="budget converter turning your budget into the categories each funder asks for, flagging what doesn&#x27;t map, and saving the mapping for next time grants budget funder formats">
-          <h4><a href="tools/budget-converter/index.html">Budget converter</a></h4>
-          <p class="use">Turning your budget into the categories each funder asks for, flagging what doesn&#x27;t map, and saving the mapping for next time</p>
-          <p class="ww"><span>Works with</span> grants, budget, funder formats</p>
-          <p class="links"><a class="go" href="tools/budget-converter/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/budget-converter/README.md">How it works</a></p>
-        </li><li class="tool" data-search="finance plan showing how the film gets paid for, against the budget: the gap still to raise and when the money arrives grants budget finance plan">
-          <h4><a href="tools/finance-plan/index.html">Finance plan</a></h4>
-          <p class="use">Showing how the film gets paid for, against the budget: the gap still to raise and when the money arrives</p>
-          <p class="ww"><span>Works with</span> grants, budget, finance plan</p>
-          <p class="links"><a class="go" href="tools/finance-plan/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/finance-plan/README.md">How it works</a> · <a href="templates/finance-plan-template.csv" download>Blank spreadsheet</a></p>
-        </li><li class="tool" data-search="funder crm keeping track of funders, investors and broadcasters: the people you know there, every meeting, call and email, and the next step with each grants funders">
-          <h4><a href="tools/funder-crm/index.html">Funder CRM</a></h4>
-          <p class="use">Keeping track of funders, investors and broadcasters: the people you know there, every meeting, call and email, and the next step with each</p>
-          <p class="ww"><span>Works with</span> grants, funders</p>
-          <p class="links"><a class="go" href="tools/funder-crm/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/funder-crm/README.md">How it works</a> · <a href="templates/funder-crm-template.csv" download>Blank spreadsheet</a></p>
-        </li></ul>
-        
-      </div>
+      <div class="stage-head"><span class="num" aria-hidden="true">01</span><h2 id="develop-h">Develop and fund</h2><p>Research, pitching and finding the money.</p><span class="tally">10 ready</span></div>
+      <div class="phase" data-phase><h3>Development</h3><ul class="tools"><li class="tool" data-search="subject tracker keep track of the people you might film, and when to follow up. people, subjects"><h4><a href="tools/subject-tracker/index.html">Subject tracker</a></h4><p class="use">Keep track of the people you might film, and when to follow up.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/subject-tracker/README.md">How it works</a> · <a href="templates/subject-tracker-template.csv" download>Spreadsheet version</a></p></li><li class="tool" data-search="research and archival log write down archival leads and sources as you find them. third-party material, research sources"><h4><a href="tools/research-log/index.html">Research and archival log</a></h4><p class="use">Write down archival leads and sources as you find them.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/research-log/README.md">How it works</a> · <a href="templates/research-log-template.csv" download>Spreadsheet version</a></p></li><li class="tool" data-search="comps tracker comparable films for your pitch, with where every number came from. comps"><h4><a href="tools/comps-tracker/index.html">Comps tracker</a></h4><p class="use">Comparable films for your pitch, with where every number came from.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/comps-tracker/README.md">How it works</a> · <a href="templates/comps-tracker-template.csv" download>Spreadsheet version</a></p></li><li class="tool" data-search="treatment builder write your treatment a section at a time, with word counts. people, subjects, treatment"><h4><a href="tools/treatment-builder/index.html">Treatment builder</a></h4><p class="use">Write your treatment a section at a time, with word counts.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/treatment-builder/README.md">How it works</a> · <a href="templates/treatment-template.docx" download>Spreadsheet version</a></p></li><li class="tool" data-search="pitch deck builder make a pitch deck or lookbook from your project and your own stills. people, comps, treatment, pitch deck"><h4><a href="tools/pitch-deck/index.html">Pitch deck builder</a></h4><p class="use">Make a pitch deck or lookbook from your project and your own stills.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/pitch-deck/README.md">How it works</a> · <a href="templates/pitch-deck-template.docx" download>Spreadsheet version</a></p></li></ul></div><div class="phase" data-phase><h3>Funding</h3><ul class="tools"><li class="tool" data-search="grant calendar every grant deadline in one place, and what each application needs. grants, grant answers"><h4><a href="tools/grant-calendar/index.html">Grant calendar</a></h4><p class="use">Every grant deadline in one place, and what each application needs.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/grant-calendar/README.md">How it works</a> · <a href="templates/grant-calendar-template.csv" download>Spreadsheet version</a></p></li><li class="tool" data-search="grant narrative library your application answers, in every length funders ask for. treatment, grants, grant answers"><h4><a href="tools/narrative-library/index.html">Grant narrative library</a></h4><p class="use">Your application answers, in every length funders ask for.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/narrative-library/README.md">How it works</a> · <a href="templates/grant-narrative-library-template.docx" download>Spreadsheet version</a></p></li><li class="tool" data-search="budget converter put your budget into the categories a funder wants. grants, budget, funder formats"><h4><a href="tools/budget-converter/index.html">Budget converter</a></h4><p class="use">Put your budget into the categories a funder wants.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/budget-converter/README.md">How it works</a></p></li><li class="tool" data-search="finance plan how the film gets paid for, and how much you still need to raise. grants, budget, finance plan"><h4><a href="tools/finance-plan/index.html">Finance plan</a></h4><p class="use">How the film gets paid for, and how much you still need to raise.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/finance-plan/README.md">How it works</a> · <a href="templates/finance-plan-template.csv" download>Spreadsheet version</a></p></li><li class="tool" data-search="funder crm who you know at each funder, and what you said you&#x27;d do next. grants, funders"><h4><a href="tools/funder-crm/index.html">Funder CRM</a></h4><p class="use">Who you know at each funder, and what you said you&#x27;d do next.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/funder-crm/README.md">How it works</a> · <a href="templates/funder-crm-template.csv" download>Spreadsheet version</a></p></li></ul></div>
     </section><section class="stage" id="prep" aria-labelledby="prep-h">
-      <div class="stage-head"><h2 id="prep-h">Prep and shoot</h2><p>Budget, schedule and the days you film. <span class="tally">18 ready</span></p></div>
-      <div class="phase" data-phase>
-        <h3>Pre-production</h3>
-        <ul class="tools"><li class="tool" data-search="budget building a documentary or indie budget with detail lines, fringes and contingency that roll up to a top sheet, with versions to compare budget">
-          <h4><a href="tools/budget/index.html">Budget</a></h4>
-          <p class="use">Building a documentary or indie budget with detail lines, fringes and contingency that roll up to a top sheet, with versions to compare</p>
-          <p class="ww"><span>Works with</span> budget</p>
-          <p class="links"><a class="go" href="tools/budget/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/budget/README.md">How it works</a> · <a href="templates/budget-template.csv" download>Blank spreadsheet</a></p>
-        </li><li class="tool" data-search="cash flow planning when money goes out and comes in, month by month or week by week, from the budget and the finance plan, and seeing where the balance runs short grants budget finance plan cash flow">
-          <h4><a href="tools/cash-flow/index.html">Cash flow</a></h4>
-          <p class="use">Planning when money goes out and comes in, month by month or week by week, from the budget and the finance plan, and seeing where the balance runs short</p>
-          <p class="ww"><span>Works with</span> grants, budget, finance plan, cash flow</p>
-          <p class="links"><a class="go" href="tools/cash-flow/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/cash-flow/README.md">How it works</a> · <a href="templates/cash-flow-template.csv" download>Blank spreadsheet</a></p>
-        </li><li class="tool" data-search="shooting calendar planning shoot days, travel days and holds across weeks or months, with who&#x27;s needed and where, and starting each day&#x27;s call sheet people locations call sheets shoot days">
-          <h4><a href="tools/shooting-calendar/index.html">Shooting calendar</a></h4>
-          <p class="use">Planning shoot days, travel days and holds across weeks or months, with who&#x27;s needed and where, and starting each day&#x27;s call sheet</p>
-          <p class="ww"><span>Works with</span> people, locations, call sheets, shoot days</p>
-          <p class="links"><a class="go" href="tools/shooting-calendar/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/shooting-calendar/README.md">How it works</a> · <a href="templates/shooting-calendar-template.csv" download>Blank spreadsheet</a></p>
-        </li><li class="tool" data-search="interview prep preparing each interview: research, the story beats to cover, questions in order with must-asks marked, and a one-page guide to print people locations subjects shoot days interviews">
-          <h4><a href="tools/interview-prep/index.html">Interview prep</a></h4>
-          <p class="use">Preparing each interview: research, the story beats to cover, questions in order with must-asks marked, and a one-page guide to print</p>
-          <p class="ww"><span>Works with</span> people, locations, subjects, shoot days, interviews</p>
-          <p class="links"><a class="go" href="tools/interview-prep/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/interview-prep/README.md">How it works</a> · <a href="templates/interview-questions-template.csv" download>Blank spreadsheet</a></p>
-        </li><li class="tool" data-search="location scout sheet recording what you learn on a scout, with your photos, linked to the place and its release, and printing a scout report for the crew locations releases and contracts scans and files location scouts">
-          <h4><a href="tools/location-scout/index.html">Location scout sheet</a></h4>
-          <p class="use">Recording what you learn on a scout, with your photos, linked to the place and its release, and printing a scout report for the crew</p>
-          <p class="ww"><span>Works with</span> locations, releases and contracts, scans and files, location scouts</p>
-          <p class="links"><a class="go" href="tools/location-scout/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/location-scout/README.md">How it works</a> · <a href="templates/location-scout-template.csv" download>Blank spreadsheet</a> <a href="templates/location-scout-template.docx" download>Blank Word doc</a></p>
-        </li><li class="tool" data-search="deal memos filling in crew deal memos from the project, printing them to sign, keeping the signed copy and sending the rates to the budget people releases and contracts scans and files call sheets budget shoot days">
-          <h4><a href="tools/deal-memos/index.html">Deal memos</a></h4>
-          <p class="use">Filling in crew deal memos from the project, printing them to sign, keeping the signed copy and sending the rates to the budget</p>
-          <p class="ww"><span>Works with</span> people, releases and contracts, scans and files, call sheets, budget, shoot days</p>
-          <p class="links"><a class="go" href="tools/deal-memos/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/deal-memos/README.md">How it works</a> · <a href="templates/deal-memos-template.csv" download>Blank spreadsheet</a> <a href="templates/legal-forms/deal-memo-template.docx" download>Form to sign</a></p>
-        </li><li class="tool" data-search="gear list listing the gear by department, owned, borrowed or rented, packing it by shoot day, and printing load-out checklists and the schedule your insurer asks for locations shoot days gear">
-          <h4><a href="tools/gear-list/index.html">Gear list</a></h4>
-          <p class="use">Listing the gear by department, owned, borrowed or rented, packing it by shoot day, and printing load-out checklists and the schedule your insurer asks for</p>
-          <p class="ww"><span>Works with</span> locations, shoot days, gear</p>
-          <p class="links"><a class="go" href="tools/gear-list/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/gear-list/README.md">How it works</a> · <a href="templates/gear-list-template.csv" download>Blank spreadsheet</a></p>
-        </li><li class="tool" data-search="coi and permit tracker tracking certificates of insurance and filming permits for each vendor and location, and seeing what&#x27;s missing or expiring before each shoot day locations releases and contracts scans and files shoot days gear">
-          <h4><a href="tools/coi-permit-tracker/index.html">COI and permit tracker</a></h4>
-          <p class="use">Tracking certificates of insurance and filming permits for each vendor and location, and seeing what&#x27;s missing or expiring before each shoot day</p>
-          <p class="ww"><span>Works with</span> locations, releases and contracts, scans and files, shoot days, gear</p>
-          <p class="links"><a class="go" href="tools/coi-permit-tracker/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/coi-permit-tracker/README.md">How it works</a> · <a href="templates/certificates-and-permits-template.csv" download>Blank spreadsheet</a></p>
-        </li><li class="tool" data-search="travel sheet giving everyone on a trip one sheet with their flights, hotels, ground transport, local contacts, the emergency number and the nearest hospital people locations call sheets shoot days trips">
-          <h4><a href="tools/travel-sheet/index.html">Travel sheet</a></h4>
-          <p class="use">Giving everyone on a trip one sheet with their flights, hotels, ground transport, local contacts, the emergency number and the nearest hospital</p>
-          <p class="ww"><span>Works with</span> people, locations, call sheets, shoot days, trips</p>
-          <p class="links"><a class="go" href="tools/travel-sheet/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/travel-sheet/README.md">How it works</a> · <a href="templates/travel-sheet-template.csv" download>Blank spreadsheet</a></p>
-        </li><li class="tool" data-search="risk and hostile-environment plans planning for risk on a shoot, especially in hostile environments: hazards rated with what you&#x27;ll do about them, emergency contacts, hospitals, a way out and check-ins people locations call sheets shoot days risk plans">
-          <h4><a href="tools/risk-plan/index.html">Risk and hostile-environment plans</a></h4>
-          <p class="use">Planning for risk on a shoot, especially in hostile environments: hazards rated with what you&#x27;ll do about them, emergency contacts, hospitals, a way out and check-ins</p>
-          <p class="ww"><span>Works with</span> people, locations, call sheets, shoot days, risk plans</p>
-          <p class="links"><a class="go" href="tools/risk-plan/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/risk-plan/README.md">How it works</a> · <a href="templates/risk-assessment-template.csv" download>Blank spreadsheet</a></p>
-        </li><li class="tool" data-search="security checklist protecting footage, sources and devices on sensitive productions, with a checklist for digital and physical security ticked off for each person on the crew people call sheets shoot days security checklist">
-          <h4><a href="tools/security-checklist/index.html">Security checklist</a></h4>
-          <p class="use">Protecting footage, sources and devices on sensitive productions, with a checklist for digital and physical security ticked off for each person on the crew</p>
-          <p class="ww"><span>Works with</span> people, call sheets, shoot days, security checklist</p>
-          <p class="links"><a class="go" href="tools/security-checklist/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/security-checklist/README.md">How it works</a> · <a href="templates/security-checklist-template.csv" download>Blank spreadsheet</a></p>
-        </li></ul>
-        
-      </div><div class="phase" data-phase>
-        <h3>Production</h3>
-        <ul class="tools"><li class="tool" data-search="call sheet building shoot-day call sheets from the people and locations in your project; weather lookup is optional and off until you click it people locations call sheets">
-          <h4><a href="tools/call-sheet/index.html">Call sheet</a></h4>
-          <p class="use">Building shoot-day call sheets from the people and locations in your project; weather lookup is optional and off until you click it</p>
-          <p class="ww"><span>Works with</span> people, locations, call sheets</p>
-          <p class="links"><a class="go" href="tools/call-sheet/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/call-sheet/README.md">How it works</a> · <a href="templates/call-sheet-template.csv" download>Blank spreadsheet</a></p>
-        </li><li class="tool" data-search="camera and sound reports logging what was shot on each card: camera reports with clips, codec, frame rate and lens notes, and sound reports with each file and its tracks, linked to the shoot day people locations scans and files call sheets shoot days camera and sound reports">
-          <h4><a href="tools/camera-sound-reports/index.html">Camera and sound reports</a></h4>
-          <p class="use">Logging what was shot on each card: camera reports with clips, codec, frame rate and lens notes, and sound reports with each file and its tracks, linked to the shoot day</p>
-          <p class="ww"><span>Works with</span> people, locations, scans and files, call sheets, shoot days, camera and sound reports</p>
-          <p class="links"><a class="go" href="tools/camera-sound-reports/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/camera-sound-reports/README.md">How it works</a> · <a href="templates/camera-and-sound-reports-template.csv" download>Blank spreadsheet</a></p>
-        </li><li class="tool" data-search="interview log logging each interview: who, when, where, which cards, and timestamped moments with favorites marked, linked to the release and transcript, and exported for the paper edit people locations releases and contracts scans and files shoot days interviews camera and sound reports">
-          <h4><a href="tools/interview-log/index.html">Interview log</a></h4>
-          <p class="use">Logging each interview: who, when, where, which cards, and timestamped moments with favorites marked, linked to the release and transcript, and exported for the paper edit</p>
-          <p class="ww"><span>Works with</span> people, locations, releases and contracts, scans and files, shoot days, interviews, camera and sound reports</p>
-          <p class="links"><a class="go" href="tools/interview-log/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/interview-log/README.md">How it works</a> · <a href="templates/interview-moments-template.csv" download>Blank spreadsheet</a></p>
-        </li><li class="tool" data-search="release tracker tracking who signed what: appearance, location and materials releases, with the signed copies, and flagging anyone on camera with no release on file people locations third-party material releases and contracts scans and files call sheets">
-          <h4><a href="tools/release-tracker/index.html">Release tracker</a></h4>
-          <p class="use">Tracking who signed what: appearance, location and materials releases, with the signed copies, and flagging anyone on camera with no release on file</p>
-          <p class="ww"><span>Works with</span> people, locations, third-party material, releases and contracts, scans and files, call sheets</p>
-          <p class="links"><a class="go" href="tools/release-tracker/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/release-tracker/README.md">How it works</a> · <a href="templates/release-log-template.csv" download>Blank spreadsheet</a> <a href="templates/release-log-template.docx" download>Blank Word doc</a></p>
-        </li><li class="tool" data-search="field journal keeping a dated journal of the production: what happened, what you learned and story ideas, tagged with people and places and linked to shoot days people locations call sheets">
-          <h4><a href="tools/field-journal/index.html">Field journal</a></h4>
-          <p class="use">Keeping a dated journal of the production: what happened, what you learned and story ideas, tagged with people and places and linked to shoot days</p>
-          <p class="ww"><span>Works with</span> people, locations, call sheets</p>
-          <p class="links"><a class="go" href="tools/field-journal/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/field-journal/README.md">How it works</a></p>
-        </li><li class="tool" data-search="daily production report recording each shoot day: call, meal and wrap times and hours for crew and talent, what was shot, and incidents and delays people call sheets shoot days camera and sound reports">
-          <h4><a href="tools/daily-production-report/index.html">Daily production report</a></h4>
-          <p class="use">Recording each shoot day: call, meal and wrap times and hours for crew and talent, what was shot, and incidents and delays</p>
-          <p class="ww"><span>Works with</span> people, call sheets, shoot days, camera and sound reports</p>
-          <p class="links"><a class="go" href="tools/daily-production-report/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/daily-production-report/README.md">How it works</a></p>
-        </li><li class="tool" data-search="expense log logging production expenses against budget accounts while keeping receipt files on your computer budget people shoot days scans and files">
-          <h4><a href="tools/expense-log/index.html">Expense log</a></h4>
-          <p class="use">Logging production expenses against budget accounts while keeping receipt files on your computer</p>
-          <p class="ww"><span>Works with</span> budget, people, shoot days, scans and files</p>
-          <p class="links"><a class="go" href="tools/expense-log/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/expense-log/README.md">How it works</a></p>
-        </li></ul>
-      </div>
+      <div class="stage-head"><span class="num" aria-hidden="true">02</span><h2 id="prep-h">Prep and shoot</h2><p>The budget, the schedule, the crew, and the days you film.</p><span class="tally">18 ready</span></div>
+      <div class="phase" data-phase><h3>Pre-production</h3><ul class="tools"><li class="tool" data-search="budget a real production budget, from detail lines up to the top sheet. budget"><h4><a href="tools/budget/index.html">Budget</a></h4><p class="use">A real production budget, from detail lines up to the top sheet.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/budget/README.md">How it works</a> · <a href="templates/budget-template.csv" download>Spreadsheet version</a></p></li><li class="tool" data-search="cash flow when money goes out and comes in, and the months you&#x27;ll run short. grants, budget, finance plan, cash flow"><h4><a href="tools/cash-flow/index.html">Cash flow</a></h4><p class="use">When money goes out and comes in, and the months you&#x27;ll run short.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/cash-flow/README.md">How it works</a> · <a href="templates/cash-flow-template.csv" download>Spreadsheet version</a></p></li><li class="tool" data-search="shooting calendar shoot days, travel days and holds, with who&#x27;s needed where. people, locations, call sheets, shoot days"><h4><a href="tools/shooting-calendar/index.html">Shooting calendar</a></h4><p class="use">Shoot days, travel days and holds, with who&#x27;s needed where.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/shooting-calendar/README.md">How it works</a> · <a href="templates/shooting-calendar-template.csv" download>Spreadsheet version</a></p></li><li class="tool" data-search="interview prep research and questions for each interview, on one page you can print. people, locations, subjects, shoot days, interviews"><h4><a href="tools/interview-prep/index.html">Interview prep</a></h4><p class="use">Research and questions for each interview, on one page you can print.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/interview-prep/README.md">How it works</a> · <a href="templates/interview-questions-template.csv" download>Spreadsheet version</a></p></li><li class="tool" data-search="location scout sheet what you found on a scout, with photos, for the rest of the crew. locations, releases and contracts, scans and files, location scouts"><h4><a href="tools/location-scout/index.html">Location scout sheet</a></h4><p class="use">What you found on a scout, with photos, for the rest of the crew.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/location-scout/README.md">How it works</a> · <a href="templates/location-scout-template.csv" download>Spreadsheet version</a></p></li><li class="tool" data-search="deal memos crew deal memos to print and sign, with the rates sent to the budget. people, releases and contracts, scans and files, call sheets, budget, shoot days"><h4><a href="tools/deal-memos/index.html">Deal memos</a></h4><p class="use">Crew deal memos to print and sign, with the rates sent to the budget.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/deal-memos/README.md">How it works</a> · <a href="templates/deal-memos-template.csv" download>Spreadsheet version</a></p></li><li class="tool" data-search="gear list what gear you&#x27;re bringing, where it&#x27;s from, and what goes out each day. locations, shoot days, gear"><h4><a href="tools/gear-list/index.html">Gear list</a></h4><p class="use">What gear you&#x27;re bringing, where it&#x27;s from, and what goes out each day.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/gear-list/README.md">How it works</a> · <a href="templates/gear-list-template.csv" download>Spreadsheet version</a></p></li><li class="tool" data-search="coi and permit tracker insurance certificates and permits, and what&#x27;s still missing before each shoot day. locations, releases and contracts, scans and files, shoot days, gear"><h4><a href="tools/coi-permit-tracker/index.html">COI and permit tracker</a></h4><p class="use">Insurance certificates and permits, and what&#x27;s still missing before each shoot day.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/coi-permit-tracker/README.md">How it works</a> · <a href="templates/certificates-and-permits-template.csv" download>Spreadsheet version</a></p></li><li class="tool" data-search="travel sheet flights, hotels and who to call, on one sheet for everyone on the trip. people, locations, call sheets, shoot days, trips"><h4><a href="tools/travel-sheet/index.html">Travel sheet</a></h4><p class="use">Flights, hotels and who to call, on one sheet for everyone on the trip.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/travel-sheet/README.md">How it works</a> · <a href="templates/travel-sheet-template.csv" download>Spreadsheet version</a></p></li><li class="tool" data-search="risk and hostile-environment plans what could go wrong on a shoot, and the plan if it does. people, locations, call sheets, shoot days, risk plans"><h4><a href="tools/risk-plan/index.html">Risk and hostile-environment plans</a></h4><p class="use">What could go wrong on a shoot, and the plan if it does.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/risk-plan/README.md">How it works</a> · <a href="templates/risk-assessment-template.csv" download>Spreadsheet version</a></p></li><li class="tool" data-search="security checklist keep footage, sources and devices safe on a sensitive shoot. people, call sheets, shoot days, security checklist"><h4><a href="tools/security-checklist/index.html">Security checklist</a></h4><p class="use">Keep footage, sources and devices safe on a sensitive shoot.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/security-checklist/README.md">How it works</a> · <a href="templates/security-checklist-template.csv" download>Spreadsheet version</a></p></li></ul></div><div class="phase" data-phase><h3>Production</h3><ul class="tools"><li class="tool" data-search="call sheet call sheets built from the people and places already in your project. people, locations, call sheets"><h4><a href="tools/call-sheet/index.html">Call sheet</a></h4><p class="use">Call sheets built from the people and places already in your project.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/call-sheet/README.md">How it works</a> · <a href="templates/call-sheet-template.csv" download>Spreadsheet version</a></p></li><li class="tool" data-search="camera and sound reports what&#x27;s on every camera and sound card, for the shoot and the edit. people, locations, scans and files, call sheets, shoot days, camera and sound reports"><h4><a href="tools/camera-sound-reports/index.html">Camera and sound reports</a></h4><p class="use">What&#x27;s on every camera and sound card, for the shoot and the edit.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/camera-sound-reports/README.md">How it works</a> · <a href="templates/camera-and-sound-reports-template.csv" download>Spreadsheet version</a></p></li><li class="tool" data-search="interview log who you interviewed, which cards it&#x27;s on, and the moments worth finding again. people, locations, releases and contracts, scans and files, shoot days, interviews, camera and sound reports"><h4><a href="tools/interview-log/index.html">Interview log</a></h4><p class="use">Who you interviewed, which cards it&#x27;s on, and the moments worth finding again.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/interview-log/README.md">How it works</a> · <a href="templates/interview-moments-template.csv" download>Spreadsheet version</a></p></li><li class="tool" data-search="daily production report what happened each shoot day: the hours, what you got, and what went wrong. people, call sheets, shoot days, camera and sound reports"><h4><a href="tools/daily-production-report/index.html">Daily production report</a></h4><p class="use">What happened each shoot day: the hours, what you got, and what went wrong.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/daily-production-report/README.md">How it works</a></p></li><li class="tool" data-search="release tracker who&#x27;s signed what, and who&#x27;s on camera without a release. people, locations, third-party material, releases and contracts, scans and files, call sheets"><h4><a href="tools/release-tracker/index.html">Release tracker</a></h4><p class="use">Who&#x27;s signed what, and who&#x27;s on camera without a release.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/release-tracker/README.md">How it works</a> · <a href="templates/release-log-template.csv" download>Spreadsheet version</a></p></li><li class="tool" data-search="expense log log what you spend against the budget, and keep the receipts. budget, people, shoot days, scans and files"><h4><a href="tools/expense-log/index.html">Expense log</a></h4><p class="use">Log what you spend against the budget, and keep the receipts.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/expense-log/README.md">How it works</a></p></li><li class="tool" data-search="field journal a dated journal of the production, tied to the people and places in it. people, locations, call sheets"><h4><a href="tools/field-journal/index.html">Field journal</a></h4><p class="use">A dated journal of the production, tied to the people and places in it.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/field-journal/README.md">How it works</a></p></li></ul></div>
     </section><section class="stage" id="finish" aria-labelledby="finish-h">
-      <div class="stage-head"><h2 id="finish-h">Edit and clear</h2><p>Everything a distributor or broadcaster asks for before delivery. <span class="tally">13 ready, 0 planned</span></p></div>
-      <div class="phase" data-phase>
-        <h3>Post-production</h3>
-        <ul class="tools"><li class="tool" data-search="footage log cataloging every clip so the editor can find it: what&#x27;s in it, who&#x27;s in it, where and when, with topics, notes and ratings, imported from a folder, a csv or your camera reports people locations scans and files shoot days camera and sound reports">
-          <h4><a href="tools/footage-log/index.html">Footage log</a></h4>
-          <p class="use">Cataloging every clip so the editor can find it: what&#x27;s in it, who&#x27;s in it, where and when, with topics, notes and ratings, imported from a folder, a CSV or your camera reports</p>
-          <p class="ww"><span>Works with</span> people, locations, scans and files, shoot days, camera and sound reports</p>
-          <p class="links"><a class="go" href="tools/footage-log/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/footage-log/README.md">How it works</a> · <a href="templates/footage-log-template.csv" download>Blank spreadsheet</a></p>
-        </li><li class="tool" data-search="paper edit building a paper edit from transcripts: picking bites with their source timecodes, arranging them into scenes, printing it, and exporting an edit list for premiere, resolve or avid people scans and files interviews paper edit">
-          <h4><a href="tools/paper-edit/index.html">Paper edit</a></h4>
-          <p class="use">Building a paper edit from transcripts: picking bites with their source timecodes, arranging them into scenes, printing it, and exporting an edit list for Premiere, Resolve or Avid</p>
-          <p class="ww"><span>Works with</span> people, scans and files, interviews, paper edit</p>
-          <p class="links"><a class="go" href="tools/paper-edit/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/paper-edit/README.md">How it works</a> · <a href="templates/paper-edit-template.csv" download>Blank spreadsheet</a></p>
-        </li><li class="tool" data-search="structure board laying out the film&#x27;s structure on cards you can move around: a card for each scene with a summary and running time, dragged into sequences and acts and colored by story thread or character people paper edit structure board">
-          <h4><a href="tools/structure-board/index.html">Structure board</a></h4>
-          <p class="use">Laying out the film&#x27;s structure on cards you can move around: a card for each scene with a summary and running time, dragged into sequences and acts and colored by story thread or character</p>
-          <p class="ww"><span>Works with</span> people, paper edit, structure board</p>
-          <p class="links"><a class="go" href="tools/structure-board/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/structure-board/README.md">How it works</a> · <a href="templates/structure-board-template.csv" download>Blank spreadsheet</a></p>
-        </li><li class="tool" data-search="cut version tracker tracking every cut: what changed, who saw it, the notes from each screening tied to a time and scene, which notes are done, deferred or carried, and the locked cut structure board cuts">
-          <h4><a href="tools/cut-tracker/index.html">Cut version tracker</a></h4>
-          <p class="use">Tracking every cut: what changed, who saw it, the notes from each screening tied to a time and scene, which notes are done, deferred or carried, and the locked cut</p>
-          <p class="ww"><span>Works with</span> structure board, cuts</p>
-          <p class="links"><a class="go" href="tools/cut-tracker/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/cut-tracker/README.md">How it works</a> · <a href="templates/cut-notes-template.csv" download>Blank spreadsheet</a></p>
-        </li><li class="tool" data-search="name supers list keeping on-screen names and titles spelled the way the rest of your project spells them, and showing graphics what changed since their last list people name supers">
-          <h4><a href="tools/name-supers/index.html">Name supers list</a></h4>
-          <p class="use">Keeping on-screen names and titles spelled the way the rest of your project spells them, and showing graphics what changed since their last list</p>
-          <p class="ww"><span>Works with</span> people, name supers</p>
-          <p class="links"><a class="go" href="tools/name-supers/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/name-supers/README.md">How it works</a> · <a href="templates/name-supers-template.csv" download>Blank spreadsheet</a></p>
-        </li><li class="tool" data-search="music cue sheet building the music cue sheet your distributor or broadcaster needs, from the music already in your clearance log third-party material cue sheet">
-          <h4><a href="tools/music-cue-sheet/index.html">Music cue sheet</a></h4>
-          <p class="use">Building the music cue sheet your distributor or broadcaster needs, from the music already in your clearance log</p>
-          <p class="ww"><span>Works with</span> third-party material, cue sheet</p>
-          <p class="links"><a class="go" href="tools/music-cue-sheet/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/music-cue-sheet/README.md">How it works</a> · <a href="templates/music-cue-sheet-template.csv" download>Blank spreadsheet</a> <a href="templates/music-cue-sheet-template.docx" download>Blank Word doc</a></p>
-        </li><li class="tool" data-search="credits builder building end credits from the people, music and archival material in your project, checking that every credit your contracts require is there, and exporting the crawl as text people third-party material releases and contracts credits">
-          <h4><a href="tools/credits-builder/index.html">Credits builder</a></h4>
-          <p class="use">Building end credits from the people, music and archival material in your project, checking that every credit your contracts require is there, and exporting the crawl as text</p>
-          <p class="ww"><span>Works with</span> people, third-party material, releases and contracts, credits</p>
-          <p class="links"><a class="go" href="tools/credits-builder/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/credits-builder/README.md">How it works</a> · <a href="templates/end-credits-template.csv" download>Blank spreadsheet</a> <a href="templates/end-credits-template.docx" download>Blank Word doc</a></p>
-        </li><li class="tool" data-search="budget-to-actuals comparing what you&#x27;ve spent against the budget, line by line, from the expense log: the variance for each line and in total, the estimate to complete, and a printed cost report budget expenses cost report">
-          <h4><a href="tools/budget-to-actuals/index.html">Budget-to-actuals</a></h4>
-          <p class="use">Comparing what you&#x27;ve spent against the budget, line by line, from the expense log: the variance for each line and in total, the estimate to complete, and a printed cost report</p>
-          <p class="ww"><span>Works with</span> budget, expenses, cost report</p>
-          <p class="links"><a class="go" href="tools/budget-to-actuals/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/budget-to-actuals/README.md">How it works</a> · <a href="templates/cost-report-template.csv" download>Blank spreadsheet</a></p>
-        </li></ul>
-      </div><div class="phase" data-phase>
-        <h3>Legal and clearances</h3>
-        <ul class="tools"><li class="tool" data-search="clearance log tracking every piece of third-party material until it&#x27;s cleared, then printing a report for your e&amp;o attorney third-party material">
-          <h4><a href="tools/clearance-log/index.html">Clearance log</a></h4>
-          <p class="use">Tracking every piece of third-party material until it&#x27;s cleared, then printing a report for your E&amp;O attorney</p>
-          <p class="ww"><span>Works with</span> third-party material</p>
-          <p class="links"><a class="go" href="tools/clearance-log/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/clearance-log/README.md">How it works</a> · <a href="templates/clearance-log-template.csv" download>Blank spreadsheet</a> <a href="templates/clearance-log-template.docx" download>Blank Word doc</a></p>
-        </li><li class="tool" data-search="fair use log documenting fair use decisions element by element: purpose, how much is used and why, the nature of the original and the market effect, where the film will be shown, and a draft memo for your attorney third-party material">
-          <h4><a href="tools/fair-use-log/index.html">Fair use log</a></h4>
-          <p class="use">Documenting fair use decisions element by element: purpose, how much is used and why, the nature of the original and the market effect, where the film will be shown, and a draft memo for your attorney</p>
-          <p class="ww"><span>Works with</span> third-party material</p>
-          <p class="links"><a class="go" href="tools/fair-use-log/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/fair-use-log/README.md">How it works</a> · <a href="templates/fair-use-template.csv" download>Blank spreadsheet</a></p>
-        </li><li class="tool" data-search="license tracker tracking the terms of each archival and music license: media, territory, term, fees and payments, and options and step deals to exercise in time, with what&#x27;s expiring flagged third-party material releases and contracts scans and files">
-          <h4><a href="tools/license-tracker/index.html">License tracker</a></h4>
-          <p class="use">Tracking the terms of each archival and music license: media, territory, term, fees and payments, and options and step deals to exercise in time, with what&#x27;s expiring flagged</p>
-          <p class="ww"><span>Works with</span> third-party material, releases and contracts, scans and files</p>
-          <p class="links"><a class="go" href="tools/license-tracker/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/license-tracker/README.md">How it works</a> · <a href="templates/licenses-template.csv" download>Blank spreadsheet</a></p>
-        </li><li class="tool" data-search="annotated-transcript clearance report marking every reference to a person, place, product, quote, music or archival material in a script or transcript, with how each is cleared, for your e&amp;o insurer people locations third-party material releases and contracts paper edit">
-          <h4><a href="tools/clearance-report/index.html">Annotated-transcript clearance report</a></h4>
-          <p class="use">Marking every reference to a person, place, product, quote, music or archival material in a script or transcript, with how each is cleared, for your E&amp;O insurer</p>
-          <p class="ww"><span>Works with</span> people, locations, third-party material, releases and contracts, paper edit</p>
-          <p class="links"><a class="go" href="tools/clearance-report/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/clearance-report/README.md">How it works</a> · <a href="templates/clearance-report-template.csv" download>Blank spreadsheet</a></p>
-        </li><li class="tool" data-search="chain-of-title binder gathering the chain-of-title documents a distributor asks for, in order, each linked to its document in the project, with what&#x27;s missing flagged, and an index and cover sheets people locations third-party material releases and contracts scans and files">
-          <h4><a href="tools/chain-of-title/index.html">Chain-of-title binder</a></h4>
-          <p class="use">Gathering the chain-of-title documents a distributor asks for, in order, each linked to its document in the project, with what&#x27;s missing flagged, and an index and cover sheets</p>
-          <p class="ww"><span>Works with</span> people, locations, third-party material, releases and contracts, scans and files</p>
-          <p class="links"><a class="go" href="tools/chain-of-title/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/chain-of-title/README.md">How it works</a> · <a href="templates/chain-of-title-template.csv" download>Blank spreadsheet</a></p>
-        </li></ul>
-      </div>
+      <div class="stage-head"><span class="num" aria-hidden="true">03</span><h2 id="finish-h">Edit and clear</h2><p>The edit, and everything you have to clear before delivery.</p><span class="tally">13 ready</span></div>
+      <div class="phase" data-phase><h3>Post-production</h3><ul class="tools"><li class="tool" data-search="footage log every clip, what&#x27;s in it and who&#x27;s in it, so the editor can find it. people, locations, scans and files, shoot days, camera and sound reports"><h4><a href="tools/footage-log/index.html">Footage log</a></h4><p class="use">Every clip, what&#x27;s in it and who&#x27;s in it, so the editor can find it.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/footage-log/README.md">How it works</a> · <a href="templates/footage-log-template.csv" download>Spreadsheet version</a></p></li><li class="tool" data-search="paper edit pick bites from transcripts, build scenes, and send an edit list to your editing app. people, scans and files, interviews, paper edit"><h4><a href="tools/paper-edit/index.html">Paper edit</a></h4><p class="use">Pick bites from transcripts, build scenes, and send an edit list to your editing app.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/paper-edit/README.md">How it works</a> · <a href="templates/paper-edit-template.csv" download>Spreadsheet version</a></p></li><li class="tool" data-search="structure board scene cards you can move around until the structure works. people, paper edit, structure board"><h4><a href="tools/structure-board/index.html">Structure board</a></h4><p class="use">Scene cards you can move around until the structure works.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/structure-board/README.md">How it works</a> · <a href="templates/structure-board-template.csv" download>Spreadsheet version</a></p></li><li class="tool" data-search="cut version tracker each cut, who saw it, and what happened to their notes. structure board, cuts"><h4><a href="tools/cut-tracker/index.html">Cut version tracker</a></h4><p class="use">Each cut, who saw it, and what happened to their notes.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/cut-tracker/README.md">How it works</a> · <a href="templates/cut-notes-template.csv" download>Spreadsheet version</a></p></li><li class="tool" data-search="name supers list on-screen names and titles, spelled right and kept up to date. people, name supers"><h4><a href="tools/name-supers/index.html">Name supers list</a></h4><p class="use">On-screen names and titles, spelled right and kept up to date.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/name-supers/README.md">How it works</a> · <a href="templates/name-supers-template.csv" download>Spreadsheet version</a></p></li><li class="tool" data-search="music cue sheet the cue sheet your distributor needs, built from your clearance log. third-party material, cue sheet"><h4><a href="tools/music-cue-sheet/index.html">Music cue sheet</a></h4><p class="use">The cue sheet your distributor needs, built from your clearance log.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/music-cue-sheet/README.md">How it works</a> · <a href="templates/music-cue-sheet-template.csv" download>Spreadsheet version</a></p></li><li class="tool" data-search="credits builder end credits from your project, with every credit your contracts require checked. people, third-party material, releases and contracts, credits"><h4><a href="tools/credits-builder/index.html">Credits builder</a></h4><p class="use">End credits from your project, with every credit your contracts require checked.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/credits-builder/README.md">How it works</a> · <a href="templates/end-credits-template.csv" download>Spreadsheet version</a></p></li><li class="tool" data-search="budget-to-actuals what you&#x27;ve spent against the budget, line by line. budget, expenses, cost report"><h4><a href="tools/budget-to-actuals/index.html">Budget-to-actuals</a></h4><p class="use">What you&#x27;ve spent against the budget, line by line.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/budget-to-actuals/README.md">How it works</a> · <a href="templates/cost-report-template.csv" download>Spreadsheet version</a></p></li></ul></div><div class="phase" data-phase><h3>Legal and clearances</h3><ul class="tools"><li class="tool" data-search="clearance log every bit of third-party material in the film, until it&#x27;s cleared. third-party material"><h4><a href="tools/clearance-log/index.html">Clearance log</a></h4><p class="use">Every bit of third-party material in the film, until it&#x27;s cleared.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/clearance-log/README.md">How it works</a> · <a href="templates/clearance-log-template.csv" download>Spreadsheet version</a></p></li><li class="tool" data-search="fair use log your fair use reasoning, written down for your attorney. third-party material"><h4><a href="tools/fair-use-log/index.html">Fair use log</a></h4><p class="use">Your fair use reasoning, written down for your attorney.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/fair-use-log/README.md">How it works</a> · <a href="templates/fair-use-template.csv" download>Spreadsheet version</a></p></li><li class="tool" data-search="license tracker what each license covers, what you still owe, and when it runs out. third-party material, releases and contracts, scans and files"><h4><a href="tools/license-tracker/index.html">License tracker</a></h4><p class="use">What each license covers, what you still owe, and when it runs out.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/license-tracker/README.md">How it works</a> · <a href="templates/licenses-template.csv" download>Spreadsheet version</a></p></li><li class="tool" data-search="annotated-transcript clearance report the annotated script your e&amp;o insurer asks for. people, locations, third-party material, releases and contracts, paper edit"><h4><a href="tools/clearance-report/index.html">Annotated-transcript clearance report</a></h4><p class="use">The annotated script your E&amp;O insurer asks for.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/clearance-report/README.md">How it works</a> · <a href="templates/clearance-report-template.csv" download>Spreadsheet version</a></p></li><li class="tool" data-search="chain-of-title binder the rights documents a distributor wants, with the gaps showing. people, locations, third-party material, releases and contracts, scans and files"><h4><a href="tools/chain-of-title/index.html">Chain-of-title binder</a></h4><p class="use">The rights documents a distributor wants, with the gaps showing.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/chain-of-title/README.md">How it works</a> · <a href="templates/chain-of-title-template.csv" download>Spreadsheet version</a></p></li></ul></div>
     </section><section class="stage" id="launch" aria-labelledby="launch-h">
-      <div class="stage-head"><h2 id="launch-h">Launch</h2><p>Festivals, sales and release. <span class="tally">2 ready, 10 planned</span></p></div>
-      <div class="phase" data-phase>
-        <h3>Marketing and festivals</h3>
-        <ul class="tools"><li class="tool" data-search="festival submission tracker tracking festival submissions, with deadlines, fees, results and screening dates festivals">
-          <h4><a href="tools/festival-submissions/index.html">Festival submission tracker</a></h4>
-          <p class="use">Tracking festival submissions, with deadlines, fees, results and screening dates</p>
-          <p class="ww"><span>Works with</span> festivals</p>
-          <p class="links"><a class="go" href="tools/festival-submissions/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/festival-submissions/README.md">How it works</a></p>
-        </li><li class="tool" data-search="press list outlets journalists beat screeners rsvps coverage screenings">
-          <h4><a href="tools/press-list/index.html">Press list</a></h4>
-          <p class="use">Keeping a press list: outlets and the people who cover them by beat, screener links sent, screening RSVPs and the coverage that comes back, with CSV export</p>
-          <p class="ww"><span>Works with</span> screenings</p>
-          <p class="links"><a class="go" href="tools/press-list/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/press-list/README.md">How it works</a> · <a href="templates/press-list-template.csv" download>Blank spreadsheet</a></p>
-        </li></ul>
-        <details class="planned"><summary>4 planned tools</summary><ul><li data-search="festival strategy map plan a festival run: premiere rules, tiers, deadlines and fees, in an order that protects your premiere."><a href="https://github.com/open-filmmaker-toolkit/toolkit/issues/77">Festival strategy map</a> <span>Plan a festival run: premiere rules, tiers, deadlines and fees, in an order that protects your premiere.</span></li><li data-search="epk and press notes builder build press notes and an electronic press kit: synopsis, director&#x27;s statement, bios, credits, stills and contacts."><a href="https://github.com/open-filmmaker-toolkit/toolkit/issues/79">EPK and press notes builder</a> <span>Build press notes and an electronic press kit: synopsis, director&#x27;s statement, bios, credits, stills and contacts.</span></li><li data-search="stills library organize production stills and key art, with captions, photo credits and approvals."><a href="https://github.com/open-filmmaker-toolkit/toolkit/issues/80">Stills library</a> <span>Organize production stills and key art, with captions, photo credits and approvals.</span></li><li data-search="awards and social calendars plan awards campaigns and social posts around festival and release dates."><a href="https://github.com/open-filmmaker-toolkit/toolkit/issues/82">Awards and social calendars</a> <span>Plan awards campaigns and social posts around festival and release dates.</span></li></ul></details>
-      </div><div class="phase" data-phase>
-        <h3>Release and distribution</h3>
-        <p class="none">Nothing built here yet.</p>
-        <details class="planned"><summary>6 planned tools</summary><ul><li data-search="rights availability matrix see which rights you hold and which you&#x27;ve sold, by territory, media and term."><a href="https://github.com/open-filmmaker-toolkit/toolkit/issues/83">Rights availability matrix</a> <span>See which rights you hold and which you&#x27;ve sold, by territory, media and term.</span></li><li data-search="deliverables checklist track every deliverable a distributor or broadcaster asks for, from masters to paperwork."><a href="https://github.com/open-filmmaker-toolkit/toolkit/issues/84">Deliverables checklist</a> <span>Track every deliverable a distributor or broadcaster asks for, from masters to paperwork.</span></li><li data-search="qc tracker track quality-control reports and fixes until the master passes."><a href="https://github.com/open-filmmaker-toolkit/toolkit/issues/85">QC tracker</a> <span>Track quality-control reports and fixes until the master passes.</span></li><li data-search="recoupment waterfall model model who gets paid, and in what order, from the film&#x27;s revenue."><a href="https://github.com/open-filmmaker-toolkit/toolkit/issues/86">Recoupment waterfall model</a> <span>Model who gets paid, and in what order, from the film&#x27;s revenue.</span></li><li data-search="revenue tracker log revenue from each statement and compare it with the waterfall."><a href="https://github.com/open-filmmaker-toolkit/toolkit/issues/87">Revenue tracker</a> <span>Log revenue from each statement and compare it with the waterfall.</span></li><li data-search="educational and theatrical booking trackers track educational licenses and theatrical and community bookings: who booked, terms, fees and payment."><a href="https://github.com/open-filmmaker-toolkit/toolkit/issues/88">Educational and theatrical booking trackers</a> <span>Track educational licenses and theatrical and community bookings: who booked, terms, fees and payment.</span></li></ul></details>
-      </div>
+      <div class="stage-head"><span class="num" aria-hidden="true">04</span><h2 id="launch-h">Launch</h2><p>Festivals, press, sales and release.</p><span class="tally">2 ready · 10 planned</span></div>
+      <div class="phase" data-phase><h3>Marketing and festivals</h3><ul class="tools"><li class="tool" data-search="festival submission tracker festival deadlines, fees, results and screenings. festivals"><h4><a href="tools/festival-submissions/index.html">Festival submission tracker</a></h4><p class="use">Festival deadlines, fees, results and screenings.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/festival-submissions/README.md">How it works</a></p></li><li class="tool" data-search="press list press contacts, the screeners you sent, and the coverage you got. screenings"><h4><a href="tools/press-list/index.html">Press list</a></h4><p class="use">Press contacts, the screeners you sent, and the coverage you got.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/press-list/README.md">How it works</a> · <a href="templates/press-list-template.csv" download>Spreadsheet version</a></p></li></ul><div class="planned"><p class="planned-h">Planned</p><ul><li class="soon" data-search="festival strategy map plan a festival run: premiere rules, tiers, deadlines and fees, in an order that protects your premiere."><a href="https://github.com/open-filmmaker-toolkit/toolkit/issues/77">Festival strategy map</a> <span>Plan a festival run: premiere rules, tiers, deadlines and fees, in an order that protects your premiere.</span></li><li class="soon" data-search="epk and press notes builder build press notes and an electronic press kit: synopsis, director&#x27;s statement, bios, credits, stills and contacts."><a href="https://github.com/open-filmmaker-toolkit/toolkit/issues/79">EPK and press notes builder</a> <span>Build press notes and an electronic press kit: synopsis, director&#x27;s statement, bios, credits, stills and contacts.</span></li><li class="soon" data-search="stills library organize production stills and key art, with captions, photo credits and approvals."><a href="https://github.com/open-filmmaker-toolkit/toolkit/issues/80">Stills library</a> <span>Organize production stills and key art, with captions, photo credits and approvals.</span></li><li class="soon" data-search="awards and social calendars plan awards campaigns and social posts around festival and release dates."><a href="https://github.com/open-filmmaker-toolkit/toolkit/issues/82">Awards and social calendars</a> <span>Plan awards campaigns and social posts around festival and release dates.</span></li></ul></div></div><div class="phase" data-phase><h3>Release and distribution</h3><p class="none">Nothing here yet.</p><div class="planned"><p class="planned-h">Planned</p><ul><li class="soon" data-search="rights availability matrix see which rights you hold and which you&#x27;ve sold, by territory, media and term."><a href="https://github.com/open-filmmaker-toolkit/toolkit/issues/83">Rights availability matrix</a> <span>See which rights you hold and which you&#x27;ve sold, by territory, media and term.</span></li><li class="soon" data-search="deliverables checklist track every deliverable a distributor or broadcaster asks for, from masters to paperwork."><a href="https://github.com/open-filmmaker-toolkit/toolkit/issues/84">Deliverables checklist</a> <span>Track every deliverable a distributor or broadcaster asks for, from masters to paperwork.</span></li><li class="soon" data-search="qc tracker track quality-control reports and fixes until the master passes."><a href="https://github.com/open-filmmaker-toolkit/toolkit/issues/85">QC tracker</a> <span>Track quality-control reports and fixes until the master passes.</span></li><li class="soon" data-search="recoupment waterfall model model who gets paid, and in what order, from the film&#x27;s revenue."><a href="https://github.com/open-filmmaker-toolkit/toolkit/issues/86">Recoupment waterfall model</a> <span>Model who gets paid, and in what order, from the film&#x27;s revenue.</span></li><li class="soon" data-search="revenue tracker log revenue from each statement and compare it with the waterfall."><a href="https://github.com/open-filmmaker-toolkit/toolkit/issues/87">Revenue tracker</a> <span>Log revenue from each statement and compare it with the waterfall.</span></li><li class="soon" data-search="educational and theatrical booking trackers track educational licenses and theatrical and community bookings: who booked, terms, fees and payment."><a href="https://github.com/open-filmmaker-toolkit/toolkit/issues/88">Educational and theatrical booking trackers</a> <span>Track educational licenses and theatrical and community bookings: who booked, terms, fees and payment.</span></li></ul></div></div>
     </section><section class="stage" id="impact" aria-labelledby="impact-h">
-      <div class="stage-head"><h2 id="impact-h">Impact and wrap</h2><p>Screenings, outreach and closing the books. <span class="tally">3 ready, 6 planned</span></p></div>
-      <div class="phase" data-phase>
-        <h3>Impact and outreach</h3>
-        <ul class="tools"><li class="tool" data-search="partner crm impact partners commitments screenings">
-          <h4><a href="tools/partner-crm/index.html">Partner CRM</a></h4>
-          <p class="use">Tracking impact partners: organizations and their contacts, commitments and next steps with due dates, and the screenings you&#x27;ve done together, with CSV export</p>
-          <p class="ww"><span>Works with</span> screenings</p>
-          <p class="links"><a class="go" href="tools/partner-crm/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/partner-crm/README.md">How it works</a> · <a href="templates/partner-crm-template.csv" download>Blank spreadsheet</a></p>
-        </li><li class="tool" data-search="discussion guide builder screening synopsis themes questions audience resources partner organizations credits print pdf">
-          <h4><a href="tools/discussion-guide/index.html">Discussion guide builder</a></h4>
-          <p class="use">Preparing a screening handout with a project synopsis and credits, editable themes and questions, audience resources and partner organizations, and print to PDF</p>
-          <p class="ww"><span>Works with</span> treatment, credits, partners</p>
-          <p class="links"><a class="go" href="tools/discussion-guide/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/discussion-guide/README.md">How it works</a></p>
-        </li></ul>
-        <details class="planned"><summary>3 planned tools</summary><ul><li data-search="theory of change builder map how the film&#x27;s campaign leads to change: audiences, activities, outcomes, and how you&#x27;ll measure them."><a href="https://github.com/open-filmmaker-toolkit/toolkit/issues/89">Theory of change builder</a> <span>Map how the film&#x27;s campaign leads to change: audiences, activities, outcomes, and how you&#x27;ll measure them.</span></li><li data-search="screening kit builder put together a kit for screening hosts: how to screen the film, tech specs, promotional materials and the discussion guide."><a href="https://github.com/open-filmmaker-toolkit/toolkit/issues/92">Screening kit builder</a> <span>Put together a kit for screening hosts: how to screen the film, tech specs, promotional materials and the discussion guide.</span></li><li data-search="impact report report on the campaign: screenings, audiences, partners and outcomes against the theory of change."><a href="https://github.com/open-filmmaker-toolkit/toolkit/issues/93">Impact report</a> <span>Report on the campaign: screenings, audiences, partners and outcomes against the theory of change.</span></li></ul></details>
-      </div><div class="phase" data-phase>
-        <h3>Close-out and archive</h3>
-        <ul class="tools"><li class="tool" data-search="archive log project asset copies storage locations copy dates hash manifests manual read-back checks csv export">
-          <h4><a href="tools/archive-log/index.html">Archive log</a></h4>
-          <p class="use">Log each project asset&#x27;s copies, storage locations and dates, hash manifests, and manual read-back checks, with CSV export</p>
-          <p class="ww"><span>Works with</span> project assets</p>
-          <p class="links"><a class="go" href="tools/archive-log/index.html">Open</a> · <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/archive-log/README.md">How it works</a></p>
-        </li></ul>
-        <details class="planned"><summary>3 planned tools</summary><ul><li data-search="final cost report close out the budget with final costs, for funders and your records."><a href="https://github.com/open-filmmaker-toolkit/toolkit/issues/94">Final cost report</a> <span>Close out the budget with final costs, for funders and your records.</span></li><li data-search="grant final reports write the final report for each grant: narrative, budget, outcomes and deliverables, before it&#x27;s due."><a href="https://github.com/open-filmmaker-toolkit/toolkit/issues/95">Grant final reports</a> <span>Write the final report for each grant: narrative, budget, outcomes and deliverables, before it&#x27;s due.</span></li><li data-search="contract and release archive gather every signed contract and release into one indexed archive for the long term."><a href="https://github.com/open-filmmaker-toolkit/toolkit/issues/97">Contract and release archive</a> <span>Gather every signed contract and release into one indexed archive for the long term.</span></li></ul></details>
-      </div>
+      <div class="stage-head"><span class="num" aria-hidden="true">05</span><h2 id="impact-h">Impact and wrap</h2><p>Screenings, outreach, and closing it all out.</p><span class="tally">3 ready · 6 planned</span></div>
+      <div class="phase" data-phase><h3>Impact and outreach</h3><ul class="tools"><li class="tool" data-search="partner crm impact partners, what they&#x27;ve committed to, and the screenings you&#x27;ve done together. screenings"><h4><a href="tools/partner-crm/index.html">Partner CRM</a></h4><p class="use">Impact partners, what they&#x27;ve committed to, and the screenings you&#x27;ve done together.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/partner-crm/README.md">How it works</a> · <a href="templates/partner-crm-template.csv" download>Spreadsheet version</a></p></li><li class="tool" data-search="discussion guide builder a handout for screenings, with discussion questions and resources. treatment, credits, partners"><h4><a href="tools/discussion-guide/index.html">Discussion guide builder</a></h4><p class="use">A handout for screenings, with discussion questions and resources.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/discussion-guide/README.md">How it works</a></p></li></ul><div class="planned"><p class="planned-h">Planned</p><ul><li class="soon" data-search="theory of change builder map how the film&#x27;s campaign leads to change: audiences, activities, outcomes, and how you&#x27;ll measure them."><a href="https://github.com/open-filmmaker-toolkit/toolkit/issues/89">Theory of change builder</a> <span>Map how the film&#x27;s campaign leads to change: audiences, activities, outcomes, and how you&#x27;ll measure them.</span></li><li class="soon" data-search="screening kit builder put together a kit for screening hosts: how to screen the film, tech specs, promotional materials and the discussion guide."><a href="https://github.com/open-filmmaker-toolkit/toolkit/issues/92">Screening kit builder</a> <span>Put together a kit for screening hosts: how to screen the film, tech specs, promotional materials and the discussion guide.</span></li><li class="soon" data-search="impact report report on the campaign: screenings, audiences, partners and outcomes against the theory of change."><a href="https://github.com/open-filmmaker-toolkit/toolkit/issues/93">Impact report</a> <span>Report on the campaign: screenings, audiences, partners and outcomes against the theory of change.</span></li></ul></div></div><div class="phase" data-phase><h3>Close-out and archive</h3><ul class="tools"><li class="tool" data-search="archive log where every copy of your project lives, and when you last checked it. project assets"><h4><a href="tools/archive-log/index.html">Archive log</a></h4><p class="use">Where every copy of your project lives, and when you last checked it.</p><p class="more"><a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/tools/archive-log/README.md">How it works</a></p></li></ul><div class="planned"><p class="planned-h">Planned</p><ul><li class="soon" data-search="final cost report close out the budget with final costs, for funders and your records."><a href="https://github.com/open-filmmaker-toolkit/toolkit/issues/94">Final cost report</a> <span>Close out the budget with final costs, for funders and your records.</span></li><li class="soon" data-search="grant final reports write the final report for each grant: narrative, budget, outcomes and deliverables, before it&#x27;s due."><a href="https://github.com/open-filmmaker-toolkit/toolkit/issues/95">Grant final reports</a> <span>Write the final report for each grant: narrative, budget, outcomes and deliverables, before it&#x27;s due.</span></li><li class="soon" data-search="contract and release archive gather every signed contract and release into one indexed archive for the long term."><a href="https://github.com/open-filmmaker-toolkit/toolkit/issues/97">Contract and release archive</a> <span>Gather every signed contract and release into one indexed archive for the long term.</span></li></ul></div></div>
     </section>
 
-    <section class="others" aria-labelledby="others-h" data-block>
-      <div><h2 id="others-h">Other free tools we recommend</h2><p>We don't rebuild what already exists. For editing, sound, transcription, subtitles, artwork and making DCPs, there are excellent free, open-source programs. We keep a checked list, by production phase.</p>
-        <p><a class="btn" href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/docs/other-tools.md">See the list</a></p></div>
-      <ul><li>Editing: Kdenlive, Shotcut</li><li>Sound: Audacity, Ardour</li><li>Transcription: Buzz, noScribe</li><li>Subtitles: Subtitle Edit, Aegisub</li><li>Delivery: DCP-o-matic, HandBrake, MediaInfo</li></ul>
+    <section class="section" aria-labelledby="workflows-h" id="workflows" data-block>
+      <h2 id="workflows-h">How the tools connect</h2>
+      <p>They all read the same project file, so what you do in one carries into the next. A few common paths:</p>
+      <ul class="flows"><li class="flow" data-search="pitch the film the people you’re following, your treatment and your comps all end up in the deck. subject tracker treatment builder comps tracker pitch deck builder"><h3>Pitch the film</h3><p class="steps"><a href="tools/subject-tracker/index.html">Subject tracker</a> <span aria-hidden="true">→</span> <a href="tools/treatment-builder/index.html">Treatment builder</a> <span aria-hidden="true">→</span> <a href="tools/comps-tracker/index.html">Comps tracker</a> <span aria-hidden="true">→</span> <a href="tools/pitch-deck/index.html">Pitch deck builder</a></p><p>The people you’re following, your treatment and your comps all end up in the deck.</p></li><li class="flow" data-search="raise the money deadlines, the answers you sent, and every funder conversation, adding up in the finance plan. grant calendar grant narrative library funder crm finance plan"><h3>Raise the money</h3><p class="steps"><a href="tools/grant-calendar/index.html">Grant calendar</a> <span aria-hidden="true">→</span> <a href="tools/narrative-library/index.html">Grant narrative library</a> <span aria-hidden="true">→</span> <a href="tools/funder-crm/index.html">Funder CRM</a> <span aria-hidden="true">→</span> <a href="tools/finance-plan/index.html">Finance plan</a></p><p>Deadlines, the answers you sent, and every funder conversation, adding up in the finance plan.</p></li><li class="flow" data-search="budget and cash build the budget once, reshape it for each funder, and see when the money runs short. budget budget converter finance plan cash flow"><h3>Budget and cash</h3><p class="steps"><a href="tools/budget/index.html">Budget</a> <span aria-hidden="true">→</span> <a href="tools/budget-converter/index.html">Budget converter</a> <span aria-hidden="true">→</span> <a href="tools/finance-plan/index.html">Finance plan</a> <span aria-hidden="true">→</span> <a href="tools/cash-flow/index.html">Cash flow</a></p><p>Build the budget once, reshape it for each funder, and see when the money runs short.</p></li><li class="flow" data-search="plan the shoot scout the places, prep the interviews, schedule the days, and start each day’s call sheet. location scout sheet interview prep shooting calendar call sheet release tracker"><h3>Plan the shoot</h3><p class="steps"><a href="tools/location-scout/index.html">Location scout sheet</a> <span aria-hidden="true">→</span> <a href="tools/interview-prep/index.html">Interview prep</a> <span aria-hidden="true">→</span> <a href="tools/shooting-calendar/index.html">Shooting calendar</a> <span aria-hidden="true">→</span> <a href="tools/call-sheet/index.html">Call sheet</a> <span aria-hidden="true">→</span> <a href="tools/release-tracker/index.html">Release tracker</a></p><p>Scout the places, prep the interviews, schedule the days, and start each day’s call sheet.</p></li><li class="flow" data-search="hire the crew the rate in a deal memo goes into the budget, and the credit you promised goes into the end credits. deal memos budget call sheet credits builder"><h3>Hire the crew</h3><p class="steps"><a href="tools/deal-memos/index.html">Deal memos</a> <span aria-hidden="true">→</span> <a href="tools/budget/index.html">Budget</a> <span aria-hidden="true">→</span> <a href="tools/call-sheet/index.html">Call sheet</a> <span aria-hidden="true">→</span> <a href="tools/credits-builder/index.html">Credits builder</a></p><p>The rate in a deal memo goes into the budget, and the credit you promised goes into the end credits.</p></li><li class="flow" data-search="ready each day pack the gear for each day, and make sure the certificates and permits are in before you go. shooting calendar gear list coi and permit tracker call sheet"><h3>Ready each day</h3><p class="steps"><a href="tools/shooting-calendar/index.html">Shooting calendar</a> <span aria-hidden="true">→</span> <a href="tools/gear-list/index.html">Gear list</a> <span aria-hidden="true">→</span> <a href="tools/coi-permit-tracker/index.html">COI and permit tracker</a> <span aria-hidden="true">→</span> <a href="tools/call-sheet/index.html">Call sheet</a></p><p>Pack the gear for each day, and make sure the certificates and permits are in before you go.</p></li><li class="flow" data-search="travel safely one trip gets a travel sheet, a risk plan, and a checklist for your devices and footage. shooting calendar travel sheet risk and hostile-environment plans security checklist"><h3>Travel safely</h3><p class="steps"><a href="tools/shooting-calendar/index.html">Shooting calendar</a> <span aria-hidden="true">→</span> <a href="tools/travel-sheet/index.html">Travel sheet</a> <span aria-hidden="true">→</span> <a href="tools/risk-plan/index.html">Risk and hostile-environment plans</a> <span aria-hidden="true">→</span> <a href="tools/security-checklist/index.html">Security checklist</a></p><p>One trip gets a travel sheet, a risk plan, and a checklist for your devices and footage.</p></li><li class="flow" data-search="from shoot to edit log the cards, catalog the clips, mark the good moments, and turn transcripts into a paper edit. camera and sound reports footage log interview log paper edit"><h3>From shoot to edit</h3><p class="steps"><a href="tools/camera-sound-reports/index.html">Camera and sound reports</a> <span aria-hidden="true">→</span> <a href="tools/footage-log/index.html">Footage log</a> <span aria-hidden="true">→</span> <a href="tools/interview-log/index.html">Interview log</a> <span aria-hidden="true">→</span> <a href="tools/paper-edit/index.html">Paper edit</a></p><p>Log the cards, catalog the clips, mark the good moments, and turn transcripts into a paper edit.</p></li><li class="flow" data-search="edit to lock bites become scenes, screening notes stick to those scenes, and the locked cut’s details go where they’re needed. paper edit structure board cut version tracker clearance log music cue sheet"><h3>Edit to lock</h3><p class="steps"><a href="tools/paper-edit/index.html">Paper edit</a> <span aria-hidden="true">→</span> <a href="tools/structure-board/index.html">Structure board</a> <span aria-hidden="true">→</span> <a href="tools/cut-tracker/index.html">Cut version tracker</a> <span aria-hidden="true">→</span> <a href="tools/clearance-log/index.html">Clearance log</a> <span aria-hidden="true">→</span> <a href="tools/music-cue-sheet/index.html">Music cue sheet</a></p><p>Bites become scenes, screening notes stick to those scenes, and the locked cut’s details go where they’re needed.</p></li><li class="flow" data-search="track the spending log what you spend as you go, and see which lines are running over. budget expense log budget-to-actuals"><h3>Track the spending</h3><p class="steps"><a href="tools/budget/index.html">Budget</a> <span aria-hidden="true">→</span> <a href="tools/expense-log/index.html">Expense log</a> <span aria-hidden="true">→</span> <a href="tools/budget-to-actuals/index.html">Budget-to-actuals</a></p><p>Log what you spend as you go, and see which lines are running over.</p></li><li class="flow" data-search="clear the film archival leads turn into clearance items, and the music ends up on the cue sheet and in the credits. research and archival log clearance log music cue sheet credits builder"><h3>Clear the film</h3><p class="steps"><a href="tools/research-log/index.html">Research and archival log</a> <span aria-hidden="true">→</span> <a href="tools/clearance-log/index.html">Clearance log</a> <span aria-hidden="true">→</span> <a href="tools/music-cue-sheet/index.html">Music cue sheet</a> <span aria-hidden="true">→</span> <a href="tools/credits-builder/index.html">Credits builder</a></p><p>Archival leads turn into clearance items, and the music ends up on the cue sheet and in the credits.</p></li><li class="flow" data-search="ready for e&amp;o and delivery license it, write up the fair use, annotate the script, and put the binder together. clearance log license tracker fair use log annotated-transcript clearance report chain-of-title binder"><h3>Ready for E&amp;O and delivery</h3><p class="steps"><a href="tools/clearance-log/index.html">Clearance log</a> <span aria-hidden="true">→</span> <a href="tools/license-tracker/index.html">License tracker</a> <span aria-hidden="true">→</span> <a href="tools/fair-use-log/index.html">Fair use log</a> <span aria-hidden="true">→</span> <a href="tools/clearance-report/index.html">Annotated-transcript clearance report</a> <span aria-hidden="true">→</span> <a href="tools/chain-of-title/index.html">Chain-of-title binder</a></p><p>License it, write up the fair use, annotate the script, and put the binder together.</p></li><li class="flow" data-search="get the names right spell someone’s name once, and it’s spelled the same in the supers and the credits. subject tracker name supers list credits builder"><h3>Get the names right</h3><p class="steps"><a href="tools/subject-tracker/index.html">Subject tracker</a> <span aria-hidden="true">→</span> <a href="tools/name-supers/index.html">Name supers list</a> <span aria-hidden="true">→</span> <a href="tools/credits-builder/index.html">Credits builder</a></p><p>Spell someone’s name once, and it’s spelled the same in the supers and the credits.</p></li></ul>
     </section>
 
-    <section aria-labelledby="help-h" id="help" data-block>
-      <div class="section-head"><h2 id="help-h">Get involved</h2><p>You don't need to code to help.</p></div>
-      <ul class="help">
-        <li><b><a href="https://github.com/open-filmmaker-toolkit/toolkit/issues/new?template=request-a-tool.yml">Ask for a tool</a></b><span>Describe a job you do by hand or pay for. Requests decide what we build next.</span></li>
-        <li><b><a href="https://github.com/open-filmmaker-toolkit/toolkit/issues/new?template=submit-a-template.yml">Share a template</a></b><span>A release, a budget sheet, a log you swear by. Remove anything private first.</span></li>
-        <li><b><a href="https://github.com/open-filmmaker-toolkit/toolkit/issues/new?template=report-a-problem.yml">Report a problem</a></b><span>Something broken, wrong or confusing. Please don't attach a real project file.</span></li>
-      </ul>
-    </section>
+    <div class="cols" data-block>
+      <section aria-labelledby="other-h" id="other">
+        <h2 id="other-h">Other free software we like</h2>
+        <p>We're not building an editor or a sound mixer. Good free ones already exist, and we keep <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/docs/other-tools.md">a list of the ones we've checked</a>.</p>
+        <ul><li>Editing: Kdenlive, Shotcut</li><li>Sound: Audacity, Ardour</li><li>Transcription: Buzz, noScribe</li><li>Subtitles: Subtitle Edit, Aegisub</li><li>Delivery: DCP-o-matic, HandBrake, MediaInfo</li></ul>
+      </section>
+      <section aria-labelledby="help-h" id="help">
+        <h2 id="help-h">Help out</h2>
+        <p>You don't need to write code.</p>
+        <ul>
+          <li><a href="https://github.com/open-filmmaker-toolkit/toolkit/issues/new?template=request-a-tool.yml">Ask for a tool.</a> Tell us about a job you do by hand, or pay too much for.</li>
+          <li><a href="https://github.com/open-filmmaker-toolkit/toolkit/issues/new?template=submit-a-template.yml">Share a template.</a> A release, budget sheet or log you swear by. Take out anything private first.</li>
+          <li><a href="https://github.com/open-filmmaker-toolkit/toolkit/issues/new?template=report-a-problem.yml">Tell us what's broken.</a> Something wrong or confusing. Please don't attach a real project file.</li>
+        </ul>
+      </section>
+    </div>
   </main>
 
   <footer>
-    <p>The tools on this site make no network requests. Your project file never leaves your computer unless you share it yourself. This site doesn't use cookies or analytics.</p>
-    <p>The templates and forms are starting points, not legal advice; have a lawyer review anything you'll sign. See <a href="https://github.com/open-filmmaker-toolkit/toolkit#not-legal-advice">Not legal advice</a>.</p>
+    <p>None of these tools send anything over the internet. Your project file stays on your computer unless you share it. This site doesn't use cookies or analytics.</p>
+    <p>The templates and forms are starting points, not legal advice. Have a lawyer look at anything you're going to sign. See <a href="https://github.com/open-filmmaker-toolkit/toolkit#not-legal-advice">Not legal advice</a>.</p>
     <p>Code under <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/LICENSE">GPL-3.0-or-later</a>, templates and guides under <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/LICENSES/CC-BY-SA-4.0.txt">CC BY-SA 4.0</a>. Made by Basil Shadid, Alex Perrault and <a href="https://github.com/open-filmmaker-toolkit/toolkit/graphs/contributors">contributors</a>. <a href="https://github.com/open-filmmaker-toolkit/toolkit">Source on GitHub</a>.</p>
   </footer>
 </div>
 <script>
 (() => {
   'use strict';
-  // Search: show tools, planned tools and workflows whose text has every word typed.
+  // Search: show the tools, planned tools and paths whose text has every word typed.
   const q = document.getElementById('q');
   document.getElementById('finder').hidden = false;
   const norm = s => s.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
   function filter() {
     const words = norm(q.value).split(/\s+/).filter(Boolean);
-    const hit = el => words.every(w => el.dataset.search.includes(w));
     let shown = 0;
-    for (const el of document.querySelectorAll('[data-search]')) { const ok = !words.length || hit(el); el.hidden = !ok; if (ok) shown++; }
-    for (const d of document.querySelectorAll('details.planned')) {
-      const any = [...d.querySelectorAll('li')].some(li => !li.hidden);
-      d.hidden = !!words.length && !any;
-      if (words.length && any) d.open = true;
-    }
+    for (const el of document.querySelectorAll('[data-search]')) { const ok = !words.length || words.every(w => el.dataset.search.includes(w)); el.hidden = !ok; if (ok) shown++; }
+    for (const p of document.querySelectorAll('.planned')) p.hidden = !!words.length && ![...p.querySelectorAll('li')].some(li => !li.hidden);
     for (const p of document.querySelectorAll('[data-phase]')) {
-      const tools = p.querySelectorAll('.tool'), none = p.querySelector('.none');
-      const vis = [...tools].some(t => !t.hidden) || [...p.querySelectorAll('.planned li')].some(li => !li.hidden);
+      const vis = [...p.querySelectorAll('[data-search]')].some(t => !t.hidden);
       p.hidden = !!words.length && !vis;
-      if (none) none.hidden = !!words.length;
+      const none = p.querySelector('.none'); if (none) none.hidden = !!words.length;
     }
     for (const s of document.querySelectorAll('.stage')) s.hidden = !!words.length && ![...s.querySelectorAll('[data-phase]')].some(p => !p.hidden);
-    for (const b of document.querySelectorAll('[data-block]')) { if (b.id === 'workflows') b.hidden = !!words.length && !b.querySelector('.flow:not([hidden])'); else b.hidden = !!words.length; }
+    for (const b of document.querySelectorAll('[data-block]')) { if (b.id === 'workflows') b.hidden = !!words.length && !b.querySelector('.flow:not([hidden])'); else if (b.id !== 'tools') b.hidden = !!words.length; }
     document.getElementById('noMatch').hidden = !words.length || shown > 0;
   }
   q.addEventListener('input', filter);
