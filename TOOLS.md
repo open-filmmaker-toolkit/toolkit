@@ -12,82 +12,82 @@ Looking for other free, open-source software for filmmaking, such as editing, so
 
 | Tool | Use it for | Status |
 | --- | --- | --- |
-| [Subject tracker](tools/subject-tracker/) | Keeping track of the people you might film, where access stands and when to follow up, then adding them to your project | First version |
-| [Research and archival log](tools/research-log/) | Logging archival leads and research sources as you find them, and sending leads to the clearance log when they're ready | First version |
-| [Comps tracker](tools/comps-tracker/) | Tracking comparable films for pitches and sales, with a source for every figure, and printing a comps page | First version |
-| [Treatment builder](tools/treatment-builder/) | Writing a treatment section by section, with word counts against your targets and versions you can compare | First version |
-| [Pitch deck builder](tools/pitch-deck/) | Putting together a pitch deck or lookbook from your project and your own stills, for screen or print | First version |
+| [Subject tracker](tools/subject-tracker/) | Keep track of the people you might film, and when to follow up. | First version |
+| [Research and archival log](tools/research-log/) | Write down archival leads and sources as you find them. | First version |
+| [Comps tracker](tools/comps-tracker/) | Comparable films for your pitch, with where every number came from. | First version |
+| [Treatment builder](tools/treatment-builder/) | Write your treatment a section at a time, with word counts. | First version |
+| [Pitch deck builder](tools/pitch-deck/) | Make a pitch deck or lookbook from your project and your own stills. | First version |
 
 ## Funding
 
 | Tool | Use it for | Status |
 | --- | --- | --- |
-| [Grant calendar](tools/grant-calendar/) | Seeing every grant and fund deadline in one place, with what each application needs and where it stands, and sending the deadlines to your calendar | First version |
-| [Grant narrative library](tools/narrative-library/) | Keeping your application answers in every length funders ask for, with live counts, and noting which funder got which version | First version |
-| [Budget converter](tools/budget-converter/) | Turning your budget into the categories each funder asks for, flagging what doesn't map, and saving the mapping for next time | First version |
-| [Finance plan](tools/finance-plan/) | Showing how the film gets paid for, against the budget: the gap still to raise and when the money arrives | First version |
-| [Funder CRM](tools/funder-crm/) | Keeping track of funders, investors and broadcasters: the people you know there, every meeting, call and email, and the next step with each | First version |
+| [Grant calendar](tools/grant-calendar/) | Every grant deadline in one place, and what each application needs. | First version |
+| [Grant narrative library](tools/narrative-library/) | Your application answers, in every length funders ask for. | First version |
+| [Budget converter](tools/budget-converter/) | Put your budget into the categories a funder wants. | First version |
+| [Finance plan](tools/finance-plan/) | How the film gets paid for, and how much you still need to raise. | First version |
+| [Funder CRM](tools/funder-crm/) | Who you know at each funder, and what you said you'd do next. | First version |
 
 ## Pre-Production
 
 | Tool | Use it for | Status |
 | --- | --- | --- |
-| [Budget](tools/budget/) | Building a documentary or indie budget with detail lines, fringes and contingency that roll up to a top sheet, with versions to compare | First version |
-| [Cash flow](tools/cash-flow/) | Planning when money goes out and comes in, month by month or week by week, from the budget and the finance plan, and seeing where the balance runs short | First version |
-| [Shooting calendar](tools/shooting-calendar/) | Planning shoot days, travel days and holds across weeks or months, with who's needed and where, and starting each day's call sheet | First version |
-| [Interview prep](tools/interview-prep/) | Preparing each interview: research, the story beats to cover, questions in order with must-asks marked, and a one-page guide to print | First version |
-| [Location scout sheet](tools/location-scout/) | Recording what you learn on a scout, with your photos, linked to the place and its release, and printing a scout report for the crew | First version |
-| [Deal memos](tools/deal-memos/) | Filling in crew deal memos from the project, printing them to sign, keeping the signed copy and sending the rates to the budget | First version |
-| [Gear list](tools/gear-list/) | Listing the gear by department, owned, borrowed or rented, packing it by shoot day, and printing load-out checklists and the schedule your insurer asks for | First version |
-| [COI and permit tracker](tools/coi-permit-tracker/) | Tracking certificates of insurance and filming permits for each vendor and location, and seeing what's missing or expiring before each shoot day | First version |
-| [Travel sheet](tools/travel-sheet/) | Giving everyone on a trip one sheet with their flights, hotels, ground transport, local contacts, the emergency number and the nearest hospital | First version |
-| [Risk and hostile-environment plans](tools/risk-plan/) | Planning for risk on a shoot, especially in hostile environments: hazards rated with what you'll do about them, emergency contacts, hospitals, a way out and check-ins | First version |
-| [Security checklist](tools/security-checklist/) | Protecting footage, sources and devices on sensitive productions, with a checklist for digital and physical security ticked off for each person on the crew | First version |
+| [Budget](tools/budget/) | A real production budget, from detail lines up to the top sheet. | First version |
+| [Cash flow](tools/cash-flow/) | When money goes out and comes in, and the months you'll run short. | First version |
+| [Shooting calendar](tools/shooting-calendar/) | Shoot days, travel days and holds, with who's needed where. | First version |
+| [Interview prep](tools/interview-prep/) | Research and questions for each interview, on one page you can print. | First version |
+| [Location scout sheet](tools/location-scout/) | What you found on a scout, with photos, for the rest of the crew. | First version |
+| [Deal memos](tools/deal-memos/) | Crew deal memos to print and sign, with the rates sent to the budget. | First version |
+| [Gear list](tools/gear-list/) | What gear you're bringing, where it's from, and what goes out each day. | First version |
+| [COI and permit tracker](tools/coi-permit-tracker/) | Insurance certificates and permits, and what's still missing before each shoot day. | First version |
+| [Travel sheet](tools/travel-sheet/) | Flights, hotels and who to call, on one sheet for everyone on the trip. | First version |
+| [Risk and hostile-environment plans](tools/risk-plan/) | What could go wrong on a shoot, and the plan if it does. | First version |
+| [Security checklist](tools/security-checklist/) | Keep footage, sources and devices safe on a sensitive shoot. | First version |
 
 ## Production
 
 | Tool | Use it for | Status |
 | --- | --- | --- |
-| [Call sheet](tools/call-sheet/) | Building shoot-day call sheets from the people and locations in your project; weather lookup is optional and off until you click it | First version |
-| [Camera and sound reports](tools/camera-sound-reports/) | Logging what was shot on each card: camera reports with clips, codec, frame rate and lens notes, and sound reports with each file and its tracks, linked to the shoot day | First version |
-| [Interview log](tools/interview-log/) | Logging each interview: who, when, where, which cards, and timestamped moments with favorites marked, linked to the release and transcript, and exported for the paper edit | First version |
-| [Daily production report](tools/daily-production-report/) | Recording each shoot day: call, meal and wrap times and hours for crew and talent, what was shot, and incidents and delays | First version |
-| [Release tracker](tools/release-tracker/) | Tracking who signed what: appearance, location and materials releases, with the signed copies, and flagging anyone on camera with no release on file | First version |
-| [Expense log](tools/expense-log/) | Logging production expenses against budget accounts while keeping receipt files on your computer | First version |
-| [Field journal](tools/field-journal/) | Keeping a dated journal of the production: what happened, what you learned and story ideas, tagged with people and places and linked to shoot days | First version |
+| [Call sheet](tools/call-sheet/) | Call sheets built from the people and places already in your project. | First version |
+| [Camera and sound reports](tools/camera-sound-reports/) | What's on every camera and sound card, for the shoot and the edit. | First version |
+| [Interview log](tools/interview-log/) | Who you interviewed, which cards it's on, and the moments worth finding again. | First version |
+| [Daily production report](tools/daily-production-report/) | What happened each shoot day: the hours, what you got, and what went wrong. | First version |
+| [Release tracker](tools/release-tracker/) | Who's signed what, and who's on camera without a release. | First version |
+| [Expense log](tools/expense-log/) | Log what you spend against the budget, and keep the receipts. | First version |
+| [Field journal](tools/field-journal/) | A dated journal of the production, tied to the people and places in it. | First version |
 
 ## Post-Production
 
 | Tool | Use it for | Status |
 | --- | --- | --- |
-| [Footage log](tools/footage-log/) | Cataloging every clip so the editor can find it: what's in it, who's in it, where and when, with topics, notes and ratings, imported from a folder, a CSV or your camera reports | First version |
-| [Paper edit](tools/paper-edit/) | Building a paper edit from transcripts: picking bites with their source timecodes, arranging them into scenes, printing it, and exporting an edit list for Premiere, Resolve or Avid | First version |
-| [Structure board](tools/structure-board/) | Laying out the film's structure on cards you can move around: a card for each scene with a summary and running time, dragged into sequences and acts and colored by story thread or character | First version |
-| [Cut version tracker](tools/cut-tracker/) | Tracking every cut: what changed, who saw it, the notes from each screening tied to a time and scene, which notes are done, deferred or carried, and the locked cut | First version |
-| [Name supers list](tools/name-supers/) | Keeping on-screen names and titles spelled the way the rest of your project spells them, and showing graphics what changed since their last list | First version |
-| [Music cue sheet](tools/music-cue-sheet/) | Building the music cue sheet your distributor or broadcaster needs, from the music already in your clearance log | First version |
-| [Credits builder](tools/credits-builder/) | Building end credits from the people, music and archival material in your project, checking that every credit your contracts require is there, and exporting the crawl as text | First version |
-| [Budget-to-actuals](tools/budget-to-actuals/) | Comparing what you've spent against the budget, line by line, from the expense log: the variance for each line and in total, the estimate to complete, and a printed cost report | First version |
+| [Footage log](tools/footage-log/) | Every clip, what's in it and who's in it, so the editor can find it. | First version |
+| [Paper edit](tools/paper-edit/) | Pick bites from transcripts, build scenes, and send an edit list to your editing app. | First version |
+| [Structure board](tools/structure-board/) | Scene cards you can move around until the structure works. | First version |
+| [Cut version tracker](tools/cut-tracker/) | Each cut, who saw it, and what happened to their notes. | First version |
+| [Name supers list](tools/name-supers/) | On-screen names and titles, spelled right and kept up to date. | First version |
+| [Music cue sheet](tools/music-cue-sheet/) | The cue sheet your distributor needs, built from your clearance log. | First version |
+| [Credits builder](tools/credits-builder/) | End credits from your project, with every credit your contracts require checked. | First version |
+| [Budget-to-actuals](tools/budget-to-actuals/) | What you've spent against the budget, line by line. | First version |
 
 ## Legal & Clearances
 
 | Tool | Use it for | Status |
 | --- | --- | --- |
-| [Clearance log](tools/clearance-log/) | Tracking every piece of third-party material until it's cleared, then printing a report for your E&O attorney | First version |
-| [Fair use log](tools/fair-use-log/) | Documenting fair use decisions element by element: purpose, how much is used and why, the nature of the original and the market effect, where the film will be shown, and a draft memo for your attorney | First version |
-| [License tracker](tools/license-tracker/) | Tracking the terms of each archival and music license: media, territory, term, fees and payments, and options and step deals to exercise in time, with what's expiring flagged | First version |
-| [Annotated-transcript clearance report](tools/clearance-report/) | Marking every reference to a person, place, product, quote, music or archival material in a script or transcript, with how each is cleared, for your E&O insurer | First version |
-| [Chain-of-title binder](tools/chain-of-title/) | Gathering the chain-of-title documents a distributor asks for, in order, each linked to its document in the project, with what's missing flagged, and an index and cover sheets | First version |
+| [Clearance log](tools/clearance-log/) | Every bit of third-party material in the film, until it's cleared. | First version |
+| [Fair use log](tools/fair-use-log/) | Your fair use reasoning, written down for your attorney. | First version |
+| [License tracker](tools/license-tracker/) | What each license covers, what you still owe, and when it runs out. | First version |
+| [Annotated-transcript clearance report](tools/clearance-report/) | The annotated script your E&O insurer asks for. | First version |
+| [Chain-of-title binder](tools/chain-of-title/) | The rights documents a distributor wants, with the gaps showing. | First version |
 
 ## Marketing & Festivals
 
 | Tool | Use it for | Status |
 | --- | --- | --- |
 | Festival strategy map | Plan a festival run: premiere rules, tiers, deadlines and fees, in an order that protects your premiere. | Planned, [#77](https://github.com/open-filmmaker-toolkit/toolkit/issues/77) |
-| [Festival submission tracker](tools/festival-submissions/) | Tracking festival submissions, with deadlines, fees, results and screening dates | First version |
+| [Festival submission tracker](tools/festival-submissions/) | Festival deadlines, fees, results and screenings. | First version |
 | EPK and press notes builder | Build press notes and an electronic press kit: synopsis, director's statement, bios, credits, stills and contacts. | Planned, [#79](https://github.com/open-filmmaker-toolkit/toolkit/issues/79) |
 | Stills library | Organize production stills and key art, with captions, photo credits and approvals. | Planned, [#80](https://github.com/open-filmmaker-toolkit/toolkit/issues/80) |
-| [Press list](tools/press-list/) | Keeping a press list: outlets and the people who cover them by beat, screener links sent, screening RSVPs and the coverage that comes back, with CSV export | First version |
+| [Press list](tools/press-list/) | Press contacts, the screeners you sent, and the coverage you got. | First version |
 | Awards and social calendars | Plan awards campaigns and social posts around festival and release dates. | Planned, [#82](https://github.com/open-filmmaker-toolkit/toolkit/issues/82) |
 
 ## Release & Distribution
@@ -106,8 +106,8 @@ Looking for other free, open-source software for filmmaking, such as editing, so
 | Tool | Use it for | Status |
 | --- | --- | --- |
 | Theory of change builder | Map how the film's campaign leads to change: audiences, activities, outcomes, and how you'll measure them. | Planned, [#89](https://github.com/open-filmmaker-toolkit/toolkit/issues/89) |
-| [Partner CRM](tools/partner-crm/) | Tracking impact partners: organizations and their contacts, commitments and next steps with due dates, and the screenings you've done together, with CSV export | First version |
-| [Discussion guide builder](tools/discussion-guide/) | Preparing a screening handout with a project synopsis and credits, editable themes and questions, audience resources and partner organizations, and print to PDF | First version |
+| [Partner CRM](tools/partner-crm/) | Impact partners, what they've committed to, and the screenings you've done together. | First version |
+| [Discussion guide builder](tools/discussion-guide/) | A handout for screenings, with discussion questions and resources. | First version |
 | Screening kit builder | Put together a kit for screening hosts: how to screen the film, tech specs, promotional materials and the discussion guide. | Planned, [#92](https://github.com/open-filmmaker-toolkit/toolkit/issues/92) |
 | Impact report | Report on the campaign: screenings, audiences, partners and outcomes against the theory of change. | Planned, [#93](https://github.com/open-filmmaker-toolkit/toolkit/issues/93) |
 
@@ -117,5 +117,5 @@ Looking for other free, open-source software for filmmaking, such as editing, so
 | --- | --- | --- |
 | Final cost report | Close out the budget with final costs, for funders and your records. | Planned, [#94](https://github.com/open-filmmaker-toolkit/toolkit/issues/94) |
 | Grant final reports | Write the final report for each grant: narrative, budget, outcomes and deliverables, before it's due. | Planned, [#95](https://github.com/open-filmmaker-toolkit/toolkit/issues/95) |
-| [Archive log](tools/archive-log/) | Log each project asset's copies, storage locations and dates, hash manifests, and manual read-back checks, with CSV export | First version |
+| [Archive log](tools/archive-log/) | Where every copy of your project lives, and when you last checked it. | First version |
 | Contract and release archive | Gather every signed contract and release into one indexed archive for the long term. | Planned, [#97](https://github.com/open-filmmaker-toolkit/toolkit/issues/97) |
