@@ -120,6 +120,19 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .st-planned { color: var(--ink-2); }
 .flags { grid-column: 2 / -1; }
 .todo { list-style: none; margin: 4px 0 0; padding: 0; }
+.so-dialog { width: min(980px, calc(100vw - 24px)); }
+.so-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.so-cols h3 { margin: 0 0 6px; font-size: 15px; }
+.so-filters { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; margin-bottom: 6px; font-size: 14px; }
+.so-filters select, .so-filters input[type=search] { flex: 1 1 140px; min-width: 0; padding: 5px 8px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); color: var(--ink); font: inherit; }
+.so-pick, .so-order { list-style: none; margin: 0; padding: 0; max-height: 46vh; overflow-y: auto; border: 1px solid var(--rule-soft); border-radius: 6px; }
+.so-pick li, .so-order li { display: flex; gap: 8px; justify-content: space-between; align-items: flex-start; padding: 6px 8px; font-size: 14px; }
+.so-pick li + li, .so-order li + li { border-top: 1px solid var(--rule-soft); }
+.so-pick .sub, .so-order .sub { display: block; color: var(--ink-2); font-size: 13px; }
+.so-moves { display: flex; gap: 2px; flex: none; }
+.icon-btn { width: 30px; height: 30px; padding: 0; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); color: var(--ink-2); cursor: pointer; font-size: 15px; line-height: 1; }
+.icon-btn:disabled { opacity: 0.4; cursor: default; }
+@media (max-width: 720px) { .so-cols { grid-template-columns: 1fr; } }
 .todo li { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 6px 0; font-size: 14px; }
 .todo li + li { border-top: 1px solid var(--rule-soft); }
 .todo .sub { display: block; color: var(--ink-3); font-size: 13px; }
@@ -297,6 +310,12 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
           <div><button type="button" class="btn" id="printBtn">Print the moments</button></div>
         </div>
       </section>
+      <section class="card" aria-labelledby="soHead">
+        <div class="card-head"><h2 id="soHead">String-outs</h2><span class="count" id="soCount"></span></div>
+        <p class="lead">Selects from across your interviews, in the order you want them, such as everyone on the night the levee broke.</p>
+        <ul class="todo" id="soList"></ul>
+        <div><button type="button" class="btn" id="soNewBtn">Start a string-out</button></div>
+      </section>
       <section class="card" aria-labelledby="todoHead">
         <div class="card-head"><h2 id="todoHead">Filmed, not logged yet</h2><span class="count" id="todoCount"></span></div>
         <ul class="todo" id="todo"></ul>
@@ -333,7 +352,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       <div class="group" id="trBox">
         <div class="list-head"><h3 id="trHead">Transcript with timecodes</h3><button type="button" class="btn small" id="trImportBtn">Import a transcript</button></div>
         <p class="hint" id="trNote">Import an SRT, WebVTT or text file with timecodes from a transcription app such as Buzz or noScribe. Timecodes and speakers are kept, and the paper edit uses the same transcript.</p>
-        <input type="file" id="trFile" accept=".srt,.vtt,.txt,text/plain,text/vtt" hidden>
+        <input type="file" id="trFile" accept=".srt,.vtt,.txt,.docx,.html,.htm,text/plain,text/vtt,text/html" hidden>
         <ol class="tr-list" id="trList" aria-labelledby="trHead"></ol>
       </div>
       <div class="group">
@@ -348,6 +367,30 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       <span class="spacer"></span>
       <button type="button" class="btn" id="editorCancel">Cancel</button>
       <button type="submit" class="btn primary" id="editorSubmit">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal so-dialog" id="soDialog" aria-labelledby="soTitle">
+  <form id="soForm" method="dialog" novalidate>
+    <div class="dlg-head"><h2 id="soTitle">String-out</h2></div>
+    <div class="dlg-body">
+      <div class="field"><label for="so-title">Name</label><input id="so-title" type="text" placeholder="The night the levee broke" autocomplete="off"></div>
+      <div class="so-cols">
+        <section aria-labelledby="soPickHead"><h3 id="soPickHead">Moments to pick from</h3>
+          <div class="so-filters"><label class="check"><input type="checkbox" id="soFav" checked> Favorites only</label><select id="soBeat" aria-label="Story beat"></select><input id="soFind" type="search" placeholder="Find" aria-label="Find moments"></div>
+          <ul class="so-pick" id="soPick"></ul></section>
+        <section aria-labelledby="soOrderHead"><h3 id="soOrderHead">In this string-out</h3><ol class="so-order" id="soOrder"></ol></section>
+      </div>
+      <div class="field"><label for="so-notes">Notes</label><textarea id="so-notes" rows="2" placeholder="What this sequence is for"></textarea></div>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn danger" id="soDeleteBtn">Remove string-out</button>
+      <button type="button" class="btn" id="soCsvBtn">Export CSV</button>
+      <button type="button" class="btn" id="soPrintBtn">Print</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="soCancel">Cancel</button>
+      <button type="submit" class="btn primary">Save</button>
     </div>
   </form>
 </dialog>
@@ -618,6 +661,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     if (printId && !withMoments.some(i => i.id === printId)) printId = '';
     $('printSel').innerHTML = withMoments.length ? `<option value="">Every logged interview</option>` + withMoments.map(i => `<option value="${esc(i.id)}"${i.id === printId ? ' selected' : ''}>${esc(who(i))}${dateOf(i) ? `, ${esc(fmtDate(dateOf(i)))}` : ''}</option>`).join('') : '<option value="">Log some moments first</option>';
     $('printSel').disabled = $('printBtn').disabled = $('favOnly').disabled = !withMoments.length;
+    renderStringOuts();
   }
 
   // ---------- Editor ----------
@@ -657,7 +701,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('trList').hidden = !segs.length;
   }
   async function importTranscript(f) {
-    const parsed = oftTranscript.parse(await f.text(), f.name, newId);
+    let parsed; try { parsed = oftTranscript.parse(await oftTranscript.read(f), f.name, newId); } catch (err) { toast(`${f.name} ${err.message}.`, true); return; }
     if (!parsed.segments.length) { toast(`Couldn't find any text in ${f.name}.`, true); return; }
     const old = transcriptFor(editing);
     const used = old && arr(PE().scenes).some(sc => arr(sc.bites).some(b => b.transcriptId === old.id));
@@ -747,6 +791,69 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     toast(`Removed the interview with ${who(editing)}.`);
   }
 
+  // ---------- String-outs ----------
+  // A string-out is a list of moments from any interview, in order, kept in stringOuts.
+  const stringOuts = () => arr(doc.stringOuts).filter(x => x && typeof x === 'object' && x.id);
+  const momentRef = (iid, mid) => { const i = interviews().find(x => x.id === iid); const m = i && arr(i.moments).find(x => x && x.id === mid); return i && m ? { i, m } : null; };
+  let soEditing = null, soNew = false, printSo = null;
+  function renderStringOuts() {
+    const all = stringOuts();
+    $('soCount').textContent = all.length ? String(all.length) : '';
+    $('soList').innerHTML = all.length ? all.map(x => { const n = arr(x.items).filter(it => momentRef(it.interviewId, it.momentId)).length, people = new Set(arr(x.items).map(it => it.interviewId)).size;
+      return `<li><span>${esc(x.title || 'Untitled string-out')}<span class="sub">${n} moment${n === 1 ? '' : 's'} from ${people} interview${people === 1 ? '' : 's'}</span></span><button type="button" class="btn small" data-so="${esc(x.id)}">Open</button></li>`; }).join('')
+      : '<li class="empty-line">None yet.</li>';
+    $('soNewBtn').disabled = !interviews().some(logged);
+  }
+  function openStringOut(id) {
+    const ex = id && stringOuts().find(x => x.id === id);
+    soNew = !ex;
+    soEditing = ex ? structuredClone(ex) : { id: newId('stringout'), items: [] };
+    soEditing.items = arr(soEditing.items).filter(it => it && it.interviewId && it.momentId);
+    $('so-title').value = str(soEditing.title); $('so-notes').value = str(soEditing.notes);
+    const beats = [...new Set(interviews().flatMap(i => arr(i.beats).map(b => str(b.text).trim())).filter(Boolean))];
+    $('soBeat').innerHTML = '<option value="">Every story beat</option>' + beats.map(b => `<option value="${esc(b)}">${esc(b)}</option>`).join('');
+    $('soFav').checked = interviews().some(i => arr(i.moments).some(m => m && m.fav));
+    $('soFind').value = '';
+    $('soDeleteBtn').hidden = soNew;
+    $('soTitle').textContent = soNew ? 'Start a string-out' : `String-out: ${soEditing.title || 'Untitled'}`;
+    drawStringOut();
+    $('soDialog').showModal(); $('so-title').focus();
+  }
+  function drawStringOut() {
+    const have = new Set(soEditing.items.map(it => `${it.interviewId}|${it.momentId}`));
+    const fav = $('soFav').checked, beat = $('soBeat').value, q = $('soFind').value.trim().toLowerCase();
+    const pick = interviews().filter(logged).sort((a, b) => str(dateOf(a)).localeCompare(str(dateOf(b)))).flatMap(i => ordered(i).filter(m => m && m.id && (!fav || m.fav) && (!beat || beatText(i, m.beatId) === beat) && (!q || `${who(i)} ${m.text}`.toLowerCase().includes(q)) && !have.has(`${i.id}|${m.id}`)).map(m => ({ i, m })));
+    $('soPick').innerHTML = pick.length ? pick.map(({ i, m }) => `<li><span><b>${esc(who(i))}</b> ${esc(m.tc || '')}${m.fav ? ' ★' : ''}<span class="sub">${esc(str(m.text).slice(0, 140))}</span></span><button type="button" class="btn small" data-soadd="${esc(i.id)}|${esc(m.id)}" aria-label="Add ${esc(who(i))} at ${esc(m.tc || 'this moment')}">Add</button></li>`).join('')
+      : '<li class="empty-line">No moments to add. Change the filters, or mark favorites in the interviews.</li>';
+    const items = soEditing.items;
+    $('soOrder').innerHTML = items.length ? items.map((it, k) => { const r = momentRef(it.interviewId, it.momentId);
+      return `<li data-k="${k}"><span>${r ? `<b>${esc(who(r.i))}</b> ${esc(r.m.tc || '')}<span class="sub">${esc(str(r.m.text).slice(0, 140))}</span>` : '<span class="sub">A moment no longer in the log</span>'}</span>
+        <span class="so-moves"><button type="button" class="icon-btn" data-somove="-1" aria-label="Move up"${k === 0 ? ' disabled' : ''}>↑</button><button type="button" class="icon-btn" data-somove="1" aria-label="Move down"${k === items.length - 1 ? ' disabled' : ''}>↓</button><button type="button" class="icon-btn" data-sodel aria-label="Take it out">×</button></span></li>`; }).join('')
+      : '<li class="empty-line">Add moments from the left, then put them in order.</li>';
+  }
+  function readStringOut() {
+    const x = soEditing;
+    const t = $('so-title').value.trim(); if (t) x.title = t; else delete x.title;
+    const n = $('so-notes').value.trim(); if (n) x.notes = n; else delete x.notes;
+    return x;
+  }
+  function saveStringOut() {
+    const x = readStringOut();
+    if (!Array.isArray(doc.stringOuts)) doc.stringOuts = [];
+    if (soNew) doc.stringOuts.push(x); else doc.stringOuts[doc.stringOuts.findIndex(y => y && y.id === x.id)] = x;
+    soNew = false;
+    $('soDialog').close(); changed();
+  }
+  const soRows = x => arr(x.items).map(it => momentRef(it.interviewId, it.momentId)).filter(Boolean);
+  function exportStringOut() {
+    const x = readStringOut(); if (!soRows(x).length) { toast('Add some moments first.', true); return; }
+    const rows = soRows(x).map(({ i, m }, k) => [k + 1, who(i), dateOf(i), cardsOf(i).join(', '), m.clipId ? clipName(i, m.clipId) : '', m.tc, m.text, m.fav ? 'Yes' : '', beatText(i, m.beatId)]);
+    const csv = '\ufeff' + [['Order', 'Interview', 'Date', 'Cards', 'Clip', 'Timecode', 'Moment', 'Favorite', 'Story beat'], ...rows].map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
+    const name = `${slug()}-string-out-${str(x.title || 'untitled').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}.csv`;
+    download(csv, name, 'text/csv;charset=utf-8');
+    toast(`Exported ${rows.length} moment${rows.length === 1 ? '' : 's'} to ${name}`);
+  }
+
   // ---------- Paper edit: CSV and print ----------
   const CSV_HEAD = ['Interview', 'Date', 'Location', 'Cards', 'Timecode', 'Moment', 'Favorite', 'Story beat', 'Release', 'Transcript'];
   function exportCsv() {
@@ -759,6 +866,14 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     toast(`Exported ${rows.length} moment${rows.length === 1 ? '' : 's'} to ${name}`);
   }
   function renderReport() {
+    if (printSo) {
+      const x = soEditing && soEditing.id === printSo ? soEditing : stringOuts().find(y => y.id === printSo);
+      if (x) {
+        $('report').innerHTML = `<h1>String-out: ${esc(x.title || 'Untitled')}</h1><p class="r-meta">${esc([doc.project.title, `Printed ${fmtDate(today())}`].filter(Boolean).join(' · '))}</p>${x.notes ? `<p>${esc(x.notes)}</p>` : ''}
+          <table><thead><tr><th class="r-c">#</th><th>Who</th><th class="r-tc">Timecode</th><th>Moment</th><th>Beat</th></tr></thead><tbody>${soRows(x).map(({ i, m }, k) => `<tr><td class="r-c">${k + 1}</td><td>${esc(who(i))}${cardsOf(i).length ? `<br><i>${esc(m.clipId && clipName(i, m.clipId) ? `Clip ${clipName(i, m.clipId)}` : `Cards ${cardsOf(i).join(', ')}`)}</i>` : ''}</td><td class="r-tc">${esc(m.tc || '')}</td><td class="r-notes">${esc(m.text || '')}</td><td>${esc(beatText(i, m.beatId))}</td></tr>`).join('')}</tbody></table>`;
+        return;
+      }
+    }
     const favOnly = $('favOnly').checked;
     const list = interviews().filter(logged).filter(i => !printId || i.id === printId).sort((a, b) => str(dateOf(a)).localeCompare(str(dateOf(b))));
     $('report').innerHTML = `<h1>Interview moments${favOnly ? ': favorites' : ''}</h1>
@@ -984,7 +1099,26 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('saveBtn').onclick = saveFile;
     $('editProjectBtn').onclick = openProjectDialog;
     $('filmTitle').onclick = openProjectDialog;
-    $('printBtn').onclick = () => { renderReport(); window.print(); };
+    $('printBtn').onclick = () => { printSo = null; renderReport(); window.print(); };
+    $('soNewBtn').onclick = () => openStringOut(null);
+    $('soList').addEventListener('click', ev => { const b = ev.target.closest('[data-so]'); if (b) openStringOut(b.dataset.so); });
+    for (const id of ['soFav', 'soBeat', 'soFind']) $(id).addEventListener('input', drawStringOut);
+    $('soPick').addEventListener('click', ev => { const b = ev.target.closest('[data-soadd]'); if (!b) return; const [interviewId, momentId] = b.dataset.soadd.split('|'); soEditing.items.push({ interviewId, momentId }); drawStringOut(); const next = $('soPick').querySelector('[data-soadd]'); (next || $('so-title')).focus(); });
+    $('soOrder').addEventListener('click', ev => {
+      const li = ev.target.closest('[data-k]'); if (!li) return;
+      const k = +li.dataset.k, mv = ev.target.closest('[data-somove]'), del = ev.target.closest('[data-sodel]'), items = soEditing.items;
+      if (del) items.splice(k, 1);
+      else if (mv) { const j = k + +mv.dataset.somove; if (j < 0 || j >= items.length) return; [items[k], items[j]] = [items[j], items[k]]; }
+      else return;
+      drawStringOut();
+      if (mv) { const b = $('soOrder').querySelector(`[data-k="${k + +mv.dataset.somove}"] [data-somove="${mv.dataset.somove}"]`); if (b && !b.disabled) b.focus(); }
+    });
+    $('soForm').addEventListener('submit', ev => { ev.preventDefault(); saveStringOut(); });
+    $('soCancel').onclick = () => $('soDialog').close();
+    $('soCsvBtn').onclick = exportStringOut;
+    $('soPrintBtn').onclick = () => { readStringOut(); printSo = soEditing.id; renderReport(); window.print(); };
+    window.addEventListener('afterprint', () => { printSo = null; });
+    $('soDeleteBtn').onclick = () => { doc.stringOuts = stringOuts().filter(x => x.id !== soEditing.id); if (!doc.stringOuts.length) delete doc.stringOuts; $('soDialog').close(); changed(); toast('Removed the string-out. The moments stay in their interviews.'); };
     window.addEventListener('beforeprint', renderReport);
     $('trImportBtn').onclick = () => { $('trFile').value = ''; $('trFile').click(); };
     $('trFile').addEventListener('change', () => { const f = $('trFile').files[0]; if (f) importTranscript(f); });
@@ -1035,7 +1169,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   window.addEventListener('error', ev => toast(`Something went wrong: ${ev.message}. Save your work, then reload the page.`, true));
   window.addEventListener('unhandledrejection', ev => toast(`Something went wrong: ${ev.reason && ev.reason.message ? ev.reason.message : ev.reason}. Save your work, then reload the page.`, true));
   /* oft-shared:transcript begin. Copied from shared/transcript.js by .github/scripts/sync_shared.py; edit it there. */
-  // Reading transcripts from transcription apps: SRT, WebVTT, or text with timestamps.
+  // Reading transcripts from transcription apps: SRT, WebVTT, text with timestamps, Word documents
+  // and the HTML noScribe writes.
   // Shared by the paper edit and the interview log, which keep transcripts in paperEdit.transcripts.
   const oftTranscript = (() => {
     const str = v => (v == null ? '' : String(v));
@@ -1095,14 +1230,62 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       out.forEach((s, i) => { if (isNum(s.start) && !isNum(s.end)) { const n = out[i + 1]; s.end = n && isNum(n.start) && n.start > s.start ? n.start : s.start + Math.max(2, s.text.split(/\s+/).length / 2.5); } });
       return out;
     }
+    // HTML, such as noScribe's: segments it times with anchors named ts_<start ms>_<end ms>_<speaker>
+    // when there are any, otherwise each paragraph as a line of text, with its [hh:mm:ss] timestamp.
+    function parseHtml(html) {
+      const dom = new DOMParser().parseFromString(html, 'text/html');
+      const anchors = [...dom.querySelectorAll('a[name^="ts_"]')].map(a => ({ a, m: /^ts_(\d+)_(\d+)(?:_(.*))?$/.exec(a.getAttribute('name')) })).filter(x => x.m);
+      if (anchors.length) {
+        return anchors.map(({ a, m }) => {
+          const sp = speakerOf(clean(a.textContent));
+          return Object.assign({ start: +m[1] / 1000, end: +m[2] / 1000 }, m[3] && !sp.speaker ? { speaker: m[3] } : {}, sp);
+        }).filter(x => x.text);
+      }
+      const blocks = [...dom.body.querySelectorAll('p, li, h1, h2, h3')];
+      const lines = (blocks.length ? blocks.map(n => n.textContent) : str(dom.body.innerText || dom.body.textContent).split('\n')).map(clean).filter(Boolean);
+      return parseText(lines.join('\n\n'));
+    }
+    // A Word document's paragraphs, read from the zip in the browser: no library, using its own unzip.
+    async function docxText(buf) {
+      const b = new Uint8Array(buf), dv = new DataView(buf);
+      let e = -1;
+      for (let i = b.length - 22; i >= Math.max(0, b.length - 66000); i--) if (dv.getUint32(i, true) === 0x06054b50) { e = i; break; }
+      if (e < 0) throw new Error("isn't a Word document");
+      let p = dv.getUint32(e + 16, true);
+      const n = dv.getUint16(e + 10, true), dec = new TextDecoder();
+      for (let k = 0; k < n; k++) {
+        if (dv.getUint32(p, true) !== 0x02014b50) break;
+        const method = dv.getUint16(p + 10, true), size = dv.getUint32(p + 20, true), nl = dv.getUint16(p + 28, true), xl = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true), off = dv.getUint32(p + 42, true);
+        const fname = dec.decode(b.subarray(p + 46, p + 46 + nl));
+        p += 46 + nl + xl + cl;
+        if (fname !== 'word/document.xml') continue;
+        const start = off + 30 + dv.getUint16(off + 26, true) + dv.getUint16(off + 28, true), data = b.subarray(start, start + size);
+        let xml;
+        if (method === 0) xml = dec.decode(data);
+        else if (method === 8 && typeof DecompressionStream !== 'undefined') xml = await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text();
+        else throw new Error("can't be unpacked in this browser");
+        const doc = new DOMParser().parseFromString(xml, 'application/xml'), W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+        return [...doc.getElementsByTagNameNS(W, 'p')].map(par => [...par.getElementsByTagNameNS(W, '*')].map(x => (x.localName === 't' ? x.textContent : x.localName === 'tab' ? ' ' : x.localName === 'br' ? ' ' : '')).join('')).join('\n');
+      }
+      throw new Error("isn't a Word document");
+    }
+    // The text of a transcript file, whatever kind it is. Word documents come back as one paragraph a line.
+    async function read(file) {
+      if (/\.docx$/i.test(file.name) || file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') return docxText(await file.arrayBuffer());
+      return file.text();
+    }
     function parse(text, name, newId) {
+      if (/\.html?$/i.test(name) || /^\s*(<!doctype html|<html)/i.test(text)) {
+        const segs = parseHtml(text).map(s => { const o = { id: newId('seg'), text: s.text }; if (isNum(s.start)) { o.start = Math.round(s.start * 1000) / 1000; o.end = Math.round((isNum(s.end) && s.end > s.start ? s.end : s.start + 2) * 1000) / 1000; } if (s.speaker) o.speaker = s.speaker; return o; });
+        return { segments: segs, format: 'html', timed: segs.some(s => isNum(s.start)) };
+      }
       const isCue = /-->/.test(text) && (/^﻿?WEBVTT/.test(text) || /\.(srt|vtt)$/i.test(name) || /^\s*\d+\s*\n\s*[\d:,.]+\s*-->/m.test(text));
       const segs = (isCue ? parseCues(text) : parseText(text)).map(s => { const o = { id: newId('seg'), text: s.text }; if (isNum(s.start)) { o.start = Math.round(s.start * 1000) / 1000; o.end = Math.round(s.end * 1000) / 1000; } if (s.speaker) o.speaker = s.speaker; return o; });
       return { segments: segs, format: isCue ? (/WEBVTT/.test(text) ? 'vtt' : 'srt') : 'text', timed: segs.some(s => isNum(s.start)) };
     }
     // Seconds as hours, minutes and seconds, such as 00:03:12.
     const hms = s => { s = Math.max(0, Math.floor(s)); return [Math.floor(s / 3600), Math.floor(s / 60) % 60, s % 60].map(n => String(n).padStart(2, '0')).join(':'); };
-    return { parse, secs, hms };
+    return { parse, read, secs, hms };
   })();
   /* oft-shared:transcript end */
   // Columns for importing from a spreadsheet, named as in this tool's template.
@@ -1301,7 +1484,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const OFT_SLUG = (window.location.pathname.match(/tools\/([^/]+)\//) || [])[1] || '';
   const OFT_GUIDE = 'https://github.com/open-filmmaker-toolkit/toolkit/blob/main/docs/sharing-a-project.md';
   const OFT_HOURS = 4;
-  const OFT_KEYS = { project: 'Project details', people: 'People', locations: 'Locations', thirdPartyElements: 'Clearance log', contracts: 'Contracts and releases', assets: 'Files and stills', musicCueSheet: 'Music cue sheet', callSheets: 'Call sheets', credits: 'Credits', supers: 'Name supers', subjects: 'Subject tracker', sources: 'Research log', comps: 'Comps tracker', treatment: 'Treatment', pitchDeck: 'Pitch deck', grants: 'Grant calendar', narratives: 'Narrative library', budget: 'Budget', budgetFormats: 'Budget converter', financePlan: 'Finance plan', funders: 'Funder CRM', cashFlow: 'Cash flow', shootDays: 'Shooting calendar', script: 'Script', scenes: 'Script breakdown', characters: 'Cast', dayOutOfDays: 'Day-out-of-days', budgetLinks: 'Budget', shots: 'Shot list', interviews: 'Interviews', questionBank: 'Question bank', journal: 'Field journal', scouts: 'Location scouts', scoutChecklist: 'Scout checklist', gear: 'Gear list', trips: 'Travel sheet', riskPlans: 'Risk plans', security: 'Security checklist', mediaReports: 'Camera and sound reports', dailyReports: 'Daily reports', expenses: 'Expense log', festivals: 'Festival submissions', screenings: 'Screenings', pressOutlets: 'Press list', partners: 'Partner CRM', discussionGuide: 'Discussion guide', paperEdit: 'Paper edit', costReport: 'Budget-to-actuals', structure: 'Structure board', cuts: 'Cut tracker', clearanceReport: 'Clearance report', chainOfTitle: 'Chain of title', festivalStrategy: 'Festival strategy', pressNotes: 'Press notes', awards: 'Awards', socialPosts: 'Social posts', deliverables: 'Deliverables', qc: 'QC tracker', waterfall: 'Waterfall', revenueStatements: 'Revenue tracker', bookings: 'Bookings', theoryOfChange: 'Theory of change', screeningKit: 'Screening kit', impactReport: 'Impact report', finalCostReport: 'Final cost report', grantReports: 'Grant reports', contractArchive: 'Contract archive' };
+  const OFT_KEYS = { project: 'Project details', people: 'People', locations: 'Locations', thirdPartyElements: 'Clearance log', contracts: 'Contracts and releases', releaseForms: 'Release wording', assets: 'Files and stills', musicCueSheet: 'Music cue sheet', callSheets: 'Call sheets', credits: 'Credits', supers: 'Name supers', subjects: 'Subject tracker', sources: 'Research log', comps: 'Comps tracker', treatment: 'Treatment', pitchDeck: 'Pitch deck', grants: 'Grant calendar', narratives: 'Narrative library', budget: 'Budget', budgetFormats: 'Budget converter', financePlan: 'Finance plan', funders: 'Funder CRM', cashFlow: 'Cash flow', shootDays: 'Shooting calendar', script: 'Script', scenes: 'Script breakdown', characters: 'Cast', dayOutOfDays: 'Day-out-of-days', budgetLinks: 'Budget', shots: 'Shot list', interviews: 'Interviews', stringOuts: 'String-outs', questionBank: 'Question bank', journal: 'Field journal', scouts: 'Location scouts', scoutChecklist: 'Scout checklist', gear: 'Gear list', trips: 'Travel sheet', riskPlans: 'Risk plans', security: 'Security checklist', mediaReports: 'Camera and sound reports', dailyReports: 'Daily reports', expenses: 'Expense log', festivals: 'Festival submissions', screenings: 'Screenings', pressOutlets: 'Press list', partners: 'Partner CRM', discussionGuide: 'Discussion guide', paperEdit: 'Paper edit', costReport: 'Budget-to-actuals', structure: 'Structure board', cuts: 'Cut tracker', clearanceReport: 'Clearance report', chainOfTitle: 'Chain of title', festivalStrategy: 'Festival strategy', pressNotes: 'Press notes', awards: 'Awards', socialPosts: 'Social posts', deliverables: 'Deliverables', qc: 'QC tracker', waterfall: 'Waterfall', revenueStatements: 'Revenue tracker', bookings: 'Bookings', theoryOfChange: 'Theory of change', screeningKit: 'Screening kit', impactReport: 'Impact report', finalCostReport: 'Final cost report', grantReports: 'Grant reports', contractArchive: 'Contract archive' };
   const oftStore = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch { /* storage off */ } } };
   const oftMe = () => (oftStore.get('oft-user-name') || '').trim();
   const oftEsc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);

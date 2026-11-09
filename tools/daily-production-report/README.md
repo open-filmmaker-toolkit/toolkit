@@ -40,7 +40,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **Scenes and takes:** the day's scenes from the [stripboard](../stripboard/), to tick off as they're finished, with the pages shot. Setups, takes and circled takes are counted from the scene and take numbers in the camera reports. The printed report adds a script supervisor's page listing every take with its notes.
 - **The weather** comes from the call sheet, and prints with the day's facts.
 - **Incidents and delays:** delay, injury, equipment, weather or other, with the time, minutes lost and what happened, and notes for the day.
-- **Prints** one page for the chosen day. **Exports crew hours as CSV,** one row for each person each day. Also exports project data: project details, people, locations, third-party elements, contracts, assets, music cue sheet details or call sheets as separate CSV files.
+- **Prints** one page for the chosen day, with signature lines for whoever prepared and approved it. Their names carry over from the last report. **Exports crew hours as CSV,** one row for each person each day. Also exports project data: project details, people, locations, third-party elements, contracts, assets, music cue sheet details or call sheets as separate CSV files.
 
 ## Saving and file conflicts
 
@@ -52,7 +52,7 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-`dailyReports`: each has an `id`, `shootDayId` and optional `callSheetId`, `callTime`, `lunchStart`, `lunchEnd`, `wrapTime`, `crew`, `shot`, `weather`, `mediaReportIds`, `completedSceneIds` (the scenes finished that day, in `scenes`), `incidents` and `notes`.
+`dailyReports`: each has an `id`, `shootDayId` and optional `callSheetId`, `callTime`, `lunchStart`, `lunchEnd`, `wrapTime`, `crew`, `shot`, `weather`, `mediaReportIds`, `completedSceneIds` (the scenes finished that day, in `scenes`), `incidents`, `notes`, `preparedBy` and `approvedBy` (names for the signature lines).
 
 - Each `crew` entry has an `id` and optional `personId`, `name`, `role`, `call`, `wrap`, `mealMinutes` and `note`. Hours aren't stored.
 - Each `incidents` entry has an `id` and optional `kind` (`delay`, `injury`, `equipment`, `weather` or `other`), `time`, `minutesLost` and `text`.
@@ -64,7 +64,6 @@ It reads `people`, `locations`, `shootDays`, `callSheets` and `mediaReports`. Ev
 
 - Overtime and meal penalty rules
 - Footage totals
-- Signatures on the printed report
 
 ## License
 

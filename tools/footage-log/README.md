@@ -36,6 +36,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **Import from a CSV,** such as a clip list from your editing app or another log. The tool reads common column names: File Name, Clip Directory or Path, Date, Description, People, Location, Keywords or Topics, Rating, Comments or Notes, Start TC, Duration and Card. People and places are matched to the project by name; names it doesn't know go in the notes.
 - **Import from [camera and sound reports](../camera-sound-reports/):** each logged camera clip comes in with its card, what's in it, timecode, the shoot day's date and place, and circled clips rated four stars.
 - **Tag people, locations and topics** from the project, and add notes and a rating from one to five stars. Select several clips and tag them at once.
+- **Moments inside a clip.** Mark what happens where, by timecode, with topics of their own: the heron landing, the line you'll use. Search finds them, topic filters include them, the printout lists them under their clip, and **Export moments** saves them as CSV in timecode order.
 - **Find clips** by words in their names, descriptions, notes or topics, or by who, where, topic or rating. The side panel counts clips for each person and place.
 - **Exports CSV** of the clips shown, with column names DaVinci Resolve's metadata import uses (File Name, Clip Directory, Description, Keywords, Comments), so it can match clips by file name; check the result in your app. Other apps open it as a spreadsheet. **Prints** the clips shown. Also exports project data: project details, people, locations, third-party elements, contracts, assets, music cue sheet details or call sheets as separate CSV files.
 
@@ -53,7 +54,7 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-Clips are `assets` with `type` "clip", a `name` (the file name), and optional `relativePath`, `date`, `description`, `personIds`, `locationIds`, `topics`, `rating` (1 to 5), `notes`, `timecode`, `duration`, `card`, and `mediaReportId` and `clipId` for a clip that came from a camera report.
+Clips are `assets` with `type` "clip", a `name` (the file name), and optional `relativePath`, `date`, `description`, `personIds`, `locationIds`, `topics`, `rating` (1 to 5), `notes`, `timecode`, `duration`, `card`, `moments` (each with an `id` and optional `tc`, `text` and `topics`), and `mediaReportId` and `clipId` for a clip that came from a camera report.
 
 It reads `people`, `locations`, `shootDays` and `mediaReports`. Everything else in the file is preserved, including other assets. See the [data model notes](../../schemas/README.md).
 
@@ -62,7 +63,6 @@ It reads `people`, `locations`, `shootDays` and `mediaReports`. Everything else 
 - Reading each clip's length, timecode and other metadata from the file itself
 - Thumbnails
 - Exporting an Avid ALE
-- Tagging moments inside a clip; use the [interview log](../interview-log/) for interviews
 
 ## License
 

@@ -35,6 +35,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **A camera report for each card:** the camera and operator, codec, resolution, frame rate and lens notes, and each clip with what or who it is, timecode, lens, notes and whether it's circled. When you don't log every clip, fill in the first and last.
 - **A sound report for each card or roll:** the recorder and sound recordist, file format, sample rate and bit depth, timecode, the track layout, and each file with its tracks and notes. New files start with the report's track layout.
 - **Scene, setup and take for each clip,** for scripted scenes, with the script supervisor's notes. They print as a slate number such as 12A-3, and the [daily production report](../daily-production-report/) counts setups and takes from them.
+- **Matches camera clips to sound files** on the same day: by scene and take when both are slated, otherwise by timecode. A clip goes with the sound file that's running when it starts, or the last one started up to ten minutes before when there's no timecode out. Each camera report says how many of its clips have sound, the printed reports show the match both ways, and the CSV has a **Synced with** column for the edit. Check them against the slate: it's a guide, not a sync.
 - **Linked to the shoot day** from the [shooting calendar](../shooting-calendar/), and to the [call sheet](../call-sheet/) started from that day. Reports are grouped by day, and the side panel lists shoot days so far with no reports.
 - **A new report picks up the last one's settings,** with the next card name, such as A002 after A001.
 - **Offload:** say where the card was copied, relative to your project file, and whether it's backed up. The card is recorded in the project's files, and the list flags cards not offloaded or not backed up.
@@ -56,7 +57,7 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-`mediaReports`: each has an `id`, `kind` (`camera` or `sound`), and optional `shootDayId`, `callSheetId`, `date`, `roll`, `device`, `operatorId`, `firstClip`, `lastClip`, `clips` (each with `id`, and optional `clip`, `subject`, `tc`, `lens`, `good`, `notes`, `scene`, `shot`, `take` and `scriptNotes`), `assetId`, `backedUp` and `notes`.
+`mediaReports`: each has an `id`, `kind` (`camera` or `sound`), and optional `shootDayId`, `callSheetId`, `date`, `roll`, `device`, `operatorId`, `firstClip`, `lastClip`, `clips` (each with `id`, and optional `clip`, `subject`, `tc`, `tcOut`, `lens`, `good`, `notes`, `scene`, `shot`, `take` and `scriptNotes`), `assetId`, `backedUp` and `notes`.
 
 - Camera reports add `codec`, `resolution`, `frameRate` and `lensNotes`. Sound reports add `fileFormat`, `sampleRate`, `timecode` and `trackLayout`.
 - Each clip or file has an `id` and optional `clip`, `subject`, `tc`, `lens` (the tracks, for sound), `good` (circled) and `notes`.
@@ -68,7 +69,7 @@ It reads `people`, `locations`, `shootDays` and `callSheets`. Everything else in
 
 - Reading clip names and metadata from the card itself
 - Checksums for offloads
-- Syncing camera clips with sound files
+- Syncing the media itself, which the editing app does
 
 ## License
 

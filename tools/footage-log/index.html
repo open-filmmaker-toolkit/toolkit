@@ -187,6 +187,11 @@ pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; b
   .row { grid-template-columns: minmax(0, 1fr); }
   .flags { grid-column: 1; }
 }
+.moms { display: grid; gap: 6px; }
+.mom { display: grid; grid-template-columns: 120px minmax(0, 2fr) minmax(0, 1fr) 30px; gap: 6px; align-items: center; }
+.mom input { min-width: 0; padding: 6px 8px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); color: var(--ink); font: inherit; font-size: 13.5px; }
+@media (max-width: 720px) { .mom { grid-template-columns: 1fr 30px; } .mom .m-text, .mom .m-topics { grid-column: 1 / -1; } .mom button { grid-row: 1; grid-column: 2; } }
+.icon-btn { width: 30px; height: 30px; padding: 0; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); color: var(--ink-2); cursor: pointer; font-size: 15px; line-height: 1; }
 @media print {
   :root { color-scheme: light; }
   body { background: #ffffff; color: #000000; font-size: 10pt; }
@@ -254,6 +259,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <button type="button" class="btn primary" id="addBtn">Add a clip</button>
         <button type="button" class="btn" id="importBtn">Import clips</button>
         <button type="button" class="btn" id="csvBtn">Export CSV</button>
+        <button type="button" class="btn" id="momCsvBtn">Export moments</button>
       </div>
       <div id="work">
         <div class="finder" role="search">
@@ -318,6 +324,12 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       <div class="field"><label for="f-topics">Topics</label><input id="f-topics" type="text" placeholder="flood, levee, archive photos" autocomplete="off"><p class="hint">Separated by commas. Topics you've used before: <span id="topicHint">none yet</span>.</p></div>
       <div class="group"><h3 id="rateHead">Rating</h3><div class="rating" id="rating" role="radiogroup" aria-labelledby="rateHead"></div></div>
       <div class="field"><label for="f-notes">Notes</label><textarea id="f-notes" rows="3" placeholder="Plane overhead at 08:40; the best answer is near the end"></textarea></div>
+      <div class="group">
+        <h3 id="momHead">Moments in the clip</h3>
+        <p class="hint">Mark what happens where, by timecode: the heron landing, the line you'll use. Moments are searched with the clip.</p>
+        <div class="moms" id="moms" role="group" aria-labelledby="momHead"></div>
+        <div><button type="button" class="btn small" id="addMomBtn">Add a moment</button></div>
+      </div>
     </div>
     <div class="dlg-foot">
       <button type="button" class="btn danger" id="deleteBtn">Remove clip</button>
@@ -499,17 +511,19 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const low = s => str(s).trim().toLowerCase();
   const stars = n => (n ? '★'.repeat(n) + '☆'.repeat(5 - n) : '');
   const topicsOf = c => arr(c.topics).filter(Boolean);
-  const allTopics = () => [...new Set(clips().flatMap(topicsOf))].sort((a, b) => a.localeCompare(b));
+  const momentsOf = c => arr(c.moments).filter(m => m && typeof m === 'object' && (m.tc || m.text));
+  const momentTopics = c => momentsOf(c).flatMap(m => arr(m.topics).filter(Boolean));
+  const allTopics = () => [...new Set(clips().flatMap(c => [...topicsOf(c), ...momentTopics(c)]))].sort((a, b) => a.localeCompare(b));
   const splitList = s => [...new Set(str(s).split(/[,;]+/).map(x => x.trim()).filter(Boolean))];
   const names = ids => arr(ids).map(person).filter(Boolean).map(p => p.name);
   const places = ids => arr(ids).map(place).filter(Boolean).map(l => l.name);
   function matches(c) {
     if (F.person && !arr(c.personIds).includes(F.person)) return false;
     if (F.place && !arr(c.locationIds).includes(F.place)) return false;
-    if (F.topic && !topicsOf(c).includes(F.topic)) return false;
+    if (F.topic && !topicsOf(c).includes(F.topic) && !momentTopics(c).includes(F.topic)) return false;
     if (F.rating === -1 ? c.rating : F.rating && (c.rating || 0) < F.rating) return false;
     if (F.q) {
-      const hay = low([c.name, c.relativePath, c.description, c.notes, c.card, ...topicsOf(c), ...names(c.personIds), ...places(c.locationIds)].join(' '));
+      const hay = low([c.name, c.relativePath, c.description, c.notes, c.card, ...topicsOf(c), ...names(c.personIds), ...places(c.locationIds), ...momentsOf(c).map(m => `${m.text || ''} ${arr(m.topics).join(' ')}`)].join(' '));
       if (!F.q.split(/\s+/).every(w => hay.includes(w))) return false;
     }
     return true;
@@ -548,6 +562,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('empty').hidden = !!all.length;
     $('work').hidden = !all.length;
     $('csvBtn').hidden = !all.length;
+    $('momCsvBtn').hidden = !all.some(c => momentsOf(c).length);
     $('rows').hidden = !list.length;
     $('noMatch').hidden = !!list.length;
     $('rows').innerHTML = list.slice(0, shown).map(c => {
@@ -555,6 +570,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       for (const n of names(c.personIds)) flags.push(`<span class="flag linked">${esc(n)}</span>`);
       for (const n of places(c.locationIds)) flags.push(`<span class="flag linked">${esc(n)}</span>`);
       for (const t of topicsOf(c)) flags.push(`<span class="flag new">${esc(t)}</span>`);
+      if (momentsOf(c).length) flags.push(`<span class="flag linked">${momentsOf(c).length} moment${momentsOf(c).length === 1 ? '' : 's'}</span>`);
       if (!c.description && !arr(c.personIds).length && !topicsOf(c).length) flags.push('<span class="flag changed">Not logged yet</span>');
       return `<li class="row" data-id="${esc(c.id)}"><span class="pick"><input type="checkbox" data-sel="${esc(c.id)}"${selected.has(c.id) ? ' checked' : ''} aria-label="Select ${esc(c.name || 'clip')}"></span>
         <button type="button" class="what" data-edit="${esc(c.id)}"><span class="nm">${esc(c.name || 'Unnamed clip')}</span>${c.description ? `<span class="tt">${esc(c.description)}</span>` : ''}</button>
@@ -591,6 +607,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     picks('locPicks', arr(doc.locations).filter(l => l && l.id), editing.locationIds, l => l.name || 'Unnamed location');
     $('topicHint').textContent = allTopics().join(', ') || 'none yet';
     drawRating(editing.rating);
+    $('moms').innerHTML = momentsOf(editing).map(momRow).join('');
     $('editorTitle').textContent = isNew ? 'Add a clip' : editing.name || 'Clip';
     $('deleteBtn').hidden = isNew;
     $('editor').showModal();
@@ -604,9 +621,26 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     for (const [k, box] of [['personIds', 'pplPicks'], ['locationIds', 'locPicks']]) { const v = picked(box); if (v.length) c[k] = v; else delete c[k]; }
     const t = splitList($('f-topics').value); if (t.length) c.topics = t; else delete c.topics;
     const r = Number((document.querySelector('#rating input:checked') || {}).value || 0); if (r) c.rating = r; else delete c.rating;
+    const ms = [...$('moms').querySelectorAll('.mom')].map(row => {
+      const m = { id: row.dataset.id || newId('moment') };
+      const tc = row.querySelector('.m-tc').value.trim(), tx = row.querySelector('.m-text').value.trim(), tp = splitList(row.querySelector('.m-topics').value);
+      if (tc) m.tc = tc; if (tx) m.text = tx; if (tp.length) m.topics = tp;
+      return m;
+    }).filter(m => m.tc || m.text).sort((a, b) => str(a.tc || '99').localeCompare(str(b.tc || '99')));
+    if (ms.length) c.moments = ms; else delete c.moments;
     if (isNew) doc.assets.push(c); else doc.assets[doc.assets.findIndex(a => a.id === c.id)] = c;
     $('editor').close();
     changed();
+  }
+  function momRow(m) {
+    return `<div class="mom" data-id="${esc(m.id || '')}"><input type="text" class="m-tc" value="${esc(m.tc)}" placeholder="08:40:12:00" aria-label="Timecode"><input type="text" class="m-text" value="${esc(m.text)}" placeholder="The heron lands on the post" aria-label="What happens"><input type="text" class="m-topics" value="${esc(arr(m.topics).join(', '))}" placeholder="Topics" aria-label="Topics for this moment"><button type="button" class="icon-btn" data-delmom aria-label="Remove this moment">×</button></div>`;
+  }
+  function exportMoments() {
+    const rows = visible().flatMap(c => momentsOf(c).map(m => [c.name, c.card, c.timecode, m.tc, m.text, arr(m.topics).join(', ')]));
+    const csv = '\ufeff' + [['File Name', 'Card', 'Clip starts', 'Timecode', 'Moment', 'Topics'], ...rows].map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
+    const name = `${slug()}-footage-moments.csv`;
+    download(csv, name, 'text/csv;charset=utf-8');
+    toast(`Exported ${rows.length} moment${rows.length === 1 ? '' : 's'} to ${name}`);
   }
   function removeEditing() {
     if (!confirm(`Remove ${editing.name || 'this clip'} from the log? The file itself isn't touched.`)) return;
@@ -762,7 +796,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('report').innerHTML = `<h1>Footage log</h1>
       <p class="r-meta">${esc([doc.project.title, `${list.length} clip${list.length === 1 ? '' : 's'}`, filt.length && `Showing ${filt.join(', ')}`, `Printed ${fmtDate(today())}`].filter(Boolean).join(' · '))}</p>
       <table><thead><tr><th>Clip</th><th>What's in it</th><th>Who and where</th><th>Topics</th><th class="r-c">Rating</th><th>Notes</th></tr></thead><tbody>
-      ${list.map(c => `<tr><td>${esc(c.name || '')}<br><span class="r-sub">${esc([c.date && fmtDate(c.date), c.card, c.timecode].filter(Boolean).join(' · '))}</span></td><td>${esc(c.description || '')}</td><td>${esc([...names(c.personIds), ...places(c.locationIds)].join(', '))}</td><td>${esc(topicsOf(c).join(', '))}</td><td class="r-c">${esc(stars(c.rating))}</td><td>${esc(c.notes || '')}</td></tr>`).join('')}
+      ${list.map(c => `<tr><td>${esc(c.name || '')}<br><span class="r-sub">${esc([c.date && fmtDate(c.date), c.card, c.timecode].filter(Boolean).join(' · '))}</span></td><td>${esc(c.description || '')}</td><td>${esc([...names(c.personIds), ...places(c.locationIds)].join(', '))}</td><td>${esc(topicsOf(c).join(', '))}</td><td class="r-c">${esc(stars(c.rating))}</td><td>${esc(c.notes || '')}${momentsOf(c).length ? `<span class="r-sub">${momentsOf(c).map(m => `${esc(m.tc || '')} ${esc(m.text || '')}`).join('<br>')}</span>` : ''}</td></tr>`).join('')}
       </tbody></table>`;
   }
 
@@ -995,6 +1029,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('emptyImportBtn').onclick = openImport;
     $('emptyOpenBtn').onclick = openFile;
     $('csvBtn').onclick = exportCsv;
+    $('momCsvBtn').onclick = exportMoments;
+    $('addMomBtn').onclick = () => { $('moms').insertAdjacentHTML('beforeend', momRow({})); $('moms').lastElementChild.querySelector('input').focus(); };
+    $('moms').addEventListener('click', ev => { const b = ev.target.closest('[data-delmom]'); if (b) b.closest('.mom').remove(); });
     $('q').addEventListener('input', () => { F.q = low($('q').value); shown = PAGE; render(); });
     for (const [id, k] of [['fPerson', 'person'], ['fPlace', 'place'], ['fTopic', 'topic']]) $(id).addEventListener('change', () => { F[k] = $(id).value; shown = PAGE; render(); });
     $('fRating').addEventListener('change', () => { F.rating = Number($('fRating').value); shown = PAGE; render(); });
@@ -1225,7 +1262,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const OFT_SLUG = (window.location.pathname.match(/tools\/([^/]+)\//) || [])[1] || '';
   const OFT_GUIDE = 'https://github.com/open-filmmaker-toolkit/toolkit/blob/main/docs/sharing-a-project.md';
   const OFT_HOURS = 4;
-  const OFT_KEYS = { project: 'Project details', people: 'People', locations: 'Locations', thirdPartyElements: 'Clearance log', contracts: 'Contracts and releases', assets: 'Files and stills', musicCueSheet: 'Music cue sheet', callSheets: 'Call sheets', credits: 'Credits', supers: 'Name supers', subjects: 'Subject tracker', sources: 'Research log', comps: 'Comps tracker', treatment: 'Treatment', pitchDeck: 'Pitch deck', grants: 'Grant calendar', narratives: 'Narrative library', budget: 'Budget', budgetFormats: 'Budget converter', financePlan: 'Finance plan', funders: 'Funder CRM', cashFlow: 'Cash flow', shootDays: 'Shooting calendar', script: 'Script', scenes: 'Script breakdown', characters: 'Cast', dayOutOfDays: 'Day-out-of-days', budgetLinks: 'Budget', shots: 'Shot list', interviews: 'Interviews', questionBank: 'Question bank', journal: 'Field journal', scouts: 'Location scouts', scoutChecklist: 'Scout checklist', gear: 'Gear list', trips: 'Travel sheet', riskPlans: 'Risk plans', security: 'Security checklist', mediaReports: 'Camera and sound reports', dailyReports: 'Daily reports', expenses: 'Expense log', festivals: 'Festival submissions', screenings: 'Screenings', pressOutlets: 'Press list', partners: 'Partner CRM', discussionGuide: 'Discussion guide', paperEdit: 'Paper edit', costReport: 'Budget-to-actuals', structure: 'Structure board', cuts: 'Cut tracker', clearanceReport: 'Clearance report', chainOfTitle: 'Chain of title', festivalStrategy: 'Festival strategy', pressNotes: 'Press notes', awards: 'Awards', socialPosts: 'Social posts', deliverables: 'Deliverables', qc: 'QC tracker', waterfall: 'Waterfall', revenueStatements: 'Revenue tracker', bookings: 'Bookings', theoryOfChange: 'Theory of change', screeningKit: 'Screening kit', impactReport: 'Impact report', finalCostReport: 'Final cost report', grantReports: 'Grant reports', contractArchive: 'Contract archive' };
+  const OFT_KEYS = { project: 'Project details', people: 'People', locations: 'Locations', thirdPartyElements: 'Clearance log', contracts: 'Contracts and releases', releaseForms: 'Release wording', assets: 'Files and stills', musicCueSheet: 'Music cue sheet', callSheets: 'Call sheets', credits: 'Credits', supers: 'Name supers', subjects: 'Subject tracker', sources: 'Research log', comps: 'Comps tracker', treatment: 'Treatment', pitchDeck: 'Pitch deck', grants: 'Grant calendar', narratives: 'Narrative library', budget: 'Budget', budgetFormats: 'Budget converter', financePlan: 'Finance plan', funders: 'Funder CRM', cashFlow: 'Cash flow', shootDays: 'Shooting calendar', script: 'Script', scenes: 'Script breakdown', characters: 'Cast', dayOutOfDays: 'Day-out-of-days', budgetLinks: 'Budget', shots: 'Shot list', interviews: 'Interviews', stringOuts: 'String-outs', questionBank: 'Question bank', journal: 'Field journal', scouts: 'Location scouts', scoutChecklist: 'Scout checklist', gear: 'Gear list', trips: 'Travel sheet', riskPlans: 'Risk plans', security: 'Security checklist', mediaReports: 'Camera and sound reports', dailyReports: 'Daily reports', expenses: 'Expense log', festivals: 'Festival submissions', screenings: 'Screenings', pressOutlets: 'Press list', partners: 'Partner CRM', discussionGuide: 'Discussion guide', paperEdit: 'Paper edit', costReport: 'Budget-to-actuals', structure: 'Structure board', cuts: 'Cut tracker', clearanceReport: 'Clearance report', chainOfTitle: 'Chain of title', festivalStrategy: 'Festival strategy', pressNotes: 'Press notes', awards: 'Awards', socialPosts: 'Social posts', deliverables: 'Deliverables', qc: 'QC tracker', waterfall: 'Waterfall', revenueStatements: 'Revenue tracker', bookings: 'Bookings', theoryOfChange: 'Theory of change', screeningKit: 'Screening kit', impactReport: 'Impact report', finalCostReport: 'Final cost report', grantReports: 'Grant reports', contractArchive: 'Contract archive' };
   const oftStore = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch { /* storage off */ } } };
   const oftMe = () => (oftStore.get('oft-user-name') || '').trim();
   const oftEsc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);

@@ -56,6 +56,8 @@ Licenses and agreements often spell out an on-screen credit. Add each one under 
 
 The tool checks the credits for that wording, ignoring capitals and punctuation. A credit line and its names count as one line ("Director of photography / Teo Ramirez" meets "Director of photography: Teo Ramirez"), and so does a heading with the credit right under it. Anything missing is flagged in red, with **Add to credits** to append the exact wording. It's also listed at the top of the printout.
 
+A contract can also say where the credit goes and how big it is: in the opening titles or the end credits, at least a given size, or on a card of its own. Set the same things on the credit itself, under **Where and how big**, and the tool checks them too: a credit with the right wording in the wrong place or too small is flagged with what's wrong. Credits in the opening titles show above the crawl, and the text export lists them first.
+
 ## Exporting the crawl
 
 **Export text** gives you the crawl as plain text, to download as a `.txt` file or copy:
@@ -75,7 +77,7 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-A `credits` object with an ordered `entries` list and an optional `notCredited` list of people left out on purpose. Each entry has an `id` and a `kind`:
+A `credits` object with an ordered `entries` list and an optional `notCredited` list of people left out on purpose. Each entry has an `id` and a `kind`, and optional `placement` (`opening` for the opening titles; the end credits when it's missing), `size` (a percentage of standard size, such as `150`) and `ownCard`:
 
 | `kind` | Fields |
 | --- | --- |
@@ -85,7 +87,7 @@ A `credits` object with an ordered `entries` list and an optional `notCredited` 
 | `music` | `heading`, and `excluded` song keys |
 | `archival` | `heading`, and `excluded` source keys |
 
-Contracts can carry a `requiredCredit` with the exact wording they require. A new license added from this tool is a contract with `type` "license", linked to its clearance log item through `thirdPartyElementIds`, and the item records it in `contractIds`.
+Contracts can carry a `requiredCredit` with the exact wording they require, and optional `requiredPlacement` (`opening` or `end`), `requiredSize` (a minimum percentage) and `requiredOwnCard`. A new license added from this tool is a contract with `type` "license", linked to its clearance log item through `thirdPartyElementIds`, and the item records it in `contractIds`.
 
 Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
@@ -93,7 +95,6 @@ Everything else in the file is preserved. See the [data model notes](../../schem
 
 - Opening titles and the order of credits within a heading by billing
 - Crawl formats for specific titling tools and crawl services
-- Checking where a required credit appears (opening titles or end credits) and its size, not just its wording
 
 ## License
 

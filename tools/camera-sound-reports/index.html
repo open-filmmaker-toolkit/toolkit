@@ -557,7 +557,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
 
   LISTS.clips = { box: 'clips', empty: 'Nothing logged yet.', blank: () => ($('f-kind').value === 'sound' && $('f-layout').value.trim() ? { lens: $('f-layout').value.trim() } : {}),
     title: (r, i) => `${editing.kind === 'sound' ? 'File' : 'Clip'} ${r.clip || i + 1}${r.subject ? `: ${r.subject}` : ''}`,
-    fields: [{ k: 'clip', label: 'Clip or file name', placeholder: 'A001C001' }, { k: 'subject', label: 'What or who', placeholder: 'Daniel interview' }, { k: 'tc', label: 'Timecode', placeholder: '08:12:30:00' },
+    fields: [{ k: 'clip', label: 'Clip or file name', placeholder: 'A001C001' }, { k: 'subject', label: 'What or who', placeholder: 'Daniel interview' }, { k: 'tc', label: 'Timecode in', placeholder: '08:12:30:00' }, { k: 'tcOut', label: 'Timecode out', placeholder: '08:14:02:10' },
       { k: 'lens', label: 'Lens or tracks' }, { k: 'scene', label: 'Scene', placeholder: '12' }, { k: 'shot', label: 'Shot or setup', placeholder: '12A' }, { k: 'take', label: 'Take', placeholder: '3' },
       { k: 'good', label: 'Circled', type: 'checkbox' }, { k: 'notes', label: 'Notes', wide: true }, { k: 'scriptNotes', label: "Script supervisor's notes", wide: true, placeholder: 'Line flub at "the levee"; prop diary in the left hand' }] };
 
@@ -590,6 +590,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         const good = arr(r.clips).filter(c => c.good).length;
         const sc = [...new Set(arr(r.clips).map(c => c.scene).filter(Boolean))];
         if (sc.length) flags.push(`<span class="flag linked">${esc(`Scene${sc.length === 1 ? '' : 's'} ${sc.join(', ')}`)}</span>`);
+        if (r.kind === 'camera' && n && soundFiles(groupKey(r)).length) { const m = arr(r.clips).filter(c => soundFor(r, c)).length; flags.push(`<span class="flag ${m === n ? 'new' : 'changed'}">${m} of ${n} clip${n === 1 ? '' : 's'} matched to sound</span>`); }
         return `<li class="row" data-id="${esc(r.id)}"><span class="kd">${esc(KIND[r.kind])}</span>
           <button type="button" class="what" data-edit="${esc(r.id)}"><span class="nm">${esc(r.roll || 'Unnamed card')}${r.device ? ` · ${esc(r.device)}` : ''}</span>${r.notes ? `<span class="tt">${esc(r.notes)}</span>` : ''}</button>
           <span class="rt">${n ? `${n} ${unit(r)}${n === 1 ? '' : 's'}${good ? `, ${good} circled` : ''}` : ''}</span>
@@ -698,8 +699,32 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
 
   // Scene 12, setup 12A, take 3 reads "12A-3", the way a slate does.
   const slate = c => [c.shot || c.scene, c.take].filter(Boolean).join('-') || '';
+  // ---------- Matching camera clips to sound files ----------
+  // Same day, and the same scene and take when both are slated; otherwise by timecode: the sound file running when the
+  // camera clip starts, or the last one started up to ten minutes before it when there's no timecode out.
+  const fpsOf = r => { const n = parseFloat(str(r.kind === 'sound' ? r.timecode : r.frameRate)); return n > 0 && n < 121 ? n : Number(doc.project.frameRate) || 24; };
+  function secs(tc, fps) {
+    const m = /^(\d{1,2}):(\d{2}):(\d{2})(?:[:;.](\d{1,3}))?$/.exec(str(tc).trim());
+    return m ? +m[1] * 3600 + +m[2] * 60 + +m[3] + (m[4] ? +m[4] / Math.round(fps) : 0) : null;
+  }
+  const soundFiles = g => reports().filter(r => r.kind === 'sound' && groupKey(r) === g).flatMap(r => arr(r.clips).map(c => ({ r, c, a: secs(c.tc, fpsOf(r)), b: secs(c.tcOut, fpsOf(r)) })));
+  function soundFor(r, c) {
+    if (r.kind !== 'camera') return null;
+    const files = soundFiles(groupKey(r));
+    if (!files.length) return null;
+    const take = x => str(x.take).trim(), scene = x => str(x.shot || x.scene).trim().toUpperCase();
+    if (take(c) && scene(c)) { const hit = files.find(f => take(f.c) === take(c) && scene(f.c) === scene(c)); if (hit) return Object.assign({ by: 'slate' }, hit); }
+    const a = secs(c.tc, fpsOf(r)), b = secs(c.tcOut, fpsOf(r));
+    if (a == null) return null;
+    const running = files.filter(f => f.a != null && f.a <= a && (f.b != null ? f.b >= a : a - f.a <= 600));
+    if (running.length) return Object.assign({ by: 'timecode' }, running.sort((x, y) => y.a - x.a)[0]);
+    if (b != null) { const over = files.filter(f => f.a != null && f.a > a && f.a < b); if (over.length) return Object.assign({ by: 'timecode' }, over.sort((x, y) => x.a - y.a)[0]); }
+    return null;
+  }
+  const soundName = m => [m.r.roll, m.c.clip].filter(Boolean).join(' / ') || 'A sound file';
+  const cameraFor = (r, c) => reports().filter(x => x.kind === 'camera' && groupKey(x) === groupKey(r)).flatMap(x => arr(x.clips).filter(k => { const m = soundFor(x, k); return m && m.c === c; }).map(k => [x.roll, k.clip].filter(Boolean).join(' / ')));
   // ---------- CSV and print ----------
-  const CSV_HEAD = ['Date', 'Shoot day', 'Report', 'Card or roll', 'Camera or recorder', 'Operator', 'Codec or format', 'Frame rate', 'Clip or file', 'What or who', 'Timecode', 'Lens or tracks', 'Circled', 'Notes', 'Copied to', 'Scene', 'Shot or setup', 'Take', "Script supervisor's notes"];
+  const CSV_HEAD = ['Date', 'Shoot day', 'Report', 'Card or roll', 'Camera or recorder', 'Operator', 'Codec or format', 'Frame rate', 'Clip or file', 'What or who', 'Timecode', 'Lens or tracks', 'Circled', 'Notes', 'Copied to', 'Scene', 'Shot or setup', 'Take', "Script supervisor's notes", 'Timecode out', 'Synced with'];
   function exportCsv() {
     const rows = [];
     for (const r of [...reports()].sort((a, b) => str(dateOf(a)).localeCompare(str(dateOf(b))) || str(a.roll).localeCompare(str(b.roll)))) {
@@ -707,7 +732,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       const path = (asset(r.assetId) || {}).relativePath;
       const cs = arr(r.clips);
       if (!cs.length) rows.push([...base, range(r), '', '', r.kind === 'sound' ? r.trackLayout : r.lensNotes, '', r.notes, path]);
-      for (const c of cs) rows.push([...base, c.clip, c.subject, c.tc, c.lens, c.good ? 'Yes' : '', c.notes, path, c.scene, c.shot, c.take, c.scriptNotes]);
+      for (const c of cs) { const m = soundFor(r, c); rows.push([...base, c.clip, c.subject, c.tc, c.lens, c.good ? 'Yes' : '', c.notes, path, c.scene, c.shot, c.take, c.scriptNotes, c.tcOut, r.kind === 'camera' ? (m ? soundName(m) : '') : cameraFor(r, c).join('; ')]); }
     }
     const csv = '﻿' + [CSV_HEAD, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
     const name = `${slug()}-camera-and-sound-reports.csv`;
@@ -722,8 +747,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       ['Clips', range(r)], ['Copied to', a && a.relativePath], ['Backed up', r.backedUp ? 'Yes' : '']].filter(x => x[1]);
     return `<section class="r-report"><h2>${esc(KIND[r.kind])} report: ${esc(r.roll || '')}</h2>
       <table class="r-facts"><tbody>${facts.map(([k, v]) => `<tr><th>${esc(k)}</th><td>${esc(v)}</td></tr>`).join('')}</tbody></table>
-      ${arr(r.clips).length ? `<table><thead><tr><th>${r.kind === 'sound' ? 'File' : 'Clip'}</th><th>What or who</th><th>Timecode</th><th>${r.kind === 'sound' ? 'Tracks' : 'Lens'}</th><th>Scene / take</th><th class="r-c">Circled</th><th>Notes</th></tr></thead><tbody>
-        ${arr(r.clips).map(c => `<tr><td>${esc(c.clip || '')}</td><td>${esc(c.subject || '')}</td><td>${esc(c.tc || '')}</td><td>${esc(c.lens || '')}</td><td>${esc(slate(c))}</td><td class="r-c">${c.good ? '●' : ''}</td><td>${esc(c.notes || '')}${c.scriptNotes ? `<span class="r-sub">Script: ${esc(c.scriptNotes)}</span>` : ''}</td></tr>`).join('')}</tbody></table>` : ''}
+      ${arr(r.clips).length ? `<table><thead><tr><th>${r.kind === 'sound' ? 'File' : 'Clip'}</th><th>What or who</th><th>Timecode</th><th>${r.kind === 'sound' ? 'Tracks' : 'Lens'}</th><th>Scene / take</th><th class="r-c">Circled</th><th>${r.kind === 'sound' ? 'Camera clips' : 'Sound'}</th><th>Notes</th></tr></thead><tbody>
+        ${arr(r.clips).map(c => { const m = soundFor(r, c), cams = r.kind === 'sound' ? cameraFor(r, c) : []; return `<tr><td>${esc(c.clip || '')}</td><td>${esc(c.subject || '')}</td><td>${esc([c.tc, c.tcOut].filter(Boolean).join(' to '))}</td><td>${esc(c.lens || '')}</td><td>${esc(slate(c))}</td><td class="r-c">${c.good ? '●' : ''}</td><td>${esc(r.kind === 'sound' ? cams.join(', ') : m ? soundName(m) : '')}</td><td>${esc(c.notes || '')}${c.scriptNotes ? `<span class="r-sub">Script: ${esc(c.scriptNotes)}</span>` : ''}</td></tr>`; }).join('')}</tbody></table>` : ''}
       ${r.notes ? `<p class="r-notes"><b>Notes:</b> ${esc(r.notes)}</p>` : ''}</section>`;
   }
   function renderReport() {
@@ -1198,7 +1223,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const OFT_SLUG = (window.location.pathname.match(/tools\/([^/]+)\//) || [])[1] || '';
   const OFT_GUIDE = 'https://github.com/open-filmmaker-toolkit/toolkit/blob/main/docs/sharing-a-project.md';
   const OFT_HOURS = 4;
-  const OFT_KEYS = { project: 'Project details', people: 'People', locations: 'Locations', thirdPartyElements: 'Clearance log', contracts: 'Contracts and releases', assets: 'Files and stills', musicCueSheet: 'Music cue sheet', callSheets: 'Call sheets', credits: 'Credits', supers: 'Name supers', subjects: 'Subject tracker', sources: 'Research log', comps: 'Comps tracker', treatment: 'Treatment', pitchDeck: 'Pitch deck', grants: 'Grant calendar', narratives: 'Narrative library', budget: 'Budget', budgetFormats: 'Budget converter', financePlan: 'Finance plan', funders: 'Funder CRM', cashFlow: 'Cash flow', shootDays: 'Shooting calendar', script: 'Script', scenes: 'Script breakdown', characters: 'Cast', dayOutOfDays: 'Day-out-of-days', budgetLinks: 'Budget', shots: 'Shot list', interviews: 'Interviews', questionBank: 'Question bank', journal: 'Field journal', scouts: 'Location scouts', scoutChecklist: 'Scout checklist', gear: 'Gear list', trips: 'Travel sheet', riskPlans: 'Risk plans', security: 'Security checklist', mediaReports: 'Camera and sound reports', dailyReports: 'Daily reports', expenses: 'Expense log', festivals: 'Festival submissions', screenings: 'Screenings', pressOutlets: 'Press list', partners: 'Partner CRM', discussionGuide: 'Discussion guide', paperEdit: 'Paper edit', costReport: 'Budget-to-actuals', structure: 'Structure board', cuts: 'Cut tracker', clearanceReport: 'Clearance report', chainOfTitle: 'Chain of title', festivalStrategy: 'Festival strategy', pressNotes: 'Press notes', awards: 'Awards', socialPosts: 'Social posts', deliverables: 'Deliverables', qc: 'QC tracker', waterfall: 'Waterfall', revenueStatements: 'Revenue tracker', bookings: 'Bookings', theoryOfChange: 'Theory of change', screeningKit: 'Screening kit', impactReport: 'Impact report', finalCostReport: 'Final cost report', grantReports: 'Grant reports', contractArchive: 'Contract archive' };
+  const OFT_KEYS = { project: 'Project details', people: 'People', locations: 'Locations', thirdPartyElements: 'Clearance log', contracts: 'Contracts and releases', releaseForms: 'Release wording', assets: 'Files and stills', musicCueSheet: 'Music cue sheet', callSheets: 'Call sheets', credits: 'Credits', supers: 'Name supers', subjects: 'Subject tracker', sources: 'Research log', comps: 'Comps tracker', treatment: 'Treatment', pitchDeck: 'Pitch deck', grants: 'Grant calendar', narratives: 'Narrative library', budget: 'Budget', budgetFormats: 'Budget converter', financePlan: 'Finance plan', funders: 'Funder CRM', cashFlow: 'Cash flow', shootDays: 'Shooting calendar', script: 'Script', scenes: 'Script breakdown', characters: 'Cast', dayOutOfDays: 'Day-out-of-days', budgetLinks: 'Budget', shots: 'Shot list', interviews: 'Interviews', stringOuts: 'String-outs', questionBank: 'Question bank', journal: 'Field journal', scouts: 'Location scouts', scoutChecklist: 'Scout checklist', gear: 'Gear list', trips: 'Travel sheet', riskPlans: 'Risk plans', security: 'Security checklist', mediaReports: 'Camera and sound reports', dailyReports: 'Daily reports', expenses: 'Expense log', festivals: 'Festival submissions', screenings: 'Screenings', pressOutlets: 'Press list', partners: 'Partner CRM', discussionGuide: 'Discussion guide', paperEdit: 'Paper edit', costReport: 'Budget-to-actuals', structure: 'Structure board', cuts: 'Cut tracker', clearanceReport: 'Clearance report', chainOfTitle: 'Chain of title', festivalStrategy: 'Festival strategy', pressNotes: 'Press notes', awards: 'Awards', socialPosts: 'Social posts', deliverables: 'Deliverables', qc: 'QC tracker', waterfall: 'Waterfall', revenueStatements: 'Revenue tracker', bookings: 'Bookings', theoryOfChange: 'Theory of change', screeningKit: 'Screening kit', impactReport: 'Impact report', finalCostReport: 'Final cost report', grantReports: 'Grant reports', contractArchive: 'Contract archive' };
   const oftStore = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch { /* storage off */ } } };
   const oftMe = () => (oftStore.get('oft-user-name') || '').trim();
   const oftEsc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);

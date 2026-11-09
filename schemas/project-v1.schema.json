@@ -260,6 +260,25 @@
       },
       "description": "Questions to reuse across interviews, kept by interview prep."
     },
+    "releaseForms": {
+      "type": "object",
+      "additionalProperties": { "type": "string" },
+      "description": "The production's own wording for blank release forms and crowd notices, kept by the release tracker."
+    },
+    "stringOuts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "title": { "type": "string" },
+          "items": { "type": "array", "items": { "type": "object", "properties": { "interviewId": { "type": "string" }, "momentId": { "type": "string" } }, "additionalProperties": true } }
+        },
+        "required": ["id"],
+        "additionalProperties": true
+      },
+      "description": "String-outs of interview moments in order, kept by the interview log."
+    },
     "dayOutOfDays": {
       "type": "object",
       "properties": {

@@ -33,6 +33,9 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 ## What it does
 
 - **Dated entries.** Each has a date (today's, to start), an optional kind (what happened, what you learned, or a story idea), a title and your text.
+- **Formatting.** Bold, italic, lists and headings from the toolbar, kept as Markdown so the export reads the same, and printed formatted.
+- **Your own tags,** such as weather, access or b-roll ideas, beside the people and places. Filter the list by one.
+- **Photos and audio notes.** Add photos, resized and kept in the project file, with captions, and audio notes, such as a voice memo from your phone. Notes up to 3 MB are kept in the file and play in the entry; longer ones are linked from a journal folder next to your project file.
 - **Tags from the project.** Tick the people and locations an entry is about, from the project's own lists. If someone is removed from the project later, the entry says so instead of dropping the tag.
 - **Linked to a shoot day.** Pick a call sheet from the [call sheet tool](../call-sheet/). If the entry has no date yet, it takes the call sheet's.
 - **Search across entries.** Type words to find them in titles, text, tags and shoot days, ignoring capitals and accents. Narrow the list to one person, one location or one kind.
@@ -50,13 +53,11 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-A `journal` list. Each entry has an `id` and optional `date` (YYYY-MM-DD), `kind` (`happened`, `learned` or `idea`), `title`, `text`, `personIds` (pointing to `people`), `locationIds` (pointing to `locations`) and `callSheetId` (pointing to `callSheets`). The tool reads `people`, `locations` and `callSheets` and doesn't change them. An entry can have a `shootDayId` and an `interviewId`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
+A `journal` list. Each entry has an `id` and optional `date` (YYYY-MM-DD), `kind` (`happened`, `learned` or `idea`), `title`, `text`, `personIds` (pointing to `people`), `locationIds` (pointing to `locations`), `callSheetId` (pointing to `callSheets`), `tags` (your own) and `assetIds` (photos and audio notes, as `assets` with `type` "journal photo" or "journal audio", the file in `data`, or a `relativePath` for a long audio note). The tool reads `people`, `locations` and `callSheets` and doesn't change them. An entry can have a `shootDayId` and an `interviewId`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
-- Photos or audio notes attached to an entry
-- Tags of your own beyond people and locations
-- Rich text; entries are plain text, and Markdown you type is kept as written
+- Recording audio notes in the browser; record them on your phone and add the file
 
 ## License
 
