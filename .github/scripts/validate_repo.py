@@ -444,6 +444,37 @@ for tool in sorted((ROOT / "tools").iterdir()):
                 if host.lower() not in allowed and host.lower() != "github.com" and host.lower() not in NAMESPACE_HOSTS:
                     fail(f"{rel}/index.html:{number}: link to {host} is not an allowed host for this tool")
 
+# Translations: a spreadsheet for each language listed in translations/languages.csv, with English in the first
+# column and the translation in the second. A translation keeps the same bold, code and links as the English, and
+# no other markup, because the tools put those back where the translation says.
+import csv as _csv
+TR = ROOT / "translations"
+if TR.is_dir():
+    langs = list(_csv.DictReader((TR / "languages.csv").read_text(encoding="utf-8-sig").splitlines())) if (TR / "languages.csv").is_file() else []
+    if not langs:
+        fail("translations: missing languages.csv with Code, Name and Label columns")
+    for lang in langs:
+        code = (lang.get("Code") or "").strip()
+        f = TR / f"{code}.csv"
+        if not f.is_file():
+            fail(f"translations: languages.csv lists {code} but {code}.csv is missing")
+            continue
+        rows = list(_csv.reader(f.read_text(encoding="utf-8-sig").splitlines()))
+        if not rows or rows[0][:2] != ["English", "Translation"]:
+            fail(f"translations/{code}.csv: the first row must be English,Translation")
+        seen = set()
+        for n, r in enumerate(rows[1:], 2):
+            if len(r) < 2 or not r[0].strip():
+                continue
+            if r[0] in seen:
+                fail(f"translations/{code}.csv:{n}: {r[0][:40]!r} is translated twice")
+            seen.add(r[0])
+            tags = lambda t: sorted(re.findall(r"</?(\w+)>", t))
+            if r[1].strip() and tags(r[0]) != tags(r[1]):
+                fail(f"translations/{code}.csv:{n}: the translation of {r[0][:40]!r} must keep the same <b>, <code> and <a> tags")
+            if re.search(r"<\w+\s[^>]*>", r[1]):
+                fail(f"translations/{code}.csv:{n}: tags in a translation can't have attributes")
+
 # Plain templates: spreadsheets and Word documents only, each listed in templates/README.md.
 # Word files must not carry macros or links to anything outside the file.
 TEMPLATES = ROOT / "templates"
