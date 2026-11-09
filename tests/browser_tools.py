@@ -4932,6 +4932,31 @@ def test_remember_file(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     context.close(); srv.shutdown()
 
+def test_browser_note(browser, fake):
+    # Browsers that can't save back to the file say so, with the setting that lets you save over the same file.
+    FF = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14.0; rv:132.0) Gecko/20100101 Firefox/132.0'
+    SAF = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15'
+    c = browser.new_context(); p = c.new_page(); p.add_init_script("window.showSaveFilePicker = window.showSaveFilePicker || (async () => null);")
+    p.goto('file://%s/tools/budget/index.html' % root); p.wait_for_timeout(300)
+    check(not p.is_visible('#oftBrowser'), 'a browser that saves back to the file shows no note')
+    p.goto('file://%s/index.html' % root); p.wait_for_timeout(200)
+    check(not p.is_visible('#homeBrowser'), 'nor does the home page')
+    c.close()
+    for ua, words in [(FF, 'Always ask you where to save files'), (SAF, 'Ask for each download')]:
+        c = browser.new_context(user_agent=ua); c.add_init_script(NO_PICKERS); p = c.new_page(); errs = []
+        p.on('pageerror', lambda e: errs.append(str(e)))
+        p.goto('file://%s/tools/budget/index.html' % root); p.wait_for_timeout(300)
+        t = p.inner_text('#oftBrowser') if p.is_visible('#oftBrowser') else ''
+        check('saves a new copy each time' in t and words in t and 'Chrome, Edge, Brave and Arc' in t, 'the tool says it saves copies, and how to keep one file (%s)' % words)
+        p.click('#oftBrowserBtn')
+        p.goto('file://%s/tools/call-sheet/index.html' % root); p.wait_for_timeout(300)
+        check(not p.is_visible('#oftBrowser'), 'once dismissed, other tools don\'t show it again')
+        p.goto('file://%s/index.html' % root); p.wait_for_timeout(200)
+        check(p.is_visible('.start #homeBrowser') and words in p.inner_text('#homeBrowser'), 'the home page says so in the Start here box')
+        check(not errs, 'no page errors %s' % errs)
+        c.close()
+
+
 def test_carry_project(browser, fake):
     # The open project goes with you from tool to tool and back to the home page, in the same tab, unsaved changes included.
     ctx = browser.new_context(accept_downloads=True, viewport={'width': 1280, 'height': 900})
@@ -5689,6 +5714,7 @@ def main():
         print('== home page / project dashboard, calendar file and summaries')
         test_dashboard(browser, fake)
         test_carry_project(browser, fake)
+        test_browser_note(browser, fake)
         print('== shared code / the calendar file in a tool with dates')
         test_tool_calendar(browser, fake)
         print('== every tool with a template / importing from a spreadsheet')

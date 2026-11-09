@@ -58,6 +58,7 @@ The home page becomes a place to work, not just a list. Each step gets an issue 
 - [x] Read-only summaries of chosen parts of the project to share, leaving out contact details, notes and fees unless you include them ([#152](https://github.com/open-filmmaker-toolkit/toolkit/issues/152))
 - [x] Install the hub as an app for offline use ([#205](https://github.com/open-filmmaker-toolkit/toolkit/issues/205))
 - [x] Open a project once and it stays open as you move between the home page and any tool in the same tab, with changes not saved yet, and no "leave this page?" question on the way
+- [x] Say which browsers save straight back to the file, and in Firefox and Safari, how to save over the same file instead of collecting copies
 
 ## Milestone 6: Planned
 
