@@ -26,7 +26,7 @@ const oftMoney = (() => {
   // Currencies other than the project's that money records use.
   function inUse() {
     const b = doc.budget || {}, f = doc.financePlan || {};
-    const recs = [...list(b.lines), ...list(f.sources), ...list(doc.contracts), ...list(doc.expenses)];
+    const recs = [...list(b.lines), ...list(f.sources), ...list(doc.contracts), ...list(doc.expenses), ...list(doc.revenueStatements)];
     return [...new Set(recs.map(r => up(r.currency)).filter(c => c && c !== home()))].sort();
   }
   const show = n => Number(n).toLocaleString(undefined, { maximumFractionDigits: 6 });

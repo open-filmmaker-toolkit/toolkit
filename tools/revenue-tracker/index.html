@@ -333,6 +333,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <div class="field"><label for="f-fees">Their fees</label><input id="f-fees" type="number" step="any" inputmode="decimal"></div>
         <div class="field"><label for="f-exp">Their expenses</label><input id="f-exp" type="number" step="any" inputmode="decimal"></div>
       </div>
+      <div class="field"><label for="f-cur">Currency, if not the project's</label><input id="f-cur" type="text" maxlength="3" list="f-curlist" autocomplete="off" class="cur-in"><datalist id="f-curlist"></datalist><p class="hint" id="curHint"></p></div>
       <div class="three">
         <div class="field"><label for="f-net">Due to you</label><input id="f-net" type="number" step="any" inputmode="decimal"></div>
         <div class="field"><label for="f-paid">Paid on</label><input id="f-paid" type="date"></div>
@@ -454,7 +455,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   }
 
 
-  const money = n => { try { return new Intl.NumberFormat(undefined, { style: 'currency', currency: doc.project.currency || 'USD' }).format(n || 0); } catch (e) { return String(n || 0); } };
+  const money = (n, cur) => { try { return new Intl.NumberFormat(undefined, { style: 'currency', currency: str(cur).toUpperCase() || doc.project.currency || 'USD' }).format(n || 0); } catch (e) { return String(n || 0); } };
   const num = v => (Number.isFinite(Number(v)) ? Number(v) : 0);
   const csvRow = r => r.map(v => (typeof v === 'number' ? String(v) : csvCell(v))).join(',');
   function exportRows(head, rows, suffix, noun) {
@@ -480,6 +481,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const source = s => (deal(s.contractId) ? deal(s.contractId).licensee || deal(s.contractId).title : '') || s.source || 'Unknown source';
   const netOf = s => (s.net != null && s.net !== '' ? num(s.net) : num(s.gross) - num(s.fees) - num(s.expenses));
   const when = s => s.periodEnd || s.statementDate || s.periodStart || '';
+  // A statement's amounts in the project currency, at the rate for its statement date.
+  const cv = (s, n) => (s.currency ? oftMoney.convert(n, s.currency, s.statementDate || s.periodEnd || s.periodStart) : n);
+  const netIn = s => cv(s, netOf(s));
+  const own = s => (s.currency ? s.currency : '');
   let by = 'source', editing = null;
   function group(s) {
     if (by === 'source') return source(s);
@@ -505,12 +510,12 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     if (s.media && media.length && !media.includes(s.media)) out.push(`${MEDIA[s.media] || s.media} isn't in the deal's media (${media.map(m => MEDIA[m] || m).join(', ')})`);
     if (has(t.feePercent) && num(s.gross) > 0) {
       const allowed = Math.round(num(s.gross) * Number(t.feePercent)) / 100, took = num(s.fees);
-      if (took - allowed > 0.5) out.push(`Their fee is ${money(took)}, ${Math.round(took / num(s.gross) * 1000) / 10}% of gross; the deal allows ${t.feePercent}%, ${money(allowed)}. That's ${money(took - allowed)} too much`);
+      if (took - allowed > 0.5) out.push(`Their fee is ${money(took, own(s))}, ${Math.round(took / num(s.gross) * 1000) / 10}% of gross; the deal allows ${t.feePercent}%, ${money(allowed, own(s))}. That's ${money(took - allowed, own(s))} too much`);
     }
     if (has(t.expenseCap)) {
-      const before = doc.revenueStatements.filter(x => x.contractId === s.contractId && x !== s && str(when(x)) <= str(when(s)) && (str(when(x)) < str(when(s)) || doc.revenueStatements.indexOf(x) < doc.revenueStatements.indexOf(s))).reduce((tt, x) => tt + num(x.expenses), 0);
-      const total = before + num(s.expenses);
-      if (num(s.expenses) && total - Number(t.expenseCap) > 0.5) out.push(`Expenses so far come to ${money(total)}, over the ${money(Number(t.expenseCap))} cap by ${money(Math.min(num(s.expenses), total - Number(t.expenseCap)))} on this statement`);
+      const before = doc.revenueStatements.filter(x => x.contractId === s.contractId && x !== s && str(when(x)) <= str(when(s)) && (str(when(x)) < str(when(s)) || doc.revenueStatements.indexOf(x) < doc.revenueStatements.indexOf(s))).reduce((tt, x) => tt + cv(x, num(x.expenses)), 0);
+      const total = before + cv(s, num(s.expenses));
+      if (num(s.expenses) && total - Number(t.expenseCap) > 0.5) out.push(`Expenses so far come to ${money(total)}, over the ${money(Number(t.expenseCap))} cap by ${money(Math.min(cv(s, num(s.expenses)), total - Number(t.expenseCap)))} on this statement`);
     }
     if (has(t.reportingDays) && isDay(s.periodEnd)) {
       const due = daysBetween(s.periodEnd, s.statementDate && isDay(s.statementDate) ? s.statementDate : today());
@@ -547,18 +552,19 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       const flags = [];
       if (s.territory) flags.push(`<span class="flag linked">${esc(s.territory)}</span>`);
       if (s.media) flags.push(`<span class="flag linked">${esc(MEDIA[s.media] || s.media)}</span>`);
-      if (num(s.fees) || num(s.expenses)) flags.push(`<span class="flag linked">Fees and expenses ${esc(money(num(s.fees) + num(s.expenses)))}</span>`);
+      if (num(s.fees) || num(s.expenses)) flags.push(`<span class="flag linked">Fees and expenses ${esc(money(num(s.fees) + num(s.expenses), own(s)))}</span>`);
+      if (own(s)) { const r = oftMoney.rateFor(s.currency, s.statementDate || s.periodEnd || s.periodStart); flags.push(`<span class="flag ${r ? 'linked' : 'changed'}">${r ? `${esc(s.currency)} at ${esc(String(r.rate))}` : `No exchange rate for ${esc(s.currency)} yet`}</span>`); }
       const calc = num(s.gross) - num(s.fees) - num(s.expenses);
       for (const a of audit(s)) flags.push(`<span class="flag problem">${esc(a)}</span>`);
-      if (s.net != null && s.net !== '' && Math.abs(num(s.net) - calc) > 0.5) flags.push(`<span class="flag changed">Due to you differs from gross less fees and expenses by ${esc(money(num(s.net) - calc))}</span>`);
+      if (s.net != null && s.net !== '' && Math.abs(num(s.net) - calc) > 0.5) flags.push(`<span class="flag changed">Due to you differs from gross less fees and expenses by ${esc(money(num(s.net) - calc, own(s)))}</span>`);
       return `<li class="row" data-id="${esc(s.id)}"><span class="rt">${esc([s.periodStart && fmtDate(s.periodStart), s.periodEnd && `to ${fmtDate(s.periodEnd)}`].filter(Boolean).join(' ') || (s.statementDate ? fmtDate(s.statementDate) : 'No dates'))}</span>
-        <button type="button" class="what" data-edit="${esc(s.id)}"><span class="nm">${esc(source(s))}</span><span class="tt">Gross ${esc(money(s.gross))}</span></button>
-        <span class="st st-${s.paidDate ? 'good' : 'warn'}">${esc(money(netOf(s)))}<span class="sub">${s.paidDate ? `Paid ${esc(fmtDate(s.paidDate))}` : 'Not paid yet'}</span></span>
+        <button type="button" class="what" data-edit="${esc(s.id)}"><span class="nm">${esc(source(s))}</span><span class="tt">Gross ${esc(money(s.gross, own(s)))}</span></button>
+        <span class="st st-${s.paidDate ? 'good' : 'warn'}">${esc(money(netOf(s), own(s)))}${own(s) ? `<span class="sub">${esc(money(netIn(s)))}</span>` : ''}<span class="sub">${s.paidDate ? `Paid ${esc(fmtDate(s.paidDate))}` : 'Not paid yet'}</span></span>
         <div class="flags">${flags.join('')}</div></li>`; }).join('');
-    const g = sum(all, s => num(s.gross)), f = sum(all, s => num(s.fees)), e = sum(all, s => num(s.expenses)), n = sum(all, netOf), p = sum(all.filter(s => s.paidDate), netOf);
+    const g = sum(all, s => cv(s, num(s.gross))), f = sum(all, s => cv(s, num(s.fees))), e = sum(all, s => cv(s, num(s.expenses))), n = sum(all, netIn), p = sum(all.filter(s => s.paidDate), netIn);
     $('totals').innerHTML = `<dt>Gross receipts</dt><dd>${esc(money(g))}</dd><dt>Their fees</dt><dd>${esc(money(f))}</dd><dt>Their expenses</dt><dd>${esc(money(e))}</dd><dt class="sum">Due to you</dt><dd class="sum">${esc(money(n))}</dd><dt>Paid</dt><dd>${esc(money(p))}</dd><dt>Still to come</dt><dd>${esc(money(n - p))}</dd>`;
     $('bySel').value = by;
-    const m = new Map(); for (const s of all) m.set(group(s), (m.get(group(s)) || 0) + num(s.gross));
+    const m = new Map(); for (const s of all) m.set(group(s), (m.get(group(s)) || 0) + cv(s, num(s.gross)));
     const keys = [...m.keys()].sort((a, b) => (by === 'year' || by === 'quarter' ? b.localeCompare(a) : m.get(b) - m.get(a)));
     $('by').innerHTML = keys.length ? keys.map(k => `<li><span>${esc(k)}</span><span class="num">${esc(money(m.get(k)))}</span></li>`).join('') : '<li class="empty-line">No statements yet.</li>';
     const found = all.flatMap(s => audit(s).map(a => ({ s, a })));
@@ -569,18 +575,26 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const tt = TERMS(deal(termsDeal));
     for (const [k, id] of [['feePercent', 't-fee'], ['expenseCap', 't-cap'], ['reportingDays', 't-report'], ['paymentDays', 't-pay']]) { if (document.activeElement !== $(id)) $(id).value = tt[k] == null ? '' : String(tt[k]); $(id).disabled = !termsDeal; }
     const un = all.filter(s => !s.paidDate && netOf(s) > 0);
-    $('unpaid').innerHTML = un.length ? un.map(s => `<li><span>${esc(source(s))}<span class="sub">${esc(s.statementDate ? `Statement ${fmtDate(s.statementDate)}` : '')}</span></span><span class="num">${esc(money(netOf(s)))}</span></li>`).join('') : '<li class="empty-line">Everything due has been paid.</li>';
+    $('unpaid').innerHTML = un.length ? un.map(s => `<li><span>${esc(source(s))}<span class="sub">${esc(s.statementDate ? `Statement ${fmtDate(s.statementDate)}` : '')}</span></span><span class="num">${esc(money(netOf(s), own(s)))}</span></li>`).join('') : '<li class="empty-line">Everything due has been paid.</li>';
   }
 
   const SF = { contractId: 'f-deal', source: 'f-source', periodStart: 'f-from', periodEnd: 'f-to', statementDate: 'f-date', territory: 'f-territory', media: 'f-media', gross: 'f-gross', fees: 'f-fees', expenses: 'f-exp', net: 'f-net', paidDate: 'f-paid', reference: 'f-ref', notes: 'f-notes' };
   const NUMS = ['gross', 'fees', 'expenses', 'net'];
-  function netHint() { const c = num($('f-gross').value) - num($('f-fees').value) - num($('f-exp').value); $('netHint').textContent = `Gross less fees and expenses: ${money(c)}. Leave "Due to you" blank to use this.`; }
+  function netHint() {
+    const cur = $('f-cur').value.trim().toUpperCase(), oc = /^[A-Z]{3}$/.test(cur) && cur !== oftMoney.home() ? cur : '';
+    const c = num($('f-gross').value) - num($('f-fees').value) - num($('f-exp').value);
+    $('netHint').textContent = `Gross less fees and expenses: ${money(c, oc)}. Leave "Due to you" blank to use this.`;
+    const r = oc && oftMoney.rateFor(oc, $('f-date').value || $('f-to').value);
+    $('curHint').textContent = !oc ? `Amounts are in ${oftMoney.home()}.` : r ? `Counted in totals at 1 ${oc} = ${r.rate} ${oftMoney.home()}, about ${money(c * r.rate)}.` : `There's no exchange rate for ${oc} yet, so it's counted as ${oftMoney.home()}. Add one under Exchange rates.`;
+  }
   function openEditor(id) {
     editing = id ? doc.revenueStatements.find(s => s.id === id) || null : null;
     const s = editing || { statementDate: today() };
     $('f-deal').innerHTML = '<option value="">Not a deal in the project</option>' + deals().map(c => `<option value="${esc(c.id)}">${esc(c.licensee || c.title)}</option>`).join('');
     $('terrList').innerHTML = [...new Set(deals().flatMap(c => arr(c.territories)).concat(doc.revenueStatements.map(x => x.territory)).filter(Boolean))].map(t => `<option value="${esc(t)}">`).join('');
     for (const [k, el] of Object.entries(SF)) $(el).value = s[k] == null ? '' : String(s[k]);
+    $('f-cur').value = str(s.currency); $('f-cur').placeholder = oftMoney.home();
+    $('f-curlist').innerHTML = oftMoney.currencies().map(x => `<option value="${esc(x)}">`).join('');
     netHint();
     $('deleteBtn').hidden = !editing;
     $('editorTitle').textContent = editing ? source(editing) : 'Add a statement';
@@ -591,14 +605,16 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     if ($('f-from').value && $('f-to').value && $('f-to').value < $('f-from').value) { $('f-to').setCustomValidity('The period ends before it starts.'); $('f-to').reportValidity(); return; }
     const s = editing || { id: newId('statement') };
     for (const [k, el] of Object.entries(SF)) { const v = $(el).value.trim(); if (v === '') delete s[k]; else s[k] = NUMS.includes(k) ? Number(v) : v; }
+    const cur = $('f-cur').value.trim().toUpperCase();
+    if (/^[A-Z]{3}$/.test(cur) && cur !== oftMoney.home()) s.currency = cur; else delete s.currency;
     if (!editing) doc.revenueStatements.push(s);
     $('editor').close(); changed();
   }
-  const CSV_HEAD = ['Source', 'Period from', 'Period to', 'Statement date', 'Territory', 'Media', 'Gross receipts', 'Their fees', 'Their expenses', 'Due to you', 'Paid on', 'Reference', 'Notes'];
-  function exportCsv() { exportRows(CSV_HEAD, sorted().map(s => [source(s), s.periodStart, s.periodEnd, s.statementDate, s.territory, MEDIA[s.media] || '', num(s.gross), num(s.fees), num(s.expenses), netOf(s), s.paidDate, s.reference, s.notes]), 'revenue', 'statement'); }
+  const CSV_HEAD = ['Source', 'Period from', 'Period to', 'Statement date', 'Territory', 'Media', 'Gross receipts', 'Their fees', 'Their expenses', 'Due to you', 'Paid on', 'Reference', 'Notes', 'Currency', 'Due to you in the project currency'];
+  function exportCsv() { exportRows(CSV_HEAD, sorted().map(s => [source(s), s.periodStart, s.periodEnd, s.statementDate, s.territory, MEDIA[s.media] || '', num(s.gross), num(s.fees), num(s.expenses), netOf(s), s.paidDate, s.reference, s.notes, own(s) || oftMoney.home(), Math.round(netIn(s) * 100) / 100]), 'revenue', 'statement'); }
   function renderReport() {
     const all = sorted();
-    const table = key => { const prev = by; by = key; const m = new Map(); for (const s of all) { const k = group(s); const r = m.get(k) || [0, 0]; r[0] += num(s.gross); r[1] += netOf(s); m.set(k, r); } by = prev;
+    const table = key => { const prev = by; by = key; const m = new Map(); for (const s of all) { const k = group(s); const r = m.get(k) || [0, 0]; r[0] += cv(s, num(s.gross)); r[1] += netIn(s); m.set(k, r); } by = prev;
       return `<table><thead><tr><th></th><th class="r-n">Gross</th><th class="r-n">Due to you</th></tr></thead><tbody>${[...m.entries()].map(([k, v]) => `<tr><td>${esc(k)}</td><td class="r-n">${esc(money(v[0]))}</td><td class="r-n">${esc(money(v[1]))}</td></tr>`).join('')}</tbody></table>`; };
     $('report').innerHTML = `<h1>Revenue</h1><p class="r-meta">${esc([doc.project.title, `${all.length} statement${all.length === 1 ? '' : 's'}`, `Printed ${fmtDate(today())}`].filter(Boolean).join(' · '))}</p>
       <table><thead><tr><th>Source</th><th>Period</th><th>Territory and media</th><th class="r-n">Gross</th><th class="r-n">Fees and expenses</th><th class="r-n">Due to you</th><th>Paid</th></tr></thead><tbody>${all.map(s => `<tr><td>${esc(source(s))}</td><td>${esc([s.periodStart, s.periodEnd].filter(Boolean).map(fmtDate).join(' to '))}</td><td>${esc([s.territory, MEDIA[s.media]].filter(Boolean).join(', '))}</td><td class="r-n">${esc(money(s.gross))}</td><td class="r-n">${esc(money(num(s.fees) + num(s.expenses)))}</td><td class="r-n">${esc(money(netOf(s)))}</td><td>${esc(s.paidDate ? fmtDate(s.paidDate) : '')}</td></tr>`).join('')}</tbody></table>
@@ -837,7 +853,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     for (const id of ['t-fee', 't-cap', 't-report', 't-pay']) $(id).addEventListener('change', readTerms);
     $('audit').addEventListener('click', ev => { const b = ev.target.closest('[data-edit]'); if (b) openEditor(b.dataset.edit); });
     $('rows').addEventListener('click', ev => { const b = ev.target.closest('[data-edit]'); if (b) openEditor(b.dataset.edit); });
-    for (const id of ['f-gross', 'f-fees', 'f-exp']) $(id).addEventListener('input', netHint);
+    for (const id of ['f-gross', 'f-fees', 'f-exp', 'f-cur', 'f-date']) $(id).addEventListener('input', netHint);
     $('deleteBtn').onclick = () => { doc.revenueStatements = doc.revenueStatements.filter(s => s !== editing); $('editor').close(); changed(); };
     $('editorForm').addEventListener('submit', ev => { ev.preventDefault(); saveEditor(); });
     $('editorForm').addEventListener('input', ev => { if (ev.target.setCustomValidity) ev.target.setCustomValidity(''); });
@@ -865,8 +881,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   // Columns for importing from a spreadsheet, named as in this tool's template.
   const OFT_IMPORT = { noun: 'statement', nouns: 'statements', key: 'source', list: () => doc.revenueStatements,
     fields: [['Source', 'source'], ['Period from', 'periodStart', 'date'], ['Period to', 'periodEnd', 'date'], ['Statement date', 'statementDate', 'date'], ['Territory', 'territory'], ['Media', 'media', 'enum', { values: MEDIA }],
-      ['Gross receipts', 'gross', 'num'], ['Their fees', 'fees', 'num'], ['Their expenses', 'expenses', 'num'], ['Due to you', 'net', 'num'], ['Paid on', 'paidDate', 'date'], ['Reference', 'reference'], ['Notes', 'notes']],
-    put: r => { const d = doc.contracts.find(c => c && c.type === 'distribution' && [c.licensee, c.title].some(x => x && String(x).toLowerCase() === String(r.source).toLowerCase())); if (d) { r.contractId = d.id; delete r.source; } if (r.net === r.gross - (r.fees || 0) - (r.expenses || 0)) delete r.net; doc.revenueStatements.push(r); } };
+      ['Gross receipts', 'gross', 'num'], ['Their fees', 'fees', 'num'], ['Their expenses', 'expenses', 'num'], ['Due to you', 'net', 'num'], ['Paid on', 'paidDate', 'date'], ['Reference', 'reference'], ['Notes', 'notes'], ['Currency', 'currency'], ['Due to you in the project currency', '', 'skip']],
+    put: r => { if (r.currency) { const c = String(r.currency).trim().toUpperCase(); if (/^[A-Z]{3}$/.test(c) && c !== oftMoney.home()) r.currency = c; else delete r.currency; } const d = doc.contracts.find(c => c && c.type === 'distribution' && [c.licensee, c.title].some(x => x && String(x).toLowerCase() === String(r.source).toLowerCase())); if (d) { r.contractId = d.id; delete r.source; } if (r.net === r.gross - (r.fees || 0) - (r.expenses || 0)) delete r.net; doc.revenueStatements.push(r); } };
   /* oft-shared:import begin. Copied from shared/import.js by .github/scripts/sync_shared.py; edit it there. */
   // Import rows from a spreadsheet (CSV) into a tool. Each tool describes its
   // columns in OFT_IMPORT, using the same column names as its spreadsheet template,
@@ -1044,6 +1060,120 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     return { open, parse, date, number };
   })();
   /* oft-shared:import end */
+  /* oft-shared:money begin. Copied from shared/money.js by .github/scripts/sync_shared.py; edit it there. */
+  // Several currencies. Any amount can carry its own currency (a `currency` field on
+  // its record); the project currency is the default. Exchange rates are typed in by
+  // hand, never fetched: project.exchangeRates, each { currency, rate, date? }, where
+  // rate is what one unit of that currency is worth in the project currency. A rate
+  // with a date applies from that date; one without a date applies to everything else.
+  const oftMoney = (() => {
+    const up = s => String(s == null ? '' : s).trim().toUpperCase();
+    const isDay = v => /^\d{4}-\d{2}-\d{2}$/.test(String(v || ''));
+    const list = v => (Array.isArray(v) ? v.filter(x => x && typeof x === 'object') : []);
+    const home = () => up(doc.project && doc.project.currency) || 'USD';
+    const rates = () => list(doc.project && doc.project.exchangeRates).filter(r => /^[A-Z]{3}$/.test(up(r.currency)) && Number(r.rate) > 0);
+    function rateFor(cur, date) {
+      cur = up(cur);
+      if (!cur || cur === home()) return { rate: 1 };
+      const all = rates().filter(r => up(r.currency) === cur);
+      const dated = all.filter(r => isDay(r.date)).sort((a, b) => a.date.localeCompare(b.date));
+      const fixed = all.find(r => !isDay(r.date));
+      const onDate = isDay(date) ? [...dated].reverse().find(r => r.date <= date) : null;
+      const hit = onDate || fixed || dated[dated.length - 1];
+      return hit ? { rate: Number(hit.rate), from: hit } : null;
+    }
+    // Converts an amount to the project currency. With no rate for its currency, the amount is counted as it is.
+    function convert(amount, cur, date) { const r = rateFor(cur, date); return r ? Number(amount) * r.rate : Number(amount); }
+    // A record's amount in the project currency, at the rate for its date.
+    const amountOf = (r, field = 'amount', dateField = 'date') => (r.currency ? convert(Number(r[field]) || 0, r.currency, r[dateField]) : Number(r[field]) || 0);
+    // Currencies other than the project's that money records use.
+    function inUse() {
+      const b = doc.budget || {}, f = doc.financePlan || {};
+      const recs = [...list(b.lines), ...list(f.sources), ...list(doc.contracts), ...list(doc.expenses), ...list(doc.revenueStatements)];
+      return [...new Set(recs.map(r => up(r.currency)).filter(c => c && c !== home()))].sort();
+    }
+    const show = n => Number(n).toLocaleString(undefined, { maximumFractionDigits: 6 });
+    function note() {
+      const cs = inUse();
+      if (!cs.length) return '';
+      const parts = cs.map(c => {
+        const all = rates().filter(r => up(r.currency) === c), dated = all.filter(r => isDay(r.date)), fixed = all.find(r => !isDay(r.date));
+        if (!all.length) return `there's no exchange rate for ${c} yet, so ${c} amounts are counted as ${home()}`;
+        if (!dated.length) return `1 ${c} = ${show(fixed.rate)} ${home()}`;
+        const last = dated.sort((a, b) => a.date.localeCompare(b.date))[dated.length - 1];
+        return `${c} at the rate for each date (latest: 1 ${c} = ${show(last.rate)} ${home()} from ${last.date})${fixed ? `, otherwise 1 ${c} = ${show(fixed.rate)} ${home()}` : ''}`;
+      });
+      return `Totals are in ${home()}: ${parts.join('; ')}.`;
+    }
+    function fmt(n, cur) {
+      try { return new Intl.NumberFormat(undefined, { style: 'currency', currency: up(cur) || home() }).format(Number(n)); }
+      catch { return `${up(cur) || home()} ${Number(n).toLocaleString()}`; }
+    }
+    // The rates dialog, opened from "Exchange rates" under the file buttons.
+    function rowHtml(r) {
+      const e = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+      return `<div class="oft-rate"><input type="text" class="oft-rate-cur" maxlength="3" value="${e(r.currency)}" placeholder="EUR" aria-label="Currency" autocomplete="off">
+        <input type="number" class="oft-rate-val" step="any" min="0" value="${e(r.rate)}" placeholder="Rate" aria-label="What 1 of it is worth in ${e(home())}">
+        <input type="date" class="oft-rate-date" value="${e(r.date)}" aria-label="From this date (leave blank for one rate)">
+        <button type="button" class="btn small" data-oft-del aria-label="Remove this rate">Remove</button></div>`;
+    }
+    function dialog() {
+      let dlg = document.getElementById('oftRatesDialog');
+      if (!dlg) {
+        dlg = document.createElement('dialog');
+        dlg.id = 'oftRatesDialog'; dlg.className = 'oft-dialog'; dlg.setAttribute('aria-labelledby', 'oftRatesTitle');
+        dlg.innerHTML = `<form method="dialog" id="oftRatesForm"><h2 id="oftRatesTitle">Exchange rates</h2>
+          <p id="oftRatesIntro"></p>
+          <div id="oftRateRows" role="group" aria-label="Rates"></div>
+          <p><button type="button" class="btn small" id="oftRateAdd">Add a rate</button></p>
+          <p id="oftRatesErr" class="oft-unmatched" aria-live="polite"></p>
+          <div class="oft-actions"><button type="button" class="btn" id="oftRatesCancel">Cancel</button><button type="submit" class="btn primary">Save rates</button></div></form>`;
+        document.body.append(dlg);
+        dlg.querySelector('#oftRateAdd').onclick = () => { dlg.querySelector('#oftRateRows').insertAdjacentHTML('beforeend', rowHtml({})); dlg.querySelector('#oftRateRows .oft-rate:last-child input').focus(); };
+        dlg.querySelector('#oftRateRows').addEventListener('click', ev => { const b = ev.target.closest('[data-oft-del]'); if (b) b.closest('.oft-rate').remove(); });
+        dlg.querySelector('#oftRatesCancel').onclick = () => dlg.close();
+        dlg.querySelector('#oftRatesForm').addEventListener('submit', ev => {
+          const out = [];
+          for (const row of dlg.querySelectorAll('.oft-rate')) {
+            const c = up(row.querySelector('.oft-rate-cur').value), v = row.querySelector('.oft-rate-val').value, d = row.querySelector('.oft-rate-date').value;
+            if (!c && !v) continue;
+            if (!/^[A-Z]{3}$/.test(c) || !(Number(v) > 0)) { ev.preventDefault(); dlg.querySelector('#oftRatesErr').textContent = 'Each rate needs a three-letter currency code, such as EUR, and a number above zero.'; return; }
+            out.push(Object.assign({ currency: c, rate: Number(v) }, d ? { date: d } : {}));
+          }
+          if (out.length) doc.project.exchangeRates = out; else delete doc.project.exchangeRates;
+          if (typeof changed === 'function') changed(); else { dirty = true; render(); }
+        });
+      }
+      dlg.querySelector('#oftRatesIntro').textContent = `Type in what one unit of each currency is worth in ${home()}, the project currency. Nothing is looked up online. Add a date to use a rate from that date on, or leave it blank for one rate throughout.`;
+      dlg.querySelector('#oftRatesErr').textContent = '';
+      const rs = list(doc.project && doc.project.exchangeRates);
+      dlg.querySelector('#oftRateRows').innerHTML = (rs.length ? rs : inUse().map(c => ({ currency: c }))).map(rowHtml).join('') || rowHtml({});
+      dlg.showModal();
+    }
+    // A field for an amount's currency, for the tools' editors.
+    function currencies() { return [...new Set([home(), ...rates().map(r => up(r.currency)), ...inUse()])]; }
+    return { home, rateFor, convert, amountOf, inUse, note, fmt, dialog, currencies, up };
+  })();
+  // Shows which rates the totals use, under the file buttons and on the printed report.
+  const oftMoneyRender = render;
+  render = function () {
+    const out = oftMoneyRender.apply(this, arguments);
+    let p = document.getElementById('oftRatesNote');
+    const text = oftMoney.note();
+    if (!p && text) { p = document.createElement('p'); p.id = 'oftRatesNote'; p.className = 'oft-rates-note'; const main = document.querySelector('main#main') || document.querySelector('main'); if (main) main.prepend(p); }
+    if (p) { p.textContent = text; p.hidden = !text; }
+    return out;
+  };
+  if (typeof renderReport === 'function') {
+    const oftMoneyReport = renderReport;
+    renderReport = function () {
+      const out = oftMoneyReport.apply(this, arguments);
+      const r = document.getElementById('report'), text = oftMoney.note();
+      if (r && text) { const p = document.createElement('p'); p.className = 'oft-rates-note'; p.textContent = text; r.append(p); }
+      return out;
+    };
+  }
+  /* oft-shared:money end */
   /* oft-shared:tool begin. Copied from shared/tool.js by .github/scripts/sync_shared.py; edit it there. */
   // Shared by every tool: your name, remembering the open file, who has it open,
   // who changed what, merging two copies and spotting conflicted copies.

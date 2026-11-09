@@ -33,6 +33,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 ## What it does
 
 - **License terms:** kind (archival, or music sync, master or both), licensor, status, media, territory, term, signed and start and end dates, fee, the credit it requires, and where the signed copy is.
+- **Most-favored-nations terms.** Give licenses tied by MFN terms the same group name. Each lower fee in a group is flagged with what it would rise to, in its own currency, and a side panel adds up what the group would cost more. Fees are compared in the project currency, so put like with like, such as the songs in one scene.
 - **Linked to the [clearance log](../clearance-log/)** both ways: pick the elements a license covers, and each element lists the license too. Archival and music that's licensed or being negotiated in the clearance log with no license here is listed, and a license started from one is filled in from it.
 - **A payment schedule:** each payment's amount, due date and whether it's paid, with what's paid and still owed for each license and in total.
 - **Options and step deals,** such as a festival license with an option for all media: what each adds, its fee, the date to exercise it by and whether you have.
@@ -57,13 +58,13 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-Licenses are `contracts` with `type` "license", and this tool adds optional `licenseKind`, `licensor`, `media`, `territory`, `term`, `fee`, `payments` (each an `id`, `amount`, `due`, `paid`, `paidDate` and `note`) and `options` (each an `id`, `what`, `fee`, `deadline`, `exercised` and `exercisedDate`). It uses the contract's `thirdPartyElementIds`, `signedDate`, `effectiveDate`, `expirationDate`, `requiredCredit` and `notes`, and adds the license's id to each element's `contractIds`.
+Licenses are `contracts` with `type` "license", and this tool adds optional `mfnGroup` (its most-favored-nations group), `licenseKind`, `licensor`, `media`, `territory`, `term`, `fee`, `payments` (each an `id`, `amount`, `due`, `paid`, `paidDate` and `note`) and `options` (each an `id`, `what`, `fee`, `deadline`, `exercised` and `exercisedDate`). It uses the contract's `thirdPartyElementIds`, `signedDate`, `effectiveDate`, `expirationDate`, `requiredCredit` and `notes`, and adds the license's id to each element's `contractIds`.
 
 The signed copy is an asset with `type` "license" and a `relativePath`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
-- Most-favored-nations terms across licenses
+Nothing planned right now. If something you need is missing, [open an issue](https://github.com/open-filmmaker-toolkit/toolkit/issues).
 
 ## License
 

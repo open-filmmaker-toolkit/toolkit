@@ -936,6 +936,7 @@
           "id": {
             "$ref": "#/$defs/id"
           },
+          "currency": { "type": "string", "pattern": "^[A-Z]{3}$", "description": "The statement's currency, when it isn't the project's. Totals convert it at project.exchangeRates." },
           "contractId": {
             "$ref": "#/$defs/id",
             "description": "The distribution deal in contracts, if there is one."
@@ -1967,6 +1968,7 @@
           "$ref": "#/$defs/id"
         },
         "stillIds": { "type": "array", "items": { "$ref": "#/$defs/id" }, "description": "For a model release or property release: the stills it covers. These releases cover the photos only, not the film." },
+        "mfnGroup": { "type": "string", "description": "For a license: the most-favored-nations group it belongs to. Licenses in the same group are owed the highest fee in it." },
         "languages": { "type": "array", "items": { "type": "string" }, "description": "For a distribution deal limited to some languages. Missing means every language." },
         "holdbacks": { "type": "array", "description": "For a distribution deal: media no one can release in its territories until a date.", "items": { "type": "object", "properties": { "media": { "type": "string" }, "until": { "type": "string", "format": "date" } }, "additionalProperties": true } },
         "revenueTerms": { "type": "object", "description": "For a distribution deal: terms the revenue tracker checks statements against.", "properties": { "feePercent": { "type": "number", "minimum": 0, "maximum": 100 }, "expenseCap": { "type": "number", "minimum": 0 }, "reportingDays": { "type": "integer", "minimum": 0, "description": "Days after a period ends that its statement is due." }, "paymentDays": { "type": "integer", "minimum": 0, "description": "Days after a statement that payment is due." } }, "additionalProperties": true },
