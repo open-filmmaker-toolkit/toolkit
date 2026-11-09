@@ -62,6 +62,7 @@ It reads `people`, `contracts`, `thirdPartyElements` and `assets`. Everything el
 
 ## Not yet
 
+Nothing planned right now. If something you need is missing, [open an issue](https://github.com/open-filmmaker-toolkit/toolkit/issues).
 
 ## License
 

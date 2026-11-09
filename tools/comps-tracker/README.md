@@ -60,6 +60,7 @@ A `comps` list. Each comp has an `id`, and optional `title`, `year`, `runtime` (
 
 ## Not yet
 
+Nothing planned right now. If something you need is missing, [open an issue](https://github.com/open-filmmaker-toolkit/toolkit/issues).
 
 ## License
 

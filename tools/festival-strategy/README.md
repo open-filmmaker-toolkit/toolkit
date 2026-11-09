@@ -63,6 +63,7 @@ Screening dates from the festival submission tracker count as the first day a fi
 
 ## Not yet
 
+Nothing planned right now. If something you need is missing, [open an issue](https://github.com/open-filmmaker-toolkit/toolkit/issues).
 
 ## License
 
