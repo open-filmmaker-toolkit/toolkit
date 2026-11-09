@@ -114,8 +114,8 @@ Each item has [its own issue](https://github.com/open-filmmaker-toolkit/toolkit/
 ### Versions and views
 
 - [ ] Several versions to compare in the treatment, structure board, theory of change, narrative library and impact report, and more than one delivery at a time ([#198](https://github.com/open-filmmaker-toolkit/toolkit/issues/198))
-- [ ] Month grids in the awards and social calendars and in the festival strategy map ([#199](https://github.com/open-filmmaker-toolkit/toolkit/issues/199))
-- [ ] Charts in the impact report, and comps side by side with charts in the comps tracker ([#200](https://github.com/open-filmmaker-toolkit/toolkit/issues/200))
+- [x] Month grids in the awards and social calendars and in the festival strategy map ([#199](https://github.com/open-filmmaker-toolkit/toolkit/issues/199))
+- [x] Charts in the impact report, and comps side by side with charts in the comps tracker ([#200](https://github.com/open-filmmaker-toolkit/toolkit/issues/200))
 
 ### Trust and polish
 

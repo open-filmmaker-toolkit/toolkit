@@ -40,6 +40,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **Suggested posts** for each accepted festival (four weeks before, a week before, the day and a thank-you) and the release, added as drafts in one click.
 - **Exports a calendar file (.ics)** for your calendar app, and **prints** the calendar and the awards.
 - **A calendar file of every date in the project**, gathered from every tool: choose **Calendar of every date** under the file buttons and pick which kinds of dates to include. Importing a newer file updates the same events instead of adding them twice.
+- **A month grid.** Switch the calendar from **List** to **Month** to see the awards, posts and festival dates on a grid. Use the arrows to move between months. On a phone, the month becomes a list of the days with something on them.
 
 ## Saving and file conflicts
 
@@ -58,7 +59,6 @@ It reads `festivals` and the project's `releaseDate`. Everything else in the fil
 ## Not yet
 
 - Posting to social platforms (the toolkit never connects to them)
-- A month grid view
 
 ## License
 
