@@ -4498,7 +4498,8 @@ def test_money(browser, fake):
     prep = next((l for l in data['budget']['lines'] if l['id'] == teo['rates'][0].get('budgetLineId')), None)
     check(prep is not None and prep['rate'] == 500 and prep['quantity'] == 3 and 'Prep days' in prep['description'], 'another rate goes on its own budget line')
     rows = csv_of(pg)
-    check(rows[0][-1] == 'Other rates' and any('Prep days: $500 a day × 3' in r[-1] for r in rows), 'the CSV lists the other rates')
+    oi = rows[0].index('Other rates') if 'Other rates' in rows[0] else -1
+    check(oi >= 0 and any('Prep days: $500 a day × 3' in r[oi] for r in rows), 'the CSV lists the other rates')
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
