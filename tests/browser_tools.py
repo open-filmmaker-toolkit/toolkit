@@ -3764,6 +3764,20 @@ def test_stills_library(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
+def test_small_screen_fixes(browser, fake):
+    # Long export buttons wrap on a 320px screen, and the kit's language menu matches the other menus in dark mode.
+    ctx, pg, errs = new_page(browser, 'paper-edit', fake, viewport={'width': 320, 'height': 700})
+    open_sample(pg, fake)
+    over = pg.evaluate('document.documentElement.scrollWidth - document.documentElement.clientWidth')
+    check(over <= 1, 'the paper edit doesn\'t scroll sideways at 320px (%spx)' % over)
+    ctx.close()
+    ctx, pg, errs = new_page(browser, 'screening-kit', fake, color_scheme='dark')
+    open_sample(pg, fake)
+    a, b = pg.evaluate("['kitLang', 'hostSel'].map(id => { const s = getComputedStyle(document.getElementById(id)); return s.backgroundColor + ' ' + s.color; })")
+    check(a == b, 'the language menu has the same colors as the host menu in dark mode (%s, %s)' % (a, b))
+    ctx.close()
+
+
 def test_charts(browser, fake):
     # Charts in the impact report and comps side by side, each with its numbers as a table.
     ctx, pg, errs = new_page(browser, 'impact-report', fake)
@@ -5580,6 +5594,7 @@ def main():
         test_awards_social(browser, fake)
         test_month_views(browser, fake)
         test_charts(browser, fake)
+        test_small_screen_fixes(browser, fake)
         print('== rights-matrix / the grid, overlaps and reverting rights')
         test_rights_matrix(browser, fake)
         print('== deliverables / the list, the project and the checklist')

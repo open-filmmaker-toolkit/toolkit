@@ -48,6 +48,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .file-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
 
 .btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; }
+@media (max-width: 400px) { .btn { max-width: 100%; white-space: normal; } }
 .btn:hover { border-color: var(--ink-3); }
 .btn.primary { background: var(--ink); border-color: var(--ink); color: var(--paper); }
 .btn.primary:hover { opacity: 0.88; }
