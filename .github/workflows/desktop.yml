@@ -1,0 +1,61 @@
+name: Desktop app
+
+# Builds the desktop app (desktop/) for testing. Only when started by hand, from the Actions tab:
+# it doesn't run on pull requests, so it never holds up the shared runners.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mac:
+    name: Mac test build
+    runs-on: macos-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Rust and Node come with GitHub's Mac runners. One app for both Apple silicon and Intel Macs.
+      - name: Build the app
+        working-directory: desktop
+        run: |
+          rustup target add aarch64-apple-darwin x86_64-apple-darwin
+          npm ci --no-fund --no-audit
+          npx tauri build --target universal-apple-darwin --bundles dmg
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: open-filmmaker-toolkit-mac
+          path: desktop/src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg
+          retention-days: 14
+
+  linux:
+    name: Linux smoke test
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install what the app and its test need
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libwebkit2gtk-4.1-dev librsvg2-dev libayatana-appindicator3-dev libxdo-dev webkit2gtk-driver xvfb xdotool
+          cargo install tauri-driver --locked
+          pip install selenium
+
+      # Opens, saves, exports, carries the project between tools, prints and reopens, with the real dialogs.
+      - name: Build and test the app
+        working-directory: desktop
+        run: |
+          npm ci --no-fund --no-audit
+          npx tauri build --debug --no-bundle
+          python3 tests/smoke.py

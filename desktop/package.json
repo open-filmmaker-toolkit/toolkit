@@ -1,0 +1,14 @@
+{
+  "name": "open-filmmaker-toolkit-desktop",
+  "private": true,
+  "description": "Builds the desktop app. The tools themselves need none of this.",
+  "license": "GPL-3.0-or-later",
+  "scripts": {
+    "tauri": "tauri",
+    "dev": "tauri dev",
+    "build": "tauri build"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Open Filmmaker Toolkit",
+  "version": "0.1.0",
+  "identifier": "io.github.open-filmmaker-toolkit",
+  "build": {
+    "frontendDist": "../dist",
+    "beforeBuildCommand": "python3 stage.py",
+    "beforeDevCommand": "python3 stage.py"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [],
+    "security": {
+      "csp": "default-src 'self' tauri: asset: blob: data: ipc: http://ipc.localhost; script-src 'self' 'unsafe-inline' tauri:; style-src 'self' 'unsafe-inline' tauri:; img-src 'self' blob: data: tauri: asset:; connect-src 'self' ipc: http://ipc.localhost blob: data: https://photon.komoot.io https://api.open-meteo.com"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "category": "Productivity",
+    "shortDescription": "Free tools for documentary and indie filmmakers",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "macOS": {
+      "signingIdentity": "-",
+      "minimumSystemVersion": "11.0"
+    }
+  }
+}

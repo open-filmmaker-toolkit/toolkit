@@ -126,6 +126,16 @@ Each item has [its own issue](https://github.com/open-filmmaker-toolkit/toolkit/
 - [x] Versioned project files with automatic backups ([#203](https://github.com/open-filmmaker-toolkit/toolkit/issues/203))
 - [ ] Test by hand with VoiceOver and NVDA, and in Firefox and Safari ([#204](https://github.com/open-filmmaker-toolkit/toolkit/issues/204))
 
+### Desktop app
+
+An app that saves straight back to your project file on every computer, using the same tools as the website. See [desktop/](desktop/README.md).
+
+- [x] A first build for testing on a Mac: open, save back to the same file, export, print, and carry the project between tools
+- [ ] Sign it for Mac and Windows
+- [ ] Windows and Linux installers
+- [ ] Connect a project folder in the app
+- [ ] Releases page, and a link from the home page
+
 ### Smaller items, tool by tool
 
 From each tool's "Not yet" list.
