@@ -33,7 +33,7 @@ Looking for other free, open-source software for filmmaking, such as editing, so
 | Tool | Use it for | Status |
 | --- | --- | --- |
 | [Budget](tools/budget/) | Build a budget from detail lines up to a top sheet. | First version |
-| [Cash flow](tools/cash-flow/) | See when money comes and goes, and when you'll run short. | First version |
+| [Cash flow](tools/cash-flow/) | See when money comes and goes. | First version |
 | [Script breakdown](tools/script-breakdown/) | Break down a script into scenes, cast and props. | First version |
 | [Stripboard](tools/stripboard/) | Arrange the script's scenes into shoot days. | First version |
 | [Day-out-of-days](tools/day-out-of-days/) | See which days each cast member works. | First version |

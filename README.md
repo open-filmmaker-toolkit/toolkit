@@ -80,7 +80,7 @@ The toolkit has two halves:
 | [Finance plan](tools/finance-plan/) | Funding | See how the film gets paid for and what's left to raise. |
 | [Funder CRM](tools/funder-crm/) | Funding | Track funder contacts and next steps. |
 | [Budget](tools/budget/) | Pre-production | Build a budget from detail lines up to a top sheet. |
-| [Cash flow](tools/cash-flow/) | Pre-production | See when money comes and goes, and when you'll run short. |
+| [Cash flow](tools/cash-flow/) | Pre-production | See when money comes and goes. |
 | [Script breakdown](tools/script-breakdown/) | Pre-production | Break down a script into scenes, cast and props. |
 | [Stripboard](tools/stripboard/) | Pre-production | Arrange the script's scenes into shoot days. |
 | [Day-out-of-days](tools/day-out-of-days/) | Pre-production | See which days each cast member works. |
@@ -145,6 +145,7 @@ All 67 are first versions: they work, and they're still changing. To ask for ano
 - **Local-first.** Every tool runs in your browser or on your own machine. No accounts and no cloud. Your project data never leaves your computer.
 - **Works offline.** Each tool is one HTML file. Keep a copy on your laptop and it works on set with no signal.
 - **One shared project file.** All tools read and write the same project. Add a person once and they show up in your call sheets, releases, name supers and credits; log an archival clip once and it flows from the research log to the clearance log to the credits.
+- **Open it once.** Open your project on the home page or in any tool, and every tool you go to in that browser tab opens it too, along with changes you haven't saved yet. Save from whichever tool you're in.
 - **Your file, your copy.** Projects save as a file on disk that you back up and share however you already do (Drive, Dropbox, a hard drive).
 - **Work together without a server.** Keep the file in a folder your sync app shares. The tools say who has it open and who changed what, and merge two copies when people save at once. See [Working on a shared file](docs/sharing-a-project.md).
 - **Earlier versions.** Each time a tool saves the project, the browser keeps a copy, and any of the last few can be restored. See [Keeping your project safe](docs/backups.md).
