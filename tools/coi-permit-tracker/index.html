@@ -137,6 +137,10 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .todo .sub { display: block; color: var(--ink-3); font-size: 13px; }
 .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .three { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.req-t { width: 100%; border-collapse: collapse; font-size: 14px; }
+.req-t th, .req-t td { padding: 3px 6px 3px 0; text-align: left; font-weight: normal; vertical-align: middle; }
+.req-t thead th { font-size: 12.5px; color: var(--ink-2); }
+.req-t input { width: 100%; min-width: 0; padding: 6px 8px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); color: var(--ink); font: inherit; }
 .picks { display: grid; gap: 4px; max-height: 180px; overflow: auto; padding: 2px; }
 .picks label { display: flex; gap: 8px; align-items: baseline; font-size: 14px; }
 .picks input { width: 16px; height: 16px; margin: 0; flex: none; }
@@ -314,6 +318,12 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <div class="field"><label for="f-party" id="partyLabel">Vendor or location</label><input id="f-party" type="text" list="partyList" autocomplete="off"><datalist id="partyList"></datalist></div>
         <div class="field" data-for="coi"><label for="f-insurer">Insurer or broker</label><input id="f-insurer" type="text" placeholder="Who the certificate comes from" autocomplete="off"></div>
         <div class="field" data-for="permit"><label for="f-ref">Permit number</label><input id="f-ref" type="text" autocomplete="off"></div>
+      </div>
+      <div class="group" data-for="coi">
+        <h3 id="reqHead">What the vendor requires</h3>
+        <p class="hint">The limits the vendor or location asks for, from their rental agreement or insurance requirements, and what the certificate shows. Leave out what they don't ask for.</p>
+        <table class="req-t" aria-labelledby="reqHead"><thead><tr><th scope="col">Coverage</th><th scope="col">They require</th><th scope="col">The certificate shows</th></tr></thead><tbody id="reqRows"></tbody></table>
+        <div class="field"><label for="f-reqOther">Other requirements</label><input id="f-reqOther" type="text" placeholder="Waiver of subrogation; primary and noncontributory; 30 days' notice of cancellation" autocomplete="off"></div>
       </div>
       <div class="field" data-for="coi"><label for="f-named">Named on it</label><input id="f-named" type="text" placeholder="Certificate holder and additional insured, as they must appear" autocomplete="off"></div>
       <div class="two">
@@ -510,6 +520,18 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const ids = new Set(objs(g.packages).filter(p => !d || p.shootDayId === d.id).flatMap(p => arr(p.itemIds)));
     return [...new Set(its.filter(i => i.source === 'rental' && i.from && (!d ? true : ids.has(i.id))).map(i => i.from.trim()))];
   }
+  // Coverage limits a vendor can require, checked against what the certificate shows.
+  const COVERAGES = [['generalEach', 'General liability, each occurrence'], ['generalAggregate', 'General liability, aggregate'], ['auto', 'Hired and non-owned auto'],
+    ['equipment', 'Rented equipment'], ['employers', "Workers' comp, employer's liability"], ['umbrella', 'Umbrella or excess']];
+  const lim = (c, k, which) => { const o = c[which] && typeof c[which] === 'object' ? c[which] : {}; const n = Number(o[k]); return o[k] != null && o[k] !== '' && isFinite(n) ? n : null; };
+  const whole = n => { try { return Number(n).toLocaleString(undefined, { style: 'currency', currency: (doc.project && doc.project.currency) || 'USD', maximumFractionDigits: 0 }); } catch { return String(n); } };
+  // What a certificate falls short on: each required limit it doesn't meet, with what it shows.
+  function shortfalls(c) {
+    if (c.type !== COI) return [];
+    return COVERAGES.filter(([k]) => lim(c, k, 'required') > 0 && (lim(c, k, 'limits') || 0) < lim(c, k, 'required'))
+      .map(([k, label]) => ({ label, need: lim(c, k, 'required'), has: lim(c, k, 'limits') }));
+  }
+  const shortText = c => shortfalls(c).map(x => `${x.label.toLowerCase()} ${whole(x.need)}, ${x.has == null ? 'not shown on the certificate' : `the certificate shows ${whole(x.has)}`}`).join('; ');
   const certFor = vendor => items().filter(c => c.type === COI && same(c.vendor, vendor));
   // Everything to sort out before a day, worst first.
   function dayIssues(d) {
@@ -519,6 +541,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       if (!isDone(c)) out.push({ level: 'bad', text: `${what}: ${statusLabel(c).toLowerCase()}${c.requestedDate ? ` since ${fmtDate(c.requestedDate)}` : ''}`, id: c.id });
       else if (isDate(c.expirationDate) && c.expirationDate < d.date) out.push({ level: 'bad', text: `${what}: expires ${fmtDate(c.expirationDate)}, before the day`, id: c.id });
       else if (isDate(c.effectiveDate) && c.effectiveDate > d.date) out.push({ level: 'bad', text: `${what}: not in effect until ${fmtDate(c.effectiveDate)}`, id: c.id });
+      else if (shortfalls(c).length) out.push({ level: 'bad', text: `${what}: below what they require for ${shortText(c)}`, id: c.id });
       else if (isDate(c.expirationDate) && c.expirationDate <= addDays(d.date, 7)) out.push({ level: 'warn', text: `${what}: expires ${fmtDate(c.expirationDate)}, soon after`, id: c.id });
       else out.push({ level: 'ok', text: `${what}: ${statusLabel(c).toLowerCase()}`, id: c.id });
     }
@@ -527,7 +550,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       if (!cs.length) out.push({ level: 'bad', text: `No certificate logged for ${v}, renting gear for the day`, vendor: v });
       else if (!cs.some(c => isDone(c) && !(isDate(c.expirationDate) && c.expirationDate < d.date))) {
         if (!cs.some(c => covers(c, d))) out.push({ level: 'bad', text: `Certificate for ${v}: ${cs.some(isDone) ? 'expires before the day' : statusLabel(cs[0]).toLowerCase()}`, id: cs[0].id });
-      } else if (!cs.some(c => covers(c, d))) out.push({ level: 'ok', text: `Certificate, ${v}: ${statusLabel(cs.find(isDone)).toLowerCase()}`, id: cs.find(isDone).id });
+      } else if (!cs.some(c => covers(c, d))) {
+        const c = cs.find(isDone);
+        if (shortfalls(c).length) out.push({ level: 'bad', text: `Certificate, ${v}: below what they require for ${shortText(c)}`, id: c.id });
+        else out.push({ level: 'ok', text: `Certificate, ${v}: ${statusLabel(c).toLowerCase()}`, id: c.id });
+      }
     }
     const l = d.locationId && place(d.locationId);
     if (l && !items().some(c => covers(c, d) && arr(c.locationIds).includes(l.id))) out.push({ level: 'info', text: `Nothing logged for ${l.name || 'the location'}. Check whether it needs a permit or a certificate.`, location: l.id, day: d.id });
@@ -569,6 +596,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       const ds = arr(c.shootDayIds).map(id => days().find(d => d.id === id)).filter(Boolean);
       if (ds.length) flags.push(`<span class="flag linked">${esc(ds.map(d => fmtDate(d.date)).join(', '))}</span>`);
       if (isDone(c) && !arr(c.assetIds).length) flags.push('<span class="flag changed">No scan attached</span>');
+      if (isDone(c) && shortfalls(c).length) flags.push(`<span class="flag problem">Below what ${esc(party(c))} requires: ${esc(shortText(c))}</span>`);
+      else if (isDone(c) && COVERAGES.some(([k]) => lim(c, k, 'required') > 0)) flags.push('<span class="flag new">Meets the required limits</span>');
+      else if (!isDone(c) && COVERAGES.some(([k]) => lim(c, k, 'required') > 0)) flags.push(`<span class="flag linked">Requires ${esc(COVERAGES.filter(([k]) => lim(c, k, 'required') > 0).map(([k, l]) => `${l.toLowerCase()} ${whole(lim(c, k, 'required'))}`).join(', '))}</span>`);
       const sub = c.type === PERMIT ? [c.reference && `No. ${c.reference}`, c.conditions].filter(Boolean).join(' · ') : c.namedOn ? `Names ${c.namedOn}` : '';
       return `<li class="row" data-id="${esc(c.id)}"><span class="kd">${esc(kindLabel(c))}</span>
         <button type="button" class="what" data-edit="${esc(c.id)}"><span class="nm">${esc(party(c))}</span>${sub ? `<span class="tt">${esc(sub)}</span>` : ''}</button>
@@ -632,6 +662,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const locs = new Set(arr(editing.locationIds)), ds = new Set(arr(editing.shootDayIds));
     $('locPicks').innerHTML = arr(doc.locations).filter(l => l && l.id).map(l => `<label><input type="checkbox" value="${esc(l.id)}"${locs.has(l.id) ? ' checked' : ''}><span>${esc(l.name || 'Unnamed location')}</span></label>`).join('') || '<p class="hint">No locations in the project yet.</p>';
     $('dayPicks').innerHTML = days().map(d => `<label><input type="checkbox" value="${esc(d.id)}"${ds.has(d.id) ? ' checked' : ''}><span>${esc(dayLabel(d))}</span></label>`).join('') || '<p class="hint">No shoot days yet.</p>';
+    // A new certificate for a vendor already logged starts with that vendor's requirements.
+    const prev = isNew && editing.vendor && items().find(c => c.type === COI && same(c.vendor, editing.vendor) && c.required);
+    if (prev) { editing.required = structuredClone(prev.required); if (prev.requirementsNotes) editing.requirementsNotes = prev.requirementsNotes; }
+    $('reqRows').innerHTML = COVERAGES.map(([k, label]) => `<tr><th scope="row">${esc(label)}</th><td><input type="number" min="0" step="any" inputmode="decimal" data-req="${k}" value="${lim(editing, k, 'required') ?? ''}" aria-label="${esc(label)}: they require"></td><td><input type="number" min="0" step="any" inputmode="decimal" data-has="${k}" value="${lim(editing, k, 'limits') ?? ''}" aria-label="${esc(label)}: the certificate shows"></td></tr>`).join('');
+    $('f-reqOther').value = str(editing.requirementsNotes);
     renderScans();
     $('deleteBtn').hidden = isNew;
     $('editor').showModal();
@@ -648,7 +683,16 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const text = { insurer: 'f-insurer', reference: 'f-ref', namedOn: 'f-named', requestedDate: 'f-requested', receivedDate: 'f-received', effectiveDate: 'f-effective', expirationDate: 'f-expires', conditions: 'f-conditions', notes: 'f-notes' };
     for (const [k, id] of Object.entries(text)) { const v = $(id).value.trim(); if (v) c[k] = v; else delete c[k]; }
     if (t === PERMIT && $('f-fee').value !== '' && Number($('f-fee').value) >= 0) c.fee = Number($('f-fee').value); else delete c.fee;
-    if (t === PERMIT) { delete c.insurer; delete c.namedOn; } else { delete c.reference; delete c.conditions; }
+    if (t === PERMIT) { delete c.insurer; delete c.namedOn; delete c.required; delete c.limits; delete c.requirementsNotes; }
+    else {
+      delete c.reference; delete c.conditions;
+      for (const [which, attr] of [['required', 'req'], ['limits', 'has']]) {
+        const o = {};
+        for (const i of $('reqRows').querySelectorAll(`[data-${attr}]`)) if (i.value !== '' && Number(i.value) >= 0) o[i.dataset[attr]] = Number(i.value);
+        if (Object.keys(o).length) c[which] = o; else delete c[which];
+      }
+      const other = $('f-reqOther').value.trim(); if (other) c.requirementsNotes = other; else delete c.requirementsNotes;
+    }
     if (isDone(c) && !c.receivedDate) c.receivedDate = today();
     if (c.status !== 'needed' && !c.requestedDate) c.requestedDate = today();
     for (const [k, box] of [['locationIds', 'locPicks'], ['shootDayIds', 'dayPicks']]) {
@@ -1667,7 +1711,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const OFT_SLUG = (window.location.pathname.match(/tools\/([^/]+)\//) || [])[1] || '';
   const OFT_GUIDE = 'https://github.com/open-filmmaker-toolkit/toolkit/blob/main/docs/sharing-a-project.md';
   const OFT_HOURS = 4;
-  const OFT_KEYS = { project: 'Project details', people: 'People', locations: 'Locations', thirdPartyElements: 'Clearance log', contracts: 'Contracts and releases', assets: 'Files and stills', musicCueSheet: 'Music cue sheet', callSheets: 'Call sheets', credits: 'Credits', supers: 'Name supers', subjects: 'Subject tracker', sources: 'Research log', comps: 'Comps tracker', treatment: 'Treatment', pitchDeck: 'Pitch deck', grants: 'Grant calendar', narratives: 'Narrative library', budget: 'Budget', budgetFormats: 'Budget converter', financePlan: 'Finance plan', funders: 'Funder CRM', cashFlow: 'Cash flow', shootDays: 'Shooting calendar', script: 'Script', scenes: 'Script breakdown', characters: 'Cast', dayOutOfDays: 'Day-out-of-days', budgetLinks: 'Budget', shots: 'Shot list', interviews: 'Interviews', journal: 'Field journal', scouts: 'Location scouts', gear: 'Gear list', trips: 'Travel sheet', riskPlans: 'Risk plans', security: 'Security checklist', mediaReports: 'Camera and sound reports', dailyReports: 'Daily reports', expenses: 'Expense log', festivals: 'Festival submissions', screenings: 'Screenings', pressOutlets: 'Press list', partners: 'Partner CRM', discussionGuide: 'Discussion guide', paperEdit: 'Paper edit', costReport: 'Budget-to-actuals', structure: 'Structure board', cuts: 'Cut tracker', clearanceReport: 'Clearance report', chainOfTitle: 'Chain of title', festivalStrategy: 'Festival strategy', pressNotes: 'Press notes', awards: 'Awards', socialPosts: 'Social posts', deliverables: 'Deliverables', qc: 'QC tracker', waterfall: 'Waterfall', revenueStatements: 'Revenue tracker', bookings: 'Bookings', theoryOfChange: 'Theory of change', screeningKit: 'Screening kit', impactReport: 'Impact report', finalCostReport: 'Final cost report', grantReports: 'Grant reports', contractArchive: 'Contract archive' };
+  const OFT_KEYS = { project: 'Project details', people: 'People', locations: 'Locations', thirdPartyElements: 'Clearance log', contracts: 'Contracts and releases', assets: 'Files and stills', musicCueSheet: 'Music cue sheet', callSheets: 'Call sheets', credits: 'Credits', supers: 'Name supers', subjects: 'Subject tracker', sources: 'Research log', comps: 'Comps tracker', treatment: 'Treatment', pitchDeck: 'Pitch deck', grants: 'Grant calendar', narratives: 'Narrative library', budget: 'Budget', budgetFormats: 'Budget converter', financePlan: 'Finance plan', funders: 'Funder CRM', cashFlow: 'Cash flow', shootDays: 'Shooting calendar', script: 'Script', scenes: 'Script breakdown', characters: 'Cast', dayOutOfDays: 'Day-out-of-days', budgetLinks: 'Budget', shots: 'Shot list', interviews: 'Interviews', questionBank: 'Question bank', journal: 'Field journal', scouts: 'Location scouts', scoutChecklist: 'Scout checklist', gear: 'Gear list', trips: 'Travel sheet', riskPlans: 'Risk plans', security: 'Security checklist', mediaReports: 'Camera and sound reports', dailyReports: 'Daily reports', expenses: 'Expense log', festivals: 'Festival submissions', screenings: 'Screenings', pressOutlets: 'Press list', partners: 'Partner CRM', discussionGuide: 'Discussion guide', paperEdit: 'Paper edit', costReport: 'Budget-to-actuals', structure: 'Structure board', cuts: 'Cut tracker', clearanceReport: 'Clearance report', chainOfTitle: 'Chain of title', festivalStrategy: 'Festival strategy', pressNotes: 'Press notes', awards: 'Awards', socialPosts: 'Social posts', deliverables: 'Deliverables', qc: 'QC tracker', waterfall: 'Waterfall', revenueStatements: 'Revenue tracker', bookings: 'Bookings', theoryOfChange: 'Theory of change', screeningKit: 'Screening kit', impactReport: 'Impact report', finalCostReport: 'Final cost report', grantReports: 'Grant reports', contractArchive: 'Contract archive' };
   const oftStore = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch { /* storage off */ } } };
   const oftMe = () => (oftStore.get('oft-user-name') || '').trim();
   const oftEsc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);

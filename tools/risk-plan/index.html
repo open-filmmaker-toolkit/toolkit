@@ -127,6 +127,11 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .score.low { background: var(--good-bg); color: var(--good); }
 .score.medium { background: var(--warn-bg); color: var(--warn); }
 .score.high { background: var(--bad-bg); color: var(--bad); }
+.log-form { display: grid; gap: 8px; margin: 6px 0 10px; }
+.log-form select, .log-form input { width: 100%; }
+.log-list li.bad span:first-child { color: var(--bad); font-weight: 600; }
+.med-p { border: 1px solid var(--rule-soft); border-radius: 8px; margin: 0 0 12px; padding: 8px 12px 4px; min-width: 0; }
+.med-p legend { font-weight: 600; padding: 0 4px; }
 .print-row { display: grid; gap: 8px; }
 .hint-inline { color: var(--ink-3); font-size: 13px; }
 @media (max-width: 720px) {
@@ -293,6 +298,22 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
           <div><button type="button" class="btn" id="insurerBtn">Print for the insurer</button></div>
         </div>
       </section>
+      <section class="card" aria-labelledby="logHead">
+        <div class="card-head"><h2 id="logHead">Check-ins during the shoot</h2></div>
+        <p class="lead" id="logNext"></p>
+        <div class="log-form">
+          <div class="field"><label for="logWho">Who</label><select id="logWho"></select></div>
+          <div class="field"><label for="logStatus">How</label><select id="logStatus"><option value="ok">Checked in</option><option value="late">Checked in late</option><option value="missed">Missed it</option></select></div>
+          <div class="field"><label for="logNote">Note</label><input id="logNote" type="text" placeholder="At the levee, all fine" autocomplete="off"></div>
+          <div><button type="button" class="btn" id="logBtn">Log it</button></div>
+        </div>
+        <ul class="todo log-list" id="logList"></ul>
+      </section>
+      <section class="card" aria-labelledby="medHead">
+        <div class="card-head"><h2 id="medHead">Medical details</h2></div>
+        <p class="lead">Blood type, allergies, medications and who to call, for each person on the plan. They're kept apart from the project file, in a file of their own that you can lock with a passphrase.</p>
+        <div><button type="button" class="btn" id="medBtn">Medical details</button></div>
+      </section>
       <section class="card" aria-labelledby="uncHead">
         <div class="card-head"><h2 id="uncHead">Shoot days without a plan</h2><span class="count" id="uncCount"></span></div>
         <p class="lead">Upcoming days in the shooting calendar at a location no plan covers.</p>
@@ -367,6 +388,26 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     </div>
   </form>
 </dialog>
+
+<dialog class="modal" id="medDialog" aria-labelledby="medTitle">
+  <form id="medForm" method="dialog" novalidate>
+    <div class="dlg-head"><h2 id="medTitle">Medical details</h2></div>
+    <div class="dlg-body">
+      <p class="hint" id="medIntro">These never go into the project file. Save them to a separate file and keep it somewhere private; lock it with a passphrase if anyone else can reach it. Close the tab without saving and they're gone.</p>
+      <div id="medLocked" hidden><p id="medLockedText"></p><div class="two"><div class="field"><label for="medUnlockPass">Passphrase</label><input id="medUnlockPass" type="password" autocomplete="off"></div><div class="field"><span class="label">&nbsp;</span><button type="button" class="btn primary" id="medUnlockBtn">Unlock</button></div></div></div>
+      <div id="medPeople"></div>
+      <div class="field"><label for="medPass">Passphrase for the file, if you want to lock it</label><input id="medPass" type="password" autocomplete="new-password"><p class="hint">Locked with AES-GCM in this browser. Without the passphrase, nobody can open the file, including you.</p></div>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn" id="medOpenBtn">Open a medical file</button>
+      <button type="button" class="btn" id="medPrintBtn">Print the medical sheet</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="medClose">Close</button>
+      <button type="button" class="btn primary" id="medSaveBtn">Save to a separate file</button>
+    </div>
+  </form>
+</dialog>
+<input type="file" id="medInput" accept=".json,application/json" hidden>
 
 <dialog class="modal" id="projectDialog" aria-labelledby="projectDialogTitle">
   <form id="projectForm" method="dialog">
@@ -602,6 +643,111 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     title: (r, i) => `Step ${i + 1}${r.after ? `: ${r.after}` : ''}`,
     fields: [{ k: 'after', label: 'When', placeholder: '30 minutes late' }, { k: 'action', label: 'What to do', type: 'textarea', wide: true }] };
 
+  // ---------- Check-ins during the shoot ----------
+  const logOf = p => arr(p.checkInLog).filter(x => x && typeof x === 'object' && x.at);
+  const nowLocal = () => { const d = new Date(); return `${today()}T${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
+  // Check-in times as written, such as "8:00, 13:00" or "8 am, 8 pm", in minutes after midnight.
+  function minutesOf(t) {
+    const m = /^(\d{1,2})(?::(\d{2}))?\s*(am|pm|a\.m\.|p\.m\.)?$/i.exec(str(t).trim());
+    if (!m) return null;
+    let h = +m[1]; const mi = +(m[2] || 0), ap = (m[3] || '').toLowerCase()[0];
+    if (ap === 'p' && h < 12) h += 12; if (ap === 'a' && h === 12) h = 0;
+    return h < 24 && mi < 60 ? h * 60 + mi : null;
+  }
+  const hm = min => new Date(2000, 0, 1, Math.floor(min / 60), min % 60).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  const during = p => (!p.startDate || today() >= p.startDate) && (!p.endDate || today() <= (p.endDate || p.startDate));
+  // The last set time that's passed today with no check-in logged after it, and the next one coming.
+  function checkInState(p) {
+    const ts = times(p).map(minutesOf).filter(x => x != null).sort((a, b) => a - b);
+    if (!ts.length || !during(p)) return null;
+    const d = new Date(), now = d.getHours() * 60 + d.getMinutes();
+    const past = ts.filter(t => t <= now), next = ts.find(t => t > now);
+    const last = past[past.length - 1];
+    const logged = last != null && logOf(p).some(x => x.at.slice(0, 10) === today() && x.status !== 'missed' && minutesOf(x.at.slice(11)) >= last);
+    return { due: last != null && !logged ? last : null, next };
+  }
+  const missedOf = p => logOf(p).filter(x => x.status === 'missed' && !x.resolved);
+  const logWho = x => (x.personId && person(x.personId) ? person(x.personId).name : x.name) || 'Everyone';
+  function renderLog() {
+    const p = plans().find(x => x.id === printId);
+    $('logBtn').disabled = !p;
+    if (!p) { $('logNext').textContent = 'Add a plan to log check-ins against it.'; $('logList').innerHTML = ''; $('logWho').innerHTML = ''; return; }
+    const st = checkInState(p);
+    $('logNext').textContent = `For ${p.title || 'this plan'}. ` + (!times(p).length ? 'Set check-in times in the plan to see when the next one is due.'
+      : !st ? (during(p) ? '' : 'The plan’s dates are not today; you can still log check-ins.') : st.due != null ? `The ${hm(st.due)} check-in hasn’t been logged yet.${st.next != null ? ` The next is at ${hm(st.next)}.` : ''}` : st.next != null ? `Next check-in at ${hm(st.next)}.` : 'No more check-ins today.');
+    const keep = $('logWho').value;
+    $('logWho').innerHTML = '<option value="">The whole team</option>' + arr(p.personIds).map(person).filter(Boolean).map(x => `<option value="${esc(x.id)}">${esc(x.name)}</option>`).join('');
+    if ([...$('logWho').options].some(o => o.value === keep)) $('logWho').value = keep;
+    const log = [...logOf(p)].sort((a, b) => b.at.localeCompare(a.at)).slice(0, 8);
+    $('logList').innerHTML = log.length ? log.map(x => `<li class="${x.status === 'missed' && !x.resolved ? 'bad' : ''}"><span>${esc(logWho(x))}: ${esc(x.status === 'missed' ? 'missed' : x.status === 'late' ? 'checked in late' : 'checked in')}<span class="sub">${esc(fmtDate(x.at.slice(0, 10)))}, ${esc(hm(minutesOf(x.at.slice(11)) || 0))}${x.note ? ` · ${esc(x.note)}` : ''}</span></span>${x.status === 'missed' && !x.resolved ? `<button type="button" class="btn small" data-resolve="${esc(x.id)}">They’re safe</button>` : ''}</li>`).join('')
+      : '<li class="empty-line">No check-ins logged yet.</li>';
+  }
+  function logCheckIn() {
+    const p = plans().find(x => x.id === printId); if (!p) return;
+    const e = { id: newId('checkin'), at: nowLocal(), status: $('logStatus').value };
+    if ($('logWho').value) e.personId = $('logWho').value;
+    if ($('logNote').value.trim()) e.note = $('logNote').value.trim();
+    p.checkInLog = [...logOf(p), e];
+    $('logNote').value = '';
+    changed();
+    toast(e.status === 'missed' ? `Logged a missed check-in. Follow the plan's steps for a missed check-in.` : 'Logged the check-in.');
+  }
+
+  // ---------- Medical details ----------
+  // Kept in memory and in a file of their own, never in the project file or the recovery draft.
+  let medical = {}, medLocked = null;
+  const MED_FIELDS = [['blood', 'Blood type'], ['allergies', 'Allergies'], ['medications', 'Medications'], ['conditions', 'Conditions to know about'], ['contact', 'Who to call, and their phone'], ['insurance', 'Health insurance or policy']];
+  const b64 = buf => btoa(String.fromCharCode(...new Uint8Array(buf)));
+  const unb64 = t => Uint8Array.from(atob(t), c => c.charCodeAt(0));
+  async function keyFor(pass, salt) {
+    const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pass), 'PBKDF2', false, ['deriveKey']);
+    return crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 250000, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+  }
+  const medTeam = () => { const p = plans().find(x => x.id === printId); return (p ? arr(p.personIds) : []).map(person).filter(Boolean); };
+  function drawMedical() {
+    const team = medTeam();
+    $('medPeople').innerHTML = team.length ? team.map(x => `<fieldset class="med-p" data-person="${esc(x.id)}"><legend>${esc(x.name || 'Unnamed')}</legend><div class="two">${MED_FIELDS.map(([k, label]) => `<div class="field"><label for="med-${esc(x.id)}-${k}">${esc(label)}</label><input id="med-${esc(x.id)}-${k}" data-med="${k}" type="text" value="${esc((medical[x.id] || {})[k])}" autocomplete="off"></div>`).join('')}</div></fieldset>`).join('')
+      : '<p class="hint">Pick the team for this plan first.</p>';
+  }
+  function readMedical() {
+    for (const fs of $('medPeople').querySelectorAll('[data-person]')) {
+      const o = {};
+      for (const i of fs.querySelectorAll('[data-med]')) if (i.value.trim()) o[i.dataset.med] = i.value.trim();
+      if (Object.keys(o).length) medical[fs.dataset.person] = o; else delete medical[fs.dataset.person];
+    }
+  }
+  async function saveMedical() {
+    readMedical();
+    if (!Object.keys(medical).length) { toast('Type someone’s details first.', true); return; }
+    const out = { format: 'oft-medical', formatVersion: 1, project: doc.project.title || '', savedAt: new Date().toISOString() };
+    const pass = $('medPass').value;
+    if (pass) {
+      if (!window.crypto || !crypto.subtle) { toast('This browser can’t lock files. Save without a passphrase, and keep the file somewhere private.', true); return; }
+      const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+      const data = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, await keyFor(pass, salt), new TextEncoder().encode(JSON.stringify(medical)));
+      out.locked = { salt: b64(salt), iv: b64(iv), data: b64(data) };
+    } else out.people = medical;
+    const name = `${slug()}-medical-details${pass ? '-locked' : ''}.json`;
+    download(JSON.stringify(out, null, 2) + '\n', name, 'application/json');
+    toast(`Saved ${name}${pass ? ', locked with your passphrase' : ''}. Keep it apart from the project file.`);
+  }
+  async function openMedical(file) {
+    let d;
+    try { d = JSON.parse(await file.text()); } catch { toast(`${file.name} isn't a medical details file.`, true); return; }
+    if (!d || d.format !== 'oft-medical') { toast(`${file.name} isn't a medical details file from this tool.`, true); return; }
+    if (d.locked) { medLocked = d.locked; $('medLocked').hidden = false; $('medLockedText').textContent = `${file.name} is locked. Type its passphrase to open it.`; $('medUnlockPass').value = ''; $('medUnlockPass').focus(); return; }
+    medical = d.people && typeof d.people === 'object' ? d.people : {};
+    drawMedical(); toast(`Opened ${file.name}.`);
+  }
+  async function unlockMedical() {
+    try {
+      const k = await keyFor($('medUnlockPass').value, unb64(medLocked.salt));
+      const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(medLocked.iv) }, k, unb64(medLocked.data));
+      medical = JSON.parse(new TextDecoder().decode(plain)); medLocked = null;
+      $('medLocked').hidden = true; drawMedical(); toast('Unlocked.');
+    } catch { toast('That passphrase doesn’t open this file.', true); }
+  }
+
   // ---------- Render ----------
   function render() {
     $('filmTitle').textContent = doc.project.title || 'Untitled film';
@@ -628,6 +774,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       if (!arr(p.contacts).length) flags.push('<span class="flag changed">No emergency contacts</span>');
       if (!arr(p.hospitals).length) flags.push('<span class="flag changed">No hospital</span>');
       if (!times(p).length) flags.push(`<span class="flag ${p.level === 'standard' ? 'linked' : 'changed'}">No check-ins</span>`);
+      for (const x of missedOf(p)) flags.push(`<span class="flag problem">Missed check-in: ${esc(logWho(x))}, ${esc(fmtDate(x.at.slice(0, 10)))} ${esc(hm(minutesOf(x.at.slice(11)) || 0))}</span>`);
+      const st = checkInState(p);
+      if (st && st.due != null) flags.push(`<span class="flag changed">The ${esc(hm(st.due))} check-in isn’t logged yet</span>`);
       return `<li class="row" data-id="${esc(p.id)}"><span class="rt">${esc(span(p) || 'No dates yet')}</span>
         <button type="button" class="what" data-edit="${esc(p.id)}"><span class="nm">${esc(p.title || 'Untitled plan')}</span>${p.author ? `<span class="tt">By ${esc(p.author)}</span>` : ''}</button>
         <span class="st lv-${esc(p.level)}">${esc(LEVELS[p.level])}</span>
@@ -640,6 +789,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     if (!all.some(p => p.id === printId)) printId = (all[0] || {}).id || null;
     $('printSel').innerHTML = all.map(p => `<option value="${esc(p.id)}"${p.id === printId ? ' selected' : ''}>${esc(p.title || 'Untitled plan')}</option>`).join('') || '<option value="">Add a plan first</option>';
     $('printSel').disabled = $('printBtn').disabled = $('insurerBtn').disabled = !all.length;
+    renderLog();
   }
 
   // ---------- Editor ----------
@@ -744,6 +894,13 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const getout = `<h2>Getting out</h2>${p.meetingPoint ? `<p><b>Meeting point:</b> ${esc(p.meetingPoint)}</p>` : ''}<p class="r-notes">${esc(p.evacuation || 'No evacuation plan written yet.')}</p>`;
     const head = `<h1>Risk plan: ${esc(p.title || '')}</h1>
       <p class="r-meta">${esc([doc.project.title, LEVELS[p.level], span(p), locs.map(l => l.name).join(', '), `Printed ${fmtDate(today())}`].filter(Boolean).join(' · '))}</p>`;
+    if (printFor === 'medical') {
+      const team = arr(p.personIds).map(person).filter(Boolean);
+      $('report').innerHTML = `<h1>Medical details: ${esc(p.title || '')}</h1><p class="r-meta">${esc([doc.project.title, span(p), 'Confidential', `Printed ${fmtDate(today())}`].filter(Boolean).join(' · '))}</p>
+        <table><thead><tr><th>Name</th>${MED_FIELDS.map(([, l]) => `<th>${esc(l)}</th>`).join('')}</tr></thead><tbody>${team.map(x => `<tr><td>${esc(x.name)}</td>${MED_FIELDS.map(([k]) => `<td>${esc((medical[x.id] || {})[k] || '')}</td>`).join('')}</tr>`).join('')}</tbody></table>
+        <p class="r-note">Confidential. For the person responsible for safety on this shoot. Keep this copy with you and destroy it afterwards.</p>`;
+      return;
+    }
     if (printFor === 'insurer') {
       $('report').innerHTML = `${head}
         <table class="r-terms"><tbody><tr><th>Production</th><td>${esc([doc.project.title, doc.project.company].filter(Boolean).join(', '))}</td></tr>
@@ -997,6 +1154,16 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     // The shared print button prints the crew copy; the other prints the insurer's copy.
     $('printBtn').onclick = () => { printFor = 'crew'; renderReport(); window.print(); };
     $('insurerBtn').onclick = () => { printFor = 'insurer'; renderReport(); window.print(); printFor = 'crew'; };
+    $('logBtn').onclick = logCheckIn;
+    $('logList').addEventListener('click', ev => { const b = ev.target.closest('[data-resolve]'); if (!b) return; const p = plans().find(x => x.id === printId); const e = p && logOf(p).find(x => x.id === b.dataset.resolve); if (e) { e.resolved = nowLocal(); changed(); } });
+    $('printSel').addEventListener('change', renderLog);
+    $('medBtn').onclick = () => { drawMedical(); $('medLocked').hidden = !medLocked; $('medDialog').showModal(); };
+    $('medClose').onclick = () => { readMedical(); $('medDialog').close(); };
+    $('medSaveBtn').onclick = saveMedical;
+    $('medOpenBtn').onclick = () => $('medInput').click();
+    $('medInput').addEventListener('change', async () => { const f = $('medInput').files[0]; if (f) await openMedical(f); $('medInput').value = ''; });
+    $('medUnlockBtn').onclick = unlockMedical;
+    $('medPrintBtn').onclick = () => { readMedical(); printFor = 'medical'; renderReport(); window.print(); printFor = 'crew'; };
     wireLists($('editorForm'));
     $('editorForm').addEventListener('change', ev => { if (ev.target.dataset && ev.target.dataset.k === 'hazard') suggestControls(ev.target); });
     $('teamPicks').addEventListener('change', () => { showTeam(); drawList('hazards'); });
@@ -1285,7 +1452,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const OFT_SLUG = (window.location.pathname.match(/tools\/([^/]+)\//) || [])[1] || '';
   const OFT_GUIDE = 'https://github.com/open-filmmaker-toolkit/toolkit/blob/main/docs/sharing-a-project.md';
   const OFT_HOURS = 4;
-  const OFT_KEYS = { project: 'Project details', people: 'People', locations: 'Locations', thirdPartyElements: 'Clearance log', contracts: 'Contracts and releases', assets: 'Files and stills', musicCueSheet: 'Music cue sheet', callSheets: 'Call sheets', credits: 'Credits', supers: 'Name supers', subjects: 'Subject tracker', sources: 'Research log', comps: 'Comps tracker', treatment: 'Treatment', pitchDeck: 'Pitch deck', grants: 'Grant calendar', narratives: 'Narrative library', budget: 'Budget', budgetFormats: 'Budget converter', financePlan: 'Finance plan', funders: 'Funder CRM', cashFlow: 'Cash flow', shootDays: 'Shooting calendar', script: 'Script', scenes: 'Script breakdown', characters: 'Cast', dayOutOfDays: 'Day-out-of-days', budgetLinks: 'Budget', shots: 'Shot list', interviews: 'Interviews', journal: 'Field journal', scouts: 'Location scouts', gear: 'Gear list', trips: 'Travel sheet', riskPlans: 'Risk plans', security: 'Security checklist', mediaReports: 'Camera and sound reports', dailyReports: 'Daily reports', expenses: 'Expense log', festivals: 'Festival submissions', screenings: 'Screenings', pressOutlets: 'Press list', partners: 'Partner CRM', discussionGuide: 'Discussion guide', paperEdit: 'Paper edit', costReport: 'Budget-to-actuals', structure: 'Structure board', cuts: 'Cut tracker', clearanceReport: 'Clearance report', chainOfTitle: 'Chain of title', festivalStrategy: 'Festival strategy', pressNotes: 'Press notes', awards: 'Awards', socialPosts: 'Social posts', deliverables: 'Deliverables', qc: 'QC tracker', waterfall: 'Waterfall', revenueStatements: 'Revenue tracker', bookings: 'Bookings', theoryOfChange: 'Theory of change', screeningKit: 'Screening kit', impactReport: 'Impact report', finalCostReport: 'Final cost report', grantReports: 'Grant reports', contractArchive: 'Contract archive' };
+  const OFT_KEYS = { project: 'Project details', people: 'People', locations: 'Locations', thirdPartyElements: 'Clearance log', contracts: 'Contracts and releases', assets: 'Files and stills', musicCueSheet: 'Music cue sheet', callSheets: 'Call sheets', credits: 'Credits', supers: 'Name supers', subjects: 'Subject tracker', sources: 'Research log', comps: 'Comps tracker', treatment: 'Treatment', pitchDeck: 'Pitch deck', grants: 'Grant calendar', narratives: 'Narrative library', budget: 'Budget', budgetFormats: 'Budget converter', financePlan: 'Finance plan', funders: 'Funder CRM', cashFlow: 'Cash flow', shootDays: 'Shooting calendar', script: 'Script', scenes: 'Script breakdown', characters: 'Cast', dayOutOfDays: 'Day-out-of-days', budgetLinks: 'Budget', shots: 'Shot list', interviews: 'Interviews', questionBank: 'Question bank', journal: 'Field journal', scouts: 'Location scouts', scoutChecklist: 'Scout checklist', gear: 'Gear list', trips: 'Travel sheet', riskPlans: 'Risk plans', security: 'Security checklist', mediaReports: 'Camera and sound reports', dailyReports: 'Daily reports', expenses: 'Expense log', festivals: 'Festival submissions', screenings: 'Screenings', pressOutlets: 'Press list', partners: 'Partner CRM', discussionGuide: 'Discussion guide', paperEdit: 'Paper edit', costReport: 'Budget-to-actuals', structure: 'Structure board', cuts: 'Cut tracker', clearanceReport: 'Clearance report', chainOfTitle: 'Chain of title', festivalStrategy: 'Festival strategy', pressNotes: 'Press notes', awards: 'Awards', socialPosts: 'Social posts', deliverables: 'Deliverables', qc: 'QC tracker', waterfall: 'Waterfall', revenueStatements: 'Revenue tracker', bookings: 'Bookings', theoryOfChange: 'Theory of change', screeningKit: 'Screening kit', impactReport: 'Impact report', finalCostReport: 'Final cost report', grantReports: 'Grant reports', contractArchive: 'Contract archive' };
   const oftStore = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch { /* storage off */ } } };
   const oftMe = () => (oftStore.get('oft-user-name') || '').trim();
   const oftEsc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);

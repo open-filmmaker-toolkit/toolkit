@@ -33,6 +33,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 ## What it does
 
 - **Certificates of insurance** for each vendor and location: requested, received or still needed, with the dates, the insurer or broker, and who's named on it, such as the certificate holder and additional insured.
+- **What each vendor requires.** Type the limits a vendor or location asks for, such as $1,000,000 general liability and $250,000 for rented equipment, and what the certificate shows. A certificate below what's required is flagged, in the list and before each shoot day. A new certificate for the same vendor starts with their requirements.
 - **Filming permits:** the issuing office, the permit number, applied for and issued dates, the dates it's in effect, and its conditions.
 - **Linked to locations and shoot days.** A certificate or permit picked for shoot days covers those days. One picked only for locations covers every day at those locations.
 - **Before each shoot day,** the side panel lists every upcoming day from the [shooting calendar](../shooting-calendar/) with what's missing: anything not received or issued yet, anything that expires before the day or isn't in effect yet, and anything that expires within a week after. It also flags rental houses with gear packed for the day in the [gear list](../gear-list/) and no certificate, and locations with nothing logged, so you can check whether they need a permit.
@@ -59,13 +60,13 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-Certificates and permits are `contracts` with `type` "certificate of insurance" or "permit" and a `status`: `needed`, `requested` or `received` for certificates, and `needed`, `applied` or `issued` for permits. Both have optional `requestedDate` (applied for, for permits), `receivedDate` (issued, for permits), `effectiveDate`, `expirationDate`, `locationIds`, `shootDayIds`, `notes` and `assetIds` (the scan, an asset with `type` "certificate scan" or "permit scan"). Certificates add `vendor`, `insurer` and `namedOn`; permits add `issuer`, `reference` (the permit number), `conditions` and `fee`. Sending fees to the budget adds lines to `budget` with a `source` and keeps the account in `budgetLinks`.
+Certificates and permits are `contracts` with `type` "certificate of insurance" or "permit" and a `status`: `needed`, `requested` or `received` for certificates, and `needed`, `applied` or `issued` for permits. Both have optional `requestedDate` (applied for, for permits), `receivedDate` (issued, for permits), `effectiveDate`, `expirationDate`, `locationIds`, `shootDayIds`, `notes` and `assetIds` (the scan, an asset with `type` "certificate scan" or "permit scan"). Certificates add `vendor`, `insurer`, `namedOn`, `required` and `limits` (coverage limits the vendor requires and the certificate shows, by `generalEach`, `generalAggregate`, `auto`, `equipment`, `employers` and `umbrella`) and `requirementsNotes`; permits add `issuer`, `reference` (the permit number), `conditions` and `fee`. Sending fees to the budget adds lines to `budget` with a `source` and keeps the account in `budgetLinks`.
 
 It reads `locations`, `shootDays` and the rental houses in `gear`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
-- Insurance requirements for each vendor, such as limits to check a certificate against
+- Reading the limits from a certificate's PDF
 
 ## License
 

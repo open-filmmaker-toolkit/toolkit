@@ -120,6 +120,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .three { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 12px; }
 .note { margin: 0; padding: 8px 10px; border-radius: 6px; font-size: 14px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; background: var(--hover); color: var(--ink-2); }
+.chk { display: flex; gap: 8px; align-items: center; font-size: 14px; }
 .print-row { display: grid; gap: 8px; }
 @media (max-width: 720px) {
   .two, .three { grid-template-columns: 1fr; }
@@ -275,6 +276,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <div class="print-row">
           <div class="field"><label for="printSel">Trip</label><select id="printSel"></select></div>
           <div class="field"><label for="printWho">Sheet for</label><select id="printWho"></select></div>
+          <label class="chk"><input type="checkbox" id="printDocs"> Include passport and visa details</label>
           <div><button type="button" class="btn" id="printBtn">Print the travel sheet</button></div>
         </div>
       </section>
@@ -299,9 +301,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <div class="field"><label for="f-name">Trip</label><input id="f-name" type="text" placeholder="Spring flood trip" autocomplete="off" required></div>
         <div class="field"><label for="f-dest">Where</label><input id="f-dest" type="text" placeholder="Riverside, California" autocomplete="off"></div>
       </div>
-      <div class="two">
+      <div class="three">
         <div class="field"><label for="f-start">From</label><input id="f-start" type="date"></div>
         <div class="field"><label for="f-end">To</label><input id="f-end" type="date"></div>
+        <div class="field"><label for="f-zone">Time zone there</label><input id="f-zone" type="text" list="zoneList" placeholder="America/Los_Angeles" autocomplete="off"><datalist id="zoneList"></datalist></div>
       </div>
       <div class="group">
         <h3 id="peopleHead">Who's going</h3>
@@ -314,6 +317,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       <div class="group">
         <div class="list-head"><h3>Getting there and around</h3><button type="button" class="btn small" data-add="legs">Add travel</button></div>
         <div class="items" id="legs"></div>
+      </div>
+      <div class="group">
+        <div class="list-head"><h3>Passports and visas</h3><button type="button" class="btn small" data-add="docs">Add someone's documents</button></div>
+        <p class="hint">Passport numbers are sensitive. They're kept in this project file, left out of the CSV, and printed only when you tick "Include passport and visa details".</p>
+        <div class="items" id="docs"></div>
       </div>
       <div class="group">
         <div class="list-head"><h3>Where you're staying</h3><button type="button" class="btn small" data-add="stays">Add a place to stay</button></div>
@@ -548,8 +556,12 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   // Everything that happens on a trip, in order: travel, check-ins, check-outs and shoot days.
   function itinerary(t, pid) {
     const ev = [];
-    for (const l of arr(t.legs)) if (forWho(l, pid)) ev.push({ date: l.date || '', time: l.departs || '', what: `${kindLabel(l.kind)}${l.carrier || l.number ? `: ${[l.carrier, l.number].filter(Boolean).join(' ')}` : ''}`,
-      detail: [l.from && l.to ? `${l.from} to ${l.to}` : l.from || l.to, l.arrives && `arrives ${l.arrives}`, l.confirmation && `confirmation ${l.confirmation}`, l.notes].filter(Boolean).join(' · '), who: l.personIds });
+    for (const l of arr(t.legs)) if (forWho(l, pid)) {
+      const lt = legTime(l);
+      ev.push({ date: l.date || '', time: `${l.departs || ''}${l.departs && l.departZone ? ` ${zoneShort(l.departZone)} time` : ''}`, what: `${kindLabel(l.kind)}${l.carrier || l.number ? `: ${[l.carrier, l.number].filter(Boolean).join(' ')}` : ''}`,
+        detail: [l.from && l.to ? `${l.from} to ${l.to}` : l.from || l.to, l.arrives && `arrives ${l.arrives}${l.arriveZone && l.arriveZone !== l.departZone ? ` ${zoneShort(l.arriveZone)} time` : ''}${lt && lt.days ? (lt.days === 1 ? ', the next day' : `, ${lt.days} days later`) : ''}`,
+          lt && `${hrs(lt.dur)} door to door`, lt && lt.from !== lt.to && `clocks go ${lt.to > lt.from ? 'forward' : 'back'} ${hrs(lt.to - lt.from)}`, l.confirmation && `confirmation ${l.confirmation}`, l.notes].filter(Boolean).join(' · '), who: l.personIds });
+    }
     for (const s of arr(t.stays)) if (forWho(s, pid)) {
       if (s.checkIn) ev.push({ date: s.checkIn, time: '', what: `Check in: ${s.name || 'place to stay'}`, detail: [s.address, s.phone, s.confirmation && `confirmation ${s.confirmation}`].filter(Boolean).join(' · '), who: s.personIds });
       if (s.checkOut) ev.push({ date: s.checkOut, time: '', what: `Check out: ${s.name || 'place to stay'}`, detail: '', who: s.personIds });
@@ -561,13 +573,57 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     return ev.sort((a, b) => (a.date || '9999').localeCompare(b.date || '9999') || (a.time || '99').localeCompare(b.time || '99'));
   }
   const names = ids => arr(ids).map(person).filter(Boolean).map(p => p.name).join(', ');
+  // Time zones are IANA names, such as America/Chicago, which the browser already knows. Offsets come from the browser too.
+  function zoneOffset(zone, iso, hm) {
+    if (!str(zone).trim()) return null;
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str(iso)) || [0, ...today().split('-')];
+    const [h, mi] = (/^(\d{1,2}):(\d{2})$/.exec(str(hm)) || [0, 12, 0]).slice(1).map(Number);
+    try {
+      const at = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], h, mi));
+      const part = new Intl.DateTimeFormat('en-US', { timeZone: zone.trim(), timeZoneName: 'longOffset' }).formatToParts(at).find(x => x.type === 'timeZoneName');
+      const o = /GMT(?:([+-])(\d{1,2})(?::(\d{2}))?)?/.exec(part ? part.value : '');
+      return o ? (o[1] ? (o[1] === '-' ? -1 : 1) * (+o[2] * 60 + +(o[3] || 0)) : 0) : null;
+    } catch { return null; }
+  }
+  const zoneShort = zone => str(zone).split('/').pop().replace(/_/g, ' ');
+  const utc = min => `UTC${min < 0 ? '−' : '+'}${Math.floor(Math.abs(min) / 60)}${Math.abs(min) % 60 ? `:${String(Math.abs(min) % 60).padStart(2, '0')}` : ''}`;
+  const hrs = min => { const h = Math.floor(Math.abs(min) / 60), m = Math.abs(min) % 60; return [h && `${h} hour${h === 1 ? '' : 's'}`, m && `${m} minutes`].filter(Boolean).join(' '); };
+  // How long a leg takes across time zones, and whether it lands the next day.
+  function legTime(l) {
+    const a = zoneOffset(l.departZone, l.date, l.departs), b = zoneOffset(l.arriveZone || l.departZone, l.date, l.arrives);
+    const t = x => (/^(\d{1,2}):(\d{2})$/.exec(str(x)) || []).slice(1).map(Number);
+    const [dh, dm] = t(l.departs), [ah, am] = t(l.arrives);
+    if (a == null || b == null || dh == null || ah == null) return null;
+    let dur = (ah * 60 + am - b) - (dh * 60 + dm - a), days = 0;
+    while (dur <= 0) { dur += 1440; days++; }
+    return { dur, days, from: a, to: b };
+  }
+  // Documents that won't last the trip: many countries want six months left on a passport.
+  function docIssues(t) {
+    const end = t.endDate || t.startDate, out = [];
+    if (!end) return out;
+    const six = (() => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(end); const d = new Date(+m[1], +m[2] + 5, +m[3]); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; })();
+    for (const d of arr(t.docs)) {
+      const who = (person(d.personId) || {}).name || 'Someone';
+      if (d.passportExpires && d.passportExpires < end) out.push(`${who}'s passport expires ${fmtDate(d.passportExpires)}, before the trip ends`);
+      else if (d.passportExpires && d.passportExpires < six) out.push(`${who}'s passport expires ${fmtDate(d.passportExpires)}, less than six months after the trip`);
+      if (d.visaExpires && d.visaExpires < end) out.push(`${who}'s visa runs out ${fmtDate(d.visaExpires)}, before the trip ends`);
+    }
+    return out;
+  }
 
   LISTS.legs = { box: 'legs', empty: 'No travel yet.', blank: () => ({ kind: 'flight' }),
     title: (r, i) => `${kindLabel(r.kind)} ${i + 1}${r.from || r.to ? `: ${[r.from, r.to].filter(Boolean).join(' to ')}` : ''}`,
     who: () => picked('peoplePicks').map(person).filter(Boolean),
     fields: [{ k: 'kind', label: 'How', type: 'select', options: KINDS }, { k: 'date', label: 'Date', type: 'date' }, { k: 'departs', label: 'Leaves', type: 'time' }, { k: 'arrives', label: 'Arrives', type: 'time' },
       { k: 'from', label: 'From', placeholder: 'MSP' }, { k: 'to', label: 'To', placeholder: 'ONT' }, { k: 'carrier', label: 'Airline, company or driver' }, { k: 'number', label: 'Flight or train number' },
+      { k: 'departZone', label: 'Leaves in time zone', placeholder: 'America/Chicago', list: 'zoneList' }, { k: 'arriveZone', label: 'Arrives in time zone', placeholder: 'America/Los_Angeles', list: 'zoneList' },
       { k: 'confirmation', label: 'Confirmation' }, { k: 'cost', label: 'Cost', type: 'number' }, { k: 'notes', label: 'Notes', wide: true }] };
+  LISTS.docs = { box: 'docs', empty: 'No passports or visas yet.', blank: () => ({ personId: picked('peoplePicks')[0] || '' }),
+    title: r => `${(person(r.personId) || {}).name || 'Someone'}'s documents`,
+    fields: [{ k: 'personId', label: 'Who', type: 'select', options: () => [{ id: '', label: 'Pick someone going' }, ...picked('peoplePicks').map(person).filter(Boolean).map(p => ({ id: p.id, label: p.name || 'Unnamed' }))] },
+      { k: 'nationality', label: 'Passport from', placeholder: 'United States' }, { k: 'passportNumber', label: 'Passport number' }, { k: 'passportExpires', label: 'Passport expires', type: 'date' },
+      { k: 'visa', label: 'Visa or entry permit', placeholder: 'Journalist visa, single entry' }, { k: 'visaExpires', label: 'Visa valid until', type: 'date' }, { k: 'notes', label: 'Notes', wide: true }] };
   LISTS.stays = { box: 'stays', empty: 'Nowhere to stay yet.', blank: () => ({}),
     title: (r, i) => r.name || `Place to stay ${i + 1}`,
     who: () => picked('peoplePicks').map(person).filter(Boolean),
@@ -601,6 +657,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       // Travelers with no way there: picked for the trip, but on no travel.
       const noTravel = ppl.filter(p => legs.length && !legs.some(l => forWho(l, p.id)));
       if (noTravel.length) flags.push(`<span class="flag changed">No travel for ${esc(noTravel.map(p => p.name).join(', '))}</span>`);
+      for (const d of docIssues(t)) flags.push(`<span class="flag problem">${esc(d)}</span>`);
+      const there = zoneOffset(t.timeZone, t.startDate), here = t.startDate ? -new Date(`${t.startDate}T12:00`).getTimezoneOffset() : -new Date().getTimezoneOffset();
+      if (there != null && there !== here) flags.push(`<span class="flag linked">${esc(zoneShort(t.timeZone))} is ${esc(hrs(there - here))} ${there > here ? 'ahead of' : 'behind'} this computer's time</span>`);
       if (!t.emergencyNumber) flags.push('<span class="flag changed">No emergency number</span>');
       if (!t.hospital || !t.hospital.name) flags.push('<span class="flag changed">No hospital</span>');
       return `<li class="row" data-id="${esc(t.id)}"><span class="rt">${esc(span(t) || 'No dates yet')}</span>
@@ -632,9 +691,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       const l = place(editing.locationIds[0]);
       if (l) editing.destination = [l.city, l.region].filter(Boolean).join(', ');
     }
-    for (const k of ['legs', 'stays', 'contacts']) editing[k] = arr(editing[k]).map(x => Object.assign({}, x));
+    for (const k of ['legs', 'stays', 'contacts', 'docs']) editing[k] = arr(editing[k]).map(x => Object.assign({}, x));
+    if (!$('zoneList').options.length && Intl.supportedValuesOf) { try { $('zoneList').innerHTML = Intl.supportedValuesOf('timeZone').map(z => `<option value="${esc(z)}">`).join(''); } catch { /* the field still takes any name */ } }
     const h = editing.hospital || {};
-    const vals = { 'f-name': editing.name, 'f-dest': editing.destination, 'f-start': editing.startDate, 'f-end': editing.endDate, 'f-emergency': editing.emergencyNumber, 'f-hname': h.name, 'f-haddr': h.address, 'f-hphone': h.phone, 'f-notes': editing.notes, 'f-perdiem': editing.perDiem };
+    const vals = { 'f-name': editing.name, 'f-dest': editing.destination, 'f-start': editing.startDate, 'f-end': editing.endDate, 'f-emergency': editing.emergencyNumber, 'f-hname': h.name, 'f-haddr': h.address, 'f-hphone': h.phone, 'f-notes': editing.notes, 'f-perdiem': editing.perDiem, 'f-zone': editing.timeZone };
     for (const [k, v] of Object.entries(vals)) $(k).value = v == null ? '' : String(v);
     picks('peoplePicks', doc.people.filter(p => p && p.id), editing.personIds, p => p.name || 'Unnamed');
     picks('locPicks', arr(doc.locations).filter(l => l && l.id), editing.locationIds, l => l.name || 'Unnamed location');
@@ -659,7 +719,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     if (!$('f-name').value.trim()) { $('f-name').setCustomValidity('Name the trip.'); $('f-name').reportValidity(); return; }
     if ($('f-start').value && $('f-end').value && $('f-end').value < $('f-start').value) { $('f-end').setCustomValidity('The trip ends before it starts.'); $('f-end').reportValidity(); return; }
     const t = editing;
-    const text = { name: 'f-name', destination: 'f-dest', startDate: 'f-start', endDate: 'f-end', emergencyNumber: 'f-emergency', notes: 'f-notes' };
+    for (const id of ['f-zone']) if ($(id).value.trim() && zoneOffset($(id).value.trim()) == null) { $(id).setCustomValidity('Use a time zone name like America/Chicago or Europe/Paris.'); $(id).reportValidity(); return; }
+    const text = { name: 'f-name', destination: 'f-dest', startDate: 'f-start', endDate: 'f-end', emergencyNumber: 'f-emergency', notes: 'f-notes', timeZone: 'f-zone' };
     for (const [k, id] of Object.entries(text)) { const v = $(id).value.trim(); if (v) t[k] = v; else delete t[k]; }
     if ($('f-perdiem').value !== '' && Number($('f-perdiem').value) >= 0) t.perDiem = Number($('f-perdiem').value); else delete t.perDiem;
     const h = Object.assign({}, t.hospital);
@@ -667,8 +728,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     if (Object.keys(h).length) t.hospital = h; else delete t.hospital;
     for (const [k, box] of [['personIds', 'peoplePicks'], ['locationIds', 'locPicks']]) { const v = picked(box); if (v.length) t[k] = v; else delete t[k]; }
     const going = new Set(arr(t.personIds));
-    for (const k of ['legs', 'stays', 'contacts']) {
-      const rows = cleanList(t[k], ['kind']).map(r => { if (!r.id) r.id = newId(k === 'legs' ? 'leg' : k === 'stays' ? 'stay' : 'contact'); if (r.personIds) { r.personIds = r.personIds.filter(id => going.has(id)); if (!r.personIds.length) delete r.personIds; } return r; });
+    t.docs = arr(t.docs).filter(d => going.has(d.personId));
+    for (const k of ['legs', 'stays', 'contacts', 'docs']) {
+      const rows = cleanList(t[k], ['kind', 'personId']).map(r => { if (!r.id) r.id = newId(k === 'legs' ? 'leg' : k === 'stays' ? 'stay' : k === 'docs' ? 'documents' : 'contact'); if (r.personIds) { r.personIds = r.personIds.filter(id => going.has(id)); if (!r.personIds.length) delete r.personIds; } return r; });
       if (rows.length) t[k] = rows; else delete t[k];
     }
     if (isNew) trips().push(t); else trips()[trips().findIndex(x => x.id === t.id)] = t;
@@ -708,7 +770,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const locs = arr(t.locationIds).map(place).filter(Boolean);
     const h = t.hospital || {};
     $('report').innerHTML = `<h1>${esc(t.name || 'Trip')}${who ? `: ${esc(who.name)}` : ''}</h1>
-      <p class="r-meta">${esc([doc.project.title, t.destination, span(t), `Printed ${fmtDate(today())}`].filter(Boolean).join(' · '))}</p>
+      <p class="r-meta">${esc([doc.project.title, t.destination, span(t), t.timeZone && zoneOffset(t.timeZone, t.startDate) != null && `local time ${utc(zoneOffset(t.timeZone, t.startDate))}`, `Printed ${fmtDate(today())}`].filter(Boolean).join(' · '))}</p>
       <div class="r-box"><p><b>Emergency: ${esc(t.emergencyNumber || 'number not set')}</b></p>${h.name ? `<p>Nearest hospital: ${esc([h.name, h.address, h.phone].filter(Boolean).join(' · '))}</p>` : '<p>Nearest hospital: not set</p>'}</div>
       <h2>Itinerary</h2>
       ${ev.length ? `<table><thead><tr><th>Date</th><th>Time</th><th>What</th><th>Details</th>${pid ? '' : '<th>Who</th>'}</tr></thead><tbody>${ev.map(e => `<tr${e.day ? ' class="r-day"' : ''}><td>${esc(e.date ? fmtDate(e.date) : '')}</td><td>${esc(e.time)}</td><td>${esc(e.what)}</td><td>${esc(e.detail)}</td>${pid ? '' : `<td>${esc(names(e.who) || 'Everyone')}</td>`}</tr>`).join('')}</tbody></table>` : '<p>Nothing booked yet.</p>'}
@@ -717,6 +779,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       <h2>Contacts</h2><table><thead><tr><th>Name</th><th>Role</th><th>Phone</th><th>Email</th></tr></thead><tbody>
       ${ppl.map(p => `<tr><td>${esc(p.name)}</td><td>${esc(arr(p.roles).join(', '))}</td><td>${esc(p.phone || '')}</td><td>${esc(p.email || '')}</td></tr>`).join('')}
       ${arr(t.contacts).map(c => `<tr><td>${esc(c.name || '')}</td><td>${esc([c.role, c.notes].filter(Boolean).join('. '))}</td><td>${esc(c.phone || '')}</td><td></td></tr>`).join('')}</tbody></table>
+      ${$('printDocs').checked && arr(t.docs).filter(d => !pid || d.personId === pid).length ? `<h2>Passports and visas</h2><table><thead><tr><th>Who</th><th>Passport</th><th>Expires</th><th>Visa</th><th>Valid until</th></tr></thead><tbody>${arr(t.docs).filter(d => !pid || d.personId === pid).map(d => `<tr><td>${esc((person(d.personId) || {}).name || '')}</td><td>${esc([d.nationality, d.passportNumber].filter(Boolean).join(', '))}</td><td>${esc(d.passportExpires ? fmtDate(d.passportExpires) : '')}</td><td>${esc(d.visa || '')}</td><td>${esc(d.visaExpires ? fmtDate(d.visaExpires) : '')}</td></tr>`).join('')}</tbody></table><p class="r-notes">Contains passport details. Keep this copy private.</p>` : ''}
       ${t.notes ? `<h2>Notes</h2><p class="r-notes">${esc(t.notes)}</p>` : ''}`;
   }
 
@@ -1623,7 +1686,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const OFT_SLUG = (window.location.pathname.match(/tools\/([^/]+)\//) || [])[1] || '';
   const OFT_GUIDE = 'https://github.com/open-filmmaker-toolkit/toolkit/blob/main/docs/sharing-a-project.md';
   const OFT_HOURS = 4;
-  const OFT_KEYS = { project: 'Project details', people: 'People', locations: 'Locations', thirdPartyElements: 'Clearance log', contracts: 'Contracts and releases', assets: 'Files and stills', musicCueSheet: 'Music cue sheet', callSheets: 'Call sheets', credits: 'Credits', supers: 'Name supers', subjects: 'Subject tracker', sources: 'Research log', comps: 'Comps tracker', treatment: 'Treatment', pitchDeck: 'Pitch deck', grants: 'Grant calendar', narratives: 'Narrative library', budget: 'Budget', budgetFormats: 'Budget converter', financePlan: 'Finance plan', funders: 'Funder CRM', cashFlow: 'Cash flow', shootDays: 'Shooting calendar', script: 'Script', scenes: 'Script breakdown', characters: 'Cast', dayOutOfDays: 'Day-out-of-days', budgetLinks: 'Budget', shots: 'Shot list', interviews: 'Interviews', journal: 'Field journal', scouts: 'Location scouts', gear: 'Gear list', trips: 'Travel sheet', riskPlans: 'Risk plans', security: 'Security checklist', mediaReports: 'Camera and sound reports', dailyReports: 'Daily reports', expenses: 'Expense log', festivals: 'Festival submissions', screenings: 'Screenings', pressOutlets: 'Press list', partners: 'Partner CRM', discussionGuide: 'Discussion guide', paperEdit: 'Paper edit', costReport: 'Budget-to-actuals', structure: 'Structure board', cuts: 'Cut tracker', clearanceReport: 'Clearance report', chainOfTitle: 'Chain of title', festivalStrategy: 'Festival strategy', pressNotes: 'Press notes', awards: 'Awards', socialPosts: 'Social posts', deliverables: 'Deliverables', qc: 'QC tracker', waterfall: 'Waterfall', revenueStatements: 'Revenue tracker', bookings: 'Bookings', theoryOfChange: 'Theory of change', screeningKit: 'Screening kit', impactReport: 'Impact report', finalCostReport: 'Final cost report', grantReports: 'Grant reports', contractArchive: 'Contract archive' };
+  const OFT_KEYS = { project: 'Project details', people: 'People', locations: 'Locations', thirdPartyElements: 'Clearance log', contracts: 'Contracts and releases', assets: 'Files and stills', musicCueSheet: 'Music cue sheet', callSheets: 'Call sheets', credits: 'Credits', supers: 'Name supers', subjects: 'Subject tracker', sources: 'Research log', comps: 'Comps tracker', treatment: 'Treatment', pitchDeck: 'Pitch deck', grants: 'Grant calendar', narratives: 'Narrative library', budget: 'Budget', budgetFormats: 'Budget converter', financePlan: 'Finance plan', funders: 'Funder CRM', cashFlow: 'Cash flow', shootDays: 'Shooting calendar', script: 'Script', scenes: 'Script breakdown', characters: 'Cast', dayOutOfDays: 'Day-out-of-days', budgetLinks: 'Budget', shots: 'Shot list', interviews: 'Interviews', questionBank: 'Question bank', journal: 'Field journal', scouts: 'Location scouts', scoutChecklist: 'Scout checklist', gear: 'Gear list', trips: 'Travel sheet', riskPlans: 'Risk plans', security: 'Security checklist', mediaReports: 'Camera and sound reports', dailyReports: 'Daily reports', expenses: 'Expense log', festivals: 'Festival submissions', screenings: 'Screenings', pressOutlets: 'Press list', partners: 'Partner CRM', discussionGuide: 'Discussion guide', paperEdit: 'Paper edit', costReport: 'Budget-to-actuals', structure: 'Structure board', cuts: 'Cut tracker', clearanceReport: 'Clearance report', chainOfTitle: 'Chain of title', festivalStrategy: 'Festival strategy', pressNotes: 'Press notes', awards: 'Awards', socialPosts: 'Social posts', deliverables: 'Deliverables', qc: 'QC tracker', waterfall: 'Waterfall', revenueStatements: 'Revenue tracker', bookings: 'Bookings', theoryOfChange: 'Theory of change', screeningKit: 'Screening kit', impactReport: 'Impact report', finalCostReport: 'Final cost report', grantReports: 'Grant reports', contractArchive: 'Contract archive' };
   const oftStore = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch { /* storage off */ } } };
   const oftMe = () => (oftStore.get('oft-user-name') || '').trim();
   const oftEsc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);

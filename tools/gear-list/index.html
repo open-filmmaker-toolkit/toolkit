@@ -137,6 +137,14 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .picks label { display: flex; gap: 8px; align-items: baseline; font-size: 14px; margin-top: 4px; }
 .picks input { width: 16px; height: 16px; margin: 0; flex: none; }
 .picks .sub { color: var(--ink-3); font-size: 12.5px; }
+.picks .kits { padding-bottom: 8px; border-bottom: 1px solid var(--rule-soft); }
+.out-now { margin: 0; font-size: 14px; font-weight: 600; }
+.out-log { margin: 4px 0 0; padding-left: 18px; font-size: 13px; color: var(--ink-2); }
+.due-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 14px; }
+.due-list li { display: flex; flex-wrap: wrap; gap: 4px 8px; justify-content: space-between; }
+.due-list button { padding: 0; border: 0; background: none; color: var(--ink); font: inherit; font-weight: 600; text-align: left; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.due-list .when { color: var(--ink-2); }
+.due-list .when.late { color: var(--bad); font-weight: 600; }
 .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .three { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
 .print-row { display: grid; gap: 8px; }
@@ -280,6 +288,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <div class="card-head"><h2 id="sumHead">Costs and values</h2></div>
         <table class="sums" id="sums"></table>
       </section>
+      <section class="card" aria-labelledby="outHead" id="outCard" hidden>
+        <div class="card-head"><h2 id="outHead">Checked out</h2><span class="count" id="outCount"></span></div>
+        <ul class="due-list" id="outList"></ul>
+      </section>
       <section class="card" aria-labelledby="printHead">
         <div class="card-head"><h2 id="printHead">Print</h2></div>
         <div class="print-row">
@@ -314,7 +326,26 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <div class="field"><label for="f-week">Week rate</label><input id="f-week" type="number" min="0" step="any" inputmode="decimal"></div>
         <div class="field"><label for="f-value">Replacement value</label><input id="f-value" type="number" min="0" step="any" inputmode="decimal"></div>
       </div>
-      <div class="field"><label for="f-serial">Serial numbers</label><input id="f-serial" type="text" placeholder="One per unit, separated by commas" autocomplete="off"></div>
+      <div class="two">
+        <div class="field"><label for="f-serial">Serial numbers</label><input id="f-serial" type="text" placeholder="One per unit, separated by commas" autocomplete="off"></div>
+        <div class="field"><label for="f-kit">Part of a kit</label><input id="f-kit" type="text" list="kitList" placeholder="A camera kit" autocomplete="off"><datalist id="kitList"></datalist><p class="hint">Items in the same kit can be packed together.</p></div>
+      </div>
+      <div class="three">
+        <div class="field"><label for="f-bought">Bought on</label><input id="f-bought" type="date"></div>
+        <div class="field"><label for="f-price">Price paid</label><input id="f-price" type="number" min="0" step="any" inputmode="decimal"></div>
+        <div class="field"><label for="f-receipt">Receipt</label><input id="f-receipt" type="text" placeholder="receipts/camera-2024.pdf" autocomplete="off"></div>
+      </div>
+      <div class="group" id="outGroup">
+        <h3>Checked out</h3>
+        <p class="out-now" id="outNow" hidden></p>
+        <div class="three" id="outForm">
+          <div class="field"><label for="f-outTo">To</label><select id="f-outTo"></select></div>
+          <div class="field" id="outNameField"><label for="f-outName">Name</label><input id="f-outName" type="text" autocomplete="off"></div>
+          <div class="field"><label for="f-outDue">Back by</label><input id="f-outDue" type="date"></div>
+        </div>
+        <div><button type="button" class="btn small" id="outBtn">Check it out</button> <button type="button" class="btn small" id="inBtn" hidden>Check it back in</button></div>
+        <ul class="out-log" id="outLog"></ul>
+      </div>
       <div class="field"><label for="f-notes">Notes</label><textarea id="f-notes" rows="2" placeholder="Accessories, cases, what it's missing"></textarea></div>
     </div>
     <div class="dlg-foot">
@@ -510,6 +541,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const best = Math.min(byDay, byWeek);
     return isFinite(best) ? cents(best * qty(i)) : 0;
   }
+  // Checking out: who has it now and since when, and a log of earlier check-outs.
+  const outOf = i => (i.checkout && typeof i.checkout === 'object' && i.checkout.out ? i.checkout : null);
+  const person = id => arr(doc.people).find(p => p && p.id === id);
+  const whoHas = c => (c.personId && person(c.personId) ? person(c.personId).name : c.name) || 'someone';
+  const kits = () => [...new Set(entries().map(i => str(i.kit).trim()).filter(Boolean))].sort();
   const fromLine = i => `${SOURCES[i.source]}${i.from ? (i.source === 'rental' ? ` from ${i.from}` : i.source === 'borrowed' ? ` from ${i.from}` : `, ${i.from}`) : ''}`;
 
   // ---------- Render ----------
@@ -534,6 +570,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       const n = daysPacked(i);
       flags.push(`<span class="flag linked">${n ? `Packed for ${n} day${n === 1 ? '' : 's'}` : 'Not in a package yet'}</span>`);
       if (i.serial) flags.push(`<span class="flag linked">S/N ${esc(i.serial)}</span>`);
+      if (i.kit) flags.push(`<span class="flag linked">In the ${esc(i.kit)}</span>`);
+      const o = outOf(i);
+      if (o) flags.push(`<span class="flag ${o.due && o.due < today() ? 'problem' : 'changed'}">Out with ${esc(whoHas(o))} since ${esc(fmtDate(o.out))}${o.due ? `${o.due < today() ? ', was due back' : ', back by'} ${esc(fmtDate(o.due))}` : ''}</span>`);
       if (i.source !== 'rental' && i.value == null) flags.push('<span class="flag changed">No value for the insurance schedule</span>');
       const rates = [i.dayRate != null && `${money(i.dayRate)} a day`, i.weekRate != null && `${money(i.weekRate)} a week`].filter(Boolean).join(' · ');
       return `<li class="row" data-id="${esc(i.id)}"><button type="button" class="what" data-edit="${esc(i.id)}"><span class="nm">${esc(i.name || 'Unnamed item')}${qty(i) > 1 ? ` × ${qty(i)}` : ''}</span>${i.notes ? `<span class="tt">${esc(i.notes)}</span>` : ''}</button>
@@ -563,6 +602,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     }
     rows.push(`<tr class="t"><td>Rentals, for the days packed</td><td class="n">${esc(money(rentals.reduce((t, i) => t + rentalCost(i), 0)))}</td></tr>`);
     $('sums').innerHTML = rows.join('');
+    const out = all.filter(outOf).sort((a, b) => str(outOf(a).due || '9999').localeCompare(str(outOf(b).due || '9999')));
+    $('outCard').hidden = !out.length;
+    $('outCount').textContent = out.length ? String(out.length) : '';
+    $('outList').innerHTML = out.map(i => { const o = outOf(i), late = o.due && o.due < today(); return `<li><button type="button" data-edit="${esc(i.id)}">${esc(i.name || 'Unnamed item')}</button><span class="when${late ? ' late' : ''}">${esc(whoHas(o))}${o.due ? `, ${late ? 'was due' : 'back by'} ${esc(fmtDate(o.due))}` : ''}</span></li>`; }).join('');
     const pk = pkgSorted();
     if (!pk.some(p => p.id === printPkg)) printPkg = (pk[0] || {}).id || '';
     $('printSel').innerHTML = pk.length ? pk.map(p => `<option value="${esc(p.id)}"${p.id === printPkg ? ' selected' : ''}>${esc(pkgName(p))}${pkgDate(p) ? `, ${esc(fmtDate(pkgDate(p)))}` : ''}</option>`).join('') : '<option value="">Add a package first</option>';
@@ -583,9 +626,14 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('f-dept').innerHTML = DEPTS.map(d => `<option value="${d.id}">${esc(d.label)}</option>`).join('');
     $('fromList').innerHTML = [...new Set(entries().map(i => i.from).filter(Boolean))].map(f => `<option value="${esc(f)}">`).join('');
     const vals = { 'f-name': editing.name, 'f-dept': editing.department, 'f-qty': editing.quantity, 'f-source': editing.source, 'f-from': editing.from, 'f-day': editing.dayRate,
-      'f-week': editing.weekRate, 'f-value': editing.value, 'f-serial': editing.serial, 'f-notes': editing.notes };
+      'f-week': editing.weekRate, 'f-value': editing.value, 'f-serial': editing.serial, 'f-notes': editing.notes, 'f-kit': editing.kit, 'f-bought': editing.purchaseDate,
+      'f-price': editing.purchasePrice, 'f-receipt': editing.receipt };
     for (const [k, v] of Object.entries(vals)) $(k).value = v == null ? '' : String(v);
     showFrom();
+    $('kitList').innerHTML = kits().map(k => `<option value="${esc(k)}">`).join('');
+    $('f-outTo').innerHTML = arr(doc.people).filter(p => p && p.id).map(p => `<option value="${esc(p.id)}">${esc(p.name || 'Unnamed')}</option>`).join('') + '<option value="">Someone not in the project</option>';
+    $('f-outDue').value = ''; $('f-outName').value = '';
+    showOut();
     $('editorTitle').textContent = isNew ? 'Add gear' : `Edit ${editing.name || 'gear'}`;
     $('deleteBtn').hidden = isNew;
     $('editor').showModal();
@@ -593,15 +641,38 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   }
   function saveEditor() {
     if (!$('f-name').value.trim()) { $('f-name').setCustomValidity('Name the item.'); $('f-name').reportValidity(); return; }
-    for (const id of ['f-qty', 'f-day', 'f-week', 'f-value']) if ($(id).value && !$(id).checkValidity()) { $(id).reportValidity(); return; }
+    for (const id of ['f-qty', 'f-day', 'f-week', 'f-value', 'f-price']) if ($(id).value && !$(id).checkValidity()) { $(id).reportValidity(); return; }
     const e = editing;
-    for (const [k, id] of [['name', 'f-name'], ['from', 'f-from'], ['serial', 'f-serial'], ['notes', 'f-notes']]) { const v = $(id).value.trim(); if (v) e[k] = v; else delete e[k]; }
+    for (const [k, id] of [['name', 'f-name'], ['from', 'f-from'], ['serial', 'f-serial'], ['notes', 'f-notes'], ['kit', 'f-kit'], ['purchaseDate', 'f-bought'], ['receipt', 'f-receipt']]) { const v = $(id).value.trim(); if (v) e[k] = v; else delete e[k]; }
+    if ($('f-price').value !== '') e.purchasePrice = Number($('f-price').value); else delete e.purchasePrice;
     e.department = $('f-dept').value; e.source = $('f-source').value;
     for (const [k, id] of [['quantity', 'f-qty'], ['dayRate', 'f-day'], ['weekRate', 'f-week'], ['value', 'f-value']]) { const v = $(id).value; if (v !== '') e[k] = Number(v); else delete e[k]; }
     if (e.quantity === 1) delete e.quantity;
     if (isNew) entries().push(e); else entries()[entries().findIndex(x => x.id === e.id)] = e;
     $('editor').close();
     changed();
+  }
+  function showOut() {
+    const o = outOf(editing);
+    $('outNow').hidden = !o;
+    $('outNow').textContent = o ? `Out with ${whoHas(o)} since ${fmtDate(o.out)}${o.due ? `, back by ${fmtDate(o.due)}` : ''}.` : '';
+    $('outForm').hidden = $('outBtn').hidden = !!o;
+    $('inBtn').hidden = !o;
+    $('outNameField').hidden = !!$('f-outTo').value;
+    const log = arr(editing.checkoutLog).filter(x => x && typeof x === 'object');
+    $('outLog').innerHTML = log.slice(-5).reverse().map(x => `<li>${esc(whoHas(x))}: ${esc(fmtDate(x.out))} to ${esc(fmtDate(x.back))}</li>`).join('');
+  }
+  function checkOut() {
+    const pid = $('f-outTo').value, name = $('f-outName').value.trim();
+    if (!pid && !name) { $('f-outName').setCustomValidity('Say who has it.'); $('f-outName').reportValidity(); return; }
+    editing.checkout = Object.assign({ out: today() }, pid ? { personId: pid } : { name }, $('f-outDue').value ? { due: $('f-outDue').value } : {});
+    showOut();
+  }
+  function checkIn() {
+    const o = outOf(editing); if (!o) return;
+    editing.checkoutLog = [...arr(editing.checkoutLog), Object.assign({}, o, { back: today() })];
+    delete editing.checkout;
+    showOut();
   }
   function removeEditing() {
     const n = daysPacked(editing);
@@ -616,8 +687,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   // ---------- Packages ----------
   function drawPicks(ids) {
     const on = new Set(ids);
-    $('picks').innerHTML = DEPTS.filter(d => entries().some(i => i.department === d.id)).map(d => `<fieldset><legend>${esc(d.label)}</legend>${entries().filter(i => i.department === d.id).map(i =>
-      `<label><input type="checkbox" value="${esc(i.id)}"${on.has(i.id) ? ' checked' : ''}><span>${esc(i.name)}${qty(i) > 1 ? ` × ${qty(i)}` : ''} <span class="sub">${esc(fromLine(i))}</span></span></label>`).join('')}</fieldset>`).join('');
+    const ks = kits();
+    $('picks').innerHTML = (ks.length ? `<fieldset class="kits"><legend>Kits</legend>${ks.map(k => { const its = entries().filter(i => i.kit === k); return `<label><input type="checkbox" data-kit="${esc(k)}"${its.every(i => on.has(i.id)) ? ' checked' : ''}><span>The whole ${esc(k)} <span class="sub">${its.length} item${its.length === 1 ? '' : 's'}</span></span></label>`; }).join('')}</fieldset>` : '') + DEPTS.filter(d => entries().some(i => i.department === d.id)).map(d => `<fieldset><legend>${esc(d.label)}</legend>${entries().filter(i => i.department === d.id).map(i =>
+      `<label><input type="checkbox" value="${esc(i.id)}"${on.has(i.id) ? ' checked' : ''}><span>${esc(i.name)}${qty(i) > 1 ? ` × ${qty(i)}` : ''} <span class="sub">${esc([fromLine(i), i.kit && `${i.kit}`].filter(Boolean).join(' · '))}</span></span></label>`).join('')}</fieldset>`).join('');
   }
   function openPackage(id) {
     const existing = id && G().packages.find(p => p.id === id);
@@ -641,7 +713,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     if (day) p.shootDayId = day; else delete p.shootDayId;
     for (const [k, id] of [['name', 'p-name'], ['notes', 'p-notes']]) { const v = $(id).value.trim(); if (v) p[k] = v; else delete p[k]; }
     if (!day && !p.name) { $('p-name').setCustomValidity('Pick a shoot day or name the package.'); $('p-name').reportValidity(); return; }
-    p.itemIds = [...$('picks').querySelectorAll('input:checked')].map(i => i.value);
+    p.itemIds = [...$('picks').querySelectorAll('input:checked:not([data-kit])')].map(i => i.value);
     if (pkgNew) G().packages.push(p); else G().packages[G().packages.findIndex(x => x.id === p.id)] = p;
     printPkg = p.id;
     view = 'pkg';
@@ -674,7 +746,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       <p class="r-meta">${esc([pkgDate(p) && fmtDate(pkgDate(p)), l && l.name, doc.project.title, `Printed ${fmtDate(today())}`].filter(Boolean).join(' · '))}</p>
       ${p.notes ? `<p>${esc(p.notes)}</p>` : ''}
       ${DEPTS.filter(dp => its.some(i => i.department === dp.id)).map(dp => `<h2>${esc(dp.label)}</h2><table><thead><tr><th class="r-box">Out</th><th class="r-box">Back</th><th>Item</th><th>From</th><th>Serial numbers</th></tr></thead><tbody>
-        ${its.filter(i => i.department === dp.id).map(i => `<tr><td class="r-box">☐</td><td class="r-box">☐</td><td>${esc(i.name)}${qty(i) > 1 ? ` × ${qty(i)}` : ''}</td><td>${esc(fromLine(i))}</td><td>${esc(i.serial || '')}</td></tr>`).join('')}</tbody></table>`).join('')}
+        ${its.filter(i => i.department === dp.id).map(i => `<tr><td class="r-box">☐</td><td class="r-box">☐</td><td>${esc(i.name)}${qty(i) > 1 ? ` × ${qty(i)}` : ''}${i.kit ? `<span class="r-sub">${esc(i.kit)}</span>` : ''}</td><td>${esc(fromLine(i))}</td><td>${esc(i.serial || '')}</td></tr>`).join('')}</tbody></table>`).join('')}
       <p class="r-note">Tick each item out at load-out and back at wrap.</p>`;
   }
   // The schedule insurers ask for: each item with its serial numbers and value, owned and borrowed first, then rented.
@@ -683,10 +755,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const total = l => cents(l.reduce((t, i) => t + num(i.value) * qty(i), 0));
     $('report').innerHTML = `<h1>Equipment schedule</h1>
       <p class="r-meta">${esc([doc.project.title, doc.project.company, `Printed ${fmtDate(today())}`].filter(Boolean).join(' · '))}</p>
-      ${groups.map(g => `<h2>${esc(g.label)}</h2><table><thead><tr><th>Item</th><th>Department</th><th>Owner or rental house</th><th>Serial numbers</th><th class="n">Qty</th><th class="n">Value</th></tr></thead><tbody>
-        ${g.its.map(i => `<tr><td>${esc(i.name)}</td><td>${esc(deptLabel(i.department))}</td><td>${esc(i.from || '')}</td><td>${esc(i.serial || '')}</td><td class="n">${qty(i)}</td><td class="n">${i.value != null ? esc(money(num(i.value) * qty(i))) : 'Not set'}</td></tr>`).join('')}
-        <tr class="r-tot"><td colspan="5">Total, ${esc(g.label.toLowerCase())}</td><td class="n">${esc(money(total(g.its)))}</td></tr></tbody></table>`).join('')}
-      <p class="r-note">Values are replacement values as entered. Check what your insurer needs, such as purchase dates.</p>`;
+      ${groups.map(g => `<h2>${esc(g.label)}</h2><table><thead><tr><th>Item</th><th>Department</th><th>Owner or rental house</th><th>Serial numbers</th><th>Bought</th><th class="n">Qty</th><th class="n">Value</th></tr></thead><tbody>
+        ${g.its.map(i => `<tr><td>${esc(i.name)}${i.receipt ? `<span class="r-sub">Receipt: ${esc(i.receipt)}</span>` : ''}</td><td>${esc(deptLabel(i.department))}</td><td>${esc(i.from || '')}</td><td>${esc(i.serial || '')}</td><td>${esc([i.purchaseDate && fmtDate(i.purchaseDate), i.purchasePrice != null && money(i.purchasePrice)].filter(Boolean).join(', '))}</td><td class="n">${qty(i)}</td><td class="n">${i.value != null ? esc(money(num(i.value) * qty(i))) : 'Not set'}</td></tr>`).join('')}
+        <tr class="r-tot"><td colspan="6">Total, ${esc(g.label.toLowerCase())}</td><td class="n">${esc(money(total(g.its)))}</td></tr></tbody></table>`).join('')}
+      <p class="r-note">Values are replacement values as entered, with purchase dates, prices and receipts where you've added them. Check what else your insurer needs.</p>`;
   }
 
   // ---------- Project CSV ----------
@@ -926,6 +998,15 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('printBtn').onclick = () => { printTarget = 'load'; renderReport(); window.print(); };
     $('scheduleBtn').onclick = () => { printTarget = 'schedule'; renderReport(); window.print(); printTarget = 'load'; };
     $('f-source').addEventListener('change', showFrom);
+    $('f-outTo').addEventListener('change', showOut);
+    $('outBtn').onclick = checkOut;
+    $('inBtn').onclick = checkIn;
+    $('outList').addEventListener('click', ev => { const b = ev.target.closest('[data-edit]'); if (b) openEditor(b.dataset.edit); });
+    $('picks').addEventListener('change', ev => {
+      const k = ev.target.closest('[data-kit]');
+      if (k) for (const i of entries().filter(x => x.kit === k.dataset.kit)) { const box = $('picks').querySelector(`input[value="${CSS.escape(i.id)}"]`); if (box) box.checked = k.checked; }
+      else for (const kb of $('picks').querySelectorAll('[data-kit]')) kb.checked = entries().filter(x => x.kit === kb.dataset.kit).every(i => { const box = $('picks').querySelector(`input[value="${CSS.escape(i.id)}"]`); return box && box.checked; });
+    });
     $('p-copy').addEventListener('change', () => { const src = G().packages.find(p => p.id === $('p-copy').value); drawPicks(src ? arr(src.itemIds) : []); });
     $('pkgForm').addEventListener('submit', ev => { ev.preventDefault(); savePackage(); });
     $('pkgForm').addEventListener('input', ev => { if (ev.target.setCustomValidity) ev.target.setCustomValidity(''); });
@@ -1255,7 +1336,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const OFT_SLUG = (window.location.pathname.match(/tools\/([^/]+)\//) || [])[1] || '';
   const OFT_GUIDE = 'https://github.com/open-filmmaker-toolkit/toolkit/blob/main/docs/sharing-a-project.md';
   const OFT_HOURS = 4;
-  const OFT_KEYS = { project: 'Project details', people: 'People', locations: 'Locations', thirdPartyElements: 'Clearance log', contracts: 'Contracts and releases', assets: 'Files and stills', musicCueSheet: 'Music cue sheet', callSheets: 'Call sheets', credits: 'Credits', supers: 'Name supers', subjects: 'Subject tracker', sources: 'Research log', comps: 'Comps tracker', treatment: 'Treatment', pitchDeck: 'Pitch deck', grants: 'Grant calendar', narratives: 'Narrative library', budget: 'Budget', budgetFormats: 'Budget converter', financePlan: 'Finance plan', funders: 'Funder CRM', cashFlow: 'Cash flow', shootDays: 'Shooting calendar', script: 'Script', scenes: 'Script breakdown', characters: 'Cast', dayOutOfDays: 'Day-out-of-days', budgetLinks: 'Budget', shots: 'Shot list', interviews: 'Interviews', journal: 'Field journal', scouts: 'Location scouts', gear: 'Gear list', trips: 'Travel sheet', riskPlans: 'Risk plans', security: 'Security checklist', mediaReports: 'Camera and sound reports', dailyReports: 'Daily reports', expenses: 'Expense log', festivals: 'Festival submissions', screenings: 'Screenings', pressOutlets: 'Press list', partners: 'Partner CRM', discussionGuide: 'Discussion guide', paperEdit: 'Paper edit', costReport: 'Budget-to-actuals', structure: 'Structure board', cuts: 'Cut tracker', clearanceReport: 'Clearance report', chainOfTitle: 'Chain of title', festivalStrategy: 'Festival strategy', pressNotes: 'Press notes', awards: 'Awards', socialPosts: 'Social posts', deliverables: 'Deliverables', qc: 'QC tracker', waterfall: 'Waterfall', revenueStatements: 'Revenue tracker', bookings: 'Bookings', theoryOfChange: 'Theory of change', screeningKit: 'Screening kit', impactReport: 'Impact report', finalCostReport: 'Final cost report', grantReports: 'Grant reports', contractArchive: 'Contract archive' };
+  const OFT_KEYS = { project: 'Project details', people: 'People', locations: 'Locations', thirdPartyElements: 'Clearance log', contracts: 'Contracts and releases', assets: 'Files and stills', musicCueSheet: 'Music cue sheet', callSheets: 'Call sheets', credits: 'Credits', supers: 'Name supers', subjects: 'Subject tracker', sources: 'Research log', comps: 'Comps tracker', treatment: 'Treatment', pitchDeck: 'Pitch deck', grants: 'Grant calendar', narratives: 'Narrative library', budget: 'Budget', budgetFormats: 'Budget converter', financePlan: 'Finance plan', funders: 'Funder CRM', cashFlow: 'Cash flow', shootDays: 'Shooting calendar', script: 'Script', scenes: 'Script breakdown', characters: 'Cast', dayOutOfDays: 'Day-out-of-days', budgetLinks: 'Budget', shots: 'Shot list', interviews: 'Interviews', questionBank: 'Question bank', journal: 'Field journal', scouts: 'Location scouts', scoutChecklist: 'Scout checklist', gear: 'Gear list', trips: 'Travel sheet', riskPlans: 'Risk plans', security: 'Security checklist', mediaReports: 'Camera and sound reports', dailyReports: 'Daily reports', expenses: 'Expense log', festivals: 'Festival submissions', screenings: 'Screenings', pressOutlets: 'Press list', partners: 'Partner CRM', discussionGuide: 'Discussion guide', paperEdit: 'Paper edit', costReport: 'Budget-to-actuals', structure: 'Structure board', cuts: 'Cut tracker', clearanceReport: 'Clearance report', chainOfTitle: 'Chain of title', festivalStrategy: 'Festival strategy', pressNotes: 'Press notes', awards: 'Awards', socialPosts: 'Social posts', deliverables: 'Deliverables', qc: 'QC tracker', waterfall: 'Waterfall', revenueStatements: 'Revenue tracker', bookings: 'Bookings', theoryOfChange: 'Theory of change', screeningKit: 'Screening kit', impactReport: 'Impact report', finalCostReport: 'Final cost report', grantReports: 'Grant reports', contractArchive: 'Contract archive' };
   const oftStore = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch { /* storage off */ } } };
   const oftMe = () => (oftStore.get('oft-user-name') || '').trim();
   const oftEsc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);

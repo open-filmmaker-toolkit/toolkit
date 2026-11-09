@@ -238,6 +238,28 @@
       },
       "description": "Shots for each scene, with a frame for the storyboard, kept by the shot list."
     },
+    "scoutChecklist": {
+      "type": "object",
+      "properties": {
+        "hidden": { "type": "array", "items": { "type": "string" }, "description": "Built-in scout items the crew doesn't use." },
+        "extra": { "type": "array", "items": { "type": "object", "properties": { "id": { "type": "string" }, "label": { "type": "string" } }, "additionalProperties": true }, "description": "The project's own scout items." }
+      },
+      "additionalProperties": true,
+      "description": "The project's scout checklist, kept by the location scout sheet."
+    },
+    "questionBank": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "text": { "type": "string" }
+        },
+        "required": ["id"],
+        "additionalProperties": true
+      },
+      "description": "Questions to reuse across interviews, kept by interview prep."
+    },
     "dayOutOfDays": {
       "type": "object",
       "properties": {

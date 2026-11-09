@@ -35,6 +35,9 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **One scout for each visit,** with the date, who scouted, a verdict (good to film, maybe, or not for us), and who to call there.
 - **The things a crew asks about:** access and hours, power, sound, light, parking and load-in, restrooms, cell signal, and permits and permission, plus notes.
 - **Photos that stay on your computer.** Add scout photos, with captions. They're resized to 1280 pixels on the long side and kept in the project file. Nothing is uploaded.
+- **Or link them,** for long scouts with many photos. **Link photos in the project folder** keeps each photo where it is, at full size, and puts only its path and a small preview in the project file. The scout report shows the preview with the path to the full-size photo.
+- **The sun's path.** Type the place's latitude and longitude, and pick a day: the tool shows sunrise and sunset with the direction of the sun, the golden hours, when the sun is highest and how high, and the sun's height each hour. It's worked out on your computer, and printed on the scout report.
+- **A checklist you can change.** Untick the built-in items your crew doesn't ask about and add your own, such as drone rules. The checklist is the same for every scout in the project.
 - **Links to the place in the project.** Pick a location, or add a new one; it's added to the project for call sheets and releases to use. The side panel lists places with no scout yet.
 - **Shows the location release** from the [release tracker](../release-tracker/): signed, waiting for signature, or none yet, so you know what to sort out before the shoot.
 - **Prints a scout report** for each scout, on its own page, with the photos. **Exports CSV.** Also exports project data: project details, people, locations, third-party elements, contracts, assets, music cue sheet details or call sheets as separate CSV files.
@@ -56,15 +59,14 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-A `scouts` list. Each scout has an `id` and a `locationId`, pointing to a place in `locations`, and optional `date`, `scoutedBy`, `verdict` (`good`, `maybe` or `no`), `contactName`, `contactPhone`, `contactEmail`, `access`, `power`, `sound`, `light`, `parking`, `restrooms`, `cellSignal`, `permits`, `notes` and `photoIds`.
+A `scouts` list. Each scout has an `id` and a `locationId`, pointing to a place in `locations`, and optional `date`, `scoutedBy`, `verdict` (`good`, `maybe` or `no`), `contactName`, `contactPhone`, `contactEmail`, `access`, `power`, `sound`, `light`, `parking`, `restrooms`, `cellSignal`, `permits`, `notes`, `photoIds`, `latitude`, `longitude`, `sunDate` (the day to show the sun for; the scout's date when it's missing), `utcOffset` (hours from UTC, when the place isn't in your computer's time zone) and `checklist` (answers to the project's own items, by item id).
 
-Photos are `assets` with `type` "scout photo", the image as a JPEG data URL in `data`, its `width` and `height`, and an optional `caption`. Adding a new place adds it to `locations`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
+Photos are `assets` with `type` "scout photo", the image as a JPEG data URL in `data`, its `width` and `height`, and an optional `caption`. A linked photo has a `relativePath` in the project folder and a small preview in `thumb` instead of `data`. A `scoutChecklist` object holds the built-in items the project `hidden`, and its `extra` items, each with an `id` and `label`. Adding a new place adds it to `locations`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
-- Pinning the place on a map, or the sun's path for a given day
-- Linking photos stored in the project folder instead of in the file, for long scouts with many photos
-- A scout checklist you can change, for crews who ask about different things
+- Pinning the place on a map, which would need map tiles from the internet
+- Showing linked photos at full size, which needs the project folder open in the browser
 
 ## License
 
