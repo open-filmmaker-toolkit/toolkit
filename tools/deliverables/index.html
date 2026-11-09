@@ -809,7 +809,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   window.addEventListener('unhandledrejection', ev => toast(`Something went wrong: ${ev.reason && ev.reason.message ? ev.reason.message : ev.reason}. Save your work, then reload the page.`, true));
   // Columns for importing from a spreadsheet, named as in this tool's template.
   const OFT_IMPORT = { noun: 'deliverable', nouns: 'deliverables', key: 'title',
-    fields: [['Section', 'section', 'enum', { values: SECTIONS }], ['Deliverable', 'title'], ['Status', 'status', 'enum', { values: STATUS }], ['Due', 'due', 'date'], ["Who's responsible", 'owner'], ['Specs', 'spec'], ['File', 'path'], ['Note', 'note'], ['From the project', '', 'skip']],
+    fields: [['Section', 'section', 'enum', { values: SECTIONS }], ['Deliverable', 'title'], ['Status', 'status', 'enum', { values: STATUS }], ['Due', 'due', 'date'], ["Who's responsible", 'owner'], ['Specs', 'spec'], ['File', 'path'], ['Note', 'note'], ['From the project', '', 'skip'], ["Distributor's schedule", 'schedule']],
     put: r => {
       const d = doc.deliverables = doc.deliverables && typeof doc.deliverables === 'object' ? doc.deliverables : {}; d.items = arr(d.items);
       const b = BUILT.find(x => x.title.toLowerCase() === String(r.title).toLowerCase());

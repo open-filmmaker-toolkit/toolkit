@@ -900,8 +900,21 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const OFT_IMPORT = { noun: 'festival', nouns: 'festivals', key: 'name', list: () => doc.festivals, make: () => ({ status: 'planned' }),
     fields: [['Festival', 'name'], ['Tier', 'tier', 'enum', { values: TIERS }], ['Premiere', 'premiere', 'enum', { values: v => { const s = String(v).toLowerCase(); return s.startsWith('world') ? 'world' : s.startsWith('international') ? 'international' : /region/.test(s) ? 'regional' : /country|national/.test(s) ? 'national' : /city/.test(s) ? 'city' : /^(none|no premiere)/.test(s) ? 'none' : /premiere$/.test(s) ? 'regional' : undefined; } }],
       ['City', 'city'], ['Country', 'country'], ['Region', 'region'], ['Starts', 'startDate', 'date'], ['Ends', 'endDate', 'date'], ['Deadline', 'deadline', 'date'], ['Fee', 'fee', 'num'], ['Notification', 'notifyDate', 'date'],
-      ['Status', 'status', 'enum', { values: STATUS }], ['Premiere clashes', '', 'skip']],
-    put: r => { if (r.tier != null) r.tier = Number(r.tier); doc.festivals.push(r); } };
+      ['Status', 'status', 'enum', { values: STATUS }], ['Premiere clashes', '', 'skip'], ['Premiere rules', 'premiereRules'], ['Deadlines and fees', 'deadlinesText']],
+    put: r => {
+      if (r.tier != null) r.tier = Number(r.tier);
+      // "Early 2027-01-10 30; Regular 2027-03-01 50", as the export writes it.
+      const ts = String(r.deadlinesText || '').split(';').map(x => /^\s*(.*?)\s*(\d{4}-\d{2}-\d{2})\s*([\d.]+)?\s*$/.exec(x)).filter(Boolean).map(m => Object.assign({ id: newId('deadline'), label: m[1] || 'Deadline', date: m[2] }, m[3] ? { fee: Number(m[3]) } : {}));
+      delete r.deadlinesText;
+      if (ts.length) r.deadlines = ts;
+      // The export writes the premiere rules it understands in words; those go back to ticks.
+      if (r.premiereRules) {
+        const al = [], rest = String(r.premiereRules).split(';').map(x => x.trim()).filter(x => { if (/^allows screenings at home$/i.test(x)) { al.push('home'); return false; } if (/^allows small festivals$/i.test(x)) { al.push('small'); return false; } return !!x; });
+        if (al.length) r.premiereAllows = al;
+        if (rest.length) r.premiereRules = rest.join('; '); else delete r.premiereRules;
+      }
+      doc.festivals.push(r);
+    } };
   /* oft-shared:import begin. Copied from shared/import.js by .github/scripts/sync_shared.py; edit it there. */
   // Import rows from a spreadsheet (CSV) into a tool. Each tool describes its
   // columns in OFT_IMPORT, using the same column names as its spreadsheet template,
