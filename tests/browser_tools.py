@@ -254,11 +254,34 @@ def test_release_tracker(browser, fake):
         check('River Keeps' in pg.inner_text('#folderNote'), 'project folder connects')
     pg.set_input_files('#scanInput', files=[{'name': 'marcus-release.pdf', 'mimeType': 'application/pdf', 'buffer': b'%PDF-1.4 fake'}])
     check('marcus-release.pdf' in pg.inner_text('#scanList'), 'attached scan is listed')
+    pg.click('#addFootBtn'); pg.select_option('#footRows [data-f="mediaReportId"]', 'report-a001'); pg.select_option('#footRows [data-f="clipId"]', label='A001C002')
+    pg.fill('#footRows [data-f="tcIn"]', '08:31:52'); pg.fill('#footRows [data-f="note"]', 'His walk along the levee')
     pg.click('#editorSubmit'); pg.wait_for_timeout(300)
     check(not pg.is_visible('#editor'), 'saving closes the editor')
     check('is-covered' in pg.get_attribute('#peopleCov .cov-line:has-text("Marcus Bell")', 'class'), 'person is now covered')
     if fake:
         check(pg.evaluate("window.__dir['releases/marcus-release.pdf']") == '%PDF-1.4 fake', 'scan is copied into the releases folder')
+
+    # A crowd notice is logged, but doesn't stand in for anyone's release.
+    pg.click('#addBtn'); pg.select_option('#f-type', 'crowd notice')
+    check(pg.is_visible('#f-posted') and pg.locator('#f-status option[value="signed"]').inner_text() == 'Posted', 'a crowd notice asks where it was posted')
+    pg.fill('#f-posted', 'Both ends of the levee path'); pg.fill('#f-crowd', '40'); pg.select_option('#f-status', 'signed'); pg.check('#locationsList input[value="location-riverside-levee"]')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check('is-covered' not in pg.get_attribute('#placesCov .cov-line:has-text("Riverside levee")', 'class'), "a crowd notice doesn't count as a location release")
+
+    # Blank forms to print and sign.
+    pg.click('#blankBtn'); pg.select_option('#b-for', 'person-ruth-hammond')
+    check('{company}' in pg.input_value('#b-text') and 'permission to film' in pg.input_value('#b-text'), 'starts from sample wording')
+    pg.fill('#b-text', 'Our attorney\'s wording for {company}.'); pg.click('#blankForm button[type=submit]'); pg.wait_for_timeout(200)
+    r = pg.inner_text('#report')
+    check('Appearance release' in r and 'Ruth Hammond' in r and "Our attorney's wording for Lowwater Films." in r and 'Signature' in r, 'prints a blank appearance release with the name filled in')
+    pg.click('#blankBtn'); pg.select_option('#b-kind', 'group'); pg.fill('#b-count', '6'); pg.click('#blankForm button[type=submit]'); pg.wait_for_timeout(200)
+    check(pg.locator('#report .bf-t tbody tr').count() == 6 and 'Group release' in pg.inner_text('#report'), 'prints a group sign-in sheet')
+    pg.click('#blankBtn'); pg.select_option('#b-kind', 'crowd'); pg.click('#blankForm button[type=submit]'); pg.wait_for_timeout(200)
+    check('Notice of filming' in pg.inner_text('#report') and 'may appear in the film' in pg.inner_text('#report'), 'prints a crowd notice to post')
+    pg.click('#blankBtn'); pg.select_option('#b-kind', 'appearance')
+    check(pg.input_value('#b-text') == "Our attorney's wording for {company}.", 'keeps your own wording for next time')
+    pg.click('#b-cancel')
 
     # Decline a pending release.
     pg.click('#peopleCov .cov-line:has-text("Leon Pryor") .cov-sig')
@@ -298,6 +321,10 @@ def test_release_tracker(browser, fake):
     temp = next(c for c in data['contracts'] if c['title'] == 'Temporary materials release')
     el = next(e for e in data['thirdPartyElements'] if e['id'] == 'sample-01')
     check(temp['id'] in el.get('contractIds', []), 'materials release is recorded on the clearance log item')
+    marcus = next(c for c in data['contracts'] if 'person-marcus-bell' in c.get('personIds', []) and c.get('status') == 'signed')
+    notice = next(c for c in data['contracts'] if c.get('type') == 'crowd notice')
+    check(marcus['footage'] == [{'mediaReportId': 'report-a001', 'clipId': marcus['footage'][0]['clipId'], 'tcIn': '08:31:52', 'note': 'His walk along the levee'}] and notice['postedAt'] == 'Both ends of the levee path' and notice['crowdSize'] == 40
+          and data['releaseForms'] == {'appearance': "Our attorney's wording for {company}."}, 'saves the footage a release covers, the crowd notice and your wording')
     marcus = next(c for c in data['contracts'] if 'person-marcus-bell' in c.get('personIds', []))
     scan = next(a for a in data['assets'] if a['id'] in marcus.get('assetIds', []))
     check(marcus['status'] == 'signed' and scan['type'] == 'release scan' and scan['relativePath'] == 'releases/marcus-release.pdf', 'saved release has its scan as an asset')
@@ -322,12 +349,12 @@ def test_release_tracker(browser, fake):
 def test_credits_builder(browser, fake):
     ctx, pg, errs = new_page(browser, 'credits-builder', fake)
     open_sample(pg, fake)
-    check(pg.inner_text('#reqCount') == '2 of 4 in the credits', 'flags the required credits that are missing, including deal memos (%s)' % pg.inner_text('#reqCount'))
+    check(pg.inner_text('#reqCount') == '2 of 4 in the credits as required', 'flags the required credits that are missing, including deal memos (%s)' % pg.inner_text('#reqCount'))
     crawl = pg.inner_text('#crawl')
     check('Lena Ward' in crawl and 'Muddy Water Hymn' in crawl and 'levee at night' not in crawl.lower(), 'crawl shows people and songs, without excluded score cues')
 
     pg.click('#reqs [data-addreq="contract-rchs-license"]'); pg.wait_for_timeout(200)
-    check(pg.inner_text('#reqCount') == '3 of 4 in the credits', 'adding the required wording meets it (%s)' % pg.inner_text('#reqCount'))
+    check(pg.inner_text('#reqCount') == '3 of 4 in the credits as required', 'adding the required wording meets it (%s)' % pg.inner_text('#reqCount'))
 
     pg.click('#exportBtn')
     text = pg.inner_text('#exportPreview')
@@ -362,7 +389,16 @@ def test_credits_builder(browser, fake):
     pg.select_option('#r-element', 'sample-07')
     pg.fill('#r-text', 'Courtesy of the Test Archive')
     pg.click('#reqForm button[type=submit]'); pg.wait_for_timeout(200)
-    check(pg.inner_text('#reqCount') == '3 of 5 in the credits', 'a new requirement is flagged until the credits include it (%s)' % pg.inner_text('#reqCount'))
+    check(pg.inner_text('#reqCount') == '3 of 5 in the credits as required', 'a new requirement is flagged until the credits include it (%s)' % pg.inner_text('#reqCount'))
+    pg.click('#reqs li:has-text("Courtesy of the Test Archive") [data-addreq]'); pg.wait_for_timeout(200)
+    check(pg.inner_text('#reqCount') == '4 of 5 in the credits as required', 'adding its wording meets it')
+    pg.click('#reqs li:has-text("Courtesy of the Test Archive") [data-editreq]')
+    pg.select_option('#r-place', 'opening'); pg.select_option('#r-size', '125'); pg.click('#reqForm button[type=submit]'); pg.wait_for_timeout(200)
+    li = pg.inner_text('#reqs li:has-text("Courtesy of the Test Archive")')
+    check(pg.inner_text('#reqCount') == '3 of 5 in the credits as required' and "It's in the end credits; the contract requires the opening titles." in li and "It's standard size; the contract requires at least 125% of standard." in li, 'checks where a required credit appears and how big it is')
+    pg.click('#entries li:has-text("Courtesy of the Test Archive") [data-edit]')
+    pg.select_option('#f-place', 'opening'); pg.select_option('#f-size', '150'); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check(pg.inner_text('#reqCount') == '4 of 5 in the credits as required' and 'opening titles' in pg.inner_text('#crawl').lower() and 'Opening titles · 150%' in pg.inner_text('#entries'), 'moving it to the opening titles at a larger size meets the requirement')
 
     pg.click('#playBtn')
     check('is-playing' in pg.get_attribute('#screen', 'class'), 'play crawl starts the roll')
@@ -381,6 +417,8 @@ def test_credits_builder(browser, fake):
           'credits and not-credited choices are saved')
     lic = next((c for c in data['contracts'] if c.get('title') == 'Test archive license'), {})
     el = next(e for e in data['thirdPartyElements'] if e['id'] == 'sample-07')
+    req_entry = next(e for e in entries if e.get('text') == 'Courtesy of the Test Archive')
+    check(lic.get('requiredPlacement') == 'opening' and lic.get('requiredSize') == 125 and req_entry.get('placement') == 'opening' and req_entry.get('size') == 150, 'saves where a credit appears, its size and what the contract requires')
     check(lic.get('requiredCredit') == 'Courtesy of the Test Archive' and lic.get('thirdPartyElementIds') == ['sample-07'] and lic.get('id') in el.get('contractIds', []),
           'new license is saved and linked to its clearance log item')
     original = json.loads(sample)
@@ -401,7 +439,7 @@ def test_credits_builder(browser, fake):
     check(roles[:6] == ['Director', 'Producer', 'Editor', 'Director of photography', 'Composer', 'Featuring'], 'draft puts key creatives first, then featuring %s' % roles[:6])
     crawl = pg.inner_text('#crawl')
     check('Daniel Okafor' in crawl and 'Muddy Water Hymn' in crawl and 'All rights reserved' in crawl, 'draft has people, music and a copyright line')
-    check(pg.inner_text('#reqCount') == '4 of 4 in the credits', 'draft includes the required wording, deal memo credits too (%s)' % pg.inner_text('#reqCount'))
+    check(pg.inner_text('#reqCount') == '4 of 4 in the credits as required', 'draft includes the required wording, deal memo credits too (%s)' % pg.inner_text('#reqCount'))
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
@@ -1304,8 +1342,22 @@ def test_field_journal(browser, fake):
     pg.select_option('#f-sheet', 'callsheet-day-1')
     check(pg.input_value('#f-date') == '2026-05-12', 'picking a call sheet fills the empty date')
     pg.check('[data-person="person-lena-ward"]'); pg.check('[data-location="location-grain-elevator"]')
+    pg.fill('#f-tags', 'dust, safety, dust')
+    pg.evaluate("const t = document.getElementById('f-text'); t.focus(); t.setSelectionRange(t.value.indexOf('Bring'), t.value.length)"); pg.click('[data-fmt="list"]')
+    pg.evaluate("const t = document.getElementById('f-text'); const i = t.value.indexOf('dust everywhere'); t.focus(); t.setSelectionRange(i, i + 4)"); pg.click('[data-fmt="bold"]')
+    check(pg.input_value('#f-text') == 'Fictional test entry: **dust** everywhere.\n- Bring masks.', 'the toolbar adds bold and list formatting')
+    pg.set_input_files('#photoInput', files=[{'name': 'dust.png', 'mimeType': 'image/png', 'buffer': TINY_PNG}])
+    pg.wait_for_function("document.querySelectorAll('#atts .att').length === 1")
+    pg.set_input_files('#audioInput', files=[{'name': 'note.mp3', 'mimeType': 'audio/mpeg', 'buffer': b'ID3\x03\x00\x00\x00\x00\x00\x00fake audio'}])
+    pg.wait_for_function("document.querySelectorAll('#atts .att').length === 2")
+    check(pg.locator('#atts audio').count() == 1, 'attaches a photo and an audio note')
     pg.click('#editorSubmit'); pg.wait_for_timeout(200)
     check(pg.locator('#rows .row').count() == 4 and 'Lena Ward' in pg.inner_text('#rows'), 'adds an entry tagged with a person and a location')
+    new_row = pg.inner_text('#rows .row:has-text("Second unit at the elevator")')
+    check('#dust' in new_row and '#safety' in new_row and '1 photo, 1 audio note' in new_row and '**' not in new_row, 'shows your own tags, attachments and plain text in the list')
+    pg.select_option('#fTag', 'safety')
+    check(pg.locator('#rows .row').count() == 1, 'filters by your own tag')
+    pg.select_option('#fTag', '')
     pg.click('[data-edit="journal-quiet-room"]')
     pg.uncheck('[data-person="person-daniel-okafor"]')
     pg.click('#editorSubmit'); pg.wait_for_timeout(200)
@@ -1319,15 +1371,18 @@ def test_field_journal(browser, fake):
     with pg.expect_download() as d:
         pg.click('#mdBtn')
     md = open(d.value.path(), encoding='utf-8').read()
-    check('Second unit at the elevator' in md and 'The levee at dawn' not in md and 'dust everywhere' in md, 'Markdown exports only the entries found by a search')
+    check('Second unit at the elevator' in md and 'The levee at dawn' not in md and '**dust** everywhere' in md and '*Photo: dust.png*' in md, 'Markdown exports only the entries found by a search, with formatting and attachments')
     pg.click('#printBtn'); pg.wait_for_timeout(200)
     check('Second unit at the elevator' in pg.inner_text('#report') and 'The levee at dawn' not in pg.evaluate('document.getElementById("report").textContent'), 'prints the entries shown')
+    check(pg.locator('#report .r-text strong').inner_text() == 'dust' and pg.locator('#report .r-text li').inner_text() == 'Bring masks.' and pg.locator('#report .r-photos img').count() == 1 and 'Audio note: note.mp3' in pg.inner_text('#report'), 'prints the formatting, the photo and the audio note')
     pg.fill('#search', '')
 
     data = saved_project(pg, fake)
     new = next(e for e in data['journal'] if e.get('title') == 'Second unit at the elevator')
     check(new['date'] == '2026-05-12' and new['kind'] == 'learned' and new['callSheetId'] == 'callsheet-day-1' and new['personIds'] == ['person-lena-ward']
           and new['locationIds'] == ['location-grain-elevator'] and new['text'].endswith('Bring masks.'), 'the new entry is saved with its tags and shoot day')
+    atts = [a for a in data['assets'] if a['id'] in new['assetIds']]
+    check(new['tags'] == ['dust', 'safety'] and sorted(a['type'] for a in atts) == ['journal audio', 'journal photo'] and all(a['data'].startswith('data:') for a in atts), 'saves your tags, and the photo and audio note in the project file')
     quiet = next(e for e in data['journal'] if e['id'] == 'journal-quiet-room')
     check('personIds' not in quiet and quiet['locationIds'] == ['location-hammond-house'], 'removing every tag drops the empty list')
     check(data['journal'][0] == original['journal'][0] and data['people'] == original['people'] and data['locations'] == original['locations'] and data['callSheets'] == original['callSheets']
@@ -1718,16 +1773,20 @@ def test_camera_sound(browser, fake):
     check(pg.is_visible('#sheetNote') and 'Day 1 of 2' in pg.inner_text('#sheetNote'), 'links to the call sheet for the day')
     pg.click('[data-add="clips"]')
     check(pg.input_value('#clips-0-lens') == '1 mix, 2 boom, 3 lav (Daniel)', 'a new file starts with the track layout')
-    pg.fill('#clips-0-clip', 'S002T01')
+    pg.fill('#clips-0-clip', 'S002T01'); pg.fill('#clips-0-tc', '13:10:00:00'); pg.fill('#clips-0-tcOut', '13:45:00:00')
     pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check('3 of 4 clips matched to sound' in pg.inner_text('[data-id="report-a001"]'), 'matches camera clips to sound files by timecode')
     pg.select_option('#printSel', 'day:shootday-may-1')
     pg.click('#printBtn'); pg.wait_for_timeout(200)
     r = pg.inner_text('#report')
     check('Camera report: A001' in r and 'Sound report: S002' in r and 'Day 1 of 2' in r and 'A002' not in r, "prints a day's reports")
+    check('S001 / S001T01' in r and 'S002 / S002T01' in r and 'A001 / A001C003, A001 / A001C004' in r, 'the reports show which sound file goes with each clip, and the other way round')
     with pg.expect_download() as d:
         pg.click('#csvBtn')
     rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
     check(rows[0][:4] == ['Date', 'Shoot day', 'Report', 'Card or roll'] and len(rows) == 9, 'CSV for the edit has a row for each clip and file')
+    sync = {r[8]: r[-1] for r in rows[1:]}
+    check(rows[0][-1] == 'Synced with' and sync['A001C001'] == 'S001 / S001T01' and sync['A001C002'] == '' and sync['S002T01'] == 'A001 / A001C003; A001 / A001C004', 'the CSV says what each clip syncs with')
     data = saved_project(pg, fake)
     rs = {r['roll']: r for r in data['mediaReports']}
     a = next(x for x in data['assets'] if x['id'] == rs['A002']['assetId'])
@@ -1773,7 +1832,21 @@ def test_interview_log(browser, fake):
     pg.click('#addBtn'); pg.select_option('#f-person', '__name'); pg.fill('#f-name', 'Neighbor on Mill Road'); pg.fill('#f-date', '2026-05-13')
     pg.click('#editorSubmit'); pg.wait_for_timeout(200)
     check('Neighbor on Mill Road' in pg.inner_text('#todo'), 'lists interviews filmed but not logged')
+    pg.click('#soNewBtn'); pg.fill('#so-title', 'The night the levee broke')
+    check(pg.locator('#soPick [data-soadd]').count() == 3, 'offers the favorite moments from every interview')
+    pg.click('#soPick [data-soadd^="interview-ruth|"]'); pg.click('#soPick [data-soadd="interview-daniel|moment-daniel-1"]')
+    pg.locator('#soOrder [data-k="1"] [data-somove="-1"]').click()
+    check(pg.locator('#soOrder li').nth(0).inner_text().startswith('Daniel Okafor') and pg.locator('#soPick [data-soadd]').count() == 1, 'adds moments from two interviews and puts them in order')
+    with pg.expect_download() as d:
+        pg.click('#soCsvBtn')
+    so_rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    check(so_rows[0][:3] == ['Order', 'Interview', 'Date'] and [r[1] for r in so_rows[1:]] == ['Daniel Okafor', 'Ruth Hammond'], 'exports the string-out in order')
+    pg.click('#soPrintBtn'); pg.wait_for_timeout(200)
+    check('String-out: The night the levee broke' in pg.inner_text('#report') and 'Reads the entry' in pg.inner_text('#report'), 'prints the string-out')
+    pg.click('#soForm button[type=submit]'); pg.wait_for_timeout(200)
+    check('The night the levee broke' in pg.inner_text('#soList') and '2 moments from 2 interviews' in pg.inner_text('#soList'), 'saves the string-out')
     data = saved_project(pg, fake)
+    check(data['stringOuts'][0]['title'] == 'The night the levee broke' and data['stringOuts'][0]['items'][0] == {'interviewId': 'interview-daniel', 'momentId': 'moment-daniel-1'}, 'string-outs are saved by interview and moment')
     iv = {i['id']: i for i in data['interviews']}
     ruth = iv['interview-ruth']
     t = next(a for a in data['assets'] if a['id'] == ruth['transcriptAssetId'])
@@ -1796,6 +1869,20 @@ def test_footage_log(browser, fake):
     pg.select_option('#fPerson', ''); pg.fill('#q', 'sandbags')
     check(pg.locator('#rows .row').count() == 1 and 'A002C001' in pg.inner_text('#rows'), 'finds clips by words')
     pg.fill('#q', '')
+    pg.click('#rows .row:has-text("A002C001") [data-edit]')
+    pg.click('#addMomBtn'); pg.locator('#moms .m-tc').nth(0).fill('09:15:20:00'); pg.locator('#moms .m-text').nth(0).fill('A heron lands on the levee post'); pg.locator('#moms .m-topics').nth(0).fill('wildlife')
+    pg.click('#addMomBtn'); pg.locator('#moms .m-tc').nth(1).fill('09:02:00:00'); pg.locator('#moms .m-text').nth(1).fill('Truck backs up to the sandbag pile')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check('2 moments' in pg.inner_text('#rows .row:has-text("A002C001")'), 'tags moments inside a clip')
+    pg.fill('#q', 'heron')
+    check(pg.locator('#rows .row').count() == 1 and 'A002C001' in pg.inner_text('#rows'), 'finds a clip by what happens in it')
+    pg.fill('#q', ''); pg.select_option('#fTopic', 'wildlife')
+    check(pg.locator('#rows .row').count() == 1, "finds a clip by a moment's topic")
+    pg.select_option('#fTopic', '')
+    with pg.expect_download() as d:
+        pg.click('#momCsvBtn')
+    mrows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    check(mrows[0][:4] == ['File Name', 'Card', 'Clip starts', 'Timecode'] and [r[3] for r in mrows[1:]] == ['09:02:00:00', '09:15:20:00'], 'exports the moments in timecode order')
     pg.click('#importBtn'); pg.click('#reportsBtn'); pg.wait_for_timeout(200)
     row = pg.locator('#rows .row:has-text("A001C004")')
     check(pg.locator('#rows .row').count() == 5 and row.count() == 1 and '★★★★☆' in row.inner_text() and 'Sandbags at the levee gate' in row.inner_text(), 'imports the clips from camera reports that are not in the log')
@@ -1826,6 +1913,8 @@ def test_footage_log(browser, fake):
     rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
     check(rows[0][:3] == ['File Name', 'Clip Directory', 'Date'] and len(rows) == 8 and ['A001C001.mov', 'footage/2026-05-12/A001'] == rows[1][:2], 'CSV has a row for each clip, with its folder')
     data = saved_project(pg, fake)
+    a2 = next(a for a in data['assets'] if a.get('moments'))
+    check([m['tc'] for m in a2['moments']] == ['09:02:00:00', '09:15:20:00'] and a2['moments'][1]['topics'] == ['wildlife'] and a2['moments'][0]['id'], 'saves the moments with the clip')
     cl = {a['name']: a for a in data['assets'] if a.get('type') == 'clip'}
     check(cl['B001C001.MOV']['relativePath'] == 'footage/day3/B001/B001C001.MOV' and cl['B001C001.MOV']['locationIds'] == ['location-hammond-house'] and cl['B001C001.MOV']['rating'] == 2
           and cl['B001C002.MOV']['personIds'] == ['person-ruth-hammond'] and 'Jo Nobody' in cl['B001C002.MOV']['notes'] and cl['A001C003.mov']['rating'] == 4 and cl['A001C004']['mediaReportId'] == 'report-a001',
@@ -1870,6 +1959,22 @@ def test_paper_edit(browser, fake):
     check('no timecodes' in pg.inner_text('#parseNote'), 'warns about a transcript with no timecodes')
     pg.click('#editorSubmit'); pg.wait_for_timeout(200)
     check(pg.is_visible('#untimedNote') and pg.locator('#segs .seg').count() == 2, 'imports it as paragraphs')
+    import zipfile
+    docx = io.BytesIO()
+    with zipfile.ZipFile(docx, 'w', zipfile.ZIP_DEFLATED) as z:
+        z.writestr('[Content_Types].xml', '<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"/>')
+        W = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"'
+        z.writestr('word/document.xml', '<?xml version="1.0"?><w:document %s><w:body><w:p><w:r><w:t>[00:00:05] Ruth Hammond: I kept the diary</w:t></w:r><w:r><w:t xml:space="preserve"> under the floor.</w:t></w:r></w:p><w:p><w:r><w:t>[00:00:12] Ruth Hammond: Nobody knew.</w:t></w:r></w:p></w:body></w:document>' % W)
+    pg.click('#addBtn')
+    pg.set_input_files('#f-file', files=[{'name': 'ruth.docx', 'mimeType': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'buffer': docx.getvalue()}]); pg.wait_for_timeout(400)
+    check('2 lines read from ruth.docx, with timecodes' in pg.inner_text('#parseNote'), 'reads a transcript from a Word document')
+    html = '<!DOCTYPE html><html><body><p><a name="ts_3000_7500_S01">S01: The water came up the stairs.</a> <a name="ts_7500_9000_S01">We waited on the roof.</a></p></body></html>'
+    pg.set_input_files('#f-file', files=[{'name': 'leon.html', 'mimeType': 'text/html', 'buffer': html.encode()}]); pg.wait_for_timeout(300)
+    check('2 lines read from leon.html, with timecodes' in pg.inner_text('#parseNote'), "reads noScribe's HTML with the timing it keeps for each segment")
+    plain_html = '<html><body><p>[00:01:00] S00: First thing.</p><p>[00:01:20] S00: Second thing.</p></body></html>'
+    pg.set_input_files('#f-file', files=[{'name': 'plain.htm', 'mimeType': 'text/html', 'buffer': plain_html.encode()}]); pg.wait_for_timeout(300)
+    check('2 lines read from plain.htm, with timecodes' in pg.inner_text('#parseNote'), 'reads HTML with timestamps in the text')
+    pg.click('#editorCancel')
     pg.locator('#segs .seg').first.click(); pg.select_option('#sceneSel', 'scene-shoebox'); pg.click('#addBiteBtn'); pg.wait_for_timeout(200)
     with pg.expect_download() as d:
         pg.click('#edlBtn')
@@ -1933,8 +2038,13 @@ def test_structure_board(browser, fake):
     pg.click('#printBtn'); pg.wait_for_timeout(200)
     r = pg.inner_text('#report')
     check('Act two: what was kept' in r and 'Boxes and closets' in r and 'Ruth at the window' in r and 'Not on the board yet' not in r, 'prints the board')
+    pg.click('#cardsBtn'); pg.wait_for_timeout(200)
+    n_cards = pg.locator('#report .ic').count()
+    first_title = pg.locator('#report .ic-title').first.inner_text()
+    check(n_cards >= 3 and pg.locator('#report .ic-n').first.inner_text() == '1' and first_title.strip() != '', 'prints index cards, numbered in board order')
     data = saved_project(pg, fake)
     st = data['structure']
+    check(n_cards == len(st['cards']), 'there is a card for every scene card on the board')
     ids = [c['id'] for c in st['cards']]
     new = next(c for c in st['cards'] if c['title'] == 'Ruth at the window')
     leon = next(c for c in st['cards'] if c['id'] == 'card-leon')
@@ -1950,12 +2060,22 @@ def test_cut_tracker(browser, fake):
     pg.on('dialog', lambda d: d.accept())
     open_sample(pg, fake)
     check(pg.locator('#rows .row').count() == 3 and 'Locked cut v12' in pg.inner_text('#lockedBox') and '1 deferred' in pg.inner_text('[data-id="cut-fine-3"]'), 'lists the cuts and the locked cut')
+    pg.click('[data-edit="cut-fine-3"]')
+    pg.select_option('#notes-2-cardId', 'card-crew'); pg.fill('[data-start="card-crew"]', '1:00:00')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
     pg.click('#addBtn')
     check(pg.input_value('#f-name') == 'Locked cut v13', 'a new cut takes the next number')
     pg.fill('#f-name', 'Fine cut 4'); pg.fill('#f-date', '2026-10-01'); pg.locator('#f-date').dispatch_event('change')
     check(pg.is_visible('#carryNote') and '1 note' in pg.inner_text('#carryText'), 'offers to carry notes still open in earlier cuts')
+    check(pg.input_value('[data-start="card-crew"]') == '1:00:00', "a new cut starts with the last cut's scene starts")
+    pg.fill('[data-start="card-crew"]', '1:05:30')
     pg.click('#carryBtn')
     check(pg.locator('#notes .item').count() == 1 and 'from Fine cut 3' in pg.inner_text('#notes legend'), 'carries the note in')
+    check(pg.input_value('#notes-0-tc') == '1:25:30', 'a carried note moves with its scene')
+    pg.fill('[data-start="card-crew"]', '1:06:00'); pg.locator('[data-start="card-crew"]').dispatch_event('input')
+    check(pg.is_visible('#shiftNote'), 'offers to move carried notes when a scene start changes')
+    pg.click('#shiftBtn')
+    check(pg.input_value('#notes-0-tc') == '1:26:00' and not pg.is_visible('#shiftNote'), 'moves them again')
     pg.click('[data-add="screenings"]'); pg.fill('#screenings-0-date', '2026-10-05'); pg.fill('#screenings-0-audience', 'Lena and Priya')
     pg.locator('#screenings-0-audience').dispatch_event('change')
     pg.click('[data-add="notes"]'); pg.fill('#notes-1-tc', '45 min'); pg.select_option('#notes-1-cardId', 'card-secret'); pg.fill('#notes-1-text', 'Trim the pause before she answers'); pg.fill('#notes-1-from', 'Lena')
@@ -1982,6 +2102,7 @@ def test_cut_tracker(browser, fake):
     old = next(n for n in cs['cut-fine-3']['notes'] if n['id'] == 'note-f3-3')
     check(old['status'] == 'carried' and old['carriedToCutId'] == f4['id'] and f4['notes'][0]['carriedFromNoteId'] == 'note-f3-3' and f4['notes'][1]['cardId'] == 'card-secret' and f4['notes'][1]['screeningId'] == f4['screenings'][0]['id'],
           'the notes and screening are saved')
+    check(f4['sceneStarts'] == {'card-crew': '1:06:00'} and cs['cut-fine-3']['sceneStarts'] == {'card-crew': '1:00:00'} and f4['notes'][0]['tc'] == '1:26:00', 'scene starts are saved with each cut')
     check(f4['locked'] is True and 'locked' not in cs['cut-locked-12'] and data['project']['cutVersion'] == 'Fine cut 4, Oct 1, 2026' and data['project']['runningTime'] == '1:25:10', 'the locked cut and project are saved')
     check(data['structure'] == original['structure'] and data['contracts'] == original['contracts'], 'other data is unchanged')
     check(not errs, 'no page errors %s' % errs)
@@ -2265,12 +2386,14 @@ def test_daily_report(browser, fake):
     pg.click('[data-add="incidents"]'); pg.fill('#incidents-1-minutesLost', '10'); pg.fill('#incidents-1-text', 'Generator trouble')
     pg.fill('#crew-2-wrap', '13:00')
     check(pg.inner_text('#totals') == 'Total hours: 24.5 · Minutes lost: 30', 'editing a wrap time and adding an incident updates the totals')
+    pg.fill('#f-prepared', 'Ana Reyes'); pg.fill('#f-approved', 'Lena Ward')
     pg.click('#editorSubmit'); pg.wait_for_timeout(200)
     pg.select_option('#printSel', 'dailyreport-may-1')
     pg.click('#printBtn'); pg.wait_for_timeout(200)
     r = pg.inner_text('#report')
     check('Daily production report' in r and 'Daniel Okafor' in r and 'Interview subject' in r and '24.5' in r and 'Wind gusts' in r and 'Generator trouble' in r and 'Camera' in r and 'A001' in r and 'S001' in r and 'Battery failed' not in r,
           "prints the chosen day's report with crew, cards and incidents")
+    check('Prepared by: Ana Reyes' in r and 'Approved by: Lena Ward' in r and pg.locator('#report .r-sign .r-line').count() == 4, 'the printed report has signature lines with names and dates')
     with pg.expect_download() as d:
         pg.click('#csvBtn')
     rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
@@ -2284,7 +2407,7 @@ def test_daily_report(browser, fake):
     check(new['callTime'] == '07:30' and new['wrapTime'] == '18:00' and new['lunchStart'] == '12:30' and new['shot'] == 'Pickup shots at the diner' and 'callSheetId' not in new and 'mediaReportIds' not in new
           and new['crew'][0]['personId'] == 'person-lena-ward' and new['crew'][1]['name'] == '=Temp sound' and new['crew'][1]['wrap'] == '02:00' and new['incidents'][0]['kind'] == 'equipment' and new['incidents'][0]['minutesLost'] == 15,
           'the new report is saved')
-    check(may1['callSheetId'] == 'callsheet-day-1' and may1['mediaReportIds'] == ['report-a001', 'report-s001'] and len(may1['incidents']) == 2 and may1['crew'][2]['wrap'] == '13:00' and may1['crew'][2]['note'] == 'Morning only' and may1['notes'] == 'Fictional sample report.'
+    check(may1['callSheetId'] == 'callsheet-day-1' and may1['mediaReportIds'] == ['report-a001', 'report-s001'] and len(may1['incidents']) == 2 and may1['crew'][2]['wrap'] == '13:00' and may1['crew'][2]['note'] == 'Morning only' and may1['notes'] == 'Fictional sample report.' and may1['preparedBy'] == 'Ana Reyes' and may1['approvedBy'] == 'Lena Ward'
           and 'hours' not in json.dumps(data['dailyReports']).lower(), 'the edited report keeps its other fields and never stores hours')
     check(data['callSheets'] == original['callSheets'] and data['mediaReports'] == original['mediaReports'] and data['people'] == original['people'] and data['shootDays'] == original['shootDays'], 'other data is unchanged')
     check(not errs, 'no page errors %s' % errs)
@@ -3370,7 +3493,7 @@ def test_scene_takes(browser, fake):
     open_text(pg, fake, text)
     check('Scene 2' in pg.inner_text('[data-id="report-a009"]'), 'a camera report shows the scenes it covers')
     rows = csv_rows(pg)
-    check(rows[0][-4:] == ['Scene', 'Shot or setup', 'Take', "Script supervisor's notes"] and any(r[8] == 'A009C002' and r[-4:] == ['2', '2A', '2', 'Lamp flickers on the line'] for r in rows), 'CSV has scene, setup, take and the script supervisor\'s notes')
+    check(rows[0][15:19] == ['Scene', 'Shot or setup', 'Take', "Script supervisor's notes"] and any(r[8] == 'A009C002' and r[15:19] == ['2', '2A', '2', 'Lamp flickers on the line'] for r in rows), 'CSV has scene, setup, take and the script supervisor\'s notes')
     pg.click('#printBtn'); pg.wait_for_timeout(150)
     check('2A-2' in pg.inner_text('#report') and 'Script: Lamp flickers' in pg.inner_text('#report'), 'the printed report has slate numbers and notes')
     check(not errs, 'no page errors %s' % errs)

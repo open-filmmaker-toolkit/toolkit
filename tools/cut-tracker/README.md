@@ -36,6 +36,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **Feedback screenings** for each cut: when, and who saw it.
 - **Notes,** each tied to a time or range in the cut, the scene from the [structure board](../structure-board/) and the shot when you know them, who gave it and the screening it came from.
 - **Done, deferred or carried.** Mark each note to do, done or deferred. When you open a later cut, the notes still to do or deferred in earlier cuts can be carried into it: the copies start as to do with where they came from, and the originals are marked carried to that cut.
+- **Notes move with their scenes.** Say where each scene starts in a cut, and a carried note in a scene that moved gets its time moved by the same amount. A new cut starts with the last cut's scene starts; change one after carrying and the tool offers to move the notes again.
 - **The locked cut.** Mark one cut locked and the project's cut version and running time are set from it, which the [clearance log](../clearance-log/) and [music cue sheet](../music-cue-sheet/) use for their reports. Only one cut is locked at a time.
 - **Prints a cut's notes** by status and time, with what changed and the screenings. **Exports CSV** of every note. Also exports project data: project details, people, locations, third-party elements, contracts, assets, music cue sheet details or call sheets as separate CSV files.
 
@@ -56,7 +57,7 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-`cuts`: each has an `id`, `name`, and optional `date`, `runningTime`, `changes`, `locked`, `screenings` (each an `id`, `date` and `audience`) and `notes`.
+`cuts`: each has an `id`, `name`, and optional `date`, `runningTime`, `changes`, `locked`, `screenings` (each an `id`, `date` and `audience`), `sceneStarts` (where each structure card starts in this cut, by card id, such as `"1:05:30"`) and `notes`.
 
 Each note has an `id`, a `status` (`open`, `done`, `deferred` or `carried`), and optional `screeningId`, `tc` and `tcOut` (time in the cut), `cardId` (a card in `structure`), `shot`, `from`, `text`, `carriedToCutId`, and `carriedFromCutId` and `carriedFromNoteId` for a carried copy.
 
@@ -64,7 +65,6 @@ Locking a cut sets `project.cutVersion` to its name and date, and `project.runni
 
 ## Not yet
 
-- Shifting carried notes' times when scenes move
 - Notes from people who fill in a form, rather than typed in by you
 
 ## License

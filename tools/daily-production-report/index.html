@@ -157,6 +157,9 @@ dialog form { display: flex; flex-direction: column; height: 100%; max-height: i
 }
 @media print {
   @page { size: portrait; margin: 14mm; }
+  .report .r-sign { display: grid; grid-template-columns: 2fr 1fr; gap: 18pt 24pt; margin-top: 24pt; break-inside: avoid; page-break-inside: avoid; }
+  .report .r-sign .r-line { border-bottom: 1pt solid #000000; height: 22pt; }
+  .report .r-sign p { margin: 3pt 0 0; font-size: 9pt; }
   :root { color-scheme: light; }
   body { background: #ffffff; color: #000000; font-size: 9.5pt; line-height: 1.35; }
   .page, dialog, .toast { display: none !important; }
@@ -293,6 +296,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <div class="items" id="incidents"></div>
       </div>
       <div class="field"><label for="f-notes">Notes</label><textarea id="f-notes" rows="3" placeholder="Anything the next day or the edit should know"></textarea></div>
+      <div class="two">
+        <div class="field"><label for="f-prepared">Prepared by</label><input id="f-prepared" type="text" list="signList" placeholder="Production coordinator" autocomplete="off"></div>
+        <div class="field"><label for="f-approved">Approved by</label><input id="f-approved" type="text" list="signList" placeholder="Producer or line producer" autocomplete="off"><datalist id="signList"></datalist></div>
+      </div>
+      <p class="hint">Their names go under the signature lines on the printed report.</p>
       <p class="totals" id="totals"></p>
     </div>
     <div class="dlg-foot">
@@ -664,6 +672,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('f-day').innerHTML = (isNew && !editing.shootDayId ? '<option value="">Choose a shoot day</option>' : '') + choices.map(d => `<option value="${esc(d.id)}">${esc([d.date && fmtDate(d.date), d.title].filter(Boolean).join(': '))}</option>`).join('');
     $('f-day').value = editing.shootDayId || '';
     fillForm(); drawLists(); showDay(); updateTotals();
+    // Whoever signed the last report is the likely signer of the next one.
+    const last = [...reports()].filter(x => x.id !== editing.id).sort((a, b) => str(dateOf(b)).localeCompare(str(dateOf(a))))[0] || {};
+    $('f-prepared').value = str(editing.preparedBy || (isNew ? last.preparedBy : ''));
+    $('f-approved').value = str(editing.approvedBy || (isNew ? last.approvedBy : ''));
+    $('signList').innerHTML = arr(doc.people).filter(p => p && p.name && !p.onCamera).map(p => `<option value="${esc(p.name)}">`).join('');
     $('editorTitle').textContent = isNew ? 'Start a daily report' : `Daily report: ${dateOf(editing) ? fmtDate(dateOf(editing)) : 'shoot day'}`;
     $('deleteBtn').hidden = isNew;
     $('editor').showModal();
@@ -692,7 +705,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const day = days().find(d => d.id === dayId), sheet = day && sheetFor(day);
     if (sheet) r.callSheetId = sheet.id; else delete r.callSheetId;
     for (const [k, id] of Object.entries(TIMES)) { const v = normTime($(id).value); if (v) r[k] = v; else delete r[k]; }
-    for (const [k, id] of Object.entries({ shot: 'f-shot', notes: 'f-notes', weather: 'f-weather' })) { const v = $(id).value.trim(); if (v) r[k] = v; else delete r[k]; }
+    for (const [k, id] of Object.entries({ shot: 'f-shot', notes: 'f-notes', weather: 'f-weather', preparedBy: 'f-prepared', approvedBy: 'f-approved' })) { const v = $(id).value.trim(); if (v) r[k] = v; else delete r[k]; }
     const done = [...$('sceneChecks').querySelectorAll('input:checked')].map(i => i.value);
     if (done.length) r.completedSceneIds = done; else delete r.completedSceneIds;
     const fix = (o, keys) => { for (const k of keys) if (o[k] != null) { const v = normTime(o[k]); if (v) o[k] = v; } return o; };
@@ -761,7 +774,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     if (!r) { $('report').innerHTML = ''; return; }
     $('report').innerHTML = `<h1>Daily production report</h1>
       <p class="r-meta">${esc([doc.project.title, dateOf(r) && fmtDate(dateOf(r)), `Printed ${fmtDate(today())}`].filter(Boolean).join(' · '))}</p>
-      ${reportHtml(r)}`;
+      ${reportHtml(r)}
+      <div class="r-sign">${[['Prepared by', r.preparedBy], ['Approved by', r.approvedBy]].map(([role, name]) => `<div><div class="r-line"></div><p>${esc(role)}${name ? `: ${esc(name)}` : ''}</p></div><div><div class="r-line"></div><p>Date</p></div>`).join('')}</div>`;
   }
 
   // ---------- Project CSV ----------
@@ -1043,7 +1057,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const OFT_SLUG = (window.location.pathname.match(/tools\/([^/]+)\//) || [])[1] || '';
   const OFT_GUIDE = 'https://github.com/open-filmmaker-toolkit/toolkit/blob/main/docs/sharing-a-project.md';
   const OFT_HOURS = 4;
-  const OFT_KEYS = { project: 'Project details', people: 'People', locations: 'Locations', thirdPartyElements: 'Clearance log', contracts: 'Contracts and releases', assets: 'Files and stills', musicCueSheet: 'Music cue sheet', callSheets: 'Call sheets', credits: 'Credits', supers: 'Name supers', subjects: 'Subject tracker', sources: 'Research log', comps: 'Comps tracker', treatment: 'Treatment', pitchDeck: 'Pitch deck', grants: 'Grant calendar', narratives: 'Narrative library', budget: 'Budget', budgetFormats: 'Budget converter', financePlan: 'Finance plan', funders: 'Funder CRM', cashFlow: 'Cash flow', shootDays: 'Shooting calendar', script: 'Script', scenes: 'Script breakdown', characters: 'Cast', dayOutOfDays: 'Day-out-of-days', budgetLinks: 'Budget', shots: 'Shot list', interviews: 'Interviews', questionBank: 'Question bank', journal: 'Field journal', scouts: 'Location scouts', scoutChecklist: 'Scout checklist', gear: 'Gear list', trips: 'Travel sheet', riskPlans: 'Risk plans', security: 'Security checklist', mediaReports: 'Camera and sound reports', dailyReports: 'Daily reports', expenses: 'Expense log', festivals: 'Festival submissions', screenings: 'Screenings', pressOutlets: 'Press list', partners: 'Partner CRM', discussionGuide: 'Discussion guide', paperEdit: 'Paper edit', costReport: 'Budget-to-actuals', structure: 'Structure board', cuts: 'Cut tracker', clearanceReport: 'Clearance report', chainOfTitle: 'Chain of title', festivalStrategy: 'Festival strategy', pressNotes: 'Press notes', awards: 'Awards', socialPosts: 'Social posts', deliverables: 'Deliverables', qc: 'QC tracker', waterfall: 'Waterfall', revenueStatements: 'Revenue tracker', bookings: 'Bookings', theoryOfChange: 'Theory of change', screeningKit: 'Screening kit', impactReport: 'Impact report', finalCostReport: 'Final cost report', grantReports: 'Grant reports', contractArchive: 'Contract archive' };
+  const OFT_KEYS = { project: 'Project details', people: 'People', locations: 'Locations', thirdPartyElements: 'Clearance log', contracts: 'Contracts and releases', releaseForms: 'Release wording', assets: 'Files and stills', musicCueSheet: 'Music cue sheet', callSheets: 'Call sheets', credits: 'Credits', supers: 'Name supers', subjects: 'Subject tracker', sources: 'Research log', comps: 'Comps tracker', treatment: 'Treatment', pitchDeck: 'Pitch deck', grants: 'Grant calendar', narratives: 'Narrative library', budget: 'Budget', budgetFormats: 'Budget converter', financePlan: 'Finance plan', funders: 'Funder CRM', cashFlow: 'Cash flow', shootDays: 'Shooting calendar', script: 'Script', scenes: 'Script breakdown', characters: 'Cast', dayOutOfDays: 'Day-out-of-days', budgetLinks: 'Budget', shots: 'Shot list', interviews: 'Interviews', stringOuts: 'String-outs', questionBank: 'Question bank', journal: 'Field journal', scouts: 'Location scouts', scoutChecklist: 'Scout checklist', gear: 'Gear list', trips: 'Travel sheet', riskPlans: 'Risk plans', security: 'Security checklist', mediaReports: 'Camera and sound reports', dailyReports: 'Daily reports', expenses: 'Expense log', festivals: 'Festival submissions', screenings: 'Screenings', pressOutlets: 'Press list', partners: 'Partner CRM', discussionGuide: 'Discussion guide', paperEdit: 'Paper edit', costReport: 'Budget-to-actuals', structure: 'Structure board', cuts: 'Cut tracker', clearanceReport: 'Clearance report', chainOfTitle: 'Chain of title', festivalStrategy: 'Festival strategy', pressNotes: 'Press notes', awards: 'Awards', socialPosts: 'Social posts', deliverables: 'Deliverables', qc: 'QC tracker', waterfall: 'Waterfall', revenueStatements: 'Revenue tracker', bookings: 'Bookings', theoryOfChange: 'Theory of change', screeningKit: 'Screening kit', impactReport: 'Impact report', finalCostReport: 'Final cost report', grantReports: 'Grant reports', contractArchive: 'Contract archive' };
   const oftStore = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch { /* storage off */ } } };
   const oftMe = () => (oftStore.get('oft-user-name') || '').trim();
   const oftEsc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);

@@ -172,7 +172,22 @@ details.group > summary { cursor: pointer; font-size: 14px; font-weight: 600; }
 @media (max-width: 420px) {
   .cov-line { grid-template-columns: 1fr; }
 }
+/* Footage a release covers */
+.foot-rows { display: grid; gap: 8px; }
+.foot-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 110px 110px minmax(0, 1.4fr) 30px; gap: 6px; align-items: center; }
+.foot-row select, .foot-row input { min-width: 0; width: 100%; padding: 6px 8px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); color: var(--ink); font: inherit; font-size: 13.5px; }
+.icon-btn { width: 30px; height: 30px; padding: 0; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); color: var(--ink-2); cursor: pointer; font-size: 15px; line-height: 1; }
+@media (max-width: 720px) { .foot-row { grid-template-columns: 1fr 1fr; } .foot-row [data-f="note"] { grid-column: 1 / -1; } }
 @media print {
+  .report .bf-h { font-size: 20pt; margin: 0 0 4pt; }
+  .report .bf-text { font-size: 11pt; line-height: 1.5; margin: 14pt 0 18pt; }
+  .report .bf-line { display: flex; gap: 8pt; align-items: flex-end; margin: 18pt 0 0; font-size: 10pt; }
+  .report .bf-l { white-space: nowrap; }
+  .report .bf-blank { flex: 1; border-bottom: 1pt solid #000000; height: 14pt; }
+  .report .bf-t td { height: 24pt; border: 0.75pt solid #000000; }
+  .report .bf-t th { border: 0.75pt solid #000000; text-align: left; padding: 3pt 5pt; }
+  .report .bf-crowd .bf-h { font-size: 40pt; text-align: center; margin-top: 40pt; }
+  .report .bf-big { font-size: 18pt; line-height: 1.5; text-align: center; margin: 30pt 10pt; }
   @page { size: portrait; margin: 14mm; }
   :root { color-scheme: light; }
   body { background: #ffffff; color: #000000; font-size: 9.5pt; }
@@ -268,6 +283,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <span class="spacer"></span>
         <button type="button" class="btn" id="csvBtn">Export releases (CSV)</button>
         <button type="button" class="btn" id="printBtn">Print report</button>
+        <button type="button" class="btn" id="blankBtn">Print a blank form</button>
         <button type="button" class="btn primary" id="addBtn">Add release</button>
       </div>
       <div class="table-wrap" id="tableWrap">
@@ -335,6 +351,19 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <div class="checks" id="elementsList" role="group" aria-labelledby="elementsListHead"></div>
       </details>
 
+      <div class="group" id="noticeGroup" hidden>
+        <h3>Where it was posted</h3>
+        <div class="field"><label for="f-posted">Posted at</label><input id="f-posted" type="text" placeholder="Both entrances to the levee path, and the parking lot" autocomplete="off"></div>
+        <div class="field"><label for="f-crowd">About how many people</label><input id="f-crowd" type="number" min="0" step="1" inputmode="numeric"></div>
+        <div class="checks" id="noticeDays" role="group" aria-label="Shoot days the notice was up"></div>
+      </div>
+
+      <div class="group">
+        <div class="group-head"><h3 id="footHead">Footage it covers</h3><span class="spacer"></span><button type="button" class="btn small" id="addFootBtn">Add footage</button></div>
+        <p class="hint">The card, clip or timecodes this release is for, when it covers only part of what you shot.</p>
+        <div class="foot-rows" id="footRows" role="group" aria-labelledby="footHead"></div>
+      </div>
+
       <p class="hint warn-text" id="missingRefs" hidden></p>
 
       <div class="group">
@@ -352,6 +381,22 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       <button type="button" class="btn" id="editorCancel">Cancel</button>
       <button type="submit" class="btn primary" id="editorSubmit">Save release</button>
     </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="blankDialog" aria-labelledby="blankTitle">
+  <form id="blankForm" method="dialog" novalidate>
+    <div class="dlg-head"><h2 id="blankTitle">Print a blank form</h2></div>
+    <div class="dlg-body">
+      <div class="row-2">
+        <div class="field"><label for="b-kind">Form</label><select id="b-kind"><option value="appearance">Appearance release</option><option value="location">Location release</option><option value="materials">Materials release</option><option value="group">Group release, a sign-in sheet</option><option value="crowd">Crowd notice to post</option></select></div>
+        <div class="field" id="b-countField"><label for="b-count">Lines on the sheet</label><input id="b-count" type="number" min="1" max="40" step="1" value="15"></div>
+      </div>
+      <div class="field" id="b-forField"><label for="b-for">Fill in a name</label><select id="b-for"></select></div>
+      <div class="field"><label for="b-text">Wording</label><textarea id="b-text" rows="9"></textarea>
+        <p class="hint">This starts as sample wording, which isn't legal advice. Replace it with wording your attorney has approved. {company} and {title} become your company and film's title when it prints. What you type here is kept in the project for next time.</p></div>
+    </div>
+    <div class="dlg-foot"><button type="button" class="btn" id="b-reset">Go back to the sample</button><span class="spacer"></span><button type="button" class="btn" id="b-cancel">Cancel</button><button type="submit" class="btn primary">Print</button></div>
   </form>
 </dialog>
 
@@ -460,6 +505,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     { value: 'appearance release', label: 'Appearance release' },
     { value: 'location release', label: 'Location release' },
     { value: 'materials release', label: 'Materials release' },
+    { value: 'group release', label: 'Group release, one sheet for several people' },
+    { value: 'crowd notice', label: 'Crowd notice, posted where you film' },
     { value: 'other release', label: 'Other release' },
   ];
   const STATUSES = [
@@ -517,10 +564,12 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const asset = id => doc.assets.find(a => a.id === id);
   const roleOf = p => (Array.isArray(p.roles) ? p.roles.join(', ') : str(p.roles));
   const addressOf = l => [l.address, l.city, l.region, l.country].map(str).filter(Boolean).join(', ');
-  const isRelease = c => /release/i.test(str(c.type));
+  const isRelease = c => /release|crowd notice/i.test(str(c.type));
+  // A crowd notice tells people nearby they may be filmed; it doesn't stand in for anyone's own release.
+  const isNotice = c => /crowd notice/i.test(str(c.type));
   const releases = () => doc.contracts.filter(isRelease);
   // Materials releases let you use someone's photos or documents; they don't cover appearing on camera or a place.
-  const coversAppearance = c => isRelease(c) && !/material/i.test(str(c.type));
+  const coversAppearance = c => isRelease(c) && !isNotice(c) && !/material/i.test(str(c.type));
   const DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
   function today() {
     const d = new Date();
@@ -713,6 +762,15 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     keep('personIds', person, 'peopleList');
     keep('locationIds', place, 'locationsList');
     keep('thirdPartyElementIds', element, 'elementsList');
+    const foot = [...$('footRows').querySelectorAll('.foot-row')].map(r => {
+      const o = {}; for (const i of r.querySelectorAll('[data-f]')) if (i.value.trim()) o[i.dataset.f] = i.value.trim(); return o;
+    }).filter(o => o.mediaReportId || o.tcIn || o.note);
+    if (foot.length) c.footage = foot; else delete c.footage;
+    if (isNotice(c)) {
+      const posted = $('f-posted').value.trim(); if (posted) c.postedAt = posted; else delete c.postedAt;
+      if ($('f-crowd').value !== '') c.crowdSize = Number($('f-crowd').value); else delete c.crowdSize;
+      const ds = [...checked('noticeDays')]; if (ds.length) c.shootDayIds = ds; else delete c.shootDayIds;
+    } else { delete c.postedAt; delete c.crowdSize; }
     return c;
   }
   function renderScans() {
@@ -758,6 +816,26 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('missingRefs').textContent = unknown ? `This release also refers to ${unknown} record${unknown === 1 ? '' : 's'} that ${unknown === 1 ? "isn't" : "aren't"} in this project file. They're kept as they are.` : '';
     updateStatusHint();
     renderScans();
+    $('f-posted').value = str(c.postedAt); $('f-crowd').value = c.crowdSize == null ? '' : String(c.crowdSize);
+    $('noticeDays').innerHTML = arr(doc.shootDays).filter(d => d && d.id && d.date).sort((a, b) => str(a.date).localeCompare(str(b.date))).map(d => `<label><input type="checkbox" value="${esc(d.id)}"${arr(c.shootDayIds).includes(d.id) ? ' checked' : ''}> ${esc(fmtDate(d.date))}${d.title ? `: ${esc(d.title)}` : ''}</label>`).join('') || '<p class="hint">No shoot days in the project.</p>';
+    $('footRows').innerHTML = arr(c.footage).map(footRow).join('');
+    showType();
+  }
+  // Camera and sound cards, from the camera and sound reports, for saying which footage a release covers.
+  const cards = () => arr(doc.mediaReports).filter(r => r && r.id);
+  function footRow(f) {
+    const r = cards().find(x => x.id === f.mediaReportId);
+    return `<div class="foot-row"><select data-f="mediaReportId" aria-label="Card"><option value="">Card</option>${cards().map(x => `<option value="${esc(x.id)}"${x.id === f.mediaReportId ? ' selected' : ''}>${esc([x.kind === 'sound' ? 'Sound' : 'Camera', x.roll].filter(Boolean).join(' '))}</option>`).join('')}</select>
+      <select data-f="clipId" aria-label="Clip"><option value="">Every clip</option>${arr(r && r.clips).filter(k => k && k.id).map(k => `<option value="${esc(k.id)}"${k.id === f.clipId ? ' selected' : ''}>${esc(k.clip || k.subject || 'Clip')}</option>`).join('')}</select>
+      <input data-f="tcIn" type="text" placeholder="From 00:12:00" aria-label="Timecode from" value="${esc(f.tcIn)}"><input data-f="tcOut" type="text" placeholder="To 00:14:30" aria-label="Timecode to" value="${esc(f.tcOut)}">
+      <input data-f="note" type="text" placeholder="What it is" aria-label="Note" value="${esc(f.note)}"><button type="button" class="icon-btn" data-delfoot aria-label="Remove this footage">×</button></div>`;
+  }
+  const footText = f => { const r = cards().find(x => x.id === f.mediaReportId), k = r && arr(r.clips).find(x => x && x.id === f.clipId); return [r && r.roll, k && (k.clip || k.subject), [f.tcIn, f.tcOut].filter(Boolean).join(' to '), f.note].filter(Boolean).join(' '); };
+  function showType() {
+    const n = /crowd notice/i.test($('f-type').value);
+    $('noticeGroup').hidden = !n;
+    $('f-signedDate').previousElementSibling.textContent = n ? 'Date posted' : 'Date signed';
+    for (const o of $('f-status').options) o.textContent = n ? ({ pending: 'Not posted yet', signed: 'Posted', declined: 'Taken down' })[o.value] || o.textContent : (STATUSES.find(x => x.value === o.value) || {}).label || o.textContent;
   }
   function openEditor(id, preset) {
     const existing = id && doc.contracts.find(c => c.id === id);
@@ -998,11 +1076,49 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       <h2>All releases (${all.length})</h2>
       ${all.length ? `<table><thead><tr><th>Release</th><th>Covers</th><th>Status</th><th>Signed</th><th>Expires</th><th>Scan</th></tr></thead><tbody>${all.map(c => { const cv = coversText(c); return `<tr>
         <td>${esc(c.title)}<br><span class="small">${esc(typeLabel(c))}</span></td>
-        <td>${esc([...cv.people, ...cv.places].join(', '))}${cv.els.length ? `<br><span class="small">${esc(cv.els.join('; '))}</span>` : ''}</td>
+        <td>${esc([...cv.people, ...cv.places].join(', '))}${cv.els.length ? `<br><span class="small">${esc(cv.els.join('; '))}</span>` : ''}${arr(c.footage).length ? `<br><span class="small">Footage: ${esc(arr(c.footage).map(footText).join('; '))}</span>` : ''}${isNotice(c) && c.postedAt ? `<br><span class="small">Posted at ${esc(c.postedAt)}${c.crowdSize ? `, about ${esc(c.crowdSize)} people` : ''}</span>` : ''}</td>
         <td>${esc(stateLabel(c))}</td><td>${esc(fmtDate(c.signedDate))}</td><td>${esc(fmtDate(c.expirationDate))}</td><td>${scanCell(c)}</td></tr>`; }).join('')}</tbody></table>` : '<p>No releases logged.</p>'}
       <p class="note">Prepared with the Open Filmmaker Toolkit release tracker. Scan locations are relative to the project file. This report is a working record, not legal advice.</p>`;
   }
-  function renderReport() { $('report').innerHTML = reportHtml(); }
+  // Sample wording for blank forms. It isn't legal advice: the dialog says to replace it with wording an attorney approves.
+  const SAMPLE = {
+    appearance: 'I give {company} and the people it licenses permission to film and record me, and to use my name, likeness, voice and what I say, in the documentary now called "{title}" and in anything promoting it, in any media, anywhere, for as long as the film is shown. I understand I won\'t be paid for this unless we agree otherwise in writing.',
+    location: 'I am the owner, or I have the authority to act for the owner, of the property named below. I give {company} permission to enter it with its crew and equipment to film on the dates below, and to use what it films there in the documentary now called "{title}" and in anything promoting it, in any media, anywhere, for as long as the film is shown. {company} will leave the property as it found it.',
+    materials: 'I own the photographs, recordings or documents listed below, or I have the right to let others use them. I give {company} permission to copy them and use them in the documentary now called "{title}" and in anything promoting it, in any media, anywhere, for as long as the film is shown.',
+    group: 'By signing below, each of us gives {company} permission to film and record us, and to use our names, likenesses and voices, in the documentary now called "{title}" and in anything promoting it, in any media, anywhere, for as long as the film is shown.',
+    crowd: 'Filming in progress. {company} is filming here for the documentary now called "{title}". If you enter this area, you may appear in the film and in anything promoting it. If you don\'t want to be filmed, please tell a member of the crew.',
+  };
+  const FORM_TITLE = { appearance: 'Appearance release', location: 'Location release', materials: 'Materials release', group: 'Group release', crowd: 'Notice of filming' };
+  const forms = () => (doc.releaseForms && typeof doc.releaseForms === 'object' && !Array.isArray(doc.releaseForms) ? doc.releaseForms : {});
+  const fill = t => str(t).replace(/\{company\}/g, doc.project.company || doc.project.producer || 'the production').replace(/\{title\}/g, doc.project.title || 'untitled');
+  let blank = null;
+  function showBlank() {
+    const k = $('b-kind').value;
+    $('b-text').value = forms()[k] || SAMPLE[k];
+    $('b-countField').hidden = k !== 'group';
+    $('b-forField').hidden = k === 'group' || k === 'crowd';
+    const list = k === 'location' ? doc.locations : doc.people;
+    $('b-for').innerHTML = '<option value="">Leave it blank, to write in</option>' + list.filter(x => x && x.id).map(x => `<option value="${esc(x.id)}">${esc(x.name || 'Unnamed')}</option>`).join('');
+  }
+  function printBlank() {
+    const k = $('b-kind').value, text = $('b-text').value.trim();
+    if (!doc.releaseForms || typeof doc.releaseForms !== 'object') doc.releaseForms = {};
+    if (text && text !== SAMPLE[k]) doc.releaseForms[k] = text; else delete doc.releaseForms[k];
+    if (!Object.keys(doc.releaseForms).length) delete doc.releaseForms;
+    const who = $('b-for').value && (k === 'location' ? place($('b-for').value) : person($('b-for').value));
+    blank = { kind: k, text: fill(text || SAMPLE[k]), who: who ? (k === 'location' ? [who.name, addressOf(who)].filter(Boolean).join(', ') : who.name) : '', count: Math.max(1, Math.min(40, Math.round(Number($('b-count').value) || 15))) };
+    $('blankDialog').close();
+    changed();
+    renderReport(); window.print();
+  }
+  function blankHtml(b) {
+    const p = doc.project, line = label => `<div class="bf-line"><span class="bf-l">${esc(label)}</span><span class="bf-blank"></span></div>`;
+    const head = `<h1 class="bf-h">${esc(FORM_TITLE[b.kind])}</h1><p class="r-meta">${esc([p.title, p.company].filter(Boolean).join(' · '))}</p><p class="bf-text">${esc(b.text)}</p>`;
+    if (b.kind === 'crowd') return `<div class="bf bf-crowd"><h1 class="bf-h">${esc(FORM_TITLE.crowd)}</h1><p class="bf-big">${esc(b.text)}</p><p class="r-meta">${esc([p.company, p.producer && `Contact: ${p.producer}`].filter(Boolean).join(' · '))}</p></div>`;
+    if (b.kind === 'group') return `<div class="bf">${head}<table class="bf-t"><thead><tr><th>Printed name</th><th>Signature</th><th>Email or phone</th><th>Date</th></tr></thead><tbody>${'<tr><td></td><td></td><td></td><td></td></tr>'.repeat(b.count)}</tbody></table><p class="small">Anyone under 18 needs a parent or guardian to sign a release of their own.</p></div>`;
+    return `<div class="bf">${head}${b.kind === 'location' ? `${b.who ? `<p><b>Property:</b> ${esc(b.who)}</p>` : line('Property and address')}${line('Dates of filming')}` : b.who ? `<p><b>Name:</b> ${esc(b.who)}</p>` : line('Printed name')}${b.kind === 'materials' ? line('What it covers') : ''}${line('Signature')}${line('Date')}${line('Email or phone')}${b.kind === 'appearance' ? line('If under 18, a parent or guardian signs here') : ''}</div>`;
+  }
+  function renderReport() { $('report').innerHTML = blank ? blankHtml(blank) : reportHtml(); }
 
   function csvCell(v) {
     let s = v == null ? '' : String(v);
@@ -1230,7 +1346,17 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('editProjectBtn').onclick = openProjectDialog;
     $('filmTitle').onclick = openProjectDialog;
     $('csvBtn').onclick = exportCsv;
-    $('printBtn').onclick = () => { renderReport(); window.print(); };
+    $('printBtn').onclick = () => { blank = null; renderReport(); window.print(); };
+    $('blankBtn').onclick = () => { showBlank(); $('blankDialog').showModal(); };
+    $('b-kind').addEventListener('change', showBlank);
+    $('b-reset').onclick = () => { $('b-text').value = SAMPLE[$('b-kind').value]; };
+    $('b-cancel').onclick = () => $('blankDialog').close();
+    $('blankForm').addEventListener('submit', ev => { ev.preventDefault(); printBlank(); });
+    window.addEventListener('afterprint', () => { blank = null; });
+    $('f-type').addEventListener('change', showType);
+    $('addFootBtn').onclick = () => { $('footRows').insertAdjacentHTML('beforeend', footRow({})); $('footRows').lastElementChild.querySelector('select').focus(); };
+    $('footRows').addEventListener('click', ev => { const b = ev.target.closest('[data-delfoot]'); if (b) b.closest('.foot-row').remove(); });
+    $('footRows').addEventListener('change', ev => { const sel = ev.target.closest('[data-f="mediaReportId"]'); if (!sel) return; const row = sel.closest('.foot-row'); const f = {}; for (const i of row.querySelectorAll('[data-f]')) f[i.dataset.f] = i.value; f.clipId = ''; row.outerHTML = footRow(f); });
     window.addEventListener('beforeprint', renderReport);
     $('projectCsvBtn').onclick = () => $('projectCsvDialog').showModal();
     $('projectCsvCancel').onclick = () => $('projectCsvDialog').close();
@@ -1506,7 +1632,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const OFT_SLUG = (window.location.pathname.match(/tools\/([^/]+)\//) || [])[1] || '';
   const OFT_GUIDE = 'https://github.com/open-filmmaker-toolkit/toolkit/blob/main/docs/sharing-a-project.md';
   const OFT_HOURS = 4;
-  const OFT_KEYS = { project: 'Project details', people: 'People', locations: 'Locations', thirdPartyElements: 'Clearance log', contracts: 'Contracts and releases', assets: 'Files and stills', musicCueSheet: 'Music cue sheet', callSheets: 'Call sheets', credits: 'Credits', supers: 'Name supers', subjects: 'Subject tracker', sources: 'Research log', comps: 'Comps tracker', treatment: 'Treatment', pitchDeck: 'Pitch deck', grants: 'Grant calendar', narratives: 'Narrative library', budget: 'Budget', budgetFormats: 'Budget converter', financePlan: 'Finance plan', funders: 'Funder CRM', cashFlow: 'Cash flow', shootDays: 'Shooting calendar', script: 'Script', scenes: 'Script breakdown', characters: 'Cast', dayOutOfDays: 'Day-out-of-days', budgetLinks: 'Budget', shots: 'Shot list', interviews: 'Interviews', questionBank: 'Question bank', journal: 'Field journal', scouts: 'Location scouts', scoutChecklist: 'Scout checklist', gear: 'Gear list', trips: 'Travel sheet', riskPlans: 'Risk plans', security: 'Security checklist', mediaReports: 'Camera and sound reports', dailyReports: 'Daily reports', expenses: 'Expense log', festivals: 'Festival submissions', screenings: 'Screenings', pressOutlets: 'Press list', partners: 'Partner CRM', discussionGuide: 'Discussion guide', paperEdit: 'Paper edit', costReport: 'Budget-to-actuals', structure: 'Structure board', cuts: 'Cut tracker', clearanceReport: 'Clearance report', chainOfTitle: 'Chain of title', festivalStrategy: 'Festival strategy', pressNotes: 'Press notes', awards: 'Awards', socialPosts: 'Social posts', deliverables: 'Deliverables', qc: 'QC tracker', waterfall: 'Waterfall', revenueStatements: 'Revenue tracker', bookings: 'Bookings', theoryOfChange: 'Theory of change', screeningKit: 'Screening kit', impactReport: 'Impact report', finalCostReport: 'Final cost report', grantReports: 'Grant reports', contractArchive: 'Contract archive' };
+  const OFT_KEYS = { project: 'Project details', people: 'People', locations: 'Locations', thirdPartyElements: 'Clearance log', contracts: 'Contracts and releases', releaseForms: 'Release wording', assets: 'Files and stills', musicCueSheet: 'Music cue sheet', callSheets: 'Call sheets', credits: 'Credits', supers: 'Name supers', subjects: 'Subject tracker', sources: 'Research log', comps: 'Comps tracker', treatment: 'Treatment', pitchDeck: 'Pitch deck', grants: 'Grant calendar', narratives: 'Narrative library', budget: 'Budget', budgetFormats: 'Budget converter', financePlan: 'Finance plan', funders: 'Funder CRM', cashFlow: 'Cash flow', shootDays: 'Shooting calendar', script: 'Script', scenes: 'Script breakdown', characters: 'Cast', dayOutOfDays: 'Day-out-of-days', budgetLinks: 'Budget', shots: 'Shot list', interviews: 'Interviews', stringOuts: 'String-outs', questionBank: 'Question bank', journal: 'Field journal', scouts: 'Location scouts', scoutChecklist: 'Scout checklist', gear: 'Gear list', trips: 'Travel sheet', riskPlans: 'Risk plans', security: 'Security checklist', mediaReports: 'Camera and sound reports', dailyReports: 'Daily reports', expenses: 'Expense log', festivals: 'Festival submissions', screenings: 'Screenings', pressOutlets: 'Press list', partners: 'Partner CRM', discussionGuide: 'Discussion guide', paperEdit: 'Paper edit', costReport: 'Budget-to-actuals', structure: 'Structure board', cuts: 'Cut tracker', clearanceReport: 'Clearance report', chainOfTitle: 'Chain of title', festivalStrategy: 'Festival strategy', pressNotes: 'Press notes', awards: 'Awards', socialPosts: 'Social posts', deliverables: 'Deliverables', qc: 'QC tracker', waterfall: 'Waterfall', revenueStatements: 'Revenue tracker', bookings: 'Bookings', theoryOfChange: 'Theory of change', screeningKit: 'Screening kit', impactReport: 'Impact report', finalCostReport: 'Final cost report', grantReports: 'Grant reports', contractArchive: 'Contract archive' };
   const oftStore = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch { /* storage off */ } } };
   const oftMe = () => (oftStore.get('oft-user-name') || '').trim();
   const oftEsc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);

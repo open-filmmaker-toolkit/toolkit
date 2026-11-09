@@ -223,6 +223,16 @@ pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; b
   .report .r-sw { width: 14pt; }
   .report .r-sw i, .report .r-legend i { display: inline-block; width: 8pt; height: 8pt; margin-right: 2pt; border: 0.5pt solid #000000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .report .r-legend span { margin-right: 10pt; font-size: 9pt; }
+  .report .ic-sheet { display: grid; grid-template-columns: 5in; justify-content: center; gap: 0.25in 0; }
+  .report .ic { box-sizing: border-box; width: 5in; height: 3in; padding: 0.18in 0.22in; border: 0.75pt dashed #777777; break-inside: avoid; page-break-inside: avoid; overflow: hidden; display: flex; flex-direction: column; gap: 5pt; }
+  .report .ic:nth-child(3n) { break-after: page; page-break-after: always; }
+  .report .ic-top { display: flex; gap: 8pt; align-items: baseline; font-size: 8.5pt; color: #333333; }
+  .report .ic-n { font: 700 12pt/1 var(--serif); color: #000000; }
+  .report .ic-where { flex: 1; }
+  .report .ic-title { margin: 0; font: 700 15pt/1.2 var(--serif); }
+  .report .ic-sum { margin: 0; font-size: 10.5pt; line-height: 1.4; }
+  .report .ic-threads { margin-top: auto; display: flex; flex-wrap: wrap; gap: 4pt 10pt; font-size: 8.5pt; }
+  .report .ic-threads i { display: inline-block; width: 8pt; height: 8pt; margin-right: 3pt; border: 0.5pt solid #000000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
 .skip-link { position: absolute; left: 12px; top: -80px; z-index: 1000; padding: 8px 14px; border: 2px solid var(--focus, #2f6fdb); border-radius: 6px; background: var(--sheet, #ffffff); color: var(--ink, #1a2130); font-weight: 600; text-decoration: none; }
 .skip-link:focus { top: 12px; }
@@ -276,6 +286,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <button type="button" class="btn" id="fromPeBtn">Cards from the paper edit</button>
         <button type="button" class="btn" id="csvBtn">Export CSV</button>
         <button type="button" class="btn" id="printBtn">Print the board</button>
+        <button type="button" class="btn" id="cardsBtn">Print index cards</button>
       </div>
       <div id="work">
         <p class="sumline" id="sumline"></p>
@@ -704,7 +715,17 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     download(csv, name, 'text/csv;charset=utf-8');
     toast(`Exported ${rows.length} card${rows.length === 1 ? '' : 's'} to ${name}`);
   }
+  let printCards = false;
+  // Index cards to cut out and pin up: three to a page, each 5 by 3 inches, in board order, with cut lines.
+  function cardsHtml() {
+    const list = ordered();
+    return `<div class="ic-sheet">${list.map((x, i) => { const ts = arr(x.c.threadIds).map(thread).filter(Boolean);
+      return `<div class="ic"><div class="ic-top"><span class="ic-n">${i + 1}</span><span class="ic-where">${esc([x.act, x.seq].filter(Boolean).join(' · '))}</span>${secsOf(x.c) ? `<span class="ic-t">${esc(fmt(secsOf(x.c)))}</span>` : ''}</div>
+        <p class="ic-title">${esc(x.c.title || 'Untitled card')}</p>${x.c.summary ? `<p class="ic-sum">${esc(x.c.summary)}</p>` : ''}
+        ${ts.length ? `<div class="ic-threads">${ts.map(t => `<span><i style="background:${hex(t.color)}"></i>${esc(t.name)}</span>`).join('')}</div>` : ''}</div>`; }).join('')}</div>`;
+  }
   function renderReport() {
+    if (printCards) { $('report').innerHTML = cardsHtml(); return; }
     const c2 = c => `<tr><td class="r-sw">${arr(c.threadIds).map(thread).filter(Boolean).map(t => `<i style="background:${hex(t.color)}"></i>`).join('')}</td><td><b>${esc(c.title || '')}</b>${c.summary ? `<br>${esc(c.summary)}` : ''}${arr(c.threadIds).length ? `<br><span class="r-sub">${esc(arr(c.threadIds).map(thread).filter(Boolean).map(t => t.name).join(', '))}</span>` : ''}</td><td class="r-t">${secsOf(c) ? esc(fmt(secsOf(c))) : ''}</td></tr>`;
     const placed = cards().filter(c => actOf(c));
     $('report').innerHTML = `<h1>Structure</h1>
@@ -928,7 +949,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('saveBtn').onclick = saveFile;
     $('editProjectBtn').onclick = openProjectDialog;
     $('filmTitle').onclick = openProjectDialog;
-    $('printBtn').onclick = () => { renderReport(); window.print(); };
+    $('printBtn').onclick = () => { printCards = false; renderReport(); window.print(); };
+    $('cardsBtn').onclick = () => { printCards = true; renderReport(); window.print(); };
+    window.addEventListener('afterprint', () => { printCards = false; });
     window.addEventListener('beforeprint', renderReport);
     $('projectCsvBtn').onclick = () => $('projectCsvDialog').showModal();
     $('projectCsvCancel').onclick = () => $('projectCsvDialog').close();
@@ -1246,7 +1269,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const OFT_SLUG = (window.location.pathname.match(/tools\/([^/]+)\//) || [])[1] || '';
   const OFT_GUIDE = 'https://github.com/open-filmmaker-toolkit/toolkit/blob/main/docs/sharing-a-project.md';
   const OFT_HOURS = 4;
-  const OFT_KEYS = { project: 'Project details', people: 'People', locations: 'Locations', thirdPartyElements: 'Clearance log', contracts: 'Contracts and releases', assets: 'Files and stills', musicCueSheet: 'Music cue sheet', callSheets: 'Call sheets', credits: 'Credits', supers: 'Name supers', subjects: 'Subject tracker', sources: 'Research log', comps: 'Comps tracker', treatment: 'Treatment', pitchDeck: 'Pitch deck', grants: 'Grant calendar', narratives: 'Narrative library', budget: 'Budget', budgetFormats: 'Budget converter', financePlan: 'Finance plan', funders: 'Funder CRM', cashFlow: 'Cash flow', shootDays: 'Shooting calendar', script: 'Script', scenes: 'Script breakdown', characters: 'Cast', dayOutOfDays: 'Day-out-of-days', budgetLinks: 'Budget', shots: 'Shot list', interviews: 'Interviews', questionBank: 'Question bank', journal: 'Field journal', scouts: 'Location scouts', scoutChecklist: 'Scout checklist', gear: 'Gear list', trips: 'Travel sheet', riskPlans: 'Risk plans', security: 'Security checklist', mediaReports: 'Camera and sound reports', dailyReports: 'Daily reports', expenses: 'Expense log', festivals: 'Festival submissions', screenings: 'Screenings', pressOutlets: 'Press list', partners: 'Partner CRM', discussionGuide: 'Discussion guide', paperEdit: 'Paper edit', costReport: 'Budget-to-actuals', structure: 'Structure board', cuts: 'Cut tracker', clearanceReport: 'Clearance report', chainOfTitle: 'Chain of title', festivalStrategy: 'Festival strategy', pressNotes: 'Press notes', awards: 'Awards', socialPosts: 'Social posts', deliverables: 'Deliverables', qc: 'QC tracker', waterfall: 'Waterfall', revenueStatements: 'Revenue tracker', bookings: 'Bookings', theoryOfChange: 'Theory of change', screeningKit: 'Screening kit', impactReport: 'Impact report', finalCostReport: 'Final cost report', grantReports: 'Grant reports', contractArchive: 'Contract archive' };
+  const OFT_KEYS = { project: 'Project details', people: 'People', locations: 'Locations', thirdPartyElements: 'Clearance log', contracts: 'Contracts and releases', releaseForms: 'Release wording', assets: 'Files and stills', musicCueSheet: 'Music cue sheet', callSheets: 'Call sheets', credits: 'Credits', supers: 'Name supers', subjects: 'Subject tracker', sources: 'Research log', comps: 'Comps tracker', treatment: 'Treatment', pitchDeck: 'Pitch deck', grants: 'Grant calendar', narratives: 'Narrative library', budget: 'Budget', budgetFormats: 'Budget converter', financePlan: 'Finance plan', funders: 'Funder CRM', cashFlow: 'Cash flow', shootDays: 'Shooting calendar', script: 'Script', scenes: 'Script breakdown', characters: 'Cast', dayOutOfDays: 'Day-out-of-days', budgetLinks: 'Budget', shots: 'Shot list', interviews: 'Interviews', stringOuts: 'String-outs', questionBank: 'Question bank', journal: 'Field journal', scouts: 'Location scouts', scoutChecklist: 'Scout checklist', gear: 'Gear list', trips: 'Travel sheet', riskPlans: 'Risk plans', security: 'Security checklist', mediaReports: 'Camera and sound reports', dailyReports: 'Daily reports', expenses: 'Expense log', festivals: 'Festival submissions', screenings: 'Screenings', pressOutlets: 'Press list', partners: 'Partner CRM', discussionGuide: 'Discussion guide', paperEdit: 'Paper edit', costReport: 'Budget-to-actuals', structure: 'Structure board', cuts: 'Cut tracker', clearanceReport: 'Clearance report', chainOfTitle: 'Chain of title', festivalStrategy: 'Festival strategy', pressNotes: 'Press notes', awards: 'Awards', socialPosts: 'Social posts', deliverables: 'Deliverables', qc: 'QC tracker', waterfall: 'Waterfall', revenueStatements: 'Revenue tracker', bookings: 'Bookings', theoryOfChange: 'Theory of change', screeningKit: 'Screening kit', impactReport: 'Impact report', finalCostReport: 'Final cost report', grantReports: 'Grant reports', contractArchive: 'Contract archive' };
   const oftStore = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch { /* storage off */ } } };
   const oftMe = () => (oftStore.get('oft-user-name') || '').trim();
   const oftEsc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);

@@ -37,6 +37,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **Move cards** by dragging them within a sequence, into another sequence or act, or back to "Not on the board yet". On a phone or with a keyboard, use the arrows on each card, or pick the act and sequence when you open it.
 - **Color by story thread or character.** Name threads, give each a color and link a thread to a person to follow a character. A card shows the color of every thread it's in, and you can highlight one thread to see where it runs.
 - **Prints the board** by act and sequence, with each card's colors, summary, threads and running time. **Exports CSV.** Also exports project data: project details, people, locations, third-party elements, contracts, assets, music cue sheet details or call sheets as separate CSV files.
+- **Prints index cards** to cut out and pin up: one 5 × 3 inch card for each scene, three to a page with cut lines, numbered in board order, with its act and sequence, summary, running time and threads.
 
 The [cut version tracker](../cut-tracker/) ties screening notes to these cards.
 
@@ -63,7 +64,6 @@ It reads `people` and `paperEdit`. Cards can have `assetIds`, clips in `assets`.
 
 ## Not yet
 
-- Index-card print layout, to cut out and pin up
 - Several versions of the structure to compare
 
 ## License

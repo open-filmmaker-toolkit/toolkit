@@ -323,7 +323,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   <form id="editorForm" method="dialog" novalidate>
     <div class="dlg-head"><h2 id="editorTitle">Import a transcript</h2></div>
     <div class="dlg-body">
-      <div class="field" id="fileField"><label for="f-file">Transcript file</label><input id="f-file" type="file" accept=".srt,.vtt,.txt,.text,.md,text/plain,text/vtt"><p class="hint">SRT, VTT, or text with timestamps such as [00:01:23] at the start of each paragraph, as Buzz and noScribe can write them.</p></div>
+      <div class="field" id="fileField"><label for="f-file">Transcript file</label><input id="f-file" type="file" accept=".srt,.vtt,.txt,.text,.md,.docx,.html,.htm,text/plain,text/vtt,text/html"><p class="hint">SRT, VTT, a Word document, noScribe's HTML, or text with timestamps such as [00:01:23] at the start of each paragraph, as Buzz and noScribe can write them.</p></div>
       <p class="note" id="parseNote" hidden></p>
       <div class="field"><label for="f-name">Name</label><input id="f-name" type="text" placeholder="Daniel Okafor, May 12" autocomplete="off" required></div>
       <div class="two">
@@ -541,7 +541,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const timed = b => isNum(b.in) && isNum(b.out) && b.out > b.in;
 
   /* oft-shared:transcript begin. Copied from shared/transcript.js by .github/scripts/sync_shared.py; edit it there. */
-  // Reading transcripts from transcription apps: SRT, WebVTT, or text with timestamps.
+  // Reading transcripts from transcription apps: SRT, WebVTT, text with timestamps, Word documents
+  // and the HTML noScribe writes.
   // Shared by the paper edit and the interview log, which keep transcripts in paperEdit.transcripts.
   const oftTranscript = (() => {
     const str = v => (v == null ? '' : String(v));
@@ -601,14 +602,62 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       out.forEach((s, i) => { if (isNum(s.start) && !isNum(s.end)) { const n = out[i + 1]; s.end = n && isNum(n.start) && n.start > s.start ? n.start : s.start + Math.max(2, s.text.split(/\s+/).length / 2.5); } });
       return out;
     }
+    // HTML, such as noScribe's: segments it times with anchors named ts_<start ms>_<end ms>_<speaker>
+    // when there are any, otherwise each paragraph as a line of text, with its [hh:mm:ss] timestamp.
+    function parseHtml(html) {
+      const dom = new DOMParser().parseFromString(html, 'text/html');
+      const anchors = [...dom.querySelectorAll('a[name^="ts_"]')].map(a => ({ a, m: /^ts_(\d+)_(\d+)(?:_(.*))?$/.exec(a.getAttribute('name')) })).filter(x => x.m);
+      if (anchors.length) {
+        return anchors.map(({ a, m }) => {
+          const sp = speakerOf(clean(a.textContent));
+          return Object.assign({ start: +m[1] / 1000, end: +m[2] / 1000 }, m[3] && !sp.speaker ? { speaker: m[3] } : {}, sp);
+        }).filter(x => x.text);
+      }
+      const blocks = [...dom.body.querySelectorAll('p, li, h1, h2, h3')];
+      const lines = (blocks.length ? blocks.map(n => n.textContent) : str(dom.body.innerText || dom.body.textContent).split('\n')).map(clean).filter(Boolean);
+      return parseText(lines.join('\n\n'));
+    }
+    // A Word document's paragraphs, read from the zip in the browser: no library, using its own unzip.
+    async function docxText(buf) {
+      const b = new Uint8Array(buf), dv = new DataView(buf);
+      let e = -1;
+      for (let i = b.length - 22; i >= Math.max(0, b.length - 66000); i--) if (dv.getUint32(i, true) === 0x06054b50) { e = i; break; }
+      if (e < 0) throw new Error("isn't a Word document");
+      let p = dv.getUint32(e + 16, true);
+      const n = dv.getUint16(e + 10, true), dec = new TextDecoder();
+      for (let k = 0; k < n; k++) {
+        if (dv.getUint32(p, true) !== 0x02014b50) break;
+        const method = dv.getUint16(p + 10, true), size = dv.getUint32(p + 20, true), nl = dv.getUint16(p + 28, true), xl = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true), off = dv.getUint32(p + 42, true);
+        const fname = dec.decode(b.subarray(p + 46, p + 46 + nl));
+        p += 46 + nl + xl + cl;
+        if (fname !== 'word/document.xml') continue;
+        const start = off + 30 + dv.getUint16(off + 26, true) + dv.getUint16(off + 28, true), data = b.subarray(start, start + size);
+        let xml;
+        if (method === 0) xml = dec.decode(data);
+        else if (method === 8 && typeof DecompressionStream !== 'undefined') xml = await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text();
+        else throw new Error("can't be unpacked in this browser");
+        const doc = new DOMParser().parseFromString(xml, 'application/xml'), W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+        return [...doc.getElementsByTagNameNS(W, 'p')].map(par => [...par.getElementsByTagNameNS(W, '*')].map(x => (x.localName === 't' ? x.textContent : x.localName === 'tab' ? ' ' : x.localName === 'br' ? ' ' : '')).join('')).join('\n');
+      }
+      throw new Error("isn't a Word document");
+    }
+    // The text of a transcript file, whatever kind it is. Word documents come back as one paragraph a line.
+    async function read(file) {
+      if (/\.docx$/i.test(file.name) || file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') return docxText(await file.arrayBuffer());
+      return file.text();
+    }
     function parse(text, name, newId) {
+      if (/\.html?$/i.test(name) || /^\s*(<!doctype html|<html)/i.test(text)) {
+        const segs = parseHtml(text).map(s => { const o = { id: newId('seg'), text: s.text }; if (isNum(s.start)) { o.start = Math.round(s.start * 1000) / 1000; o.end = Math.round((isNum(s.end) && s.end > s.start ? s.end : s.start + 2) * 1000) / 1000; } if (s.speaker) o.speaker = s.speaker; return o; });
+        return { segments: segs, format: 'html', timed: segs.some(s => isNum(s.start)) };
+      }
       const isCue = /-->/.test(text) && (/^﻿?WEBVTT/.test(text) || /\.(srt|vtt)$/i.test(name) || /^\s*\d+\s*\n\s*[\d:,.]+\s*-->/m.test(text));
       const segs = (isCue ? parseCues(text) : parseText(text)).map(s => { const o = { id: newId('seg'), text: s.text }; if (isNum(s.start)) { o.start = Math.round(s.start * 1000) / 1000; o.end = Math.round(s.end * 1000) / 1000; } if (s.speaker) o.speaker = s.speaker; return o; });
       return { segments: segs, format: isCue ? (/WEBVTT/.test(text) ? 'vtt' : 'srt') : 'text', timed: segs.some(s => isNum(s.start)) };
     }
     // Seconds as hours, minutes and seconds, such as 00:03:12.
     const hms = s => { s = Math.max(0, Math.floor(s)); return [Math.floor(s / 3600), Math.floor(s / 60) % 60, s % 60].map(n => String(n).padStart(2, '0')).join(':'); };
-    return { parse, secs, hms };
+    return { parse, read, secs, hms };
   })();
   /* oft-shared:transcript end */
   const parseTranscript = (text, name) => oftTranscript.parse(text, name, newId);
@@ -827,7 +876,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   }
   async function readFile() {
     const f = $('f-file').files[0]; if (!f) return;
-    parsed = parseTranscript(await f.text(), f.name);
+    try { parsed = parseTranscript(await oftTranscript.read(f), f.name); } catch (err) { toast(`${f.name} ${err.message}.`, true); return; }
     const n = parsed.segments.length;
     $('parseNote').hidden = false;
     $('parseNote').className = `note${!n || !parsed.timed ? ' warn' : ''}`;
@@ -1197,7 +1246,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const OFT_SLUG = (window.location.pathname.match(/tools\/([^/]+)\//) || [])[1] || '';
   const OFT_GUIDE = 'https://github.com/open-filmmaker-toolkit/toolkit/blob/main/docs/sharing-a-project.md';
   const OFT_HOURS = 4;
-  const OFT_KEYS = { project: 'Project details', people: 'People', locations: 'Locations', thirdPartyElements: 'Clearance log', contracts: 'Contracts and releases', assets: 'Files and stills', musicCueSheet: 'Music cue sheet', callSheets: 'Call sheets', credits: 'Credits', supers: 'Name supers', subjects: 'Subject tracker', sources: 'Research log', comps: 'Comps tracker', treatment: 'Treatment', pitchDeck: 'Pitch deck', grants: 'Grant calendar', narratives: 'Narrative library', budget: 'Budget', budgetFormats: 'Budget converter', financePlan: 'Finance plan', funders: 'Funder CRM', cashFlow: 'Cash flow', shootDays: 'Shooting calendar', script: 'Script', scenes: 'Script breakdown', characters: 'Cast', dayOutOfDays: 'Day-out-of-days', budgetLinks: 'Budget', shots: 'Shot list', interviews: 'Interviews', questionBank: 'Question bank', journal: 'Field journal', scouts: 'Location scouts', scoutChecklist: 'Scout checklist', gear: 'Gear list', trips: 'Travel sheet', riskPlans: 'Risk plans', security: 'Security checklist', mediaReports: 'Camera and sound reports', dailyReports: 'Daily reports', expenses: 'Expense log', festivals: 'Festival submissions', screenings: 'Screenings', pressOutlets: 'Press list', partners: 'Partner CRM', discussionGuide: 'Discussion guide', paperEdit: 'Paper edit', costReport: 'Budget-to-actuals', structure: 'Structure board', cuts: 'Cut tracker', clearanceReport: 'Clearance report', chainOfTitle: 'Chain of title', festivalStrategy: 'Festival strategy', pressNotes: 'Press notes', awards: 'Awards', socialPosts: 'Social posts', deliverables: 'Deliverables', qc: 'QC tracker', waterfall: 'Waterfall', revenueStatements: 'Revenue tracker', bookings: 'Bookings', theoryOfChange: 'Theory of change', screeningKit: 'Screening kit', impactReport: 'Impact report', finalCostReport: 'Final cost report', grantReports: 'Grant reports', contractArchive: 'Contract archive' };
+  const OFT_KEYS = { project: 'Project details', people: 'People', locations: 'Locations', thirdPartyElements: 'Clearance log', contracts: 'Contracts and releases', releaseForms: 'Release wording', assets: 'Files and stills', musicCueSheet: 'Music cue sheet', callSheets: 'Call sheets', credits: 'Credits', supers: 'Name supers', subjects: 'Subject tracker', sources: 'Research log', comps: 'Comps tracker', treatment: 'Treatment', pitchDeck: 'Pitch deck', grants: 'Grant calendar', narratives: 'Narrative library', budget: 'Budget', budgetFormats: 'Budget converter', financePlan: 'Finance plan', funders: 'Funder CRM', cashFlow: 'Cash flow', shootDays: 'Shooting calendar', script: 'Script', scenes: 'Script breakdown', characters: 'Cast', dayOutOfDays: 'Day-out-of-days', budgetLinks: 'Budget', shots: 'Shot list', interviews: 'Interviews', stringOuts: 'String-outs', questionBank: 'Question bank', journal: 'Field journal', scouts: 'Location scouts', scoutChecklist: 'Scout checklist', gear: 'Gear list', trips: 'Travel sheet', riskPlans: 'Risk plans', security: 'Security checklist', mediaReports: 'Camera and sound reports', dailyReports: 'Daily reports', expenses: 'Expense log', festivals: 'Festival submissions', screenings: 'Screenings', pressOutlets: 'Press list', partners: 'Partner CRM', discussionGuide: 'Discussion guide', paperEdit: 'Paper edit', costReport: 'Budget-to-actuals', structure: 'Structure board', cuts: 'Cut tracker', clearanceReport: 'Clearance report', chainOfTitle: 'Chain of title', festivalStrategy: 'Festival strategy', pressNotes: 'Press notes', awards: 'Awards', socialPosts: 'Social posts', deliverables: 'Deliverables', qc: 'QC tracker', waterfall: 'Waterfall', revenueStatements: 'Revenue tracker', bookings: 'Bookings', theoryOfChange: 'Theory of change', screeningKit: 'Screening kit', impactReport: 'Impact report', finalCostReport: 'Final cost report', grantReports: 'Grant reports', contractArchive: 'Contract archive' };
   const oftStore = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch { /* storage off */ } } };
   const oftMe = () => (oftStore.get('oft-user-name') || '').trim();
   const oftEsc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);

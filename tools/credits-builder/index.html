@@ -190,6 +190,10 @@ pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; b
   .req { grid-template-columns: 14px minmax(0, 1fr); }
   .req .acts { grid-column: 2; justify-content: flex-start; }
 }
+.c-open { padding-bottom: 24px; margin-bottom: 24px; border-bottom: 1px dashed rgba(255,255,255,.35); }
+.c-label { margin: 0 0 12px; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.8; }
+.row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 600px) { .row-2 { grid-template-columns: 1fr; } }
 @media print {
   @page { size: portrait; margin: 16mm; }
   :root { color-scheme: light; }
@@ -358,6 +362,14 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <p class="hint">Rights holders of licensed, fair use and public domain archival material, artwork and quotes in your clearance log.</p>
         <div class="checks" id="sourceList" role="group" aria-labelledby="sourcesHead"></div>
       </div>
+      <div class="group">
+        <h3>Where and how big</h3>
+        <div class="row-2">
+          <div class="field"><label for="f-place">Where it appears</label><select id="f-place"><option value="">End credits</option><option value="opening">Opening titles</option></select></div>
+          <div class="field"><label for="f-size">Size</label><select id="f-size"><option value="">Standard</option><option value="125">Larger, 125%</option><option value="150">Larger still, 150%</option><option value="200">Main title size, 200%</option></select></div>
+        </div>
+        <label class="check"><input type="checkbox" id="f-card"> On a card of its own</label>
+      </div>
     </div>
     <div class="dlg-foot">
       <button type="button" class="btn danger" id="deleteBtn">Remove from credits</button>
@@ -390,6 +402,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <textarea id="r-text" rows="3" placeholder="Footage courtesy of the Riverside County Historical Society"></textarea>
         <p class="hint">The credits are checked for this wording, ignoring capitals and punctuation.</p>
       </div>
+      <div class="row-2">
+        <div class="field"><label for="r-place">Where it must appear</label><select id="r-place"><option value="">Anywhere</option><option value="opening">In the opening titles</option><option value="end">In the end credits</option></select></div>
+        <div class="field"><label for="r-size">At least this size</label><select id="r-size"><option value="">Any size</option><option value="125">125% of standard</option><option value="150">150% of standard</option><option value="200">Main title size</option></select></div>
+      </div>
+      <label class="check"><input type="checkbox" id="r-card"> On a card of its own</label>
     </div>
     <div class="dlg-foot">
       <button type="button" class="btn danger" id="reqRemoveBtn">Remove requirement</button>
@@ -617,6 +634,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   function units() {
     const out = [];
     for (const e of entries()) {
+      const at = out.length;
       if (e.kind === 'heading') { if (str(e.text).trim()) out.push({ type: 'heading', entryId: e.id, text: str(e.text).trim() }); }
       else if (e.kind === 'text') { const lines = str(e.text).split('\n').map(l => l.trim()).filter(Boolean); if (lines.length) out.push({ type: 'text', entryId: e.id, lines }); }
       else if (e.kind === 'credit') { const names = entryNames(e); if (names.length || str(e.role).trim()) out.push({ type: 'credit', entryId: e.id, role: str(e.role).trim(), names }); }
@@ -633,6 +651,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         const names = sources().filter(s => !skip.has(s.key)).map(s => s.name);
         if (names.length) out.push({ type: 'credit', entryId: e.id, role: str(e.heading).trim() || 'Archival material courtesy of', names });
       }
+      if (e.placement === 'opening') for (const u of out.slice(at)) u.opening = true;
     }
     return out;
   }
@@ -640,6 +659,17 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
 
   // ---------- Required credits ----------
   const requirements = () => doc.contracts.filter(c => str(c.requiredCredit).trim());
+  const SIZE = { 125: '125% of standard', 150: '150% of standard', 200: 'main title size' };
+  // What's wrong with where a required credit sits or how big it is, once its wording is in the credits.
+  function placeProblems(c, unit) {
+    const e = unit && entries().find(x => x.id === unit.entryId);
+    if (!e) return [];
+    const out = [], where = e.placement === 'opening' ? 'opening' : 'end';
+    if (c.requiredPlacement && c.requiredPlacement !== where) out.push(`It's in the ${where === 'opening' ? 'opening titles' : 'end credits'}; the contract requires the ${c.requiredPlacement === 'opening' ? 'opening titles' : 'end credits'}.`);
+    if (Number(c.requiredSize) > (Number(e.size) || 100)) out.push(`It's ${e.size ? SIZE[e.size] || `${e.size}%` : 'standard size'}; the contract requires at least ${SIZE[c.requiredSize] || `${c.requiredSize}%`}.`);
+    if (c.requiredOwnCard && !e.ownCard) out.push('The contract requires a card of its own.');
+    return out;
+  }
   function metBy(c, list) {
     const want = norm(c.requiredCredit);
     if (!want) return null;
@@ -674,14 +704,15 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
 
   function renderRequirements(list) {
     const reqs = requirements();
-    const met = reqs.filter(c => metBy(c, list)).length;
-    $('reqCount').textContent = reqs.length ? `${met} of ${reqs.length} in the credits` : '';
+    const met = reqs.filter(c => { const u = metBy(c, list); return u && !placeProblems(c, u).length; }).length;
+    $('reqCount').textContent = reqs.length ? `${met} of ${reqs.length} in the credits as required` : '';
     $('reqs').innerHTML = reqs.length ? reqs.map(c => {
-      const ok = !!metBy(c, list);
-      return `<li class="req ${ok ? 'is-met' : 'is-missing'}">
+      const u = metBy(c, list), ok = !!u, probs = placeProblems(c, u);
+      const want = [c.requiredPlacement && (c.requiredPlacement === 'opening' ? 'opening titles' : 'end credits'), c.requiredSize && `at least ${SIZE[c.requiredSize] || `${c.requiredSize}%`}`, c.requiredOwnCard && 'its own card'].filter(Boolean).join(', ');
+      return `<li class="req ${ok && !probs.length ? 'is-met' : 'is-missing'}">
         <span class="dot" aria-hidden="true"></span>
-        <div><q>${esc(str(c.requiredCredit).trim())}</q><span class="sub">${esc(c.title || 'Untitled contract')}</span>
-          <span class="state">${ok ? 'In the credits' : 'Not in the credits yet'}</span></div>
+        <div><q>${esc(str(c.requiredCredit).trim())}</q><span class="sub">${esc(c.title || 'Untitled contract')}${want ? ` · ${esc(want)}` : ''}</span>
+          <span class="state">${!ok ? 'Not in the credits yet' : probs.length ? esc(`In the credits, but: ${probs.join(' ')}`) : 'In the credits'}</span></div>
         <div class="acts">${ok ? '' : `<button type="button" class="btn small" data-addreq="${esc(c.id)}">Add to credits</button>`}
           <button type="button" class="btn small" data-editreq="${esc(c.id)}" aria-label="Edit the requirement from ${esc(c.title || 'this contract')}">Edit</button></div>
       </li>`;
@@ -734,7 +765,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       const s = summary(e);
       return `<li class="entry is-${e.kind}" data-id="${esc(e.id)}">
         <span class="kind">${KIND_LABEL[e.kind]}</span>
-        <button type="button" class="what" data-edit="${esc(e.id)}">${esc(s.main)}${s.sub ? `<span class="sub">${esc(s.sub)}</span>` : ''}${s.warn ? `<span class="sub warn">${esc(s.warn)}</span>` : ''}</button>
+        <button type="button" class="what" data-edit="${esc(e.id)}">${esc(s.main)}${s.sub ? `<span class="sub">${esc(s.sub)}</span>` : ''}${e.placement === 'opening' || e.size || e.ownCard ? `<span class="sub">${esc([e.placement === 'opening' && 'Opening titles', e.size && `${e.size}%`, e.ownCard && 'Own card'].filter(Boolean).join(' · '))}</span>` : ''}${s.warn ? `<span class="sub warn">${esc(s.warn)}</span>` : ''}</button>
         <span class="move">
           <button type="button" class="icon-btn" data-up="${i}" aria-label="Move ${esc(s.main)} up"${i === 0 ? ' disabled' : ''}>↑</button>
           <button type="button" class="icon-btn" data-down="${i}" aria-label="Move ${esc(s.main)} down"${i === list.length - 1 ? ' disabled' : ''}>↓</button>
@@ -754,16 +785,18 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const title = doc.project.title;
     return (title ? `<p class="c-title">${esc(title)}</p>` : '') + list.map(u => unitHtml(u)).join('');
   }
-  function renderCrawl(list) {
-    $('crawl').innerHTML = list.length ? crawlHtml(list) : '<p class="c-empty">Your end crawl appears here as you add credits.</p>';
+  function renderCrawl(all) {
+    const open = all.filter(u => u.opening), list = all.filter(u => !u.opening);
+    $('crawl').innerHTML = (open.length ? `<div class="c-open"><p class="c-label">Opening titles</p>${open.map(u => unitHtml(u)).join('')}</div>` : '') + (list.length ? crawlHtml(list) : '<p class="c-empty">Your end crawl appears here as you add credits.</p>');
     const names = list.reduce((n, u) => n + (u.type === 'credit' ? u.names.length : 0), 0);
     $('crawlStats').textContent = list.length ? `${names} name${names === 1 ? '' : 's'}, ${list.filter(u => u.type === 'song').length} songs` : '';
   }
 
   // ---------- Text export ----------
   function crawlText(layout) {
-    const list = units();
+    const all = units(), open = all.filter(u => u.opening), list = all.filter(u => !u.opening);
     const out = [];
+    if (open.length) { out.push('OPENING TITLES', ''); for (const u of open) out.push(...(u.type === 'credit' ? [u.role, ...u.names].filter(Boolean) : u.type === 'heading' ? [u.text] : u.lines), ''); out.push('END CREDITS', ''); }
     const title = doc.project.title;
     if (title) out.push(title, '');
     for (const u of list) {
@@ -867,6 +900,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('f-names').value = arr(editing.names).join('\n');
     $('peopleList').innerHTML = peopleChecks(editing);
     $('f-heading').value = k === 'heading' ? str(editing.text) : '';
+    $('f-place').value = editing.placement === 'opening' ? 'opening' : '';
+    $('f-size').value = [125, 150, 200].includes(editing.size) ? String(editing.size) : '';
+    $('f-card').checked = !!editing.ownCard;
     $('f-text').value = k === 'text' ? str(editing.text) : '';
     $('f-musicHeading').value = k === 'music' ? str(editing.heading) : '';
     $('f-archivalHeading').value = k === 'archival' ? str(editing.heading) : '';
@@ -893,6 +929,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     else if (e.kind === 'text') e.text = $('f-text').value.replace(/\s+$/, '');
     else if (e.kind === 'music') { set('heading', $('f-musicHeading').value.trim()); e.excluded = unchecked('songList'); }
     else if (e.kind === 'archival') { set('heading', $('f-archivalHeading').value.trim()); e.excluded = unchecked('sourceList'); }
+    if ($('f-place').value) e.placement = $('f-place').value; else delete e.placement;
+    if ($('f-size').value) e.size = Number($('f-size').value); else delete e.size;
+    if ($('f-card').checked) e.ownCard = true; else delete e.ownCard;
     return e;
   }
   function saveEditor() {
@@ -989,6 +1028,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('r-contract').innerHTML = `<option value="">A new license or agreement</option>${opts.join('')}`;
     $('r-contract').value = c ? c.id : '';
     $('r-text').value = c ? str(c.requiredCredit) : '';
+    $('r-place').value = c && ['opening', 'end'].includes(c.requiredPlacement) ? c.requiredPlacement : '';
+    $('r-size').value = c && [125, 150, 200].includes(Number(c.requiredSize)) ? String(c.requiredSize) : '';
+    $('r-card').checked = !!(c && c.requiredOwnCard);
     $('r-title').value = '';
     $('r-element').innerHTML = `<option value="">None</option>${doc.thirdPartyElements.map(e => `<option value="${esc(e.id)}">${esc(str(e.description) || (e.music && e.music.title) || e.id)}</option>`).join('')}`;
     $('reqRemoveBtn').hidden = !c;
@@ -1025,13 +1067,16 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       if (old) delete old.requiredCredit;
     }
     c.requiredCredit = text;
+    if ($('r-place').value) c.requiredPlacement = $('r-place').value; else delete c.requiredPlacement;
+    if ($('r-size').value) c.requiredSize = Number($('r-size').value); else delete c.requiredSize;
+    if ($('r-card').checked) c.requiredOwnCard = true; else delete c.requiredOwnCard;
     $('reqDialog').close();
     changed();
     toast(metBy(c) ? 'Saved. That credit is already in the credits.' : 'Saved. It’s flagged until the credits include that wording.');
   }
   function removeRequirement() {
     const c = doc.contracts.find(x => x.id === reqContractId);
-    if (c) delete c.requiredCredit;
+    if (c) { delete c.requiredCredit; delete c.requiredPlacement; delete c.requiredSize; delete c.requiredOwnCard; }
     $('reqDialog').close();
     changed();
     toast('Removed the requirement. The contract itself is unchanged.');
@@ -1351,7 +1396,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const OFT_SLUG = (window.location.pathname.match(/tools\/([^/]+)\//) || [])[1] || '';
   const OFT_GUIDE = 'https://github.com/open-filmmaker-toolkit/toolkit/blob/main/docs/sharing-a-project.md';
   const OFT_HOURS = 4;
-  const OFT_KEYS = { project: 'Project details', people: 'People', locations: 'Locations', thirdPartyElements: 'Clearance log', contracts: 'Contracts and releases', assets: 'Files and stills', musicCueSheet: 'Music cue sheet', callSheets: 'Call sheets', credits: 'Credits', supers: 'Name supers', subjects: 'Subject tracker', sources: 'Research log', comps: 'Comps tracker', treatment: 'Treatment', pitchDeck: 'Pitch deck', grants: 'Grant calendar', narratives: 'Narrative library', budget: 'Budget', budgetFormats: 'Budget converter', financePlan: 'Finance plan', funders: 'Funder CRM', cashFlow: 'Cash flow', shootDays: 'Shooting calendar', script: 'Script', scenes: 'Script breakdown', characters: 'Cast', dayOutOfDays: 'Day-out-of-days', budgetLinks: 'Budget', shots: 'Shot list', interviews: 'Interviews', questionBank: 'Question bank', journal: 'Field journal', scouts: 'Location scouts', scoutChecklist: 'Scout checklist', gear: 'Gear list', trips: 'Travel sheet', riskPlans: 'Risk plans', security: 'Security checklist', mediaReports: 'Camera and sound reports', dailyReports: 'Daily reports', expenses: 'Expense log', festivals: 'Festival submissions', screenings: 'Screenings', pressOutlets: 'Press list', partners: 'Partner CRM', discussionGuide: 'Discussion guide', paperEdit: 'Paper edit', costReport: 'Budget-to-actuals', structure: 'Structure board', cuts: 'Cut tracker', clearanceReport: 'Clearance report', chainOfTitle: 'Chain of title', festivalStrategy: 'Festival strategy', pressNotes: 'Press notes', awards: 'Awards', socialPosts: 'Social posts', deliverables: 'Deliverables', qc: 'QC tracker', waterfall: 'Waterfall', revenueStatements: 'Revenue tracker', bookings: 'Bookings', theoryOfChange: 'Theory of change', screeningKit: 'Screening kit', impactReport: 'Impact report', finalCostReport: 'Final cost report', grantReports: 'Grant reports', contractArchive: 'Contract archive' };
+  const OFT_KEYS = { project: 'Project details', people: 'People', locations: 'Locations', thirdPartyElements: 'Clearance log', contracts: 'Contracts and releases', releaseForms: 'Release wording', assets: 'Files and stills', musicCueSheet: 'Music cue sheet', callSheets: 'Call sheets', credits: 'Credits', supers: 'Name supers', subjects: 'Subject tracker', sources: 'Research log', comps: 'Comps tracker', treatment: 'Treatment', pitchDeck: 'Pitch deck', grants: 'Grant calendar', narratives: 'Narrative library', budget: 'Budget', budgetFormats: 'Budget converter', financePlan: 'Finance plan', funders: 'Funder CRM', cashFlow: 'Cash flow', shootDays: 'Shooting calendar', script: 'Script', scenes: 'Script breakdown', characters: 'Cast', dayOutOfDays: 'Day-out-of-days', budgetLinks: 'Budget', shots: 'Shot list', interviews: 'Interviews', stringOuts: 'String-outs', questionBank: 'Question bank', journal: 'Field journal', scouts: 'Location scouts', scoutChecklist: 'Scout checklist', gear: 'Gear list', trips: 'Travel sheet', riskPlans: 'Risk plans', security: 'Security checklist', mediaReports: 'Camera and sound reports', dailyReports: 'Daily reports', expenses: 'Expense log', festivals: 'Festival submissions', screenings: 'Screenings', pressOutlets: 'Press list', partners: 'Partner CRM', discussionGuide: 'Discussion guide', paperEdit: 'Paper edit', costReport: 'Budget-to-actuals', structure: 'Structure board', cuts: 'Cut tracker', clearanceReport: 'Clearance report', chainOfTitle: 'Chain of title', festivalStrategy: 'Festival strategy', pressNotes: 'Press notes', awards: 'Awards', socialPosts: 'Social posts', deliverables: 'Deliverables', qc: 'QC tracker', waterfall: 'Waterfall', revenueStatements: 'Revenue tracker', bookings: 'Bookings', theoryOfChange: 'Theory of change', screeningKit: 'Screening kit', impactReport: 'Impact report', finalCostReport: 'Final cost report', grantReports: 'Grant reports', contractArchive: 'Contract archive' };
   const oftStore = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch { /* storage off */ } } };
   const oftMe = () => (oftStore.get('oft-user-name') || '').trim();
   const oftEsc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);

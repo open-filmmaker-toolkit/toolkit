@@ -35,9 +35,12 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 ## What it does
 
 - **Shows coverage.** Everyone on camera and every location filmed is listed like a sign-in sheet: signed (with the date), waiting for signature, expired, declined, or no release on file. The ones that still need a signed release come first. Click a line to open its release, or to start one if there's nothing on file.
-- **Logs releases.** Appearance, location, materials or other releases, each with a status (waiting for signature, signed or declined), the date signed, an optional expiry date, and notes.
+- **Logs releases.** Appearance, location, materials, group or other releases, each with a status (waiting for signature, signed or declined), the date signed, an optional expiry date, and notes.
 - **Links each release** to the people and locations in your project, and, for materials releases, to the photos, home movies or documents in your clearance log. Add a person or location without leaving the release.
 - **Attaches the signed copy** (see below).
+- **Says which footage a release covers,** when it covers only part of what you shot: a card from the [camera and sound reports](../camera-sound-reports/), a clip on it, timecodes and a note.
+- **Group releases and crowd notices.** A group release covers several people on one sign-in sheet. A crowd notice records where you posted a notice of filming, for how many people and on which shoot days. It's kept with the releases but doesn't count as anyone's own release.
+- **Prints blank forms** to sign: an appearance, location or materials release, a group sign-in sheet with as many lines as you need, or a crowd notice to post. Each starts with sample wording, which isn't legal advice: replace it with wording your attorney has approved, and the tool keeps yours for next time. Pick a person or place to fill in their name.
 - **Finds things.** Search, and filter by status or by releases with no scan attached.
 - **Prints a release report** for your E&O attorney: what still needs a signed release, everyone and everywhere on camera with their release, and every release with its scan.
 - **Exports releases (CSV),** one row per release. The blank [release log spreadsheet](../../templates/release-log-template.csv) has the same columns, and the [Word version](../../templates/release-log-template.docx) adds an on-camera list to fill in on set, for anyone who doesn't use the tool.
@@ -75,17 +78,15 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-Releases are entries in `contracts` whose `type` contains "release": `appearance release`, `location release`, `materials release` or `other release`. Each has a `title`, a `status` of `pending`, `signed` or `declined`, and optionally `signedDate`, `expirationDate` (YYYY-MM-DD), `notes`, and the `personIds`, `locationIds`, `thirdPartyElementIds` and `assetIds` it covers.
+Releases are entries in `contracts` whose `type` contains "release": `appearance release`, `location release`, `materials release`, `group release` or `other release`, and crowd notices, with `type` `crowd notice` and optional `postedAt`, `crowdSize` and `shootDayIds`. Each has a `title`, a `status` of `pending`, `signed` or `declined`, and optionally `signedDate`, `expirationDate` (YYYY-MM-DD), `notes`, and the `personIds`, `locationIds`, `thirdPartyElementIds` and `assetIds` it covers, and `footage` (each with an optional `mediaReportId`, `clipId`, `tcIn`, `tcOut` and `note`).
 
 Scans are entries in `assets` with `type` "release scan" and a `relativePath` relative to the project file. People and locations can carry `onCamera: true` or `false`. A materials release's link to clearance-log items is also recorded on each item as `contractIds`.
 
-Other contracts, such as music licenses, are kept as they are and don't appear in this tool. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
+Your own wording for blank forms is kept in `releaseForms`, by `appearance`, `location`, `materials`, `group` and `crowd`. Other contracts, such as music licenses, are kept as they are and don't appear in this tool. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
-- Blank release forms to print and sign
-- Linking a release to specific footage or timecodes
-- Group releases and crowd notices for a whole crowd at once
+- Signing releases on a phone or tablet
 
 ## License
 

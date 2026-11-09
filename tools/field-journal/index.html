@@ -123,6 +123,17 @@ dialog form { display: flex; flex-direction: column; height: 100%; max-height: i
 .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); max-width: calc(100vw - 32px); padding: 10px 16px; border-radius: 8px; background: var(--ink); color: var(--paper); font-size: 14px; box-shadow: 0 6px 24px rgba(10, 14, 22, 0.25); z-index: 10; }
 .toast.error { background: var(--bad); color: #ffffff; }
 .report { display: none; }
+.fmt-bar { display: flex; gap: 4px; margin-bottom: 4px; }
+.atts { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin-bottom: 6px; }
+.att { position: relative; margin: 0; border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; background: var(--paper); }
+.att img { display: block; width: 100%; aspect-ratio: 3 / 2; object-fit: cover; }
+.att input { width: 100%; border: 0; border-top: 1px solid var(--rule-soft); padding: 5px 8px; font-size: 13px; background: var(--sheet); color: var(--ink); }
+.att .icon-btn { position: absolute; top: 4px; right: 4px; background: var(--sheet); }
+.att.audio { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; padding: 6px 44px 6px 10px; font-size: 14px; }
+.att.audio audio { height: 32px; max-width: 100%; }
+.att .sub { display: block; font-size: 12.5px; color: var(--ink-2); }
+.icon-btn { width: 30px; height: 30px; padding: 0; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); color: var(--ink-2); cursor: pointer; font-size: 15px; line-height: 1; }
+.flag.tag { font-style: italic; }
 @media print {
   @page { size: portrait; margin: 16mm; }
   :root { color-scheme: light; }
@@ -134,7 +145,13 @@ dialog form { display: flex; flex-direction: column; height: 100%; max-height: i
   .report .r-meta { margin: 2pt 0 8pt; }
   .report .r-tags { margin: 0 0 3pt; font-size: 8.5pt; color: #333333; }
   .report .r-entry { break-inside: avoid; page-break-inside: avoid; }
-  .report .r-text { margin: 0; white-space: pre-wrap; }
+  .report .r-text p { margin: 0 0 5pt; }
+  .report .r-text ul { margin: 0 0 5pt 14pt; padding: 0; }
+  .report .r-text h3 { margin: 6pt 0 3pt; font-size: 10.5pt; }
+  .report .r-photos { display: grid; grid-template-columns: 1fr 1fr; gap: 6pt; margin: 6pt 0; }
+  .report .r-photos figure { margin: 0; break-inside: avoid; }
+  .report .r-photos img { width: 100%; height: 50mm; object-fit: cover; display: block; }
+  .report .r-photos figcaption { font-size: 8.5pt; }
   .report .r-note { margin-top: 14pt; font-size: 8pt; color: #333333; }
 }
 .skip-link { position: absolute; left: 12px; top: -80px; z-index: 1000; padding: 8px 14px; border: 2px solid var(--focus, #2f6fdb); border-radius: 6px; background: var(--sheet, #ffffff); color: var(--ink, #1a2130); font-weight: 600; text-decoration: none; }
@@ -192,6 +209,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <select id="fPerson" aria-label="Show entries about a person"></select>
         <select id="fLocation" aria-label="Show entries about a location"></select>
         <select id="fKind" aria-label="Show a kind of entry"></select>
+        <select id="fTag" aria-label="Show entries with a tag"></select>
       </div>
       <ol class="rows" id="rows" aria-labelledby="listHead"></ol>
       <p class="empty-line" id="noMatch" hidden>No entries match. Clear the search or the filters to see them all.</p>
@@ -220,7 +238,16 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <div class="field"><label for="f-kind">Kind</label><select id="f-kind"></select></div>
       </div>
       <div class="field"><label for="f-title">Title</label><input id="f-title" type="text" placeholder="The levee at dawn" autocomplete="off"></div>
-      <div class="field"><label for="f-text">Entry</label><textarea id="f-text" rows="9" placeholder="What happened, what you learned, what you want to try next"></textarea><p class="hint">Plain text. Markdown you type is kept as written in the export.</p></div>
+      <div class="field"><label for="f-text">Entry</label>
+        <div class="fmt-bar" role="toolbar" aria-label="Formatting"><button type="button" class="btn small" data-fmt="bold" aria-label="Bold"><b>B</b></button><button type="button" class="btn small" data-fmt="italic" aria-label="Italic"><i>I</i></button><button type="button" class="btn small" data-fmt="list">List</button><button type="button" class="btn small" data-fmt="heading">Heading</button></div>
+        <textarea id="f-text" rows="9" placeholder="What happened, what you learned, what you want to try next"></textarea><p class="hint">Bold, italic, lists and headings are kept as Markdown, so the export reads the same, and they print formatted.</p></div>
+      <div class="field"><label for="f-tags">Tags of your own</label><input id="f-tags" type="text" list="tagList" placeholder="weather, access, b-roll ideas" autocomplete="off"><datalist id="tagList"></datalist><p class="hint">Separate them with commas.</p></div>
+      <div class="group">
+        <h3 id="attHead">Photos and audio notes</h3>
+        <p class="hint">Photos are resized and kept in the project file. Short audio notes are kept in it too; longer ones are linked from a journal folder next to your project file, so the file stays small.</p>
+        <div class="atts" id="atts" role="group" aria-labelledby="attHead"></div>
+        <div><button type="button" class="btn small" id="addPhotoBtn">Add photos</button> <button type="button" class="btn small" id="addAudioBtn">Add an audio note</button></div>
+      </div>
       <div id="oftLinks"></div>
       <div class="field" id="sheetField"><label for="f-sheet">Shoot day</label><select id="f-sheet"></select><p class="hint">A call sheet from the project. Picking one fills in the date if it's empty.</p></div>
       <div class="group">
@@ -241,6 +268,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   </form>
 </dialog>
 
+<input type="file" id="photoInput" accept="image/*" multiple hidden>
+<input type="file" id="audioInput" accept="audio/*" hidden>
 <dialog class="modal" id="projectDialog" aria-labelledby="projectDialogTitle">
   <form id="projectForm" method="dialog">
     <div class="dlg-head"><h2 id="projectDialogTitle">Film details</h2></div>
@@ -323,7 +352,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   let dirty = false;
   let editing = null;
   let isNew = false;
-  const finder = { q: '', person: '', location: '', kind: '' };
+  const finder = { q: '', person: '', location: '', kind: '', tag: '' };
 
   function blankDoc() {
     return { format: FORMAT, formatVersion: FORMAT_VERSION, project: { title: '', company: '', producer: '', frameRate: 24, currency: 'USD' }, people: [], locations: [], journal: [] };
@@ -351,6 +380,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     if (!Array.isArray(d.people)) d.people = [];
     if (!Array.isArray(d.locations)) d.locations = [];
     if (!Array.isArray(d.journal)) d.journal = [];
+    if (!Array.isArray(d.assets)) d.assets = [];
     d.journal = d.journal.filter(x => x && typeof x === 'object');
     for (const e of d.journal) if (!e.id) e.id = newId('journal');
     d.format = FORMAT;
@@ -372,12 +402,30 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const sortedNewest = list => list.map((e, i) => [e, i]).sort((a, b) => str(b[0].date || '').localeCompare(str(a[0].date || '')) || b[1] - a[1]).map(x => x[0]);
   const sortedOldest = list => list.map((e, i) => [e, i]).sort((a, b) => str(a[0].date || '9999').localeCompare(str(b[0].date || '9999')) || a[1] - b[1]).map(x => x[0]);
 
+  const tagsOf = e => arr(e.tags).map(str).filter(Boolean);
+  const asset = id => doc.assets.find(a => a && a.id === id);
+  const attsOf = e => arr(e.assetIds).map(asset).filter(a => a && /^journal (photo|audio)$/.test(a.type));
+  // The few kinds of formatting the toolbar adds, drawn as HTML for print. Everything is escaped first.
+  function richHtml(t) {
+    const inline = x => esc(x).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/(^|[^*])\*(?!\s)(.+?)\*(?!\*)/g, '$1<em>$2</em>');
+    const out = []; let list = null;
+    for (const line of str(t).split('\n')) {
+      const li = /^\s*[-*]\s+(.*)$/.exec(line), h = /^#{1,3}\s+(.*)$/.exec(line);
+      if (li) { if (!list) { list = []; } list.push(`<li>${inline(li[1])}</li>`); continue; }
+      if (list) { out.push(`<ul>${list.join('')}</ul>`); list = null; }
+      if (h) out.push(`<h3>${inline(h[1])}</h3>`);
+      else if (line.trim()) out.push(`<p>${inline(line)}</p>`);
+    }
+    if (list) out.push(`<ul>${list.join('')}</ul>`);
+    return out.join('');
+  }
+  const plain = t => str(t).replace(/^#{1,3}\s+/gm, '').replace(/^\s*[-*]\s+/gm, '• ').replace(/\*\*(.+?)\*\*/g, '$1').replace(/(^|[^*])\*(?!\s)(.+?)\*(?!\*)/g, '$1$2');
   function peopleNames(e) { return arr(e.personIds).map(id => (person(id) || {}).name).filter(Boolean); }
   function placeNames(e) { return arr(e.locationIds).map(id => (location(id) || {}).name).filter(Boolean); }
   // Everything a search can match: the text, the title, the tags and the shoot day.
   function haystack(e) {
     const s = e.callSheetId && sheet(e.callSheetId);
-    return norm([e.title, e.text, kindLabel(e.kind), e.date, peopleNames(e).join(' '), placeNames(e).join(' '), s && sheetLabel(s)].join(' '));
+    return norm([e.title, e.text, kindLabel(e.kind), e.date, peopleNames(e).join(' '), placeNames(e).join(' '), s && sheetLabel(s), tagsOf(e).join(' ')].join(' '));
   }
   function shown() {
     const words = norm(finder.q).split(' ').filter(Boolean);
@@ -385,6 +433,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       if (finder.person && !arr(e.personIds).includes(finder.person)) return false;
       if (finder.location && !arr(e.locationIds).includes(finder.location)) return false;
       if (finder.kind && e.kind !== finder.kind) return false;
+      if (finder.tag && !tagsOf(e).includes(finder.tag)) return false;
       if (!words.length) return true;
       const h = haystack(e);
       return words.every(w => h.includes(w));
@@ -410,10 +459,13 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     fillFinder('fPerson', 'All people', [...usedPeople].map(id => [id, (person(id) || {}).name || 'Removed person']), finder.person);
     fillFinder('fLocation', 'All locations', [...usedPlaces].map(id => [id, (location(id) || {}).name || 'Removed location']), finder.location);
     fillFinder('fKind', 'All kinds', KINDS, finder.kind);
-    finder.person = $('fPerson').value; finder.location = $('fLocation').value; finder.kind = $('fKind').value;
+    const tags = [...new Set(all.flatMap(tagsOf))].sort();
+    fillFinder('fTag', 'All tags', tags.map(t => [t, t]), finder.tag);
+    $('fTag').hidden = !tags.length;
+    finder.person = $('fPerson').value; finder.location = $('fLocation').value; finder.kind = $('fKind').value; finder.tag = $('fTag').value;
 
     const list = shown();
-    const filtering = !!(norm(finder.q) || finder.person || finder.location || finder.kind);
+    const filtering = !!(norm(finder.q) || finder.person || finder.location || finder.kind || finder.tag);
     $('count').textContent = all.length ? (filtering ? `${list.length} of ${all.length} entries` : `${all.length} entr${all.length === 1 ? 'y' : 'ies'}`) : '';
     $('empty').hidden = !!all.length;
     $('finders').hidden = !all.length;
@@ -428,7 +480,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       else if (e.callSheetId) flags.push('<span class="flag problem">Its call sheet is no longer in the project</span>');
       for (const id of arr(e.personIds)) flags.push(person(id) ? `<span class="flag">${esc(person(id).name || 'Unnamed')}</span>` : '<span class="flag problem">A person is no longer in the project</span>');
       for (const id of arr(e.locationIds)) flags.push(location(id) ? `<span class="flag">${esc(location(id).name || 'Unnamed')}</span>` : '<span class="flag problem">A location is no longer in the project</span>');
-      const body = bodyOf(e).replace(/\s+/g, ' ').trim();
+      for (const t of tagsOf(e)) flags.push(`<span class="flag tag">#${esc(t)}</span>`);
+      const at = attsOf(e), ph = at.filter(a => a.type === 'journal photo').length, au = at.length - ph;
+      if (at.length) flags.push(`<span class="flag linked">${[ph && `${ph} photo${ph === 1 ? '' : 's'}`, au && `${au} audio note${au === 1 ? '' : 's'}`].filter(Boolean).join(', ')}</span>`);
+      const body = plain(bodyOf(e)).replace(/\s+/g, ' ').trim();
       return `<li class="row" data-id="${esc(e.id)}">
         <span class="tc">${esc(e.date ? fmtDate(e.date) : 'No date')}</span>
         <button type="button" class="what" data-edit="${esc(e.id)}"><span class="nm">${esc(titleOf(e))}</span>${body ? `<span class="tt">${esc(body.length > 180 ? body.slice(0, 180) + '…' : body)}</span>` : ''}</button>
@@ -456,6 +511,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const missingPeople = arr(editing.personIds).filter(i => !person(i)), missingPlaces = arr(editing.locationIds).filter(i => !location(i));
     checkList($('peopleList'), [...peopleOrder().map(p => [p.id, p.name || 'Unnamed', arr(p.roles)[0]]), ...missingPeople.map(i => [i, 'Removed person', i])], arr(editing.personIds), 'person');
     checkList($('locList'), [...placesOrder().map(l => [l.id, l.name || 'Unnamed']), ...missingPlaces.map(i => [i, 'Removed location', i])], arr(editing.locationIds), 'location');
+    $('f-tags').value = tagsOf(editing).join(', ');
+    $('tagList').innerHTML = [...new Set(entries().flatMap(tagsOf))].map(t => `<option value="${esc(t)}">`).join('');
+    atts = attsOf(editing).map(a => ({ a: structuredClone(a), isNew: false }));
+    drawAtts();
     $('editorTitle').textContent = isNew ? 'Add an entry' : 'Journal entry';
     $('deleteBtn').hidden = isNew;
     oftLinks.fill(editing);
@@ -472,6 +531,16 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const pp = picked($('peopleList'), 'person'), ll = picked($('locList'), 'location');
     if (pp.length) e.personIds = pp; else delete e.personIds;
     if (ll.length) e.locationIds = ll; else delete e.locationIds;
+    const tags = [...new Set($('f-tags').value.split(',').map(t => t.trim()).filter(Boolean))];
+    if (tags.length) e.tags = tags; else delete e.tags;
+    // Attachments are assets this tool made; removing one from the entry removes its record.
+    const kept = new Set(atts.map(x => x.a.id));
+    for (const id of arr(e.assetIds)) { const a = asset(id); if (a && /^journal (photo|audio)$/.test(a.type) && !kept.has(id)) doc.assets = doc.assets.filter(x => x.id !== id); }
+    for (const x of atts) { if (x.isNew) doc.assets.push(x.a); else { const i = doc.assets.findIndex(a => a.id === x.a.id); if (i >= 0) doc.assets[i] = x.a; } }
+    const others = arr(e.assetIds).filter(id => !kept.has(id) && asset(id) && !/^journal (photo|audio)$/.test(asset(id).type));
+    e.assetIds = [...others, ...atts.map(x => x.a.id)];
+    if (!e.assetIds.length) delete e.assetIds;
+    atts = [];
     oftLinks.save(e);
     if (isNew) entries().push(e); else entries()[entries().findIndex(x => x.id === e.id)] = e;
     $('editor').close();
@@ -485,10 +554,50 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     toast(`Removed "${name}".`);
   }
 
+  // ---------- Photos and audio notes ----------
+  let atts = [];
+  const AUDIO_MAX = 3 * 1024 * 1024;
+  function readPhoto(file) {
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file), im = new Image();
+      im.onload = () => {
+        const k = Math.min(1, 1280 / Math.max(im.naturalWidth, im.naturalHeight)), w = Math.max(1, Math.round(im.naturalWidth * k)), h = Math.max(1, Math.round(im.naturalHeight * k));
+        const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'); g.fillStyle = '#ffffff'; g.fillRect(0, 0, w, h); g.drawImage(im, 0, 0, w, h);
+        URL.revokeObjectURL(url);
+        resolve({ id: newId('asset'), name: file.name, type: 'journal photo', mimeType: 'image/jpeg', width: w, height: h, data: c.toDataURL('image/jpeg', 0.8) });
+      };
+      im.onerror = () => { URL.revokeObjectURL(url); reject(new Error(`${file.name} isn't an image this browser can open`)); };
+      im.src = url;
+    });
+  }
+  const readData = file => new Promise((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(r.result); r.onerror = () => reject(r.error); r.readAsDataURL(file); });
+  async function addAudio(file) {
+    const a = { id: newId('asset'), name: file.name, type: 'journal audio', mimeType: file.type || 'audio/mpeg' };
+    if (file.size <= AUDIO_MAX) a.data = await readData(file);
+    else { a.relativePath = `journal/${file.name.replace(/[\\/:*?"<>|]+/g, '-')}`; toast(`${file.name} is too long to keep in the project file. It's linked as ${a.relativePath}: put it in a journal folder next to your project file.`); }
+    atts.push({ a, isNew: true }); drawAtts();
+  }
+  function drawAtts() {
+    $('atts').innerHTML = atts.length ? atts.map((x, i) => x.a.type === 'journal photo'
+      ? `<figure class="att"><img src="${x.a.data}" alt="${esc(x.a.caption || x.a.name)}"><input type="text" data-cap="${i}" value="${esc(x.a.caption)}" placeholder="Caption" aria-label="Caption for ${esc(x.a.name)}"><button type="button" class="icon-btn" data-delatt="${i}" aria-label="Remove ${esc(x.a.name)}">×</button></figure>`
+      : `<div class="att audio"><span class="nm">${esc(x.a.name)}${x.a.relativePath ? `<span class="sub">${esc(x.a.relativePath)}</span>` : ''}</span>${x.a.data ? `<audio controls preload="none" src="${x.a.data}" aria-label="Play ${esc(x.a.name)}"></audio>` : ''}<button type="button" class="icon-btn" data-delatt="${i}" aria-label="Remove ${esc(x.a.name)}">×</button></div>`).join('') : '<p class="empty-line">Nothing attached yet.</p>';
+  }
+  function format(kind) {
+    const t = $('f-text'), a = t.selectionStart, b = t.selectionEnd, v = t.value, sel = v.slice(a, b);
+    let out, cur;
+    if (kind === 'bold' || kind === 'italic') { const m = kind === 'bold' ? '**' : '*'; out = `${m}${sel || 'text'}${m}`; cur = [a + m.length, a + m.length + (sel || 'text').length]; }
+    else {
+      const start = v.lastIndexOf('\n', a - 1) + 1, mark = kind === 'list' ? '- ' : '## ';
+      const block = v.slice(start, b).split('\n').map(l => (l.startsWith(mark) ? l : mark + l)).join('\n');
+      t.value = v.slice(0, start) + block + v.slice(b); t.focus(); t.setSelectionRange(start + block.length, start + block.length); return;
+    }
+    t.value = v.slice(0, a) + out + v.slice(b); t.focus(); t.setSelectionRange(cur[0], cur[1]);
+  }
+
   // ---------- Markdown and print ----------
   function entryMeta(e) {
     const s = e.callSheetId && sheet(e.callSheetId);
-    return [kindLabel(e.kind), s && `Shoot day: ${sheetLabel(s)}`, peopleNames(e).length && `People: ${peopleNames(e).join(', ')}`, placeNames(e).length && `Locations: ${placeNames(e).join(', ')}`].filter(Boolean);
+    return [kindLabel(e.kind), s && `Shoot day: ${sheetLabel(s)}`, peopleNames(e).length && `People: ${peopleNames(e).join(', ')}`, placeNames(e).length && `Locations: ${placeNames(e).join(', ')}`, tagsOf(e).length && `Tags: ${tagsOf(e).join(', ')}`].filter(Boolean);
   }
   function markdown(list) {
     const lines = [`# Field journal${doc.project.title ? `: ${doc.project.title}` : ''}`, '', `${list.length} entr${list.length === 1 ? 'y' : 'ies'}, oldest first.`, ''];
@@ -497,6 +606,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       const meta = entryMeta(e);
       if (meta.length) lines.push(meta.map(m => `*${m}*`).join('  \n'), '');
       if (bodyOf(e)) lines.push(bodyOf(e), '');
+      for (const a of attsOf(e)) lines.push(`*${a.type === 'journal photo' ? 'Photo' : 'Audio note'}: ${a.caption || a.name}${a.relativePath ? ` (${a.relativePath})` : ''}*`, '');
     }
     return lines.join('\n').replace(/\n{3,}/g, '\n\n').replace(/\n+$/, '') + '\n';
   }
@@ -512,7 +622,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       <p class="r-meta">${esc(`${list.length} entr${list.length === 1 ? 'y' : 'ies'}`)}${norm(finder.q) || finder.person || finder.location || finder.kind ? ' · filtered' : ''}</p>
       ${list.map(e => `<div class="r-entry"><h2>${esc(e.date ? fmtDate(e.date) : 'No date')} · ${esc(titleOf(e))}</h2>
         ${entryMeta(e).length ? `<p class="r-tags">${esc(entryMeta(e).join(' · '))}</p>` : ''}
-        ${bodyOf(e) ? `<p class="r-text">${esc(bodyOf(e))}</p>` : ''}</div>`).join('')}`;
+        ${bodyOf(e) ? `<div class="r-text">${richHtml(bodyOf(e))}</div>` : ''}
+        ${attsOf(e).some(a => a.data && a.type === 'journal photo') ? `<div class="r-photos">${attsOf(e).filter(a => a.type === 'journal photo' && a.data).map(a => `<figure><img src="${a.data}" alt="">${a.caption ? `<figcaption>${esc(a.caption)}</figcaption>` : ''}</figure>`).join('')}</div>` : ''}
+        ${attsOf(e).some(a => a.type === 'journal audio') ? `<p class="r-tags">${esc(attsOf(e).filter(a => a.type === 'journal audio').map(a => `Audio note: ${a.name}${a.relativePath ? ` (${a.relativePath})` : ''}`).join(' · '))}</p>` : ''}</div>`).join('')}`;
   }
 
   // ---------- Project CSV ----------
@@ -743,12 +855,19 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('emptyAddBtn').onclick = () => openEditor(null);
     $('emptyOpenBtn').onclick = openFile;
     $('search').addEventListener('input', () => { finder.q = $('search').value; render(); });
-    for (const [id, key] of [['fPerson', 'person'], ['fLocation', 'location'], ['fKind', 'kind']]) $(id).addEventListener('change', () => { finder[key] = $(id).value; render(); });
+    for (const [id, key] of [['fPerson', 'person'], ['fLocation', 'location'], ['fKind', 'kind'], ['fTag', 'tag']]) $(id).addEventListener('change', () => { finder[key] = $(id).value; render(); });
     $('rows').addEventListener('click', ev => { const b = ev.target.closest('[data-edit]'); if (b) openEditor(b.dataset.edit); });
     $('f-sheet').addEventListener('change', () => { const s = sheet($('f-sheet').value); if (s && !$('f-date').value) $('f-date').value = s.date; });
     $('editorForm').addEventListener('submit', ev => { ev.preventDefault(); saveEditor(); });
     $('editorForm').addEventListener('input', ev => { if (ev.target.setCustomValidity) ev.target.setCustomValidity(''); });
-    $('editorCancel').onclick = () => $('editor').close();
+    $('editorCancel').onclick = () => { atts = []; $('editor').close(); };
+    $('addPhotoBtn').onclick = () => $('photoInput').click();
+    $('addAudioBtn').onclick = () => $('audioInput').click();
+    $('photoInput').addEventListener('change', async () => { for (const f of [...$('photoInput').files]) { try { atts.push({ a: await readPhoto(f), isNew: true }); } catch (err) { toast(err.message, true); } } $('photoInput').value = ''; drawAtts(); });
+    $('audioInput').addEventListener('change', async () => { const f = $('audioInput').files[0]; if (f) await addAudio(f); $('audioInput').value = ''; });
+    $('atts').addEventListener('click', ev => { const b = ev.target.closest('[data-delatt]'); if (b) { atts.splice(+b.dataset.delatt, 1); drawAtts(); } });
+    $('atts').addEventListener('input', ev => { const i = ev.target.closest('[data-cap]'); if (i) { const v = i.value.trim(); if (v) atts[+i.dataset.cap].a.caption = v; else delete atts[+i.dataset.cap].a.caption; } });
+    document.querySelector('.fmt-bar').addEventListener('click', ev => { const b = ev.target.closest('[data-fmt]'); if (b) format(b.dataset.fmt); });
     $('deleteBtn').onclick = removeEditing;
 
     document.addEventListener('keydown', ev => {
@@ -843,7 +962,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const OFT_SLUG = (window.location.pathname.match(/tools\/([^/]+)\//) || [])[1] || '';
   const OFT_GUIDE = 'https://github.com/open-filmmaker-toolkit/toolkit/blob/main/docs/sharing-a-project.md';
   const OFT_HOURS = 4;
-  const OFT_KEYS = { project: 'Project details', people: 'People', locations: 'Locations', thirdPartyElements: 'Clearance log', contracts: 'Contracts and releases', assets: 'Files and stills', musicCueSheet: 'Music cue sheet', callSheets: 'Call sheets', credits: 'Credits', supers: 'Name supers', subjects: 'Subject tracker', sources: 'Research log', comps: 'Comps tracker', treatment: 'Treatment', pitchDeck: 'Pitch deck', grants: 'Grant calendar', narratives: 'Narrative library', budget: 'Budget', budgetFormats: 'Budget converter', financePlan: 'Finance plan', funders: 'Funder CRM', cashFlow: 'Cash flow', shootDays: 'Shooting calendar', script: 'Script', scenes: 'Script breakdown', characters: 'Cast', dayOutOfDays: 'Day-out-of-days', budgetLinks: 'Budget', shots: 'Shot list', interviews: 'Interviews', questionBank: 'Question bank', journal: 'Field journal', scouts: 'Location scouts', scoutChecklist: 'Scout checklist', gear: 'Gear list', trips: 'Travel sheet', riskPlans: 'Risk plans', security: 'Security checklist', mediaReports: 'Camera and sound reports', dailyReports: 'Daily reports', expenses: 'Expense log', festivals: 'Festival submissions', screenings: 'Screenings', pressOutlets: 'Press list', partners: 'Partner CRM', discussionGuide: 'Discussion guide', paperEdit: 'Paper edit', costReport: 'Budget-to-actuals', structure: 'Structure board', cuts: 'Cut tracker', clearanceReport: 'Clearance report', chainOfTitle: 'Chain of title', festivalStrategy: 'Festival strategy', pressNotes: 'Press notes', awards: 'Awards', socialPosts: 'Social posts', deliverables: 'Deliverables', qc: 'QC tracker', waterfall: 'Waterfall', revenueStatements: 'Revenue tracker', bookings: 'Bookings', theoryOfChange: 'Theory of change', screeningKit: 'Screening kit', impactReport: 'Impact report', finalCostReport: 'Final cost report', grantReports: 'Grant reports', contractArchive: 'Contract archive' };
+  const OFT_KEYS = { project: 'Project details', people: 'People', locations: 'Locations', thirdPartyElements: 'Clearance log', contracts: 'Contracts and releases', releaseForms: 'Release wording', assets: 'Files and stills', musicCueSheet: 'Music cue sheet', callSheets: 'Call sheets', credits: 'Credits', supers: 'Name supers', subjects: 'Subject tracker', sources: 'Research log', comps: 'Comps tracker', treatment: 'Treatment', pitchDeck: 'Pitch deck', grants: 'Grant calendar', narratives: 'Narrative library', budget: 'Budget', budgetFormats: 'Budget converter', financePlan: 'Finance plan', funders: 'Funder CRM', cashFlow: 'Cash flow', shootDays: 'Shooting calendar', script: 'Script', scenes: 'Script breakdown', characters: 'Cast', dayOutOfDays: 'Day-out-of-days', budgetLinks: 'Budget', shots: 'Shot list', interviews: 'Interviews', stringOuts: 'String-outs', questionBank: 'Question bank', journal: 'Field journal', scouts: 'Location scouts', scoutChecklist: 'Scout checklist', gear: 'Gear list', trips: 'Travel sheet', riskPlans: 'Risk plans', security: 'Security checklist', mediaReports: 'Camera and sound reports', dailyReports: 'Daily reports', expenses: 'Expense log', festivals: 'Festival submissions', screenings: 'Screenings', pressOutlets: 'Press list', partners: 'Partner CRM', discussionGuide: 'Discussion guide', paperEdit: 'Paper edit', costReport: 'Budget-to-actuals', structure: 'Structure board', cuts: 'Cut tracker', clearanceReport: 'Clearance report', chainOfTitle: 'Chain of title', festivalStrategy: 'Festival strategy', pressNotes: 'Press notes', awards: 'Awards', socialPosts: 'Social posts', deliverables: 'Deliverables', qc: 'QC tracker', waterfall: 'Waterfall', revenueStatements: 'Revenue tracker', bookings: 'Bookings', theoryOfChange: 'Theory of change', screeningKit: 'Screening kit', impactReport: 'Impact report', finalCostReport: 'Final cost report', grantReports: 'Grant reports', contractArchive: 'Contract archive' };
   const oftStore = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch { /* storage off */ } } };
   const oftMe = () => (oftStore.get('oft-user-name') || '').trim();
   const oftEsc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);

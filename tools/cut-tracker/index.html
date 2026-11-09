@@ -198,6 +198,10 @@ pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; b
   .row { grid-template-columns: minmax(0, 1fr); }
   .flags { grid-column: 1; }
 }
+.starts { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px 14px; }
+.start { display: grid; grid-template-columns: minmax(0, 1fr) 96px; gap: 8px; align-items: center; font-size: 14px; }
+.start span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.start input { min-width: 0; padding: 5px 8px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); color: var(--ink); font: inherit; }
 @media print {
   @page { size: portrait; margin: 16mm; }
   :root { color-scheme: light; }
@@ -316,6 +320,12 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       <div class="group">
         <div class="list-head"><h3>Feedback screenings</h3><button type="button" class="btn small" data-add="screenings">Add a screening</button></div>
         <div class="items" id="screenings"></div>
+      </div>
+      <div class="group" id="startsGroup">
+        <h3 id="startsHead">Where scenes start in this cut</h3>
+        <p class="hint">When a scene moves between cuts, notes carried into this cut move with it. Type where each scene starts here, such as 0:14:20; scenes left blank aren't moved.</p>
+        <div class="starts" id="starts" role="group" aria-labelledby="startsHead"></div>
+        <p class="note" id="shiftNote" hidden><span id="shiftText"></span><button type="button" class="btn small" id="shiftBtn">Move them</button></p>
       </div>
       <div class="group">
         <div class="list-head"><h3>Notes</h3><button type="button" class="btn small" data-add="notes">Add a note</button></div>
@@ -524,6 +534,18 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const m = str(tc).trim().match(/^(?:(\d{1,2}):)?(\d{1,2}):(\d{2})(?:[:;.]\d{1,2})?$/);
     return m ? Number(m[1] || 0) * 3600 + Number(m[2]) * 60 + Number(m[3]) : null;
   }
+  const hms = n => { n = Math.max(0, Math.round(n)); return `${Math.floor(n / 3600)}:${String(Math.floor(n / 60) % 60).padStart(2, '0')}:${String(n % 60).padStart(2, '0')}`; };
+  const startOf = (c, cardId) => secs(c && c.sceneStarts && c.sceneStarts[cardId]);
+  // How far a scene moved from one cut to the next, when both say where it starts.
+  const moved = (from, to, cardId) => { const a = startOf(from, cardId), b = startOf(to, cardId); return a != null && b != null ? b - a : null; };
+  // A carried note's time, moved by as much as its scene moved.
+  function shifted(n, from, to) {
+    const d = n.cardId != null ? moved(from, to, n.cardId) : null;
+    if (d == null || !d) return null;
+    const out = {};
+    for (const k of ['tc', 'tcOut']) if (secs(n[k]) != null) out[k] = hms(secs(n[k]) + d);
+    return Object.keys(out).length ? out : null;
+  }
   const where = n => [n.tc && (n.tcOut ? `${n.tc} to ${n.tcOut}` : n.tc), card(n.cardId) && card(n.cardId).title, n.shot && `shot: ${n.shot}`].filter(Boolean).join(' · ');
   const screening = (c, id) => arr(c.screenings).find(s => s.id === id);
   const counts = c => Object.fromEntries(STATUS.map(s => [s.id, arr(c.notes).filter(n => n.status === s.id).length]));
@@ -611,23 +633,60 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     for (const k of ['screenings', 'notes']) editing[k] = arr(editing[k]).map(x => Object.assign({}, x));
     for (const [k, id] of [['name', 'f-name'], ['date', 'f-date'], ['runningTime', 'f-rt'], ['changes', 'f-changes'], ['exportFile', 'f-file']]) $(id).value = str(editing[k]);
     $('f-locked').checked = !!editing.locked;
-    drawLists(); showCarry();
+    drawLists(); showCarry(); drawStarts();
     $('editorTitle').textContent = isNew ? 'Add a cut' : editing.name || 'Cut';
     $('deleteBtn').hidden = isNew;
     $('editor').showModal();
     $(isNew ? 'f-name' : 'f-changes').focus();
   }
+  // Scene starts: for each structure card, where it starts in this cut. A new cut starts with the last cut's.
+  function drawStarts() {
+    const cs = cardsList();
+    $('startsGroup').hidden = !cs.length;
+    const prev = ordered().filter(x => x.id !== editing.id && (!editing.date || !x.date || x.date <= editing.date)).filter(x => x.sceneStarts).slice(-1)[0];
+    const own = editing.sceneStarts || (isNew && prev ? prev.sceneStarts : {}) || {};
+    $('starts').innerHTML = cs.map(c => `<label class="start"><span>${esc(c.title || 'Untitled scene')}</span><input type="text" data-start="${esc(c.id)}" value="${esc(own[c.id] || '')}" placeholder="0:00:00" autocomplete="off" aria-label="Where ${esc(c.title || 'this scene')} starts"></label>`).join('');
+    showShift();
+  }
+  function readStarts() {
+    const o = {};
+    for (const i of $('starts').querySelectorAll('[data-start]')) if (secs(i.value) != null) o[i.dataset.start] = hms(secs(i.value));
+    return o;
+  }
+  // Carried notes whose scene has moved since the cut they came from, and aren't at the new time yet.
+  function toShift() {
+    const here = Object.assign({}, editing, { sceneStarts: readStarts() });
+    return arr(editing.notes).map(n => {
+      const from = cutOf(n.carriedFromCutId), orig = from && arr(from.notes).find(x => x.id === n.carriedFromNoteId);
+      const t = orig && shifted(orig, from, here);
+      return t && (t.tc !== n.tc || (t.tcOut && t.tcOut !== n.tcOut)) ? { n, t } : null;
+    }).filter(Boolean);
+  }
+  function showShift() {
+    const list = toShift();
+    $('shiftNote').hidden = !list.length;
+    if (list.length) $('shiftText').textContent = `${list.length} carried note${list.length === 1 ? '' : 's'} ${list.length === 1 ? 'is' : 'are'} in a scene that moved.`;
+  }
+  function shiftNotes() {
+    const list = toShift();
+    for (const { n, t } of list) Object.assign(n, t);
+    drawList('notes'); showShift();
+    toast(`Moved ${list.length} note${list.length === 1 ? '' : 's'} with ${list.length === 1 ? 'its scene' : 'their scenes'}.`);
+  }
   // Copies earlier notes into this cut. The originals are marked carried when you save.
   function carryNotes() {
     const list = carriable(editing).filter(x => !carry.some(y => y.note.id === x.note.id));
+    let moves = 0;
     for (const x of list) {
       carry.push(x);
       const n = { id: newId('note'), status: 'open', carriedFromCutId: x.cut.id, carriedFromNoteId: x.note.id };
       for (const k of ['tc', 'tcOut', 'cardId', 'shot', 'from', 'text']) if (x.note[k]) n[k] = x.note[k];
+      const t = shifted(x.note, x.cut, Object.assign({}, editing, { sceneStarts: readStarts() }));
+      if (t) { Object.assign(n, t); moves++; }
       editing.notes.push(n);
     }
-    drawList('notes'); showCarry();
-    toast(`Carried ${list.length} note${list.length === 1 ? '' : 's'}. Times may have moved in this cut; check them.`);
+    drawList('notes'); showCarry(); showShift();
+    toast(`Carried ${list.length} note${list.length === 1 ? '' : 's'}${moves ? `, and moved ${moves} with ${moves === 1 ? 'its scene' : 'their scenes'}` : ''}. Check the times of notes in scenes without a start.`);
   }
   function saveEditor() {
     if (!$('f-name').value.trim()) { $('f-name').setCustomValidity('Name the cut.'); $('f-name').reportValidity(); return; }
@@ -637,6 +696,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     if (bad) { bad.setCustomValidity('Use hours, minutes and seconds, such as 0:12:30.'); bad.reportValidity(); return; }
     const c = editing;
     for (const [k, id] of [['name', 'f-name'], ['date', 'f-date'], ['runningTime', 'f-rt'], ['changes', 'f-changes'], ['exportFile', 'f-file']]) { const v = $(id).value.trim(); if (v) c[k] = v; else delete c[k]; }
+    const st = readStarts(); if (Object.keys(st).length) c.sceneStarts = st; else delete c.sceneStarts;
     const sc = cleanList(c.screenings); if (sc.length) c.screenings = sc; else delete c.screenings;
     const ids = new Set(arr(c.screenings).map(s => s.id));
     const ns = cleanList(c.notes, ['status', 'screeningId', 'carriedFromCutId', 'carriedFromNoteId']).map(n => { if (n.screeningId && !ids.has(n.screeningId)) delete n.screeningId; return n; });
@@ -921,6 +981,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('screenings').addEventListener('change', () => drawList('notes'));
     $('f-date').addEventListener('change', () => { editing.date = $('f-date').value; showCarry(); });
     $('carryBtn').onclick = carryNotes;
+    $('shiftBtn').onclick = shiftNotes;
+    $('starts').addEventListener('input', showShift);
     $('editorForm').addEventListener('submit', ev => { ev.preventDefault(); saveEditor(); });
     $('editorForm').addEventListener('input', ev => { if (ev.target.setCustomValidity) ev.target.setCustomValidity(''); });
     $('editorCancel').onclick = () => $('editor').close();
@@ -1473,7 +1535,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const OFT_SLUG = (window.location.pathname.match(/tools\/([^/]+)\//) || [])[1] || '';
   const OFT_GUIDE = 'https://github.com/open-filmmaker-toolkit/toolkit/blob/main/docs/sharing-a-project.md';
   const OFT_HOURS = 4;
-  const OFT_KEYS = { project: 'Project details', people: 'People', locations: 'Locations', thirdPartyElements: 'Clearance log', contracts: 'Contracts and releases', assets: 'Files and stills', musicCueSheet: 'Music cue sheet', callSheets: 'Call sheets', credits: 'Credits', supers: 'Name supers', subjects: 'Subject tracker', sources: 'Research log', comps: 'Comps tracker', treatment: 'Treatment', pitchDeck: 'Pitch deck', grants: 'Grant calendar', narratives: 'Narrative library', budget: 'Budget', budgetFormats: 'Budget converter', financePlan: 'Finance plan', funders: 'Funder CRM', cashFlow: 'Cash flow', shootDays: 'Shooting calendar', script: 'Script', scenes: 'Script breakdown', characters: 'Cast', dayOutOfDays: 'Day-out-of-days', budgetLinks: 'Budget', shots: 'Shot list', interviews: 'Interviews', questionBank: 'Question bank', journal: 'Field journal', scouts: 'Location scouts', scoutChecklist: 'Scout checklist', gear: 'Gear list', trips: 'Travel sheet', riskPlans: 'Risk plans', security: 'Security checklist', mediaReports: 'Camera and sound reports', dailyReports: 'Daily reports', expenses: 'Expense log', festivals: 'Festival submissions', screenings: 'Screenings', pressOutlets: 'Press list', partners: 'Partner CRM', discussionGuide: 'Discussion guide', paperEdit: 'Paper edit', costReport: 'Budget-to-actuals', structure: 'Structure board', cuts: 'Cut tracker', clearanceReport: 'Clearance report', chainOfTitle: 'Chain of title', festivalStrategy: 'Festival strategy', pressNotes: 'Press notes', awards: 'Awards', socialPosts: 'Social posts', deliverables: 'Deliverables', qc: 'QC tracker', waterfall: 'Waterfall', revenueStatements: 'Revenue tracker', bookings: 'Bookings', theoryOfChange: 'Theory of change', screeningKit: 'Screening kit', impactReport: 'Impact report', finalCostReport: 'Final cost report', grantReports: 'Grant reports', contractArchive: 'Contract archive' };
+  const OFT_KEYS = { project: 'Project details', people: 'People', locations: 'Locations', thirdPartyElements: 'Clearance log', contracts: 'Contracts and releases', releaseForms: 'Release wording', assets: 'Files and stills', musicCueSheet: 'Music cue sheet', callSheets: 'Call sheets', credits: 'Credits', supers: 'Name supers', subjects: 'Subject tracker', sources: 'Research log', comps: 'Comps tracker', treatment: 'Treatment', pitchDeck: 'Pitch deck', grants: 'Grant calendar', narratives: 'Narrative library', budget: 'Budget', budgetFormats: 'Budget converter', financePlan: 'Finance plan', funders: 'Funder CRM', cashFlow: 'Cash flow', shootDays: 'Shooting calendar', script: 'Script', scenes: 'Script breakdown', characters: 'Cast', dayOutOfDays: 'Day-out-of-days', budgetLinks: 'Budget', shots: 'Shot list', interviews: 'Interviews', stringOuts: 'String-outs', questionBank: 'Question bank', journal: 'Field journal', scouts: 'Location scouts', scoutChecklist: 'Scout checklist', gear: 'Gear list', trips: 'Travel sheet', riskPlans: 'Risk plans', security: 'Security checklist', mediaReports: 'Camera and sound reports', dailyReports: 'Daily reports', expenses: 'Expense log', festivals: 'Festival submissions', screenings: 'Screenings', pressOutlets: 'Press list', partners: 'Partner CRM', discussionGuide: 'Discussion guide', paperEdit: 'Paper edit', costReport: 'Budget-to-actuals', structure: 'Structure board', cuts: 'Cut tracker', clearanceReport: 'Clearance report', chainOfTitle: 'Chain of title', festivalStrategy: 'Festival strategy', pressNotes: 'Press notes', awards: 'Awards', socialPosts: 'Social posts', deliverables: 'Deliverables', qc: 'QC tracker', waterfall: 'Waterfall', revenueStatements: 'Revenue tracker', bookings: 'Bookings', theoryOfChange: 'Theory of change', screeningKit: 'Screening kit', impactReport: 'Impact report', finalCostReport: 'Final cost report', grantReports: 'Grant reports', contractArchive: 'Contract archive' };
   const oftStore = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch { /* storage off */ } } };
   const oftMe = () => (oftStore.get('oft-user-name') || '').trim();
   const oftEsc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);

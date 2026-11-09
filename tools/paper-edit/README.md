@@ -32,7 +32,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 
 ## What it does
 
-- **Imports transcripts** as SRT or VTT files, or as text with a timestamp such as `[00:01:23]` at the start of each paragraph, the way Buzz, noScribe and other transcription apps can write them. Speakers are read from VTT voice tags and from lines that start with a name, such as `Ruth Hammond:` or `SPEAKER_01:`. Text without timestamps can be imported too, but its bites can't go in the edit list.
+- **Imports transcripts** as SRT or VTT files, Word documents, noScribe's HTML (using the timing it keeps for each segment), or text with a timestamp such as `[00:01:23]` at the start of each paragraph, the way Buzz, noScribe and other transcription apps can write them. Word documents are unpacked in the browser, with nothing added to the tool. Speakers are read from VTT voice tags and from lines that start with a name, such as `Ruth Hammond:` or `SPEAKER_01:`. Text without timestamps can be imported too, but its bites can't go in the edit list.
 - **Links each transcript to its clip:** the clip name your editing app knows the media by, the reel, and the timecode the clip starts at, picked from the [footage log](../footage-log/) or typed in. Link it to the [interview](../interview-log/) and the person speaking, too.
 - **Pick bites** by clicking lines in a transcript; shift-click to pick a run. Lines that follow one another become one bite. Find words across the transcript, and see which lines are already in a scene.
 - **Arrange bites into scenes.** Name the scenes, move bites and scenes up and down, move a bite into the next or previous scene, trim a bite's words, adjust its source in and out, and add a note for the editor. Each scene shows its length and the paper edit its running time.
@@ -68,7 +68,6 @@ It reads `people`, `interviews` and the clips in `assets`. A bite brought in fro
 
 - Drop-frame timecode
 - FCPXML and AAF exports, and separate audio tracks in the edit list
-- Reading transcripts from Word documents or noScribe's HTML; export VTT or text from those apps instead
 
 ## License
 
