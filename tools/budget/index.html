@@ -1391,7 +1391,49 @@ input.from-global { background: var(--hover); }
   }
   /* oft-shared:money end */
   // Columns for importing from a spreadsheet, named as in this tool's template.
+  // Budgets exported from other budgeting programs as CSV: account rows with their detail lines under them, and
+  // columns such as Acct, Description, Amount, Units, X, Rate, Subtotal and Fringes. This turns them into this
+  // tool's columns, and lists anything it leaves out. The tool's own CSV and template are read as they are.
+  function otherBudget(text) {
+    const rows = oftImport.parse(text);
+    const low = r => r.map(c => str(c).trim().toLowerCase().replace(/\s+/g, ' '));
+    const hi = rows.findIndex(r => { const h = low(r); return h.includes('description') && h.some(c => /^(rate|amount|units?|subtotal|sub total|total|x)$/.test(c)); });
+    if (hi < 0 || low(rows[hi]).includes('account number')) return null;
+    const h = low(rows[hi]), col = re => h.findIndex(c => re.test(c));
+    const ci = { acct: col(/^(acct|acct\.? ?#|acct\.? no\.?|account|account ?#|account no\.?|account code|code|line ?#?|no\.?)$/), desc: col(/^description$/), qty: col(/^(amount|amt|qty|quantity|days|weeks|count)$/),
+      unit: col(/^(units?|unit type|per)$/), x: col(/^(x|mult|multiplier|times)$/), rate: col(/^rate$/), sub: col(/^(subtotal|sub total|line total|total)$/), fringe: col(/^(fringes?|fringe codes?|frng)$/), cur: col(/^(currency|curr?)$/) };
+    const cell = (r, k) => (ci[k] >= 0 ? str(r[ci[k]]).trim() : '');
+    const num = v => { const t = str(v).trim(); if (!t) return null; const n = oftImport.number(t.replace(/^\((.*)\)$/, '-$1')); return n; };
+    const out = [OFT_IMPORT.fields.map(f => f[0])], notes = [], fringes = new Set();
+    const have = new Set(arr((doc.budget || {}).fringes).map(f => str(f && f.name).toLowerCase()));
+    let section = '', acct = null, totals = 0;
+    rows.slice(hi + 1).forEach((r, k) => {
+      const n = hi + k + 2, code = cell(r, 'acct'), desc = cell(r, 'desc'), qty = num(cell(r, 'qty')), rate = num(cell(r, 'rate')), sub = num(cell(r, 'sub'));
+      const label = desc || code || r.filter(Boolean).join(' ');
+      if (!r.some(c => str(c).trim())) return;
+      if (/^(grand )?(sub ?)?totals?\b|^total |\btotals?$|^contingency|^(total )?fringes?$/i.test(desc) || /^total/i.test(code)) { totals++; return; }
+      if (!code && rate == null && qty == null && /above.the.line|\batl\b/i.test(desc)) { section = 'Above the line'; return; }
+      if (!code && rate == null && qty == null && /post.?production|\bpost\b/i.test(desc)) { section = 'Post-production'; return; }
+      if (!code && rate == null && qty == null && /below.the.line|\bbtl\b|production/i.test(desc)) { section = 'Production'; return; }
+      if (!code && rate == null && qty == null && /\bother\b/i.test(desc)) { section = SECTIONS.some(s => s.id === 'other') ? (SECTIONS.find(s => s.id === 'other') || {}).label : section; return; }
+      // An account: a number and a name, and no rate or quantity of its own.
+      if (code && rate == null && qty == null) { acct = { code, name: desc || `Account ${code}` }; return; }
+      if (rate == null && sub == null) { notes.push(`Row ${n}, "${label}": no amount or rate, so it's left out.`); return; }
+      const a = code && (!acct || acct.code !== code) ? { code, name: acct && code.startsWith(acct.code.replace(/0+$/, '')) ? acct.name : `Account ${code}` } : acct;
+      if (!a) { notes.push(`Row ${n}, "${label}": not under an account, so it's left out.`); return; }
+      const fr = cell(r, 'fringe').split(/\s*[,;/]\s*/).filter(Boolean);
+      for (const f of fr) if (!have.has(f.replace(/\s+[\d.]+%$/, '').toLowerCase())) fringes.add(f.replace(/\s+[\d.]+%$/, ''));
+      const line = { 'Account number': a.code, Account: a.name, Section: section, Description: desc || a.name, Quantity: rate == null ? 1 : qty == null ? 1 : qty, Unit: rate == null ? 'Allow' : cell(r, 'unit'),
+        Multiplier: cell(r, 'x'), Rate: rate == null ? sub : rate, Fringe: fr.join('; '), Currency: cell(r, 'cur') };
+      out.push(out[0].map(c => (line[c] == null ? '' : String(line[c]))));
+    });
+    if (totals) notes.push(`${totals} total row${totals === 1 ? '' : 's'}, which this tool works out itself.`);
+    if (fringes.size) notes.push(`Fringes this budget doesn't have yet: ${[...fringes].join(', ')}. They're added at the rate the file gives, or 0%, so check them under Fringes.`);
+    out.notes = notes;
+    return out.length > 1 || notes.length ? out : null;
+  }
   const OFT_IMPORT = { noun: 'line', nouns: 'lines', key: 'description',
+    read: (text, name) => otherBudget(text),
     skipRow: raw => !Object.values(raw).some(Boolean) || /^total$/i.test(raw['Account'] || '') || /percentage of the subtotal/i.test(raw['Section'] || ''),
     fields: [['Account number', 'code'], ['Account', 'account'], ['Section', 'section', 'enum', { values: SECTIONS }], ['Description', 'description'], ['Quantity', 'quantity', 'num'], ['Unit', 'unit'], ['Multiplier', 'multiplier', 'num'], ['Rate', 'rate', 'num'],
       ['Subtotal', '', 'skip'], ['Fringe', 'fringe'], ['Fringe amount', '', 'skip'], ['Total', '', 'skip'], ['Currency', 'currency']],
@@ -1400,7 +1442,7 @@ input.from-global { background: var(--hover); }
       let a = b.accounts.find(y => y && ((r.code && String(y.code) === String(r.code)) || (!r.code && y.name === r.account)));
       if (!a) { a = { id: x.newId('account'), code: r.code || '', name: r.account || 'Imported', section: r.section || 'production' }; b.accounts.push(a); }
       r.accountId = a.id;
-      if (r.fringe) { const ids = String(r.fringe).split(/\s*;\s*/).map(n => b.fringes.find(y => y && String(y.name).toLowerCase() === n.toLowerCase().replace(/\s+[\d.]+%$/, '').replace(/\s*\(.*\)$/, ''))).filter(Boolean).map(f => f.id); if (ids.length) r.fringeId = ids[0]; if (ids.length > 1) r.fringeIds = ids; }
+      if (r.fringe) { const ids = String(r.fringe).split(/\s*;\s*/).filter(Boolean).map(n => { const name = n.replace(/\s+[\d.]+%$/, '').replace(/\s*\(.*\)$/, '').trim(); let f = b.fringes.find(y => y && String(y.name).toLowerCase() === name.toLowerCase()); if (!f && name) { const pc = n.match(/([\d.]+)%/); f = { id: x.newId('fringe'), name, percent: pc ? Number(pc[1]) : 0 }; b.fringes.push(f); } return f; }).filter(Boolean).map(f => f.id); if (ids.length) r.fringeId = ids[0]; if (ids.length > 1) r.fringeIds = ids; }
       if (r.currency) { r.currency = String(r.currency).toUpperCase(); if (r.currency === oftMoney.home() || !/^[A-Z]{3}$/.test(r.currency)) delete r.currency; }
       ['code', 'account', 'section', 'fringe'].forEach(k => delete r[k]);
       b.lines.push(r);
@@ -1501,6 +1543,8 @@ input.from-global { background: var(--hover); }
         const keyField = S.fields.find(x => x[1] === S.key);
         const kv = S.key.split('.').reduce((o, k) => (o || {})[k], rec);
         if (S.key && (kv == null || str(kv).trim() === '') && !refs.some(x => x[0] === S.key && x[2].length)) { out.push({ n: n + 2, skip: true, problems: [`No ${keyField ? keyField[0].toLowerCase() : S.key}, so it's skipped`] }); return; }
+        // A tool can say when a row is one it already has, such as the same festival exported again.
+        if (S.same && S.same(rec, raw)) { out.push({ n: n + 2, skip: true, problems: [`${str(kv) || 'This row'} is already here, so it's skipped`] }); return; }
         out.push({ n: n + 2, rec, refs, raw, problems, label: str(kv) || (refs.find(x => x[0] === S.key) || [0, 0, []])[2].join(', ') });
       });
       return out;
@@ -1525,11 +1569,16 @@ input.from-global { background: var(--hover); }
       box.querySelectorAll('select').forEach(s => s.addEventListener('change', () => { state.map[+s.dataset.col] = s.value; box.dataset.ready = ''; preview(); }));
     }
     function load(name, text) {
-      const rows = parse(text);
+      // A tool can read its own text formats, such as a QC report, into rows under its column names.
+      const rows = (S.read && S.read(text, name)) || parse(text);
       if (!rows.length) { oftEl('oftImpSummary').textContent = `${name} is empty.`; return; }
       const head = rows[0].map(h => h.trim());
       state = { name, head, rows: rows.slice(1), map: head.map(guess) };
       oftEl('oftImpFile').textContent = `${name}: ${state.rows.length} row${state.rows.length === 1 ? '' : 's'}`;
+      // Anything a tool's own reader couldn't use is listed, so nothing is dropped without saying so.
+      const notes = Array.isArray(rows.notes) ? rows.notes : [];
+      oftEl('oftImpNoteList').innerHTML = notes.map(n => `<li>${esc(n)}</li>`).join('');
+      oftEl('oftImpNotes').hidden = !notes.length;
       oftEl('oftImpMap').dataset.ready = '';
       oftEl('oftImpStep').hidden = false;
       preview();
@@ -1563,6 +1612,7 @@ input.from-global { background: var(--hover); }
         dlg.id = 'oftImportDialog'; dlg.className = 'oft-dialog'; dlg.setAttribute('aria-labelledby', 'oftImpTitle');
         dlg.innerHTML = `<h2 id="oftImpTitle"></h2><p id="oftImpIntro"></p>
           <p class="oft-files"><span id="oftImpFile">No file chosen</span> <button type="button" class="btn" id="oftImpChoose">Choose a CSV file</button></p>
+          <div id="oftImpNotes" hidden><p>Left out of the file:</p><ul id="oftImpNoteList"></ul></div>
           <input type="file" id="oftImpInput" accept=".csv,.tsv,.txt,text/csv" hidden>
           <div id="oftImpStep" hidden><h3>Match the columns</h3><div class="oft-map" id="oftImpMap"></div><p id="oftImpSummary" aria-live="polite"></p><div id="oftImpRows"></div></div>
           <div class="oft-actions"><button type="button" class="btn" id="oftImpCancel">Cancel</button><button type="button" class="btn primary" id="oftImpAdd" disabled>Add</button></div>`;
@@ -1575,6 +1625,7 @@ input.from-global { background: var(--hover); }
       oftEl('oftImpTitle').textContent = `Import ${S.nouns} from a spreadsheet`;
       oftEl('oftImpIntro').textContent = `Choose a CSV file. Columns named as in this tool's spreadsheet template are matched for you; match any others below. Importing adds ${S.nouns} and never changes or removes what's already here.`;
       oftEl('oftImpFile').textContent = 'No file chosen';
+      oftEl('oftImpNotes').hidden = true;
       oftEl('oftImpStep').hidden = true;
       oftEl('oftImpAdd').disabled = true; oftEl('oftImpAdd').textContent = 'Add';
       dlg.showModal();
@@ -2066,6 +2117,12 @@ input.from-global { background: var(--hover); }
       imp.type = 'button'; imp.className = 'link-btn'; imp.id = 'oftImportBtn'; imp.textContent = 'Import from a spreadsheet';
       imp.onclick = () => oftImport.open(OFT_IMPORT);
       links.prepend(imp);
+    }
+    if (typeof oftVcard !== 'undefined' && typeof OFT_VCARD !== 'undefined') {
+      const vc = document.createElement('button');
+      vc.type = 'button'; vc.className = 'link-btn'; vc.id = 'oftVcardBtn'; vc.textContent = 'Import from an address book';
+      vc.onclick = () => oftVcard.open();
+      links.prepend(vc);
     }
     if (typeof oftCosts !== 'undefined' && typeof OFT_COSTS !== 'undefined') {
       const cb = document.createElement('button');

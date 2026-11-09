@@ -447,7 +447,7 @@ def test_credits_builder(browser, fake):
 TEMPLATE_EXPORTS = [('shot-list', 'shot-list-template.csv'), ('script-breakdown', 'script-breakdown-template.csv'), ('contract-archive', 'contract-archive-template.csv'), ('final-cost-report', 'final-cost-report-template.csv'), ('impact-report', 'impact-results-template.csv'), ('theory-of-change', 'theory-of-change-template.csv'), ('bookings', 'bookings-template.csv'), ('revenue-tracker', 'revenue-template.csv'), ('waterfall', 'waterfall-template.csv'), ('qc-tracker', 'qc-issues-template.csv'), ('deliverables', 'deliverables-template.csv'), ('rights-matrix', 'rights-matrix-template.csv'), ('stills-library', 'stills-caption-sheet-template.csv'), ('festival-strategy', 'festival-strategy-template.csv'), ('fair-use-log', 'fair-use-template.csv'), ('license-tracker', 'licenses-template.csv'), ('clearance-report', 'clearance-report-template.csv'), ('chain-of-title', 'chain-of-title-template.csv'), ('structure-board', 'structure-board-template.csv'), ('cut-tracker', 'cut-notes-template.csv'), ('budget-to-actuals', 'cost-report-template.csv'), ('footage-log', 'footage-log-template.csv'), ('paper-edit', 'paper-edit-template.csv'), ('press-list', 'press-list-template.csv'), ('partner-crm', 'partner-crm-template.csv'), ('camera-sound-reports', 'camera-and-sound-reports-template.csv'), ('interview-log', 'interview-moments-template.csv'), ('travel-sheet', 'travel-sheet-template.csv'), ('risk-plan', 'risk-assessment-template.csv'), ('security-checklist', 'security-checklist-template.csv'), ('gear-list', 'gear-list-template.csv'), ('coi-permit-tracker', 'certificates-and-permits-template.csv'), ('location-scout', 'location-scout-template.csv'), ('deal-memos', 'deal-memos-template.csv'), ('shooting-calendar', 'shooting-calendar-template.csv'), ('interview-prep', 'interview-questions-template.csv'), ('funder-crm', 'funder-crm-template.csv'), ('cash-flow', 'cash-flow-template.csv'), ('budget', 'budget-template.csv'), ('finance-plan', 'finance-plan-template.csv'), ('grant-calendar', 'grant-calendar-template.csv'), ('clearance-log', 'clearance-log-template.csv'), ('release-tracker', 'release-log-template.csv'),
                     ('music-cue-sheet', 'music-cue-sheet-template.csv'), ('name-supers', 'name-supers-template.csv'),
                     ('subject-tracker', 'subject-tracker-template.csv'), ('research-log', 'research-log-template.csv'),
-                    ('comps-tracker', 'comps-tracker-template.csv')]
+                    ('comps-tracker', 'comps-tracker-template.csv'), ('festival-submissions', 'festival-submissions-template.csv')]
 
 def test_name_supers(browser, fake):
     ctx, pg, errs = new_page(browser, 'name-supers', fake)
@@ -492,6 +492,54 @@ def test_name_supers(browser, fake):
     check(data.get('credits') == original['credits'] and data.get('callSheets') == original['callSheets'] and data['contracts'] == original['contracts'], "other tools' data is unchanged")
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
+
+VCF = ('BEGIN:VCARD\r\nVERSION:3.0\r\nPRODID:-//Apple Inc.//macOS//EN\r\nN:Whitfield;Dana;;;\r\nFN:Dana Whitfield\r\nORG:Riverbend Documentary Fund;\r\nitem1.EMAIL;type=INTERNET;type=pref:dana@example.org\r\nTEL;type=CELL;type=VOICE:+1 555 0100\r\nEND:VCARD\r\n'
+       'BEGIN:VCARD\r\nVERSION:3.0\r\nFN:Omar Haddad\r\nN:Haddad;Omar;;;\r\nORG:Prairie Arts Council\r\nTITLE:Grants manager\r\nEMAIL;TYPE=INTERNET;TYPE=WORK:omar@example.net\r\nNOTE:Met at the spring\r\n  forum\\, interested in rivers\r\nEND:VCARD\r\n'
+       'BEGIN:VCARD\r\nVERSION:2.1\r\nN;LANGUAGE=en-us:Lindqvist;Sofie\r\nFN:Sofie Lindqvist\r\nORG;CHARSET=UTF-8;ENCODING=QUOTED-PRINTABLE:=C3=85kerby Films\r\nEMAIL;PREF;INTERNET:sofie@example.com\r\nEND:VCARD\r\n'
+       'BEGIN:VCARD\r\nVERSION:3.0\r\nFN:Ruth Hammond\r\nEMAIL:ruth@example.org\r\nEND:VCARD\r\n')
+
+
+def test_vcard(browser, fake):
+    # Contacts from an address book, in the four tools that keep contacts.
+    for tool, key in [('funder-crm', 'funders'), ('partner-crm', 'partners'), ('press-list', 'pressOutlets'), ('subject-tracker', 'subjects')]:
+        original = json.loads(sample)
+        ctx, pg, errs = new_page(browser, tool, fake)
+        open_sample(pg, fake)
+        with pg.expect_file_chooser() as fc:
+            pg.click('#oftVcardBtn')
+        fc.value.set_files(files=[{'name': 'contacts.vcf', 'mimeType': 'text/vcard', 'buffer': VCF.encode()}]); pg.wait_for_selector('#oftVcardDialog[open]')
+        items = pg.inner_text('#oftVcardItems')
+        check('Åkerby Films' in items and 'Omar Haddad' in items and 'Grants manager' in items, '%s: reads Apple, Google and Outlook cards' % tool)
+        boxes = pg.locator('#oftVcardItems input')
+        if tool == 'funder-crm':
+            check('1 already in this project' in pg.inner_text('#oftVcardIntro') and not boxes.nth(0).is_checked() and 'Already in Riverbend Documentary Fund' in items and 'Adds Prairie Arts Council as a new funder' in items,
+                  'matches a contact already in the project, and leaves it unticked')
+            boxes.nth(0).check()
+        if tool == 'subject-tracker':
+            check(not boxes.nth(3).is_checked() and 'Already a subject as Ruth Hammond' in items, 'matches a subject by name')
+            boxes.nth(3).check()
+        n = pg.locator('#oftVcardItems input:checked').count()
+        check(pg.inner_text('#oftVcardAdd') == 'Add %d contacts' % n, '%s: the button counts the contacts' % tool)
+        pg.click('#oftVcardAdd'); pg.wait_for_timeout(200)
+        data = saved_project(pg, fake)
+        recs = data[key]
+        if tool == 'subject-tracker':
+            omar = next(x for x in recs if x['name'] == 'Omar Haddad')
+            ruth = next(x for x in recs if x['name'] == 'Ruth Hammond')
+            check(len(recs) == len(original[key]) + 3 and omar['about'] == 'Grants manager, Prairie Arts Council' and omar['status'] == 'researching' and omar['notes'] == 'Met at the spring forum, interested in rivers'
+                  and ruth['email'] == 'ruth@example.org' and ruth['about'] == next(x for x in original[key] if x['name'] == 'Ruth Hammond')['about'], 'subjects are added, and one already here only gets what it was missing')
+        else:
+            prairie = next(x for x in recs if x['name'] == 'Prairie Arts Council')
+            c = prairie['contacts'][0]
+            check(c['name'] == 'Omar Haddad' and c['email'] == 'omar@example.net' and c.get('beat' if tool == 'press-list' else 'title') == 'Grants manager' and prairie['type'] == 'other'
+                  and any(x['name'] == 'Åkerby Films' for x in recs) and any(x['name'] == 'Ruth Hammond' and x['contacts'][0]['email'] == 'ruth@example.org' for x in recs), '%s: contacts join their organization, added when new' % tool)
+            if tool == 'funder-crm':
+                riv = next(x for x in recs if x['id'] == 'funder-riverbend')
+                was = next(x for x in original[key] if x['id'] == 'funder-riverbend')
+                check(len(riv['contacts']) == len(was['contacts']) and riv['contacts'][0]['phone'] == '+1 555 0100' and riv['contacts'][0]['title'] == was['contacts'][0]['title'], 'a contact already here gets only what it was missing')
+        check(not errs, '%s: no page errors %s' % (tool, errs))
+        ctx.close()
+
 
 def test_subject_tracker(browser, fake):
     ctx, pg, errs = new_page(browser, 'subject-tracker', fake)
@@ -2642,6 +2690,62 @@ def test_daily_report(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
+def test_expense_statements(browser, fake):
+    # Bank and card statements: OFX, a bank CSV with debit and credit columns, and a card CSV with charges as positive numbers.
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'expense-log', fake)
+    open_sample(pg, fake)
+    ofx = ('OFXHEADER:100\nDATA:OFXSGML\n\n<OFX><CREDITCARDMSGSRSV1><CCSTMTTRNRS><CCSTMTRS><CURDEF>USD<CCACCTFROM><ACCTID>0000</CCACCTFROM><BANKTRANLIST>\n'
+           '<STMTTRN><TRNTYPE>DEBIT<DTPOSTED>20260511120000[-5:EST]<TRNAMT>-62.40<FITID>t1<NAME>ROADSIDE FUEL</STMTTRN>\n'
+           '<STMTTRN><TRNTYPE>DEBIT<DTPOSTED>20260512<TRNAMT>-120.00<FITID>t2<NAME>LUMBER YARD<MEMO>Set build</STMTTRN>\n'
+           '<STMTTRN><TRNTYPE>CREDIT<DTPOSTED>20260513<TRNAMT>30.00<FITID>t3<NAME>REFUND</STMTTRN>\n</BANKTRANLIST></CCSTMTRS></CCSTMTTRNRS></CREDITCARDMSGSRSV1></OFX>\n')
+    def load(name, text):
+        pg.set_input_files('#stmtInput', files=[{'name': name, 'mimeType': 'application/octet-stream', 'buffer': text.encode()}])
+        pg.wait_for_selector('#stmtDialog[open]')
+    pg.click('#stmtBtn')
+    load('card.qfx', ofx)
+    rows = pg.locator('#stmtRows tr')
+    check(pg.inner_text('#stmtSummary') == '3 transactions: 2 money out, 1 money in. 1 looks like one already in the log.', 'reads an OFX statement (%s)' % pg.inner_text('#stmtSummary'))
+    check(not rows.nth(0).locator('input').is_checked() and rows.nth(1).locator('input').is_checked() and rows.nth(2).locator('input').is_disabled() and 'Money in' in rows.nth(2).inner_text(),
+          'one already in the log starts unticked, and money in can\'t be added')
+    check(pg.input_value('#stmtMethod') == 'card' and pg.is_hidden('#stmtFlipBox'), 'a card statement is paid by card')
+    pg.click('#stmtAdd')
+    check(pg.is_visible('#stmtDialog'), 'asks for a budget account before adding')
+    pg.select_option('#stmtAccount', 'account-2200')
+    check(pg.inner_text('#stmtAdd') == 'Add 1 expense', 'the button says how many it adds')
+    pg.click('#stmtAdd'); pg.wait_for_timeout(200)
+    check(pg.locator('#rows tr').count() == len(original['expenses']) + 1, 'adds the picked transaction')
+
+    pg.click('#stmtBtn')
+    load('bank.csv', 'Account,Production checking\n\nDate,Description,Debit,Credit,Balance\n05/14/2026,Hardware store,45.10,,954.90\n05/15/2026,Deposit,,500.00,1454.90\n')
+    check(pg.inner_text('#stmtSummary') == '2 transactions: 1 money out, 1 money in.' and '$45.10' in rows.nth(0).inner_text(), 'reads a bank CSV with debit and credit columns, below the account details')
+    rows.nth(0).locator('select').select_option('account-2200')
+    pg.click('#stmtAdd'); pg.wait_for_timeout(200)
+
+    pg.click('#stmtBtn')
+    load('card.csv', 'Transaction Date,Description,Amount\n2026-05-16,Coffee for crew,18.50\n2026-05-17,Payment thank you,-200.00\n2026-05-18,Tape and batteries,32.00\n')
+    check(pg.is_visible('#stmtFlipBox') and pg.is_checked('#stmtFlip') and rows.nth(0).locator('input').is_checked() and rows.nth(1).locator('input').is_disabled(),
+          'works out that a card CSV lists charges as positive numbers')
+    pg.uncheck('#stmtFlip')
+    check(rows.nth(0).locator('input').is_disabled() and '$200.00' in rows.nth(1).inner_text(), 'the sign can be switched')
+    pg.check('#stmtFlip')
+    rows.nth(2).locator('input').uncheck()
+    pg.select_option('#stmtAccount', 'account-2200')
+    pg.click('#stmtAdd'); pg.wait_for_timeout(200)
+
+    pg.click('#stmtBtn')
+    load('card.qfx', ofx)
+    check('2 look like ones already in the log' in pg.inner_text('#stmtSummary') and pg.is_disabled('#stmtAdd'), 'importing the same statement again adds nothing (%s)' % pg.inner_text('#stmtSummary'))
+    pg.click('#stmtCancel')
+    data = saved_project(pg, fake)
+    new = [e for e in data['expenses'] if e['id'] not in {x['id'] for x in original['expenses']}]
+    lumber = next(e for e in new if e.get('bankRef') == 't2')
+    check(len(new) == 3 and lumber['amount'] == 120 and lumber['payee'] == 'LUMBER YARD' and lumber['description'] == 'Set build' and lumber['method'] == 'card' and lumber['accountId'] == 'account-2200'
+          and sorted(e['amount'] for e in new) == [18.5, 45.1, 120], 'saves the new expenses (%s)' % new)
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+
 def test_expense_log(browser, fake):
     original = json.loads(sample)
     ctx, pg, errs = new_page(browser, 'expense-log', fake, fixed_today('2026-11-01'))
@@ -2740,7 +2844,7 @@ def test_festivals(browser, fake):
         pg.click('#csvBtn')
     rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
     nl = next(r for r in rows if r[0] == 'Northern Light Film Festival')
-    check(rows[0] == ['Festival', 'Status', 'Deadline', 'Platform', 'Fee', 'Waiver code', 'Submitted', 'Screenings', 'Laurel', 'Screening fee', 'Screening fee paid', 'Travel covered', 'Travel cost', 'Link', 'Notes'] and len(rows) == 7
+    check(rows[0] == ['Festival', 'Status', 'Deadline', 'Platform', 'Fee', 'Waiver code', 'Submitted', 'Screenings', 'Laurel', 'Screening fee', 'Screening fee paid', 'Travel covered', 'Travel cost', 'Link', 'Notes', 'Notification date', 'Festival starts', 'Festival ends', 'City', 'Country'] and len(rows) == 7
           and nl[8] == 'Winner: Audience Award' and nl[9] == '500' and nl[10] == 'No' and nl[12] == '400'
           and nl[1] == 'Accepted' and nl[4] == '45' and nl[7] == '2026-12-05 7:30 pm Main Hall (fictional)' and next(r for r in rows if r[0] == 'Test Fest')[6] == '2026-11-01'
           and next(r for r in rows if r[0] == 'Riverbend Documentary Festival')[5] == 'RIVER-WAIVE', 'CSV lists every festival with fees, waiver codes and screenings')
@@ -4355,6 +4459,118 @@ def test_tool_calendar(browser, fake):
 # and the stills library needs the images themselves.
 REPORT_TEMPLATES = {'stills-library', 'contract-archive', 'final-cost-report', 'waterfall', 'rights-matrix', 'clearance-report', 'chain-of-title', 'budget-to-actuals', 'cash-flow', 'security-checklist', 'paper-edit'}
 
+def test_service_imports(browser, fake):
+    # Exports from submission platforms and funder databases, QC reports and hash manifests. The files are made up.
+    ctx, pg, errs = new_page(browser, 'festival-submissions', fake)
+    open_sample(pg, fake)
+    n0 = len(json.loads(sample)['festivals'])
+    import_csv(pg, 'platform-export.csv', 'Festival Name,Category,Submission Date,Deadline Date,Entry Fee,Judging Status,Notification Date,Event Start Date,City,Country,Website\n'
+               'Lakeside Nonfiction Days,Feature Documentary,"Sep 2, 2026","Sep 15, 2026",$45.00,In Consideration,"Nov 30, 2026","Feb 4, 2027",Lakeside,United States,https://example.org/lakeside\n'
+               'Northern Lights Doc Fest,Feature Documentary,2026-08-01,2026-08-20,30,Not Selected,2026-10-01,2026-12-01,Tromso,Norway,https://example.org/northern\n'
+               'Prairie Screen,Feature Documentary,2026-07-10,2026-07-31,25,Official Selection,2026-09-15,2026-10-20,Prairie,Canada,https://example.org/prairie\n'
+               'Riverbend Documentary Festival,Feature Documentary,,2027-01-15,60,Draft,,,,,\n')
+    check(pg.locator('#oftImpMap .oft-unmatched').count() == 1 and '3 festivals to add, 1 row skipped' in pg.inner_text('#oftImpSummary') and 'already here' in pg.inner_text('#oftImpRows'),
+          "matches a submission platform's columns and skips a festival already here (%s)" % pg.inner_text('#oftImpSummary'))
+    pg.click('#oftImpAdd'); pg.wait_for_timeout(200)
+    data = saved_project(pg, fake)
+    fs = {f['name']: f for f in data['festivals']}
+    lk = fs['Lakeside Nonfiction Days']
+    check(len(data['festivals']) == n0 + 3 and lk['status'] == 'submitted' and lk['submittedOn'] == '2026-09-02' and lk['deadline'] == '2026-09-15' and lk['fee'] == 45 and lk['notifyDate'] == '2026-11-30'
+          and lk['startDate'] == '2027-02-04' and fs['Northern Lights Doc Fest']['status'] == 'declined' and fs['Prairie Screen']['status'] == 'accepted', 'reads deadlines, dates and status from the export')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+    ctx, pg, errs = new_page(browser, 'grant-calendar', fake)
+    open_sample(pg, fake)
+    import_csv(pg, 'funders.csv', 'Grantmaker Name,Opportunity Title,Application Deadline,Award Amount,Eligibility Requirements,Website,Fields of Interest\n'
+               'Lakeshore Arts Trust,Media Fund,03/01/2027,"$5,000 - $20,000",Independent producers,https://example.org/lakeshore,Documentary; environment\n')
+    check(pg.locator('#oftImpMap .oft-unmatched').count() == 0 and '1 grant to add' in pg.inner_text('#oftImpSummary'), "matches a funder database's columns (%s)" % pg.inner_text('#oftImpSummary'))
+    pg.click('#oftImpAdd'); pg.wait_for_timeout(200)
+    data = saved_project(pg, fake)
+    g = next(x for x in data['grants'] if x['funder'] == 'Lakeshore Arts Trust')
+    check(g['program'] == 'Media Fund' and g['deadline'] == '2027-03-01' and g['amount'] == '$5,000 - $20,000' and g['status'] == 'researching' and g['notes'] == 'Documentary; environment', 'adds the grant to research')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+    ctx, pg, errs = new_page(browser, 'qc-tracker', fake)
+    open_sample(pg, fake)
+    report = ('Clearframe QC (fictional) report\nProgram: The River Keeps v2 master\n\n'
+              '00:01:10:05 - 00:01:10:09  Video  Major  Dropped frame\n'
+              '00:12:00:00\tAudio\tWarning\tLoudness -22 LUFS, spec is -24\n'
+              '01:02:03:04 Minor Captions Caption overlaps lower third\n'
+              'Overall: FAIL\n')
+    import_csv(pg, 'clearframe-qc.txt', report)
+    check('3 issues to add' in pg.inner_text('#oftImpSummary') and pg.locator('#oftImpMap .oft-unmatched').count() == 0, 'reads a plain text QC report (%s)' % pg.inner_text('#oftImpSummary'))
+    pg.click('#oftImpAdd'); pg.wait_for_timeout(200)
+    import_csv(pg, 'qc.csv', 'TC In,TC Out,Grade,Category,Description,Notes\n01:00:05:00,01:00:06:00,FYI,Luma,Brief flash over legal,Within spec\n')
+    check('1 issue to add' in pg.inner_text('#oftImpSummary') and pg.locator('#oftImpMap .oft-unmatched').count() == 0, "matches a QC house's spreadsheet columns")
+    pg.click('#oftImpAdd'); pg.wait_for_timeout(200)
+    data = saved_project(pg, fake)
+    iss = {i['description']: i for r in data['qc']['reports'] for i in arr_(r.get('issues'))}
+    d = iss.get('Dropped frame', {})
+    check(d.get('tc') == '00:01:10:05' and d.get('tcOut') == '00:01:10:09' and d.get('severity') == 'major' and d.get('area') == 'picture'
+          and iss.get('Loudness -22 LUFS, spec is -24', {}).get('severity') == 'minor' and iss.get('Loudness -22 LUFS, spec is -24', {}).get('area') == 'sound'
+          and iss.get('Caption overlaps lower third', {}).get('area') == 'captions' and iss.get('Brief flash over legal', {}).get('severity') == 'note' and iss['Brief flash over legal'].get('area') == 'picture',
+          'issues keep their timecodes, severity and area (%s)' % list(iss)[-4:])
+    check(any(r.get('vendor') == 'clearframe-qc' for r in data['qc']['reports']), 'the text report becomes a report named after the file')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+    ctx, pg, errs = new_page(browser, 'archive-log', fake)
+    open_sample(pg, fake)
+    pg.click('#addBtn')
+    pg.select_option('#f-asset', 'asset-card-a001')
+    pg.fill('#f-copyLabel', 'LTO tape 1'); pg.fill('#f-location', 'Vault')
+    with pg.expect_file_chooser() as fc:
+        pg.click('#hashFileBtn')
+    fc.value.set_files(files=[{'name': 'A001.mhl', 'mimeType': 'text/xml', 'buffer': b'<?xml version="1.0"?>\n<hashlist version="1.1"><hash><file>A001/clip001.mov</file><size>10</size><xxhash64be>0123456789abcdef</xxhash64be></hash><hash><file>A001/clip002.mov</file><xxhash64be>fedcba9876543210</xxhash64be></hash></hashlist>\n'}])
+    pg.wait_for_timeout(200)
+    check(pg.inner_text('#hashSummary') == '2 files with xxHash64 hashes, from A001.mhl.' and 'clip002' in pg.input_value('#f-hashList'), 'loads an MHL manifest (%s)' % pg.inner_text('#hashSummary'))
+    pg.fill('#f-hashList', 'd41d8cd98f00b204e9800998ecf8427e  A001/clip001.mov\n0cc175b9c0f1b6a831c399e269772661 *A001/clip002.mov\n')
+    check(pg.inner_text('#hashSummary') == '2 files with MD5 hashes.', 'reads a pasted md5sum list')
+    pg.fill('#f-hashList', 'SHA256 (A001/clip001.mov) = ' + 'a' * 64 + '\n')
+    check(pg.inner_text('#hashSummary') == '1 file with SHA-256 hashes.', 'reads the BSD form')
+    with pg.expect_file_chooser() as fc:
+        pg.click('#hashFileBtn')
+    fc.value.set_files(files=[{'name': 'A001.xxh64', 'mimeType': 'text/plain', 'buffer': b'0123456789abcdef  A001/clip001.mov\nfedcba9876543210  A001/clip002.mov\naaaaaaaaaaaaaaaa  A001/clip003.mov\n'}])
+    pg.wait_for_timeout(200)
+    check(pg.inner_text('#hashSummary') == '3 files with xxHash64 hashes, from A001.xxh64.', 'loads an xxHash manifest')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check('3 files with xxHash64 hashes' in pg.inner_text('#rows'), 'the list says what the manifest holds')
+    data = saved_project(pg, fake)
+    c = next(c for a in data['assets'] if a['id'] == 'asset-card-a001' for c in a.get('archiveCopies', []) if c.get('copyLabel') == 'LTO tape 1')
+    check(c['hashCount'] == 3 and c['hashAlgorithm'] == 'xxHash64' and c['manifestFile'] == 'A001.xxh64' and 'clip003' in c['hashList'], 'saves the manifest with the copy')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+    ctx, pg, errs = new_page(browser, 'budget', fake)
+    open_sample(pg, fake)
+    other = ('Acct,Description,Amount,Units,X,Rate,Subtotal,Total,Fringes\n,ABOVE THE LINE,,,,,,,\n1100,STORY & RIGHTS,,,,,,,\n,Option payment,1,Flat,1,"2,500.00","2,500.00",,\n'
+             ',Writer,10,Weeks,1,"1,200.00","12,000.00",,"FICA, WGA 15%"\n,Total Account 1100,,,,,,"14,500.00",\n,Total Above-the-Line,,,,,,"14,500.00",\n,PRODUCTION,,,,,,,\n2000,CAMERA,,,,,,,\n'
+             ',Camera package,12,Days,1,650,7800,,Payroll taxes\n,Expendables,,,,,500,,\n,See vendor quote,,,,,,,\n,OTHER,,,,,,,\n7700,INSURANCE,,,,,,,\n,Production package,1,Flat,1,3200,3200,,\n,GRAND TOTAL,,,,,,"26,000",\n')
+    import_csv(pg, 'other-program.csv', other)
+    notes = pg.inner_text('#oftImpNotes')
+    check('5 lines to add' in pg.inner_text('#oftImpSummary') and pg.locator('#oftImpMap .oft-unmatched').count() == 0, "reads another budgeting program's export (%s)" % pg.inner_text('#oftImpSummary'))
+    check('"See vendor quote": no amount or rate' in notes and '3 total rows' in notes and 'FICA, WGA' in notes, 'lists what it left out and the fringes it adds (%s)' % notes)
+    pg.click('#oftImpAdd'); pg.wait_for_timeout(200)
+    data = saved_project(pg, fake)
+    b = data['budget']
+    fr = {f['name']: f for f in b['fringes']}
+    acc = {a['code']: a for a in b['accounts']}
+    lines = {l['description']: l for l in b['lines']}
+    w = lines['Writer']
+    check(fr['FICA']['percent'] == 0 and fr['WGA']['percent'] == 15 and w['fringeIds'] == [fr['FICA']['id'], fr['WGA']['id']] and w['quantity'] == 10 and w['rate'] == 1200 and w['accountId'] == acc['1100']['id'],
+          'lines go into their accounts, with fringes mapped by name')
+    check(acc['7700']['name'] == 'INSURANCE' and acc['7700']['section'] == 'other' and lines['Expendables']['rate'] == 500 and lines['Expendables']['unit'] == 'Allow' and lines['Camera package']['fringeId'] == 'fringe-payroll',
+          'a new account takes its section, and an amount with no rate is an allowance')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+
+def arr_(v):
+    return v if isinstance(v, list) else []
+
+
 def import_csv(pg, name, text):
     pg.click('#oftImportBtn')
     pg.set_input_files('#oftImpInput', files=[{'name': name, 'mimeType': 'text/csv', 'buffer': text.encode('utf-8')}])
@@ -4715,6 +4931,7 @@ def main():
         test_name_supers(browser, fake)
         print('== subject-tracker / filters, follow-ups and adding people')
         test_subject_tracker(browser, fake)
+        test_vcard(browser, fake)
         print('== research-log / tabs, statuses and sending to the clearance log')
         test_research_log(browser, fake)
         print('== comps-tracker / sources, tags and the comps page')
@@ -4796,6 +5013,7 @@ def main():
         test_daily_report(browser, fake)
         print('== expense-log / totals, receipts, per diems and CSV')
         test_expense_log(browser, fake)
+        test_expense_statements(browser, fake)
         print('== festival-submissions / ordering, flags, screenings and CSV')
         test_festivals(browser, fake)
         print('== footage-log / imports, tags, filters and CSV')
@@ -4860,6 +5078,7 @@ def main():
         test_tool_calendar(browser, fake)
         print('== every tool with a template / importing from a spreadsheet')
         test_imports(browser, fake)
+        test_service_imports(browser, fake)
         print('== money / currencies, fringes with caps and several rates in a deal memo')
         test_money(browser, fake)
         print('== waterfall / pari passu, corridors and interest')

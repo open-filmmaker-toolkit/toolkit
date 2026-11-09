@@ -264,7 +264,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       </div>
       <div class="field"><label for="f-location">Storage location</label><input id="f-location" type="text" required placeholder="Drive, tape, storage service, or physical location" autocomplete="off"></div>
       <label class="offsite"><input type="checkbox" id="f-offsite"> Kept off-site, somewhere a fire or theft at the main copies wouldn't reach</label>
-      <div class="field"><label for="f-hashList">Hash manifest</label><textarea id="f-hashList" rows="5" spellcheck="false" placeholder="Paste the manifest text or a file reference"></textarea><p class="hint">Paste a manifest created by another tool, or enter its location. No media is read or hashed here.</p></div>
+      <div class="field"><label for="f-hashList">Hash manifest</label><textarea id="f-hashList" rows="5" spellcheck="false" placeholder="Paste the manifest text or a file reference"></textarea><p class="hint">Paste a manifest created by another tool, load the manifest file, or enter its location. No media is read or hashed here.</p><p><button type="button" class="btn small" id="hashFileBtn">Load a manifest file</button></p><p class="hint" id="hashSummary" role="status"></p><input type="file" id="hashFile" accept=".md5,.sha1,.sha256,.sha512,.xxh,.xxh64,.xxh128,.xxh3,.mhl,.txt,.xml,text/plain" hidden></div>
       <div class="field"><label for="f-nextCheck">Next read-back check</label><input id="f-nextCheck" type="date"><p class="hint">A date is shown as due when you open this tool. It won't trigger a notification while the tool is closed.</p></div>
       <div class="group">
         <h3>Read-back check history</h3>
@@ -399,7 +399,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <td><strong>${esc(asset.name || 'Unnamed asset')}</strong><span class="detail">${esc([asset.type, copy.copyLabel].filter(Boolean).join(' · ') || 'Project asset')}</span></td>
         <td>${esc(copy.storageLocation || 'Location not set')}${isOffsite(copy) ? ' <span class="tag good">Off-site</span>' : ''}<span class="detail">${esc(lastLine)}</span></td>
         <td class="date">${esc(fmtDate(copy.copiedAt))}</td>
-        <td><span class="tag ${statusClass}">${esc(state.label)}</span>${copy.hashList ? '<span class="detail">Hash manifest recorded</span>' : '<span class="detail">No hash manifest</span>'}</td>
+        <td><span class="tag ${statusClass}">${esc(state.label)}</span>${copy.hashList ? `<span class="detail">${esc(copy.hashCount ? `Hash manifest: ${manifestText({files: copy.hashCount, algorithm: copy.hashAlgorithm})}` : 'Hash manifest recorded')}</span>` : '<span class="detail">No hash manifest</span>'}</td>
         <td><button type="button" class="row-action" data-edit-copy="${esc(copy.id)}" data-asset="${esc(asset.id)}">Edit</button></td>
       </tr>`;
     }).join('');
@@ -491,6 +491,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     offTouched = !!copy && typeof copy.offsite === 'boolean';
     $('f-copyLabel').value = copy?.copyLabel || '';
     $('f-hashList').value = copy?.hashList || '';
+    manifestFile = copy?.manifestFile || '';
+    showManifest();
     $('f-nextCheck').value = safeDate(copy?.nextCheckDate);
     $('f-checkDate').value = today();
     $('f-checkResult').value = 'passed';
@@ -554,6 +556,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     // Only kept when it differs from what the location suggests, so a guess can still change with the location.
     const off = $('f-offsite').checked; if (off !== OFFSITE.test(location)) copy.offsite = off; else delete copy.offsite;
     if (manifest.trim()) copy.hashList = manifest; else delete copy.hashList;
+    const read = readManifest(manifest, manifestFile);
+    if (read.files) { copy.hashCount = read.files; if (read.algorithm) copy.hashAlgorithm = read.algorithm; else delete copy.hashAlgorithm; } else { delete copy.hashCount; delete copy.hashAlgorithm; }
+    if (read.files && manifestFile) copy.manifestFile = manifestFile; else delete copy.manifestFile;
     if (nextCheck) copy.nextCheckDate = nextCheck; else delete copy.nextCheckDate;
     if (stagedChecks.length) copy.checks = stagedChecks; else delete copy.checks;
     $('editor').close();
@@ -676,6 +681,51 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const node = $('toast'); node.textContent = message; node.classList.toggle('error', error); node.hidden = false;
     clearTimeout(toastTimer); toastTimer = setTimeout(() => { node.hidden = true; }, error ? 7000 : 4200);
   }
+  // ---------- Hash manifests ----------
+  // Reads the manifests offload and checksum tools write: md5sum, sha1sum, sha256sum and xxhsum lists, the BSD
+  // "MD5 (file) = hash" form, and MHL files. It only reads the list; it never reads media or works out hashes.
+  const HASH_NAMES = {md5: 'MD5', sha1: 'SHA-1', sha256: 'SHA-256', sha512: 'SHA-512', xxh32: 'xxHash32', xxh64: 'xxHash64', xxh128: 'xxHash128', xxh3: 'xxHash3', c4: 'C4'};
+  function readManifest(text, name) {
+    const t = str(text), ext = (str(name).match(/\.([a-z0-9]+)$/i) || ['', ''])[1].toLowerCase();
+    const files = [];
+    let algo = '';
+    if (/<hashlist|<mhl|<hash>/i.test(t)) {
+      for (const m of t.matchAll(/<hash\b[^>]*>([\s\S]*?)<\/hash>/gi)) {
+        const b = m[1];
+        const path = (b.match(/<(?:file|path)\b[^>]*>([^<]*)<\/(?:file|path)>/i) || [])[1];
+        const h = b.match(/<(md5|sha1|sha256|sha512|xxhash64be|xxhash64|xxhash|xxh64|xxh128|xxh3|c4)\b[^>]*>([^<]*)</i);
+        if (path && h) { files.push(path.trim()); algo = algo || h[1].toLowerCase().replace(/^xxhash(64be|64)?$/, 'xxh64'); }
+      }
+      return {files: files.length, algorithm: HASH_NAMES[algo] || ''};
+    }
+    const lens = new Set();
+    for (const line of t.split(/\r?\n/)) {
+      let m = line.match(/^\s*(MD5|SHA1|SHA256|SHA512|XXH32|XXH64|XXH128|XXH3)\s*\((.+)\)\s*=\s*([0-9a-f]+)\s*$/i);
+      if (m) { files.push(m[2]); algo = algo || m[1].toLowerCase(); continue; }
+      m = line.match(/^\s*([0-9a-f]{8,128})\s+\*?(.+?)\s*$/i);
+      if (m) { files.push(m[2]); lens.add(m[1].length); }
+    }
+    if (!algo) {
+      const fromExt = {md5: 'md5', sha1: 'sha1', sha256: 'sha256', sha512: 'sha512', xxh: 'xxh64', xxh64: 'xxh64', xxh128: 'xxh128', xxh3: 'xxh3'}[ext];
+      const len = lens.size === 1 ? [...lens][0] : 0;
+      algo = fromExt || {32: 'md5', 40: 'sha1', 64: 'sha256', 128: 'sha512', 16: 'xxh64', 8: 'xxh32'}[len] || '';
+    }
+    return {files: files.length, algorithm: HASH_NAMES[algo] || ''};
+  }
+  const manifestText = m => (m.files ? `${m.files} file${m.files === 1 ? '' : 's'}${m.algorithm ? ` with ${m.algorithm} hashes` : ''}` : '');
+  let manifestFile = '';
+  function showManifest() {
+    const m = readManifest($('f-hashList').value, manifestFile);
+    $('hashSummary').textContent = m.files ? `${manifestText(m)}${manifestFile ? `, from ${manifestFile}` : ''}.` : str($('f-hashList').value).trim() ? 'No file hashes found; it\'s kept as a note.' : '';
+  }
+  async function loadManifest(file) {
+    const text = await file.text();
+    const m = readManifest(text, file.name);
+    if (!m.files) { toast(`Couldn't find any file hashes in ${file.name}. Choose an MD5, SHA, xxHash or MHL manifest.`, true); return; }
+    manifestFile = file.name;
+    $('f-hashList').value = text;
+    showManifest();
+  }
   function init() {
     doc = normalize(doc); render(); checkDraft();
     $('openBtn').onclick = openFile; $('saveBtn').onclick = saveFile; $('newBtn').onclick = newProject;
@@ -693,6 +743,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('addBtn').onclick = $('emptyAddBtn').onclick = () => openEditor();
     $('editorCancel').onclick = () => $('editor').close();
     $('editorForm').addEventListener('submit', submitCopy);
+    $('hashFileBtn').onclick = () => $('hashFile').click();
+    $('hashFile').addEventListener('change', async () => { const f = $('hashFile').files[0]; $('hashFile').value = ''; if (f) await loadManifest(f); });
+    $('f-hashList').addEventListener('input', () => { manifestFile = ''; showManifest(); });
     $('f-asset').addEventListener('change', updateNewAssetFields);
     $('recordCheckBtn').onclick = recordCheck;
     $('removeCopyBtn').onclick = removeCopy;
@@ -1201,6 +1254,12 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       imp.type = 'button'; imp.className = 'link-btn'; imp.id = 'oftImportBtn'; imp.textContent = 'Import from a spreadsheet';
       imp.onclick = () => oftImport.open(OFT_IMPORT);
       links.prepend(imp);
+    }
+    if (typeof oftVcard !== 'undefined' && typeof OFT_VCARD !== 'undefined') {
+      const vc = document.createElement('button');
+      vc.type = 'button'; vc.className = 'link-btn'; vc.id = 'oftVcardBtn'; vc.textContent = 'Import from an address book';
+      vc.onclick = () => oftVcard.open();
+      links.prepend(vc);
     }
     if (typeof oftCosts !== 'undefined' && typeof OFT_COSTS !== 'undefined') {
       const cb = document.createElement('button');

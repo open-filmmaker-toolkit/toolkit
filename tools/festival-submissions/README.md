@@ -47,6 +47,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 The festival link is stored as plain text. It only becomes a clickable link if it starts with `http://` or `https://`.
 
 - **A calendar file of every date in the project**, gathered from every tool: choose **Calendar of every date** under the file buttons and pick which kinds of dates to include. Importing a newer file updates the same events instead of adding them twice.
+- **Imports from a spreadsheet or a submission platform:** choose **Import from a spreadsheet** under the file buttons and pick a CSV file: one with the columns of the [spreadsheet template](../../templates/festival-submissions-template.csv), or the export a submission platform gives you. Its usual column names, such as Festival Name, Deadline Date, Entry Fee and Judging Status, are matched for you, and statuses such as In Consideration, Not Selected and Official Selection become submitted, declined and accepted. A festival already here is skipped.
 
 ## Saving and file conflicts
 
@@ -64,7 +65,7 @@ Everything else in the file is preserved, including fields this tool doesn't rec
 
 ## Not yet
 
-- Importing festivals from a spreadsheet or a submission platform
+Nothing planned right now. If something you need is missing, [open an issue](https://github.com/open-filmmaker-toolkit/toolkit/issues).
 
 ## License
 

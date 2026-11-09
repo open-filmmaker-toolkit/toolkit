@@ -9,7 +9,8 @@
 :root{color-scheme:light dark;--paper:#f4f1e8;--sheet:#fffdf7;--ink:#252d27;--muted:#59625a;--faint:#5f665c;--rule:#d8d6ca;--soft:#ece9de;--accent:#a44c2d;--accent-ink:#fff8ed;--olive:#47634c;--olive-soft:#e4ecdf;--amber:#74531b;--amber-soft:#f5ecd4;--red:#a33e32;--red-soft:#f7e4df;--focus:#226bc1;--serif:Georgia,"Times New Roman",serif;--sans:system-ui,-apple-system,"Segoe UI",sans-serif;--mono:ui-monospace,"SFMono-Regular",Consolas,monospace}
 @media(prefers-color-scheme:dark){:root{--paper:#171b17;--sheet:#202620;--ink:#e7e9df;--muted:#b3bbae;--faint:#8d978b;--rule:#3a4339;--soft:#292f29;--accent:#db7955;--accent-ink:#1d211c;--olive:#a4c39f;--olive-soft:#28362a;--amber:#e1bd73;--amber-soft:#39321f;--red:#ef8c7c;--red-soft:#3c2824;--focus:#8ebeff}}
 *{box-sizing:border-box}html{-webkit-text-size-adjust:100%}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 var(--sans)}button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}:focus-visible{outline:2px solid var(--focus);outline-offset:3px}[hidden]{display:none!important}.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}.page{max-width:1280px;margin:auto;padding:0 32px 48px}.masthead{display:flex;justify-content:space-between;align-items:end;gap:22px;padding:27px 0 20px;border-bottom:1px solid var(--rule)}.eyebrow{margin:0 0 3px;color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.13em;text-transform:uppercase}.film-title{margin:0;font:600 32px/1.12 var(--serif);letter-spacing:-.02em;overflow-wrap:anywhere;cursor:pointer}.film-title.is-empty{font-weight:400;font-style:italic;color:var(--faint)}.film-meta{margin:5px 0 0;color:var(--muted);font-size:13px}.file{display:grid;justify-items:end;gap:8px}.file-state{margin:0;color:var(--muted);font-size:12px}.dirty{color:var(--amber);font-weight:700}.file-actions,.actions,.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.btn{display:inline-flex;justify-content:center;align-items:center;gap:7px;min-height:36px;padding:7px 12px;border:1px solid var(--rule);border-radius:4px;background:var(--sheet);font-size:13px;font-weight:650;white-space:nowrap}.btn:hover{border-color:var(--muted);background:var(--soft)}.btn.primary{border-color:var(--accent);background:var(--accent);color:var(--accent-ink)}.btn.primary:hover{filter:brightness(.94)}.btn.text{background:transparent}.btn.danger{color:var(--red)}.link-btn{padding:0;border:0;background:none;color:var(--muted);font-size:13px;text-decoration:underline;text-underline-offset:2px;cursor:pointer}.banner{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 14px;margin:15px 0;border:1px solid var(--amber);border-radius:4px;background:var(--amber-soft)}.banner p{margin:0}.hero{display:flex;justify-content:space-between;align-items:end;gap:18px;padding:30px 0 17px}.hero h2{margin:0;font:600 25px/1.1 var(--serif)}.hero p{margin:6px 0 0;color:var(--muted);font-size:13px}.workspace{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(270px,.8fr);gap:22px;align-items:start}.left,.right{min-width:0}.right{display:grid;gap:15px}.card{background:var(--sheet);border:1px solid var(--rule);border-radius:5px;padding:16px}.section-title{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:0 0 12px}.section-title h2{margin:0;font:600 18px/1.2 var(--serif)}.section-title .subtle{font-size:12px;color:var(--muted)}.filters{display:grid;grid-template-columns:minmax(150px,1fr) minmax(150px,1fr) minmax(170px,1.2fr);gap:8px;margin:0 0 12px}.filters input,.filters select{min-width:0;padding:8px 10px;border:1px solid var(--rule);border-radius:4px;background:var(--sheet)}.table-wrap{position:relative;overflow-x:auto;border:1px solid var(--rule);border-radius:4px}.ledger{width:100%;border-collapse:collapse;font-size:13px}.ledger th{padding:9px 10px;background:var(--soft);color:var(--muted);font-size:11px;letter-spacing:.07em;text-align:left;text-transform:uppercase;white-space:nowrap}.ledger td{padding:10px;border-top:1px solid var(--rule);vertical-align:top}.ledger tbody tr:hover{background:color-mix(in srgb,var(--soft) 45%,transparent)}.ledger .date,.ledger .amount{font-variant-numeric:tabular-nums;white-space:nowrap}.ledger .amount{text-align:right;font-weight:700}.ledger .account-code{display:block;color:var(--faint);font:11px var(--mono)}.ledger .detail{display:block;color:var(--muted);font-size:12px}.tag{display:inline-block;padding:2px 7px;border-radius:20px;background:var(--olive-soft);color:var(--olive);font-size:11px;font-weight:700;white-space:nowrap}.tag.perdiem{background:var(--amber-soft);color:var(--amber)}.tag.pettycash{background:var(--red-soft);color:var(--red)}.icon{border:0;background:none;color:var(--muted);font-size:17px;line-height:1}.icon:hover{color:var(--red)}.empty{padding:38px 20px;text-align:center;border:1px dashed var(--rule);border-radius:4px;color:var(--muted)}.empty b{display:block;margin-bottom:4px;color:var(--ink);font:600 20px var(--serif)}.totals{display:grid;gap:0}.total-line{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:start;padding:9px 0;border-top:1px solid var(--rule);font-size:13px}.total-line:first-child{border-top:0;padding-top:0}.total-line .name{min-width:0}.total-line .code{display:block;color:var(--faint);font:11px var(--mono)}.total-line strong{font-variant-numeric:tabular-nums;white-space:nowrap}.total-grand{margin-top:5px;padding-top:13px;border-top:2px solid var(--ink);font-weight:750}.kind-totals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:12px}.kind-box{padding:9px;background:var(--paper);border:1px solid var(--rule);border-radius:4px}.kind-box b{display:block;font:600 17px/1.2 var(--serif);font-variant-numeric:tabular-nums}.kind-box span{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}.foot{margin:22px 0 0;color:var(--faint);font-size:12px}.foot p{margin:0}.report{display:none}
-dialog{padding:0;border:0;background:var(--sheet);color:var(--ink);box-shadow:0 12px 50px #0004}dialog::backdrop{background:#12171199}dialog.modal{width:min(580px,calc(100vw - 28px));max-height:calc(100dvh - 28px);border-radius:6px}dialog form{display:flex;flex-direction:column;max-height:inherit}.dlg-head{padding:18px 22px 12px;border-bottom:1px solid var(--rule)}.dlg-head h2{margin:0;font:600 22px/1.2 var(--serif)}.dlg-body{display:grid;gap:13px;overflow:auto;padding:17px 22px 20px;align-content:start}.dlg-foot{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:13px 22px;border-top:1px solid var(--rule)}.spacer{flex:1}.field{display:grid;gap:4px;min-width:0}.field label,.field .label{font-size:13px;font-weight:700}.field input,.field select,.field textarea{width:100%;padding:8px 10px;border:1px solid var(--rule);border-radius:4px;background:var(--paper)}.field textarea{resize:vertical}.field .hint,.hint{margin:0;color:var(--muted);font-size:12px}.two{display:grid;grid-template-columns:1fr 1fr;gap:11px}.three{display:grid;grid-template-columns:repeat(3,1fr);gap:11px}.receipt-note{padding:10px 12px;background:var(--olive-soft);border-left:3px solid var(--olive);font-size:12px}.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:5;max-width:calc(100vw - 24px);padding:10px 15px;border-radius:4px;background:var(--ink);color:var(--paper);box-shadow:0 4px 20px #0003;font-size:13px}.toast.error{background:var(--red);color:white}.cant-run{display:none;max-width:620px;margin:60px auto;padding:24px}.no-js .page{display:none}.no-js .cant-run{display:block}
+dialog{padding:0;border:0;background:var(--sheet);color:var(--ink);box-shadow:0 12px 50px #0004}dialog::backdrop{background:#12171199}dialog.modal{width:min(580px,calc(100vw - 28px));max-height:calc(100dvh - 28px);border-radius:6px}dialog.modal.wide{width:min(920px,calc(100vw - 28px))}
+.stmt-wrap{overflow-x:auto}.stmt{width:100%;border-collapse:collapse;font-size:13px}.stmt th{padding:6px 8px;text-align:left;font-size:12px;color:var(--muted);white-space:nowrap}.stmt td{padding:6px 8px;border-top:1px solid var(--rule);vertical-align:top}.stmt td.amount{text-align:right}.stmt select{max-width:220px;padding:5px 8px;border:1px solid var(--rule);border-radius:4px;background:var(--paper);color:var(--ink)}.stmt tr.is-in td,.stmt tr.is-dup td{color:var(--muted)}.stmt .why{display:block;font-size:12px;color:var(--muted)}.stmt input[type=checkbox]{width:18px;height:18px}label.inline{display:inline-flex;gap:8px;align-items:center;font-size:14px;font-weight:600}label.inline input{width:18px;height:18px}dialog form{display:flex;flex-direction:column;max-height:inherit}.dlg-head{padding:18px 22px 12px;border-bottom:1px solid var(--rule)}.dlg-head h2{margin:0;font:600 22px/1.2 var(--serif)}.dlg-body{display:grid;gap:13px;overflow:auto;padding:17px 22px 20px;align-content:start}.dlg-foot{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:13px 22px;border-top:1px solid var(--rule)}.spacer{flex:1}.field{display:grid;gap:4px;min-width:0}.field label,.field .label{font-size:13px;font-weight:700}.field input,.field select,.field textarea{width:100%;padding:8px 10px;border:1px solid var(--rule);border-radius:4px;background:var(--paper)}.field textarea{resize:vertical}.field .hint,.hint{margin:0;color:var(--muted);font-size:12px}.two{display:grid;grid-template-columns:1fr 1fr;gap:11px}.three{display:grid;grid-template-columns:repeat(3,1fr);gap:11px}.receipt-note{padding:10px 12px;background:var(--olive-soft);border-left:3px solid var(--olive);font-size:12px}.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:5;max-width:calc(100vw - 24px);padding:10px 15px;border-radius:4px;background:var(--ink);color:var(--paper);box-shadow:0 4px 20px #0003;font-size:13px}.toast.error{background:var(--red);color:white}.cant-run{display:none;max-width:620px;margin:60px auto;padding:24px}.no-js .page{display:none}.no-js .cant-run{display:block}
 @media(max-width:850px){.workspace{grid-template-columns:1fr}.right{grid-template-columns:1fr 1fr}.ledger{min-width:700px}}@media(max-width:620px){.page{padding:0 15px 30px}.masthead{align-items:flex-start;flex-direction:column;padding-top:20px}.file{width:100%;justify-items:start}.file-actions{justify-content:flex-start}.film-title{font-size:27px}.hero{align-items:flex-start;flex-direction:column;padding-top:22px}.hero h2{font-size:23px}.right{grid-template-columns:1fr}.filters{grid-template-columns:1fr}.card{padding:13px}.two,.three{grid-template-columns:1fr}.dlg-head,.dlg-body,.dlg-foot{padding-left:17px;padding-right:17px}.kind-totals{grid-template-columns:1fr 1fr 1fr}}
 @media print{@page{size:landscape;margin:14mm}:root{color-scheme:light}body{background:white;color:#111;font-size:10pt}.page,dialog,.toast{display:none!important}.report{display:block}.report h1{margin:0;font:700 19pt/1.1 var(--serif)}.report .meta{margin:4pt 0 12pt;color:#444}.report h2{margin:14pt 0 5pt;font:700 12pt var(--serif);break-after:avoid}.report table{width:100%;border-collapse:collapse;font-size:9pt}.report th,.report td{padding:4pt 5pt;border-bottom:.6pt solid #999;text-align:left;vertical-align:top}.report th{background:#eee}.report .sum{font-weight:700}.report .footnote{margin-top:12pt;font-size:8pt;color:#444}}
 .skip-link { position: absolute; left: 12px; top: -80px; z-index: 1000; padding: 8px 14px; border: 2px solid var(--focus, #2f6fdb); border-radius: 6px; background: var(--sheet, #ffffff); color: var(--ink, #1a2130); font-weight: 600; text-decoration: none; }
@@ -26,7 +27,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
 <header class="masthead"><div><p class="eyebrow"><a class="home-link" href="../../index.html">Open Filmmaker Toolkit</a> <span aria-hidden="true">/</span> Expense log</p><h1 class="film-title" id="filmTitle">Untitled film</h1><p class="film-meta"><span id="filmMeta"></span> <button type="button" class="link-btn" id="editProjectBtn">Edit film details</button></p></div><div class="file"><p class="file-state" id="fileState">Not saved to a file yet</p><div class="file-actions"><button type="button" class="btn" id="openBtn">Open file</button><button type="button" class="btn" id="projectCsvBtn">Export project data (CSV)</button><button type="button" class="btn primary" id="saveBtn">Save file</button></div></div></header>
 <div class="banner" id="recovery" role="region" aria-label="Unsaved work" hidden><p id="recoveryText"></p><div class="actions"><button type="button" class="btn primary" id="restoreBtn">Restore it</button><button type="button" class="btn" id="discardBtn">Discard it</button></div></div>
 <main id="main">
-<section class="hero"><div><h2>Every cost, accounted for.</h2><p>Log receipts while the details are still fresh. Each entry belongs to a budget account.</p></div><div class="toolbar"><button type="button" class="btn primary" id="addBtn">＋ Add an expense</button><button type="button" class="btn" id="csvBtn">Export CSV</button><button type="button" class="btn" id="printBtn">Print report</button></div></section>
+<section class="hero"><div><h2>Every cost, accounted for.</h2><p>Log receipts while the details are still fresh. Each entry belongs to a budget account.</p></div><div class="toolbar"><button type="button" class="btn primary" id="addBtn">＋ Add an expense</button><button type="button" class="btn" id="csvBtn">Export CSV</button><button type="button" class="btn" id="stmtBtn">Import a bank or card statement</button><button type="button" class="btn" id="printBtn">Print report</button></div></section>
 <div class="workspace"><section class="left"><div class="card"><div class="section-title"><h2>Expense ledger</h2><span class="subtle" id="count"></span></div><div class="filters"><label class="sr-only" for="accountFilter">Filter by budget account</label><select id="accountFilter"><option value="">All budget accounts</option></select><label class="sr-only" for="kindFilter">Filter by expense type</label><select id="kindFilter"><option value="">All types</option><option value="expense">Expense</option><option value="perdiem">Per diem</option><option value="pettycash">Petty cash</option></select><label class="sr-only" for="search">Search expenses</label><input id="search" type="search" placeholder="Search expenses, payees, people…"></div><div class="table-wrap" id="tableWrap"><table class="ledger"><thead><tr><th>Date</th><th>Expense</th><th>Budget account</th><th>Type</th><th>Method</th><th>Amount</th><th><span class="sr-only">Actions</span></th></tr></thead><tbody id="rows"></tbody></table></div><div class="empty" id="empty" hidden><b>No expenses yet</b>Start a record with its date, budget account and payment details.</div><p class="hint" id="noMatch" hidden>No expenses match these filters. Clear the search or choose another filter.</p></div></section>
 <aside class="right"><section class="card"><div class="section-title"><h2>Totals by account</h2><span class="subtle">Current view</span></div><div class="totals" id="accountTotals"></div><div class="total-line total-grand"><span class="name">Grand total</span><strong id="grandTotal"></strong></div></section><section class="card"><div class="section-title"><h2>By type</h2><span class="subtle">Current view</span></div><div class="kind-totals" id="kindTotals"></div></section></aside></div>
 </main>
@@ -46,6 +47,14 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
 <div class="field"><label for="f-receipt">Receipt photo or PDF</label><input id="f-receipt" type="file" accept="image/*,application/pdf"><p class="receipt-note">The file stays on your computer; the project records only its name. Put it in the receipts folder next to your project file.</p></div>
 <div class="field"><label for="f-notes">Notes</label><textarea id="f-notes" rows="2" placeholder="Optional details for your records"></textarea></div>
 </div><div class="dlg-foot"><button type="button" class="btn" id="editorCancel">Cancel</button><span class="spacer"></span><button type="submit" class="btn primary" id="editorSubmit">Add expense</button></div></form></dialog>
+<dialog class="modal wide" id="stmtDialog" aria-labelledby="stmtTitle"><form id="stmtForm" method="dialog" novalidate><div class="dlg-head"><h2 id="stmtTitle">Import a statement</h2></div><div class="dlg-body">
+<p class="hint" id="stmtFile"></p>
+<p id="stmtSummary" role="status"></p>
+<div class="three"><div class="field"><label for="stmtAccount">Budget account for the ones you pick</label><select id="stmtAccount"></select></div><div class="field"><label for="stmtMethod">Paid by</label><select id="stmtMethod"><option value="card">Card</option><option value="transfer">Transfer</option><option value="check">Check</option><option value="other">Other</option></select></div><div class="field" id="stmtFlipBox"><label class="inline"><input type="checkbox" id="stmtFlip"> Charges are positive numbers in this file</label><p class="hint">Card statements often list what you spent as positive numbers, and banks as negative ones.</p></div></div>
+<div class="stmt-wrap"><table class="stmt"><thead><tr><th scope="col"><span class="sr-only">Add</span></th><th scope="col">Date</th><th scope="col">Description</th><th scope="col">Amount</th><th scope="col">Budget account</th></tr></thead><tbody id="stmtRows"></tbody></table></div>
+<p class="hint">Only money going out can be added. Transactions that look like ones already in the log, with the same date and amount, start unticked.</p>
+</div><div class="dlg-foot"><button type="button" class="btn" id="stmtCancel">Cancel</button><button type="submit" class="btn primary" id="stmtAdd">Add</button></div></form></dialog>
+<input type="file" id="stmtInput" accept=".csv,.tsv,.txt,.ofx,.qfx,.qbo,text/csv,application/x-ofx" hidden>
 <dialog class="modal" id="projectDialog" aria-labelledby="projectTitle"><form id="projectForm" method="dialog"><div class="dlg-head"><h2 id="projectTitle">Film details</h2></div><div class="dlg-body"><div class="field"><label for="p-title">Film title</label><input id="p-title" type="text"></div><div class="field"><label for="p-company">Production company</label><input id="p-company" type="text"></div><div class="field"><label for="p-producer">Producer</label><input id="p-producer" type="text"></div></div><div class="dlg-foot"><button type="button" class="btn" id="projectCancel">Cancel</button><span class="spacer"></span><button type="submit" class="btn primary">Save details</button></div></form></dialog>
 <dialog class="modal" id="projectCsvDialog" aria-labelledby="projectCsvTitle"><form id="projectCsvForm" method="dialog"><div class="dlg-head"><h2 id="projectCsvTitle">Export project data</h2></div><div class="dlg-body"><div class="field"><label for="projectCsvCollection">Data to export</label><select id="projectCsvCollection"><option value="project">Project details</option><option value="people">People</option><option value="locations">Locations</option><option value="thirdPartyElements">Third-party elements</option><option value="contracts">Contracts</option><option value="assets">Assets</option><option value="musicCueSheet">Music cue sheet details</option><option value="callSheets">Call sheets</option></select></div><p class="hint">Nested values are kept as JSON in their cell. Exports every record, including fields this tool doesn't edit.</p></div><div class="dlg-foot"><button type="button" class="btn" id="projectCsvCancel">Cancel</button><span class="spacer"></span><button type="submit" class="btn primary">Export CSV</button></div></form></dialog>
 <dialog class="modal" id="conflictDialog" aria-labelledby="conflictTitle"><form method="dialog"><div class="dlg-head"><h2 id="conflictTitle">Project file changed</h2></div><div class="dlg-body"><p id="conflictText">This project file changed after you opened it. Saving will replace those changes.</p><p class="hint">Your edits are still here. Reload the latest file, save a separate copy, or explicitly overwrite the changed file.</p></div><div class="dlg-foot"><button type="button" class="btn" id="conflictReloadBtn">Reload latest</button><button type="button" class="btn" id="conflictCopyBtn">Save a copy</button><button type="button" class="btn danger" id="conflictOverwriteBtn">Overwrite file</button><button type="button" class="btn" id="conflictCancelBtn">Keep editing</button></div></form></dialog>
@@ -101,7 +110,118 @@ async function saveFile(){const out=serialize();if(fileHandle){let current;try{c
 function loadText(text,name,handle){let data;try{data=JSON.parse(text)}catch{toast(`Couldn't open ${name}: it isn't a project file.`,true);return}if(!data||data.format!==FORMAT){toast(`Couldn't open ${name}: it isn't an Open Filmmaker Toolkit project file.`,true);return}if(Number(data.formatVersion)>VERSION){toast(`Couldn't open ${name}: it was saved by a newer version of the toolkit.`,true);return}doc=normalize(data);fileHandle=handle;baselineText=text;fileName=name;dirty=false;clearDraft();render();toast(`Opened ${name}: ${arr(doc.expenses).length} expense entries`)}
 async function openFile(){if(dirty&&!confirm('You have unsaved changes. Open another file and lose them?'))return;if(window.showOpenFilePicker&&window.self===window.top){try{const[h]=await window.showOpenFilePicker({types:pickerTypes});const f=await h.getFile();loadText(await f.text(),f.name,h)}catch(err){if(err.name!=='AbortError')toast(`Couldn't open the file: ${err.message}`,true)}return}$('fileInput').click()}
 function toast(msg,error=false){const t=$('toast');t.textContent=msg;t.classList.toggle('error',error);t.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.hidden=true,error?7000:4200)}
-function init(){doc=normalize(doc);render();$('openBtn').onclick=openFile;$('saveBtn').onclick=saveFile;$('fileInput').addEventListener('change',async()=>{const f=$('fileInput').files[0];if(f)loadText(await f.text(),f.name,null);$('fileInput').value=''});$('filmTitle').onclick=$('editProjectBtn').onclick=openProjectDialog;$('projectForm').addEventListener('submit',ev=>{ev.preventDefault();saveProjectDialog()});$('projectCancel').onclick=()=>$('projectDialog').close();$('projectCsvBtn').onclick=()=>$('projectCsvDialog').showModal();$('projectCsvCancel').onclick=()=>$('projectCsvDialog').close();$('projectCsvForm').addEventListener('submit',ev=>{ev.preventDefault();exportProjectCsv();$('projectCsvDialog').close()});$('addBtn').onclick=openEditor;$('editorCancel').onclick=()=>$('editor').close();$('editorForm').addEventListener('submit',addExpense);$('f-kind').addEventListener('change',()=>{if($('f-kind').value==='perdiem')rememberPerDiem()});$('accountFilter').addEventListener('change',()=>{filterAccount=$('accountFilter').value;render()});$('kindFilter').addEventListener('change',()=>{filterKind=$('kindFilter').value;render()});$('search').addEventListener('input',()=>{query=$('search').value;render()});$('rows').addEventListener('click',ev=>{const b=ev.target.closest('[data-remove]');if(b&&confirm('Remove this expense?'))removeExpense(b.dataset.remove)});$('csvBtn').onclick=exportCsv;$('printBtn').onclick=()=>{renderReport();window.print()};window.addEventListener('beforeprint',renderReport);checkDraft()}
+function init(){doc=normalize(doc);render();wireStatement();$('openBtn').onclick=openFile;$('saveBtn').onclick=saveFile;$('fileInput').addEventListener('change',async()=>{const f=$('fileInput').files[0];if(f)loadText(await f.text(),f.name,null);$('fileInput').value=''});$('filmTitle').onclick=$('editProjectBtn').onclick=openProjectDialog;$('projectForm').addEventListener('submit',ev=>{ev.preventDefault();saveProjectDialog()});$('projectCancel').onclick=()=>$('projectDialog').close();$('projectCsvBtn').onclick=()=>$('projectCsvDialog').showModal();$('projectCsvCancel').onclick=()=>$('projectCsvDialog').close();$('projectCsvForm').addEventListener('submit',ev=>{ev.preventDefault();exportProjectCsv();$('projectCsvDialog').close()});$('addBtn').onclick=openEditor;$('editorCancel').onclick=()=>$('editor').close();$('editorForm').addEventListener('submit',addExpense);$('f-kind').addEventListener('change',()=>{if($('f-kind').value==='perdiem')rememberPerDiem()});$('accountFilter').addEventListener('change',()=>{filterAccount=$('accountFilter').value;render()});$('kindFilter').addEventListener('change',()=>{filterKind=$('kindFilter').value;render()});$('search').addEventListener('input',()=>{query=$('search').value;render()});$('rows').addEventListener('click',ev=>{const b=ev.target.closest('[data-remove]');if(b&&confirm('Remove this expense?'))removeExpense(b.dataset.remove)});$('csvBtn').onclick=exportCsv;$('printBtn').onclick=()=>{renderReport();window.print()};window.addEventListener('beforeprint',renderReport);checkDraft()}
+// ---------- Bank and card statements ----------
+// Reads CSV, OFX and QFX statements, then lists each transaction to pick from before anything is added.
+let stmt = [], stmtName = '';
+const stmtNum = v => { const t = str(v).trim(), neg = /^\(.*\)$/.test(t) || /-$/.test(t); const n = oftImport.number(t.replace(/^\((.*)\)$/, '$1').replace(/-$/, '')); return n == null ? null : neg ? -Math.abs(n) : n; };
+function ofxTag(block, tag) { const m = new RegExp(`<${tag}>([^<\\r\\n]*)`, 'i').exec(block); return m ? m[1].trim() : ''; }
+function readOfx(text) {
+  const card = /<CCACCTFROM>/i.test(text), cur = ofxTag(text, 'CURDEF').toUpperCase();
+  return text.split(/<STMTTRN>/i).slice(1).map(b => {
+    const d = ofxTag(b, 'DTPOSTED') || ofxTag(b, 'DTUSER'), amt = Number(ofxTag(b, 'TRNAMT').replace(',', '.'));
+    const name = ofxTag(b, 'NAME') || ofxTag(b, 'PAYEE'), memo = ofxTag(b, 'MEMO');
+    return { date: /^\d{8}/.test(d) ? `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}` : null, value: amt, signed: false, out: -amt, payee: name, description: memo || name, ref: ofxTag(b, 'FITID'),
+      method: card ? 'card' : /CHECK/i.test(ofxTag(b, 'TRNTYPE')) || ofxTag(b, 'CHECKNUM') ? 'check' : 'transfer', currency: /^[A-Z]{3}$/.test(cur) ? cur : '' };
+  }).filter(t => t.date && isFinite(t.value));
+}
+function readStatementCsv(text) {
+  const rows = oftImport.parse(text);
+  // Some banks put the account details above the column names, so start at the first row that has them.
+  const hi = rows.findIndex(r => r.some(c => /date/i.test(c)) && r.some(c => /amount|debit|credit|withdraw|deposit|paid|charge/i.test(c)));
+  if (hi < 0) return [];
+  const head = rows[hi].map(h => str(h).trim().toLowerCase());
+  const col = (re, not) => head.findIndex(h => re.test(h) && !(not && not.test(h)));
+  const ci = { date: col(/date/, /value date/), desc: col(/description|payee|merchant|narrative|details|^name$|^transaction$/), memo: col(/memo|^notes?$/),
+    amount: col(/amount/, /debit|credit|withdraw|deposit|balance/), debit: col(/debit|withdraw|money out|paid out|charge/), credit: col(/credit|deposit|money in|paid in/, /card/),
+    type: col(/^type$|transaction type|^dr\/cr$|^cr\/dr$|debit\/credit/), ref: col(/^(transaction )?id$|reference|fitid/) };
+  if (ci.type >= 0 && (ci.type === ci.debit || ci.type === ci.credit)) { ci.debit = -1; ci.credit = -1; }
+  const out = [];
+  for (const r of rows.slice(hi + 1)) {
+    const date = oftImport.date(r[ci.date]);
+    if (!date) continue;
+    const t = { date, description: str(r[ci.desc >= 0 ? ci.desc : ci.memo]).trim(), memo: ci.memo >= 0 && ci.memo !== ci.desc ? str(r[ci.memo]).trim() : '', ref: ci.ref >= 0 ? str(r[ci.ref]).trim() : '', signed: false };
+    if (ci.debit >= 0 || ci.credit >= 0) {
+      const d = ci.debit >= 0 ? stmtNum(r[ci.debit]) : null, c = ci.credit >= 0 ? stmtNum(r[ci.credit]) : null;
+      if (d == null && c == null) continue;
+      t.out = Math.abs(d || 0) - Math.abs(c || 0);
+    } else {
+      const a = stmtNum(r[ci.amount]);
+      if (a == null) continue;
+      const kind = ci.type >= 0 ? str(r[ci.type]).toLowerCase() : '';
+      if (/credit|^cr$|deposit|refund/.test(kind)) t.out = -Math.abs(a);
+      else if (/debit|^dr$|withdraw|purchase|sale|charge/.test(kind)) t.out = Math.abs(a);
+      else { t.value = a; t.signed = true; t.out = -a; }
+    }
+    out.push(t);
+  }
+  return out;
+}
+const alreadyLogged = t => arr(doc.expenses).some(e => e && ((t.ref && e.bankRef === t.ref) || (e.date === t.date && expenseCents(e) === moneyCents(Math.abs(t.out)))));
+function openStatement(text, name) {
+  stmtName = name;
+  const ofx = /<OFX>|OFXHEADER/i.test(text);
+  stmt = ofx ? readOfx(text) : readStatementCsv(text);
+  if (!stmt.length) { toast(`Couldn't find any transactions in ${name}. Choose a CSV, OFX or QFX statement from your bank or card.`, true); return; }
+  // When the file has one amount column, more positive amounts than negative ones means charges are positive.
+  const signed = stmt.filter(t => t.signed);
+  $('stmtFlipBox').hidden = !signed.length;
+  $('stmtFlip').checked = signed.length > 0 && signed.filter(t => t.value > 0).length > signed.filter(t => t.value < 0).length;
+  const acct = (accounts().find(a => a.id === $('f-account').value) || {}).id || '';
+  $('stmtAccount').innerHTML = '<option value="">Choose for each one</option>' + accounts().map(a => `<option value="${esc(a.id)}"${a.id === acct ? ' selected' : ''}>${esc(a.code || '')} · ${esc(a.name || 'Unnamed account')}</option>`).join('');
+  $('stmtMethod').value = ofx ? stmt[0].method : 'card';
+  $('stmtFile').textContent = `From ${name}.`;
+  stmt.forEach(t => { t.dup = alreadyLogged(t); });
+  renderStatement(true);
+  $('stmtDialog').showModal();
+}
+function stmtOut(t) { return t.signed && $('stmtFlip').checked ? t.value : t.out; }
+function renderStatement(fresh) {
+  const keep = fresh ? null : [...$('stmtRows').querySelectorAll('tr')].map(tr => ({ on: tr.querySelector('input').checked, was: !tr.querySelector('input').disabled, acct: tr.querySelector('select').value }));
+  const opts = sel => '<option value="">Choose an account</option>' + accounts().map(a => `<option value="${esc(a.id)}"${a.id === sel ? ' selected' : ''}>${esc(a.code || '')} · ${esc(a.name || 'Unnamed account')}</option>`).join('');
+  $('stmtRows').innerHTML = stmt.map((t, i) => {
+    const out = stmtOut(t), isIn = !(out > 0), k = keep && keep[i];
+    t.dup = !isIn && alreadyLogged(Object.assign({}, t, { out }));
+    const on = !isIn && (k && k.was ? k.on : !t.dup);
+    const why = isIn ? 'Money in, not an expense' : t.dup ? 'Looks like one already in the log' : '';
+    return `<tr class="${isIn ? 'is-in' : t.dup ? 'is-dup' : ''}"><td><input type="checkbox" aria-label="Add ${esc(t.description || 'this transaction')}" data-i="${i}"${on ? ' checked' : ''}${isIn ? ' disabled' : ''}></td><td>${esc(fmtDate(t.date))}</td>
+      <td>${esc(t.description || t.payee || 'No description')}${t.memo ? `<span class="why">${esc(t.memo)}</span>` : ''}${why ? `<span class="why">${esc(why)}</span>` : ''}</td><td class="amount">${esc(money(moneyCents(Math.abs(out))))}${isIn ? ' in' : ''}</td>
+      <td><select aria-label="Budget account for ${esc(t.description || 'this transaction')}"${isIn ? ' disabled' : ''}>${opts(k ? k.acct : $('stmtAccount').value)}</select></td></tr>`;
+  }).join('');
+  stmtCount();
+}
+function stmtCount() {
+  const outs = stmt.filter(t => stmtOut(t) > 0), dups = outs.filter(t => t.dup).length, picked = $('stmtRows').querySelectorAll('input:checked').length;
+  $('stmtSummary').textContent = `${stmt.length} transaction${stmt.length === 1 ? '' : 's'}: ${outs.length} money out${stmt.length - outs.length ? `, ${stmt.length - outs.length} money in` : ''}.${dups ? ` ${dups} look${dups === 1 ? 's' : ''} like ${dups === 1 ? 'one' : 'ones'} already in the log.` : ''}`;
+  $('stmtAdd').textContent = picked ? `Add ${picked} expense${picked === 1 ? '' : 's'}` : 'Add';
+  $('stmtAdd').disabled = !picked;
+}
+function addStatement() {
+  const rows = [...$('stmtRows').querySelectorAll('tr')].map((tr, i) => ({ t: stmt[i], on: tr.querySelector('input').checked, sel: tr.querySelector('select') })).filter(r => r.on);
+  const missing = rows.find(r => !accountById(r.sel.value));
+  if (missing) { missing.sel.focus(); toast('Choose a budget account for each one you picked.', true); return; }
+  const method = $('stmtMethod').value;
+  for (const { t, sel } of rows) {
+    const e = { id: makeId('expense'), date: t.date, amount: moneyCents(Math.abs(stmtOut(t))) / 100, description: t.description || t.payee || 'From a statement', payee: t.payee || '', accountId: sel.value, kind: 'expense', method };
+    if (!e.payee) delete e.payee;
+    if (t.ref) e.bankRef = t.ref;
+    if (t.memo) e.notes = t.memo;
+    if (t.currency && t.currency !== oftMoney.home()) e.currency = t.currency;
+    doc.expenses.push(e);
+  }
+  $('stmtDialog').close();
+  changed();
+  toast(`Added ${rows.length} expense${rows.length === 1 ? '' : 's'} from ${stmtName}.`);
+}
+function wireStatement() {
+  $('stmtBtn').onclick = () => { if (!accounts().length) { toast('This project has no budget accounts. Add accounts in the budget tool first.', true); return; } $('stmtInput').click(); };
+  $('stmtInput').addEventListener('change', async () => { const f = $('stmtInput').files[0]; $('stmtInput').value = ''; if (f) openStatement(await f.text(), f.name); });
+  $('stmtFlip').addEventListener('change', () => renderStatement(false));
+  $('stmtAccount').addEventListener('change', () => { $('stmtRows').querySelectorAll('select:not([disabled])').forEach(s => { s.value = $('stmtAccount').value; }); });
+  $('stmtRows').addEventListener('change', stmtCount);
+  $('stmtCancel').onclick = () => $('stmtDialog').close();
+  $('stmtForm').addEventListener('submit', ev => { ev.preventDefault(); addStatement(); });
+}
 /* oft-shared:money begin. Copied from shared/money.js by .github/scripts/sync_shared.py; edit it there. */
 // Several currencies. Any amount can carry its own currency (a `currency` field on
 // its record); the project currency is the default. Exchange rates are typed in by
@@ -216,6 +336,192 @@ if (typeof renderReport === 'function') {
   };
 }
 /* oft-shared:money end */
+/* oft-shared:import begin. Copied from shared/import.js by .github/scripts/sync_shared.py; edit it there. */
+// Import rows from a spreadsheet (CSV) into a tool. Each tool describes its
+// columns in OFT_IMPORT, using the same column names as its spreadsheet template,
+// so a filled-in template imports without any matching. Importing only adds.
+const oftImport = (() => {
+  const str = v => (v == null ? '' : String(v));
+  const norm = s => str(s).toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9%]+/g, '');
+  const esc = s => str(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const store = { get(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* storage off */ } } };
+  function parse(text) {
+    text = str(text).replace(/^﻿/, '');
+    const first = text.split(/\r?\n/)[0] || '';
+    const sep = [',', ';', '\t'].map(s => [s, first.split(s).length]).sort((a, b) => b[1] - a[1])[0][0];
+    const rows = []; let row = [], cell = '', q = false;
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (q) { if (c === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; } else cell += c; continue; }
+      if (c === '"' && cell === '') q = true;
+      else if (c === sep) { row.push(cell); cell = ''; }
+      else if (c === '\n' || c === '\r') { if (c === '\r' && text[i + 1] === '\n') i++; row.push(cell); rows.push(row); row = []; cell = ''; }
+      else cell += c;
+    }
+    if (cell !== '' || row.length) { row.push(cell); rows.push(row); }
+    return rows.filter(r => r.some(c => c.trim() !== ''));
+  }
+  // Values are written back as the tool stores them: undo the "'" a CSV export adds before = + - @.
+  const clean = v => str(v).trim().replace(/^'(?=[=+\-@])/, '');
+  function date(v) {
+    const s = clean(v);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+    let m = s.match(/^(\d{4})[/.](\d{1,2})[/.](\d{1,2})$/);
+    if (m) return `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}`;
+    m = s.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})$/);
+    if (m) { const y = m[3].length === 2 ? `20${m[3]}` : m[3]; return `${y}-${m[1].padStart(2, '0')}-${m[2].padStart(2, '0')}`; }
+    const d = new Date(s);
+    if (/[a-z]/i.test(s) && /\d{4}/.test(s) && !isNaN(d)) return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    return null;
+  }
+  function number(v) {
+    let s = clean(v).replace(/[\s$€£¥]|[A-Z]{3}$|^[A-Z]{3}/g, '');
+    if (/^-?\d{1,3}(\.\d{3})+(,\d+)?$/.test(s)) s = s.replace(/\./g, '').replace(',', '.');
+    s = s.replace(/,/g, '');
+    return s !== '' && isFinite(Number(s)) ? Number(s) : null;
+  }
+  const yes = v => /^(yes|y|true|1|x|✓|done)$/i.test(clean(v));
+  const list = v => clean(v).split(/\s*[;\n]\s*|\s*,\s*(?![^()]*\))/).map(x => x.trim()).filter(Boolean);
+  function values(spec) {
+    if (!spec) return [];
+    if (Array.isArray(spec)) return spec.map(x => typeof x === 'string' ? [x, x] : [x.id != null ? x.id : x.value, x.label]);
+    return Object.entries(spec);
+  }
+  function pick(spec, v) {
+    if (typeof spec === 'function') return spec(v);
+    const s = norm(v);
+    const hit = values(spec).find(([id, label]) => norm(id) === s || norm(label) === s) || values(spec).find(([id, label]) => s && (norm(label).startsWith(s) || s.startsWith(norm(label))));
+    return hit ? hit[0] : undefined;
+  }
+  function setPath(o, key, v) { const parts = key.split('.'); let t = o; for (const p of parts.slice(0, -1)) t = t[p] = t[p] && typeof t[p] === 'object' ? t[p] : {}; t[parts[parts.length - 1]] = v; }
+  const many = type => type === 'people' || type === 'places';
+  const newId = p => `${p}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+
+  let S = null, state = null;
+  const fields = () => S.fields.filter(f => f[2] !== 'skip');
+  const known = col => S.fields.find(f => norm(f[0]) === norm(col) || (f[3] && f[3].alt && f[3].alt.some(a => norm(a) === norm(col))));
+  function guess(col) {
+    const saved = (store.get(`oft-import:${OFT_SLUG}`) || {})[norm(col)];
+    if (saved !== undefined) return saved;
+    const f = known(col);
+    if (f) return f[2] === 'skip' ? '' : f[0];
+    const g = fields().find(x => norm(x[1].split('.').pop()) === norm(col));
+    return g ? g[0] : '';
+  }
+  function build() {
+    const { head, rows, map } = state;
+    const out = [];
+    rows.forEach((cells, n) => {
+      const raw = {}; head.forEach((h, i) => { raw[h] = clean(cells[i]); });
+      if (S.skipRow && S.skipRow(raw)) return;
+      const rec = S.make ? S.make(raw) : {}, problems = [], refs = [];
+      head.forEach((h, i) => {
+        const f = map[i] && S.fields.find(x => x[0] === map[i]);
+        const v = clean(cells[i]);
+        if (!f || v === '') return;
+        const [label, key, type, extra] = f;
+        let val = v;
+        if (type === 'date') { val = date(v); if (val == null) { problems.push(`${label} "${v}" isn't a date, so it's left blank`); return; } }
+        else if (type === 'num' || type === 'int') { val = number(v); if (val == null) { problems.push(`${label} "${v}" isn't a number, so it's left blank`); return; } }
+        else if (type === 'yes') val = yes(v);
+        else if (type === 'list') val = list(v);
+        else if (type === 'enum') { val = pick(extra.values, v); if (val === undefined) { if (extra.free) val = v; else { problems.push(typeof extra.values === 'function' ? `${label} "${v}" isn't one the tool knows, so it's left as the default` : `${label} "${v}" isn't one of ${values(extra.values).map(x => x[1]).join(', ')}, so it's left as the default`); return; } } }
+        else if (type === 'people' || type === 'places' || type === 'person' || type === 'place') { refs.push([key, type, many(type) ? list(v) : [v]]); return; }
+        setPath(rec, key, val);
+      });
+      const keyField = S.fields.find(x => x[1] === S.key);
+      const kv = S.key.split('.').reduce((o, k) => (o || {})[k], rec);
+      if (S.key && (kv == null || str(kv).trim() === '') && !refs.some(x => x[0] === S.key && x[2].length)) { out.push({ n: n + 2, skip: true, problems: [`No ${keyField ? keyField[0].toLowerCase() : S.key}, so it's skipped`] }); return; }
+      // A tool can say when a row is one it already has, such as the same festival exported again.
+      if (S.same && S.same(rec, raw)) { out.push({ n: n + 2, skip: true, problems: [`${str(kv) || 'This row'} is already here, so it's skipped`] }); return; }
+      out.push({ n: n + 2, rec, refs, raw, problems, label: str(kv) || (refs.find(x => x[0] === S.key) || [0, 0, []])[2].join(', ') });
+    });
+    return out;
+  }
+  function preview() {
+    const list = build(), add = list.filter(r => !r.skip), skipped = list.length - add.length;
+    const flagged = list.filter(r => r.problems.length);
+    $map();
+    oftEl('oftImpSummary').textContent = `${add.length} ${add.length === 1 ? S.noun : S.nouns} to add${skipped ? `, ${skipped} row${skipped === 1 ? '' : 's'} skipped` : ''}.`;
+    oftEl('oftImpRows').innerHTML = flagged.length ? `<h3>Check these rows</h3><ul>${flagged.slice(0, 50).map(r => `<li><b>Row ${r.n}${r.label ? `, ${esc(r.label)}` : ''}:</b> ${r.problems.map(esc).join('. ')}.</li>`).join('')}</ul>${flagged.length > 50 ? `<p>And ${flagged.length - 50} more.</p>` : ''}`
+      : add.length ? `<h3>First rows</h3><ul>${add.slice(0, 5).map(r => `<li>${esc(r.label || `Row ${r.n}`)}</li>`).join('')}</ul>` : '';
+    oftEl('oftImpAdd').disabled = !add.length;
+    oftEl('oftImpAdd').textContent = add.length ? `Add ${add.length} ${add.length === 1 ? S.noun : S.nouns}` : 'Nothing to add';
+    state.list = add;
+  }
+  function $map() {
+    const box = oftEl('oftImpMap');
+    if (box.dataset.ready === '1') return;
+    box.dataset.ready = '1';
+    const opts = c => `<option value="">Don't import</option>${fields().map(f => `<option value="${esc(f[0])}"${f[0] === c ? ' selected' : ''}>${esc(f[0])}</option>`).join('')}`;
+    box.innerHTML = `<table><thead><tr><th scope="col">Column in the file</th><th scope="col">Goes to</th></tr></thead><tbody>${state.head.map((h, i) => `<tr><td>${esc(h || `Column ${i + 1}`)}${!state.map[i] && !(known(h) && known(h)[2] === 'skip') ? ' <small class="oft-unmatched">Not matched</small>' : ''}</td><td><select data-col="${i}" aria-label="Where ${esc(h || `column ${i + 1}`)} goes">${opts(state.map[i])}</select></td></tr>`).join('')}</tbody></table>`;
+    box.querySelectorAll('select').forEach(s => s.addEventListener('change', () => { state.map[+s.dataset.col] = s.value; box.dataset.ready = ''; preview(); }));
+  }
+  function load(name, text) {
+    // A tool can read its own text formats, such as a QC report, into rows under its column names.
+    const rows = (S.read && S.read(text, name)) || parse(text);
+    if (!rows.length) { oftEl('oftImpSummary').textContent = `${name} is empty.`; return; }
+    const head = rows[0].map(h => h.trim());
+    state = { name, head, rows: rows.slice(1), map: head.map(guess) };
+    oftEl('oftImpFile').textContent = `${name}: ${state.rows.length} row${state.rows.length === 1 ? '' : 's'}`;
+    // Anything a tool's own reader couldn't use is listed, so nothing is dropped without saying so.
+    const notes = Array.isArray(rows.notes) ? rows.notes : [];
+    oftEl('oftImpNoteList').innerHTML = notes.map(n => `<li>${esc(n)}</li>`).join('');
+    oftEl('oftImpNotes').hidden = !notes.length;
+    oftEl('oftImpMap').dataset.ready = '';
+    oftEl('oftImpStep').hidden = false;
+    preview();
+  }
+  function commit() {
+    const remember = store.get(`oft-import:${OFT_SLUG}`) || {};
+    state.head.forEach((h, i) => { const f = known(h); if (!f || f[0] !== state.map[i]) remember[norm(h)] = state.map[i]; });
+    store.set(`oft-import:${OFT_SLUG}`, remember);
+    const people = () => (doc.people = Array.isArray(doc.people) ? doc.people : []);
+    const places = () => (doc.locations = Array.isArray(doc.locations) ? doc.locations : []);
+    const find = (arr, field, value, make) => { const v = str(value).trim(); let x = arr.find(r => r && norm(r[field]) === norm(v)); if (!x) { x = Object.assign({ id: newId(make && make.prefix || 'item') }, (make && make.fields) || {}, { [field]: v }); arr.push(x); } return x; };
+    const ref = (type, name) => type.startsWith('person') || type === 'people' ? find(people(), 'name', name, { prefix: 'person' }).id : find(places(), 'name', name, { prefix: 'location' }).id;
+    let added = 0;
+    for (const r of state.list) {
+      const rec = r.rec;
+      rec.id = rec.id || newId(S.prefix || S.noun.replace(/\s+/g, '-'));
+      for (const [key, type, names] of r.refs) { const ids = names.map(n => ref(type, n)); setPath(rec, key, many(type) ? ids : ids[0]); }
+      const ctx = { raw: r.raw, find, ref, newId };
+      if (S.put) { if (S.put(rec, ctx) === false) continue; } else S.list().push(rec);
+      added++;
+    }
+    oftEl('oftImportDialog').close();
+    if (typeof changed === 'function') changed(); else { dirty = true; render(); }
+    toast(`Added ${added} ${added === 1 ? S.noun : S.nouns} from ${state.name}`);
+  }
+  function open(spec) {
+    S = spec; state = null;
+    let dlg = oftEl('oftImportDialog');
+    if (!dlg) {
+      dlg = document.createElement('dialog');
+      dlg.id = 'oftImportDialog'; dlg.className = 'oft-dialog'; dlg.setAttribute('aria-labelledby', 'oftImpTitle');
+      dlg.innerHTML = `<h2 id="oftImpTitle"></h2><p id="oftImpIntro"></p>
+        <p class="oft-files"><span id="oftImpFile">No file chosen</span> <button type="button" class="btn" id="oftImpChoose">Choose a CSV file</button></p>
+        <div id="oftImpNotes" hidden><p>Left out of the file:</p><ul id="oftImpNoteList"></ul></div>
+        <input type="file" id="oftImpInput" accept=".csv,.tsv,.txt,text/csv" hidden>
+        <div id="oftImpStep" hidden><h3>Match the columns</h3><div class="oft-map" id="oftImpMap"></div><p id="oftImpSummary" aria-live="polite"></p><div id="oftImpRows"></div></div>
+        <div class="oft-actions"><button type="button" class="btn" id="oftImpCancel">Cancel</button><button type="button" class="btn primary" id="oftImpAdd" disabled>Add</button></div>`;
+      document.body.append(dlg);
+      oftEl('oftImpChoose').onclick = () => { oftEl('oftImpInput').value = ''; oftEl('oftImpInput').click(); };
+      oftEl('oftImpInput').addEventListener('change', async ev => { const f = ev.target.files[0]; if (f) load(f.name, await f.text()); });
+      oftEl('oftImpCancel').onclick = () => dlg.close();
+      oftEl('oftImpAdd').onclick = commit;
+    }
+    oftEl('oftImpTitle').textContent = `Import ${S.nouns} from a spreadsheet`;
+    oftEl('oftImpIntro').textContent = `Choose a CSV file. Columns named as in this tool's spreadsheet template are matched for you; match any others below. Importing adds ${S.nouns} and never changes or removes what's already here.`;
+    oftEl('oftImpFile').textContent = 'No file chosen';
+    oftEl('oftImpNotes').hidden = true;
+    oftEl('oftImpStep').hidden = true;
+    oftEl('oftImpAdd').disabled = true; oftEl('oftImpAdd').textContent = 'Add';
+    dlg.showModal();
+  }
+  return { open, parse, date, number };
+})();
+/* oft-shared:import end */
 /* oft-shared:tool begin. Copied from shared/tool.js by .github/scripts/sync_shared.py; edit it there. */
 // Shared by every tool: your name, remembering the open file, who has it open,
 // who changed what, merging two copies and spotting conflicted copies.
@@ -700,6 +1006,12 @@ function oftBuild() {
     imp.type = 'button'; imp.className = 'link-btn'; imp.id = 'oftImportBtn'; imp.textContent = 'Import from a spreadsheet';
     imp.onclick = () => oftImport.open(OFT_IMPORT);
     links.prepend(imp);
+  }
+  if (typeof oftVcard !== 'undefined' && typeof OFT_VCARD !== 'undefined') {
+    const vc = document.createElement('button');
+    vc.type = 'button'; vc.className = 'link-btn'; vc.id = 'oftVcardBtn'; vc.textContent = 'Import from an address book';
+    vc.onclick = () => oftVcard.open();
+    links.prepend(vc);
   }
   if (typeof oftCosts !== 'undefined' && typeof OFT_COSTS !== 'undefined') {
     const cb = document.createElement('button');

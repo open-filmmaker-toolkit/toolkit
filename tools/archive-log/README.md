@@ -40,6 +40,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **Exports CSV.** Each archive row includes its complete hash manifest and read-back history. Project asset CSV export also includes `archiveCopies` as JSON.
 - **Prints an archive report** with copy locations, dates and current check status.
 - **Preserves the rest of the project file**, including asset fields this tool doesn't edit.
+- **Loads hash manifests.** In a copy, choose **Load a manifest file** and pick an MD5, SHA, xxHash or MHL manifest. The manifest is kept with the copy, and the tool says how many files it lists and which hash it uses. It reads the list only: it never reads media or works out hashes.
 
 ## Saving and file conflicts
 
@@ -51,7 +52,7 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-An optional `archiveCopies` array on each `assets` record. A copy has an `id`, `storageLocation` and `copiedAt`, and may include a `copyLabel`, `offsite` (true or false, when it differs from what the location suggests), `hashList`, `nextCheckDate` and `checks`. Each check has an `id`, `checkedAt`, `result` (`passed`, `partial` or `failed`) and optional `notes`. Hash manifests are text or references supplied by the user; they are not generated or validated by this tool.
+An optional `archiveCopies` array on each `assets` record. A copy has an `id`, `storageLocation` and `copiedAt`, and may include a `copyLabel`, `offsite` (true or false, when it differs from what the location suggests), `hashList` (with `hashCount`, `hashAlgorithm` and `manifestFile` when a manifest file was loaded or the pasted list could be read), `nextCheckDate` and `checks`. Each check has an `id`, `checkedAt`, `result` (`passed`, `partial` or `failed`) and optional `notes`. Hash manifests are text or references supplied by the user; they are not generated or validated by this tool.
 
 All other project data is preserved. See the [data model notes](../../schemas/README.md).
 
@@ -59,7 +60,6 @@ All other project data is preserved. See the [data model notes](../../schemas/RE
 
 - Notifications or automatic reminders while the tool is closed
 - Verifying that media can be read back or comparing its hashes; record those results after checking with another tool
-- Importing hash manifests from external files
 
 ## License
 

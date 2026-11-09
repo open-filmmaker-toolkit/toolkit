@@ -858,9 +858,56 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   window.addEventListener('error', ev => toast(`Something went wrong: ${ev.message}. Save your work, then reload the page.`, true));
   window.addEventListener('unhandledrejection', ev => toast(`Something went wrong: ${ev.reason && ev.reason.message ? ev.reason.message : ev.reason}. Save your work, then reload the page.`, true));
   // Columns for importing from a spreadsheet, named as in this tool's template.
+  // Words QC reports use for severity, area and the overall result.
+  const fromMap = (spec, v) => { const t = str(v).trim().toLowerCase(); const hit = Object.entries(spec).find(([id, label]) => id === t || label.toLowerCase() === t); return hit ? hit[0] : undefined; };
+  function qcSeverity(v) {
+    const t = str(v).trim().toLowerCase();
+    if (/crit|fail|major|error|reject|high|severe|^[45]$/.test(t)) return 'major';
+    if (/minor|warn|medium|caution|moderate|^[23]$/.test(t)) return 'minor';
+    if (/note|info|fyi|low|advis|observ|^1$/.test(t)) return 'note';
+    return fromMap(SEV, v);
+  }
+  function qcArea(v) {
+    const t = str(v).trim().toLowerCase();
+    if (/caption|subtitle|\bcc\b|sdh|timed text/.test(t)) return 'captions';
+    if (/audio|sound|loud|dialog|lkfs|lufs|\bdb|peak|phase|channel|mix/.test(t)) return 'sound';
+    if (/pic|video|vid\b|luma|chroma|image|pixel|frame|colou?r|gamut|visual/.test(t)) return 'picture';
+    return fromMap(AREA, v) || (t ? 'other' : undefined);
+  }
+  const qcResult = v => { const t = str(v).trim().toLowerCase(); return /fail|reject/.test(t) ? 'fail' : /pass|accept|approved/.test(t) ? 'pass' : /pending|wait|progress/.test(t) ? 'pending' : fromMap(RESULT, v); };
+  // A plain text report: one issue on each line that starts with a timecode, such as
+  // "01:04:12:08 - 01:04:12:20  Video  Major  Dead pixel, upper left".
+  function qcText(text, name) {
+    const TC = /\d{1,2}[:;.]\d{2}[:;.]\d{2}[:;.]\d{2}/g;
+    const report = str(name).replace(/\.[^.]+$/, '') || 'QC report';
+    const rows = [];
+    for (const line of str(text).split(/\r?\n/)) {
+      const tcs = line.match(TC);
+      if (!tcs || line.search(TC) > 12) continue;
+      let rest = line.replace(TC, ' ').replace(/^[\s\-–—to|,;:]+/i, '').trim();
+      // Severity and area words at the start of the line, in either order.
+      const toks = rest.split(/\s+/).filter(Boolean);
+      let sev = '', area = '';
+      while (toks.length) {
+        const w = toks[0].replace(/[[\](),:|]/g, '');
+        if (!w) toks.shift();
+        else if (!sev && /^(critical|fail(ed)?|major|error|minor|warn(ing)?|note|info|fyi|low|medium|high|[1-5])$/i.test(w)) { sev = w; toks.shift(); }
+        else if (!area && /^(video|picture|audio|sound|captions?|subtitles?|cc|luma|chroma|loudness|other)$/i.test(w)) { area = w; toks.shift(); }
+        else break;
+      }
+      const keep = [toks.join(' ')];
+      rows.push([report, tcs[0], tcs[1] || '', sev, area, keep.join(' ').replace(/^[\s\-–—:]+/, '')]);
+    }
+    return rows.length ? [['Report', 'Timecode', 'To', 'Severity', 'Area', 'Issue'], ...rows] : null;
+  }
   const OFT_IMPORT = { noun: 'issue', nouns: 'issues', key: 'description', prefix: 'qc',
-    fields: [['Report', 'report'], ['Version', 'version'], ['Result', 'result', 'enum', { values: RESULT }], ['Timecode', 'tc'], ['To', 'tcOut'], ['Severity', 'severity', 'enum', { values: SEV }], ['Area', 'area', 'enum', { values: AREA }],
-      ['Issue', 'description'], ['Who fixes it', 'owner', 'enum', { values: OWNER }], ['Fix', 'fix', 'enum', { values: FIX }], ['Fixed in', 'fixedIn'], ['Note', 'note'], ['Found in cut', 'foundCut'], ['Fixed in cut', 'fixedCut']],
+    // QC houses name the same columns their own way, and some send a plain text report: both are read here.
+    read: (text, name) => (/\.(csv|tsv)$/i.test(name) ? null : qcText(text, name)),
+    fields: [['Report', 'report', '', { alt: ['Vendor', 'QC house', 'Facility', 'QC report'] }], ['Version', 'version', '', { alt: ['Master', 'Deliverable', 'File name', 'Asset'] }], ['Result', 'result', 'enum', { values: qcResult, alt: ['Overall result', 'Status'] }],
+      ['Timecode', 'tc', '', { alt: ['TC', 'TC in', 'Timecode in', 'Start TC', 'Start timecode', 'Start', 'In', 'Source in', 'Record in'] }], ['To', 'tcOut', '', { alt: ['TC out', 'Timecode out', 'End TC', 'End timecode', 'End', 'Out'] }],
+      ['Severity', 'severity', 'enum', { values: qcSeverity, alt: ['Grade', 'Rating', 'Priority', 'Level', 'Flag'] }], ['Area', 'area', 'enum', { values: qcArea, alt: ['Category', 'Type', 'Track', 'Element'] }],
+      ['Issue', 'description', '', { alt: ['Description', 'Comment', 'Comments', 'Event', 'Problem', 'Defect', 'Remark', 'Fault'] }], ['Who fixes it', 'owner', 'enum', { values: OWNER }], ['Fix', 'fix', 'enum', { values: FIX }], ['Fixed in', 'fixedIn'],
+      ['Note', 'note', '', { alt: ['Notes', 'Action', 'Recommendation'] }], ['Found in cut', 'foundCut'], ['Fixed in cut', 'fixedCut']],
     put: (r, x) => {
       const q = doc.qc = doc.qc && typeof doc.qc === 'object' ? doc.qc : {}; q.versions = arr(q.versions); q.reports = arr(q.reports);
       const ver = n => n ? x.find(q.versions, 'name', n, { prefix: 'master' }).id : undefined;
@@ -969,6 +1016,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         const keyField = S.fields.find(x => x[1] === S.key);
         const kv = S.key.split('.').reduce((o, k) => (o || {})[k], rec);
         if (S.key && (kv == null || str(kv).trim() === '') && !refs.some(x => x[0] === S.key && x[2].length)) { out.push({ n: n + 2, skip: true, problems: [`No ${keyField ? keyField[0].toLowerCase() : S.key}, so it's skipped`] }); return; }
+        // A tool can say when a row is one it already has, such as the same festival exported again.
+        if (S.same && S.same(rec, raw)) { out.push({ n: n + 2, skip: true, problems: [`${str(kv) || 'This row'} is already here, so it's skipped`] }); return; }
         out.push({ n: n + 2, rec, refs, raw, problems, label: str(kv) || (refs.find(x => x[0] === S.key) || [0, 0, []])[2].join(', ') });
       });
       return out;
@@ -993,11 +1042,16 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       box.querySelectorAll('select').forEach(s => s.addEventListener('change', () => { state.map[+s.dataset.col] = s.value; box.dataset.ready = ''; preview(); }));
     }
     function load(name, text) {
-      const rows = parse(text);
+      // A tool can read its own text formats, such as a QC report, into rows under its column names.
+      const rows = (S.read && S.read(text, name)) || parse(text);
       if (!rows.length) { oftEl('oftImpSummary').textContent = `${name} is empty.`; return; }
       const head = rows[0].map(h => h.trim());
       state = { name, head, rows: rows.slice(1), map: head.map(guess) };
       oftEl('oftImpFile').textContent = `${name}: ${state.rows.length} row${state.rows.length === 1 ? '' : 's'}`;
+      // Anything a tool's own reader couldn't use is listed, so nothing is dropped without saying so.
+      const notes = Array.isArray(rows.notes) ? rows.notes : [];
+      oftEl('oftImpNoteList').innerHTML = notes.map(n => `<li>${esc(n)}</li>`).join('');
+      oftEl('oftImpNotes').hidden = !notes.length;
       oftEl('oftImpMap').dataset.ready = '';
       oftEl('oftImpStep').hidden = false;
       preview();
@@ -1031,6 +1085,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         dlg.id = 'oftImportDialog'; dlg.className = 'oft-dialog'; dlg.setAttribute('aria-labelledby', 'oftImpTitle');
         dlg.innerHTML = `<h2 id="oftImpTitle"></h2><p id="oftImpIntro"></p>
           <p class="oft-files"><span id="oftImpFile">No file chosen</span> <button type="button" class="btn" id="oftImpChoose">Choose a CSV file</button></p>
+          <div id="oftImpNotes" hidden><p>Left out of the file:</p><ul id="oftImpNoteList"></ul></div>
           <input type="file" id="oftImpInput" accept=".csv,.tsv,.txt,text/csv" hidden>
           <div id="oftImpStep" hidden><h3>Match the columns</h3><div class="oft-map" id="oftImpMap"></div><p id="oftImpSummary" aria-live="polite"></p><div id="oftImpRows"></div></div>
           <div class="oft-actions"><button type="button" class="btn" id="oftImpCancel">Cancel</button><button type="button" class="btn primary" id="oftImpAdd" disabled>Add</button></div>`;
@@ -1043,6 +1098,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       oftEl('oftImpTitle').textContent = `Import ${S.nouns} from a spreadsheet`;
       oftEl('oftImpIntro').textContent = `Choose a CSV file. Columns named as in this tool's spreadsheet template are matched for you; match any others below. Importing adds ${S.nouns} and never changes or removes what's already here.`;
       oftEl('oftImpFile').textContent = 'No file chosen';
+      oftEl('oftImpNotes').hidden = true;
       oftEl('oftImpStep').hidden = true;
       oftEl('oftImpAdd').disabled = true; oftEl('oftImpAdd').textContent = 'Add';
       dlg.showModal();
@@ -1534,6 +1590,12 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       imp.type = 'button'; imp.className = 'link-btn'; imp.id = 'oftImportBtn'; imp.textContent = 'Import from a spreadsheet';
       imp.onclick = () => oftImport.open(OFT_IMPORT);
       links.prepend(imp);
+    }
+    if (typeof oftVcard !== 'undefined' && typeof OFT_VCARD !== 'undefined') {
+      const vc = document.createElement('button');
+      vc.type = 'button'; vc.className = 'link-btn'; vc.id = 'oftVcardBtn'; vc.textContent = 'Import from an address book';
+      vc.onclick = () => oftVcard.open();
+      links.prepend(vc);
     }
     if (typeof oftCosts !== 'undefined' && typeof OFT_COSTS !== 'undefined') {
       const cb = document.createElement('button');

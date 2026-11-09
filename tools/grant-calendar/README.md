@@ -48,6 +48,7 @@ For anyone who doesn't use the tool, there's a blank [spreadsheet template](../.
 
 - **A calendar file of every date in the project**, gathered from every tool: choose **Calendar of every date** under the file buttons and pick which kinds of dates to include. Importing a newer file updates the same events instead of adding them twice.
 - **Imports from a spreadsheet:** choose **Import from a spreadsheet** under the file buttons and pick a CSV file. One with the columns of the [spreadsheet template](../../templates/grant-calendar-template.csv) imports as it is; match any other columns once and the tool remembers. Problems, such as a date it can't read, show row by row before anything is added, and importing only adds.
+- **Imports from a funder database:** the spreadsheet import also matches the columns funder databases use in their exports, such as Grantmaker Name, Opportunity Title, Application Deadline and Award Amount. A grant already here, with the same funder, program and deadline, is skipped.
 
 ## Saving and file conflicts
 
@@ -65,7 +66,6 @@ Which answers went to which grant is kept on the answers, in the library's `narr
 
 ## Not yet
 
-- Importing grants from a funder database
 - A list of funders that the toolkit keeps up to date for everyone. Lists are shared as files instead, so nothing is fetched
 
 ## License
