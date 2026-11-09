@@ -1182,6 +1182,15 @@ def test_cash_flow(browser, fake):
     check('cost not scheduled' not in pg.inner_text('#unsched'), 'schedules a percentage')
     pg.select_option('.mode[data-kind="lines"][data-id="line-1300-4"]', 'same'); pg.wait_for_timeout(100)
     check('Deferred' not in pg.inner_text('#unsched'), 'a line can go back to its account schedule')
+    pg.locator('[data-acct], .map').filter(has_text='Archive research').first.locator('details').evaluate('d => d.open = true')
+    pg.select_option('.mode[data-kind="lines"][data-id="line-1000-0"]', 'payments'); pg.wait_for_selector('#payDialog[open]')
+    pg.select_option('#p-by', 'percent'); pg.fill('#pp-d-0', '2026-02-01'); pg.fill('#pp-v-0', '30')
+    pg.click('#payAdd'); pg.fill('#pp-d-1', '2026-03-15'); pg.fill('#pp-v-1', '50'); pg.locator('#pp-v-1').dispatch_event('input')
+    check('$2,800 of $3,500 placed; $700 left unscheduled' in pg.inner_text('#payNote'), 'works out payments as percentages of the cost')
+    pg.click('#payForm button[type="submit"]'); pg.wait_for_timeout(200)
+    check('2 payments' in pg.inner_text('#sched') and 'cost not scheduled' in pg.inner_text('#unsched'), 'saves the payments and leaves the rest unscheduled')
+    pg.click('#oneAdd'); pg.select_option('#o-kind', 'in'); pg.fill('#o-label', 'Bridge loan'); pg.fill('#o-date', '2026-05-01'); pg.fill('#o-amount', '10000'); pg.click('#oneForm button[type="submit"]'); pg.wait_for_timeout(200)
+    check('Bridge loan' in pg.inner_text('#oneList') and '+$10,000' in pg.inner_text('#oneList'), 'adds one-off money coming in')
     pg.click('#settingsBtn'); pg.select_option('#s-period', 'week'); pg.click('#settingsSubmit'); pg.wait_for_timeout(200)
     check('weeks' in pg.inner_text('#count'), 'shows weeks')
     pg.click('#flowViewBtn')
@@ -1197,6 +1206,7 @@ def test_cash_flow(browser, fake):
     cf = data['cashFlow']
     check(cf['period'] == 'week' and cf['openingBalance'] == 20000 and cf['includeProspective'] is True and 'includePending' not in cf and
           cf['markups']['markup-contingency'] == {'mode': 'spread', 'from': '2027-01-01', 'to': '2027-12-31'} and 'line-1300-4' not in cf['lines'], 'the schedule is saved')
+    check(cf['lines']['line-1000-0'] == {'mode': 'payments', 'by': 'percent', 'payments': [{'date': '2026-02-01', 'percent': 30}, {'date': '2026-03-15', 'percent': 50}]} and cf['oneOffs'][0]['kind'] == 'in' and cf['oneOffs'][0]['amount'] == 10000, 'saves payments on dates and one-offs')
     check(data['budget'] == original['budget'] and data['financePlan'] == original['financePlan'], "the budget and finance plan are unchanged")
     check(not errs, 'no page errors %s' % errs)
     ctx.close()

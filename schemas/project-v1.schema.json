@@ -157,6 +157,7 @@
     "cashFlow": {
       "type": "object",
       "properties": {
+        "oneOffs": { "type": "array", "description": "Costs and money coming in that aren't in the budget or the finance plan.", "items": { "type": "object", "required": ["id"], "properties": { "id": { "$ref": "#/$defs/id" }, "kind": { "enum": ["in", "out"] }, "label": { "type": "string" }, "date": { "type": "string", "format": "date" }, "amount": { "type": "number", "minimum": 0 }, "currency": { "type": "string", "pattern": "^[A-Z]{3}$" } }, "additionalProperties": true } },
         "period": {
           "type": "string",
           "enum": [
@@ -4551,6 +4552,17 @@
                 "in-kind"
               ]
             }
+          },
+          "additionalProperties": true
+        },
+        {
+          "type": "object",
+          "description": "Paid on chosen dates, by amount or by percentage of the cost.",
+          "required": ["mode"],
+          "properties": {
+            "mode": { "const": "payments" },
+            "by": { "enum": ["percent"] },
+            "payments": { "type": "array", "items": { "type": "object", "properties": { "date": { "type": "string", "format": "date" }, "amount": { "type": "number", "minimum": 0 }, "percent": { "type": "number", "minimum": 0 } }, "additionalProperties": true } }
           },
           "additionalProperties": true
         }
