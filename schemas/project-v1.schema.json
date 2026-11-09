@@ -1011,6 +1011,11 @@
           "id": {
             "$ref": "#/$defs/id"
           },
+          "boxOffice": { "type": "array", "description": "Box office for a split deal, a line for each night or week.", "items": { "type": "object", "properties": { "id": { "$ref": "#/$defs/id" }, "date": { "type": "string", "format": "date" }, "admissions": { "type": "number", "minimum": 0 }, "gross": { "type": "number", "minimum": 0 } }, "additionalProperties": true } },
+          "boxOfficeTaxes": { "type": "number", "minimum": 0, "description": "Taxes and fees taken off the gross before the split." },
+          "invoiceNumber": { "type": "string" },
+          "invoiceDue": { "type": "string", "format": "date" },
+          "invoicePayment": { "type": "string", "description": "How to pay, printed on the invoice." },
           "venue": {
             "type": "string"
           },
@@ -1159,6 +1164,8 @@
               "id": {
                 "$ref": "#/$defs/id"
               },
+              "assumptions": { "type": "string", "description": "What has to be true for this step to lead to the next." },
+              "risks": { "type": "string", "description": "What could stop it." },
               "text": {
                 "type": "string"
               },
@@ -1195,6 +1202,9 @@
               "id": {
                 "$ref": "#/$defs/id"
               },
+              "outcomeIds": { "type": "array", "items": { "$ref": "#/$defs/id" }, "description": "Later outcomes this one leads to." },
+              "assumptions": { "type": "string", "description": "What has to be true for this step to lead to the next." },
+              "risks": { "type": "string", "description": "What could stop it." },
               "text": {
                 "type": "string"
               },
@@ -1263,6 +1273,7 @@
       "type": "object",
       "description": "The screening kit for hosts, kept by the screening kit builder.",
       "properties": {
+        "hosts": { "type": "object", "description": "What's different in each host's kit, by host: \"partner:\" or \"booking:\" and an id.", "additionalProperties": { "type": "object", "properties": { "note": { "type": "string" }, "hosting": { "type": "string" }, "tech": { "type": "string" }, "promotion": { "type": "string" }, "contact": { "type": "string" } }, "additionalProperties": true } },
         "hosting": {
           "type": "string"
         },
@@ -1414,6 +1425,7 @@
       "type": "object",
       "description": "The final cost report, kept by the final cost report tool: the date costs run to, whether it is final, and variance notes.",
       "properties": {
+        "signOff": { "type": "object", "description": "The accountant's sign-off page.", "properties": { "include": { "type": "boolean", "description": "Print the page." }, "name": { "type": "string" }, "firm": { "type": "string" }, "credential": { "type": "string" }, "statement": { "type": "string", "description": "What the accountant signs, when it isn't the tool's usual wording." }, "date": { "type": "string", "format": "date" } }, "additionalProperties": true },
         "closeDate": {
           "type": "string",
           "format": "date"
@@ -1955,6 +1967,9 @@
           "$ref": "#/$defs/id"
         },
         "stillIds": { "type": "array", "items": { "$ref": "#/$defs/id" }, "description": "For a model release or property release: the stills it covers. These releases cover the photos only, not the film." },
+        "languages": { "type": "array", "items": { "type": "string" }, "description": "For a distribution deal limited to some languages. Missing means every language." },
+        "holdbacks": { "type": "array", "description": "For a distribution deal: media no one can release in its territories until a date.", "items": { "type": "object", "properties": { "media": { "type": "string" }, "until": { "type": "string", "format": "date" } }, "additionalProperties": true } },
+        "revenueTerms": { "type": "object", "description": "For a distribution deal: terms the revenue tracker checks statements against.", "properties": { "feePercent": { "type": "number", "minimum": 0, "maximum": 100 }, "expenseCap": { "type": "number", "minimum": 0 }, "reportingDays": { "type": "integer", "minimum": 0, "description": "Days after a period ends that its statement is due." }, "paymentDays": { "type": "integer", "minimum": 0, "description": "Days after a statement that payment is due." } }, "additionalProperties": true },
         "title": {
           "type": "string",
           "minLength": 1
@@ -2426,6 +2441,7 @@
         "copyLabel": {
           "type": "string"
         },
+        "offsite": { "type": "boolean", "description": "Whether the copy is kept off-site. When missing, a location that reads like cloud storage or another site counts as off-site." },
         "storageLocation": {
           "type": "string",
           "minLength": 1
@@ -2596,6 +2612,7 @@
       "type": "object",
       "description": "A screening discussion guide, kept by the discussion guide builder.",
       "properties": {
+        "versions": { "type": "array", "description": "Guides for other audiences or screenings, each with the same fields as the main guide and who it's for.", "items": { "type": "object", "required": ["id"], "properties": { "id": { "$ref": "#/$defs/id" }, "audience": { "type": "string" }, "synopsis": { "type": "string" }, "themes": { "type": "string" }, "questions": { "type": "string" }, "resourceNotes": { "type": "string" }, "partnerIds": { "type": "array", "items": { "$ref": "#/$defs/id" } } }, "additionalProperties": true } },
         "synopsis": {
           "type": "string"
         },

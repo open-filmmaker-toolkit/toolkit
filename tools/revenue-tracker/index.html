@@ -130,6 +130,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .chkline { display: flex; gap: 8px; align-items: center; font-size: 14px; }
 .sub-h { margin: 6px 0 8px; font-size: 17px; }
 .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.terms { display: grid; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--rule-soft); }
+.terms select, .terms input { width: 100%; }
 .three { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
 .checks { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 4px 12px; margin: 4px 0 0; }
 .checks label { display: flex; gap: 6px; align-items: baseline; font-size: 14px; font-weight: 400; }
@@ -284,6 +286,22 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       <section class="card" aria-labelledby="dueHead">
         <div class="card-head"><h2 id="dueHead">Not paid yet</h2></div>
         <ul class="todo" id="unpaid"></ul>
+      </section>
+      <section class="card" aria-labelledby="auditHead">
+        <div class="card-head"><h2 id="auditHead">Checked against the deals</h2><span class="count" id="auditCount"></span></div>
+        <p class="lead">Each statement against its deal: the dates, territories and media it covers, the fee and expenses the deal allows, and when the statement and payment were due. Set the terms below.</p>
+        <ul class="todo" id="audit"></ul>
+        <div class="terms">
+          <div class="field"><label for="t-deal">Terms for</label><select id="t-deal"></select></div>
+          <div class="two">
+            <div class="field"><label for="t-fee">Their fee, % of gross</label><input id="t-fee" type="number" min="0" max="100" step="any" inputmode="decimal"></div>
+            <div class="field"><label for="t-cap">Expenses capped at</label><input id="t-cap" type="number" min="0" step="any" inputmode="decimal"></div>
+          </div>
+          <div class="two">
+            <div class="field"><label for="t-report">Statement due, days after the period</label><input id="t-report" type="number" min="0" step="1" inputmode="numeric"></div>
+            <div class="field"><label for="t-pay">Payment due, days after the statement</label><input id="t-pay" type="number" min="0" step="1" inputmode="numeric"></div>
+          </div>
+        </div>
       </section>
     </div>
   </main>
@@ -470,6 +488,48 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const d = when(s); if (!d) return 'No date';
     return by === 'year' ? d.slice(0, 4) : `${d.slice(0, 4)} Q${Math.floor((+d.slice(5, 7) - 1) / 3) + 1}`;
   }
+  // ---------- Checking statements against the deal ----------
+  const TERMS = c => (c && c.revenueTerms && typeof c.revenueTerms === 'object' ? c.revenueTerms : {});
+  const isDay = v => /^\d{4}-\d{2}-\d{2}$/.test(str(v));
+  const daysBetween = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / 86400000);
+  const has = v => v != null && v !== '' && isFinite(Number(v));
+  const days = n => `${n} day${n === 1 ? '' : 's'}`;
+  function audit(s) {
+    const c = deal(s.contractId), t = TERMS(c), out = [];
+    if (!c) return out;
+    if (isDay(c.effectiveDate) && isDay(s.periodStart) && s.periodStart < c.effectiveDate) out.push(`The period starts ${fmtDate(s.periodStart)}, before the deal does (${fmtDate(c.effectiveDate)})`);
+    if (isDay(c.expirationDate) && isDay(s.periodEnd) && s.periodEnd > c.expirationDate) out.push(`The period runs past the end of the deal (${fmtDate(c.expirationDate)})`);
+    const terr = arr(c.territories);
+    if (s.territory && terr.length && !terr.some(x => /worldwide|world/i.test(x) || norm(x) === norm(s.territory))) out.push(`${s.territory} isn't one of the deal's territories (${terr.join(', ')})`);
+    const media = arr(c.mediaRights);
+    if (s.media && media.length && !media.includes(s.media)) out.push(`${MEDIA[s.media] || s.media} isn't in the deal's media (${media.map(m => MEDIA[m] || m).join(', ')})`);
+    if (has(t.feePercent) && num(s.gross) > 0) {
+      const allowed = Math.round(num(s.gross) * Number(t.feePercent)) / 100, took = num(s.fees);
+      if (took - allowed > 0.5) out.push(`Their fee is ${money(took)}, ${Math.round(took / num(s.gross) * 1000) / 10}% of gross; the deal allows ${t.feePercent}%, ${money(allowed)}. That's ${money(took - allowed)} too much`);
+    }
+    if (has(t.expenseCap)) {
+      const before = doc.revenueStatements.filter(x => x.contractId === s.contractId && x !== s && str(when(x)) <= str(when(s)) && (str(when(x)) < str(when(s)) || doc.revenueStatements.indexOf(x) < doc.revenueStatements.indexOf(s))).reduce((tt, x) => tt + num(x.expenses), 0);
+      const total = before + num(s.expenses);
+      if (num(s.expenses) && total - Number(t.expenseCap) > 0.5) out.push(`Expenses so far come to ${money(total)}, over the ${money(Number(t.expenseCap))} cap by ${money(Math.min(num(s.expenses), total - Number(t.expenseCap)))} on this statement`);
+    }
+    if (has(t.reportingDays) && isDay(s.periodEnd)) {
+      const due = daysBetween(s.periodEnd, s.statementDate && isDay(s.statementDate) ? s.statementDate : today());
+      if (due > Number(t.reportingDays)) out.push(s.statementDate ? `The statement came ${days(due - Number(t.reportingDays))} late` : `The statement is ${days(due - Number(t.reportingDays))} overdue`);
+    }
+    if (has(t.paymentDays) && isDay(s.statementDate) && netOf(s) > 0) {
+      const d = daysBetween(s.statementDate, s.paidDate && isDay(s.paidDate) ? s.paidDate : today());
+      if (d > Number(t.paymentDays)) out.push(s.paidDate ? `Paid ${days(d - Number(t.paymentDays))} late` : `Payment is ${days(d - Number(t.paymentDays))} overdue`);
+    }
+    return out;
+  }
+  let termsDeal = '';
+  function readTerms() {
+    const c = deal(termsDeal); if (!c) return;
+    const t = Object.assign({}, TERMS(c));
+    for (const [k, id] of [['feePercent', 't-fee'], ['expenseCap', 't-cap'], ['reportingDays', 't-report'], ['paymentDays', 't-pay']]) { const v = $(id).value; if (v !== '' && isFinite(Number(v))) t[k] = Number(v); else delete t[k]; }
+    if (Object.keys(t).length) c.revenueTerms = t; else delete c.revenueTerms;
+    changed();
+  }
   const sorted = () => [...doc.revenueStatements].sort((a, b) => str(when(b)).localeCompare(str(when(a))));
   const sum = (list, f) => list.reduce((t, s) => t + f(s), 0);
 
@@ -489,6 +549,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       if (s.media) flags.push(`<span class="flag linked">${esc(MEDIA[s.media] || s.media)}</span>`);
       if (num(s.fees) || num(s.expenses)) flags.push(`<span class="flag linked">Fees and expenses ${esc(money(num(s.fees) + num(s.expenses)))}</span>`);
       const calc = num(s.gross) - num(s.fees) - num(s.expenses);
+      for (const a of audit(s)) flags.push(`<span class="flag problem">${esc(a)}</span>`);
       if (s.net != null && s.net !== '' && Math.abs(num(s.net) - calc) > 0.5) flags.push(`<span class="flag changed">Due to you differs from gross less fees and expenses by ${esc(money(num(s.net) - calc))}</span>`);
       return `<li class="row" data-id="${esc(s.id)}"><span class="rt">${esc([s.periodStart && fmtDate(s.periodStart), s.periodEnd && `to ${fmtDate(s.periodEnd)}`].filter(Boolean).join(' ') || (s.statementDate ? fmtDate(s.statementDate) : 'No dates'))}</span>
         <button type="button" class="what" data-edit="${esc(s.id)}"><span class="nm">${esc(source(s))}</span><span class="tt">Gross ${esc(money(s.gross))}</span></button>
@@ -500,6 +561,13 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const m = new Map(); for (const s of all) m.set(group(s), (m.get(group(s)) || 0) + num(s.gross));
     const keys = [...m.keys()].sort((a, b) => (by === 'year' || by === 'quarter' ? b.localeCompare(a) : m.get(b) - m.get(a)));
     $('by').innerHTML = keys.length ? keys.map(k => `<li><span>${esc(k)}</span><span class="num">${esc(money(m.get(k)))}</span></li>`).join('') : '<li class="empty-line">No statements yet.</li>';
+    const found = all.flatMap(s => audit(s).map(a => ({ s, a })));
+    $('auditCount').textContent = found.length ? String(found.length) : '';
+    $('audit').innerHTML = found.length ? found.map(({ s, a }) => `<li><span>${esc(source(s))}<span class="sub">${esc(a)}</span></span><button type="button" class="btn small" data-edit="${esc(s.id)}">Open</button></li>`).join('') : `<li class="empty-line">${deals().some(c => Object.keys(TERMS(c)).length) ? 'Every statement matches its deal.' : 'Nothing found. Set the terms below to check fees, expenses and dates too.'}</li>`;
+    if (!deal(termsDeal)) termsDeal = (deals()[0] || {}).id || '';
+    $('t-deal').innerHTML = deals().map(c => `<option value="${esc(c.id)}"${c.id === termsDeal ? ' selected' : ''}>${esc(c.licensee || c.title || 'Deal')}</option>`).join('') || '<option value="">No distribution deals yet</option>';
+    const tt = TERMS(deal(termsDeal));
+    for (const [k, id] of [['feePercent', 't-fee'], ['expenseCap', 't-cap'], ['reportingDays', 't-report'], ['paymentDays', 't-pay']]) { if (document.activeElement !== $(id)) $(id).value = tt[k] == null ? '' : String(tt[k]); $(id).disabled = !termsDeal; }
     const un = all.filter(s => !s.paidDate && netOf(s) > 0);
     $('unpaid').innerHTML = un.length ? un.map(s => `<li><span>${esc(source(s))}<span class="sub">${esc(s.statementDate ? `Statement ${fmtDate(s.statementDate)}` : '')}</span></span><span class="num">${esc(money(netOf(s)))}</span></li>`).join('') : '<li class="empty-line">Everything due has been paid.</li>';
   }
@@ -765,6 +833,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('emptyOpenBtn').onclick = openFile;
     $('csvBtn').onclick = exportCsv;
     $('bySel').addEventListener('change', () => { by = $('bySel').value; render(); });
+    $('t-deal').addEventListener('change', () => { termsDeal = $('t-deal').value; render(); });
+    for (const id of ['t-fee', 't-cap', 't-report', 't-pay']) $(id).addEventListener('change', readTerms);
+    $('audit').addEventListener('click', ev => { const b = ev.target.closest('[data-edit]'); if (b) openEditor(b.dataset.edit); });
     $('rows').addEventListener('click', ev => { const b = ev.target.closest('[data-edit]'); if (b) openEditor(b.dataset.edit); });
     for (const id of ['f-gross', 'f-fees', 'f-exp']) $(id).addEventListener('input', netHint);
     $('deleteBtn').onclick = () => { doc.revenueStatements = doc.revenueStatements.filter(s => s !== editing); $('editor').close(); changed(); };

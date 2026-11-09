@@ -35,6 +35,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **Statements** with the distribution deal (from the [rights availability matrix](../rights-matrix/)) or whoever sent it, the period, statement date, territory and media, gross receipts, their fees and expenses, what's due to you, when it was paid and a reference.
 - **Due to you** is worked out from gross less fees and expenses unless you enter it, and a statement that doesn't add up is flagged.
 - **Totals:** gross, fees, expenses, due, paid and still to come. **Gross by** source, territory, media, year or quarter.
+- **Checks statements against the deal.** Each statement is checked against its deal's dates, territories and media. Set a deal's fee percentage, expense cap and when statements and payments are due, and it also flags a fee higher than the deal allows, with how much too much, expenses over the cap across all the deal's statements, and statements or payments that came late. Problems show on the statement and in a side list.
 - **Not paid yet:** statements with money still owed.
 - **Feeds the [recoupment waterfall model](../waterfall/),** which can run actual revenue to date through the tiers.
 - **Prints** the statements with totals by territory, media and year, and **exports CSV.**
@@ -53,14 +54,13 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-A `revenueStatements` collection: `contractId` (a distribution deal) or `source`, `periodStart`, `periodEnd`, `statementDate`, `territory`, `media`, `gross`, `fees`, `expenses`, `net` (due to you, when it differs from gross less fees and expenses), `paidDate`, `reference` and `notes`.
+A `revenueStatements` collection: `contractId` (a distribution deal) or `source`, `periodStart`, `periodEnd`, `statementDate`, `territory`, `media`, `gross`, `fees`, `expenses`, `net` (due to you, when it differs from gross less fees and expenses), `paidDate`, `reference` and `notes`. Deal terms for the checks are kept on the deal, as `revenueTerms` on the contract: `feePercent`, `expenseCap`, `reportingDays` and `paymentDays`.
 
 It reads distribution deals in `contracts`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
 - Currencies other than the project currency
-- Audits against the deal terms
 
 ## License
 

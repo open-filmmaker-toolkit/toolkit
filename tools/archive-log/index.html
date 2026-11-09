@@ -77,6 +77,8 @@ button { cursor: pointer; }
 .ledger .date { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .ledger strong { font-weight: 600; }
 .detail { display: block; color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+.offsite { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; }
+.offsite input { margin-top: 3px; }
 .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; background: var(--soft); color: var(--muted); font-size: 12px; font-weight: 600; white-space: nowrap; }
 .tag.good { background: var(--good-bg); color: var(--good); }
 .tag.due { background: var(--warn-bg); color: var(--warn); }
@@ -204,7 +206,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       <div class="card">
         <div class="section-title"><h2 id="registerTitle">Archive register</h2><span class="subtle" id="count"></span></div>
         <div class="filters">
-          <label><span class="sr-only">Filter read-back checks</span><select id="statusFilter"><option value="">All copies</option><option value="overdue">Overdue checks</option><option value="due">Due within 30 days</option><option value="failed">Last check not passed</option></select></label>
+          <label><span class="sr-only">Filter read-back checks</span><select id="statusFilter"><option value="">All copies</option><option value="overdue">Overdue checks</option><option value="due">Due within 30 days</option><option value="failed">Last check not passed</option><option value="nooffsite">Assets with no off-site copy</option></select></label>
           <label><span class="sr-only">Filter by asset type</span><select id="typeFilter"><option value="">All asset types</option></select></label>
           <label><span class="sr-only">Search archive copies</span><input id="search" type="search" placeholder="Search copies" autocomplete="off"></label>
         </div>
@@ -223,6 +225,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <div class="section-title"><h2 id="checksTitle">Read-back checks</h2><span class="subtle" id="dueCount"></span></div>
         <ul class="stat-list" id="dueList"></ul>
         <p class="hint" id="noDue">No checks due in the next 30 days.</p>
+      </section>
+      <section class="card" aria-labelledby="offsiteTitle">
+        <div class="section-title"><h2 id="offsiteTitle">No off-site copy</h2><span class="subtle" id="offsiteCount"></span></div>
+        <ul class="stat-list" id="offsiteList"></ul>
+        <p class="hint">Assets with copies only in one place. Tick "Kept off-site" on a copy stored somewhere else, such as cloud storage or a second building.</p>
       </section>
       <section class="card" aria-labelledby="summaryTitle">
         <div class="section-title"><h2 id="summaryTitle">Archive at a glance</h2></div>
@@ -256,6 +263,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <div class="field"><label for="f-copiedAt">Copy date</label><input id="f-copiedAt" type="date" required></div>
       </div>
       <div class="field"><label for="f-location">Storage location</label><input id="f-location" type="text" required placeholder="Drive, tape, storage service, or physical location" autocomplete="off"></div>
+      <label class="offsite"><input type="checkbox" id="f-offsite"> Kept off-site, somewhere a fire or theft at the main copies wouldn't reach</label>
       <div class="field"><label for="f-hashList">Hash manifest</label><textarea id="f-hashList" rows="5" spellcheck="false" placeholder="Paste the manifest text or a file reference"></textarea><p class="hint">Paste a manifest created by another tool, or enter its location. No media is read or hashed here.</p></div>
       <div class="field"><label for="f-nextCheck">Next read-back check</label><input id="f-nextCheck" type="date"><p class="hint">A date is shown as due when you open this tool. It won't trigger a notification while the tool is closed.</p></div>
       <div class="group">
@@ -345,6 +353,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     return arr(copy.checks).filter(check => check && typeof check === 'object')
       .sort((a, b) => str(b.checkedAt).localeCompare(str(a.checkedAt)))[0] || null;
   }
+  // A copy counts as off-site when you said so, or, until you say, when its location reads like cloud or another site.
+  const OFFSITE = /\b(cloud|off-?site|backblaze|wasabi|glacier|s3|dropbox|google drive|onedrive|icloud|box\.com|vault|safe deposit|bank|another building|second office)\b/i;
+  const isOffsite = copy => (copy.offsite === true ? true : copy.offsite === false ? false : OFFSITE.test(str(copy.storageLocation)));
+  let offTouched = false;
+  const noOffsite = () => assets().filter(asset => copies(asset).length && !copies(asset).some(isOffsite));
   function filteredRows() {
     const needle = query.trim().toLowerCase();
     return copyRows().filter(({asset, copy}) => {
@@ -352,6 +365,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       if (filterStatus === 'overdue' && state.key !== 'overdue') return false;
       if (filterStatus === 'due' && state.key !== 'due' && state.key !== 'overdue') return false;
       if (filterStatus === 'failed' && (!latest || latest.result === 'passed')) return false;
+      if (filterStatus === 'nooffsite' && copies(asset).some(isOffsite)) return false;
       if (filterType && str(asset.type) !== filterType) return false;
       return !needle || [asset.name, asset.type, asset.relativePath, copy.copyLabel, copy.storageLocation, copy.copiedAt, copy.nextCheckDate, copy.hashList,
         ...arr(copy.checks).flatMap(check => [check.checkedAt, check.result, check.notes])].join(' ').toLowerCase().includes(needle);
@@ -383,7 +397,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       const lastLine = last ? `Last check: ${fmtDate(last.checkedAt)} · ${resultLabel(last.result)}` : 'No read-back recorded';
       return `<tr data-asset-id="${esc(asset.id)}" data-copy-id="${esc(copy.id)}">
         <td><strong>${esc(asset.name || 'Unnamed asset')}</strong><span class="detail">${esc([asset.type, copy.copyLabel].filter(Boolean).join(' · ') || 'Project asset')}</span></td>
-        <td>${esc(copy.storageLocation || 'Location not set')}<span class="detail">${esc(lastLine)}</span></td>
+        <td>${esc(copy.storageLocation || 'Location not set')}${isOffsite(copy) ? ' <span class="tag good">Off-site</span>' : ''}<span class="detail">${esc(lastLine)}</span></td>
         <td class="date">${esc(fmtDate(copy.copiedAt))}</td>
         <td><span class="tag ${statusClass}">${esc(state.label)}</span>${copy.hashList ? '<span class="detail">Hash manifest recorded</span>' : '<span class="detail">No hash manifest</span>'}</td>
         <td><button type="button" class="row-action" data-edit-copy="${esc(copy.id)}" data-asset="${esc(asset.id)}">Edit</button></td>
@@ -403,6 +417,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     ).join('');
     $('noDue').hidden = actionable.length > 0;
 
+    const lone = noOffsite();
+    $('offsiteCount').textContent = lone.length ? `${lone.length} asset${lone.length === 1 ? '' : 's'}` : 'None';
+    $('offsiteList').innerHTML = lone.length ? lone.map(asset => { const c = copies(asset); return `<li><span><button type="button" data-edit-copy="${esc(c[0].id)}" data-asset="${esc(asset.id)}">${esc(asset.name || 'Unnamed asset')}</button><span class="detail">${esc(c.map(x => x.storageLocation).filter(Boolean).join(', '))}</span></span><span class="when">${c.length} cop${c.length === 1 ? 'y' : 'ies'}</span></li>`; }).join('') : '<li class="hint">Every asset with a copy has one off-site.</li>';
     const overdue = allRows.filter(({copy}) => checkStatus(copy).key === 'overdue').length;
     const scheduled = allRows.filter(({copy}) => safeDate(copy.nextCheckDate)).length;
     const withManifest = allRows.filter(({copy}) => str(copy.hashList).trim()).length;
@@ -428,10 +445,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   }
   function suggestedName() { return `${slug(doc.project.title)}.oft.json`; }
   function exportCsv() {
-    const headers = ['Asset', 'Asset type', 'Project-relative path', 'Copy label', 'Storage location', 'Copied date', 'Next read-back date', 'Check status', 'Last check date', 'Last check result', 'Hash manifest', 'Read-back checks'];
+    const headers = ['Asset', 'Asset type', 'Project-relative path', 'Copy label', 'Storage location', 'Off-site', 'Copied date', 'Next read-back date', 'Check status', 'Last check date', 'Last check result', 'Hash manifest', 'Read-back checks'];
     const rows = filteredRows().map(({asset, copy}) => {
       const last = latestCheck(copy);
-      return [asset.name, asset.type, asset.relativePath, copy.copyLabel, copy.storageLocation, copy.copiedAt, copy.nextCheckDate,
+      return [asset.name, asset.type, asset.relativePath, copy.copyLabel, copy.storageLocation, isOffsite(copy) ? 'Yes' : 'No', copy.copiedAt, copy.nextCheckDate,
         checkStatus(copy).label, last?.checkedAt, last ? resultLabel(last.result) : '', copy.hashList,
         JSON.stringify(arr(copy.checks))];
     });
@@ -470,6 +487,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('f-assetName').required = false;
     $('f-copiedAt').value = copy?.copiedAt || today();
     $('f-location').value = copy?.storageLocation || '';
+    $('f-offsite').checked = copy ? isOffsite(copy) : false;
+    offTouched = !!copy && typeof copy.offsite === 'boolean';
     $('f-copyLabel').value = copy?.copyLabel || '';
     $('f-hashList').value = copy?.hashList || '';
     $('f-nextCheck').value = safeDate(copy?.nextCheckDate);
@@ -532,6 +551,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     copy.storageLocation = location;
     const label = $('f-copyLabel').value.trim(), manifest = $('f-hashList').value, nextCheck = safeDate($('f-nextCheck').value);
     if (label) copy.copyLabel = label; else delete copy.copyLabel;
+    // Only kept when it differs from what the location suggests, so a guess can still change with the location.
+    const off = $('f-offsite').checked; if (off !== OFFSITE.test(location)) copy.offsite = off; else delete copy.offsite;
     if (manifest.trim()) copy.hashList = manifest; else delete copy.hashList;
     if (nextCheck) copy.nextCheckDate = nextCheck; else delete copy.nextCheckDate;
     if (stagedChecks.length) copy.checks = stagedChecks; else delete copy.checks;
@@ -679,6 +700,12 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('typeFilter').addEventListener('change', () => { filterType = $('typeFilter').value; render(); });
     $('search').addEventListener('input', () => { query = $('search').value; render(); });
     $('rows').addEventListener('click', event => {
+      const button = event.target.closest('[data-edit-copy]');
+      if (button) openEditor(button.dataset.asset, button.dataset.editCopy);
+    });
+    $('f-location').addEventListener('input', () => { if (!offTouched) $('f-offsite').checked = OFFSITE.test($('f-location').value); });
+    $('f-offsite').addEventListener('change', () => { offTouched = true; });
+    $('offsiteList').addEventListener('click', event => {
       const button = event.target.closest('[data-edit-copy]');
       if (button) openEditor(button.dataset.asset, button.dataset.editCopy);
     });

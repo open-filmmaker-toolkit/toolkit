@@ -211,6 +211,12 @@ pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; b
   .report h1 { margin: 0; font: 700 18pt/1.2 var(--serif); }
   .report h2 { margin: 14pt 0 4pt; font: 700 12pt/1.2 var(--serif); break-after: avoid; page-break-after: avoid; }
   .report .r-meta { margin: 2pt 0 10pt; }
+  .report .r-sign { break-before: page; page-break-before: always; }
+  .report .r-facts th { text-align: left; font-weight: 400; padding-right: 18pt; }
+  .report .r-statement { margin: 14pt 0 30pt; max-width: 150mm; }
+  .report .r-sigs { display: grid; grid-template-columns: 2fr 1fr; gap: 26pt 18pt; max-width: 160mm; }
+  .report .r-sigs .r-line { display: block; min-height: 14pt; border-bottom: 1px solid #000; }
+  .report .r-sigs p { margin: 3pt 0 0; font-size: 9.5pt; }
   .report table { width: 100%; border-collapse: collapse; }
   .report th, .report td { padding: 4pt 5pt; border-bottom: 0.75pt solid #999999; text-align: left; vertical-align: top; }
   .report th { font-size: 9pt; border-bottom: 1pt solid #000000; }
@@ -290,6 +296,18 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <div class="card-head"><h2 id="noteHead">Needs a note</h2></div>
         <p class="lead">Funders usually ask why a line went more than 10 percent over or under. Click an account to add a note.</p>
         <ul class="todo" id="needs"></ul>
+      </section>
+      <section class="card" aria-labelledby="signHead">
+        <div class="card-head"><h2 id="signHead">Accountant's sign-off</h2></div>
+        <p class="lead">A last page for the accountant to sign, after the report. Change the wording to what your accountant and funder use.</p>
+        <label class="check"><input type="checkbox" id="so-on"> Print a sign-off page</label>
+        <div id="soFields">
+          <div class="field"><label for="so-name">Accountant</label><input id="so-name" type="text" autocomplete="off"></div>
+          <div class="field"><label for="so-firm">Firm</label><input id="so-firm" type="text" autocomplete="off"></div>
+          <div class="field"><label for="so-cred">License or credential</label><input id="so-cred" type="text" autocomplete="off" placeholder="CPA, license number"></div>
+          <div class="field"><label for="so-text">What they're signing</label><textarea id="so-text" rows="5"></textarea></div>
+          <div class="field"><label for="so-date">Signed on</label><input id="so-date" type="date"></div>
+        </div>
       </section>
       <section class="card" aria-labelledby="howHead">
         <div class="card-head"><h2 id="howHead">How it's worked out</h2></div>
@@ -570,6 +588,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const fopts = formats().map(f => `<option value="format:${esc(f.id)}">${esc(f.name || 'Funder format')}</option>`).join('');
     $('layout').innerHTML = '<option value="account">By account</option><option value="line">By line</option><option value="top">Top sheet</option>' + fopts;
     if (![...$('layout').options].some(o => o.value === layout)) layout = 'account';
+    const so = SO();
+    $('so-on').checked = !!so.include; $('soFields').hidden = !so.include;
+    for (const [k, id] of [['name', 'so-name'], ['firm', 'so-firm'], ['credential', 'so-cred'], ['date', 'so-date']]) if (document.activeElement !== $(id)) $(id).value = str(so[k]);
+    if (document.activeElement !== $('so-text')) $('so-text').value = str(so.statement || SIGN_TEXT);
     $('layout').value = layout; $('closeDate').value = str(F().closeDate); $('status').value = F().status === 'final' ? 'final' : 'draft';
     if (!has) { $('count').textContent = ''; $('totals').innerHTML = ''; $('needs').innerHTML = ''; return; }
     const gs = groups(layout === 'line' ? 'account' : layout), all = rows();
@@ -622,6 +644,23 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     download(csv, name, 'text/csv;charset=utf-8');
     toast(`Exported the final cost report to ${name}`);
   }
+  const SIGN_TEXT = 'I have reviewed the costs in this report against the production\'s books and records. To the best of my knowledge, they are the costs of the production to the date shown, and the variances are explained.';
+  const SO = () => (F().signOff && typeof F().signOff === 'object' ? F().signOff : {});
+  function readSignOff() {
+    const o = Object.assign({}, SO());
+    if ($('so-on').checked) o.include = true; else delete o.include;
+    for (const [k, id] of [['name', 'so-name'], ['firm', 'so-firm'], ['credential', 'so-cred'], ['date', 'so-date']]) { const v = $(id).value.trim(); if (v) o[k] = v; else delete o[k]; }
+    const t = $('so-text').value.trim(); if (t && t !== SIGN_TEXT) o.statement = t; else delete o.statement;
+    setF('signOff', o); changed();
+  }
+  function signOffPage(tb, tf) {
+    const o = SO(), p = doc.project;
+    return `<section class="r-sign"><h1>Accountant's sign-off</h1><p class="r-meta">${esc([p.title, p.company, isDate(F().closeDate) && `Costs to ${fmtDate(F().closeDate)}`].filter(Boolean).join(' · '))}</p>
+      <table class="r-facts"><tbody><tr><th>Total budget</th><td class="r-n">${esc(money(tb))}</td></tr><tr><th>Total final cost</th><td class="r-n">${esc(money(tf))}</td></tr><tr><th>${tb - tf < 0 ? 'Over budget' : 'Under budget'}</th><td class="r-n">${esc(money(Math.abs(cents(tb - tf))))}</td></tr></tbody></table>
+      <p class="r-statement">${esc(o.statement || SIGN_TEXT)}</p>
+      <div class="r-sigs"><div><span class="r-line"></span><p>${esc(o.name || 'Accountant')}${o.credential ? `, ${esc(o.credential)}` : ''}${o.firm ? `<br>${esc(o.firm)}` : ''}</p></div><div><span class="r-line">${o.date ? esc(fmtDate(o.date)) : ''}</span><p>Date</p></div>
+      <div><span class="r-line"></span><p>${esc(p.producer || 'Producer')}${p.company ? `<br>${esc(p.company)}` : ''}</p></div><div><span class="r-line"></span><p>Date</p></div></div></section>`;
+  }
   function renderReport() {
     const gs = groups(layout === 'line' ? 'account' : layout), all = rows();
     const tb = cents(all.reduce((t, r) => t + r.budget, 0)), tf = cents(all.reduce((t, r) => t + r.final, 0));
@@ -630,7 +669,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('report').innerHTML = `<h1>Final cost report${F().status === 'final' ? '' : ' (draft)'}</h1><p class="r-meta">${esc([doc.project.title, doc.project.company, f && `In the ${f.name} categories`, isDate(F().closeDate) && `Costs to ${fmtDate(F().closeDate)}`, `Printed ${fmtDate(today())}`].filter(Boolean).join(' · '))}</p>
       <table><thead><tr><th>${f ? 'Category' : layout === 'top' ? 'Section' : 'Account'}</th><th class="r-n">Budget</th><th class="r-n">Final cost</th><th class="r-n">Variance</th></tr></thead><tbody>${gs.map(g => `<tr><td>${esc(g.label)}${notes()[g.key] ? `<span class="r-sub">${esc(notes()[g.key])}</span>` : ''}</td><td class="r-n">${esc(money(g.budget))}</td><td class="r-n">${esc(money(g.final))}</td><td class="r-n">${esc(v(variance(g)))}</td></tr>${layout === 'line' ? g.lines.filter(r => r.line).map(r => `<tr><td style="padding-left:12pt">${esc(lineName(r.line))}</td><td class="r-n">${esc(money(r.budget))}</td><td class="r-n">${esc(money(r.final))}</td><td class="r-n">${esc(v(cents(r.budget - r.final)))}</td></tr>`).join('') : ''}`).join('')}</tbody>
       <tfoot><tr><th>Total</th><th class="r-n">${esc(money(tb))}</th><th class="r-n">${esc(money(tf))}</th><th class="r-n">${esc(v(cents(tb - tf)))}</th></tr></tfoot></table>
-      <p class="r-note">Final cost is spending in the expense log plus anything still to pay.</p>`;
+      <p class="r-note">Final cost is spending in the expense log plus anything still to pay.</p>${SO().include ? signOffPage(tb, tf) : ''}`;
   }
 
   // ---------- Project CSV ----------
@@ -862,6 +901,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('layout').addEventListener('change', () => { layout = $('layout').value; render(); });
     $('closeDate').addEventListener('change', () => { setF('closeDate', $('closeDate').value); changed(); });
     $('status').addEventListener('change', () => { setF('status', $('status').value === 'final' ? 'final' : ''); changed(); });
+    for (const id of ['so-on', 'so-name', 'so-firm', 'so-cred', 'so-text', 'so-date']) $(id).addEventListener('change', readSignOff);
     $('table').addEventListener('click', ev => { const b = ev.target.closest('[data-note]'); if (b) openEditor(b.dataset.note); });
     $('f-key').addEventListener('change', showFacts);
     $('editorForm').addEventListener('submit', ev => { ev.preventDefault(); saveEditor(); });

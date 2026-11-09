@@ -82,6 +82,10 @@ button, input, select, textarea { font: inherit; color: inherit; }
 /* The supers list */
 .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 10px; }
 .toolbar h2 { margin: 0 8px 0 0; font: 600 20px/1.2 var(--serif); }
+.host-pick { font-size: 14px; color: var(--ink-2); }
+#hostSel { min-height: 36px; max-width: 100%; padding: 6px 8px; font: inherit; color: var(--ink); background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; }
+.host-note { margin: 0 0 10px; padding: 8px 10px; border-radius: 6px; background: var(--hover); font-size: 14px; }
+.st .sub { display: block; font-size: 12px; font-weight: 400; }
 .toolbar .count { font-size: 13px; color: var(--ink-2); }
 .toolbar .spacer { flex: 1; }
 .rows { list-style: none; margin: 0; padding: 0; background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; }
@@ -270,10 +274,12 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <h2 id="listHead">Screening kit</h2>
         <span class="count" id="count"></span>
         <span class="spacer"></span>
+        <label class="host-pick" for="hostSel">Kit for</label><select id="hostSel"></select>
         <button type="button" class="btn primary" id="addBtn">Add a checklist item</button>
         <button type="button" class="btn" id="printBtn">Print the kit</button>
       </div>
       <p class="lead">A kit for the people hosting a screening: about the film, how to host, the tech specs, how to promote it, the discussion, and a checklist for the weeks before.</p>
+      <p class="host-note" id="hostNote" role="status" hidden></p>
       <ol class="rows" id="rows" aria-labelledby="listHead"></ol>
     </section>
     <div class="side">
@@ -444,6 +450,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     ['report', 'after', 'Send us the attendance and anything people said that stayed with you'],
   ].map(([key, when, text]) => ({ key, when, text }));
   const SECTIONS = [
+    { key: 'note', title: 'A note for this host', kind: 'note', hint: 'A few lines at the top of this host’s kit only: the date, who to ask for, anything agreed.' },
     { key: 'about', title: 'About the film', kind: 'about', hint: 'The logline, synopsis and running time, from the press notes or the treatment.' },
     { key: 'hosting', title: 'Hosting the screening', kind: 'text', hint: 'How to plan and run the screening, and what the license covers.' },
     { key: 'tech', title: 'Tech specs', kind: 'tech', hint: 'Formats you can send, and anything the host needs to play them.' },
@@ -456,6 +463,21 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const K = () => (doc.screeningKit && typeof doc.screeningKit === 'object' ? doc.screeningKit : {});
   function setK(k, v) { const o = Object.assign({}, K()); if (v == null || v === '' || (Array.isArray(v) && !v.length) || (typeof v === 'object' && !Array.isArray(v) && !Object.keys(v).length)) delete o[k]; else o[k] = v; if (Object.keys(o).length) doc.screeningKit = o; else delete doc.screeningKit; }
   const hidden = key => arr(K().hidden).includes(key);
+  // A kit for each host: partners from the partner CRM and venues from bookings. A host's kit uses the shared
+  // wording unless you change a section for them, and can have a note of its own.
+  let host = '';
+  const HOSTS = () => [...doc.partners.filter(p => p && p.id).map(p => ({ key: `partner:${p.id}`, name: p.name || 'Unnamed partner' })),
+    ...arr(doc.bookings).filter(b => b && b.id && b.status !== 'declined' && b.status !== 'cancelled').map(b => ({ key: `booking:${b.id}`, name: b.venue || 'Unnamed venue', date: b.startDate }))];
+  const hostOf = key => HOSTS().find(h => h.key === key);
+  const HK = () => { const all = K().hosts && typeof K().hosts === 'object' ? K().hosts : {}; return host && all[host] && typeof all[host] === 'object' ? all[host] : {}; };
+  const own = k => host && str(HK()[k]).trim() !== '';
+  const val = k => (own(k) ? HK()[k] : K()[k]);
+  function setHost(k, v) {
+    const all = Object.assign({}, K().hosts && typeof K().hosts === 'object' ? K().hosts : {}), h = Object.assign({}, all[host] || {});
+    if (str(v).trim() && (k === 'note' || str(v).trim() !== str(K()[k]).trim())) h[k] = str(v).trim(); else delete h[k];
+    if (Object.keys(h).length) all[host] = h; else delete all[host];
+    setK('hosts', all);
+  }
   const PN = () => (doc.pressNotes && typeof doc.pressNotes === 'object' ? doc.pressNotes : {});
   const TR = () => (doc.treatment && doc.treatment.sections && typeof doc.treatment.sections === 'object' ? doc.treatment.sections : {});
   const G = () => (doc.discussionGuide && typeof doc.discussionGuide === 'object' ? doc.discussionGuide : {});
@@ -471,11 +493,12 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     return [...BUILT.filter(b => !off.includes(b.key)), ...own.map(c => ({ key: c.id, when: WHEN[c.when] ? c.when : 'day', text: c.text, own: true }))].sort((a, b) => order.indexOf(a.when) - order.indexOf(b.when));
   }
   function state(s) {
+    if (s.kind === 'note') return !host ? 'off' : str(HK().note).trim() ? 'done' : 'todo';
     if (hidden(s.key)) return 'off';
     if (s.kind === 'about') return about().logline || about().synopsis ? 'from' : 'todo';
-    if (s.kind === 'text') return str(K()[s.key]).trim() ? 'done' : 'todo';
-    if (s.kind === 'tech') return arr(K().formats).length || str(K().tech).trim() ? 'done' : 'todo';
-    if (s.kind === 'promo') return str(K().promotion).trim() || picked().length ? 'done' : 'todo';
+    if (s.kind === 'text') return str(val(s.key)).trim() ? 'done' : 'todo';
+    if (s.kind === 'tech') return arr(K().formats).length || str(val('tech')).trim() ? 'done' : 'todo';
+    if (s.kind === 'promo') return str(val('promotion')).trim() || picked().length ? 'done' : 'todo';
     if (s.kind === 'guide') return guideParts().questions.length || guideParts().themes.length ? 'from' : 'todo';
     if (s.kind === 'checklist') return checklist().length ? 'done' : 'todo';
     return 'todo';
@@ -483,14 +506,16 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const STATE = { done: 'Written', from: 'From the project', todo: 'Not done yet', off: 'Left out' };
   function summary(s) {
     if (s.kind === 'about') return [about().logline, about().runtime && `Running time ${about().runtime}`].filter(Boolean).join(' · ');
-    if (s.kind === 'text') return str(K()[s.key]);
-    if (s.kind === 'tech') return [arr(K().formats).map(f => FORMATS[f]).join(', '), K().tech].filter(Boolean).join(' · ');
-    if (s.kind === 'promo') return [picked().length && `${picked().length} image${picked().length === 1 ? '' : 's'}`, K().promotion].filter(Boolean).join(' · ');
+    if (s.kind === 'note') return str(HK().note);
+    if (s.kind === 'text') return str(val(s.key));
+    if (s.kind === 'tech') return [arr(K().formats).map(f => FORMATS[f]).join(', '), val('tech')].filter(Boolean).join(' · ');
+    if (s.kind === 'promo') return [picked().length && `${picked().length} image${picked().length === 1 ? '' : 's'}`, val('promotion')].filter(Boolean).join(' · ');
     if (s.kind === 'guide') { const g = guideParts(); return [g.themes.length && `${g.themes.length} theme${g.themes.length === 1 ? '' : 's'}`, g.questions.length && `${g.questions.length} question${g.questions.length === 1 ? '' : 's'}`, g.partners.length && `${g.partners.length} partner${g.partners.length === 1 ? '' : 's'}`].filter(Boolean).join(', '); }
     if (s.kind === 'checklist') return `${checklist().length} item${checklist().length === 1 ? '' : 's'}`;
     return '';
   }
   const entries = () => SECTIONS.filter(s => ['done', 'from'].includes(state(s)));
+  const OWN_KEY = { hosting: 'hosting', contact: 'contact', tech: 'tech', promotion: 'promotion' };
   let editing = null, draftChecks = [];
 
   function render() {
@@ -499,10 +524,16 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('filmMeta').textContent = [doc.project.company, doc.project.producer && `Producer: ${doc.project.producer}`].filter(Boolean).join(' · ');
     $('fileState').innerHTML = (fileName ? esc(fileName) : 'Not saved to a file yet') + (dirty ? ' · <span class="dirty">Unsaved changes</span>' : '');
     document.title = `${doc.project.title ? doc.project.title + ' · ' : ''}Screening kit builder · Open Filmmaker Toolkit`;
-    const on = SECTIONS.filter(s => !hidden(s.key)).length;
-    $('count').textContent = `${entries().length} of ${on} section${on === 1 ? '' : 's'} ready`;
-    $('rows').innerHTML = SECTIONS.map((s, i) => { const st = state(s), sum = summary(s);
-      return `<li class="row" data-key="${s.key}"><span class="rt">${i + 1}</span><button type="button" class="what" data-edit="${s.key}"><span class="nm">${esc(s.title)}</span>${sum && st !== 'off' ? `<span class="tt">${esc(sum)}</span>` : ''}</button><span class="st st-${st === 'done' ? 'good' : st === 'todo' ? 'warn' : st === 'off' ? 'quiet' : ''}">${STATE[st]}</span></li>`; }).join('');
+    if (host && !hostOf(host)) host = '';
+    $('hostSel').innerHTML = `<option value="">Every host</option>${HOSTS().map(h => `<option value="${esc(h.key)}"${h.key === host ? ' selected' : ''}>${esc(h.name)}${h.date ? `, ${esc(fmtDate(h.date))}` : ''}${K().hosts && K().hosts[h.key] ? ' (own kit)' : ''}</option>`).join('')}`;
+    $('hostSel').hidden = $('hostSel').previousElementSibling.hidden = !HOSTS().length;
+    $('hostNote').hidden = !host;
+    $('hostNote').textContent = host ? `The kit for ${hostOf(host).name}. Sections you change here are for them only; the rest come from the kit for every host.` : '';
+    const secs = SECTIONS.filter(s => s.kind !== 'note' || host);
+    const on = secs.filter(s => !hidden(s.key)).length;
+    $('count').textContent = `${secs.filter(s => ['done', 'from'].includes(state(s))).length} of ${on} section${on === 1 ? '' : 's'} ready`;
+    $('rows').innerHTML = secs.map((s, i) => { const st = state(s), sum = summary(s), mine = host && s.kind !== 'note' && (own(s.key) || own(OWN_KEY[s.kind === 'promo' ? 'promotion' : s.kind] || ''));
+      return `<li class="row" data-key="${s.key}"><span class="rt">${i + 1}</span><button type="button" class="what" data-edit="${s.key}"><span class="nm">${esc(s.title)}</span>${sum && st !== 'off' ? `<span class="tt">${esc(sum)}</span>` : ''}</button><span class="st st-${st === 'done' ? 'good' : st === 'todo' ? 'warn' : st === 'off' ? 'quiet' : ''}">${STATE[st]}${mine ? '<span class="sub">For this host</span>' : ''}</span></li>`; }).join('');
     const miss = SECTIONS.filter(s => state(s) === 'todo');
     $('missing').innerHTML = miss.length ? miss.map(s => `<li>${esc(s.title)}</li>`).join('') : '<li class="empty-line">Every section is ready or left out.</li>';
     $('from').innerHTML = [['Press notes', doc.pressNotes ? 'Logline and synopsis' : 'Not started', '../press-notes/index.html'], ['Discussion guide', doc.discussionGuide ? summary(SECTIONS[4]) || 'Started' : 'Not started', '../discussion-guide/index.html'], ['Stills library', `${art().length} approved image${art().length === 1 ? '' : 's'}`, '../stills-library/index.html']]
@@ -518,12 +549,14 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   function openEditor(key) {
     const s = SECTIONS.find(x => x.key === key); if (!s) return;
     editing = s;
-    $('editorTitle').textContent = s.title; $('secHint').textContent = s.hint; $('f-hide').checked = hidden(s.key); $('hideLine').hidden = s.kind === 'checklist';
+    $('editorTitle').textContent = host ? `${s.title}: ${hostOf(host).name}` : s.title; $('secHint').textContent = s.hint; $('f-hide').checked = hidden(s.key); $('hideLine').hidden = s.kind === 'checklist' || s.kind === 'note';
     let body = '';
     if (s.kind === 'about') { const a = about(); body = `<pre class="preview">${esc([a.logline, a.synopsis, a.runtime && `Running time: ${a.runtime}`].filter(Boolean).join('\n\n') || 'Nothing yet.')}</pre><p class="hint">Change this in the <a href="../press-notes/index.html">EPK and press notes builder</a> or the <a href="../treatment-builder/index.html">treatment builder</a>.</p>`; }
-    if (s.kind === 'text') body = field('f-text', s.title, str(K()[s.key]) , 8) + (STARTER[s.key] ? '<p><button type="button" class="btn" id="starterBtn">Start from our wording</button></p>' : '');
-    if (s.kind === 'tech') body = `<fieldset class="field"><legend>Formats you can send</legend><div class="checks">${Object.entries(FORMATS).map(([k, v]) => `<label><input type="checkbox" data-format="${k}"${arr(K().formats).includes(k) ? ' checked' : ''}> ${esc(v)}</label>`).join('')}</div></fieldset>${field('f-text', 'Specs and playback notes', str(K().tech), 5)}<p class="hint">Running time: ${esc(doc.project.runningTime || 'not set')}. Aspect ratio and sound: ${esc([PN().specs && PN().specs.aspectRatio, PN().specs && PN().specs.sound].filter(Boolean).join(', ') || 'not set in the press notes')}.</p>`;
-    if (s.kind === 'promo') body = field('f-text', 'How to promote it', str(K().promotion), 6) + (STARTER.promotion ? '<p><button type="button" class="btn" id="starterBtn">Start from our wording</button></p>' : '') + `<fieldset class="field"><legend>Images for hosts</legend><div class="thumbs">${art().map(a => `<label><img src="${esc(a.data)}" alt=""><span><input type="checkbox" data-img="${esc(a.id)}"${arr(K().imageIds).includes(a.id) ? ' checked' : ''}> ${esc(a.caption || a.name)}</span></label>`).join('') || '<p class="hint">No approved stills yet. Approve some in the <a href="../stills-library/index.html">stills library</a>.</p>'}</div></fieldset>`;
+    const forHost = host ? `<p class="hint">For ${esc(hostOf(host).name)} only. Leave it as it is to use the wording for every host.</p>` : '';
+    if (s.kind === 'note') body = field('f-text', s.title, str(HK().note), 5);
+    if (s.kind === 'text') body = forHost + field('f-text', s.title, str(val(s.key)) , 8) + (STARTER[s.key] && !host ? '<p><button type="button" class="btn" id="starterBtn">Start from our wording</button></p>' : '') + (own(s.key) ? '<p><button type="button" class="btn" id="sharedBtn">Use the wording for every host</button></p>' : '');
+    if (s.kind === 'tech') body = `<fieldset class="field"><legend>Formats you can send</legend><div class="checks">${Object.entries(FORMATS).map(([k, v]) => `<label><input type="checkbox" data-format="${k}"${arr(K().formats).includes(k) ? ' checked' : ''}> ${esc(v)}</label>`).join('')}</div></fieldset>${forHost}${field('f-text', 'Specs and playback notes', str(val('tech')), 5)}${own('tech') ? '<p><button type="button" class="btn" id="sharedBtn">Use the wording for every host</button></p>' : ''}<p class="hint">Running time: ${esc(doc.project.runningTime || 'not set')}. Aspect ratio and sound: ${esc([PN().specs && PN().specs.aspectRatio, PN().specs && PN().specs.sound].filter(Boolean).join(', ') || 'not set in the press notes')}.</p>`;
+    if (s.kind === 'promo') body = forHost + field('f-text', 'How to promote it', str(val('promotion')), 6) + (own('promotion') ? '<p><button type="button" class="btn" id="sharedBtn">Use the wording for every host</button></p>' : '') + (STARTER.promotion && !host ? '<p><button type="button" class="btn" id="starterBtn">Start from our wording</button></p>' : '') + `<fieldset class="field"><legend>Images for hosts</legend><div class="thumbs">${art().map(a => `<label><img src="${esc(a.data)}" alt=""><span><input type="checkbox" data-img="${esc(a.id)}"${arr(K().imageIds).includes(a.id) ? ' checked' : ''}> ${esc(a.caption || a.name)}</span></label>`).join('') || '<p class="hint">No approved stills yet. Approve some in the <a href="../stills-library/index.html">stills library</a>.</p>'}</div></fieldset>`;
     if (s.kind === 'guide') { const g = guideParts(); body = `<pre class="preview">${esc([g.themes.length && `Themes:\n${g.themes.join('\n')}`, g.questions.length && `Questions:\n${g.questions.join('\n')}`, g.resources.length && `Resources:\n${g.resources.join('\n')}`, g.partners.length && `Partners: ${g.partners.map(p => p.name).join(', ')}`].filter(Boolean).join('\n\n') || 'No discussion guide yet.')}</pre><p class="hint">Change this in the <a href="../discussion-guide/index.html">discussion guide builder</a>.</p>`; }
     if (s.kind === 'checklist') { draftChecks = checklist().map(c => Object.assign({}, c)); body = '<div id="checkList"></div><p><button type="button" class="btn" id="checkAdd">Add an item</button> <button type="button" class="btn" id="checkReset">Put back the usual items</button></p>'; }
     $('secBody').innerHTML = body;
@@ -532,12 +565,14 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   }
   function saveEditor() {
     const s = editing, h = arr(K().hidden).filter(k => k !== s.key);
-    if ($('f-hide').checked && s.kind !== 'checklist') h.push(s.key);
+    if ($('f-hide').checked && s.kind !== 'checklist' && s.kind !== 'note') h.push(s.key);
     setK('hidden', h);
     const txt = $('f-text') ? $('f-text').value.trim() : '';
-    if (s.kind === 'text') setK(s.key, txt);
-    if (s.kind === 'tech') { setK('tech', txt); setK('formats', [...$('secBody').querySelectorAll('[data-format]:checked')].map(i => i.dataset.format)); }
-    if (s.kind === 'promo') { setK('promotion', txt); setK('imageIds', [...$('secBody').querySelectorAll('[data-img]:checked')].map(i => i.dataset.img)); }
+    const put = (k, v) => (host ? setHost(k, v) : setK(k, v));
+    if (s.kind === 'note') setHost('note', txt);
+    if (s.kind === 'text') put(s.key, txt);
+    if (s.kind === 'tech') { put('tech', txt); setK('formats', [...$('secBody').querySelectorAll('[data-format]:checked')].map(i => i.dataset.format)); }
+    if (s.kind === 'promo') { put('promotion', txt); setK('imageIds', [...$('secBody').querySelectorAll('[data-img]:checked')].map(i => i.dataset.img)); }
     if (s.kind === 'checklist') {
       keepChecks();
       setK('removed', BUILT.filter(b => !draftChecks.some(c => c.key === b.key)).map(b => b.key));
@@ -553,14 +588,16 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const paras = t => str(t).split(/\n\s*\n/).map(p => p.trim()).filter(Boolean).map(p => `<p>${esc(p)}</p>`).join('');
     const list = xs => `<ul>${xs.map(x => `<li>${esc(x)}</li>`).join('')}</ul>`;
     const a = about(), g = guideParts();
-    let h = `<h1>${esc(doc.project.title || 'Untitled film')}</h1><p class="r-kind">Screening kit for hosts</p>`;
+    const hh = host && hostOf(host);
+    let h = `<h1>${esc(doc.project.title || 'Untitled film')}</h1><p class="r-kind">${hh ? `Screening kit for ${esc(hh.name)}${hh.date ? `, ${esc(fmtDate(hh.date))}` : ''}` : 'Screening kit for hosts'}</p>`;
+    if (hh && str(HK().note).trim()) h += `<section class="r-note">${paras(HK().note)}</section>`;
     if (on(sec.about)) h += `<section><h2>About the film</h2>${a.logline ? `<p class="r-logline">${esc(a.logline)}</p>` : ''}${paras(a.synopsis)}${a.runtime ? `<p>Running time: ${esc(a.runtime)}</p>` : ''}</section>`;
-    if (on(sec.hosting)) h += `<section><h2>Hosting the screening</h2>${paras(K().hosting)}</section>`;
-    if (on(sec.tech)) h += `<section><h2>Tech specs</h2>${arr(K().formats).length ? `<p>Available on: ${esc(arr(K().formats).map(f => FORMATS[f]).join(', '))}</p>` : ''}${paras(K().tech)}</section>`;
-    if (on(sec.promotion)) h += `<section><h2>Promotion</h2>${paras(K().promotion)}${picked().length ? `<div class="r-imgs">${picked().map(x => `<figure><img src="${esc(x.data)}" alt=""><figcaption>${esc(x.caption || '')}${x.photoCredit ? ` Photo: ${esc(x.photoCredit)}` : ''}</figcaption></figure>`).join('')}</div>` : ''}</section>`;
+    if (on(sec.hosting)) h += `<section><h2>Hosting the screening</h2>${paras(val('hosting'))}</section>`;
+    if (on(sec.tech)) h += `<section><h2>Tech specs</h2>${arr(K().formats).length ? `<p>Available on: ${esc(arr(K().formats).map(f => FORMATS[f]).join(', '))}</p>` : ''}${paras(val('tech'))}</section>`;
+    if (on(sec.promotion)) h += `<section><h2>Promotion</h2>${paras(val('promotion'))}${picked().length ? `<div class="r-imgs">${picked().map(x => `<figure><img src="${esc(x.data)}" alt=""><figcaption>${esc(x.caption || '')}${x.photoCredit ? ` Photo: ${esc(x.photoCredit)}` : ''}</figcaption></figure>`).join('')}</div>` : ''}</section>`;
     if (on(sec.discussion)) h += `<section><h2>The discussion</h2>${g.themes.length ? `<h3>Themes</h3>${list(g.themes)}` : ''}${g.questions.length ? `<h3>Questions</h3><ol>${g.questions.map(q => `<li>${esc(q)}</li>`).join('')}</ol>` : ''}${g.resources.length ? `<h3>Resources</h3>${list(g.resources)}` : ''}${g.partners.length ? `<h3>Partner organizations</h3>${list(g.partners.map(p => p.name))}` : ''}</section>`;
     if (checklist().length) h += `<section class="r-check"><h2>Host checklist</h2>${Object.entries(WHEN).map(([k, v]) => { const xs = checklist().filter(c => c.when === k); return xs.length ? `<h3>${esc(v)}</h3><ul class="r-boxes">${xs.map(c => `<li>&#9744; ${esc(c.text)}</li>`).join('')}</ul>` : ''; }).join('')}</section>`;
-    if (on(sec.contact)) h += `<section><h2>Contact</h2>${paras(K().contact)}</section>`;
+    if (on(sec.contact)) h += `<section><h2>Contact</h2>${paras(val('contact'))}</section>`;
     $('report').innerHTML = h;
   }
 
@@ -776,6 +813,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('editProjectBtn').onclick = openProjectDialog;
     $('filmTitle').onclick = openProjectDialog;
     $('printBtn').onclick = () => { renderReport(); window.print(); };
+    $('hostSel').addEventListener('change', () => { host = $('hostSel').value; render(); });
     window.addEventListener('beforeprint', renderReport);
     $('projectCsvBtn').onclick = () => $('projectCsvDialog').showModal();
     $('projectCsvCancel').onclick = () => $('projectCsvDialog').close();
@@ -791,6 +829,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('rows').addEventListener('click', ev => { const b = ev.target.closest('[data-edit]'); if (b) openEditor(b.dataset.edit); });
     $('secBody').addEventListener('click', ev => {
       const t = ev.target;
+      if (t.id === 'sharedBtn') { const k = editing.kind === 'promo' ? 'promotion' : editing.kind === 'tech' ? 'tech' : editing.key; $('f-text').value = str(K()[k]); t.remove(); return; }
       if (t.id === 'starterBtn') { $('f-text').value = STARTER[editing.key === 'promotion' ? 'promotion' : editing.key]; return; }
       if (t.id === 'checkAdd') return addCheck();
       if (t.id === 'checkReset') { keepChecks(); for (const b of BUILT) if (!draftChecks.some(c => c.key === b.key)) draftChecks.push(Object.assign({}, b)); const o = Object.keys(WHEN); draftChecks.sort((a, b) => o.indexOf(a.when) - o.indexOf(b.when)); drawChecks(); return; }
