@@ -601,7 +601,8 @@ function oftBuild() {
 @media print { .oft-bar, .oft-links { display: none !important; } }`;
   document.head.append(style);
   const bars = document.createElement('div');
-  bars.innerHTML = `<div class="oft-bar quiet" id="oftReopen" role="region" aria-label="Open the last project file" hidden><p id="oftReopenText"></p><div class="actions"><button type="button" class="btn primary" id="oftReopenBtn">Open it</button><button type="button" class="btn" id="oftForgetBtn">Forget it</button></div></div>
+  bars.innerHTML = `<div class="oft-bar quiet" id="oftBrowser" role="region" aria-label="About saving in this browser" hidden><p id="oftBrowserText"></p><div class="actions"><button type="button" class="btn" id="oftBrowserBtn">Got it</button></div></div>
+<div class="oft-bar quiet" id="oftReopen" role="region" aria-label="Open the last project file" hidden><p id="oftReopenText"></p><div class="actions"><button type="button" class="btn primary" id="oftReopenBtn">Open it</button><button type="button" class="btn" id="oftForgetBtn">Forget it</button></div></div>
 <div class="oft-bar" id="oftPresence" role="status" hidden><p id="oftPresenceText"></p><div class="actions"><button type="button" class="btn" id="oftPresenceBtn">Dismiss</button></div></div>
 <div class="oft-bar" id="oftCopies" role="region" aria-label="Conflicted copies" hidden><p id="oftCopiesText"></p><div class="actions"><button type="button" class="btn primary" id="oftCopiesBtn">Merge it</button><button type="button" class="btn" id="oftCopiesHide">Not now</button></div></div>`;
   const main = document.querySelector('main#main') || document.querySelector('main');
@@ -681,6 +682,11 @@ function oftBuild() {
   oftEl('oftCopiesHide').onclick = () => { oftEl('oftCopies').hidden = true; };
   const cancel = oftEl('conflictCancelBtn');
   if (cancel) { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn primary'; b.id = 'conflictMergeBtn'; b.textContent = 'Merge both'; b.onclick = oftMergeConflict; cancel.parentElement.prepend(b); }
+  if (!window.showSaveFilePicker && !oftStore.get(OFT_NOTE_DONE)) {
+    oftEl('oftBrowserText').innerHTML = oftBrowserNote();
+    oftEl('oftBrowser').hidden = false;
+    oftEl('oftBrowserBtn').onclick = () => { oftStore.set(OFT_NOTE_DONE, '1'); oftEl('oftBrowser').hidden = true; };
+  }
   oftWatchDialogs();
   oftSettingsText();
 }
