@@ -1483,6 +1483,20 @@ def test_versions(browser, fake):
     ctx.close()
 
 
+def test_home_columns(browser, fake):
+    # On a wide screen the "not sure where to begin" prompt sits under the intro text, in the left column.
+    ctx = browser.new_context(viewport={'width': 1440, 'height': 900})
+    pg = ctx.new_page()
+    pg.goto('file://%s/index.html' % root)
+    pg.wait_for_timeout(300)
+    left, right = pg.evaluate("[document.querySelector('#firstRunShow').getBoundingClientRect().right, document.querySelector('.start').getBoundingClientRect().left]")
+    check(left < right, 'the first-run prompt is in the left column, beside the start box (%s < %s)' % (round(left), round(right)))
+    check(pg.locator('.start #firstRunShow').count() == 0, 'the start box no longer holds the prompt')
+    pg.click('#firstRunShow')
+    check(pg.is_visible('#firstRun'), 'the prompt still opens the questions')
+    ctx.close()
+
+
 def test_first_run(browser, fake):
     # The guided first run on the home page: two questions, tools to start with, a project file, and gone once dismissed.
     ctx = browser.new_context(accept_downloads=True, viewport={'width': 375, 'height': 800})
@@ -5505,6 +5519,7 @@ def main():
         test_hub(browser, fake)
         test_versions(browser, fake)
         test_offline(browser, fake)
+        test_home_columns(browser, fake)
         test_first_run(browser, fake)
         test_compare_versions(browser, fake)
         test_translations(browser, fake)

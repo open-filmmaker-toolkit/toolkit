@@ -92,6 +92,8 @@ a:hover { text-decoration-thickness: 2px; }
 .cols li + li { margin-top: 4px; }
 footer { margin-top: 48px; padding-top: 16px; border-top: 3px solid var(--ink); font-size: 13.5px; color: var(--ink-2); }
 footer p { margin: 0 0 8px; max-width: 80ch; }
+.not-sure { margin-top: 20px; font-size: 18px; text-align: left; }
+.not-sure .link-btn { text-align: left; }
 .link-btn { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; }
 @media (max-width: 860px) {
   .intro, .cols { grid-template-columns: 1fr; }
@@ -194,6 +196,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <h1 id="intro-h">Free tools for documentary and indie filmmakers</h1>
         <p>These tools handle the business side of a film: budgets, releases, grants, call sheets, clearances and credits.</p>
         <p>They run in your browser with nothing to install. Every tool reads the same project file on your computer, so you enter things once.</p>
+        <p class="not-sure"><button type="button" class="link-btn" id="firstRunShow">Not sure where to begin? Answer two questions.</button></p>
       </div>
       <section class="start" aria-labelledby="start-h">
         <h2 id="start-h">Start here</h2>
@@ -210,7 +213,6 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         </ol>
         <p class="dl">Working with other people? Read <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/docs/sharing-a-project.md">working on a shared file</a>.</p>
         <p class="dl">To work offline, <a href="docs/offline.md">install the toolkit as an app</a>, or <a href="https://github.com/open-filmmaker-toolkit/toolkit/archive/refs/heads/main.zip">download it</a> and open <code>index.html</code>.</p>
-        <p class="dl"><button type="button" class="link-btn" id="firstRunShow">Not sure where to begin? Answer two questions.</button></p>
       </section>
     </section>
 
