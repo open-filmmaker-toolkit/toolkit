@@ -3457,6 +3457,8 @@
         "id": {
           "$ref": "#/$defs/id"
         },
+        "quantityGlobal": { "$ref": "#/$defs/id", "description": "The global the quantity comes from. The quantity is kept up to date as the global's value times quantityTimes." },
+        "quantityTimes": { "type": "number", "description": "What the global is multiplied by for this line; 1 when missing." },
         "accountId": {
           "$ref": "#/$defs/id"
         },
@@ -3536,6 +3538,7 @@
     "budget": {
       "type": "object",
       "properties": {
+        "globals": { "type": "array", "description": "Named numbers lines can use for their quantity, such as shoot weeks.", "items": { "type": "object", "required": ["id"], "properties": { "id": { "$ref": "#/$defs/id" }, "name": { "type": "string" }, "value": { "type": "number" } }, "additionalProperties": true } },
         "accounts": {
           "type": "array",
           "items": {
