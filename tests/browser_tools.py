@@ -4925,6 +4925,45 @@ def test_remember_file(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     context.close(); srv.shutdown()
 
+def test_carry_project(browser, fake):
+    # The open project goes with you from tool to tool and back to the home page, in the same tab, unsaved changes included.
+    ctx = browser.new_context(accept_downloads=True, viewport={'width': 1280, 'height': 900})
+    ctx.add_init_script(STUB_PRINT + NO_PICKERS)
+    pg = ctx.new_page(); errs = []; dialogs = []
+    pg.on('pageerror', lambda e: errs.append(str(e)))
+    pg.on('dialog', lambda d: (dialogs.append(d.type), d.accept()))
+    loaded = "document.getElementById('filmMeta').textContent.trim() !== ''"
+    pg.goto('file://%s/index.html' % root)
+    pg.set_input_files('#projectInput', files=[{'name': 'river.oft.json', 'mimeType': 'application/json', 'buffer': sample.encode()}])
+    pg.wait_for_selector('#dashboard .needs')
+    pg.click('#showTools'); pg.locator('#catalog .tool h4 a[href="tools/call-sheet/index.html"]').first.click()
+    pg.wait_for_function(loaded)
+    check('River' in pg.inner_text('#filmTitle') and 'river.oft.json' in pg.inner_text('#fileState'), 'a tool picked from the full list opens with the project')
+    pg.click('#editProjectBtn'); pg.fill('#p-title', 'The River Keeps Going'); pg.click('#projectForm button[type=submit]')
+    check('unsaved' in pg.inner_text('#fileState').lower(), 'a change in the tool is unsaved')
+    pg.click('.home-link'); pg.wait_for_selector('#dashboard .needs')
+    check(not dialogs, 'moving to the home page doesn\'t ask about leaving (%s)' % dialogs)
+    check('The River Keeps Going' in pg.inner_text('#dashTitle') and "haven't saved" in pg.inner_text('#toast'), 'the home page shows the unsaved change and says so')
+    pg.click('#showTools'); pg.locator('#catalog .tool h4 a[href="tools/budget/index.html"]').first.click()
+    pg.wait_for_function(loaded)
+    check('The River Keeps Going' in pg.inner_text('#filmTitle') and 'unsaved' in pg.inner_text('#fileState').lower(), 'the next tool has the change, still unsaved')
+    with pg.expect_download() as d:
+        pg.click('#saveBtn')
+    check(json.loads(open(d.value.path(), encoding='utf-8').read())['project']['title'] == 'The River Keeps Going', 'saving there saves the change')
+    pg.go_back(); pg.wait_for_selector('#dashboard .needs')
+    pg.go_back(); pg.wait_for_function(loaded); pg.wait_for_timeout(300)
+    check('The River Keeps Going' in pg.inner_text('#filmTitle') and 'unsaved' not in pg.inner_text('#fileState').lower(), 'going Back shows the saved project, not the older page')
+    p2 = ctx.new_page(); p2.goto('file://%s/tools/budget/index.html' % root); p2.wait_for_timeout(500)
+    check(p2.inner_text('#filmMeta').strip() == '', 'a new tab starts with no project open')
+    p2.close()
+    pg.goto('file://%s/index.html' % root); pg.wait_for_selector('#dashboard .needs')
+    pg.click('#closeProject')
+    pg.goto('file://%s/tools/call-sheet/index.html' % root); pg.wait_for_timeout(500)
+    check(pg.inner_text('#filmMeta').strip() == '', 'closing the project on the home page closes it for the tools too')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+
 def test_dashboard(browser, fake):
     ctx = browser.new_context(accept_downloads=True, viewport={'width': 1280, 'height': 900})
     ctx.add_init_script(STUB_PRINT + NO_PICKERS)
@@ -5642,6 +5681,7 @@ def main():
         test_remember_file(browser, fake)
         print('== home page / project dashboard, calendar file and summaries')
         test_dashboard(browser, fake)
+        test_carry_project(browser, fake)
         print('== shared code / the calendar file in a tool with dates')
         test_tool_calendar(browser, fake)
         print('== every tool with a template / importing from a spreadsheet')

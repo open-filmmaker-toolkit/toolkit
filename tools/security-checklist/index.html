@@ -1608,19 +1608,80 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     if (oftEl('oftReopen')) oftEl('oftReopen').hidden = true;
     if (oftEl('oftCopies')) oftEl('oftCopies').hidden = true;
     if (handle) oftIdb('put', 'file', { handle, name, at: new Date().toISOString() });
+    oftCarry();
     oftWarnOpen(text);
     if (handle) oftMarkOpen(text, handle).then(oftScanFolder);
     const rec = oftRecordFromHash();
     if (rec) setTimeout(() => oftShowRecord(rec), 60);
   }
-  async function oftHandoff() {
-    let h = null;
-    try { h = JSON.parse(sessionStorage.getItem('oft-handoff') || 'null'); sessionStorage.removeItem('oft-handoff'); } catch { /* none */ }
-    if (!h || !h.text || fileName || dirty || Date.now() - (h.at || 0) > 10 * 60e3) return false;
+  // ---------- The open project goes with you from page to page in this tab ----------
+  // Whatever project is open, with any changes not saved yet, is kept in this tab's session storage, so the
+  // next tool, or the home page, opens it without asking. A new tab starts with nothing open.
+  const OFT_CARRY = 'oft-current';
+  let oftMoving = 0, oftHadFile = false;
+  const oftCarried = () => { try { return JSON.parse(sessionStorage.getItem(OFT_CARRY) || 'null'); } catch { return null; } };
+  function oftCarry() {
+    try {
+      // A page that never had a project open leaves the tab's project alone; one that closed it, or started a new one, clears it.
+      if (!fileName || !doc) { if (oftHadFile) sessionStorage.removeItem(OFT_CARRY); return false; }
+      oftHadFile = true;
+      const rec = { name: fileName, base: baselineText, at: Date.now() };
+      if (dirty) { const now = serialize(); if (now !== baselineText) rec.text = now; }
+      if (!rec.base && !rec.text) { sessionStorage.removeItem(OFT_CARRY); return false; }
+      sessionStorage.setItem(OFT_CARRY, JSON.stringify(rec));
+      return true;
+    } catch {
+      try { sessionStorage.removeItem(OFT_CARRY); } catch { /* storage off */ }
+      return false;
+    }
+  }
+  // Opens the carried project. `again` is for a page the browser brings back with Back or Forward,
+  // which may be showing an older state than the tab's.
+  async function oftArrive(again) {
+    const c = oftCarried();
+    if (!c || !c.name || (!c.base && !c.text)) return false;
+    if (!again && (fileName || dirty)) return false;
+    if (again) {
+      const mine = dirty ? serialize() : baselineText;
+      if (fileName === c.name && (c.text || c.base) === mine) return true;
+    }
     const saved = window.showOpenFilePicker ? await oftIdb('get', 'file') : null;
-    loadText(h.text, h.name, saved && saved.name === h.name ? saved.handle : null);
+    const handle = saved && saved.name === c.name ? saved.handle : null;
+    let base = c.base;
+    // Without changes waiting, read the file itself when the browser already allows it: it may be newer.
+    if (handle && !c.text && handle.queryPermission) {
+      try { if ((await handle.queryPermission({ mode: 'readwrite' })) === 'granted') base = await (await handle.getFile()).text(); } catch { /* use the copy */ }
+    }
+    if (!again && (fileName || dirty)) return false;
+    dirty = false;
+    if (!c.text) { loadText(base, c.name, handle); return fileName === c.name; }
+    loadText(c.text, c.name, handle);
+    if (fileName !== c.name) return false;
+    baselineText = c.base || null; dirty = true;
+    if (typeof saveDraft === 'function') saveDraft();
+    if (typeof render === 'function') render();
+    oftCarry();
+    toast(`${c.name} has changes you haven't saved yet. Save here to keep them.`);
     return true;
   }
+  // Following a link to another page of the toolkit takes the project along, so there's nothing to lose
+  // and no "leave this page?" question. Closing the tab, or going somewhere else, still asks.
+  function oftToolkitLink(a) {
+    if (!a || a.target && a.target !== '_self' || a.hasAttribute('download')) return false;
+    let u;
+    try { u = new URL(a.getAttribute('href'), window.location.href); } catch { return false; }
+    const root = new URL(document.querySelector('.home-link') ? '../../' : './', window.location.href);
+    if (u.protocol !== root.protocol || u.host !== root.host || !u.pathname.startsWith(root.pathname)) return false;
+    if (u.pathname === window.location.pathname) return false;
+    return /(\/|\.html)$/.test(u.pathname);
+  }
+  document.addEventListener('click', ev => {
+    if (ev.defaultPrevented || ev.button !== 0 || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey) return;
+    const a = ev.target.closest && ev.target.closest('a[href]');
+    if (oftToolkitLink(a) && oftCarry()) oftMoving = Date.now();
+  });
+  window.addEventListener('beforeunload', ev => { if (oftMoving && Date.now() - oftMoving < 5000) ev.stopImmediatePropagation(); }, true);
+  window.addEventListener('pageshow', ev => { if (ev.persisted) { oftMoving = 0; oftArrive(true); } });
 
   // ---------- Settings dialog: your name, the remembered file, the folder ----------
   async function oftSettingsText() {
@@ -1882,11 +1943,12 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     if (!dirty && fileName) {
       if (before && name === fileName && !(await oftVersions(fileName)).length) await oftKeep(fileName, before, '');
       await oftKeep(fileName, fileHandle && baselineText ? baselineText : serialize(), typeof TOOL !== 'undefined' ? TOOL : '');
+      oftCarry();
     }
     return out;
   };
-  window.addEventListener('pagehide', oftClearOpen);
-  setTimeout(async () => { oftBuild(); oftRecent(); if (!(await oftHandoff())) oftOffer(); }, 0);
+  window.addEventListener('pagehide', () => { oftCarry(); oftClearOpen(); });
+  setTimeout(async () => { oftBuild(); oftRecent(); if (!(await oftArrive(false))) oftOffer(); }, 0);
   /* oft-shared:tool end */
   init();
 })();
