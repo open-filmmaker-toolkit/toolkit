@@ -4404,6 +4404,37 @@ def test_money(browser, fake):
     ctx.close()
 
 # waterfall / pari passu, corridors and interest, against a worked example
+def test_waterfall_pools(browser, fake):
+    d = json.loads(sample)
+    start = (datetime.date.today() - datetime.timedelta(days=731)).isoformat()
+    d['waterfall'] = {'pools': [{'id': 'pool-na', 'name': 'North America', 'territories': ['United States', 'Canada']}, {'id': 'pool-row', 'name': 'Rest of world', 'territories': ['France', 'Germany']}],
+        'tiers': [{'id': 't-fee', 'name': 'Sales fee', 'kind': 'gross', 'percent': 15, 'party': 'Sales agent'},
+            {'id': 't-exp', 'name': 'Sales expenses', 'kind': 'fixed', 'amount': 20000, 'party': 'Sales agent', 'byPool': {'pool-na': 10000, 'pool-row': 10000}},
+            {'id': 't-loan', 'name': 'Gap loan', 'kind': 'fixed', 'amount': 50000, 'party': 'Lender', 'interest': 10, 'interestFrom': start, 'compound': 'yearly'},
+            {'id': 't-net', 'name': 'Net profits', 'kind': 'split', 'splits': [{'party': 'Producers', 'share': 100}]}], 'scenarios': []}
+    d['revenueStatements'] = [{'id': 'st-us', 'source': 'US distributor', 'territory': 'United States', 'gross': 100000}, {'id': 'st-fr', 'source': 'French distributor', 'territory': 'France', 'gross': 5000}]
+    ctx, pg, errs = new_page(browser, 'waterfall', fake)
+    open_text(pg, fake, json.dumps(d, indent=2))
+    pg.select_option('#scenSel', 'actual'); pg.wait_for_timeout(100)
+    r = pg.inner_text('#results')
+    check('Rest of world: $4,250.00 of $10,000.00, $5,750.00 short, not made up from the other pools' in r and 'North America: $10,000.00 of $10,000.00' in r and '$5,750.00 still owed' in pg.inner_text('[data-id="t-exp"]'), 'without cross-collateralization, each pool recoups only from its own revenue')
+    loan = 50000 * (1.1 ** (731 / 365.25) - 1)
+    check(('Includes $%s interest, compounded yearly' % format(round(loan, 2), ',.2f')) in r or ('Includes $%s interest, compounded yearly' % format(round(loan, 2) + 0.01, ',.2f')) in r, 'compound interest, with how much (%s)' % round(loan, 2))
+    pg.click('[data-edit="t-exp"]'); pg.check('#f-crossed'); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    r = pg.inner_text('#results')
+    check("Cross-collateralized: Rest of world's shortfall of $5,750.00 made up from North America" in r and 'still owed' not in pg.inner_text('[data-id="t-exp"]'), 'cross-collateralized, one pool makes up the shortfall in another')
+    pg.select_option('#scenSel', ''); pg.fill('#try-pool-na', '40000'); pg.fill('#try-pool-row', '60000'); pg.wait_for_timeout(100)
+    check('$100,000.00' in pg.inner_text('#results'), 'tries an amount for each pool')
+    pg.click('#poolAdd'); pg.fill('#pools .pool:last-child .pl-name', 'Asia'); pg.locator('#pools .pool:last-child .pl-name').dispatch_event('change'); pg.wait_for_timeout(100)
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    rep = pg.inner_text('#report')
+    check('compounded yearly' in rep and 'cross-collateralized' in rep, 'the printed summary explains both')
+    data = saved_project(pg, fake)
+    w = data['waterfall']
+    check(w['tiers'][1]['crossed'] is True and w['tiers'][1]['byPool'] == {'pool-na': 10000, 'pool-row': 10000} and w['tiers'][2]['compound'] == 'yearly' and w['pools'][2]['name'] == 'Asia', 'saves pools, cross-collateralization and compounding')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
 def test_waterfall_terms(browser, fake):
     d = json.loads(sample)
     start = (datetime.date.today() - datetime.timedelta(days=731)).isoformat()
@@ -4732,6 +4763,7 @@ def main():
         test_money(browser, fake)
         print('== waterfall / pari passu, corridors and interest')
         test_waterfall_terms(browser, fake)
+        test_waterfall_pools(browser, fake)
         print('== edit imports / transcripts, markers and edit lists')
         test_edit_imports(browser, fake)
         print('== templates / columns match the tools\' exports')

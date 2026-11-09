@@ -840,6 +840,7 @@
       "type": "object",
       "description": "The recoupment waterfall: tiers in the order they are paid, and revenue scenarios, kept by the recoupment waterfall model.",
       "properties": {
+        "pools": { "type": "array", "description": "Territory pools whose revenue is recouped together.", "items": { "type": "object", "required": ["id"], "properties": { "id": { "$ref": "#/$defs/id" }, "name": { "type": "string" }, "territories": { "type": "array", "items": { "type": "string" } } }, "additionalProperties": true } },
         "tiers": {
           "type": "array",
           "description": "Tiers in payment order.",
@@ -852,6 +853,9 @@
               "id": {
                 "$ref": "#/$defs/id"
               },
+              "compound": { "enum": ["monthly", "yearly"], "description": "How a fixed tier's interest compounds. Missing means simple interest." },
+              "byPool": { "type": "object", "description": "For a fixed tier: how much each territory pool recoups, by pool id.", "additionalProperties": { "type": "number", "minimum": 0 } },
+              "crossed": { "type": "boolean", "description": "The pools are cross-collateralized: one pool's shortfall is made up from another's revenue." },
               "name": {
                 "type": "string"
               },

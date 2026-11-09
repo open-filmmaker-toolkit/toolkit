@@ -35,6 +35,8 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **Tiers in order:** a percentage of gross receipts off the top (such as a sales agent's fee), a percentage of what's left, a fixed amount paid until it's paid in full (expenses, investor recoupment and premium, deferments), or a split of what's left between parties. Reorder them with the arrows.
 - **Start from the usual tiers** and change them to match your agreements.
 - **Revenue scenarios:** try any amount of gross receipts, save scenarios, or choose actual revenue from the [revenue tracker](../revenue-tracker/).
+- **Territory pools and cross-collateralization.** Group territories into pools, such as North America and the rest of the world. Actual revenue goes to the pool its territory is in, or try an amount for each pool. A fixed tier can say how much each pool recoups: without cross-collateralization, each pool recoups only from its own revenue, and a shortfall in one isn't made up from another; ticked as cross-collateralized, it is. Under each tier, the results say how the payment was split between the pools.
+- **Compound interest.** A fixed tier's interest can be simple, or compounded monthly or yearly, and the results say how much interest is included.
 - **What each party receives** at each tier and in total, with what's still owed on fixed tiers.
 - **Break-even:** the gross receipts at which every fixed tier is paid in full.
 - **Prints a summary** with every scenario side by side, and **exports CSV.**
@@ -55,14 +57,13 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-A `waterfall` record with `tiers`, in payment order (`name`, `kind` of `gross`, `percent`, `fixed`, `pari`, `split` or `corridor`, `party`, `percent`, `amount`, `splits` with `party` and `share`, and `note`), and `scenarios` (`name` and `gross`). A `fixed` tier can have `interest` (a simple yearly percentage) and `interestFrom` (a date). A `pari` tier has `parties`, each with `party`, `amount` and, when `shareBy` is `share`, a `share`. A `corridor` has `percent` and `from`, the gross receipts it starts at; corridors are paid alongside the tiers, wherever they sit in the list.
+A `waterfall` record with `tiers`, in payment order (`name`, `kind` of `gross`, `percent`, `fixed`, `pari`, `split` or `corridor`, `party`, `percent`, `amount`, `splits` with `party` and `share`, and `note`), and `scenarios` (`name` and `gross`). A `fixed` tier can have `interest` (a yearly percentage), `interestFrom` (a date) and `compound` (`monthly` or `yearly`; simple when missing), and `byPool` (the amount each territory pool recoups) with `crossed` (true when cross-collateralized). `pools` lists the territory pools, each with `id`, `name` and `territories`. A `pari` tier has `parties`, each with `party`, `amount` and, when `shareBy` is `share`, a `share`. A `corridor` has `percent` and `from`, the gross receipts it starts at; corridors are paid alongside the tiers, wherever they sit in the list.
 
 It reads `revenueStatements`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
-- Cross-collateralization between territories
-- Compound interest
+Nothing planned right now. If something you need is missing, [open an issue](https://github.com/open-filmmaker-toolkit/toolkit/issues).
 
 ## License
 
