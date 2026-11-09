@@ -392,6 +392,10 @@
       "$ref": "#/$defs/paperEdit",
       "description": "Transcripts and the scenes of bites picked from them, kept by the paper edit. A record rather than a collection."
     },
+    "payroll": {
+      "$ref": "#/$defs/payroll",
+      "description": "Overtime, meal and turnaround rules and minimum rates by role, kept by deal memos for timecards. A record rather than a collection."
+    },
     "costReport": {
       "$ref": "#/$defs/costReport",
       "description": "Estimates to complete and the report date, kept by budget-to-actuals. A record rather than a collection."
@@ -1554,6 +1558,39 @@
   },
   "additionalProperties": true,
   "$defs": {
+    "payroll": {
+      "type": "object",
+      "properties": {
+        "rules": {
+          "type": "object",
+          "description": "Only the rules changed from the defaults are kept.",
+          "properties": {
+            "dayHours": { "type": "number", "minimum": 0, "description": "Hours a day's rate covers; overtime starts after them. Default 10." },
+            "overtimeTimes": { "type": "number", "minimum": 0, "description": "Overtime pays this many times the hourly rate. Default 1.5." },
+            "doubleAfter": { "type": "number", "minimum": 0, "description": "Hours after which double time starts. Default 12." },
+            "doubleTimes": { "type": "number", "minimum": 0, "description": "Double time pays this many times the hourly rate. Default 2." },
+            "mealAfter": { "type": "number", "minimum": 0, "description": "Hours from call, or from the end of the meal, within which a meal is due. Default 6." },
+            "mealPenalty": { "type": "number", "minimum": 0, "description": "Penalty for each half hour, or part of one, that a meal is late. Default 0." },
+            "turnaroundHours": { "type": "number", "minimum": 0, "description": "Rest due between wrap and the next call. Default 10." }
+          }
+        },
+        "rates": {
+          "type": "array",
+          "description": "Minimum rates by role.",
+          "items": {
+            "type": "object",
+            "required": ["role"],
+            "properties": {
+              "id": { "type": "string" },
+              "role": { "type": "string" },
+              "agreement": { "type": "string", "description": "The union, guild or local agreement the minimum comes from." },
+              "minimum": { "type": "number", "minimum": 0 },
+              "rateUnit": { "type": "string", "enum": ["day", "week", "hour", "flat"] }
+            }
+          }
+        }
+      }
+    },
     "id": {
       "type": "string",
       "minLength": 1
@@ -2074,6 +2111,15 @@
             "hour",
             "flat"
           ]
+        },
+        "dealKind": {
+          "type": "string",
+          "enum": [
+            "crew",
+            "cast",
+            "contributor"
+          ],
+          "description": "Who a deal memo is for. Missing means crew."
         },
         "overtime": {
           "type": "string"

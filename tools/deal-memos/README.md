@@ -11,7 +11,7 @@
 
 # Deal memos
 
-Write down what you agreed with each crew member: role, dates, rate, kit fee, overtime, credit and payment terms. Print it to sign, track it from sent to signed, keep the signed copy, and send the rate to the budget.
+Write down what you agreed with each crew member, cast member or contributor: role, dates, rate, kit fee, overtime, credit and payment terms. Print it to sign, track it from sent to signed, keep the signed copy, and send the rate to the budget. Check rates against union minimums and work out timecards from the daily reports.
 
 Part of the [Open Filmmaker Toolkit](../../README.md). Tracking issue: [#56](https://github.com/open-filmmaker-toolkit/toolkit/issues/56).
 
@@ -46,6 +46,11 @@ This is not legal advice. Deal memos are contracts, and what they need differs f
 
 - **Imports from a spreadsheet:** choose **Import from a spreadsheet** under the file buttons and pick a CSV file. One with the columns of the [spreadsheet template](../../templates/deal-memos-template.csv) imports as it is; match any other columns once and the tool remembers. Problems, such as a date it can't read, show row by row before anything is added, and importing only adds.
 - **Several rates in one memo,** such as prep, shoot and travel days. Each goes on its own budget line, and the printed memo lists them all.
+- **Cast and contributors too.** Choose who a memo is for: crew, cast, or a contributor such as a composer, writer or consultant. The printed memo is headed to match, and someone new added for a cast memo is marked as on camera.
+- **Minimum rates by role.** Under **Rates and rules**, list the minimum for each role and the agreement it comes from, or load them from a CSV with the columns of the [union rates template](../../templates/union-rates-template.csv). A memo whose rate is below the minimum for its role is flagged.
+- **Timecards.** **Open timecards** works out each person's week from the call, meal and wrap times in the [daily production reports](../daily-production-report/): hours, overtime, double time, meal penalties and rest cut short between days. Set the rules under **Rates and rules**. Pay comes from each person's deal memo. Print the timecards to sign, or export a payroll summary as a CSV to hand to your payroll company.
+
+The timecards are there to help you check hours and catch problems early. They don't replace a payroll service: the tool doesn't withhold taxes, pay anyone, file anything or know every rule in your agreement. Have your payroll company run the actual numbers.
 
 ## Saving and file conflicts
 
@@ -63,9 +68,8 @@ A new crew member is added to `people`, with the role. Everything else in the fi
 
 ## Not yet
 
-- Union rates and rules, such as minimums, meal penalties and turnaround
-- Timecards and payroll
-- Deal memos for cast and contributors, beyond crew
+- Different overtime and meal rules for each union in the same project
+- Sixth and seventh day rates, night premiums and other premiums beyond overtime, meals and turnaround
 
 ## License
 

@@ -87,6 +87,7 @@ The release tracker treats a contract as a release when its `type` contains "rel
 - Certificates of insurance and permits are contracts too, with `type` "certificate of insurance" or "permit", and refer to `locations` and `shootDays`. See the [COI and permit tracker](../tools/coi-permit-tracker/README.md#what-it-adds-to-the-project-file).
 - Licenses are contracts with `type` "license". The [license tracker](../tools/license-tracker/README.md#what-it-adds-to-the-project-file) adds their terms, payments and options, and links them to `thirdPartyElements` both ways. The [fair use log](../tools/fair-use-log/README.md#what-it-adds-to-the-project-file) adds `fairUse` to elements marked fair use.
 - Deal memos are contracts too, with `type` "deal memo"; they aren't releases. See the [deal memos](../tools/deal-memos/README.md#what-it-adds-to-the-project-file) for their fields.
+- Deal memos can be for crew, cast or contributors (`dealKind`). The `payroll` record holds the overtime, meal and turnaround rules and the minimum rates by role that deal memos uses for timecards; the timecards themselves are worked out from `dailyReports` and aren't saved.
 - Signed copies are `assets` with `type` "release scan" and a `relativePath` under `releases/`, relative to the project file.
 
 ## CSV exports

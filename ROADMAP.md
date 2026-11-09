@@ -88,13 +88,13 @@ Each item has [its own issue](https://github.com/open-filmmaker-toolkit/toolkit/
 
 ### Money
 
-- [ ] Currencies other than the project currency in the revenue tracker ([#182](https://github.com/open-filmmaker-toolkit/toolkit/issues/182))
-- [ ] Cost reports by period in budget-to-actuals, and comparing two cost reports or two final cost reports ([#183](https://github.com/open-filmmaker-toolkit/toolkit/issues/183))
-- [ ] Globals in the budget, such as a shoot length every line can refer to ([#184](https://github.com/open-filmmaker-toolkit/toolkit/issues/184))
-- [ ] Uneven cost spreads, such as a deposit and a final payment, and one-off items in cash flow ([#185](https://github.com/open-filmmaker-toolkit/toolkit/issues/185))
-- [ ] Cross-collateralization between territories and compound interest in the waterfall ([#186](https://github.com/open-filmmaker-toolkit/toolkit/issues/186))
-- [ ] Most-favored-nations terms across licenses in the license tracker ([#187](https://github.com/open-filmmaker-toolkit/toolkit/issues/187))
-- [ ] Union rates and rules, overtime, meal penalties and turnaround, timecards, and deal memos for cast and contributors ([#188](https://github.com/open-filmmaker-toolkit/toolkit/issues/188))
+- [x] Currencies other than the project currency in the revenue tracker ([#182](https://github.com/open-filmmaker-toolkit/toolkit/issues/182))
+- [x] Cost reports by period in budget-to-actuals, and comparing two cost reports or two final cost reports ([#183](https://github.com/open-filmmaker-toolkit/toolkit/issues/183))
+- [x] Globals in the budget, such as a shoot length every line can refer to ([#184](https://github.com/open-filmmaker-toolkit/toolkit/issues/184))
+- [x] Uneven cost spreads, such as a deposit and a final payment, and one-off items in cash flow ([#185](https://github.com/open-filmmaker-toolkit/toolkit/issues/185))
+- [x] Cross-collateralization between territories and compound interest in the waterfall ([#186](https://github.com/open-filmmaker-toolkit/toolkit/issues/186))
+- [x] Most-favored-nations terms across licenses in the license tracker ([#187](https://github.com/open-filmmaker-toolkit/toolkit/issues/187))
+- [x] Union rates and rules, overtime, meal penalties and turnaround, timecards, and deal memos for cast and contributors ([#188](https://github.com/open-filmmaker-toolkit/toolkit/issues/188))
 
 ### Imports
 

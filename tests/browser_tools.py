@@ -2420,6 +2420,87 @@ def test_chain_of_title(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
+def test_deal_memo_timecards(browser, fake):
+    # Union rates, overtime, meal penalties, turnaround and timecards, from the daily reports' times.
+    d = json.loads(sample)
+    d['dailyReports'] = [
+        {'id': 'dr-a', 'shootDayId': 'shootday-may-1', 'callTime': '07:00', 'lunchStart': '13:30', 'lunchEnd': '14:00', 'wrapTime': '21:00',
+         'crew': [{'id': 'c1', 'personId': 'person-teo-ramirez', 'role': 'Director of photography', 'call': '07:00', 'wrap': '21:00', 'mealMinutes': 30},
+                  {'id': 'c2', 'personId': 'person-lena-ward', 'role': 'Director', 'mealMinutes': 30}]},
+        {'id': 'dr-b', 'shootDayId': 'shootday-may-2', 'callTime': '06:00', 'lunchStart': '12:00', 'lunchEnd': '12:30', 'wrapTime': '16:00',
+         'crew': [{'id': 'c3', 'personId': 'person-teo-ramirez', 'role': 'Director of photography', 'mealMinutes': 30},
+                  {'id': 'c4', 'personId': 'person-priya-nair', 'role': 'Editor', 'call': '09:00', 'wrap': '17:00', 'mealMinutes': 30}]}]
+    ctx, pg, errs = new_page(browser, 'deal-memos', fake)
+    if fake:
+        pg.evaluate('t => window.__file.text = t', json.dumps(d)); pg.click('#openBtn')
+    else:
+        pg.set_input_files('#fileInput', files=[{'name': 'p.oft.json', 'mimeType': 'application/json', 'buffer': json.dumps(d).encode()}])
+    pg.wait_for_function("document.getElementById('filmMeta').textContent.trim() !== ''")
+    check('1 week of daily reports' in pg.inner_text('#payState'), 'counts the weeks of daily reports (%s)' % pg.inner_text('#payState'))
+
+    pg.click('#ratesBtn')
+    check(pg.input_value('#r-dayHours') == '10' and pg.input_value('#r-turnaroundHours') == '10', 'rules start from the usual defaults')
+    pg.fill('#r-mealPenalty', '25')
+    pg.click('#urAddBtn')
+    pg.fill('#urRows .ur-row:last-child .u-role', 'Director of photography'); pg.fill('#urRows .ur-row:last-child .u-min', '800')
+    pg.set_input_files('#urInput', files=[{'name': 'rates.csv', 'mimeType': 'text/csv', 'buffer': b'Role,Agreement,Minimum,Per\nEditor,Editors Guild,2500,Week\nDirector of photography,Local 600,900,day\n'}])
+    pg.wait_for_timeout(200)
+    check(pg.locator('#urRows .ur-row').count() == 2 and pg.input_value('#urRows .ur-row:first-child .u-min') == '900', 'loads rates from a file, replacing a role already listed')
+    with pg.expect_download() as dl:
+        pg.click('#urCsvBtn')
+    rr = list(csv.reader(io.StringIO(open(dl.value.path(), encoding='utf-8-sig').read())))
+    check(rr[0] == ['Role', 'Agreement', 'Minimum', 'Per'] and ['Editor', 'Editors Guild', '2500', 'Week'] in rr, 'exports the rates in the same columns (%s)' % rr)
+    pg.click('#ratesForm button[type="submit"]'); pg.wait_for_timeout(200)
+    check('Below the Local 600 minimum of $900 a day' in pg.inner_text('[data-id="contract-deal-teo"]') and 'Below the Editors Guild minimum' in pg.inner_text('[data-id="contract-deal-priya"]'),
+          'flags deal memos below the minimum for their role')
+    pg.click('[data-edit="contract-deal-teo"]')
+    check(pg.is_visible('#minNote') and 'This rate is below it' in pg.inner_text('#minNote'), 'the memo shows the minimum and warns')
+    pg.fill('#f-rate', '950'); pg.locator('#f-rate').dispatch_event('input')
+    check('below' not in pg.inner_text('#minNote') and 'Local 600 minimum for Director of photography: $900 a day' in pg.inner_text('#minNote'), 'a rate above the minimum just shows it')
+    pg.click('#editorCancel')
+
+    pg.click('#timecardsBtn')
+    check(pg.is_visible('#tcNotPayroll') and "doesn't replace a payroll service" in pg.inner_text('#tcNotPayroll'), 'says plainly it is not a payroll service')
+    teo = pg.inner_text('#tcList [data-person="person-teo-ramirez"]')
+    check('13.5' in teo and 'Total $2,137.50' in teo and 'meal penalties $75.00' in teo and 'short turnaround $112.50' in teo, 'works out overtime, double time, meal penalties and a short turnaround (%s)' % teo)
+    check('No deal memo with a rate' in pg.inner_text('#tcList [data-person="person-lena-ward"]') and 'Total $2,200.00' in pg.inner_text('#tcList [data-person="person-priya-nair"]'),
+          'a weekly rate counts once, and someone without a memo gets hours only')
+    with pg.expect_download() as dl:
+        pg.click('#tcCsvBtn')
+    rows = list(csv.DictReader(io.StringIO(open(dl.value.path(), encoding='utf-8-sig').read())))
+    t = next(r for r in rows if r['Name'] == 'Teo Ramirez')
+    check(len(rows) == 3 and t['Week starting'] == '2026-05-11' and t['Overtime hours'] == '2' and t['Double-time hours'] == '1.5' and t['Meal penalties'] == '3' and t['Rest short (hours)'] == '1' and t['Total'] == '2137.5',
+          'the payroll summary has a row for each person (%s)' % t)
+    pg.click('#tcPrintBtn'); pg.wait_for_timeout(200)
+    r = pg.inner_text('#report')
+    check(r.startswith('Timecards, week of') and 'Approved for the production' in r and "isn't a payroll service" in r, 'prints the timecards to sign')
+    pg.click('#tcClose')
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    check(pg.inner_text('#report').startswith('Not legal advice'), 'printing a memo afterwards prints the memo')
+
+    pg.click('#addBtn')
+    pg.select_option('#f-kind', 'cast')
+    check(pg.inner_text('#f-personLabel') == 'Cast member', 'a cast memo asks for the cast member')
+    pg.select_option('#f-person', '__new'); pg.fill('#f-pname', 'Sam Lee'); pg.fill('#f-role', 'Narrator'); pg.fill('#f-rate', '400')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(300)
+    sam = pg.locator('#rows .row:has-text("Sam Lee")')
+    check('Cast' in sam.inner_text(), 'cast memos are marked in the list')
+    pg.select_option('#printSel', sam.get_attribute('data-id'))
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    r = pg.inner_text('#report')
+    check('Cast deal memo' in r and 'Cast member: Sam Lee' in r, 'prints a cast deal memo')
+    data = saved_project(pg, fake)
+    p = data['payroll']
+    check(p['rules'] == {'mealPenalty': 25} and len(p['rates']) == 2 and next(x for x in p['rates'] if x['role'] == 'Director of photography')['minimum'] == 900,
+          'saves only the changed rules, and the rates (%s)' % p)
+    m = next(c for c in data['contracts'] if c.get('type') == 'deal memo' and c.get('role') == 'Narrator')
+    s = next(x for x in data['people'] if x['name'] == 'Sam Lee')
+    check(m['dealKind'] == 'cast' and s.get('onCamera') is True and 'dealKind' not in next(c for c in data['contracts'] if c['id'] == 'contract-deal-teo'), 'saves the kind of memo, and new cast are on camera')
+    check(data['dailyReports'] == d['dailyReports'], 'the daily reports are unchanged')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+
 def test_deal_memos(browser, fake):
     original = json.loads(sample)
     ctx, pg, errs = new_page(browser, 'deal-memos', fake)
@@ -4667,6 +4748,7 @@ def main():
         test_location_scout(browser, fake)
         print('== deal-memos / calendar, budget, signed copies and print')
         test_deal_memos(browser, fake)
+        test_deal_memo_timecards(browser, fake)
         print('== gear-list / gear, packages, costs and print')
         test_gear_list(browser, fake)
         print('== coi-permit-tracker / certificates, permits and shoot-day checks')

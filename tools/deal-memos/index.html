@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Deal memos · Open Filmmaker Toolkit</title>
-<meta name="description" content="Fill in crew deal memos from the project: role, dates, rate, kit fee, overtime, credit and payment terms. Track sent and signed, keep the signed copy, and send rates to the budget. Runs in your browser; your data stays on your computer.">
+<meta name="description" content="Fill in deal memos for crew, cast and contributors: role, dates, rate, kit fee, overtime, credit and payment terms. Track sent and signed, keep the signed copy, send rates to the budget, check union minimums and work out timecards. Runs in your browser; your data stays on your computer.">
 <style>
 :root {
   --paper: #f1f3f2; --sheet: #ffffff; --ink: #1a2130; --ink-2: #4b556a; --ink-3: #5d6677;
@@ -177,6 +177,21 @@ pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; b
 .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); max-width: calc(100vw - 32px); padding: 10px 16px; border-radius: 8px; background: var(--ink); color: var(--paper); font-size: 14px; box-shadow: 0 6px 24px rgba(10, 14, 22, 0.25); z-index: 10; }
 .toast.error { background: var(--bad); color: #ffffff; }
 .report { display: none; }
+dialog.modal.wide { width: min(900px, calc(100vw - 32px)); }
+.ur-row { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) auto; gap: 6px; align-items: end; }
+.ur-row input, .ur-row select { width: 100%; padding: 7px 9px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); }
+.ur-rows { display: grid; gap: 6px; }
+.tc { display: grid; gap: 6px; padding-top: 10px; border-top: 1px solid var(--rule-soft); }
+.tc h3 { margin: 0; font-size: 16px; }
+.tc h3 .sub { font-weight: 400; font-size: 13px; color: var(--ink-3); margin-left: 6px; }
+.tc-scroll { overflow-x: auto; }
+.tc table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.tc th, .tc td { padding: 4px 6px; border-bottom: 1px solid var(--rule-soft); text-align: left; white-space: nowrap; }
+.tc tfoot th, .tc tfoot td { font-weight: 600; border-bottom: 0; }
+.tc .num { text-align: right; font-variant-numeric: tabular-nums; }
+.tc-pay { margin: 0; font-size: 14px; }
+.side-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+@media (max-width: 720px) { .ur-row { grid-template-columns: 1fr 1fr; } }
 
 @media (max-width: 900px) {
   .workspace { grid-template-columns: 1fr; }
@@ -212,6 +227,7 @@ pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; b
   .report .r-terms td { white-space: pre-wrap; }
   .report .r-agree { margin: 14pt 0 0; }
   .report .r-sign { display: grid; grid-template-columns: 1fr 1fr; gap: 24pt; margin-top: 36pt; }
+  .report .r-tc { break-inside: avoid; page-break-inside: avoid; margin-top: 12pt; }
   .report .r-sign .r-line { border-bottom: 1pt solid #000000; height: 28pt; }
   .report .r-sign p { margin: 3pt 0 0; font-size: 9pt; }
   .report .r-sign p + p { margin-top: 18pt; border-top: 0.75pt solid #000000; padding-top: 2pt; width: 60%; }
@@ -297,6 +313,12 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <p class="lead">People on a call sheet or a shoot day who aren't on camera.</p>
         <ul class="todo" id="crew"></ul>
       </section>
+      <section class="card" aria-labelledby="payHead">
+        <div class="card-head"><h2 id="payHead">Timecards and union rates</h2></div>
+        <p class="lead">Hours, overtime, meal penalties and short turnarounds from the daily reports, and the minimum rate for each role.</p>
+        <p class="hint" id="payState"></p>
+        <div class="side-actions"><button type="button" class="btn" id="timecardsBtn">Open timecards</button><button type="button" class="btn" id="ratesBtn">Rates and rules</button></div>
+      </section>
     </div>
   </main>
 
@@ -309,8 +331,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   <form id="editorForm" method="dialog" novalidate>
     <div class="dlg-head"><h2 id="editorTitle">Deal memo</h2></div>
     <div class="dlg-body">
+      <div class="field"><label for="f-kind">Who the memo is for</label><select id="f-kind"><option value="crew">Crew</option><option value="cast">Cast</option><option value="contributor">Contributor, such as a composer, writer or consultant</option></select></div>
       <div class="two">
-        <div class="field"><label for="f-person">Crew member</label><select id="f-person"></select></div>
+        <div class="field"><label for="f-person" id="f-personLabel">Crew member</label><select id="f-person"></select></div>
         <div class="field"><label for="f-role">Role</label><input id="f-role" type="text" placeholder="Director of photography" autocomplete="off"></div>
       </div>
       <div class="newperson" id="newPerson" hidden>
@@ -334,6 +357,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
           <div class="field"><label for="f-guarantee">Guaranteed</label><input id="f-guarantee" type="number" min="0" step="any" inputmode="decimal" placeholder="Days or weeks"></div>
           <div class="field"><label for="f-total">Total for the guarantee</label><input id="f-total" type="text" readonly tabindex="-1"></div>
         </div>
+        <p class="note info" id="minNote" role="status" hidden></p>
         <div class="other-rates" id="rateRows" role="group" aria-label="Other rates"></div>
         <p class="hint">Other rates in the same memo, such as prep, travel or overtime days. Each goes on its own budget line.</p>
         <p><button type="button" class="btn small" id="addRateBtn">Add another rate</button></p>
@@ -433,6 +457,51 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       <button type="button" class="btn danger" id="conflictOverwriteBtn">Overwrite file</button>
       <button type="button" class="btn" id="conflictCancelBtn">Keep editing</button>
     </div>
+  </form>
+</dialog>
+
+<dialog class="modal wide" id="ratesDialog" aria-labelledby="ratesTitle">
+  <form id="ratesForm" method="dialog" novalidate>
+    <div class="dlg-head"><h2 id="ratesTitle">Rates and rules</h2></div>
+    <div class="dlg-body">
+      <p class="hint">Fill these in from your union or guild agreement, or from what you agreed with the crew. Timecards use the rules; deal memos warn when a rate is below the minimum for its role.</p>
+      <div class="group">
+        <h3>Overtime, meals and turnaround</h3>
+        <div class="four">
+          <div class="field"><label for="r-dayHours">Hours a day's rate covers</label><input id="r-dayHours" type="number" min="1" step="any" inputmode="decimal"></div>
+          <div class="field"><label for="r-overtimeTimes">Overtime pays (times the rate)</label><input id="r-overtimeTimes" type="number" min="1" step="any" inputmode="decimal"></div>
+          <div class="field"><label for="r-doubleAfter">Double time after (hours)</label><input id="r-doubleAfter" type="number" min="1" step="any" inputmode="decimal"></div>
+          <div class="field"><label for="r-doubleTimes">Double time pays (times the rate)</label><input id="r-doubleTimes" type="number" min="1" step="any" inputmode="decimal"></div>
+        </div>
+        <div class="three">
+          <div class="field"><label for="r-mealAfter">A meal is due within (hours)</label><input id="r-mealAfter" type="number" min="1" step="any" inputmode="decimal"></div>
+          <div class="field"><label for="r-mealPenalty">Meal penalty for each half hour late</label><input id="r-mealPenalty" type="number" min="0" step="any" inputmode="decimal"></div>
+          <div class="field"><label for="r-turnaroundHours">Rest between days (hours)</label><input id="r-turnaroundHours" type="number" min="0" step="any" inputmode="decimal"></div>
+        </div>
+        <p class="hint">Hours worked are from call to wrap, less the meal. Rest cut short is paid at the overtime rate. A weekly rate counts as five days.</p>
+      </div>
+      <div class="group">
+        <h3>Minimum rates by role</h3>
+        <div class="ur-rows" id="urRows" role="group" aria-label="Minimum rates by role"></div>
+        <p class="empty-line" id="urEmpty">No minimum rates yet.</p>
+        <div class="side-actions"><button type="button" class="btn small" id="urAddBtn">Add a rate</button><button type="button" class="btn small" id="urLoadBtn">Load rates from a file</button><button type="button" class="btn small" id="urCsvBtn">Export rates (CSV)</button></div>
+        <p class="hint">A file is a CSV with the columns Role, Agreement, Minimum and Per (day, week, hour or flat). A rate for a role already listed replaces it.</p>
+      </div>
+    </div>
+    <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn" id="ratesCancel">Cancel</button><button type="submit" class="btn primary">Save rates and rules</button></div>
+  </form>
+</dialog>
+<input type="file" id="urInput" accept=".csv,.tsv,.txt,text/csv" hidden>
+
+<dialog class="modal wide" id="tcDialog" aria-labelledby="tcTitle">
+  <form method="dialog">
+    <div class="dlg-head"><h2 id="tcTitle">Timecards</h2></div>
+    <div class="dlg-body">
+      <p class="note warn" id="tcNotPayroll">This works out hours and pay from the daily reports so you can check timecards. It doesn't replace a payroll service: it doesn't withhold taxes, pay anyone or know every rule in your agreement. Hand the summary to your payroll company and let them run the numbers.</p>
+      <div class="field"><label for="tcWeek">Week</label><select id="tcWeek"></select></div>
+      <div id="tcList"></div>
+    </div>
+    <div class="dlg-foot"><button type="button" class="btn" id="tcCsvBtn">Export the payroll summary (CSV)</button><button type="button" class="btn" id="tcPrintBtn">Print timecards</button><span class="spacer"></span><button type="button" class="btn" id="tcClose">Close</button></div>
   </form>
 </dialog>
 
@@ -562,6 +631,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const PER = [{ id: 'day', label: 'Day', unit: 'Days' }, { id: 'week', label: 'Week', unit: 'Weeks' }, { id: 'hour', label: 'Hour', unit: 'Hours' }, { id: 'flat', label: 'Flat fee', unit: 'Flat' }];
   const statusLabel = id => (STATUSES.find(s => s.id === id) || STATUSES[0]).label;
   const perOf = id => PER.find(p => p.id === id) || PER[0];
+  const KINDS = [{ id: 'crew', label: 'Crew', who: 'Crew member' }, { id: 'cast', label: 'Cast', who: 'Cast member' }, { id: 'contributor', label: 'Contributor', who: 'Contributor' }];
+  const kindOf = c => KINDS.find(k => k.id === (c && c.dealKind)) || KINDS[0];
+  let printWhat = 'memo';
+  let tcWeek = null;
   let filter = 'all';
   let editing = null;
   let isNew = false;
@@ -670,6 +743,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       if (c.startDate || c.endDate) flags.push(`<span class="flag linked">${esc([c.startDate && fmtDate(c.startDate), c.endDate && fmtDate(c.endDate)].filter(Boolean).join(' to '))}</span>`);
       if (c.kitFee != null) flags.push(`<span class="flag linked">Kit ${esc(money(c.kitFee))}${perOf(c.kitFeeUnit).id === 'flat' ? '' : ` a ${perOf(c.kitFeeUnit).id}`}</span>`);
       if (c.requiredCredit) flags.push(`<span class="flag linked">Credit: ${esc(c.requiredCredit)}</span>`);
+      if (kindOf(c).id !== 'crew') flags.push(`<span class="flag linked">${esc(kindOf(c).label)}</span>`);
+      const low = belowMinimum(c);
+      if (low) flags.push(`<span class="flag problem">Below the ${esc(low.agreement ? `${low.agreement} ` : '')}minimum of ${esc(money(low.minimum))} a ${esc(perOf(low.rateUnit).id)}</span>`);
       const m = budgetMatch(c);
       if (m === true) flags.push('<span class="flag new">In the budget</span>');
       else if (m === false) flags.push('<span class="flag changed">The budget line has a different rate or length</span>');
@@ -696,6 +772,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     if (!all.some(c => c.id === printId)) printId = (list[0] || all[0] || {}).id || null;
     $('printSel').innerHTML = all.map(c => `<option value="${esc(c.id)}"${c.id === printId ? ' selected' : ''}>${esc(who(c))}${c.role ? `, ${esc(c.role)}` : ''}</option>`).join('');
     $('printSel').disabled = $('printBtn').disabled = !all.length;
+    const ws = weeks();
+    $('payState').textContent = [ws.length ? `${ws.length} week${ws.length === 1 ? '' : 's'} of daily reports with times.` : 'No daily reports with call and wrap times yet.',
+      unionRates().length ? `${unionRates().length} minimum rate${unionRates().length === 1 ? '' : 's'}.` : ''].filter(Boolean).join(' ');
   }
 
   // ---------- Editor ----------
@@ -732,8 +811,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const lastWritten = (memos().slice().reverse().find(c => c.writtenFor) || {}).writtenFor;
     editing = existing ? structuredClone(existing) : { id: newId('contract'), title: '', type: TYPE, status: 'draft', personIds: personId ? [personId] : [], rateUnit: 'day', kitFeeUnit: 'day', writtenFor: lastWritten };
     pendingScans = []; removedScanIds = [];
-    const crewFirst = [...doc.people].sort((a, b) => isCrew(b) - isCrew(a) || str(a.name).localeCompare(str(b.name)));
-    $('f-person').innerHTML = '<option value="">Pick a person</option>' + crewFirst.map(p => `<option value="${esc(p.id)}">${esc(p.name)}${arr(p.roles).length ? `, ${esc(p.roles[0])}` : ''}</option>`).join('') + '<option value="__new">Someone new…</option>';
+    $('f-kind').value = kindOf(editing).id;
+    fillPeople();
     $('f-status').innerHTML = options(STATUSES, editing.status);
     $('f-per').innerHTML = options(PER, editing.rateUnit || 'day');
     $('f-kitper').innerHTML = options(PER.filter(p => p.id !== 'hour'), editing.kitFeeUnit || 'day');
@@ -742,11 +821,32 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       'f-credit': editing.requiredCredit, 'f-other': editing.otherTerms, 'f-written': editing.writtenFor, 'f-notes': editing.notes, 'f-sent': editing.sentDate, 'f-signed': editing.signedDate, 'f-pname': '', 'f-pemail': '' };
     for (const [k, v] of Object.entries(vals)) $(k).value = v == null ? '' : String(v);
     $('rateRows').innerHTML = arr(editing.rates).filter(r => r && typeof r === 'object').map(rateRow).join('');
-    showPerson(); showTotal(); showBudget(); renderScans();
+    showPerson(); showTotal(); showBudget(); renderScans(); showMinimum();
     $('editorTitle').textContent = isNew ? 'Add a deal memo' : `Deal memo: ${who(editing)}`;
     $('deleteBtn').hidden = isNew;
     $('editor').showModal();
     $(personId ? 'f-rate' : 'f-person').focus();
+  }
+  // Crew first for a crew memo; people on camera first for cast.
+  function fillPeople() {
+    const kind = $('f-kind').value, keep = $('f-person').value;
+    const first = p => (kind === 'cast' ? !isCrew(p) : kind === 'crew' ? isCrew(p) : true);
+    const sorted = [...doc.people].sort((a, b) => first(b) - first(a) || str(a.name).localeCompare(str(b.name)));
+    $('f-person').innerHTML = '<option value="">Pick a person</option>' + sorted.map(p => `<option value="${esc(p.id)}">${esc(p.name)}${arr(p.roles).length ? `, ${esc(p.roles[0])}` : ''}</option>`).join('') + '<option value="__new">Someone new…</option>';
+    if (keep) $('f-person').value = keep;
+    $('f-personLabel').textContent = (KINDS.find(k => k.id === kind) || KINDS[0]).who;
+    $('f-role').placeholder = kind === 'cast' ? 'Narrator' : kind === 'contributor' ? 'Composer' : 'Director of photography';
+  }
+  // The minimum for the role, from the rates and rules, and whether the rate is below it.
+  function showMinimum() {
+    const m = minimumFor($('f-role').value), n = $('minNote');
+    if (!m || m.minimum == null) { n.hidden = true; return; }
+    const unit = perOf(m.rateUnit), r = $('f-rate').value;
+    const what = `${m.agreement ? `${m.agreement} minimum` : 'Minimum'} for ${m.role}: ${money(m.minimum)}${unit.id === 'flat' ? ' flat' : ` a ${unit.id}`}.`;
+    const low = r !== '' && perOf($('f-per').value).id === unit.id && Number(r) < num(m.minimum);
+    n.textContent = low ? `${what} This rate is below it.` : what;
+    n.className = `note ${low ? 'warn' : 'info'}`;
+    n.hidden = false;
   }
   function useCalendar() {
     const days = shootDaysFor($('f-person').value);
@@ -783,13 +883,14 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   }
   async function saveEditor() {
     let pid = $('f-person').value;
-    if (!pid) { $('f-person').setCustomValidity('Pick the crew member, or add someone new.'); $('f-person').reportValidity(); return; }
+    if (!pid) { $('f-person').setCustomValidity(`Pick the ${kindOf({ dealKind: $('f-kind').value }).who.toLowerCase()}, or add someone new.`); $('f-person').reportValidity(); return; }
     if (pid === '__new') {
       const name = $('f-pname').value.trim();
       if (!name) { $('f-pname').setCustomValidity('Type their name.'); $('f-pname').reportValidity(); return; }
       const p = { id: newId('person'), name };
       if ($('f-role').value.trim()) p.roles = [$('f-role').value.trim()];
       if ($('f-pemail').value.trim()) p.email = $('f-pemail').value.trim();
+      if ($('f-kind').value === 'cast') p.onCamera = true;
       doc.people.push(p);
       pid = p.id;
     }
@@ -804,6 +905,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     if (c.status === 'signed' && !c.signedDate) c.signedDate = today();
     for (const [k, id] of [['rate', 'f-rate'], ['guarantee', 'f-guarantee'], ['kitFee', 'f-kit']]) { const v = $(id).value; if (v !== '') c[k] = Number(v); else delete c[k]; }
     c.rateUnit = $('f-per').value; c.kitFeeUnit = $('f-kitper').value;
+    if ($('f-kind').value === 'crew') delete c.dealKind; else c.dealKind = $('f-kind').value;
     const rates = readRates();
     if (rates.length) c.rates = rates; else delete c.rates;
     c.title = `Deal memo: ${who(c)}${c.role ? `, ${c.role}` : ''}`;
@@ -896,12 +998,216 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     } catch { toast(`Couldn't find ${a.relativePath} in ${projectDir.name}. Check the file is there.`, true); }
   }
 
+  // ---------- Union rates, timecards and payroll ----------
+  const RULES = { dayHours: 10, overtimeTimes: 1.5, doubleAfter: 12, doubleTimes: 2, mealAfter: 6, mealPenalty: 0, turnaroundHours: 10 };
+  const payroll = () => (doc.payroll && typeof doc.payroll === 'object' && !Array.isArray(doc.payroll) ? doc.payroll : {});
+  function rules() {
+    const out = Object.assign({}, RULES), saved = payroll().rules || {};
+    for (const k of Object.keys(RULES)) if (typeof saved[k] === 'number' && isFinite(saved[k])) out[k] = saved[k];
+    return out;
+  }
+  const unionRates = () => arr(payroll().rates).filter(r => r && typeof r === 'object' && str(r.role).trim());
+  const minimumFor = role => (str(role).trim() ? unionRates().find(r => str(r.role).trim().toLowerCase() === str(role).trim().toLowerCase()) : null) || null;
+  function belowMinimum(c) {
+    const m = minimumFor(c.role);
+    if (!m || m.minimum == null || c.rate == null || perOf(m.rateUnit).id !== perOf(c.rateUnit).id) return null;
+    return num(c.rate) < num(m.minimum) ? m : null;
+  }
+  const toMin = t => { const m = /^(\d{1,2}):(\d{2})/.exec(str(t)); return m ? Number(m[1]) * 60 + Number(m[2]) : null; };
+  const clock = t => { const m = toMin(t); return m == null ? '' : str(t).slice(0, 5); };
+  const reportDate = r => { const d = arr(doc.shootDays).find(x => x && x.id === r.shootDayId); return d && isDate(d.date) ? d.date : isDate(r.date) ? r.date : null; };
+  const dayNo = iso => Math.round(Date.parse(iso + 'T12:00:00Z') / 86400000);
+  const addDays = (iso, n) => new Date(Date.parse(iso + 'T12:00:00Z') + n * 86400000).toISOString().slice(0, 10);
+  const weekOf = iso => addDays(iso, -((new Date(iso + 'T12:00:00Z').getUTCDay() + 6) % 7));
+  const hrs = n => String(Math.round(n * 100) / 100);
+  // One line for each person on each daily report: hours worked, overtime, meal penalties and rest cut short.
+  function workDays() {
+    const R = rules(), out = [];
+    // A meal penalty for each half hour, or part of one, past the limit without a meal.
+    const late = gap => (gap > R.mealAfter * 60 ? Math.ceil((gap - R.mealAfter * 60) / 30) : 0);
+    for (const r of arr(doc.dailyReports)) {
+      if (!r || typeof r !== 'object') continue;
+      const date = reportDate(r);
+      if (!date) continue;
+      for (const x of arr(r.crew)) {
+        if (!x || typeof x !== 'object' || !x.personId) continue;
+        const call = toMin(x.call || r.callTime);
+        let wrap = toMin(x.wrap || r.wrapTime);
+        if (call == null || wrap == null) continue;
+        if (wrap <= call) wrap += 1440;
+        let ls = toMin(r.lunchStart), le = toMin(r.lunchEnd);
+        if (ls != null && ls < call) ls += 1440;
+        if (le != null && ls != null && le < ls) le += 1440;
+        const known = ls != null && le != null && ls >= call && le <= wrap;
+        const meal = x.mealMinutes != null && x.mealMinutes !== '' ? num(x.mealMinutes) : known ? le - ls : 0;
+        const hours = Math.max(0, (wrap - call - meal) / 60);
+        const ot = Math.max(0, Math.min(hours, R.doubleAfter) - R.dayHours), dt = Math.max(0, hours - Math.max(R.doubleAfter, R.dayHours));
+        const meals = meal && known ? late(ls - call) + late(wrap - le) : meal ? 0 : late(wrap - call);
+        out.push({ date, personId: x.personId, role: str(x.role), call: clock(x.call || r.callTime), wrap: clock(x.wrap || r.wrapTime), meal, hours, ot, dt, meals, short: 0,
+          start: dayNo(date) * 1440 + call, end: dayNo(date) * 1440 + wrap });
+      }
+    }
+    out.sort((a, b) => a.personId.localeCompare(b.personId) || a.start - b.start);
+    for (let i = 1; i < out.length; i++) {
+      const a = out[i - 1], b = out[i];
+      if (a.personId !== b.personId) continue;
+      const rest = b.start - a.end;
+      if (rest >= 0 && rest < R.turnaroundHours * 60) b.short = (R.turnaroundHours * 60 - rest) / 60;
+    }
+    return out;
+  }
+  const weeks = () => [...new Set(workDays().map(d => weekOf(d.date)))].sort();
+  // The memo that pays for a day: one whose dates include it first, then signed before sent before draft.
+  function memoFor(pid, date) {
+    const fits = c => (!c.startDate || c.startDate <= date) && (!c.endDate || c.endDate >= date);
+    const rank = c => (fits(c) ? 0 : 10) + ['signed', 'sent', 'draft'].indexOf(c.status);
+    return memos().filter(c => c.status !== 'declined' && c.rate != null && arr(c.personIds).includes(pid)).sort((a, b) => rank(a) - rank(b))[0] || null;
+  }
+  function timecards(week) {
+    const R = rules(), last = addDays(week, 6), by = new Map();
+    for (const d of workDays()) if (d.date >= week && d.date <= last) { if (!by.has(d.personId)) by.set(d.personId, []); by.get(d.personId).push(d); }
+    return [...by].map(([pid, days]) => {
+      days.sort((a, b) => a.start - b.start);
+      const c = memoFor(pid, days[0].date), unit = c ? perOf(c.rateUnit).id : null;
+      const sum = k => days.reduce((t, d) => t + d[k], 0);
+      const t = { hours: sum('hours'), ot: sum('ot'), dt: sum('dt'), meals: sum('meals'), short: sum('short') };
+      t.straight = t.hours - t.ot - t.dt;
+      let pay = null;
+      if (c && unit !== 'flat') {
+        const h = unit === 'hour' ? num(c.rate) : unit === 'day' ? num(c.rate) / R.dayHours : num(c.rate) / (5 * R.dayHours);
+        const base = unit === 'hour' ? t.straight * h : unit === 'day' ? days.length * num(c.rate) : num(c.rate);
+        pay = { base, ot: t.ot * h * R.overtimeTimes + t.dt * h * R.doubleTimes, meals: t.meals * R.mealPenalty, turnaround: t.short * h * R.overtimeTimes };
+        pay.total = pay.base + pay.ot + pay.meals + pay.turnaround;
+      }
+      const role = (c && c.role) || days[0].role || '';
+      return { pid, name: (person(pid) || {}).name || 'Someone no longer in the project', role, agreement: (minimumFor(role) || {}).agreement || '', memo: c, unit, days, t, pay };
+    }).sort((a, b) => a.name.localeCompare(b.name));
+  }
+  function payText(k) {
+    if (!k.memo) return 'No deal memo with a rate, so pay isn\'t worked out.';
+    if (!k.pay) return `Flat fee of ${money(k.memo.rate)}. The hours are for the record.`;
+    const p = k.pay;
+    return [`Base ${money(p.base, true)}`, p.ot ? `overtime ${money(p.ot, true)}` : '', k.t.meals ? `meal penalties ${money(p.meals, true)}` : '', p.turnaround ? `short turnaround ${money(p.turnaround, true)}` : '']
+      .filter(Boolean).join(', ') + `. Total ${money(p.total, true)} at ${payLine(k.memo)}.`;
+  }
+  function tcTable(k) {
+    const cell = (v, n) => `<td class="num">${v ? esc(n ? n(v) : hrs(v)) : ''}</td>`;
+    return `<table><thead><tr><th scope="col">Day</th><th scope="col">Call</th><th scope="col">Wrap</th><th scope="col" class="num">Meal (minutes)</th><th scope="col" class="num">Hours</th><th scope="col" class="num">Overtime</th><th scope="col" class="num">Double time</th><th scope="col" class="num">Meal penalties</th><th scope="col" class="num">Rest short (hours)</th></tr></thead>
+      <tbody>${k.days.map(d => `<tr><th scope="row">${esc(fmtDate(d.date))}</th><td>${esc(d.call)}</td><td>${esc(d.wrap)}</td>${cell(d.meal, String)}${cell(d.hours)}${cell(d.ot)}${cell(d.dt)}${cell(d.meals, String)}${cell(d.short)}</tr>`).join('')}</tbody>
+      <tfoot><tr><th scope="row">Week</th><td></td><td></td><td></td>${cell(k.t.hours)}${cell(k.t.ot)}${cell(k.t.dt)}${cell(k.t.meals, String)}${cell(k.t.short)}</tr></tfoot></table>`;
+  }
+  function renderTimecards() {
+    const ws = weeks();
+    if (!ws.includes(tcWeek)) tcWeek = ws[ws.length - 1] || null;
+    $('tcWeek').innerHTML = ws.map(w => `<option value="${w}"${w === tcWeek ? ' selected' : ''}>Week of ${esc(fmtDate(w))}</option>`).join('');
+    $('tcWeek').disabled = !ws.length;
+    const cards = tcWeek ? timecards(tcWeek) : [];
+    $('tcCsvBtn').disabled = $('tcPrintBtn').disabled = !cards.length;
+    $('tcList').innerHTML = cards.length ? cards.map(k => `<section class="tc" data-person="${esc(k.pid)}"><h3>${esc(k.name)}<span class="sub">${esc([k.role, k.agreement].filter(Boolean).join(', '))}</span></h3>
+      <div class="tc-scroll">${tcTable(k)}</div><p class="tc-pay">${esc(payText(k))}</p></section>`).join('')
+      : '<p class="empty-line">No daily reports with call and wrap times yet. Fill them in with the daily production report, then come back here.</p>';
+  }
+  function renderTimecardReport() {
+    const cards = tcWeek ? timecards(tcWeek) : [];
+    $('report').innerHTML = `<h1>Timecards, week of ${esc(fmtDate(tcWeek || today()))}</h1>
+      <p class="r-meta">${esc([doc.project.title, doc.project.company].filter(Boolean).join(' · '))}</p>
+      <p class="r-legal">Worked out from the daily production reports. This isn't a payroll service: check each card against your agreement and give the summary to your payroll company.</p>
+      ${cards.map(k => `<div class="r-tc"><h2>${esc(k.name)}${k.role ? `, ${esc(k.role)}` : ''}</h2>${tcTable(k)}<p>${esc(payText(k))}</p>
+        <div class="r-sign"><div><div class="r-line"></div><p>${esc(k.name)}</p><p>Date</p></div><div><div class="r-line"></div><p>Approved for the production</p><p>Date</p></div></div></div>`).join('')}`;
+  }
+  const PAYROLL_HEAD = ['Week starting', 'Name', 'Role', 'Agreement', 'Days worked', 'Hours', 'Straight hours', 'Overtime hours', 'Double-time hours', 'Meal penalties', 'Rest short (hours)', 'Rate', 'Per', 'Base pay', 'Overtime pay', 'Meal penalty pay', 'Turnaround pay', 'Total'];
+  function exportPayroll() {
+    const cards = tcWeek ? timecards(tcWeek) : [];
+    const r2 = n => (n == null ? '' : Math.round(n * 100) / 100);
+    const rows = cards.map(k => [tcWeek, k.name, k.role, k.agreement, k.days.length, r2(k.t.hours), r2(k.t.straight), r2(k.t.ot), r2(k.t.dt), k.t.meals, r2(k.t.short),
+      k.memo ? k.memo.rate : '', k.memo ? perOf(k.memo.rateUnit).label : '', ...(k.pay ? [k.pay.base, k.pay.ot, k.pay.meals, k.pay.turnaround, k.pay.total].map(r2) : ['', '', '', '', ''])]);
+    const csv = '﻿' + [PAYROLL_HEAD, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
+    const name = `${slug()}-payroll-week-of-${tcWeek}.csv`;
+    download(csv, name, 'text/csv;charset=utf-8');
+    toast(`Exported the payroll summary for ${rows.length} ${rows.length === 1 ? 'person' : 'people'} to ${name}`);
+  }
+  // Rates and rules dialog
+  const urRow = r => `<div class="ur-row" data-id="${esc(r.id || '')}">
+      <div class="field"><label>Role</label><input class="u-role" type="text" value="${esc(r.role || '')}" autocomplete="off"></div>
+      <div class="field"><label>Agreement</label><input class="u-agreement" type="text" value="${esc(r.agreement || '')}" placeholder="Union, guild or local" autocomplete="off"></div>
+      <div class="field"><label>Minimum</label><input class="u-min" type="number" min="0" step="any" inputmode="decimal" value="${r.minimum == null ? '' : esc(r.minimum)}"></div>
+      <div class="field"><label>Per</label><select class="u-per">${options(PER, r.rateUnit || 'day')}</select></div>
+      <button type="button" class="btn small" data-delur aria-label="Remove ${esc(r.role || 'this rate')}">Remove</button>
+    </div>`;
+  function showUrEmpty() { $('urEmpty').hidden = !!$('urRows').children.length; }
+  function readUr() {
+    return [...$('urRows').querySelectorAll('.ur-row')].map(row => {
+      const v = c => row.querySelector(c).value.trim();
+      const r = { id: row.dataset.id || newId('rate'), role: v('.u-role'), rateUnit: v('.u-per') };
+      if (v('.u-agreement')) r.agreement = v('.u-agreement');
+      if (v('.u-min') !== '' && isFinite(Number(v('.u-min')))) r.minimum = Number(v('.u-min'));
+      return r;
+    }).filter(r => r.role);
+  }
+  function openRates() {
+    const R = rules();
+    for (const k of Object.keys(RULES)) $(`r-${k}`).value = String(R[k]);
+    $('urRows').innerHTML = unionRates().map(urRow).join('');
+    // Labels in each row point at their inputs.
+    labelUr();
+    showUrEmpty();
+    $('ratesDialog').showModal();
+  }
+  function labelUr() {
+    $('urRows').querySelectorAll('.ur-row').forEach((row, i) => row.querySelectorAll('.field').forEach(f => { const inp = f.querySelector('input, select'); inp.id = `ur-${i}-${inp.className}`; f.querySelector('label').htmlFor = inp.id; }));
+  }
+  function saveRates() {
+    for (const k of Object.keys(RULES)) if ($(`r-${k}`).value !== '' && !$(`r-${k}`).checkValidity()) { $(`r-${k}`).reportValidity(); return; }
+    const saved = {};
+    for (const k of Object.keys(RULES)) { const v = $(`r-${k}`).value; if (v !== '' && isFinite(Number(v)) && Number(v) !== RULES[k]) saved[k] = Number(v); }
+    const pr = Object.assign({}, payroll());
+    if (Object.keys(saved).length) pr.rules = saved; else delete pr.rules;
+    const rates = readUr();
+    if (rates.length) pr.rates = rates; else delete pr.rates;
+    if (Object.keys(pr).length) doc.payroll = pr; else delete doc.payroll;
+    $('ratesDialog').close();
+    changed();
+    toast('Saved the rates and rules');
+  }
+  async function loadRates(file) {
+    const rows = oftImport.parse(await file.text()).filter(r => r.some(c => str(c).trim()));
+    if (!rows.length) { toast(`${file.name} has no rows.`, true); return; }
+    const head = rows[0].map(h => str(h).trim().toLowerCase());
+    const col = (names, fallback) => { const i = head.findIndex(h => names.includes(h)); return i >= 0 ? i : head.some(h => ['role', 'agreement', 'minimum', 'per'].includes(h)) ? -1 : fallback; };
+    const hasHead = head.includes('role');
+    const ci = { role: col(['role', 'position', 'job'], 0), agreement: col(['agreement', 'union', 'guild', 'local'], 1), min: col(['minimum', 'rate', 'minimum rate'], 2), per: col(['per', 'unit'], 3) };
+    const perFrom = v => { const t = str(v).trim().toLowerCase(); return (PER.find(p => p.id === t || p.label.toLowerCase() === t || p.unit.toLowerCase() === t || (t.startsWith('flat') && p.id === 'flat')) || PER[0]).id; };
+    const have = readUr();
+    let added = 0;
+    for (const r of rows.slice(hasHead ? 1 : 0)) {
+      const role = str(r[ci.role]).trim();
+      if (!role) continue;
+      const min = oftImport.number(r[ci.min]);
+      const item = { id: newId('rate'), role, rateUnit: ci.per >= 0 ? perFrom(r[ci.per]) : 'day' };
+      if (ci.agreement >= 0 && str(r[ci.agreement]).trim()) item.agreement = str(r[ci.agreement]).trim();
+      if (min != null && isFinite(min)) item.minimum = min;
+      const i = have.findIndex(h => h.role.toLowerCase() === role.toLowerCase());
+      if (i >= 0) { item.id = have[i].id; have[i] = item; } else have.push(item);
+      added++;
+    }
+    $('urRows').innerHTML = have.map(urRow).join('');
+    labelUr(); showUrEmpty();
+    toast(added ? `Loaded ${added} rate${added === 1 ? '' : 's'} from ${file.name}. Save to keep them.` : `Found no roles in ${file.name}.`, !added);
+  }
+  function exportRates() {
+    const rows = readUr().map(r => [r.role, r.agreement, r.minimum, perOf(r.rateUnit).label]);
+    const csv = '﻿' + [['Role', 'Agreement', 'Minimum', 'Per'], ...rows].map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
+    const name = `${slug()}-union-rates.csv`;
+    download(csv, name, 'text/csv;charset=utf-8');
+    toast(`Exported ${rows.length} rate${rows.length === 1 ? '' : 's'} to ${name}`);
+  }
+
   // ---------- CSV and print ----------
-  const CSV_HEAD = ['Name', 'Role', 'Status', 'Start', 'End', 'Rate', 'Per', 'Guaranteed', 'Kit fee', 'Kit fee per', 'Overtime and hours', 'Payment terms', 'Credit', 'Other terms', 'Written for', 'Sent on', 'Signed on', 'Signed copy', 'In the budget', 'Other rates'];
+  const CSV_HEAD = ['Name', 'Role', 'Status', 'Start', 'End', 'Rate', 'Per', 'Guaranteed', 'Kit fee', 'Kit fee per', 'Overtime and hours', 'Payment terms', 'Credit', 'Other terms', 'Written for', 'Sent on', 'Signed on', 'Signed copy', 'In the budget', 'Other rates', 'Kind'];
   function exportCsv() {
     const rows = memos().map(c => [who(c), c.role, statusLabel(c.status), c.startDate, c.endDate, c.rate, perOf(c.rateUnit).label, c.guarantee, c.kitFee, c.kitFee != null ? perOf(c.kitFeeUnit).label : '',
       c.overtime, c.paymentTerms, c.requiredCredit, c.otherTerms, c.writtenFor, c.sentDate, c.signedDate, arr(c.assetIds).map(asset).filter(Boolean).map(a => a.relativePath || a.name).join('; '),
-      budgetMatch(c) == null ? '' : budgetMatch(c) ? 'Yes' : 'Differs', otherRates(c).map(rateText).join('; ')]);
+      budgetMatch(c) == null ? '' : budgetMatch(c) ? 'Yes' : 'Differs', otherRates(c).map(rateText).join('; '), kindOf(c).label]);
     const csv = '﻿' + [CSV_HEAD, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
     const name = `${slug()}-deal-memos.csv`;
     download(csv, name, 'text/csv;charset=utf-8');
@@ -909,25 +1215,26 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   }
   // The memo to sign: the notice first, then the terms, then both signatures.
   function renderReport() {
+    if (printWhat === 'timecards') { renderTimecardReport(); return; }
     const c = memos().find(x => x.id === printId) || memos()[0];
     if (!c) { $('report').innerHTML = ''; return; }
     const p = person(arr(c.personIds)[0]) || {};
     const pr = doc.project;
     const g = oneRate(c), all = guaranteeTotal(c);
-    const rows = [['Production', [pr.title, pr.company].filter(Boolean).join(', ')], ['Crew member', [p.name, p.email, p.phone].filter(Boolean).join(' · ')], ['Role', c.role],
+    const rows = [['Production', [pr.title, pr.company].filter(Boolean).join(', ')], [kindOf(c).who, [p.name, p.email, p.phone].filter(Boolean).join(' · ')], ['Role', c.role],
       ['Dates', [c.startDate && fmtDate(c.startDate), c.endDate && fmtDate(c.endDate)].filter(Boolean).join(' to ')],
       ['Rate', c.rate != null ? payLine(c) : ''], ['Guaranteed', c.guarantee ? `${c.guarantee} ${perOf(c.rateUnit).unit.toLowerCase()}${g ? `, ${money(g)}` : ''}` : ''],
       ...otherRates(c).map(r => [r.label || 'Other rate', rateText(r).replace(/^[^:]*: /, '')]), ...(otherRates(c).length && all ? [['All rates together', money(all)]] : []),
       ['Kit fee', c.kitFee != null ? `${money(c.kitFee)}${perOf(c.kitFeeUnit).id === 'flat' ? ' flat' : ` a ${perOf(c.kitFeeUnit).id}`}` : ''],
       ['Overtime and hours', c.overtime], ['Payment terms', c.paymentTerms], ['Credit', c.requiredCredit], ['Other terms', c.otherTerms]].filter(r => str(r[1]).trim());
     $('report').innerHTML = `<p class="r-legal"><b>Not legal advice.</b> This deal memo is a general starting point${c.writtenFor ? `, written for ${esc(c.writtenFor)}` : ''}. Laws differ from place to place. Have a lawyer licensed where you work review it before anyone signs.</p>
-      <h1>Crew deal memo</h1>
+      <h1>${esc(kindOf(c).label)} deal memo</h1>
       <p class="r-meta">${esc([pr.title, c.writtenFor && `Written for ${c.writtenFor}`].filter(Boolean).join(' · '))}</p>
       <table class="r-terms"><tbody>${rows.map(([k, v]) => `<tr><th>${esc(k)}</th><td>${esc(v)}</td></tr>`).join('')}</tbody></table>
       <p class="r-agree">By signing, both parties agree to the terms above for this production.</p>
       <div class="r-sign">
         <div><div class="r-line"></div><p>For the production${pr.producer ? `: ${esc(pr.producer)}` : ''}${pr.company ? `, ${esc(pr.company)}` : ''}</p><p>Date</p></div>
-        <div><div class="r-line"></div><p>Crew member: ${esc(p.name || '')}</p><p>Date</p></div>
+        <div><div class="r-line"></div><p>${esc(kindOf(c).who)}: ${esc(p.name || '')}</p><p>Date</p></div>
       </div>`;
   }
 
@@ -1142,7 +1449,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('saveBtn').onclick = saveFile;
     $('editProjectBtn').onclick = openProjectDialog;
     $('filmTitle').onclick = openProjectDialog;
-    $('printBtn').onclick = () => { renderReport(); window.print(); };
+    $('printBtn').onclick = () => { printWhat = 'memo'; renderReport(); window.print(); };
     window.addEventListener('beforeprint', renderReport);
     $('projectCsvBtn').onclick = () => $('projectCsvDialog').showModal();
     $('projectCsvCancel').onclick = () => $('projectCsvDialog').close();
@@ -1182,6 +1489,22 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('editorForm').addEventListener('input', ev => { if (ev.target.setCustomValidity) ev.target.setCustomValidity(''); });
     $('editorCancel').onclick = () => $('editor').close();
     $('deleteBtn').onclick = removeEditing;
+    $('f-kind').addEventListener('change', () => { fillPeople(); });
+    for (const id of ['f-role', 'f-rate', 'f-per']) $(id).addEventListener(id === 'f-per' ? 'change' : 'input', showMinimum);
+    $('ratesBtn').onclick = openRates;
+    $('ratesCancel').onclick = () => $('ratesDialog').close();
+    $('ratesForm').addEventListener('submit', ev => { ev.preventDefault(); saveRates(); });
+    $('urAddBtn').onclick = () => { $('urRows').insertAdjacentHTML('beforeend', urRow({})); labelUr(); showUrEmpty(); $('urRows').lastElementChild.querySelector('input').focus(); };
+    $('urRows').addEventListener('click', ev => { const b = ev.target.closest('[data-delur]'); if (b) { b.closest('.ur-row').remove(); labelUr(); showUrEmpty(); } });
+    $('urLoadBtn').onclick = () => $('urInput').click();
+    $('urInput').addEventListener('change', async () => { const f = $('urInput').files[0]; if (f) await loadRates(f); $('urInput').value = ''; });
+    $('urCsvBtn').onclick = exportRates;
+    $('timecardsBtn').onclick = () => { renderTimecards(); $('tcDialog').showModal(); };
+    $('tcWeek').addEventListener('change', () => { tcWeek = $('tcWeek').value; renderTimecards(); });
+    $('tcClose').onclick = () => $('tcDialog').close();
+    $('tcCsvBtn').onclick = exportPayroll;
+    $('tcPrintBtn').onclick = () => { printWhat = 'timecards'; renderReport(); window.print(); };
+    window.addEventListener('afterprint', () => { printWhat = 'memo'; });
 
     document.addEventListener('keydown', ev => {
       const mod = ev.metaKey || ev.ctrlKey;
@@ -1319,7 +1642,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   // Columns for importing from a spreadsheet, named as in this tool's template.
   const OFT_IMPORT = { noun: 'deal memo', nouns: 'deal memos', key: 'personIds', list: () => doc.contracts, make: () => ({ type: TYPE, status: 'draft' }), prefix: 'contract-deal',
     fields: [['Name', 'personIds', 'people'], ['Role', 'role'], ['Status', 'status', 'enum', { values: STATUSES }], ['Start', 'startDate', 'date'], ['End', 'endDate', 'date'], ['Rate', 'rate', 'num'], ['Per', 'rateUnit', 'enum', { values: PER }], ['Guaranteed', 'guarantee', 'num'],
-      ['Kit fee', 'kitFee', 'num'], ['Kit fee per', 'kitFeeUnit', 'enum', { values: PER }], ['Overtime and hours', 'overtime'], ['Payment terms', 'paymentTerms'], ['Credit', 'requiredCredit'], ['Other terms', 'otherTerms'], ['Written for', 'writtenFor'], ['Sent on', 'sentDate', 'date'], ['Signed on', 'signedDate', 'date']],
+      ['Kit fee', 'kitFee', 'num'], ['Kit fee per', 'kitFeeUnit', 'enum', { values: PER }], ['Overtime and hours', 'overtime'], ['Payment terms', 'paymentTerms'], ['Credit', 'requiredCredit'], ['Other terms', 'otherTerms'], ['Written for', 'writtenFor'], ['Sent on', 'sentDate', 'date'], ['Signed on', 'signedDate', 'date'], ['Kind', 'dealKind', 'enum', { values: KINDS }]],
     put: r => { const p = doc.people.find(y => y.id === arr(r.personIds)[0]); r.title = `Deal memo: ${p ? p.name : 'someone'}${r.role ? `, ${r.role}` : ''}`; doc.contracts.push(r); } };
   /* oft-shared:import begin. Copied from shared/import.js by .github/scripts/sync_shared.py; edit it there. */
   // Import rows from a spreadsheet (CSV) into a tool. Each tool describes its
