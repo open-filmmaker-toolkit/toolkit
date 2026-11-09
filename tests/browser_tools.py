@@ -1640,6 +1640,39 @@ def test_compare_versions(browser, fake):
     ctx.close()
 
 
+def test_translations(browser, fake):
+    # Spanish and French: the home page, a tool as it draws itself, the language menu, and a screening kit in Spanish.
+    ctx = browser.new_context()
+    pg = ctx.new_page()
+    errs = []
+    pg.on('pageerror', lambda e: errs.append(str(e)))
+    pg.add_init_script("if (!sessionStorage.getItem('set')) { localStorage.setItem('oft-lang', 'es'); sessionStorage.setItem('set', '1'); }")
+    pg.goto('file://%s/index.html' % root); pg.wait_for_timeout(300)
+    check(pg.inner_text('h1') == 'Herramientas gratuitas para cineastas documentales e independientes' and pg.evaluate('document.documentElement.lang') == 'es'
+          and pg.locator('a[href="tools/budget/index.html"]').first.inner_text() == 'Presupuesto' and pg.locator('#q').get_attribute('placeholder').startswith('Busca'), 'the home page reads in Spanish')
+    check(pg.locator('#oftLang option').count() == 3, 'every page offers the languages there are')
+    link = pg.locator('a[href*="sharing-a-project"]').first
+    check(link.inner_text() == 'cómo trabajar en un archivo compartido' and 'sharing-a-project' in link.get_attribute('href'), 'links keep their address in a translated sentence')
+    pg.goto('file://%s/tools/release-tracker/index.html' % root); pg.wait_for_timeout(300)
+    open_sample(pg, False)
+    check(pg.inner_text('#saveBtn') == 'Guardar archivo' and 'Seguimiento de autorizaciones' in pg.inner_text('.tool-name') and 'Añadir tu nombre' in pg.inner_text('.oft-links'), 'a tool is translated, including the parts it draws as it opens')
+    pg.select_option('#oftLang', 'fr'); pg.wait_for_load_state(); pg.wait_for_timeout(300)
+    check(pg.inner_text('#saveBtn') == 'Enregistrer le fichier', 'picking French switches the page to French')
+    pg.select_option('#oftLang', 'en'); pg.wait_for_load_state(); pg.wait_for_timeout(300)
+    check(pg.inner_text('#saveBtn') == 'Save file' and pg.evaluate("localStorage.getItem('oft-lang')") == 'en', 'picking English brings the English back')
+    ctx.close()
+    ctx, pg, errs2 = new_page(browser, 'screening-kit', fake)
+    open_sample(pg, fake)
+    pg.select_option('#kitLang', 'es'); pg.wait_for_timeout(150)
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    r = pg.inner_text('#report')
+    check('Kit de proyección para quienes organizan' in r and 'Cuatro semanas antes' in r and 'Confirma con nosotros la fecha' in r, 'a screening kit prints in Spanish (%s)' % r[:200])
+    data = saved_project(pg, fake)
+    check(data['screeningKit']['language'] == 'es', 'the kit keeps its language')
+    check(not errs and not errs2, 'no page errors %s %s' % (errs, errs2))
+    ctx.close()
+
+
 def test_hub(browser, fake):
     for scheme, vp in [('light', {'width': 1280, 'height': 900}), ('dark', PHONE)]:
         ctx = browser.new_context(viewport=vp, color_scheme=scheme)
@@ -5460,6 +5493,7 @@ def main():
         test_offline(browser, fake)
         test_first_run(browser, fake)
         test_compare_versions(browser, fake)
+        test_translations(browser, fake)
         print('== location-scout / scouts, photos and releases')
         test_location_scout(browser, fake)
         print('== deal-memos / calendar, budget, signed copies and print')

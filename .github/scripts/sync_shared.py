@@ -21,20 +21,55 @@ def pages():
     return sorted(ROOT.glob('tools/*/index.html')) + [ROOT / 'index.html']
 
 
-def block(name, indent):
+# Translations: each language in translations/ is copied into a page's i18n block, but only the lines
+# that page uses, so a page carries no more than it needs.
+def languages():
+    import csv
+    langs = {}
+    folder = ROOT / 'translations'
+    names = folder / 'languages.csv'
+    if not names.is_file():
+        return langs
+    for row in csv.DictReader(names.read_text(encoding='utf-8-sig').splitlines()):
+        code = (row.get('Code') or '').strip()
+        f = folder / ('%s.csv' % code)
+        if not code or not f.is_file():
+            continue
+        strings = {}
+        for r in csv.reader(f.read_text(encoding='utf-8-sig').splitlines()[1:]):
+            if len(r) >= 2 and r[0].strip() and r[1].strip():
+                strings[r[0].strip()] = r[1].strip()
+        langs[code] = {'name': row.get('Name', code).strip(), 'label': (row.get('Label') or 'Language').strip(), 'strings': strings}
+    return langs
+
+
+def i18n_data(page_text):
+    import json
+    src = re.sub(r'/\* oft-shared:i18n begin.*?oft-shared:i18n end \*/', '', page_text, flags=re.S)
+    unesc = lambda t: t.replace('&lt;', '<').replace('&gt;', '>').replace('&amp;', '&')
+    used = lambda k: all(unesc(seg).strip() in src for seg in re.split(r'</?\w+>', k) if seg.strip())
+    out = {}
+    for code, lang in sorted(languages().items()):
+        out[code] = {'name': lang['name'], 'label': lang['label'], 'strings': {k: v for k, v in sorted(lang['strings'].items()) if used(k)}}
+    return 'const OFT_LANGS = ' + json.dumps(out, ensure_ascii=False, separators=(',', ':')) + ';'
+
+
+def block(name, indent, page_text=''):
     code = (ROOT / 'shared' / ('%s.js' % name)).read_text(encoding='utf-8').rstrip('\n')
+    if name == 'i18n':
+        code = i18n_data(page_text) + '\n' + code
     lines = [BEGIN % (name, name)] + code.split('\n') + [END % name]
     return '\n'.join((indent + l) if l else '' for l in lines)
 
 
 def blocks_in(text):
-    return re.findall(r'/\* oft-shared:([a-z-]+) begin\.', text)
+    return re.findall(r'/\* oft-shared:([a-z0-9-]+) begin\.', text)
 
 
 def sync(text):
     for name in blocks_in(text):
         pat = re.compile(r'^([ \t]*)' + re.escape(BEGIN % (name, name)) + r'.*?' + re.escape(END % name), re.S | re.M)
-        text = pat.sub(lambda m: block(name, m.group(1)), text, count=1)
+        text = pat.sub(lambda m, t=text: block(name, m.group(1), t), text, count=1)
     return text
 
 

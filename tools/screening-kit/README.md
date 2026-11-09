@@ -39,6 +39,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **A host checklist** by when: four weeks before, two weeks, the week before, the day and afterward, including sending you the attendance for the [impact report](../impact-report/). Remove items or add your own.
 - **A kit for each host.** Pick a partner from the [partner CRM](../partner-crm/) or a venue from [bookings](../bookings/) under **Kit for**. Add a note for that host, and change any of hosting, tech specs, promotion or contact for them only; everything else comes from the kit for every host. The print is headed with the host's name.
 - **Prints the kit,** with the checklist on its own page.
+- **Kits in other languages.** Choose a language next to **Print the kit**, for all hosts or for one. The headings, checklist and our starting wording print in that language; what you write prints as you wrote it. See [translations](../../translations/README.md) for the languages there are.
 
 ## Saving and file conflicts
 
@@ -57,7 +58,6 @@ It reads `pressNotes`, `treatment`, `discussionGuide`, `partners` and `assets`. 
 ## Not yet
 
 - Sending the kit by email (the toolkit never connects to the internet)
-- Translations
 
 ## License
 
