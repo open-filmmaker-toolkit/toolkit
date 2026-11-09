@@ -618,6 +618,76 @@ async function oftSettingsText() {
   const nameBtn = oftEl('oftNameBtn');
   if (nameBtn) nameBtn.textContent = oftMe() ? `You're ${oftMe()}` : 'Add your name';
 }
+// ---------- Earlier versions ----------
+// Each time a tool saves the project, this browser keeps a copy, the last few for each file name, along with
+// the file as it was before the first save. Any of them can be restored; nothing changes until you save.
+const OFT_KEEP = 6;
+const oftVersionKey = name => `versions:${name}`;
+async function oftVersions(name) { const v = name ? await oftIdb('get', oftVersionKey(name)) : null; return Array.isArray(v) ? v : []; }
+async function oftKeep(name, text, note) {
+  if (!name || !text || text.length > 25e6) return;
+  const list = await oftVersions(name);
+  if (list.length && list[0].text === text) return;
+  let by = '';
+  try { const d = JSON.parse(text); by = d.savedBy || ''; } catch { return; }
+  list.unshift({ at: new Date().toISOString(), who: oftMe(), tool: note || by, text });
+  await oftIdb('put', oftVersionKey(name), list.slice(0, OFT_KEEP));
+}
+// What restoring would undo: the changes in the project now, compared with that version.
+function oftVersionChanges(text) {
+  let old;
+  try { old = JSON.parse(text); } catch { return null; }
+  return oftDiff(old, JSON.parse(serialize()));
+}
+// Records added, removed or changed between two copies of the project, by tool.
+function oftDiff(a, b) {
+  const out = [];
+  const tool = path => OFT_KEYS[path[0]] || String(path[0] || 'Project');
+  const walk = (x, y, path) => {
+    if (oftSame(x, y)) return;
+    if ((oftRecList(x) || oftRecList(y)) && [x, y].every(v => v === undefined || Array.isArray(v))) {
+      const xa = new Map((x || []).filter(oftIsObj).map(r => [r.id, r])), ya = new Map((y || []).filter(oftIsObj).map(r => [r.id, r]));
+      for (const [id, r] of ya) if (!xa.has(id)) out.push({ kind: 'added', tool: tool(path), label: oftLabel(r) });
+      for (const [id, r] of xa) if (!ya.has(id)) out.push({ kind: 'removed', tool: tool(path), label: oftLabel(r) });
+      for (const [id, r] of ya) if (xa.has(id) && !oftSame(xa.get(id), r)) out.push({ kind: 'changed', tool: tool(path), label: oftLabel(r) });
+      return;
+    }
+    if (oftIsObj(x) && oftIsObj(y) && path.length < 2) {
+      for (const k of new Set([...Object.keys(x), ...Object.keys(y)])) if (!OFT_META.has(k) && !(path.length === 0 && OFT_SKIP.has(k))) walk(x[k], y[k], path.concat(k));
+      return;
+    }
+    out.push({ kind: x === undefined ? 'added' : y === undefined ? 'removed' : 'changed', tool: tool(path), label: path.length > 1 ? String(path[path.length - 1]) : '' });
+  };
+  walk(a, b, []);
+  return out;
+}
+async function oftOpenVersions() {
+  const dlg = oftEl('oftVersionsDialog'), list = await oftVersions(fileName);
+  oftEl('oftVersionsIntro').textContent = !fileName ? 'Save the project to a file first. Each time you save it, this browser keeps a copy.'
+    : list.length ? `The last ${list.length === 1 ? 'copy' : `${list.length} copies`} of ${fileName} this browser kept when it was saved, newest first. Restoring one puts it in the tool, and nothing changes in the file until you save.`
+    : `This browser hasn't kept a copy of ${fileName} yet. It keeps one each time you save.`;
+  const verb = { added: 'Added', changed: 'Changed', removed: 'Removed' };
+  oftEl('oftVersionsList').innerHTML = list.map((v, i) => {
+    const ch = oftVersionChanges(v.text) || [];
+    const sum = !ch.length ? 'The same as the project now.' : `Restoring it undoes ${ch.length} change${ch.length === 1 ? '' : 's'}: ${ch.slice(0, 6).map(c => `${(verb[c.kind] || c.kind).toLowerCase()} ${c.label ? `${c.label} in ` : ''}${c.tool}`).join('; ')}${ch.length > 6 ? `, and ${ch.length - 6} more` : ''}.`;
+    return `<li><span class="oft-v-when">${oftEsc(oftWhen(v.at))}${v.who ? `, by ${oftEsc(v.who)}` : ''}${v.tool ? `, saved from ${oftEsc(String(v.tool).replace(/ [\d.]+$/, '').replace(/-/g, ' '))}` : ''}</span>
+      <span class="oft-v-sum">${oftEsc(sum)}</span>${ch.length ? `<button type="button" class="btn" data-restore="${i}">Restore this version</button>` : ''}</li>`;
+  }).join('');
+  dlg.showModal();
+}
+async function oftRestore(i) {
+  const v = (await oftVersions(fileName))[i];
+  if (!v) return;
+  const keep = { baselineText, fileHandle, fileName };
+  loadText(v.text, keep.fileName, keep.fileHandle);
+  // The file on disk hasn't changed, so the next save is checked against it as usual.
+  baselineText = keep.baselineText; fileHandle = keep.fileHandle; fileName = keep.fileName;
+  dirty = true;
+  if (typeof saveDraft === 'function') saveDraft();
+  render();
+  oftEl('oftVersionsDialog').close();
+  toast(`Restored the version from ${oftWhen(v.at)}. Save to keep it, or open the file again to go back.`);
+}
 function oftChangedNote() {
   let rec = null;
   try { rec = editing; } catch { rec = null; } // eslint-disable-line no-undef
@@ -681,6 +751,10 @@ function oftBuild() {
 .oft-conflict input { margin-top: 4px; }
 .oft-conflict small, .oft-changed { color: var(--ink-3); font-size: 13px; }
 .oft-changed { margin: -4px 0 10px; }
+.oft-versions { margin: 0 0 12px; padding: 0 0 0 20px; display: grid; gap: 10px; }
+.oft-versions li { display: grid; gap: 4px; justify-items: start; font-size: 14px; }
+.oft-v-when { font-weight: 600; }
+.oft-v-sum { color: var(--ink-2); }
 .oft-flash { outline: 3px solid var(--focus) !important; outline-offset: 2px; }
 @media print { .oft-bar, .oft-links { display: none !important; } }`;
   document.head.append(style);
@@ -694,7 +768,7 @@ function oftBuild() {
   else if (main) main.prepend(...bars.children);
   const links = document.createElement('p');
   links.className = 'oft-links';
-  links.innerHTML = `<button type="button" class="link-btn" id="oftNameBtn">Add your name</button><button type="button" class="link-btn" id="oftMergeBtn">Merge two copies</button><a href="${OFT_GUIDE}">Working on a shared file</a>`;
+  links.innerHTML = `<button type="button" class="link-btn" id="oftNameBtn">Add your name</button><button type="button" class="link-btn" id="oftMergeBtn">Merge two copies</button><button type="button" class="link-btn" id="oftVersionsBtn">Earlier versions</button><a href="${OFT_GUIDE}">Working on a shared file</a>`;
   if (typeof oftImport !== 'undefined' && typeof OFT_IMPORT !== 'undefined') {
     const imp = document.createElement('button');
     imp.type = 'button'; imp.className = 'link-btn'; imp.id = 'oftImportBtn'; imp.textContent = 'Import from a spreadsheet';
@@ -730,6 +804,10 @@ function oftBuild() {
   <h3>Remembered file</h3><p id="oftFileText"></p><p><button type="button" class="btn" id="oftForgetFile">Forget it</button></p>
   <div id="oftFolderBox"><h3>Conflicted copies</h3><p id="oftFolderText">Let the tools look in the project file's folder for conflicted copies made by your sync app.</p><p><button type="button" class="btn" id="oftFolderBtn">Choose the folder</button></p></div>
   <div class="oft-actions"><button type="button" class="btn" id="oftSettingsCancel">Cancel</button><button type="submit" class="btn primary">Save</button></div></form></dialog>
+<dialog class="oft-dialog" id="oftVersionsDialog" aria-labelledby="oftVersionsTitle"><h2 id="oftVersionsTitle">Earlier versions</h2><p id="oftVersionsIntro"></p>
+  <ol class="oft-versions" id="oftVersionsList"></ol>
+  <p class="oft-changed">Copies are kept in this browser only, so also keep the file itself backed up. See <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/docs/backups.md">keeping your project safe</a>.</p>
+  <div class="oft-actions"><button type="button" class="btn" id="oftVersionsClose">Close</button></div></dialog>
 <dialog class="oft-dialog" id="oftMergeDialog" aria-labelledby="oftMergeTitle"><h2 id="oftMergeTitle">Merge two copies</h2><p id="oftMergeIntro"></p>
   <div class="oft-files" id="oftMergePick"><div><span id="oftMergeA">Not chosen</span><button type="button" class="btn" id="oftMergeABtn">Choose the first copy</button></div><div><span id="oftMergeB">Not chosen</span><button type="button" class="btn" id="oftMergeBBtn">Choose the second copy</button></div></div>
   <input type="file" id="oftMergeFile" accept=".json,application/json" hidden>
@@ -743,6 +821,9 @@ function oftBuild() {
   oftEl('oftForgetFile').onclick = oftForget;
   oftEl('oftFolderBtn').onclick = oftPickFolder;
   oftEl('oftMergeBtn').onclick = () => oftOpenMerge('copies');
+  oftEl('oftVersionsBtn').onclick = oftOpenVersions;
+  oftEl('oftVersionsClose').onclick = () => oftEl('oftVersionsDialog').close();
+  oftEl('oftVersionsList').addEventListener('click', ev => { const b = ev.target.closest('[data-restore]'); if (b) oftRestore(Number(b.dataset.restore)); });
   oftEl('oftMergeABtn').onclick = () => oftReadCopy('a');
   oftEl('oftMergeBBtn').onclick = () => oftReadCopy('b');
   oftEl('oftMergeFile').addEventListener('change', async ev => { const f = ev.target.files[0]; if (f) await oftTakeCopy(ev.target.dataset.side || 'b', f.name, await f.text()); });
@@ -777,7 +858,14 @@ saveFile = async function () {
   }
   if (doc && Array.isArray(doc.openBy)) { const others = doc.openBy.filter(p => oftFresh(p) && p.name !== oftMe()); if (others.length) doc.openBy = others; else delete doc.openBy; }
   oftStamp();
-  return oftSaveFile.apply(this, arguments);
+  const before = baselineText, name = fileName;
+  const out = await oftSaveFile.apply(this, arguments);
+  // Keep the file as it was before this save, then the saved file, when the save went through.
+  if (!dirty && fileName) {
+    if (before && name === fileName && !(await oftVersions(fileName)).length) await oftKeep(fileName, before, '');
+    await oftKeep(fileName, fileHandle && baselineText ? baselineText : serialize(), typeof TOOL !== 'undefined' ? TOOL : '');
+  }
+  return out;
 };
 window.addEventListener('pagehide', oftClearOpen);
 setTimeout(async () => { oftBuild(); oftRecent(); if (!(await oftHandoff())) oftOffer(); }, 0);

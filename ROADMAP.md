@@ -121,7 +121,7 @@ Each item has [its own issue](https://github.com/open-filmmaker-toolkit/toolkit/
 
 - [ ] Translations of the tools, starting with Spanish and French ([#201](https://github.com/open-filmmaker-toolkit/toolkit/issues/201))
 - [ ] A guided first run on the home page that points you to the tools you'll need first ([#202](https://github.com/open-filmmaker-toolkit/toolkit/issues/202))
-- [ ] Versioned project files with automatic backups ([#203](https://github.com/open-filmmaker-toolkit/toolkit/issues/203))
+- [x] Versioned project files with automatic backups ([#203](https://github.com/open-filmmaker-toolkit/toolkit/issues/203))
 - [ ] Test by hand with VoiceOver and NVDA, and in Firefox and Safari ([#204](https://github.com/open-filmmaker-toolkit/toolkit/issues/204))
 
 ### Smaller items, tool by tool
