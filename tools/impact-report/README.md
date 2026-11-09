@@ -42,6 +42,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 For anyone who doesn't use the tool, there's a [spreadsheet template](../../templates/impact-results-template.csv) with the same columns as the export.
 
 - **Imports from a spreadsheet:** choose **Import from a spreadsheet** under the file buttons and pick a CSV file. One with the columns of the [spreadsheet template](../../templates/impact-results-template.csv) imports as it is; match any other columns once and the tool remembers. Problems, such as a date it can't read, show row by row before anything is added, and importing only adds.
+- **Charts.** The results against their targets, and the audience at each screening, as bar charts with the numbers in a table beneath. They print with the report.
 
 ## Saving and file conflicts
 
@@ -60,7 +61,6 @@ It reads `theoryOfChange`, `screenings`, `bookings` and `partners`. Everything e
 ## Not yet
 
 - Reports for more than one period side by side
-- Charts
 - Survey results (the toolkit never collects data from the public)
 
 ## License

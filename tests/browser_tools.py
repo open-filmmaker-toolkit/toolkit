@@ -3574,6 +3574,63 @@ def test_stills_library(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
+def test_charts(browser, fake):
+    # Charts in the impact report and comps side by side, each with its numbers as a table.
+    ctx, pg, errs = new_page(browser, 'impact-report', fake)
+    open_sample(pg, fake)
+    fig = pg.locator('#charts figure').first
+    check(fig.locator('figcaption').inner_text() == 'Results against their targets' and 'People at community screenings' in fig.locator('table').inner_text() and '140 people' in fig.inner_text()
+          and fig.locator('.oft-chart-bars').get_attribute('aria-hidden') == 'true', 'charts the results against their targets, with a table of the numbers')
+    w = pg.evaluate("parseFloat(document.querySelector('#charts .oft-chart-row .f').style.width)")
+    check(abs(w - 28) < 0.5, 'the bar is as long as the result against the target (%s%%)' % w)
+    pg.locator('[data-result="indicator-comments"]').fill('250'); pg.locator('[data-result="indicator-comments"]').dispatch_event('change'); pg.wait_for_timeout(150)
+    check('Public comments on the levee plan' in pg.inner_text('#charts') and pg.locator('#charts .oft-chart-row .f.met').count() == 1, 'a result that meets its target shows as met')
+    pg.click('#printBtn'); pg.wait_for_timeout(150)
+    check('Results against their targets' in pg.inner_text('#report'), 'the charts print with the report')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+    ctx, pg, errs = new_page(browser, 'comps-tracker', fake)
+    open_sample(pg, fake)
+    pg.click('#compareBtn')
+    heads = pg.locator('#cmpTable thead th').all_inner_texts()
+    check(pg.is_visible('#compareDialog') and heads[1:] == ['Backwater Hymnal', 'The Seawall Years'], 'compares the comps in the pitch side by side (%s)' % heads)
+    caps = pg.locator('#cmpCharts figcaption').all_inner_texts()
+    check('Reported sale' in caps and 'Runtime' in caps and '$350,000' in pg.inner_text('#cmpCharts'), 'charts the figures as reported (%s)' % caps)
+    pg.locator('#cmpPick input').nth(2).check()
+    check(pg.locator('#cmpTable thead th').count() == 4, 'another comp can be added to the comparison')
+    pg.set_viewport_size({'width': 375, 'height': 800}); pg.wait_for_timeout(100)
+    check(pg.evaluate('document.documentElement.scrollWidth') <= 375, 'the comparison fits at phone width, scrolling inside the table')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+
+def test_month_views(browser, fake):
+    # Month grids in the awards and social calendars and the festival strategy map, by keyboard and at phone width.
+    for tool, sel in [('awards-social', '#views [data-v=month]'), ('festival-strategy', '#views [data-v=month]')]:
+        ctx, pg, errs = new_page(browser, tool, fake)
+        open_sample(pg, fake)
+        pg.click(sel)
+        check(pg.is_visible('#monthView') and pg.is_hidden('#rows' if tool == 'festival-strategy' else '#agenda') and pg.locator('#monthView .oft-cal-day').count() >= 28, '%s: shows a month grid' % tool)
+        start = pg.inner_text('#monthView h3')
+        pg.focus('#monthView [data-month="1"]'); pg.keyboard.press('Enter')
+        check(pg.inner_text('#monthView h3') != start and pg.evaluate("document.activeElement.dataset.month") == '1', '%s: moves to the next month by keyboard, keeping focus' % tool)
+        for _ in range(36):
+            if pg.locator('#monthView .oft-cal-day button').count():
+                break
+            pg.click('#monthView [data-month="1"]')
+        item = pg.locator('#monthView .oft-cal-day button').first
+        check(item.count() == 1, '%s: dates show on their day' % tool)
+        item.focus(); pg.keyboard.press('Enter'); pg.wait_for_timeout(150)
+        check(pg.locator('dialog[open]').count() == 1, '%s: an item opens its editor' % tool)
+        pg.keyboard.press('Escape')
+        pg.set_viewport_size({'width': 375, 'height': 800}); pg.wait_for_timeout(100)
+        check(pg.evaluate('document.documentElement.scrollWidth') <= 375 and pg.locator('#monthView .oft-cal-day.empty').first.is_hidden() and pg.locator('#monthView .oft-cal-day:not(.empty):not(.out) .long').first.is_visible(),
+              '%s: at phone width the month is a list of the days with something on them' % tool)
+        check(not errs, '%s: no page errors %s' % (tool, errs))
+        ctx.close()
+
+
 def test_awards_social(browser, fake):
     original = json.loads(sample)
     ctx, pg, errs = new_page(browser, 'awards-social', fake)
@@ -5325,6 +5382,8 @@ def main():
         test_stills_library(browser, fake)
         print('== awards-social / awards, posts, suggestions and the calendar file')
         test_awards_social(browser, fake)
+        test_month_views(browser, fake)
+        test_charts(browser, fake)
         print('== rights-matrix / the grid, overlaps and reverting rights')
         test_rights_matrix(browser, fake)
         print('== deliverables / the list, the project and the checklist')
