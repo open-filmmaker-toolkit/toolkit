@@ -3493,7 +3493,7 @@ def test_scene_takes(browser, fake):
     open_text(pg, fake, text)
     check('Scene 2' in pg.inner_text('[data-id="report-a009"]'), 'a camera report shows the scenes it covers')
     rows = csv_rows(pg)
-    check(rows[0][-4:] == ['Scene', 'Shot or setup', 'Take', "Script supervisor's notes"] and any(r[8] == 'A009C002' and r[-4:] == ['2', '2A', '2', 'Lamp flickers on the line'] for r in rows), 'CSV has scene, setup, take and the script supervisor\'s notes')
+    check(rows[0][15:19] == ['Scene', 'Shot or setup', 'Take', "Script supervisor's notes"] and any(r[8] == 'A009C002' and r[15:19] == ['2', '2A', '2', 'Lamp flickers on the line'] for r in rows), 'CSV has scene, setup, take and the script supervisor\'s notes')
     pg.click('#printBtn'); pg.wait_for_timeout(150)
     check('2A-2' in pg.inner_text('#report') and 'Script: Lamp flickers' in pg.inner_text('#report'), 'the printed report has slate numbers and notes')
     check(not errs, 'no page errors %s' % errs)
