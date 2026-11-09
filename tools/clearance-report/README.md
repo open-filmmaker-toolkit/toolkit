@@ -32,8 +32,8 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 
 ## What it does
 
-- **Imports a script or transcript** as SRT or VTT, or as text with a timestamp at the start of each paragraph, or uses a transcript already in the [paper edit](../paper-edit/). Set the timecode at time zero, such as 01:00:00:00, and the frame rate, so each line shows its program timecode.
-- **Mark references.** Select words in a line and press Mark to note a person, place, product or logo, quote, music, archival material, artwork or something else. The tool guesses from the words when they're a name in the project.
+- **Imports a script or transcript** as SRT or VTT, a Word document, a PDF with text in it (not a scan), noScribe's HTML, or text with a timestamp at the start of each paragraph, or uses a transcript already in the [paper edit](../paper-edit/). Set the timecode at time zero, such as 01:00:00:00, and the frame rate, so each line shows its program timecode.
+- **Mark references.** Select words in a line and press Mark to note a person, place, product or logo, quote, music, archival material, artwork or something else. The tool guesses from the words when they're a name in the project. When the words run on into the next line, tick the box and they're highlighted on both lines. **Add it to the clearance log** makes a new clearance log element from the marked words, at the line's timecode, and links the mark to it.
 - **Find names from the project:** marks every mention of the project's people, places and music titles in one go, for you to check.
 - **Shows each mark's clearance.** People and places use their appearance and location releases, the way the [release tracker](../release-tracker/) works them out. Everything else uses the element's status in the [clearance log](../clearance-log/), with its license. When something is cleared another way, such as a public figure in the news, say so with a note, or mark it not cleared.
 - **Prints the report:** every line with its timecode, the marked words numbered, and each mark's clearance beside it, then a list of what isn't cleared yet. **Exports CSV,** one row for each mark. Also exports project data: project details, people, locations, third-party elements, contracts, assets, music cue sheet details or call sheets as separate CSV files.
@@ -54,15 +54,13 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 A `clearanceReport` record with `scripts`. Each script has an `id`, `name`, `format`, `frameRate`, optional `startTc`, `segments` (each an `id`, `text`, and optional `start`, `end` and `speaker`) and `marks`.
 
-Each mark has an `id`, `segId` (its line), `words`, `kind` (`person`, `place`, `product`, `quote`, `music`, `archival`, `artwork` or `other`), and optional `personId`, `locationId` or `elementId`, `override` (`cleared` or `not`), `note` and `auto` (found from the project's names).
+Each mark has an `id`, `segId` (its line), `words`, `kind` (`person`, `place`, `product`, `quote`, `music`, `archival`, `artwork` or `other`), and optional `endSegId` (the next line, when the words run on into it), `personId`, `locationId` or `elementId`, `override` (`cleared` or `not`), `note` and `auto` (found from the project's names).
 
 It reads `people`, `locations`, `thirdPartyElements`, `contracts` and `paperEdit`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
-- Reading Word or PDF scripts; export text with timestamps instead
-- Marking a span across two lines
-- Adding an element to the clearance log from a mark
+Nothing planned right now. If something you need is missing, [open an issue](https://github.com/open-filmmaker-toolkit/toolkit/issues).
 
 ## License
 

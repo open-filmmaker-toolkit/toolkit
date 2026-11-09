@@ -1,6 +1,7 @@
-// Reading transcripts from transcription apps: SRT, WebVTT, text with timestamps, Word documents
-// and the HTML noScribe writes.
-// Shared by the paper edit and the interview log, which keep transcripts in paperEdit.transcripts.
+// Reading transcripts from transcription apps: SRT, WebVTT, text with timestamps and the HTML noScribe writes,
+// and Word documents and PDFs, which need the docs block (shared/docs.js) on the page too.
+// Shared by the paper edit and the interview log, which keep transcripts in paperEdit.transcripts,
+// and the clearance report, which reads scripts.
 const oftTranscript = (() => {
   const str = v => (v == null ? '' : String(v));
   const isNum = n => typeof n === 'number' && isFinite(n);
@@ -74,35 +75,8 @@ const oftTranscript = (() => {
     const lines = (blocks.length ? blocks.map(n => n.textContent) : str(dom.body.innerText || dom.body.textContent).split('\n')).map(clean).filter(Boolean);
     return parseText(lines.join('\n\n'));
   }
-  // A Word document's paragraphs, read from the zip in the browser: no library, using its own unzip.
-  async function docxText(buf) {
-    const b = new Uint8Array(buf), dv = new DataView(buf);
-    let e = -1;
-    for (let i = b.length - 22; i >= Math.max(0, b.length - 66000); i--) if (dv.getUint32(i, true) === 0x06054b50) { e = i; break; }
-    if (e < 0) throw new Error("isn't a Word document");
-    let p = dv.getUint32(e + 16, true);
-    const n = dv.getUint16(e + 10, true), dec = new TextDecoder();
-    for (let k = 0; k < n; k++) {
-      if (dv.getUint32(p, true) !== 0x02014b50) break;
-      const method = dv.getUint16(p + 10, true), size = dv.getUint32(p + 20, true), nl = dv.getUint16(p + 28, true), xl = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true), off = dv.getUint32(p + 42, true);
-      const fname = dec.decode(b.subarray(p + 46, p + 46 + nl));
-      p += 46 + nl + xl + cl;
-      if (fname !== 'word/document.xml') continue;
-      const start = off + 30 + dv.getUint16(off + 26, true) + dv.getUint16(off + 28, true), data = b.subarray(start, start + size);
-      let xml;
-      if (method === 0) xml = dec.decode(data);
-      else if (method === 8 && typeof DecompressionStream !== 'undefined') xml = await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text();
-      else throw new Error("can't be unpacked in this browser");
-      const doc = new DOMParser().parseFromString(xml, 'application/xml'), W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
-      return [...doc.getElementsByTagNameNS(W, 'p')].map(par => [...par.getElementsByTagNameNS(W, '*')].map(x => (x.localName === 't' ? x.textContent : x.localName === 'tab' ? ' ' : x.localName === 'br' ? ' ' : '')).join('')).join('\n');
-    }
-    throw new Error("isn't a Word document");
-  }
-  // The text of a transcript file, whatever kind it is. Word documents come back as one paragraph a line.
-  async function read(file) {
-    if (/\.docx$/i.test(file.name) || file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') return docxText(await file.arrayBuffer());
-    return file.text();
-  }
+  // The text of a transcript file, whatever kind it is. Word documents and PDFs, read by oftDocs, come back a paragraph or line at a time.
+  const read = file => oftDocs.text(file);
   function parse(text, name, newId) {
     if (/\.html?$/i.test(name) || /^\s*(<!doctype html|<html)/i.test(text)) {
       const segs = parseHtml(text).map(s => { const o = { id: newId('seg'), text: s.text }; if (isNum(s.start)) { o.start = Math.round(s.start * 1000) / 1000; o.end = Math.round((isNum(s.end) && s.end > s.start ? s.end : s.start + 2) * 1000) / 1000; } if (s.speaker) o.speaker = s.speaker; return o; });

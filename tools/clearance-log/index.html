@@ -292,6 +292,8 @@ dialog form { display: flex; flex-direction: column; height: 100%; }
   .toolbar #addBtn { order: -1; flex-basis: 100%; justify-content: center; }
 }
 
+.lic-row { display: flex; gap: 6px; }
+.lic-row input { flex: 1; min-width: 0; }
 @media print {
   @page { size: landscape; margin: 12mm; }
   :root { color-scheme: light; }
@@ -479,6 +481,13 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
           <label for="f-licenseRef">License or memo on file</label>
           <input id="f-licenseRef" name="licenseRef" placeholder="File name or reference">
         </div>
+      </div>
+      <div class="field">
+        <label for="f-licFile">License file</label>
+        <div class="lic-row"><input id="f-licFile" type="text" placeholder="licenses/rchs-footage-license.pdf" autocomplete="off"><button type="button" class="btn small" id="licPickBtn">Pick the file</button></div>
+        <p class="hint">Where the signed license or memo is, relative to your project file. Pick it to fill in its name, then keep it in a licenses folder next to the project file. The tool doesn't open or upload it.</p>
+        <p class="hint" id="licFromContracts" hidden></p>
+        <input type="file" id="licInput" accept=".pdf,image/*,.doc,.docx" hidden>
       </div>
       <details class="who-where" id="whoWhere">
         <summary>People and places in it</summary>
@@ -965,6 +974,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       ? `Where it sits in the cut (${doc.project.cutVersion}), as hours:minutes:seconds:frames.`
       : 'Where it sits in your current cut, as hours:minutes:seconds:frames.';
     for (const k of ['tcIn', 'tcOut', 'description']) form.elements[k].setCustomValidity('');
+    const lic = e && licenseOf(e);
+    $('f-licFile').value = lic ? strOf(lic.relativePath) : '';
+    const fromC = e ? contractFiles(e) : [];
+    $('licFromContracts').hidden = !fromC.length;
+    $('licFromContracts').textContent = fromC.length ? `In the license tracker: ${fromC.join('; ')}` : '';
     $('editor').showModal();
     form.elements.description.focus();
   }
@@ -990,6 +1004,20 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     return ok;
   }
 
+  const arrOf = v => (Array.isArray(v) ? v : []), strOf = v => (v == null ? '' : String(v));
+  // The license file is an asset with type "license file", linked from the element by licenseAssetId.
+  const asset = id => arrOf(doc.assets).find(a => a && a.id === id);
+  const licenseOf = e => { const a = e && e.licenseAssetId && asset(e.licenseAssetId); return a && a.type === 'license file' ? a : null; };
+  // Signed copies recorded on the element's contracts in the license tracker.
+  const contractFiles = e => arrOf(e.contractIds).map(id => arrOf(doc.contracts).find(c => c && c.id === id)).filter(Boolean)
+    .flatMap(c => arrOf(c.assetIds).map(asset).filter(a => a && a.relativePath).map(a => `${a.relativePath} (${c.title || 'contract'})`));
+  function saveLicenseFile(e) {
+    const path = $('f-licFile').value.trim().replace(/\\/g, '/'), old = licenseOf(e);
+    if (!Array.isArray(doc.assets)) doc.assets = [];
+    if (path && old) { old.relativePath = path; old.name = path.split('/').pop(); }
+    else if (path) { const a = { id: newId(), name: path.split('/').pop(), type: 'license file', relativePath: path }; doc.assets.push(a); e.licenseAssetId = a.id; }
+    else if (old) { doc.assets = doc.assets.filter(a => a.id !== old.id); delete e.licenseAssetId; }
+  }
   function saveEditor() {
     if (!validateEditor()) return false;
     const f = $('editorForm').elements;
@@ -1005,10 +1033,12 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       const e = els().find(x => x.id === editingId);
       Object.assign(e, values, { updatedAt: now });
       for (const [k, box] of [['personIds', 'f-people'], ['locationIds', 'f-places']]) { const v = picked(box); if (v.length) e[k] = v; else delete e[k]; }
+      saveLicenseFile(e);
       label = 'Updated';
     } else {
       const add = { id: newId(), ...values, createdAt: now, updatedAt: now };
       for (const [k, box] of [['personIds', 'f-people'], ['locationIds', 'f-places']]) { const v = picked(box); if (v.length) add[k] = v; }
+      saveLicenseFile(add);
       els().push(add);
       label = 'Added';
     }
@@ -1023,6 +1053,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     if (!e) return;
     if (!confirm(`Delete "${e.description || 'Untitled element'}" from the log? This can't be undone.`)) return;
     doc.thirdPartyElements = els().filter(x => x.id !== editingId);
+    if (licenseOf(e)) doc.assets = doc.assets.filter(a => a.id !== e.licenseAssetId);
     $('editor').close();
     changed();
     toast(`Deleted "${e.description || 'Untitled element'}"`);
@@ -1399,6 +1430,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     });
 
     $('editorForm').addEventListener('submit', ev => { ev.preventDefault(); saveEditor(); });
+    $('licPickBtn').onclick = () => $('licInput').click();
+    $('licInput').addEventListener('change', () => { const f = $('licInput').files[0]; if (f) $('f-licFile').value = `licenses/${f.name}`; $('licInput').value = ''; });
     $('editorCancel').onclick = () => $('editor').close();
     $('deleteBtn').onclick = deleteEditing;
     $('duplicateBtn').onclick = duplicateEditing;

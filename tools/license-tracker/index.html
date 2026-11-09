@@ -472,7 +472,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const isDay = s => /^\d{4}-\d{2}-\d{2}$/.test(str(s));
   const isRelease = c => /release/i.test(str(c.type));
   // Materials releases cover someone's photos or documents, not appearing on camera or a place.
-  const coversAppearance = c => isRelease(c) && !/material/i.test(str(c.type));
+  const coversAppearance = c => isRelease(c) && !/material|model release|property release/i.test(str(c.type));
   function releaseState(c) {
     if (c.status === 'signed') return isDay(c.expirationDate) && c.expirationDate < today() ? 'expired' : 'signed';
     if (c.status === 'pending' || c.status === 'declined') return c.status;

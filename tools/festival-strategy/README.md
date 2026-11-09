@@ -33,6 +33,8 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 ## What it does
 
 - **Festivals with their premiere rules:** tier 1 to 4, world, international, regional, country or city premiere, or none, plus city, country, region, festival dates, deadline, fee and notification date.
+- **Each festival's own premiere rules.** Tick whether it allows earlier screenings in your home country or at small, local festivals, and note anything else it says, such as how it treats online screenings. Clashes follow those rules.
+- **Early, regular and late deadlines,** each with its date and fee. If the festival has no deadline of its own yet, it takes the next tier still open.
 - **Premiere clashes.** If a festival that screens first would end the premiere a later one asks for, both are flagged. It's a firm clash when the earlier festival has accepted you, and a risk when you're still waiting.
 - **Hear back first:** festivals that want a premiere, by tier and notification date, so you know whose answer to wait for before accepting an earlier one.
 - **Fees:** paid, still to pay and the total. **Next deadlines** for festivals you plan to enter.
@@ -54,14 +56,12 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-Adds `tier`, `premiere` (`world`, `international`, `regional`, `national`, `city` or `none`), `city`, `country`, `region`, `startDate`, `endDate` and `notifyDate` to `festivals`, and a `festivalStrategy` record with `homeCountry` and `homeRegion`.
+Adds `tier`, `premiere` (`world`, `international`, `regional`, `national`, `city` or `none`), `city`, `country`, `region`, `startDate`, `endDate`, `notifyDate`, `premiereAllows` (`home` and `small`), `premiereRules` and `deadlines` (each with `id`, `label`, `date` and `fee`) to `festivals`, and a `festivalStrategy` record with `homeCountry` and `homeRegion`.
 
 Screening dates from the festival submission tracker count as the first day a film screens. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
-- Each festival's own premiere rules, such as which earlier screenings it allows
-- Early, regular and late deadlines with their fees
 - A calendar view
 
 ## License

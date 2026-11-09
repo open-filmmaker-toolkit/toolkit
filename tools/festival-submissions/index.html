@@ -228,7 +228,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <button type="button" class="btn primary" id="addBtn">Add a festival</button>
         <button type="button" class="btn" id="csvBtn">Export CSV</button>
         <button type="button" class="btn" id="printBtn">Print</button>
+        <button type="button" class="btn" id="listSaveBtn">Save a festival list</button>
+        <button type="button" class="btn" id="listOpenBtn">Add from a list</button>
       </div>
+      <section id="oftReminders" aria-labelledby="oftRemHead" hidden></section>
       <div id="filterBar">
         <div class="filters" id="filters" role="group" aria-label="Show festivals by status"></div>
         <label class="search"><span class="sr-only">Search festivals</span><input type="search" id="search" placeholder="Search festivals, platforms, waiver codes, venues" autocomplete="off"></label>
@@ -285,6 +288,19 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <p class="hint">Add each screening the festival gives you.</p>
         <div class="sc-rows" id="scRows" role="group" aria-labelledby="scHead"></div>
         <div><button type="button" class="btn small" id="addScreeningBtn">Add a screening</button></div>
+        <div class="two">
+          <div class="field"><label for="f-laurel">Laurel</label><select id="f-laurel"><option value="">None yet</option><option value="selection">Official selection</option><option value="nominee">Nominee</option><option value="winner">Winner</option></select></div>
+          <div class="field"><label for="f-award">Award</label><input id="f-award" type="text" autocomplete="off" placeholder="Best Documentary Feature"></div>
+        </div>
+        <label class="check"><input type="checkbox" id="f-laurelFiles"> We have the laurel files from the festival</label>
+        <div class="two">
+          <div class="field"><label for="f-sfee">Screening fee they pay you</label><input id="f-sfee" type="number" min="0" step="any" inputmode="decimal"></div>
+          <div class="field"><label class="check"><input type="checkbox" id="f-sfeePaid"> Paid</label></div>
+        </div>
+        <div class="two">
+          <div class="field"><label for="f-travel">What the festival covers</label><input id="f-travel" type="text" autocomplete="off" placeholder="Two hotel nights, no flights"></div>
+          <div class="field"><label for="f-travelCost">What travel will cost you</label><input id="f-travelCost" type="number" min="0" step="any" inputmode="decimal"></div>
+        </div>
       </div>
       <div class="field"><label for="f-notes">Notes</label><textarea id="f-notes" rows="3"></textarea></div>
     </div>
@@ -435,6 +451,12 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const festName = f => f.name || 'Unnamed festival';
   const planned = f => f.status === 'planned';
   const hasFee = f => f.fee != null && f.fee !== '' && isFinite(Number(f.fee));
+  const hasNum = v => v != null && v !== '' && isFinite(Number(v));
+  // Early, regular and late deadlines, set in the festival strategy map.
+  const tiers = f => arr(f.deadlines).filter(t => t && typeof t === 'object' && /^\d{4}-\d{2}-\d{2}$/.test(str(t.date))).sort((a, b) => a.date.localeCompare(b.date));
+  const nextTier = f => { const t = tiers(f); return t.length ? (t.find(x => daysUntil(x.date) >= 0) || t[t.length - 1]) : null; };
+  const LAURELS = { selection: 'Official selection', nominee: 'Nominee', winner: 'Winner' };
+  const laurelText = f => (LAURELS[f.laurel] ? [LAURELS[f.laurel], f.laurelAward].filter(Boolean).join(': ') : '');
   const isLink = u => /^https?:\/\//i.test(str(u).trim());
   function money(n) {
     if (n == null || n === '' || !isFinite(Number(n))) return '';
@@ -503,6 +525,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('noMatch').hidden = !all.length || !!list.length;
     $('rows').innerHTML = list.map(rowHtml).join('');
     renderSide(all);
+    oftReminders.render();
   }
   function rowHtml(f) {
     const l = deadlineState(f);
@@ -520,6 +543,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       else if (all.length) flags.push(`<span class="flag linked">${all.length} screening${all.length === 1 ? '' : 's'}, all past</span>`);
       else flags.push('<span class="flag changed">No screening dates yet</span>');
     }
+    if (planned(f) && tiers(f).length) flags.push(`<span class="flag linked">${esc(tiers(f).map(t => [t.label, fmtDate(t.date), hasNum(t.fee) ? money(t.fee) : ''].filter(Boolean).join(' ')).join(' · '))}</span>`);
+    if (laurelText(f)) flags.push(`<span class="flag new">${esc(laurelText(f))}${f.laurelFiles ? '' : ', laurel files to get'}</span>`);
+    if (hasNum(f.screeningFee)) flags.push(`<span class="flag ${f.screeningFeePaid ? 'linked' : 'changed'}">Screening fee ${esc(money(f.screeningFee))}${f.screeningFeePaid ? ', paid' : ', not paid yet'}</span>`);
+    if (f.travelSupport || hasNum(f.travelCost)) flags.push(`<span class="flag linked">${esc(['Travel', f.travelSupport, hasNum(f.travelCost) && `costs you ${money(f.travelCost)}`].filter(Boolean).join(': ').replace(': costs', ', costs'))}</span>`);
     if (isLink(f.url)) flags.push(`<span class="flag linked"><a href="${esc(f.url.trim())}" target="_blank" rel="noopener noreferrer">Festival link</a></span>`);
     else if (f.url) flags.push(`<span class="flag linked">${esc(f.url)}</span>`);
     return `<li class="row${f.status === 'declined' ? ' is-closed' : ''}" data-id="${esc(f.id)}">
@@ -545,6 +572,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       [money(fees(plan)) || '0', `fees still to pay, ${plan.length} planned`],
       [money(fees(sub)) || '0', `fees paid, ${sub.length} submitted`],
       [String(all.filter(f => f.status === 'accepted').length), 'accepted'],
+      ...(all.some(f => hasNum(f.screeningFee)) ? [[money(all.filter(f => !f.screeningFeePaid).reduce((t, f) => t + (hasNum(f.screeningFee) ? Number(f.screeningFee) : 0), 0)) || '0', 'screening fees still owed to you']] : []),
+      ...(all.some(f => hasNum(f.travelCost)) ? [[money(all.filter(f => f.status !== 'declined').reduce((t, f) => t + (hasNum(f.travelCost) ? Number(f.travelCost) : 0), 0)) || '0', 'travel to festivals']] : []),
       [String(all.filter(f => f.status === 'declined').length), 'declined'],
     ];
     $('stats').innerHTML = stats.map(([b, s]) => `<div class="stat"><b>${esc(b)}</b><span>${esc(s)}</span></div>`).join('');
@@ -566,8 +595,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     editing = existing ? structuredClone(existing) : { id: newId('festival'), status: 'planned' };
     $('f-status').innerHTML = STATUSES.map(s => `<option value="${s.id}">${esc(s.label)}</option>`).join('');
     const vals = { 'f-name': editing.name, 'f-platform': editing.platform, 'f-url': editing.url, 'f-deadline': editing.deadline, 'f-status': editing.status,
-      'f-submitted': editing.submittedOn, 'f-fee': editing.fee, 'f-waiver': editing.waiverCode, 'f-notes': editing.notes };
+      'f-submitted': editing.submittedOn, 'f-fee': editing.fee, 'f-waiver': editing.waiverCode, 'f-notes': editing.notes,
+      'f-laurel': LAURELS[editing.laurel] ? editing.laurel : '', 'f-award': editing.laurelAward, 'f-sfee': editing.screeningFee, 'f-travel': editing.travelSupport, 'f-travelCost': editing.travelCost };
     for (const [k, v] of Object.entries(vals)) $(k).value = v == null ? '' : String(v);
+    $('f-laurelFiles').checked = !!editing.laurelFiles; $('f-sfeePaid').checked = !!editing.screeningFeePaid;
     $('scRows').innerHTML = sortedScreenings(editing).map(scRow).join('');
     showScreenings();
     $('editorTitle').textContent = isNew ? 'Add a festival' : 'Edit festival';
@@ -577,12 +608,14 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   }
   function saveEditor() {
     if (!$('f-name').value.trim()) { $('f-name').setCustomValidity('Type the festival’s name.'); $('f-name').reportValidity(); return; }
-    if ($('f-fee').value && !$('f-fee').checkValidity()) { $('f-fee').reportValidity(); return; }
+    for (const id of ['f-fee', 'f-sfee', 'f-travelCost']) if ($(id).value && !$(id).checkValidity()) { $(id).reportValidity(); return; }
     const e = editing;
     const text = { name: 'f-name', platform: 'f-platform', url: 'f-url', deadline: 'f-deadline', submittedOn: 'f-submitted', waiverCode: 'f-waiver', notes: 'f-notes' };
     for (const [k, id] of Object.entries(text)) { const v = $(id).value.trim(); if (v) e[k] = v; else delete e[k]; }
     e.status = $('f-status').value;
-    if ($('f-fee').value !== '') e.fee = Number($('f-fee').value); else delete e.fee;
+    for (const [k, id] of [['fee', 'f-fee'], ['screeningFee', 'f-sfee'], ['travelCost', 'f-travelCost']]) { if ($(id).value !== '') e[k] = Number($(id).value); else delete e[k]; }
+    for (const [k, id] of [['laurel', 'f-laurel'], ['laurelAward', 'f-award'], ['travelSupport', 'f-travel']]) { const v = $(id).value.trim(); if (v) e[k] = v; else delete e[k]; }
+    for (const [k, id] of [['laurelFiles', 'f-laurelFiles'], ['screeningFeePaid', 'f-sfeePaid']]) { if ($(id).checked) e[k] = true; else delete e[k]; }
     // Each row updates its own screening, so fields this tool doesn't edit survive.
     const old = new Map(screenings(e).map(s => [s.id, s]));
     const rows = [...$('scRows').querySelectorAll('.sc-row')].map(r => {
@@ -605,10 +638,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   }
 
   // ---------- Exports and print ----------
-  const CSV_HEAD = ['Festival', 'Status', 'Deadline', 'Platform', 'Fee', 'Waiver code', 'Submitted', 'Screenings', 'Link', 'Notes'];
+  const CSV_HEAD = ['Festival', 'Status', 'Deadline', 'Platform', 'Fee', 'Waiver code', 'Submitted', 'Screenings', 'Laurel', 'Screening fee', 'Screening fee paid', 'Travel covered', 'Travel cost', 'Link', 'Notes'];
   function exportCsv() {
     const rows = sorted(entries()).map(f => [f.name, statusLabel(f.status), f.deadline, f.platform, hasFee(f) ? f.fee : '', f.waiverCode, f.submittedOn,
-      sortedScreenings(f).map(s => [s.date, s.time, s.venue, s.note && `(${s.note})`].filter(Boolean).join(' ')).join('; '), f.url, f.notes]);
+      sortedScreenings(f).map(s => [s.date, s.time, s.venue, s.note && `(${s.note})`].filter(Boolean).join(' ')).join('; '), laurelText(f), hasNum(f.screeningFee) ? Number(f.screeningFee) : '', hasNum(f.screeningFee) ? (f.screeningFeePaid ? 'Yes' : 'No') : '', f.travelSupport, hasNum(f.travelCost) ? Number(f.travelCost) : '', f.url, f.notes]);
     const csv = '\ufeff' + [CSV_HEAD, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
     const name = `${slug()}-festival-submissions.csv`;
     download(csv, name, 'text/csv;charset=utf-8');
@@ -853,6 +886,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('projectForm').addEventListener('submit', ev => { ev.preventDefault(); saveProjectDialog(); });
     $('projectCancel').onclick = () => $('projectDialog').close();
     $('addBtn').onclick = () => openEditor(null);
+    $('listSaveBtn').onclick = () => oftLists.save();
+    $('listOpenBtn').onclick = () => oftLists.open();
     $('emptyAddBtn').onclick = () => openEditor(null);
     $('emptyOpenBtn').onclick = openFile;
     $('csvBtn').onclick = exportCsv;
@@ -1219,6 +1254,192 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     return { TOOLS, KINDS, PARTS, CONTACT, flags, glance, dates, ics, summary, today, addDays, fmt, calendarDialog, saveText, stem };
   })();
   /* oft-shared:project end */
+    // Reminders: deadlines coming up, decisions that are late, screenings soon, and screening fees to chase.
+  const OFT_REMINDERS = {
+    records: () => entries(),
+    open: id => openEditor(id),
+    what: 'Deadlines show two weeks ahead, screenings a week ahead, and a decision or screening fee once it is late. Dismiss one and it comes back only if its date changes.',
+    items: () => entries().flatMap(f => {
+      const out = [], name = festName(f), tier = nextTier(f), dl = tier ? tier.date : f.deadline, n = daysUntil(dl);
+      if (planned(f) && n != null && n >= 0 && n <= SOON) out.push({ id: f.id, key: `deadline:${dl}`, when: dl,
+        text: `${name}${tier && tier.label ? `'s ${tier.label.toLowerCase()} deadline` : ''} is ${n === 0 ? 'today' : n === 1 ? 'tomorrow' : `in ${n} days`}, on ${fmtDate(dl)}${tier && hasNum(tier.fee) ? `, for ${money(tier.fee)}` : ''}.` });
+      if (planned(f) && n != null && n < 0) out.push({ id: f.id, key: `passed:${dl}`, when: dl, late: true,
+        text: `${name}'s deadline was ${fmtDate(dl)}. Mark it submitted, or change the deadline if it moved.` });
+      const d = daysUntil(f.notifyDate);
+      if (f.status === 'submitted' && d != null && d < 0) out.push({ id: f.id, key: `notify:${f.notifyDate}`, when: f.notifyDate,
+        text: `${name} said they'd decide by ${fmtDate(f.notifyDate)}. Check your email and the platform, then mark it accepted or declined.` });
+      if (f.status === 'accepted') for (const s of screenings(f)) { const k = daysUntil(s.date); if (k != null && k >= 0 && k <= 7) out.push({ id: f.id, key: `screening:${s.id}:${s.date}`, when: s.date,
+        text: `${name} screens ${k === 0 ? 'today' : k === 1 ? 'tomorrow' : `in ${k} days`}${s.time ? ` at ${s.time}` : ''}${s.venue ? `, ${s.venue}` : ''}.` }); }
+      const end = f.endDate || (sortedScreenings(f).filter(s => s.date).pop() || {}).date, e = daysUntil(end);
+      if (f.status === 'accepted' && hasNum(f.screeningFee) && !f.screeningFeePaid && e != null && e < -14) out.push({ id: f.id, key: `fee:${end}`, when: end, late: true,
+        text: `${name} owes you a screening fee of ${money(f.screeningFee)}. Send an invoice, or tick it paid in the festival.` });
+      return out;
+    })
+  };
+  // A list of festivals and their usual deadlines and fees, to share with other productions.
+  const mmdd = iso => (/^\d{4}-(\d{2})-(\d{2})$/.exec(str(iso)) || []).slice(1).join('-');
+  function nextDate(md) {
+    const m = /^(\d{2})-(\d{2})$/.exec(str(md));
+    if (!m) return '';
+    const y = new Date().getFullYear(), iso = yy => `${yy}-${m[1]}-${m[2]}`;
+    return daysUntil(iso(y)) < 0 ? iso(y + 1) : iso(y);
+  }
+  const sameFest = (a, b) => norm(a.name) && norm(a.name) === norm(b.name);
+  const OFT_LIST = {
+    kind: 'festivals', title: 'Festival list', noun: 'festival', nouns: 'festivals',
+    items: () => entries().filter(f => str(f.name).trim()).reduce((out, f) => {
+      if (out.some(x => sameFest(x, f))) return out;
+      const it = { name: f.name, url: f.url, platform: f.platform, usualDeadline: mmdd(f.deadline), fee: hasNum(f.fee) ? Number(f.fee) : undefined,
+        deadlines: tiers(f).map(t => Object.assign({ label: t.label, usual: mmdd(t.date) }, hasNum(t.fee) ? { fee: Number(t.fee) } : {})).filter(t => t.usual),
+        city: f.city, country: f.country, region: f.region, tier: f.tier, premiere: f.premiere, premiereRules: f.premiereRules, usualStart: mmdd(f.startDate), usualNotify: mmdd(f.notifyDate) };
+      for (const k of Object.keys(it)) if (it[k] == null || it[k] === '' || (Array.isArray(it[k]) && !it[k].length)) delete it[k];
+      out.push(it); return out;
+    }, []),
+    label: it => str(it.name) || 'Unnamed festival',
+    detail: it => [it.usualDeadline ? `Usually due ${fmtDate(nextDate(it.usualDeadline)).replace(/,? \d{4}$/, '')}` : 'No usual deadline', hasNum(it.fee) ? `${money(it.fee)} fee` : '', [it.city, it.country].filter(Boolean).join(', ')].filter(Boolean).join(' · '),
+    has: it => entries().some(f => sameFest(f, it)),
+    add: items => {
+      for (const it of items) {
+        const f = { id: newId('festival'), status: 'planned' };
+        for (const k of ['name', 'url', 'platform', 'city', 'country', 'region', 'premiere', 'premiereRules']) if (str(it[k]).trim()) f[k] = str(it[k]).trim();
+        if (Number.isInteger(it.tier)) f.tier = it.tier;
+        if (hasNum(it.fee)) f.fee = Number(it.fee);
+        const due = nextDate(it.usualDeadline); if (due) f.deadline = due;
+        const ts = (Array.isArray(it.deadlines) ? it.deadlines : []).map(t => t && Object.assign({ id: newId('deadline'), label: str(t.label).trim() || 'Deadline', date: nextDate(t.usual) }, hasNum(t.fee) ? { fee: Number(t.fee) } : {})).filter(t => t && t.date);
+        if (ts.length) f.deadlines = ts;
+        for (const [k, u] of [['startDate', 'usualStart'], ['notifyDate', 'usualNotify']]) { const v = nextDate(it[u]); if (v) f[k] = v; }
+        entries().push(f);
+      }
+      changed();
+      return items.length;
+    }
+  };
+  /* oft-shared:reminders begin. Copied from shared/reminders.js by .github/scripts/sync_shared.py; edit it there. */
+  // Reminders shown when you open a tool: what's coming up or overdue. A tool lists them in
+  // OFT_REMINDERS = { records: () => [...], items: () => [{ id, key, text, when?, late? }], open: id => ..., what? },
+  // puts <section id="oftReminders" hidden></section> where they should show, and calls
+  // oftReminders.render() whenever it renders. Each reminder has a key that changes when its
+  // date does; dismissing one keeps its key in the record's dismissedReminders, so a reminder
+  // comes back if the date moves.
+  const oftReminders = (() => {
+    const str = v => (v == null ? '' : String(v));
+    const e = s => str(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+    const R = () => (typeof OFT_REMINDERS !== 'undefined' ? OFT_REMINDERS : null);
+    const rec = id => (R() ? R().records().find(r => r && r.id === id) : null);
+    const dismissed = (r, key) => !!r && Array.isArray(r.dismissedReminders) && r.dismissedReminders.includes(key);
+    function due() {
+      if (!R()) return [];
+      return R().items().filter(i => i && i.id && i.key && !dismissed(rec(i.id), i.key))
+        .sort((a, b) => (b.late ? 1 : 0) - (a.late ? 1 : 0) || str(a.when).localeCompare(str(b.when)));
+    }
+    function dismiss(id, key) {
+      const r = rec(id);
+      if (!r) return;
+      // Only the reminders still showing are kept, so the list doesn't grow forever.
+      const live = new Set(R().items().filter(i => i.id === id).map(i => i.key));
+      r.dismissedReminders = [...new Set([...(Array.isArray(r.dismissedReminders) ? r.dismissedReminders : []).filter(k => live.has(k)), key])];
+      changed();
+    }
+    function render() {
+      const box = document.getElementById('oftReminders');
+      if (!box || !R()) return;
+      const list = due();
+      box.hidden = !list.length;
+      if (!list.length) { box.innerHTML = ''; return; }
+      box.innerHTML = `<div class="oft-rem-head"><h2 id="oftRemHead">Reminders</h2><span class="oft-rem-n">${list.length}</span></div>
+        <ul class="oft-rem-list" aria-labelledby="oftRemHead">${list.map(i => `<li class="${i.late ? 'late' : ''}"><span class="oft-rem-text">${e(i.text)}</span>
+          <span class="oft-rem-acts"><button type="button" class="btn small" data-rem-open="${e(i.id)}">Open</button><button type="button" class="btn small" data-rem-dismiss="${e(i.id)}" data-rem-key="${e(i.key)}" aria-label="Dismiss: ${e(i.text)}">Dismiss</button></span></li>`).join('')}</ul>
+        <p class="oft-rem-note">${e(R().what || 'Reminders show here when you open this tool. Dismiss one and it comes back only if its date changes.')}</p>`;
+    }
+    document.addEventListener('click', ev => {
+      const o = ev.target.closest('[data-rem-open]');
+      if (o) { R().open(o.dataset.remOpen); return; }
+      const d = ev.target.closest('[data-rem-dismiss]');
+      if (d) { const box = document.getElementById('oftReminders'); dismiss(d.dataset.remDismiss, d.dataset.remKey); const next = box && box.querySelector('[data-rem-dismiss]'); if (next) next.focus(); }
+    });
+    const css = document.createElement('style');
+    css.textContent = '#oftReminders { margin: 0 0 16px; padding: 12px 14px; border: 1px solid var(--rule); border-left: 4px solid var(--warn, #9a6700); border-radius: 8px; background: var(--sheet); }\n.oft-rem-head { display: flex; align-items: center; gap: 8px; }\n.oft-rem-head h2 { margin: 0; font-size: 16px; }\n.oft-rem-n { font-size: 13px; color: var(--ink-2); }\n.oft-rem-list { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; }\n.oft-rem-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; font-size: 14px; }\n.oft-rem-list li.late .oft-rem-text { font-weight: 600; }\n.oft-rem-text { flex: 1 1 240px; min-width: 0; overflow-wrap: anywhere; }\n.oft-rem-acts { display: flex; gap: 6px; }\n.oft-rem-note { margin: 8px 0 0; font-size: 13px; color: var(--ink-2); }\n@media print { #oftReminders { display: none !important; } }';
+    document.head.append(css);
+    return { render, due, dismiss };
+  })();
+  /* oft-shared:reminders end */
+  /* oft-shared:lists begin. Copied from shared/lists.js by .github/scripts/sync_shared.py; edit it there. */
+  // Lists to share between projects: funders and their usual deadlines, festivals, and the like.
+  // A list is a small JSON file, { format: "oft-list", formatVersion: 1, kind, title, savedAt, items },
+  // that a team keeps in a shared folder or passes around; nothing is fetched from anywhere.
+  // A tool describes its list in OFT_LIST = { kind, title, noun, nouns, items: () => [...],
+  // label: item => '', detail: item => '', has: item => bool, add: items => number }
+  // and calls oftLists.save() and oftLists.open() from its own buttons.
+  const oftLists = (() => {
+    const str = v => (v == null ? '' : String(v));
+    const e = s => str(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+    const L = () => OFT_LIST;
+    const plural = (n, a, b) => `${n} ${n === 1 ? a : b}`;
+    function save() {
+      const items = L().items();
+      if (!items.length) { toast(`There are no ${L().nouns} to put in a list yet.`); return; }
+      const out = { format: 'oft-list', formatVersion: 1, kind: L().kind, title: `${L().title}${doc.project && doc.project.title ? `, from ${doc.project.title}` : ''}`, savedAt: new Date().toISOString(), items };
+      const name = `${slug()}-${L().kind}-list.json`;
+      download(JSON.stringify(out, null, 2) + '\n', name, 'application/json');
+      toast(`Saved ${plural(items.length, L().noun, L().nouns)} to ${name}. Open it from another project to add them there.`);
+    }
+    function dialog() {
+      let dlg = document.getElementById('oftListDialog');
+      if (dlg) return dlg;
+      dlg = document.createElement('dialog');
+      dlg.className = 'oft-dialog'; dlg.id = 'oftListDialog'; dlg.setAttribute('aria-labelledby', 'oftListTitle');
+      dlg.innerHTML = `<h2 id="oftListTitle"></h2><p id="oftListIntro"></p>
+    <p><button type="button" class="btn small" id="oftListAll">Tick all</button> <button type="button" class="btn small" id="oftListNone">Untick all</button></p>
+    <fieldset class="oft-list-items" id="oftListItems"><legend class="oft-vh">Pick what to add</legend></fieldset>
+    <div class="oft-actions"><button type="button" class="btn" id="oftListCancel">Cancel</button><button type="button" class="btn primary" id="oftListAdd">Add</button></div>`;
+      document.body.append(dlg);
+      const css = document.createElement('style');
+      css.textContent = '.oft-list-items { border: 0; margin: 0 0 12px; padding: 0; min-width: 0; display: grid; gap: 6px; max-height: 50vh; overflow-y: auto; }\n.oft-list-items label { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; }\n.oft-list-items input { margin-top: 3px; }\n.oft-list-items small { display: block; color: var(--ink-2); }\n.oft-vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }';
+      document.head.append(css);
+      dlg.querySelector('#oftListCancel').onclick = () => dlg.close();
+      dlg.querySelector('#oftListAll').onclick = () => dlg.querySelectorAll('#oftListItems input:not(:disabled)').forEach(i => { i.checked = true; });
+      dlg.querySelector('#oftListNone').onclick = () => dlg.querySelectorAll('#oftListItems input').forEach(i => { i.checked = false; });
+      return dlg;
+    }
+    function show(list, fileName) {
+      const items = (Array.isArray(list.items) ? list.items : []).filter(x => x && typeof x === 'object');
+      const dlg = dialog(), $ = q => dlg.querySelector(q);
+      $('#oftListTitle').textContent = `Add from ${list.title || fileName}`;
+      const fresh = items.filter(i => !L().has(i)).length;
+      $('#oftListIntro').textContent = `${plural(items.length, L().noun, L().nouns)} in the list${items.length - fresh ? `, ${items.length - fresh} already in this project` : ''}. Pick the ones to add. Check their dates and details: a shared list is only as current as whoever saved it.`;
+      $('#oftListItems').innerHTML = '<legend class="oft-vh">Pick what to add</legend>' + items.map((it, k) => {
+        const have = L().has(it);
+        return `<label><input type="checkbox" value="${k}"${have ? ' disabled' : ' checked'}><span>${e(L().label(it))}<small>${e(have ? 'Already in this project' : L().detail(it))}</small></span></label>`;
+      }).join('');
+      $('#oftListAdd').onclick = () => {
+        const picked = [...dlg.querySelectorAll('#oftListItems input:checked')].map(i => items[+i.value]);
+        if (!picked.length) { dlg.close(); return; }
+        const n = L().add(picked);
+        dlg.close();
+        changed();
+        toast(`Added ${plural(n, L().noun, L().nouns)} from the list.`);
+      };
+      dlg.showModal();
+    }
+    function open() {
+      const input = document.createElement('input');
+      input.type = 'file'; input.accept = '.json,application/json'; input.hidden = true;
+      document.body.append(input);
+      input.onchange = async () => {
+        const f = input.files[0];
+        input.remove();
+        if (!f) return;
+        let list;
+        try { list = JSON.parse(await f.text()); } catch { toast(`${f.name} isn't a list file this tool can read.`); return; }
+        if (!list || list.format !== 'oft-list') { toast(`${f.name} isn't a shared list. Save one with "Save a list" in this tool.`); return; }
+        if (list.kind !== L().kind) { toast(`${f.name} is a list of ${str(list.kind) || 'something else'}, not ${L().nouns}.`); return; }
+        show(list, f.name);
+      };
+      input.click();
+    }
+    return { save, open, show };
+  })();
+  /* oft-shared:lists end */
   /* oft-shared:tool begin. Copied from shared/tool.js by .github/scripts/sync_shared.py; edit it there. */
   // Shared by every tool: your name, remembering the open file, who has it open,
   // who changed what, merging two copies and spotting conflicted copies.

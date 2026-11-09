@@ -37,6 +37,9 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **Worked out from the project where it can be:** crew deal memos are in hand when every [deal memo](../deal-memos/) is signed, and the fair use letter isn't needed when nothing is marked fair use.
 - **Link each item to its document:** pick agreements and files already in the project, or say where the file is. Mark an item in hand, missing or not needed for this film, with a note.
 - **Add your own items** to any section, such as a distribution agreement.
+- **A distributor's delivery schedule.** **Add a distributor's schedule** takes the list copied from their schedule, one item a line, and adds each as your own document marked with their name, in the section it most likely belongs to. Numbering, bullets and headings are left out, and so is anything already on the list. **Save your items as a list** writes them to a small file for another production, and **Add from a list** reads one back.
+- **One PDF of the documents.** Choose the folder your documents are in, and **Make one PDF** joins every document in hand that's a PDF into one file, in tab order. It says which it couldn't find, which aren't PDFs, and which it couldn't read, such as one locked with a password.
+- **Checks agreements for work-for-hire or assignment language.** In the same folder, it reads each agreement's PDF or Word file and looks for the usual words: a work made for hire, or an assignment of all right, title and interest. What it found shows on the item. It only looks for words; your attorney should read the agreements.
 - **Prints an index** with a tab number for each document and its status, **then a cover sheet for each tab** with the agreement's parties and dates and where the file is. **Exports CSV.** Also exports project data: project details, people, locations, third-party elements, contracts, assets, music cue sheet details or call sheets as separate CSV files.
 
 For anyone who doesn't use the tool, there's a [spreadsheet template](../../templates/chain-of-title-template.csv) with the same columns as the export.
@@ -53,15 +56,12 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-A `chainOfTitle` record with `items`, kept only for what you've changed: each has an `id` and `key` (a built-in item such as `cr-film`, or `contract:`, `person:` or `element:` and an id), and optional `status` (`have`, `missing` or `na`), `contractIds`, `assetIds` and `note`. Your own items add `custom`, `title` and `section`. A file you name is an asset with `type` "chain of title document".
+A `chainOfTitle` record with `items`, kept only for what you've changed: each has an `id` and `key` (a built-in item such as `cr-film`, or `contract:`, `person:` or `element:` and an id), and optional `status` (`have`, `missing` or `na`), `contractIds`, `assetIds` and `note`. Your own items add `custom`, `title` and `section`, and `schedule` when they came from a distributor's delivery schedule. `languageCheck` records the last check of an agreement's file: `date`, `file` and `found` (`work for hire`, `assignment`, or neither). A file you name is an asset with `type` "chain of title document".
 
 It reads `people`, `contracts`, `thirdPartyElements` and `assets`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
-- Delivery schedules from specific distributors
-- Merging the documents into one PDF
-- Checking that agreements contain work-for-hire or assignment language
 
 ## License
 

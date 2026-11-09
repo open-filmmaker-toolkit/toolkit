@@ -161,6 +161,10 @@ dialog form { display: flex; flex-direction: column; height: 100%; max-height: i
 .hint { margin: 0; font-size: 13px; color: var(--ink-3); }
 .field input, .field select, .field textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); }
 .group { display: grid; gap: 8px; padding-top: 10px; border-top: 1px solid var(--rule-soft); }
+.group h3 { margin: 0; font-size: 15px; }
+.rel-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 14px; }
+.rel-list li { display: flex; flex-wrap: wrap; gap: 4px 10px; }
+.rel-list .sub { color: var(--ink-3); }
 .checks { display: grid; gap: 2px; max-height: 260px; overflow-y: auto; padding: 2px; }
 .check { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; align-items: start; padding: 5px 4px; border-radius: 6px; cursor: pointer; }
 .check:hover { background: var(--hover); }
@@ -255,6 +259,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <span class="count" id="count"></span>
         <span class="spacer"></span>
         <button type="button" class="btn primary" id="addBtn">Add stills</button>
+        <button type="button" class="btn" id="folderBtn">Add a folder of stills</button>
         <button type="button" class="btn" id="csvBtn">Export caption sheet</button>
         <button type="button" class="btn" id="printBtn">Print caption sheet</button>
       </div>
@@ -289,6 +294,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     </div>
   </main>
   <input type="file" id="stillInput" accept="image/*" multiple hidden>
+  <input type="file" id="folderInput" webkitdirectory multiple hidden>
 
   <footer class="foot">
     <p>Part of the <a href="../../index.html">Open Filmmaker Toolkit</a>. This page makes no network requests: everything stays on this computer until you save or export it. Uses the same project file as the other toolkit tools.</p>
@@ -310,6 +316,21 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <div class="field"><label for="f-path">Full-resolution file</label><input id="f-path" type="text" autocomplete="off" placeholder="stills/levee-road-full.tif"></div>
       </div>
       <fieldset class="field"><legend>People pictured</legend><div class="checks" id="f-people"></div></fieldset>
+      <div class="group" id="relGroup">
+        <h3 id="relHead">Releases for this still</h3>
+        <p class="hint">A model or property release that covers this photo only, not the film. People with a signed release for the film are already covered.</p>
+        <ul class="rel-list" id="relList" aria-labelledby="relHead"></ul>
+        <div class="two">
+          <div class="field"><label for="r-kind">Kind</label><select id="r-kind"><option value="model release">Model release, for a person</option><option value="property release">Property release, for a building, artwork or the like</option></select></div>
+          <div class="field" id="r-whoField"><label for="r-who">Who</label><select id="r-who"></select></div>
+          <div class="field" id="r-whatField" hidden><label for="r-what">What property</label><input id="r-what" type="text" autocomplete="off" placeholder="The Hammond house"></div>
+        </div>
+        <div class="two">
+          <div class="field"><label for="r-status">Status</label><select id="r-status"><option value="pending">Waiting for signature</option><option value="signed">Signed</option></select></div>
+          <div class="field"><label for="r-date">Signed on</label><input id="r-date" type="date"></div>
+        </div>
+        <div><button type="button" class="btn small" id="relAddBtn">Add the release</button></div>
+      </div>
       <div class="two">
         <div class="field"><label for="f-approval">Approval</label><select id="f-approval"><option value="pending">Waiting for approval</option><option value="approved">Approved</option><option value="rejected">Not approved</option></select></div>
         <div class="field"><label for="f-approvedBy">Approved by</label><input id="f-approvedBy" type="text" autocomplete="off"></div>
@@ -437,7 +458,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const isDay = s => /^\d{4}-\d{2}-\d{2}$/.test(str(s));
   const isRelease = c => /release/i.test(str(c.type));
   // Materials releases cover someone's photos or documents, not appearing on camera or a place.
-  const coversAppearance = c => isRelease(c) && !/material/i.test(str(c.type));
+  const coversAppearance = c => isRelease(c) && !/material|model release|property release/i.test(str(c.type));
   function releaseState(c) {
     if (c.status === 'signed') return isDay(c.expirationDate) && c.expirationDate < today() ? 'expired' : 'signed';
     if (c.status === 'pending' || c.status === 'declined') return c.status;
@@ -466,7 +487,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
           const w = Math.max(1, Math.round(img.naturalWidth * scale)), h = Math.max(1, Math.round(img.naturalHeight * scale));
           const c = document.createElement('canvas'); c.width = w; c.height = h;
           c.getContext('2d').drawImage(img, 0, 0, w, h);
-          resolve({ name: file.name, mimeType: 'image/jpeg', data: c.toDataURL('image/jpeg', 0.85), width: w, height: h });
+          resolve({ name: file.name, mimeType: 'image/jpeg', data: c.toDataURL('image/jpeg', 0.85), width: w, height: h, fullWidth: img.naturalWidth, fullHeight: img.naturalHeight });
         };
         img.src = r.result;
       };
@@ -499,7 +520,17 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const person = id => doc.people.find(p => p.id === id);
   let filter = 'all', editing = null;
   const pictured = a => arr(a.personIds).map(person).filter(Boolean);
-  const problems = a => pictured(a).map(p => ({ p, c: coverage('person', p.id) })).filter(x => x.c.state !== 'signed');
+  // Model and property releases for stills only: contracts that list the stills they cover in stillIds.
+  const STILL_REL = { 'model release': 'Model release', 'property release': 'Property release' };
+  const stillReleases = a => arr(doc.contracts).filter(c => c && STILL_REL[str(c.type).toLowerCase()] && arr(c.stillIds).includes(a.id));
+  function coverFor(a, p) {
+    const c = coverage('person', p.id);
+    if (c.state === 'signed') return c;
+    const m = stillReleases(a).find(r => str(r.type).toLowerCase() === 'model release' && arr(r.personIds).includes(p.id) && releaseState(r) === 'signed');
+    return m ? { state: 'signed', release: m, still: true } : c;
+  }
+  const problems = a => [...pictured(a).map(p => ({ p, c: coverFor(a, p) })).filter(x => x.c.state !== 'signed'),
+    ...stillReleases(a).filter(r => str(r.type).toLowerCase() === 'property release' && releaseState(r) !== 'signed').map(r => ({ p: { id: r.id, name: r.title || 'Property' }, c: { state: releaseState(r) } }))];
   const approval = a => (APPROVAL[a.approval] ? a.approval : 'pending');
 
   function render() {
@@ -518,7 +549,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('rows').innerHTML = shown.map(a => {
       const flags = [];
       if (a.type === 'key art') flags.push('<span class="flag linked">Key art</span>');
-      for (const p of pictured(a)) { const c = coverage('person', p.id); flags.push(`<span class="flag ${c.state === 'signed' ? 'linked' : 'problem'}">${esc(p.name)}: ${esc(COVER_LABEL[c.state])}</span>`); }
+      for (const p of pictured(a)) { const c = coverFor(a, p); flags.push(`<span class="flag ${c.state === 'signed' ? 'linked' : 'problem'}">${esc(p.name)}: ${esc(c.still ? 'Model release signed' : COVER_LABEL[c.state])}</span>`); }
+      for (const r of stillReleases(a).filter(r => str(r.type).toLowerCase() === 'property release')) { const st = releaseState(r); flags.push(`<span class="flag ${st === 'signed' ? 'linked' : 'problem'}">${esc(r.title || 'Property')}: ${esc(st === 'signed' ? 'Property release signed' : COVER_LABEL[st] || 'Release not signed yet')}</span>`); }
       if (!str(a.photoCredit).trim()) flags.push('<span class="flag changed">No photo credit</span>');
       if (a.relativePath) flags.push(`<span class="flag linked">${esc(a.relativePath)}</span>`);
       const ap = approval(a);
@@ -541,6 +573,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     for (const [k, x] of Object.entries(v)) $(k).value = x == null ? '' : String(x);
     const on = arr(editing.personIds);
     $('f-people').innerHTML = doc.people.map(p => `<label><input type="checkbox" value="${esc(p.id)}"${on.includes(p.id) ? ' checked' : ''}> ${esc(p.name)}</label>`).join('') || '<p class="hint">No people in the project yet.</p>';
+    pendingRel = [];
+    $('r-who').innerHTML = doc.people.filter(p => p && p.id).map(p => `<option value="${esc(p.id)}">${esc(p.name || 'Unnamed')}</option>`).join('') || '<option value="">No people in the project yet</option>';
+    $('r-kind').value = 'model release'; $('r-status').value = 'pending'; $('r-date').value = ''; $('r-what').value = '';
+    showRelKind(); renderRel();
     $('editorTitle').textContent = editing.caption || editing.name || 'Still';
     $('editor').showModal();
     $('f-caption').focus();
@@ -552,6 +588,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     a.type = $('f-kind').value;
     const ids = [...$('f-people').querySelectorAll('input:checked')].map(i => i.value);
     if (ids.length) a.personIds = ids; else delete a.personIds;
+    if (pendingRel.length) doc.contracts.push(...pendingRel);
+    pendingRel = [];
     $('editor').close();
     changed();
   }
@@ -564,10 +602,43 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     toast('Removed the still');
     changed();
   }
+  let pendingRel = [];
+  const showRelKind = () => { const m = $('r-kind').value === 'model release'; $('r-whoField').hidden = !m; $('r-whatField').hidden = m; };
+  function renderRel() {
+    const list = [...stillReleases(editing), ...pendingRel];
+    $('relList').innerHTML = list.map(r => `<li><span>${esc(r.title || STILL_REL[str(r.type).toLowerCase()])}</span><span class="sub">${esc(r.status === 'signed' ? `Signed${r.signedDate ? ` ${fmtDate(r.signedDate)}` : ''}` : 'Waiting for signature')}</span></li>`).join('') || '<li class="empty-line">None yet.</li>';
+  }
+  function addRelease() {
+    const kind = $('r-kind').value, model = kind === 'model release';
+    const p = model && person($('r-who').value), what = $('r-what').value.trim();
+    if (model && !p) { $('r-who').setCustomValidity('Add the person to the project first.'); $('r-who').reportValidity(); return; }
+    if (!model && !what) { $('r-what').setCustomValidity('Say what the property is.'); $('r-what').reportValidity(); return; }
+    const r = { id: newId('contract'), type: kind, title: model ? `Model release: ${p.name}` : `Property release: ${what}`, status: $('r-status').value, stillIds: [editing.id] };
+    if (model) r.personIds = [p.id];
+    if ($('r-date').value) r.signedDate = $('r-date').value;
+    pendingRel.push(r);
+    // Ticks the person as pictured, since the release is for them.
+    if (model) { const box = $('f-people').querySelector(`input[value="${CSS.escape(p.id)}"]`); if (box) box.checked = true; }
+    $('r-what').value = ''; $('r-date').value = ''; $('r-status').value = 'pending';
+    renderRel();
+  }
+  // A folder of stills: each image gets a small copy for the project file and keeps its path to the full-size file.
+  async function addFolder(files) {
+    const imgs = files.filter(f => /^image\//.test(f.type) || /\.(jpe?g|png|gif|webp|tiff?|heic)$/i.test(f.name));
+    const have = new Set(entries().map(a => str(a.relativePath)));
+    let added = 0, skipped = 0, bad = 0;
+    for (const f of imgs) {
+      const path = f.webkitRelativePath || f.name;
+      if (have.has(path)) { skipped++; continue; }
+      try { const img = await loadImage(f); doc.assets.push(Object.assign({ id: newId('still'), type: 'still', approval: 'pending' }, img, { name: f.name, relativePath: path, fullWidth: img.fullWidth, fullHeight: img.fullHeight })); added++; } catch (e) { bad++; }
+    }
+    if (added) changed();
+    toast([added ? `Added ${added} still${added === 1 ? '' : 's'} with their full-size files` : 'No new stills in that folder', skipped && `${skipped} already in the library`, bad && `${bad} couldn't be read`].filter(Boolean).join('. ') + '.', !added && !!bad);
+  }
   async function addStills(files) {
     let bad = 0, added = null;
     for (const f of files) {
-      try { const img = await loadImage(f); const a = Object.assign({ id: newId('still'), type: 'still', approval: 'pending' }, img); doc.assets.push(a); added = added || a; } catch (e) { bad++; }
+      try { const img = await loadImage(f); delete img.fullWidth; delete img.fullHeight; const a = Object.assign({ id: newId('still'), type: 'still', approval: 'pending' }, img); doc.assets.push(a); added = added || a; } catch (e) { bad++; }
     }
     if (bad) toast(`${bad} file${bad === 1 ? '' : 's'} couldn't be read as an image`, true);
     if (added) { changed(); openEditor(added.id); }
@@ -576,7 +647,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const CSV_HEAD = ['File', 'Kind', 'Caption', 'Photo credit', 'Taken on', 'People pictured', 'Releases', 'Approval', 'Approved by', 'Full-resolution file', 'Notes'];
   function exportCsv() {
     exportRows(CSV_HEAD, entries().map(a => [a.name, a.type === 'key art' ? 'Key art' : 'Production still', a.caption, a.photoCredit, a.date, pictured(a).map(p => p.name).join('; '),
-      pictured(a).map(p => `${p.name}: ${COVER_LABEL[coverage('person', p.id).state]}`).join('; '), APPROVAL[approval(a)], a.approvedBy, a.relativePath, a.notes]), 'caption-sheet', 'still');
+      [...pictured(a).map(p => { const c = coverFor(a, p); return `${p.name}: ${c.still ? 'Model release signed' : COVER_LABEL[c.state]}`; }), ...stillReleases(a).filter(r => str(r.type).toLowerCase() === 'property release').map(r => `${r.title}: ${releaseState(r) === 'signed' ? 'Signed' : 'Not signed yet'}`)].join('; '), APPROVAL[approval(a)], a.approvedBy, a.relativePath, a.notes]), 'caption-sheet', 'still');
   }
   function renderReport() {
     const all = entries().filter(a => approval(a) !== 'rejected');
@@ -813,6 +884,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('emptyOpenBtn').onclick = openFile;
     $('csvBtn').onclick = exportCsv;
     $('removeBtn').onclick = removeStill;
+    $('folderBtn').onclick = () => $('folderInput').click();
+    $('folderInput').addEventListener('change', async () => { const files = [...$('folderInput').files]; $('folderInput').value = ''; if (files.length) await addFolder(files); });
+    $('r-kind').addEventListener('change', showRelKind);
+    $('relAddBtn').onclick = addRelease;
+    for (const id of ['r-who', 'r-what']) $(id).addEventListener('input', () => $(id).setCustomValidity(''));
     $('stillInput').addEventListener('change', async () => { const files = [...$('stillInput').files]; $('stillInput').value = ''; if (files.length) await addStills(files); });
     $('filters').addEventListener('click', ev => { const b = ev.target.closest('[data-f]'); if (b) { filter = b.dataset.f; render(); } });
     $('rows').addEventListener('click', ev => { const b = ev.target.closest('[data-edit]'); if (b) openEditor(b.dataset.edit); });

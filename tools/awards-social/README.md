@@ -33,6 +33,8 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 ## What it does
 
 - **Awards** with category, eligibility rules and window, entry deadline and fee, voting, nominations and ceremony dates, and status. Each award's window is checked against the film's first festival screening or release date.
+- **Rules it can check.** Set an award's running time limits, the theatrical run it needs and in which cities, whether a festival win qualifies instead, and whether it rules out TV or streaming first. Each award then says whether the film meets them, from the running time in the film details, theatrical runs in [bookings](../bookings/), festival wins in the [festival submission tracker](../festival-submissions/), and signed TV and streaming deals. The toolkit doesn't come with each award's rules built in, because they change every year: copy them from the award's own rules.
+- **Shares award lists.** **Save an award list** writes your awards, their rules, usual window and deadline and fee to a small file, without your status or notes. **Add from a list** opens one and adds the awards you pick with their next dates.
 - **Social posts** with a date, where they go, the text, a link and status: idea, draft, scheduled or posted.
 - **One calendar,** by month: award dates, posts, accepted and pending festival starts and screenings, and the release date. Filter by kind.
 - **Suggested posts** for each accepted festival (four weeks before, a week before, the day and a thank-you) and the release, added as drafts in one click.
@@ -49,14 +51,13 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-An `awards` collection (`name`, `category`, `rules`, `windowStart`, `windowEnd`, `deadline`, `fee`, `status`, `votingStart`, `nominationsDate`, `ceremonyDate`, `notes`) and a `socialPosts` collection (`date`, `platform`, `status`, `text`, `link`, and `eventKey` for suggested posts).
+An `awards` collection (`name`, `category`, `rules`, `windowStart`, `windowEnd`, `deadline`, `fee`, `status`, `votingStart`, `nominationsDate`, `ceremonyDate`, `notes`, and `rulesCheck`: `minMinutes`, `maxMinutes`, `runDays`, `runCities`, `festivalWin` and `noTv`) and a `socialPosts` collection (`date`, `platform`, `status`, `text`, `link`, and `eventKey` for suggested posts).
 
 It reads `festivals` and the project's `releaseDate`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
 - Posting to social platforms (the toolkit never connects to them)
-- Each award's full rules built in
 - A month grid view
 
 ## License

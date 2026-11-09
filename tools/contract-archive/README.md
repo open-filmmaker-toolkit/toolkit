@@ -36,6 +36,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **A tab number and a suggested file name** for each, by folder and date.
 - **Signed copies:** link a file already in the project or say where it is. Agreements signed without a copy are flagged; filter by missing copies or not signed yet.
 - **Where the archive is kept** and when you last checked it, with a note for each agreement.
+- **How long to keep each kind of agreement.** Each agreement shows a keep-until date, counted from when it ends, or from when it was signed if it has no end date. Releases, licenses and distribution deals are kept for good to start with, and crew agreements, insurance, permits and anything else for seven years. Change any of them, and show only what's past its date.
 - **Exports the index as CSV** and **a suggested folder layout as a text file,** and **prints the index.**
 
 For anyone who doesn't use the tool, there's a [spreadsheet template](../../templates/contract-archive-template.csv) with the same columns as the export.
@@ -50,14 +51,13 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-A `contractArchive` record: `location`, `checkedDate` and `notes` by contract id. A signed copy you name is an asset with `type` "release scan" or "signed contract" and a `relativePath`, added to the contract's `assetIds`.
+A `contractArchive` record: `location`, `checkedDate`, `notes` by contract id, and `retention`, the years to keep each folder's agreements when you change the suggestion. A signed copy you name is an asset with `type` "release scan" or "signed contract" and a `relativePath`, added to the contract's `assetIds`.
 
 It reads `contracts`, `assets`, `people` and `locations`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
 - Copying the files into the folders (the toolkit never touches files on your computer)
-- Retention dates for each kind of agreement
 - Checking a file is still where you said
 
 ## License

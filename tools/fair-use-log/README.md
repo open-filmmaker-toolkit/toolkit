@@ -33,6 +33,9 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 ## What it does
 
 - **Reads the [clearance log](../clearance-log/).** Every element marked fair use there shows up here, with its source, rights holder, timecodes, length and how it's used. Change those details in the clearance log.
+- **The kind of use,** from the four the [Documentary Filmmakers' Statement of Best Practices in Fair Use](https://cmsimpact.org/resource/documentarians-fair-use-and-best-practices) describes: critique of the work itself, quotation to illustrate a point, material caught while filming something else, and historical sequences. Each comes with a short note on what the statement says to watch for, in our words, and a link to the statement.
+- **Each place it's used.** When an element appears more than once, give each use its own timecodes; the lengths add up. Uses are shared with the clearance log, whose edit list import fills them in.
+- **Marks elements fair use** from the list of elements not cleared another way, here or in the clearance log.
 - **The four factors, with the questions to answer for each:** the purpose and character of the use, the nature of the original work, how much is used and why, and the effect on the market for the original. Add how you got the material and how it's credited.
 - **Where the film will be shown.** Fair use is a US doctrine. Other countries have narrower exceptions, such as fair dealing in Canada, the UK and Australia, so when the film will be shown outside the US the tool says so and keeps a note on each country.
 - **The attorney's review:** a memo status (draft, ready for the attorney, reviewed), the attorney, when they reviewed it and what they said.
@@ -55,15 +58,13 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-It adds `fairUse` to elements in `thirdPartyElements` marked fair use, with optional `purpose`, `nature`, `amount`, `market`, `sourced`, `where` (`us`, `us-plus` or `outside`), `countries`, `otherCountries`, `status` (`draft`, `ready` or `reviewed`), `attorney`, `reviewedDate` and `advice`.
+It adds `fairUse` to elements in `thirdPartyElements` marked fair use, with optional `purpose`, `nature`, `amount`, `market`, `sourced`, `situation` (`critique`, `quotation`, `incidental`, `historical` or `other`), `where` (`us`, `us-plus` or `outside`), `countries`, `otherCountries`, `status` (`draft`, `ready` or `reviewed`), `attorney`, `reviewedDate` and `advice`.
 
-Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
+It can change an element's `status` to `fair-use`, and its `uses` (each with `tcIn` and `tcOut`), with `tcIn` and `tcOut` following the first use. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
-- Linking to the documentary fair use best practices statements for your kind of use
-- Clip-by-clip timecodes when one element is used in several places
-- Marking an element fair use from here; do it in the clearance log
+- Best practices statements for other fields, such as the ones for poetry or online video
 
 ## License
 
