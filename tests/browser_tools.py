@@ -2844,7 +2844,7 @@ def test_festivals(browser, fake):
         pg.click('#csvBtn')
     rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
     nl = next(r for r in rows if r[0] == 'Northern Light Film Festival')
-    check(rows[0] == ['Festival', 'Status', 'Deadline', 'Platform', 'Fee', 'Waiver code', 'Submitted', 'Screenings', 'Laurel', 'Screening fee', 'Screening fee paid', 'Travel covered', 'Travel cost', 'Link', 'Notes'] and len(rows) == 7
+    check(rows[0] == ['Festival', 'Status', 'Deadline', 'Platform', 'Fee', 'Waiver code', 'Submitted', 'Screenings', 'Laurel', 'Screening fee', 'Screening fee paid', 'Travel covered', 'Travel cost', 'Link', 'Notes', 'Notification date', 'Festival starts', 'Festival ends', 'City', 'Country'] and len(rows) == 7
           and nl[8] == 'Winner: Audience Award' and nl[9] == '500' and nl[10] == 'No' and nl[12] == '400'
           and nl[1] == 'Accepted' and nl[4] == '45' and nl[7] == '2026-12-05 7:30 pm Main Hall (fictional)' and next(r for r in rows if r[0] == 'Test Fest')[6] == '2026-11-01'
           and next(r for r in rows if r[0] == 'Riverbend Documentary Festival')[5] == 'RIVER-WAIVE', 'CSV lists every festival with fees, waiver codes and screenings')

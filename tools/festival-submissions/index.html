@@ -638,10 +638,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   }
 
   // ---------- Exports and print ----------
-  const CSV_HEAD = ['Festival', 'Status', 'Deadline', 'Platform', 'Fee', 'Waiver code', 'Submitted', 'Screenings', 'Laurel', 'Screening fee', 'Screening fee paid', 'Travel covered', 'Travel cost', 'Link', 'Notes'];
+  const CSV_HEAD = ['Festival', 'Status', 'Deadline', 'Platform', 'Fee', 'Waiver code', 'Submitted', 'Screenings', 'Laurel', 'Screening fee', 'Screening fee paid', 'Travel covered', 'Travel cost', 'Link', 'Notes', 'Notification date', 'Festival starts', 'Festival ends', 'City', 'Country'];
   function exportCsv() {
     const rows = sorted(entries()).map(f => [f.name, statusLabel(f.status), f.deadline, f.platform, hasFee(f) ? f.fee : '', f.waiverCode, f.submittedOn,
-      sortedScreenings(f).map(s => [s.date, s.time, s.venue, s.note && `(${s.note})`].filter(Boolean).join(' ')).join('; '), laurelText(f), hasNum(f.screeningFee) ? Number(f.screeningFee) : '', hasNum(f.screeningFee) ? (f.screeningFeePaid ? 'Yes' : 'No') : '', f.travelSupport, hasNum(f.travelCost) ? Number(f.travelCost) : '', f.url, f.notes]);
+      sortedScreenings(f).map(s => [s.date, s.time, s.venue, s.note && `(${s.note})`].filter(Boolean).join(' ')).join('; '), laurelText(f), hasNum(f.screeningFee) ? Number(f.screeningFee) : '', hasNum(f.screeningFee) ? (f.screeningFeePaid ? 'Yes' : 'No') : '', f.travelSupport, hasNum(f.travelCost) ? Number(f.travelCost) : '', f.url, f.notes, f.notifyDate, f.startDate, f.endDate, f.city, f.country]);
     const csv = '\ufeff' + [CSV_HEAD, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
     const name = `${slug()}-festival-submissions.csv`;
     download(csv, name, 'text/csv;charset=utf-8');
