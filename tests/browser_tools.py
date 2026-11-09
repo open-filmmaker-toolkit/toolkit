@@ -1483,6 +1483,45 @@ def test_versions(browser, fake):
     ctx.close()
 
 
+def test_first_run(browser, fake):
+    # The guided first run on the home page: two questions, tools to start with, a project file, and gone once dismissed.
+    ctx = browser.new_context(accept_downloads=True, viewport={'width': 375, 'height': 800})
+    pg = ctx.new_page()
+    errs = []
+    pg.on('pageerror', lambda e: errs.append(str(e)))
+    pg.goto('file://%s/index.html' % root)
+    check(pg.is_visible('#firstRun'), 'the first run shows on a first visit')
+    pg.check('input[name=frKind][value=fiction]'); pg.check('input[name=frStage][value=prep]')
+    pg.click('#firstRunForm button[type=submit]')
+    links = pg.locator('#firstRunList a')
+    check(links.count() == 5 and links.first.get_attribute('href') == 'tools/script-breakdown/index.html' and links.first.inner_text() == 'Script breakdown'
+          and pg.evaluate('document.activeElement.textContent') == 'Script breakdown', 'suggests five tools to start with, and moves focus to them')
+    check(pg.evaluate('document.documentElement.scrollWidth') <= 375, 'fits at phone width')
+    pg.fill('#firstRunTitleInput', 'Night Harbor')
+    with pg.expect_download() as d:
+        pg.click('#firstRunStart')
+    started = json.loads(open(d.value.path(), encoding='utf-8').read())
+    check(d.value.suggested_filename == 'night-harbor.oft.json' and started['format'] == 'open-filmmaker-toolkit/project' and started['formatVersion'] == 1 and started['project']['title'] == 'Night Harbor',
+          'starts a project file with the title')
+    check('Script breakdown' in pg.inner_text('#firstRunSaved'), 'says where to open it')
+    pg.reload()
+    check(pg.is_hidden('#firstRun'), 'not shown again after starting a project')
+    pg.click('#firstRunShow')
+    check(pg.is_visible('#firstRun'), 'can be brought back')
+    pg.click('#firstRunSkip')
+    pg.reload()
+    check(pg.is_hidden('#firstRun'), 'stays dismissed')
+    ctx.close()
+    ctx = browser.new_context()
+    pg = ctx.new_page()
+    pg.goto('file://%s/index.html' % root)
+    pg.set_input_files('#projectInput', files=[{'name': 'p.oft.json', 'mimeType': 'application/json', 'buffer': sample.encode()}])
+    pg.wait_for_timeout(300)
+    check(pg.is_hidden('#firstRun'), 'opening a project puts the first run away')
+    ctx.close()
+    check(not errs, 'no page errors %s' % errs)
+
+
 def test_offline(browser, fake):
     # Installed from the web: the service worker keeps every page, and the toolkit opens with no connection.
     import functools, http.server, socketserver, threading
@@ -5337,6 +5376,7 @@ def main():
         test_hub(browser, fake)
         test_versions(browser, fake)
         test_offline(browser, fake)
+        test_first_run(browser, fake)
         print('== location-scout / scouts, photos and releases')
         test_location_scout(browser, fake)
         print('== deal-memos / calendar, budget, signed copies and print')

@@ -110,6 +110,19 @@ footer p { margin: 0 0 8px; max-width: 80ch; }
 }
 @media print { .finder, .bar nav { display: none; } }
 .open-box { padding: 12px 14px; border-bottom: 1px solid var(--rule); }
+.first-run { margin: 0 0 24px; border: 1px solid var(--ink); background: var(--sheet); }
+.first-run h2 { margin: 0; padding: 6px 12px; background: var(--tape); color: var(--tape-ink); font: 600 13px/1.5 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; }
+.first-run .fr-body { padding: 12px 14px; display: grid; gap: 12px; }
+.first-run fieldset { margin: 0; padding: 0; border: 0; min-width: 0; }
+.first-run legend { padding: 0; margin-bottom: 6px; font-weight: 600; }
+.first-run .opts { display: flex; flex-wrap: wrap; gap: 6px 16px; }
+.first-run .opts label { display: inline-flex; gap: 6px; align-items: center; font-size: 15px; cursor: pointer; }
+.first-run .opts input { width: 18px; height: 18px; margin: 0; }
+.first-run .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.first-run ol.picks { margin: 0; padding-left: 22px; display: grid; gap: 6px; }
+.first-run ol.picks span { display: block; font-size: 14px; color: var(--ink-2); }
+.first-run .field { display: grid; gap: 4px; max-width: 420px; }
+.first-run .field input { padding: 8px 10px; border: 1px solid var(--rule); border-radius: 3px; background: var(--paper); color: var(--ink); font: inherit; }
 .open-box p { margin: 0 0 8px; font-size: 15px; color: var(--ink); }
 .open-box .row { display: flex; flex-wrap: wrap; gap: 8px; }
 .open-box .hint, .open-box .reopen { font-size: 14px; color: var(--ink-2); }
@@ -196,8 +209,34 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
           <li>For your own film, choose <b>New project</b> and save the file.</li>
         </ol>
         <p class="dl">Working with other people? Read <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/docs/sharing-a-project.md">working on a shared file</a>.</p>
-        <p class="dl">To work offline, <a href="https://github.com/open-filmmaker-toolkit/toolkit/archive/refs/heads/main.zip">download the toolkit</a> and open <code>index.html</code>.</p>
+        <p class="dl">To work offline, <a href="docs/offline.md">install the toolkit as an app</a>, or <a href="https://github.com/open-filmmaker-toolkit/toolkit/archive/refs/heads/main.zip">download it</a> and open <code>index.html</code>.</p>
+        <p class="dl"><button type="button" class="link-btn" id="firstRunShow">Not sure where to begin? Answer two questions.</button></p>
       </section>
+    </section>
+
+    <section class="first-run" id="firstRun" aria-labelledby="firstRunTitle" hidden>
+      <h2 id="firstRunTitle">New here? Find where to start</h2>
+      <form class="fr-body" id="firstRunForm">
+        <fieldset><legend>What are you making?</legend><div class="opts">
+          <label><input type="radio" name="frKind" value="doc" checked> A documentary</label>
+          <label><input type="radio" name="frKind" value="fiction"> A scripted short or feature</label>
+        </div></fieldset>
+        <fieldset><legend>Where are you in it?</legend><div class="opts">
+          <label><input type="radio" name="frStage" value="develop" checked> Developing and raising money</label>
+          <label><input type="radio" name="frStage" value="prep"> Getting ready to shoot</label>
+          <label><input type="radio" name="frStage" value="shoot"> Shooting</label>
+          <label><input type="radio" name="frStage" value="post"> Editing and clearing</label>
+          <label><input type="radio" name="frStage" value="launch"> Festivals, release and outreach</label>
+        </div></fieldset>
+        <div class="row"><button type="submit" class="btn primary">Show me where to start</button><button type="button" class="btn" id="firstRunSkip">No thanks</button></div>
+        <div id="firstRunPicks" hidden>
+          <p><b>Start with these.</b> They share one project file, so what you enter in one shows up in the others.</p>
+          <ol class="picks" id="firstRunList"></ol>
+          <div class="field"><label for="firstRunTitleInput">Your film's title</label><input id="firstRunTitleInput" type="text" placeholder="A working title is fine" autocomplete="off"></div>
+          <p class="row"><button type="button" class="btn primary" id="firstRunStart">Start a project file</button><button type="button" class="btn" id="firstRunDone">Done</button></p>
+          <p class="hint" id="firstRunSaved" role="status"></p>
+        </div>
+      </form>
     </section>
 
     <section class="dash" id="dashboard" aria-labelledby="dashTitle" hidden></section>
@@ -323,6 +362,61 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     installPrompt = null;
     document.getElementById('installBtn').hidden = true;
   });
+  // A guided first run: two questions, then the five or so tools to start with, and a project file to start from.
+  // It shows once; dismissing it, or opening a project, puts it away for good. "Not sure where to begin?" brings it back.
+  (() => {
+    const FR_KEY = 'oft-first-run-done';
+    const PICKS = {
+      doc: {
+        develop: [['treatment-builder', 'Write the logline, synopsis and treatment'], ['comps-tracker', 'Find films like yours and what they did'], ['pitch-deck', 'Turn the treatment into a deck'], ['funder-crm', 'Keep track of the funders you talk to'], ['grant-calendar', 'Never miss a grant deadline']],
+        prep: [['budget', 'Build the budget'], ['subject-tracker', 'Keep track of the people you might film'], ['release-tracker', 'Get the releases you need'], ['shooting-calendar', 'Plan the shoot days'], ['call-sheet', 'Send the crew where to be and when']],
+        shoot: [['call-sheet', 'Make each day\'s call sheet'], ['release-tracker', 'Log releases as you get them'], ['field-journal', 'Write down what happened each day'], ['camera-sound-reports', 'Log each card and roll'], ['expense-log', 'Keep every receipt']],
+        post: [['footage-log', 'Log and tag the footage'], ['paper-edit', 'Build scenes from the transcripts'], ['clearance-log', 'Clear every third-party element'], ['music-cue-sheet', 'Make the music cue sheet'], ['credits-builder', 'Build the credits from the project']],
+        launch: [['festival-submissions', 'Track deadlines, fees and results'], ['festival-strategy', 'Plan the premiere and the festival run'], ['press-list', 'Keep the press list'], ['screening-kit', 'Put together a screening kit'], ['impact-report', 'Report what the film changed']],
+      },
+      fiction: {
+        develop: [['treatment-builder', 'Write the logline, synopsis and treatment'], ['comps-tracker', 'Find films like yours and what they did'], ['pitch-deck', 'Turn the treatment into a deck'], ['finance-plan', 'Plan where the money comes from'], ['budget', 'Build the budget']],
+        prep: [['script-breakdown', 'Break down the script'], ['stripboard', 'Put the scenes in shooting order'], ['day-out-of-days', 'See who works which days'], ['budget', 'Build the budget'], ['deal-memos', 'Write up the crew and cast deals']],
+        shoot: [['call-sheet', 'Make each day\'s call sheet'], ['sides', 'Print the day\'s pages'], ['daily-production-report', 'Report each day'], ['camera-sound-reports', 'Log each card and roll'], ['expense-log', 'Keep every receipt']],
+        post: [['cut-tracker', 'Keep track of each cut and its notes'], ['clearance-log', 'Clear every third-party element'], ['music-cue-sheet', 'Make the music cue sheet'], ['credits-builder', 'Build the credits from the project'], ['qc-tracker', 'Track the fixes QC asks for']],
+        launch: [['festival-submissions', 'Track deadlines, fees and results'], ['festival-strategy', 'Plan the premiere and the festival run'], ['press-notes', 'Write the press notes'], ['deliverables', 'Track what each distributor needs'], ['revenue-tracker', 'Track what the film earns']],
+      },
+    };
+    const $id = id => document.getElementById(id);
+    const toolHref = slug => ['tools', slug, 'index.html'].join('/');
+    const store = { get: () => { try { return localStorage.getItem(FR_KEY); } catch { return '1'; } }, set: () => { try { localStorage.setItem(FR_KEY, '1'); } catch { /* storage off */ } } };
+    const box = $id('firstRun');
+    const nameOf = slug => { const a = document.querySelector(`a[href="${toolHref(slug)}"]`); return a ? a.textContent.trim() : slug.replace(/-/g, ' '); };
+    const picked = n => (document.querySelector(`input[name=${n}]:checked`) || {}).value;
+    const hide = () => { store.set(); box.hidden = true; };
+    const show = () => { box.hidden = false; $id('firstRunPicks').hidden = true; $id('firstRunSaved').textContent = ''; box.scrollIntoView({ block: 'start' }); box.querySelector('input').focus(); };
+    if (!store.get() && $id('dashboard').hidden) box.hidden = false;
+    $id('firstRunShow').addEventListener('click', show);
+    $id('firstRunSkip').addEventListener('click', hide);
+    $id('firstRunDone').addEventListener('click', hide);
+    $id('firstRunForm').addEventListener('submit', ev => {
+      ev.preventDefault();
+      const list = PICKS[picked('frKind')][picked('frStage')];
+      $id('firstRunList').innerHTML = list.map(([slug, why]) => `<li><a href="${toolHref(slug)}">${nameOf(slug).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c])}</a><span>${why}</span></li>`).join('');
+      $id('firstRunPicks').hidden = false;
+      $id('firstRunList').querySelector('a').focus();
+    });
+    // A new, empty project file with the title, to open in any tool.
+    $id('firstRunStart').addEventListener('click', () => {
+      const title = $id('firstRunTitleInput').value.trim();
+      const project = { format: 'open-filmmaker-toolkit/project', formatVersion: 1, project: { title, company: '', producer: '', currency: 'USD' }, people: [], savedAt: new Date().toISOString(), savedBy: 'home' };
+      const name = `${(title || 'my-film').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'my-film'}.oft.json`;
+      const url = URL.createObjectURL(new Blob([JSON.stringify(project, null, 2) + '\n'], { type: 'application/json' }));
+      const a = document.createElement('a');
+      a.href = url; a.download = name; document.body.append(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      const first = $id('firstRunList').querySelector('a');
+      $id('firstRunSaved').textContent = `Saved ${name} to your downloads. Keep it somewhere safe, then open it in ${first ? first.textContent : 'any tool'} with Open file.`;
+      store.set();
+    });
+    // Opening a project means you've found your way in.
+    new MutationObserver(() => { if (!$id('dashboard').hidden && !box.hidden) hide(); }).observe($id('dashboard'), { attributes: true, attributeFilter: ['hidden'] });
+  })();
   /* oft-shared:project begin. Copied from shared/project.js by .github/scripts/sync_shared.py; edit it there. */
   // Shared by the home page and the tools: what needs you across the project,
   // every date in it as one calendar file, and read-only summaries to share.
