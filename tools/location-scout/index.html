@@ -137,6 +137,23 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .photo img { display: block; width: 100%; aspect-ratio: 3 / 2; object-fit: cover; }
 .photo input { width: 100%; border: 0; border-top: 1px solid var(--rule-soft); padding: 6px 8px; font-size: 13px; background: var(--sheet); }
 .photo .icon-btn { position: absolute; top: 4px; right: 4px; background: var(--sheet); border-color: var(--rule); }
+.photo .path { display: block; padding: 3px 8px 0; font-size: 11.5px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.photo-acts { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+.photo-acts .folder { display: inline-flex; gap: 6px; align-items: center; font-size: 13.5px; }
+.photo-acts .folder input { width: 160px; padding: 5px 8px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); color: var(--ink); font: inherit; }
+.grp-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+.grp-head h3 { margin: 0; }
+.ck-list { border: 0; margin: 0 0 12px; padding: 0; display: grid; gap: 6px; }
+.ck-list legend { font-weight: 600; margin-bottom: 4px; padding: 0; }
+.ck-list label { display: flex; gap: 8px; align-items: center; font-size: 14px; }
+.ck-row { display: grid; grid-template-columns: minmax(0, 1fr) 30px; gap: 6px; margin-bottom: 6px; }
+.ck-row input { min-width: 0; padding: 6px 8px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); color: var(--ink); font: inherit; }
+.sun-t { width: 100%; border-collapse: collapse; font-size: 14px; }
+.sun-t caption { text-align: left; font-size: 13px; color: var(--ink-2); padding-bottom: 4px; }
+.sun-t th, .sun-t td { text-align: left; padding: 3px 6px 3px 0; border-bottom: 1px solid var(--rule-soft); font-weight: normal; }
+.sun-t thead th { font-size: 12.5px; color: var(--ink-2); }
+.sun-hours { margin: 6px 0 0; font-size: 12.5px; color: var(--ink-2); line-height: 1.5; }
+.sun-none { margin: 0; font-size: 14px; }
 .icon-btn { width: 30px; height: 30px; padding: 0; border: 1px solid transparent; border-radius: 6px; background: none; color: var(--ink-2); cursor: pointer; font-size: 16px; line-height: 1; }
 .icon-btn:hover { border-color: var(--rule); color: var(--ink); }
 @media (max-width: 720px) {
@@ -325,24 +342,37 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         </div>
       </div>
       <div class="group">
-        <h3>What it's like</h3>
-        <div class="field"><label for="f-access">Access and hours</label><textarea id="f-access" rows="2" placeholder="Gate opens 7 am; key from the caretaker; no access Sundays"></textarea></div>
+        <div class="grp-head"><h3>What it's like</h3><button type="button" class="btn small" id="checklistBtn">Change the checklist</button></div>
+        <div class="field" data-item="access"><label for="f-access">Access and hours</label><textarea id="f-access" rows="2" placeholder="Gate opens 7 am; key from the caretaker; no access Sundays"></textarea></div>
         <div class="two">
-          <div class="field"><label for="f-power">Power</label><input id="f-power" type="text" placeholder="Two outlets in the shed, 15 amp" autocomplete="off"></div>
-          <div class="field"><label for="f-sound">Sound</label><input id="f-sound" type="text" placeholder="Highway hum; trains on the hour" autocomplete="off"></div>
-          <div class="field"><label for="f-light">Light</label><input id="f-light" type="text" placeholder="Faces east; best before 10 am" autocomplete="off"></div>
-          <div class="field"><label for="f-parking">Parking and load-in</label><input id="f-parking" type="text" placeholder="Gravel lot for 4 cars, 50 m carry" autocomplete="off"></div>
-          <div class="field"><label for="f-restrooms">Restrooms</label><input id="f-restrooms" type="text" placeholder="At the gas station, 5 minutes" autocomplete="off"></div>
-          <div class="field"><label for="f-signal">Cell signal</label><input id="f-signal" type="text" placeholder="One bar; texts only" autocomplete="off"></div>
+          <div class="field" data-item="power"><label for="f-power">Power</label><input id="f-power" type="text" placeholder="Two outlets in the shed, 15 amp" autocomplete="off"></div>
+          <div class="field" data-item="sound"><label for="f-sound">Sound</label><input id="f-sound" type="text" placeholder="Highway hum; trains on the hour" autocomplete="off"></div>
+          <div class="field" data-item="light"><label for="f-light">Light</label><input id="f-light" type="text" placeholder="Faces east; best before 10 am" autocomplete="off"></div>
+          <div class="field" data-item="parking"><label for="f-parking">Parking and load-in</label><input id="f-parking" type="text" placeholder="Gravel lot for 4 cars, 50 m carry" autocomplete="off"></div>
+          <div class="field" data-item="restrooms"><label for="f-restrooms">Restrooms</label><input id="f-restrooms" type="text" placeholder="At the gas station, 5 minutes" autocomplete="off"></div>
+          <div class="field" data-item="cellSignal"><label for="f-signal">Cell signal</label><input id="f-signal" type="text" placeholder="One bar; texts only" autocomplete="off"></div>
         </div>
-        <div class="field"><label for="f-permits">Permits and permission</label><textarea id="f-permits" rows="2" placeholder="County park permit, 10 working days; the owner signs the location release"></textarea></div>
+        <div class="field" data-item="permits"><label for="f-permits">Permits and permission</label><textarea id="f-permits" rows="2" placeholder="County park permit, 10 working days; the owner signs the location release"></textarea></div>
+        <div id="extraFields"></div>
         <div class="field"><label for="f-notes">Notes</label><textarea id="f-notes" rows="3" placeholder="What makes it right for the film, and what to watch for"></textarea></div>
       </div>
       <div class="group">
+        <h3 id="sunHead">The sun</h3>
+        <p class="hint">Where the sun rises and sets on a day you pick, and how high it is through the day. Type the place's latitude and longitude, from a map app, as decimal degrees.</p>
+        <div class="three">
+          <div class="field"><label for="f-lat">Latitude</label><input id="f-lat" type="number" step="any" min="-90" max="90" placeholder="41.52" inputmode="decimal"></div>
+          <div class="field"><label for="f-lng">Longitude</label><input id="f-lng" type="number" step="any" min="-180" max="180" placeholder="-90.58" inputmode="decimal"></div>
+          <div class="field"><label for="f-sunDate">For the day</label><input id="f-sunDate" type="date"></div>
+        </div>
+        <div class="field"><label for="f-utc">Hours from UTC, if the place is in another time zone</label><input id="f-utc" type="number" step="0.25" min="-12" max="14" placeholder="This computer's time zone" inputmode="decimal"></div>
+        <div class="sun" id="sun" aria-live="polite"></div>
+      </div>
+      <div class="group">
         <h3 id="photoHead">Photos</h3>
-        <p class="hint">Photos are resized and kept in the project file, on your computer. Nothing is uploaded.</p>
+        <p class="hint">Photos are resized and kept in the project file, on your computer. Nothing is uploaded. For a long scout with many photos, link them instead: they stay in the project folder at full size, and the file keeps a small preview of each.</p>
         <div class="photos" id="photos" role="group" aria-labelledby="photoHead"></div>
-        <div><button type="button" class="btn small" id="addPhotoBtn">Add photos</button></div>
+        <div class="photo-acts"><button type="button" class="btn small" id="addPhotoBtn">Add photos</button><button type="button" class="btn small" id="linkPhotoBtn">Link photos in the project folder</button>
+          <label class="folder">Folder <input id="f-folder" type="text" value="scouts/" aria-label="Folder in the project the linked photos are in" autocomplete="off"></label></div>
       </div>
     </div>
     <div class="dlg-foot">
@@ -354,6 +384,18 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   </form>
 </dialog>
 <input type="file" id="photoInput" accept="image/*" multiple hidden>
+<input type="file" id="linkInput" accept="image/*" multiple hidden>
+<dialog class="modal" id="checklistDialog" aria-labelledby="checklistTitle">
+  <form id="checklistForm" method="dialog">
+    <div class="dlg-head"><h2 id="checklistTitle">The scout checklist</h2></div>
+    <div class="dlg-body">
+      <p class="hint">Untick what your crew doesn't ask about, and add what they do. The checklist is the same for every scout in the project. Answers already written stay, even if you untick their item.</p>
+      <fieldset class="ck-list" id="ckBuiltIn"><legend>Built in</legend></fieldset>
+      <fieldset class="ck-list"><legend>Your own</legend><div id="ckExtra"></div><button type="button" class="btn small" id="ckAdd">Add an item</button></fieldset>
+    </div>
+    <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn" id="ckCancel">Cancel</button><button type="submit" class="btn primary">Save the checklist</button></div>
+  </form>
+</dialog>
 
 <dialog class="modal" id="projectDialog" aria-labelledby="projectDialogTitle">
   <form id="projectForm" method="dialog">
@@ -486,7 +528,68 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const entries = () => doc.scouts;
   const place = id => doc.locations.find(l => l && l.id === id);
   const asset = id => doc.assets.find(a => a && a.id === id);
-  const photosOf = s => arr(s.photoIds).map(asset).filter(a => a && /^data:image\//.test(str(a.data)));
+  // Photos kept in the file have the image in data; linked ones live in the project folder, with a small preview in thumb.
+  const srcOf = a => (/^data:image\//.test(str(a.data)) ? a.data : /^data:image\//.test(str(a.thumb)) ? a.thumb : '');
+  const photosOf = s => arr(s.photoIds).map(asset).filter(a => a && srcOf(a));
+  // The checklist: built-in items the crew doesn't use can be hidden, and the project can add its own.
+  const CK = () => (doc.scoutChecklist && typeof doc.scoutChecklist === 'object' && !Array.isArray(doc.scoutChecklist) ? doc.scoutChecklist : {});
+  const hiddenItems = () => arr(CK().hidden).map(str);
+  const extraItems = () => arr(CK().extra).filter(x => x && typeof x === 'object' && x.id && str(x.label).trim());
+  const answerOf = (s, id) => str(s.checklist && typeof s.checklist === 'object' ? s.checklist[id] : '');
+  // What a scout shows: built-in items that aren't hidden, or that have an answer, then the project's own items.
+  const itemsFor = s => [...FIELDS.filter(f => !hiddenItems().includes(f[0]) || str(s[f[0]]).trim()).map(f => [f[1], str(s[f[0]])]),
+    ...extraItems().map(x => [x.label, answerOf(s, x.id)]), ...Object.entries(s.checklist && typeof s.checklist === 'object' ? s.checklist : {}).filter(([id, v]) => !extraItems().some(x => x.id === id) && str(v).trim()).map(([, v]) => ['Other', str(v)])];
+
+  // ---------- The sun ----------
+  // Where the sun is, from the NOAA solar calculator's equations. Good to about a minute, which is plenty for planning a shoot.
+  const rad = d => d * Math.PI / 180, deg = r => r * 180 / Math.PI;
+  function sunAt(ms, lat, lng) {
+    const T = (ms / 86400000 + 2440587.5 - 2451545) / 36525;
+    const L0 = (280.46646 + T * (36000.76983 + T * 0.0003032)) % 360;
+    const M = 357.52911 + T * (35999.05029 - 0.0001537 * T);
+    const e = 0.016708634 - T * (0.000042037 + 0.0000001267 * T);
+    const C = Math.sin(rad(M)) * (1.914602 - T * (0.004817 + 0.000014 * T)) + Math.sin(rad(2 * M)) * (0.019993 - 0.000101 * T) + Math.sin(rad(3 * M)) * 0.000289;
+    const om = 125.04 - 1934.136 * T, lambda = L0 + C - 0.00569 - 0.00478 * Math.sin(rad(om));
+    const eps = 23 + (26 + (21.448 - T * (46.815 + T * (0.00059 - T * 0.001813))) / 60) / 60 + 0.00256 * Math.cos(rad(om));
+    const dec = Math.asin(Math.sin(rad(eps)) * Math.sin(rad(lambda)));
+    const y = Math.tan(rad(eps / 2)) ** 2;
+    const eot = 4 * deg(y * Math.sin(2 * rad(L0)) - 2 * e * Math.sin(rad(M)) + 4 * e * y * Math.sin(rad(M)) * Math.cos(2 * rad(L0)) - 0.5 * y * y * Math.sin(4 * rad(L0)) - 1.25 * e * e * Math.sin(2 * rad(M)));
+    const mins = ((ms / 60000) % 1440 + 1440) % 1440;
+    const ha = rad(((mins + eot + 4 * lng) % 1440 + 1440) % 1440 / 4 - 180);
+    const zen = Math.acos(Math.max(-1, Math.min(1, Math.sin(rad(lat)) * Math.sin(dec) + Math.cos(rad(lat)) * Math.cos(dec) * Math.cos(ha))));
+    const az = (deg(Math.atan2(Math.sin(ha), Math.cos(ha) * Math.sin(rad(lat)) - Math.tan(dec) * Math.cos(rad(lat)))) + 180) % 360;
+    return { elevation: 90 - deg(zen), azimuth: az };
+  }
+  const COMPASS = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+  const bearing = az => `${COMPASS[Math.round(az / 22.5) % 16]}, ${Math.round(az)}°`;
+  const hhmm = m => new Date(2000, 0, 1, Math.floor(m / 60), Math.round(m % 60)).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  // The day in the place's own time: sunrise and sunset (the sun's top edge at the horizon), golden hours (below 6°), and the sun's height each hour.
+  function sunDay(iso, lat, lng, offsetHours) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str(iso));
+    if (!m || !isFinite(lat) || !isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return null;
+    const off = isFinite(offsetHours) ? offsetHours : -new Date(+m[1], +m[2] - 1, +m[3], 12).getTimezoneOffset() / 60;
+    const start = Date.UTC(+m[1], +m[2] - 1, +m[3]) - off * 3600000;
+    const at = min => sunAt(start + min * 60000, lat, lng);
+    const pts = []; for (let min = 0; min <= 1440; min++) pts.push(at(min));
+    const cross = (lvl, rising) => { for (let i = 1; i < pts.length; i++) { const a = pts[i - 1].elevation, b = pts[i].elevation; if (rising ? a < lvl && b >= lvl : a >= lvl && b < lvl) return i; } return null; };
+    let noon = 0; for (let i = 1; i < pts.length; i++) if (pts[i].elevation > pts[noon].elevation) noon = i;
+    return { off, rise: cross(-0.833, true), set: cross(-0.833, false), goldEnd: cross(6, true), goldStart: cross(6, false), noon, pts,
+      hours: [...Array(24)].map((_, h) => ({ h, ...pts[h * 60] })).filter(x => x.elevation > -0.833) };
+  }
+  function sunHtml(lat, lng, iso, off) {
+    const d = sunDay(iso, lat, lng, off);
+    if (!d) return '';
+    const row = (label, i) => (i == null ? '' : `<tr><th scope="row">${esc(label)}</th><td>${esc(hhmm(i))}</td><td>${esc(bearing(d.pts[i].azimuth))}</td></tr>`);
+    const tz = `UTC${d.off >= 0 ? '+' : '−'}${Math.abs(d.off)}`;
+    if (d.rise == null && d.set == null) return `<p class="sun-none">${d.pts[d.noon].elevation > 0 ? "The sun doesn't set that day." : "The sun doesn't rise that day."}</p>`;
+    return `<table class="sun-t"><caption>${esc(fmtDate(iso))}, times in ${esc(tz)}</caption><thead><tr><th scope="col"><span class="sr-only">When</span></th><th scope="col">Time</th><th scope="col">Sun to the</th></tr></thead><tbody>
+      ${row('Sunrise', d.rise)}${row('Morning golden hour ends', d.goldEnd)}<tr><th scope="row">Highest, ${esc(Math.round(d.pts[d.noon].elevation))}° up</th><td>${esc(hhmm(d.noon))}</td><td>${esc(bearing(d.pts[d.noon].azimuth))}</td></tr>${row('Evening golden hour starts', d.goldStart)}${row('Sunset', d.set)}</tbody></table>
+      <p class="sun-hours">${d.hours.map(x => `${esc(hhmm(x.h * 60))}: ${esc(Math.round(x.elevation))}° up, ${esc(COMPASS[Math.round(x.azimuth / 22.5) % 16])}`).join(' · ')}</p>`;
+  }
+  const num = v => (str(v).trim() === '' || !isFinite(Number(v)) ? NaN : Number(v));
+  function showSun() {
+    $('sun').innerHTML = sunHtml(num($('f-lat').value), num($('f-lng').value), $('f-sunDate').value || $('f-date').value, num($('f-utc').value)) || '<p class="hint">Type the latitude and longitude to see the sun.</p>';
+  }
   const placeName = s => (place(s.locationId) || {}).name || 'A place no longer in the project';
   const addressOf = l => (l ? [l.address, l.city, l.region].filter(Boolean).join(', ') : '');
   // The location release for a place, from the release tracker: signed beats pending.
@@ -527,7 +630,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       if (str(s.permits).trim()) flags.push(`<span class="flag linked">Permits: ${esc(s.permits.length > 50 ? s.permits.slice(0, 50) + '…' : s.permits)}</span>`);
       if (s.date) flags.push(`<span class="flag linked">Scouted ${esc(fmtDate(s.date))}${s.scoutedBy ? ` by ${esc(s.scoutedBy)}` : ''}</span>`);
       return `<li class="row${s.verdict === 'no' ? ' is-no' : ''}" data-id="${esc(s.id)}">
-        ${ps.length ? `<img class="thumb" src="${ps[0].data}" alt="">` : '<span class="thumb none">No photo</span>'}
+        ${ps.length ? `<img class="thumb" src="${srcOf(ps[0])}" alt="">` : '<span class="thumb none">No photo</span>'}
         <button type="button" class="what" data-edit="${esc(s.id)}"><span class="nm">${esc(placeName(s))}</span>${addressOf(l) ? `<span class="tt">${esc(addressOf(l))}</span>` : ''}</button>
         <span class="vd v-${esc(s.verdict || 'unset')}">${esc(verdictLabel(s.verdict))}</span>
         ${flags.length ? `<div class="flags">${flags.join('')}</div>` : ''}
@@ -543,30 +646,33 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   }
 
   // ---------- Editor ----------
-  function readImage(file) {
+  function readImage(file, linkTo) {
     return new Promise((resolve, reject) => {
       const url = URL.createObjectURL(file);
       const im = new Image();
       im.onload = () => {
-        const scale = Math.min(1, MAX_SIDE / Math.max(im.naturalWidth, im.naturalHeight));
+        const scale = Math.min(1, (linkTo ? 320 : MAX_SIDE) / Math.max(im.naturalWidth, im.naturalHeight));
         const w = Math.max(1, Math.round(im.naturalWidth * scale)), h = Math.max(1, Math.round(im.naturalHeight * scale));
         const c = document.createElement('canvas'); c.width = w; c.height = h;
         const g = c.getContext('2d'); g.fillStyle = '#ffffff'; g.fillRect(0, 0, w, h); g.drawImage(im, 0, 0, w, h);
         URL.revokeObjectURL(url);
-        resolve({ id: newId('asset'), name: file.name, type: 'scout photo', mimeType: 'image/jpeg', width: w, height: h, data: c.toDataURL('image/jpeg', 0.8) });
+        if (linkTo) resolve({ id: newId('asset'), name: file.name, type: 'scout photo', mimeType: file.type || 'image/jpeg', relativePath: linkTo + file.name, width: im.naturalWidth, height: im.naturalHeight, thumb: c.toDataURL('image/jpeg', 0.7) });
+        else resolve({ id: newId('asset'), name: file.name, type: 'scout photo', mimeType: 'image/jpeg', width: w, height: h, data: c.toDataURL('image/jpeg', 0.8) });
       };
       im.onerror = () => { URL.revokeObjectURL(url); reject(new Error(`${file.name} isn't an image this browser can open`)); };
       im.src = url;
     });
   }
-  async function addPhotos(files) {
+  async function addPhotos(files, link) {
     const failed = [];
-    for (const f of files) { try { photos.push({ asset: await readImage(f), isNew: true }); } catch (err) { failed.push(err.message); } }
+    let folder = link ? $('f-folder').value.trim().replace(/\\/g, '/').replace(/^\/+/, '') : '';
+    if (link && folder && !folder.endsWith('/')) folder += '/';
+    for (const f of files) { try { photos.push({ asset: await readImage(f, link ? folder || '' : null), isNew: true }); } catch (err) { failed.push(err.message); } }
     drawPhotos();
     if (failed.length) toast(`Couldn't add ${failed.length} file${failed.length === 1 ? '' : 's'}: ${failed.join('; ')}.`, true);
   }
   function drawPhotos() {
-    $('photos').innerHTML = photos.length ? photos.map((p, i) => `<figure class="photo" data-i="${i}"><img src="${p.asset.data}" alt="${esc(p.asset.caption || p.asset.name)}">
+    $('photos').innerHTML = photos.length ? photos.map((p, i) => `<figure class="photo${p.asset.relativePath && !p.asset.data ? ' linked' : ''}" data-i="${i}"><img src="${srcOf(p.asset)}" alt="${esc(p.asset.caption || p.asset.name)}">${p.asset.relativePath && !p.asset.data ? `<span class="path" title="${esc(p.asset.relativePath)}">${esc(p.asset.relativePath)}</span>` : ''}
       <input type="text" value="${esc(p.asset.caption)}" placeholder="Caption" aria-label="Caption for ${esc(p.asset.name)}" data-caption="${i}">
       <button type="button" class="icon-btn" data-delphoto="${i}" aria-label="Remove ${esc(p.asset.name)}">×</button></figure>`).join('') : '<p class="hint">No photos yet.</p>';
   }
@@ -592,10 +698,18 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     photos = photosOf(editing).map(a => ({ asset: structuredClone(a), isNew: false }));
     drawPhotos();
     showLocation();
+    for (const [id, k] of [['f-lat', 'latitude'], ['f-lng', 'longitude'], ['f-sunDate', 'sunDate'], ['f-utc', 'utcOffset']]) $(id).value = editing[k] == null ? '' : String(editing[k]);
+    showSun();
+    drawChecklist();
     $('editorTitle').textContent = isNew ? 'Add a scout' : `Scout: ${placeName(editing)}`;
     $('deleteBtn').hidden = isNew;
     $('editor').showModal();
     $(locationId ? 'f-date' : 'f-location').focus();
+  }
+  function drawChecklist() {
+    for (const el of $('editor').querySelectorAll('[data-item]')) el.hidden = hiddenItems().includes(el.dataset.item) && !str(editing[el.dataset.item]).trim() && !$(FIELDS.find(f => f[0] === el.dataset.item)[2]).value.trim();
+    const kept = Object.fromEntries([...$('extraFields').querySelectorAll('[data-extra]')].map(i => [i.dataset.extra, i.value]));
+    $('extraFields').innerHTML = extraItems().length ? `<div class="two">${extraItems().map(x => `<div class="field"><label for="x-${esc(x.id)}">${esc(x.label)}</label><input id="x-${esc(x.id)}" data-extra="${esc(x.id)}" type="text" value="${esc(x.id in kept ? kept[x.id] : answerOf(editing, x.id))}" autocomplete="off"></div>`).join('')}</div>` : '';
   }
   function saveEditor() {
     let loc = $('f-location').value;
@@ -613,6 +727,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const text = { date: 'f-date', scoutedBy: 'f-by', verdict: 'f-verdict', contactName: 'f-contact', contactPhone: 'f-phone', contactEmail: 'f-email', notes: 'f-notes' };
     for (const [k, , fid] of FIELDS) text[k] = fid;
     for (const [k, id] of Object.entries(text)) { const v = $(id).value.trim(); if (v) e[k] = v; else delete e[k]; }
+    const ck = Object.assign({}, e.checklist && typeof e.checklist === 'object' ? e.checklist : {});
+    for (const i of $('extraFields').querySelectorAll('[data-extra]')) { if (i.value.trim()) ck[i.dataset.extra] = i.value.trim(); else delete ck[i.dataset.extra]; }
+    if (Object.keys(ck).length) e.checklist = ck; else delete e.checklist;
+    for (const [id, k] of [['f-lat', 'latitude'], ['f-lng', 'longitude'], ['f-utc', 'utcOffset']]) { const v = num($(id).value); if (isFinite(v)) e[k] = v; else delete e[k]; }
+    if ($('f-sunDate').value) e.sunDate = $('f-sunDate').value; else delete e.sunDate;
     // Photos are assets; a removed photo's record goes, since this tool made it and the image lives only in the project file.
     const kept = new Set(photos.map(p => p.asset.id));
     for (const id of arr(e.photoIds)) if (!kept.has(id)) { const a = asset(id); if (a && a.type === 'scout photo') doc.assets = doc.assets.filter(x => x.id !== id); }
@@ -620,7 +739,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       if (p.isNew) doc.assets.push(p.asset);
       else { const i = doc.assets.findIndex(a => a.id === p.asset.id); if (i >= 0) doc.assets[i] = p.asset; }
     }
-    const missing = arr(e.photoIds).filter(id => !asset(id) || !/^data:image\//.test(str(asset(id).data)));
+    const missing = arr(e.photoIds).filter(id => !kept.has(id) && (!asset(id) || !srcOf(asset(id))));
     e.photoIds = [...photos.map(p => p.asset.id), ...missing.filter(id => asset(id))];
     if (!e.photoIds.length) delete e.photoIds;
     if (isNew) entries().push(e); else entries()[entries().findIndex(x => x.id === e.id)] = e;
@@ -636,13 +755,33 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     toast(`Removed the scout of ${placeName(editing)}.`);
   }
 
+  // ---------- The checklist ----------
+  const ckRow = x => `<div class="ck-row" data-id="${esc(x.id)}"><input type="text" value="${esc(x.label)}" placeholder="Drone rules" aria-label="Checklist item" autocomplete="off"><button type="button" class="icon-btn" data-delck aria-label="Remove ${esc(x.label || 'this item')}">×</button></div>`;
+  function openChecklist() {
+    $('ckBuiltIn').innerHTML = '<legend>Built in</legend>' + FIELDS.map(f => `<label><input type="checkbox" value="${esc(f[0])}"${hiddenItems().includes(f[0]) ? '' : ' checked'}> ${esc(f[1])}</label>`).join('');
+    $('ckExtra').innerHTML = extraItems().map(ckRow).join('');
+    $('checklistDialog').showModal();
+  }
+  function saveChecklist() {
+    const hidden = [...$('ckBuiltIn').querySelectorAll('input:not(:checked)')].map(i => i.value);
+    const extra = [...$('ckExtra').querySelectorAll('.ck-row')].map(r => ({ id: r.dataset.id, label: r.querySelector('input').value.trim() })).filter(x => x.label);
+    const c = Object.assign({}, CK());
+    if (hidden.length) c.hidden = hidden; else delete c.hidden;
+    if (extra.length) c.extra = extra; else delete c.extra;
+    if (Object.keys(c).length) doc.scoutChecklist = c; else delete doc.scoutChecklist;
+    $('checklistDialog').close();
+    if ($('editor').open) drawChecklist();
+    changed();
+  }
+
   // ---------- CSV and print ----------
   const CSV_HEAD = ['Location', 'Address', 'Scouted on', 'Scouted by', 'Verdict', 'Contact', 'Phone', 'Email', ...FIELDS.map(f => f[1]), 'Location release', 'Photos', 'Notes'];
   function exportCsv() {
+    const extra = extraItems();
     const rows = sorted(entries()).map(s => { const l = place(s.locationId), r = l && releaseFor(l.id);
       return [placeName(s), addressOf(l), s.date, s.scoutedBy, s.verdict ? verdictLabel(s.verdict) : '', s.contactName, s.contactPhone, s.contactEmail, ...FIELDS.map(f => s[f[0]]),
-        r ? (r.status === 'signed' ? 'Signed' : 'Waiting for signature') : 'None', photosOf(s).length, s.notes]; });
-    const csv = '﻿' + [CSV_HEAD, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
+        r ? (r.status === 'signed' ? 'Signed' : 'Waiting for signature') : 'None', photosOf(s).length, s.notes, ...extra.map(x => answerOf(s, x.id))]; });
+    const csv = '﻿' + [[...CSV_HEAD, ...extra.map(x => x.label)], ...rows].map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
     const name = `${slug()}-location-scouts.csv`;
     download(csv, name, 'text/csv;charset=utf-8');
     toast(`Exported ${rows.length} scout${rows.length === 1 ? '' : 's'} to ${name}`);
@@ -652,12 +791,13 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('report').innerHTML = sorted(entries()).map(s => {
       const l = place(s.locationId), r = l && releaseFor(l.id), ps = photosOf(s);
       const rows = [['Verdict', verdictLabel(s.verdict)], ['Scouted', [s.date && fmtDate(s.date), s.scoutedBy].filter(Boolean).join(', by ')],
-        ['Contact', [s.contactName, s.contactPhone, s.contactEmail].filter(Boolean).join(' · ')], ...FIELDS.map(f => [f[1], s[f[0]]]),
+        ['Contact', [s.contactName, s.contactPhone, s.contactEmail].filter(Boolean).join(' · ')], ...itemsFor(s),
         ['Location release', r ? (r.status === 'signed' ? `Signed${r.signedDate ? ` ${fmtDate(r.signedDate)}` : ''}` : 'Waiting for signature') : 'None yet'], ['Notes', s.notes]].filter(x => str(x[1]).trim());
       return `<section class="r-scout"><h1>${esc(placeName(s))}</h1>
         <p class="r-meta">${esc([addressOf(l), doc.project.title, 'Scout report', `Printed ${fmtDate(today())}`].filter(Boolean).join(' · '))}</p>
         <table class="r-fields"><tbody>${rows.map(([k, v]) => `<tr><th>${esc(k)}</th><td>${esc(v)}</td></tr>`).join('')}</tbody></table>
-        ${ps.length ? `<div class="r-photos">${ps.map(p => `<figure><img src="${p.data}" alt="">${p.caption ? `<figcaption>${esc(p.caption)}</figcaption>` : ''}</figure>`).join('')}</div>` : ''}
+        ${isFinite(s.latitude) && isFinite(s.longitude) && (s.sunDate || s.date) ? `<h2>The sun</h2>${sunHtml(s.latitude, s.longitude, s.sunDate || s.date, isFinite(s.utcOffset) ? s.utcOffset : NaN)}` : ''}
+        ${ps.length ? `<div class="r-photos">${ps.map(p => `<figure><img src="${srcOf(p)}" alt="">${p.caption || (p.relativePath && !p.data) ? `<figcaption>${esc([p.caption, p.relativePath && !p.data && `Full size: ${p.relativePath}`].filter(Boolean).join(' · '))}</figcaption>` : ''}</figure>`).join('')}</div>` : ''}
         <p class="r-note">Contains contact details. Keep printed copies private.</p></section>`;
     }).join('');
   }
@@ -894,6 +1034,14 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('todo').addEventListener('click', ev => { const b = ev.target.closest('[data-scout]'); if (b) openEditor(null, b.dataset.scout); });
     $('f-location').addEventListener('change', () => { $('f-location').setCustomValidity(''); showLocation(); });
     $('addPhotoBtn').onclick = () => $('photoInput').click();
+    $('linkPhotoBtn').onclick = () => $('linkInput').click();
+    $('linkInput').addEventListener('change', async () => { await addPhotos([...$('linkInput').files], true); $('linkInput').value = ''; });
+    for (const id of ['f-lat', 'f-lng', 'f-sunDate', 'f-utc', 'f-date']) $(id).addEventListener('input', showSun);
+    $('checklistBtn').onclick = openChecklist;
+    $('ckCancel').onclick = () => $('checklistDialog').close();
+    $('ckAdd').onclick = () => { $('ckExtra').insertAdjacentHTML('beforeend', ckRow({ id: newId('check'), label: '' })); $('ckExtra').lastElementChild.querySelector('input').focus(); };
+    $('ckExtra').addEventListener('click', ev => { const b = ev.target.closest('[data-delck]'); if (b) b.closest('.ck-row').remove(); });
+    $('checklistForm').addEventListener('submit', ev => { ev.preventDefault(); saveChecklist(); });
     $('photoInput').addEventListener('change', async () => { await addPhotos([...$('photoInput').files]); $('photoInput').value = ''; });
     $('photos').addEventListener('click', ev => { const b = ev.target.closest('[data-delphoto]'); if (b) { photos.splice(Number(b.dataset.delphoto), 1); drawPhotos(); } });
     $('photos').addEventListener('input', ev => { const i = ev.target.dataset.caption; if (i != null) { const v = ev.target.value.trim(); if (v) photos[i].asset.caption = v; else delete photos[i].asset.caption; } });
@@ -1441,7 +1589,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const OFT_SLUG = (window.location.pathname.match(/tools\/([^/]+)\//) || [])[1] || '';
   const OFT_GUIDE = 'https://github.com/open-filmmaker-toolkit/toolkit/blob/main/docs/sharing-a-project.md';
   const OFT_HOURS = 4;
-  const OFT_KEYS = { project: 'Project details', people: 'People', locations: 'Locations', thirdPartyElements: 'Clearance log', contracts: 'Contracts and releases', assets: 'Files and stills', musicCueSheet: 'Music cue sheet', callSheets: 'Call sheets', credits: 'Credits', supers: 'Name supers', subjects: 'Subject tracker', sources: 'Research log', comps: 'Comps tracker', treatment: 'Treatment', pitchDeck: 'Pitch deck', grants: 'Grant calendar', narratives: 'Narrative library', budget: 'Budget', budgetFormats: 'Budget converter', financePlan: 'Finance plan', funders: 'Funder CRM', cashFlow: 'Cash flow', shootDays: 'Shooting calendar', script: 'Script', scenes: 'Script breakdown', characters: 'Cast', dayOutOfDays: 'Day-out-of-days', budgetLinks: 'Budget', shots: 'Shot list', interviews: 'Interviews', journal: 'Field journal', scouts: 'Location scouts', gear: 'Gear list', trips: 'Travel sheet', riskPlans: 'Risk plans', security: 'Security checklist', mediaReports: 'Camera and sound reports', dailyReports: 'Daily reports', expenses: 'Expense log', festivals: 'Festival submissions', screenings: 'Screenings', pressOutlets: 'Press list', partners: 'Partner CRM', discussionGuide: 'Discussion guide', paperEdit: 'Paper edit', costReport: 'Budget-to-actuals', structure: 'Structure board', cuts: 'Cut tracker', clearanceReport: 'Clearance report', chainOfTitle: 'Chain of title', festivalStrategy: 'Festival strategy', pressNotes: 'Press notes', awards: 'Awards', socialPosts: 'Social posts', deliverables: 'Deliverables', qc: 'QC tracker', waterfall: 'Waterfall', revenueStatements: 'Revenue tracker', bookings: 'Bookings', theoryOfChange: 'Theory of change', screeningKit: 'Screening kit', impactReport: 'Impact report', finalCostReport: 'Final cost report', grantReports: 'Grant reports', contractArchive: 'Contract archive' };
+  const OFT_KEYS = { project: 'Project details', people: 'People', locations: 'Locations', thirdPartyElements: 'Clearance log', contracts: 'Contracts and releases', assets: 'Files and stills', musicCueSheet: 'Music cue sheet', callSheets: 'Call sheets', credits: 'Credits', supers: 'Name supers', subjects: 'Subject tracker', sources: 'Research log', comps: 'Comps tracker', treatment: 'Treatment', pitchDeck: 'Pitch deck', grants: 'Grant calendar', narratives: 'Narrative library', budget: 'Budget', budgetFormats: 'Budget converter', financePlan: 'Finance plan', funders: 'Funder CRM', cashFlow: 'Cash flow', shootDays: 'Shooting calendar', script: 'Script', scenes: 'Script breakdown', characters: 'Cast', dayOutOfDays: 'Day-out-of-days', budgetLinks: 'Budget', shots: 'Shot list', interviews: 'Interviews', questionBank: 'Question bank', journal: 'Field journal', scouts: 'Location scouts', scoutChecklist: 'Scout checklist', gear: 'Gear list', trips: 'Travel sheet', riskPlans: 'Risk plans', security: 'Security checklist', mediaReports: 'Camera and sound reports', dailyReports: 'Daily reports', expenses: 'Expense log', festivals: 'Festival submissions', screenings: 'Screenings', pressOutlets: 'Press list', partners: 'Partner CRM', discussionGuide: 'Discussion guide', paperEdit: 'Paper edit', costReport: 'Budget-to-actuals', structure: 'Structure board', cuts: 'Cut tracker', clearanceReport: 'Clearance report', chainOfTitle: 'Chain of title', festivalStrategy: 'Festival strategy', pressNotes: 'Press notes', awards: 'Awards', socialPosts: 'Social posts', deliverables: 'Deliverables', qc: 'QC tracker', waterfall: 'Waterfall', revenueStatements: 'Revenue tracker', bookings: 'Bookings', theoryOfChange: 'Theory of change', screeningKit: 'Screening kit', impactReport: 'Impact report', finalCostReport: 'Final cost report', grantReports: 'Grant reports', contractArchive: 'Contract archive' };
   const oftStore = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch { /* storage off */ } } };
   const oftMe = () => (oftStore.get('oft-user-name') || '').trim();
   const oftEsc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);

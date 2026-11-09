@@ -157,6 +157,14 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .people label { display: flex; gap: 8px; align-items: baseline; font-size: 14px; min-width: 0; }
 .people input { width: 16px; height: 16px; margin: 0; flex: none; }
 .people .sub { color: var(--ink-3); font-size: 12.5px; }
+.icon-btn { width: 30px; height: 30px; padding: 0; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); color: var(--ink-2); cursor: pointer; font-size: 16px; line-height: 1; }
+.clash { margin: 4px 0 0; font-size: 13.5px; color: var(--bad); font-weight: 600; }
+.add-new { margin-top: 6px; font-size: 14px; }
+.add-new summary { cursor: pointer; color: var(--ink-2); }
+.add-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 6px; margin-top: 6px; }
+.add-row input, .sched-row input { min-width: 0; padding: 6px 8px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); color: var(--ink); font: inherit; }
+.sched { display: grid; gap: 6px; }
+.sched-row { display: grid; grid-template-columns: 120px minmax(0, 1fr) 30px; gap: 6px; align-items: center; }
 .cs-note { margin: 0; padding: 8px 10px; border-radius: 6px; background: var(--good-bg); color: var(--good); font-size: 14px; }
 .cs-note.warn { background: var(--warn-bg); color: var(--warn); }
 .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -329,6 +337,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <div class="card-head"><h2 id="nextHead">Coming up</h2><span class="count" id="nextCount"></span></div>
         <ul class="due-list" id="nextList"></ul>
       </section>
+      <section class="card" aria-labelledby="clashHead" id="clashCard" hidden>
+        <div class="card-head"><h2 id="clashHead">Conflicts</h2><span class="count" id="clashCount"></span></div>
+        <p class="lead">People needed on two days with the same date.</p>
+        <ul class="due-list" id="clashList"></ul>
+      </section>
       <section class="card" aria-labelledby="whoHead">
         <div class="card-head"><h2 id="whoHead">Who's needed</h2></div>
         <p class="lead">Shoot days and holds coming up, for each person.</p>
@@ -354,12 +367,22 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       </div>
       <div class="field"><label for="f-title">What you're filming</label><input id="f-title" type="text" placeholder="Ruth reads from the diary at the house" autocomplete="off"></div>
       <div class="two">
-        <div class="field"><label for="f-location">Where</label><select id="f-location"></select></div>
+        <div class="field"><label for="f-location">Where</label><select id="f-location"></select>
+          <details class="add-new" id="newPlace"><summary>Add a new location</summary><div class="add-row"><input id="np-name" type="text" placeholder="Hammond house" aria-label="New location's name" autocomplete="off"><input id="np-address" type="text" placeholder="Address" aria-label="New location's address" autocomplete="off"><button type="button" class="btn small" id="npAdd">Add</button></div></details></div>
         <div class="field"><label for="f-block">Trip or block</label><input id="f-block" type="text" list="blocks" placeholder="Spring flood trip" autocomplete="off"><datalist id="blocks"></datalist></div>
       </div>
       <div class="group">
         <h3 id="peopleHead">Who's needed</h3>
         <div class="people" id="people" role="group" aria-labelledby="peopleHead"></div>
+        <p class="clash" id="clash" aria-live="polite" hidden></p>
+        <details class="add-new" id="newPerson"><summary>Add someone new</summary><div class="add-row"><input id="nw-name" type="text" placeholder="Name" aria-label="New person's name" autocomplete="off"><input id="nw-role" type="text" placeholder="Role, such as Sound" aria-label="New person's role" autocomplete="off"><button type="button" class="btn small" id="nwAdd">Add</button></div>
+          <p class="hint">Added to the project when you save the day, for the call sheets, releases and credits too.</p></details>
+      </div>
+      <div class="group">
+        <h3 id="schedHead">Times</h3>
+        <p class="hint">The day's plan, such as crew call, the interview and wrap. A call sheet started from this day starts with them.</p>
+        <div class="sched" id="sched" role="group" aria-labelledby="schedHead"></div>
+        <div><button type="button" class="btn small" id="addTimeBtn">Add a time</button></div>
       </div>
       <div class="field"><label for="f-notes">Notes</label><textarea id="f-notes" rows="3" placeholder="Hold for weather; confirm with the family by Friday"></textarea></div>
     </div>
@@ -549,6 +572,17 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     if (view === 'list') renderList();
     renderSide();
   }
+  // Someone needed on two days with the same date, such as a second unit or a hold left on the calendar.
+  function clashes(s, ids) {
+    if (!isDate(s.date)) return [];
+    const mine = ids || arr(s.personIds);
+    return entries().filter(o => o.id !== s.id && o.date === s.date && o.kind !== 'travel' && s.kind !== 'travel')
+      .flatMap(o => mine.filter(id => arr(o.personIds).includes(id) && person(id)).map(id => ({ p: person(id), other: o })));
+  }
+  const clashText = c => `${c.p.name || 'Someone'} is also needed for ${dayName(c.other)}${place(c.other.locationId) ? ` at ${place(c.other.locationId).name}` : ''}`;
+  const times = s => arr(s.schedule).filter(t => t && typeof t === 'object' && (t.time || t.what));
+  const clock = t => { const m = /^(\d{1,2}):(\d{2})$/.exec(str(t)); return m ? new Date(2000, 0, 1, +m[1], +m[2]).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : str(t); };
+  const span = s => { const ts = times(s).map(t => t.time).filter(Boolean).sort(); return ts.length ? (ts.length > 1 ? `${clock(ts[0])} to ${clock(ts[ts.length - 1])}` : clock(ts[0])) : ''; };
   function rowHtml(s) {
     const l = place(s.locationId);
     const ps = arr(s.personIds).map(person).filter(Boolean);
@@ -556,6 +590,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     if (l) flags.push(`<span class="flag linked">${esc(l.name)}</span>`);
     else if (s.locationId) flags.push('<span class="flag problem">Its location is no longer in the project</span>');
     if (ps.length) flags.push(`<span class="flag linked">${esc(ps.map(p => p.name).join(', '))}</span>`);
+    for (const c of clashes(s)) flags.push(`<span class="flag problem">${esc(clashText(c))} the same day</span>`);
     const issue = sheetIssue(s);
     if (issue) flags.push(`<span class="flag problem">${esc(issue)}</span>`);
     else if (s.callSheetId) flags.push('<span class="flag new">Call sheet started</span>');
@@ -563,7 +598,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const lab = dayLabel(s);
     return `<li class="row${isDate(s.date) && s.date < today() ? ' is-past' : ''}" data-id="${esc(s.id)}">
       <span class="tc"><b>${esc(isDate(s.date) ? fmtDate(s.date) : 'No date')}</b><span class="wd">${esc(isDate(s.date) ? weekday(s.date) : '')}</span></span>
-      <button type="button" class="what" data-edit="${esc(s.id)}"><span class="nm">${esc(dayName(s))}</span>${lab || s.notes ? `<span class="tt">${esc([lab, s.notes].filter(Boolean).join(' · '))}</span>` : ''}</button>
+      <button type="button" class="what" data-edit="${esc(s.id)}"><span class="nm">${esc(dayName(s))}</span>${lab || s.notes || span(s) ? `<span class="tt">${esc([lab, span(s), s.notes].filter(Boolean).join(' · '))}</span>` : ''}</button>
       <span class="kd k-${esc(s.kind)}">${esc(kindLabel(s.kind))}</span>
       ${flags.length ? `<div class="flags">${flags.join('')}</div>` : ''}
     </li>`;
@@ -611,6 +646,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const counts = new Map();
     for (const s of upcoming().filter(x => x.kind !== 'travel')) for (const id of arr(s.personIds)) { const p = person(id); if (p) counts.set(p, (counts.get(p) || 0) + 1); }
     const rows = [...counts.entries()].sort((a, b) => b[1] - a[1] || str(a[0].name).localeCompare(str(b[0].name)));
+    const seen = new Set(), all = [];
+    for (const s of upcoming()) for (const c of clashes(s)) { const k = [s.date, c.p.id].join('|'); if (!seen.has(k)) { seen.add(k); all.push({ s, c }); } }
+    $('clashCard').hidden = !all.length;
+    $('clashCount').textContent = all.length ? String(all.length) : '';
+    $('clashList').innerHTML = all.map(({ s, c }) => `<li><button type="button" data-edit="${esc(s.id)}">${esc(c.p.name || 'Someone')}</button><span class="when">${esc(fmtDate(s.date))}: ${esc(dayName(s))} and ${esc(dayName(c.other))}</span></li>`).join('');
     $('whoList').innerHTML = rows.length ? rows.map(([p, n]) => `<li><span>${esc(p.name)}</span><span class="n">${n} day${n === 1 ? '' : 's'}</span></li>`).join('') : '<li class="empty-line">Add people to the days coming up.</li>';
   }
 
@@ -620,20 +660,42 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     isNew = !existing;
     const last = sorted(entries()).pop();
     editing = existing ? structuredClone(existing) : { id: newId('shootday'), kind: 'shoot', date: date || '', block: last && last.block && !date ? last.block : undefined };
-    $('f-location').innerHTML = '<option value="">Not set</option>' + doc.locations.filter(l => l && l.id).map(l => `<option value="${esc(l.id)}">${esc(l.name || 'Unnamed location')}</option>`).join('');
+    fillPlaces(editing.locationId);
     $('blocks').innerHTML = [...new Set(entries().map(s => s.block).filter(Boolean))].map(b => `<option value="${esc(b)}">`).join('');
     const vals = { 'f-date': editing.date, 'f-through': '', 'f-kind': editing.kind, 'f-title': editing.title, 'f-location': editing.locationId, 'f-block': editing.block, 'f-notes': editing.notes };
     for (const [k, v] of Object.entries(vals)) $(k).value = v == null ? '' : String(v);
-    // People who are usually on a shoot come first: crew and those on camera.
-    const people = doc.people.filter(p => p && p.id);
-    $('people').innerHTML = people.length ? people.map(p => `<label><input type="checkbox" value="${esc(p.id)}"${arr(editing.personIds).includes(p.id) ? ' checked' : ''}><span>${esc(p.name || 'Unnamed')}${arr(p.roles).length ? ` <span class="sub">${esc(arr(p.roles).join(', '))}</span>` : ''}</span></label>`).join('')
-      : '<p class="hint">Add people to the project, in the call sheet or another tool, to pick them here.</p>';
+    newPeople = []; newPlaces = [];
+    fillPeople(arr(editing.personIds));
+    $('sched').innerHTML = times(editing).map(timeRow).join('');
+    for (const d of ['newPerson', 'newPlace']) $(d).open = false;
     $('throughField').hidden = !isNew;
     $('editorTitle').textContent = isNew ? 'Add days' : `Edit ${kindLabel(editing.kind).toLowerCase()} day`;
     $('deleteBtn').hidden = isNew;
     showSheet();
     $('editor').showModal();
     (date ? $('f-title') : $('f-date')).focus();
+  }
+  // People and places added here wait until the day is saved, so Cancel leaves the project as it was.
+  let newPeople = [], newPlaces = [];
+  function fillPeople(checked) {
+    const people = [...doc.people.filter(p => p && p.id), ...newPeople];
+    $('people').innerHTML = people.length ? people.map(p => `<label><input type="checkbox" value="${esc(p.id)}"${checked.includes(p.id) ? ' checked' : ''}><span>${esc(p.name || 'Unnamed')}${arr(p.roles).length ? ` <span class="sub">${esc(arr(p.roles).join(', '))}</span>` : ''}</span></label>`).join('')
+      : '<p class="hint">No one in the project yet. Add someone new below.</p>';
+    showClash();
+  }
+  function showClash() {
+    if (!editing) return;
+    const ids = [...$('people').querySelectorAll('input:checked')].map(i => i.value);
+    const cs = clashes(Object.assign({}, editing, { date: $('f-date').value, kind: $('f-kind').value }), ids);
+    $('clash').hidden = !cs.length;
+    $('clash').textContent = cs.length ? `${cs.map(clashText).join('. ')} on this date.` : '';
+  }
+  function fillPlaces(value) {
+    $('f-location').innerHTML = '<option value="">Not set</option>' + [...doc.locations.filter(l => l && l.id), ...newPlaces].map(l => `<option value="${esc(l.id)}">${esc(l.name || 'Unnamed location')}</option>`).join('');
+    $('f-location').value = value || '';
+  }
+  function timeRow(t) {
+    return `<div class="sched-row"><input type="time" class="t-time" value="${esc(/^\d{1,2}:\d{2}$/.test(str(t.time)) ? str(t.time).padStart(5, '0') : '')}" aria-label="Time"><input type="text" class="t-what" value="${esc(t.what)}" placeholder="Crew call" aria-label="What happens then" autocomplete="off"><button type="button" class="icon-btn" data-deltime aria-label="Remove this time">×</button></div>`;
   }
   function showSheet() {
     const c = editing.callSheetId && sheet(editing.callSheetId);
@@ -648,6 +710,13 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     e.kind = $('f-kind').value;
     const ids = [...$('people').querySelectorAll('input:checked')].map(i => i.value);
     if (ids.length) e.personIds = ids; else delete e.personIds;
+    const sched = [...$('sched').querySelectorAll('.sched-row')].map(r => Object.assign({}, r.querySelector('.t-time').value ? { time: r.querySelector('.t-time').value } : {}, r.querySelector('.t-what').value.trim() ? { what: r.querySelector('.t-what').value.trim() } : {}))
+      .filter(t => t.time || t.what).sort((a, b) => str(a.time || '99').localeCompare(str(b.time || '99')));
+    if (sched.length) e.schedule = sched; else delete e.schedule;
+    // New people and places join the project when they're used.
+    for (const p of newPeople) if (ids.includes(p.id)) doc.people.push(p);
+    for (const l of newPlaces) if (e.locationId === l.id) doc.locations.push(l);
+    newPeople = []; newPlaces = [];
     return e;
   }
   function saveEditor() {
@@ -686,7 +755,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     if (s.locationId && place(s.locationId)) c.locationId = s.locationId;
     const crew = arr(s.personIds).map(person).filter(Boolean).map(p => Object.assign({ personId: p.id }, roles(p) ? { role: roles(p) } : {}));
     if (crew.length) c.crew = crew;
-    if (s.title) c.schedule = [{ time: '', description: s.title }];
+    if (times(s).length) c.schedule = times(s).map(t => ({ time: t.time || '', description: t.what || '' }));
+    else if (s.title) c.schedule = [{ time: '', description: s.title }];
     doc.callSheets.push(c);
     s.callSheetId = c.id;
     return c;
@@ -986,7 +1056,30 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       const c = ev.target.closest('[data-sheet]');
       if (c) { const s = entries().find(x => x.id === c.dataset.sheet); if (s) { startSheet(s); changed(); toast(`Started the call sheet for ${fmtDate(s.date)}. Open the project in the call sheet tool to finish it.`); } }
     });
-    $('f-kind').addEventListener('change', showSheet);
+    $('f-kind').addEventListener('change', () => { showSheet(); showClash(); });
+    $('f-date').addEventListener('change', showClash);
+    $('people').addEventListener('change', showClash);
+    $('addTimeBtn').onclick = () => { $('sched').insertAdjacentHTML('beforeend', timeRow({})); $('sched').lastElementChild.querySelector('.t-time').focus(); };
+    $('sched').addEventListener('click', ev => { if (ev.target.closest('[data-deltime]')) ev.target.closest('.sched-row').remove(); });
+    $('nwAdd').onclick = () => {
+      const name = $('nw-name').value.trim();
+      if (!name) { $('nw-name').focus(); return; }
+      const p = Object.assign({ id: newId('person'), name }, $('nw-role').value.trim() ? { roles: [$('nw-role').value.trim()] } : {});
+      newPeople.push(p);
+      fillPeople([...[...$('people').querySelectorAll('input:checked')].map(i => i.value), p.id]);
+      $('nw-name').value = $('nw-role').value = '';
+      $('newPerson').open = false;
+      toast(`${name} will be added to the project when you save.`);
+    };
+    $('npAdd').onclick = () => {
+      const name = $('np-name').value.trim();
+      if (!name) { $('np-name').focus(); return; }
+      const l = Object.assign({ id: newId('location'), name }, $('np-address').value.trim() ? { address: $('np-address').value.trim() } : {});
+      newPlaces.push(l);
+      fillPlaces(l.id);
+      $('np-name').value = $('np-address').value = '';
+      $('newPlace').open = false;
+    };
     $('callSheetBtn').onclick = startSheetFromEditor;
     $('editorForm').addEventListener('submit', ev => { ev.preventDefault(); saveEditor(); });
     $('editorForm').addEventListener('input', ev => { if (ev.target.setCustomValidity) ev.target.setCustomValidity(''); });
@@ -1530,7 +1623,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const OFT_SLUG = (window.location.pathname.match(/tools\/([^/]+)\//) || [])[1] || '';
   const OFT_GUIDE = 'https://github.com/open-filmmaker-toolkit/toolkit/blob/main/docs/sharing-a-project.md';
   const OFT_HOURS = 4;
-  const OFT_KEYS = { project: 'Project details', people: 'People', locations: 'Locations', thirdPartyElements: 'Clearance log', contracts: 'Contracts and releases', assets: 'Files and stills', musicCueSheet: 'Music cue sheet', callSheets: 'Call sheets', credits: 'Credits', supers: 'Name supers', subjects: 'Subject tracker', sources: 'Research log', comps: 'Comps tracker', treatment: 'Treatment', pitchDeck: 'Pitch deck', grants: 'Grant calendar', narratives: 'Narrative library', budget: 'Budget', budgetFormats: 'Budget converter', financePlan: 'Finance plan', funders: 'Funder CRM', cashFlow: 'Cash flow', shootDays: 'Shooting calendar', script: 'Script', scenes: 'Script breakdown', characters: 'Cast', dayOutOfDays: 'Day-out-of-days', budgetLinks: 'Budget', shots: 'Shot list', interviews: 'Interviews', journal: 'Field journal', scouts: 'Location scouts', gear: 'Gear list', trips: 'Travel sheet', riskPlans: 'Risk plans', security: 'Security checklist', mediaReports: 'Camera and sound reports', dailyReports: 'Daily reports', expenses: 'Expense log', festivals: 'Festival submissions', screenings: 'Screenings', pressOutlets: 'Press list', partners: 'Partner CRM', discussionGuide: 'Discussion guide', paperEdit: 'Paper edit', costReport: 'Budget-to-actuals', structure: 'Structure board', cuts: 'Cut tracker', clearanceReport: 'Clearance report', chainOfTitle: 'Chain of title', festivalStrategy: 'Festival strategy', pressNotes: 'Press notes', awards: 'Awards', socialPosts: 'Social posts', deliverables: 'Deliverables', qc: 'QC tracker', waterfall: 'Waterfall', revenueStatements: 'Revenue tracker', bookings: 'Bookings', theoryOfChange: 'Theory of change', screeningKit: 'Screening kit', impactReport: 'Impact report', finalCostReport: 'Final cost report', grantReports: 'Grant reports', contractArchive: 'Contract archive' };
+  const OFT_KEYS = { project: 'Project details', people: 'People', locations: 'Locations', thirdPartyElements: 'Clearance log', contracts: 'Contracts and releases', assets: 'Files and stills', musicCueSheet: 'Music cue sheet', callSheets: 'Call sheets', credits: 'Credits', supers: 'Name supers', subjects: 'Subject tracker', sources: 'Research log', comps: 'Comps tracker', treatment: 'Treatment', pitchDeck: 'Pitch deck', grants: 'Grant calendar', narratives: 'Narrative library', budget: 'Budget', budgetFormats: 'Budget converter', financePlan: 'Finance plan', funders: 'Funder CRM', cashFlow: 'Cash flow', shootDays: 'Shooting calendar', script: 'Script', scenes: 'Script breakdown', characters: 'Cast', dayOutOfDays: 'Day-out-of-days', budgetLinks: 'Budget', shots: 'Shot list', interviews: 'Interviews', questionBank: 'Question bank', journal: 'Field journal', scouts: 'Location scouts', scoutChecklist: 'Scout checklist', gear: 'Gear list', trips: 'Travel sheet', riskPlans: 'Risk plans', security: 'Security checklist', mediaReports: 'Camera and sound reports', dailyReports: 'Daily reports', expenses: 'Expense log', festivals: 'Festival submissions', screenings: 'Screenings', pressOutlets: 'Press list', partners: 'Partner CRM', discussionGuide: 'Discussion guide', paperEdit: 'Paper edit', costReport: 'Budget-to-actuals', structure: 'Structure board', cuts: 'Cut tracker', clearanceReport: 'Clearance report', chainOfTitle: 'Chain of title', festivalStrategy: 'Festival strategy', pressNotes: 'Press notes', awards: 'Awards', socialPosts: 'Social posts', deliverables: 'Deliverables', qc: 'QC tracker', waterfall: 'Waterfall', revenueStatements: 'Revenue tracker', bookings: 'Bookings', theoryOfChange: 'Theory of change', screeningKit: 'Screening kit', impactReport: 'Impact report', finalCostReport: 'Final cost report', grantReports: 'Grant reports', contractArchive: 'Contract archive' };
   const oftStore = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch { /* storage off */ } } };
   const oftMe = () => (oftStore.get('oft-user-name') || '').trim();
   const oftEsc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);

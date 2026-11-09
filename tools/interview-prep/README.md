@@ -35,7 +35,8 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **Links each interview to the person in the project,** or to someone not in it yet, and to a day in the [shooting calendar](../shooting-calendar/) if there is one. People on camera are listed first.
 - **Keeps research notes.** If the [subject tracker](../subject-tracker/) has notes on the person, add them in one click.
 - **Story beats to cover.** Each question can belong to a beat, and beats with no questions yet are flagged, so nothing you meant to cover gets left out.
-- **Questions in order.** Type a question and press Enter to add it. Move questions up or down, and mark the must-asks.
+- **Questions in order.** Type a question and press Enter to add it. Move questions up or down, mark the must-asks, and tick **Follow-up** to tuck a question under the one before it, numbered 3a, 3b and so on.
+- **A question bank** for the questions you ask in many interviews. Save one from any interview, add it to the next, and see how many interviews use each.
 - **After the interview,** mark it done and tick the questions you asked.
 - **Prints a one-page guide** for the interview you pick: who, when and where, what it's for, the beats as a checklist, the questions numbered with must-asks starred, and your notes.
 - **Exports CSV** of every question, in order. Also exports project data: project details, people, locations, third-party elements, contracts, assets, music cue sheet details or call sheets as separate CSV files.
@@ -55,12 +56,11 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-An `interviews` list. Each interview has an `id` and a `status` (`planned` or `done`), and optional `personId` (or `name` for someone not in the project), `date`, `shootDayId`, `minutes`, `goal`, `research`, `beats` (each with `id` and `text`) and `questions` (each with `id`, `text`, and optional `must`, `beatId` and `asked`), in the order they're asked. The [interview log](../interview-log/) adds what happened on the day to the same interviews. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
+An `interviews` list. Each interview has an `id` and a `status` (`planned` or `done`), and optional `personId` (or `name` for someone not in the project), `date`, `shootDayId`, `minutes`, `goal`, `research`, `beats` (each with `id` and `text`) and `questions` (each with `id`, `text`, and optional `must`, `followUp` (a follow-up to the last question before it that isn't one), `beatId` and `asked`), in the order they're asked. A `questionBank` list holds questions to reuse, each with an `id` and `text`. The [interview log](../interview-log/) adds what happened on the day to the same interviews. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
-- Follow-up questions nested under a question
-- A question bank shared across interviews
+- Sharing a question bank between projects
 
 ## License
 

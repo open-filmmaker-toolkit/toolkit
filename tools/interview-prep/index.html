@@ -133,6 +133,12 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .qs { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; counter-reset: q; }
 .q { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; gap: 4px 8px; align-items: start; padding: 8px; border: 1px solid var(--rule-soft); border-radius: 6px; background: var(--paper); }
 .q.must { border-color: var(--ink-2); box-shadow: inset 3px 0 0 var(--ink); }
+.q.follow { margin-left: 28px; }
+.from-bank { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 14px; }
+.from-bank select { flex: 1 1 200px; min-width: 0; padding: 5px 8px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); color: var(--ink); font: inherit; }
+.bank-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 14px; }
+.bank-list li { display: flex; gap: 8px; justify-content: space-between; align-items: flex-start; }
+.bank-list .sub { display: block; font-size: 12.5px; color: var(--ink-3); }
 .q .num { font-weight: 700; color: var(--ink-2); font-variant-numeric: tabular-nums; padding-top: 6px; text-align: right; }
 .q textarea { width: 100%; min-height: 38px; padding: 6px 8px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); font: inherit; resize: vertical; }
 .q .moves { display: flex; gap: 2px; }
@@ -222,7 +228,8 @@ pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; b
   .report .r-key { font-weight: 400; font-size: 8.5pt; }
   .report .r-beats { margin: 0; padding: 0; list-style: none; columns: 2; column-gap: 14pt; }
   .report .r-beats li { margin: 0 0 2pt; break-inside: avoid; }
-  .report .r-qs { margin: 0; padding-left: 16pt; }
+  .report .r-qs { margin: 0; padding-left: 0; list-style: none; }
+  .report .r-qs .r-follow { margin-left: 18pt; }
   .report .r-qs li { margin: 0 0 3pt; break-inside: avoid; page-break-inside: avoid; }
   .report .r-qs .r-must { font-weight: 700; }
   .report .r-box { font-weight: 400; }
@@ -295,6 +302,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <div class="card-head"><h2 id="nextHead">Coming up</h2></div>
         <ul class="due-list" id="nextList"></ul>
       </section>
+      <section class="card" aria-labelledby="bankHead">
+        <div class="card-head"><h2 id="bankHead">Question bank</h2><span class="count" id="bankCount"></span></div>
+        <p class="lead">Questions you ask in many interviews, such as "Is there anything we haven't asked?". Save one from any interview, then add it to the next.</p>
+        <ul class="bank-list" id="bankList"></ul>
+      </section>
       <section class="card" aria-labelledby="printHead">
         <div class="card-head"><h2 id="printHead">Interview guide</h2></div>
         <p class="lead">A one-page guide for the interview you pick: the beats to cover and the questions in order, with boxes to tick as you go.</p>
@@ -336,9 +348,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       </div>
       <div class="group">
         <h3 id="qHead">Questions, in order</h3>
-        <p class="hint">Mark the questions you can't leave without asking. Move them up or down to change the order.</p>
+        <p class="hint">Mark the questions you can't leave without asking. Move them up or down to change the order, and tick "Follow-up" to tuck a question under the one before it.</p>
         <ol class="qs" id="qs" aria-labelledby="qHead"></ol>
         <div class="add-q"><input id="newQ" type="text" placeholder="Type a question and press Enter" aria-label="New question" autocomplete="off"><button type="button" class="btn" id="addQBtn">Add</button></div>
+        <div class="from-bank" id="fromBank"><label for="bankSel">From the question bank</label><select id="bankSel"></select><button type="button" class="btn small" id="bankAddBtn">Add it</button></div>
       </div>
     </div>
     <div class="dlg-foot">
@@ -538,6 +551,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     if (!all.some(i => i.id === printId)) printId = (sorted(all)[0] || {}).id || null;
     $('printSel').innerHTML = sorted(all).map(i => `<option value="${esc(i.id)}"${i.id === printId ? ' selected' : ''}>${esc(who(i))}${dateOf(i) ? `, ${esc(fmtDate(dateOf(i)))}` : ''}</option>`).join('');
     $('printSel').disabled = $('printBtn').disabled = !all.length;
+    renderBank();
   }
 
   // ---------- Editor ----------
@@ -547,11 +561,21 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       <span class="cnt${n ? '' : ' none'}">${n ? `${n} question${n === 1 ? '' : 's'}` : 'No questions yet'}</span>
       <button type="button" class="icon-btn" data-delbeat aria-label="Remove this beat">×</button></div>`;
   }
-  function qRow(q, idx, total) {
-    return `<li class="q${q.must ? ' must' : ''}" data-id="${esc(q.id)}"><span class="num">${idx + 1}</span>
-      <textarea aria-label="Question ${idx + 1}" rows="1">${esc(q.text)}</textarea>
+  // Numbers questions 1, 2, 2a, 2b, 3: a follow-up hangs under the last question that isn't one.
+  function numbers(qs) {
+    let n = 0, k = 0;
+    return qs.map((q, i) => (q.followUp && i > 0 && n ? `${n}${String.fromCharCode(97 + k++)}` : (k = 0, String(++n))));
+  }
+  const bank = () => arr(doc.questionBank).filter(q => q && typeof q === 'object' && str(q.text).trim());
+  const inBank = t => bank().some(b => norm(b.text) === norm(t));
+  function qRow(q, idx, total, label) {
+    label = label || String(idx + 1);
+    return `<li class="q${q.must ? ' must' : ''}${q.followUp && idx ? ' follow' : ''}" data-id="${esc(q.id)}"><span class="num">${esc(label)}</span>
+      <textarea aria-label="Question ${esc(label)}" rows="1">${esc(q.text)}</textarea>
       <span class="moves"><button type="button" class="icon-btn" data-move="-1" aria-label="Move up"${idx === 0 ? ' disabled' : ''}>↑</button><button type="button" class="icon-btn" data-move="1" aria-label="Move down"${idx === total - 1 ? ' disabled' : ''}>↓</button><button type="button" class="icon-btn" data-delq aria-label="Remove this question">×</button></span>
       <span class="opts"><label><input type="checkbox" data-must${q.must ? ' checked' : ''}> Must ask</label>
+        ${idx ? `<label><input type="checkbox" data-follow${q.followUp ? ' checked' : ''}> Follow-up</label>` : ''}
+        <button type="button" class="btn small" data-tobank${inBank(q.text) || !str(q.text).trim() ? ' disabled' : ''}>${inBank(q.text) ? 'In the bank' : 'Save to the bank'}</button>
         <label>Beat <select data-beat aria-label="Story beat for question ${idx + 1}"><option value="">None</option>${beats(editing).map(b => `<option value="${esc(b.id)}"${q.beatId === b.id ? ' selected' : ''}>${esc(b.text || 'Untitled beat')}</option>`).join('')}</select></label>
         ${editing.status === 'done' ? `<label><input type="checkbox" data-asked${q.asked ? ' checked' : ''}> Asked</label>` : ''}</span></li>`;
   }
@@ -562,6 +586,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     editing.questions = [...$('qs').querySelectorAll('.q')].map(r => {
       const q = Object.assign({}, old.get(r.dataset.id), { id: r.dataset.id, text: r.querySelector('textarea').value.trim() });
       if (r.querySelector('[data-must]').checked) q.must = true; else delete q.must;
+      const f = r.querySelector('[data-follow]');
+      if (f && f.checked) q.followUp = true; else delete q.followUp;
       const b = r.querySelector('[data-beat]').value;
       if (b) q.beatId = b; else delete q.beatId;
       const a = r.querySelector('[data-asked]');
@@ -572,7 +598,20 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   function drawLists() {
     const qs = questions(editing);
     $('beats').innerHTML = beats(editing).map(beatRow).join('');
-    $('qs').innerHTML = qs.length ? qs.map((q, i) => qRow(q, i, qs.length)).join('') : '<li class="empty-line">No questions yet.</li>';
+    const nums = numbers(qs);
+    $('qs').innerHTML = qs.length ? qs.map((q, i) => qRow(q, i, qs.length, nums[i])).join('') : '<li class="empty-line">No questions yet.</li>';
+    const have = new Set(qs.map(q => norm(q.text)));
+    const left = bank().filter(b => !have.has(norm(b.text)));
+    $('fromBank').hidden = !left.length;
+    $('bankSel').innerHTML = left.map(b => `<option value="${esc(b.id)}">${esc(b.text)}</option>`).join('');
+  }
+  function renderBank() {
+    const b = bank();
+    $('bankCount').textContent = b.length ? String(b.length) : '';
+    $('bankList').innerHTML = b.length ? b.map(q => {
+      const n = entries().filter(i => questions(i).some(x => norm(x.text) === norm(q.text))).length;
+      return `<li><span>${esc(q.text)}<span class="sub">${n ? `In ${n} interview${n === 1 ? '' : 's'}` : 'Not used yet'}</span></span><button type="button" class="icon-btn" data-unbank="${esc(q.id)}" aria-label="Remove from the bank: ${esc(q.text)}">×</button></li>`;
+    }).join('') : '<li class="empty-line">No questions saved yet.</li>';
   }
   function showSubject() {
     const id = $('f-person').value;
@@ -640,7 +679,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   // ---------- CSV and print ----------
   const CSV_HEAD = ['Interviewee', 'Date', 'Order', 'Question', 'Must ask', 'Story beat', 'Asked'];
   function exportCsv() {
-    const rows = sorted(entries()).flatMap(i => questions(i).map((q, n) => [who(i), dateOf(i), n + 1, q.text, q.must ? 'Yes' : '', (beats(i).find(b => b.id === q.beatId) || {}).text, q.asked ? 'Yes' : '']));
+    const rows = sorted(entries()).flatMap(i => questions(i).map((q, n) => [who(i), dateOf(i), numbers(questions(i))[n], q.text, q.must ? 'Yes' : '', (beats(i).find(b => b.id === q.beatId) || {}).text, q.asked ? 'Yes' : '']));
     const csv = '﻿' + [CSV_HEAD, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
     const name = `${slug()}-interview-questions.csv`;
     download(csv, name, 'text/csv;charset=utf-8');
@@ -659,7 +698,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       ${i.goal ? `<p class="r-goal"><b>For:</b> ${esc(i.goal)}</p>` : ''}
       ${beats(i).length ? `<h2>Cover</h2><ul class="r-beats">${beats(i).map(b => `<li>☐ ${esc(b.text)}</li>`).join('')}</ul>` : ''}
       <h2>Questions${qs.some(q => q.must) ? ' <span class="r-key">★ must ask</span>' : ''}</h2>
-      <ol class="r-qs">${qs.map(q => `<li class="${q.must ? 'r-must' : ''}"><span class="r-box">☐</span> ${q.must ? '★ ' : ''}${esc(q.text)}</li>`).join('')}</ol>
+      <ol class="r-qs">${qs.map((q, n) => `<li class="${q.must ? 'r-must' : ''}${q.followUp && n ? ' r-follow' : ''}" data-n="${esc(numbers(qs)[n])}"><span class="r-box">☐</span> <b class="r-num">${esc(numbers(qs)[n])}.</b> ${q.must ? '★ ' : ''}${esc(q.text)}</li>`).join('')}</ol>
       ${i.research ? `<h2>Notes</h2><p class="r-notes">${esc(i.research)}</p>` : ''}
       <p class="r-note">Before you roll: check the release, room tone, and that you've asked if there's anything they want to add.</p>`;
   }
@@ -917,7 +956,26 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       drawLists();
       if (mv) { const b = $('qs').querySelector(`[data-id="${CSS.escape(row.dataset.id)}"] [data-move="${mv.dataset.move}"]`); if (b && !b.disabled) b.focus(); }
     });
-    $('qs').addEventListener('change', ev => { if (ev.target.matches('[data-must], [data-beat]')) { readLists(); drawLists(); } });
+    $('qs').addEventListener('change', ev => { if (ev.target.matches('[data-must], [data-beat], [data-follow]')) { readLists(); drawLists(); } });
+    $('qs').addEventListener('click', ev => {
+      const b = ev.target.closest('[data-tobank]'); if (!b) return;
+      const text = b.closest('.q').querySelector('textarea').value.trim(); if (!text || inBank(text)) return;
+      readLists();
+      if (!Array.isArray(doc.questionBank)) doc.questionBank = [];
+      doc.questionBank.push({ id: newId('bank-question'), text });
+      changed(); drawLists();
+      toast('Saved to the question bank. Add it to any interview from there.');
+    });
+    $('bankAddBtn').onclick = () => {
+      const q = bank().find(b => b.id === $('bankSel').value); if (!q) return;
+      readLists(); editing.questions.push({ id: newId('question'), text: q.text }); drawLists();
+    };
+    $('bankList').addEventListener('click', ev => {
+      const b = ev.target.closest('[data-unbank]'); if (!b) return;
+      doc.questionBank = bank().filter(q => q.id !== b.dataset.unbank);
+      if (!doc.questionBank.length) delete doc.questionBank;
+      changed();
+    });
     $('newQ').addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.preventDefault(); addQuestion(); } });
     $('addQBtn').onclick = addQuestion;
     $('editorForm').addEventListener('submit', ev => { ev.preventDefault(); saveEditor(); });
@@ -1470,7 +1528,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const OFT_SLUG = (window.location.pathname.match(/tools\/([^/]+)\//) || [])[1] || '';
   const OFT_GUIDE = 'https://github.com/open-filmmaker-toolkit/toolkit/blob/main/docs/sharing-a-project.md';
   const OFT_HOURS = 4;
-  const OFT_KEYS = { project: 'Project details', people: 'People', locations: 'Locations', thirdPartyElements: 'Clearance log', contracts: 'Contracts and releases', assets: 'Files and stills', musicCueSheet: 'Music cue sheet', callSheets: 'Call sheets', credits: 'Credits', supers: 'Name supers', subjects: 'Subject tracker', sources: 'Research log', comps: 'Comps tracker', treatment: 'Treatment', pitchDeck: 'Pitch deck', grants: 'Grant calendar', narratives: 'Narrative library', budget: 'Budget', budgetFormats: 'Budget converter', financePlan: 'Finance plan', funders: 'Funder CRM', cashFlow: 'Cash flow', shootDays: 'Shooting calendar', script: 'Script', scenes: 'Script breakdown', characters: 'Cast', dayOutOfDays: 'Day-out-of-days', budgetLinks: 'Budget', shots: 'Shot list', interviews: 'Interviews', journal: 'Field journal', scouts: 'Location scouts', gear: 'Gear list', trips: 'Travel sheet', riskPlans: 'Risk plans', security: 'Security checklist', mediaReports: 'Camera and sound reports', dailyReports: 'Daily reports', expenses: 'Expense log', festivals: 'Festival submissions', screenings: 'Screenings', pressOutlets: 'Press list', partners: 'Partner CRM', discussionGuide: 'Discussion guide', paperEdit: 'Paper edit', costReport: 'Budget-to-actuals', structure: 'Structure board', cuts: 'Cut tracker', clearanceReport: 'Clearance report', chainOfTitle: 'Chain of title', festivalStrategy: 'Festival strategy', pressNotes: 'Press notes', awards: 'Awards', socialPosts: 'Social posts', deliverables: 'Deliverables', qc: 'QC tracker', waterfall: 'Waterfall', revenueStatements: 'Revenue tracker', bookings: 'Bookings', theoryOfChange: 'Theory of change', screeningKit: 'Screening kit', impactReport: 'Impact report', finalCostReport: 'Final cost report', grantReports: 'Grant reports', contractArchive: 'Contract archive' };
+  const OFT_KEYS = { project: 'Project details', people: 'People', locations: 'Locations', thirdPartyElements: 'Clearance log', contracts: 'Contracts and releases', assets: 'Files and stills', musicCueSheet: 'Music cue sheet', callSheets: 'Call sheets', credits: 'Credits', supers: 'Name supers', subjects: 'Subject tracker', sources: 'Research log', comps: 'Comps tracker', treatment: 'Treatment', pitchDeck: 'Pitch deck', grants: 'Grant calendar', narratives: 'Narrative library', budget: 'Budget', budgetFormats: 'Budget converter', financePlan: 'Finance plan', funders: 'Funder CRM', cashFlow: 'Cash flow', shootDays: 'Shooting calendar', script: 'Script', scenes: 'Script breakdown', characters: 'Cast', dayOutOfDays: 'Day-out-of-days', budgetLinks: 'Budget', shots: 'Shot list', interviews: 'Interviews', questionBank: 'Question bank', journal: 'Field journal', scouts: 'Location scouts', scoutChecklist: 'Scout checklist', gear: 'Gear list', trips: 'Travel sheet', riskPlans: 'Risk plans', security: 'Security checklist', mediaReports: 'Camera and sound reports', dailyReports: 'Daily reports', expenses: 'Expense log', festivals: 'Festival submissions', screenings: 'Screenings', pressOutlets: 'Press list', partners: 'Partner CRM', discussionGuide: 'Discussion guide', paperEdit: 'Paper edit', costReport: 'Budget-to-actuals', structure: 'Structure board', cuts: 'Cut tracker', clearanceReport: 'Clearance report', chainOfTitle: 'Chain of title', festivalStrategy: 'Festival strategy', pressNotes: 'Press notes', awards: 'Awards', socialPosts: 'Social posts', deliverables: 'Deliverables', qc: 'QC tracker', waterfall: 'Waterfall', revenueStatements: 'Revenue tracker', bookings: 'Bookings', theoryOfChange: 'Theory of change', screeningKit: 'Screening kit', impactReport: 'Impact report', finalCostReport: 'Final cost report', grantReports: 'Grant reports', contractArchive: 'Contract archive' };
   const oftStore = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch { /* storage off */ } } };
   const oftMe = () => (oftStore.get('oft-user-name') || '').trim();
   const oftEsc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);

@@ -35,6 +35,8 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **Trips from the [shooting calendar](../shooting-calendar/).** Shoot days that share a trip name show up in the side panel; make a sheet from one and it starts with the dates, the people on those days and the locations.
 - **Who's going,** picked from the project's people, and the locations, picked from the project's locations.
 - **Travel for each person:** flights, trains, drives, cars and shuttles, with the date, times, from and to, the airline or company, the flight or train number and the confirmation. Tick who each one is for; nobody ticked means everyone. A trip flags anyone going who isn't on any travel.
+- **Time zones.** Give each leg the time zone it leaves from and lands in, such as America/Chicago, and the sheet shows local times, how long the journey takes, whether it lands the next day, and how far the clocks change. Give the trip its time zone and the list says how far ahead or behind it is.
+- **Passports and visas** for each person going: where the passport is from, its number and expiry, and any visa with the date it runs out. A passport that expires before the trip ends, or within six months after, is flagged, and so is a visa that runs out early. They stay out of the CSV and are printed only when you tick **Include passport and visa details**.
 - **Places to stay,** with address, phone, check-in and check-out, confirmation and who's staying.
 - **Local contacts,** such as a fixer, driver or location contact.
 - **Emergencies:** the local emergency number and the nearest hospital. If a [call sheet](../call-sheet/) for the trip's locations or dates already lists a hospital, the tool offers it.
@@ -57,9 +59,10 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-`trips`: each has an `id`, `name`, and optional `perDiem`, `block` (the trip in the shooting calendar, matched by `shootDays[].block`), `destination`, `startDate`, `endDate`, `personIds`, `locationIds`, `legs`, `stays`, `contacts`, `emergencyNumber`, `hospital` (`name`, `address`, `phone`) and `notes`.
+`trips`: each has an `id`, `name`, and optional `perDiem`, `block` (the trip in the shooting calendar, matched by `shootDays[].block`), `destination`, `startDate`, `endDate`, `timeZone` (an IANA name such as `America/Los_Angeles`), `docs`, `personIds`, `locationIds`, `legs`, `stays`, `contacts`, `emergencyNumber`, `hospital` (`name`, `address`, `phone`) and `notes`.
 
-- Each leg has an `id`, a `kind` (`flight`, `train`, `drive`, `ground` or `other`), and optional `date`, `departs`, `arrives`, `from`, `to`, `carrier`, `number`, `confirmation`, `cost`, `personIds` and `notes`.
+- Each leg has an `id`, a `kind` (`flight`, `train`, `drive`, `ground` or `other`), and optional `date`, `departs`, `arrives`, `from`, `to`, `carrier`, `number`, `departZone`, `arriveZone`, `confirmation`, `cost`, `personIds` and `notes`.
+- Each entry in `docs` has an `id`, a `personId`, and optional `nationality`, `passportNumber`, `passportExpires`, `visa`, `visaExpires` and `notes`.
 - Each stay has an `id` and optional `name`, `address`, `phone`, `checkIn`, `checkOut`, `confirmation`, `cost`, `personIds` and `notes`.
 - Each contact has an `id` and optional `name`, `role`, `phone` and `notes`.
 
@@ -67,8 +70,6 @@ A leg or stay with no `personIds` is for everyone on the trip. It reads `people`
 
 ## Not yet
 
-- Passport and visa details for each person
-- Time zones on travel that crosses them
 - Sending each person their own sheet
 
 ## License

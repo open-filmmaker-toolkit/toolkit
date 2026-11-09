@@ -35,6 +35,9 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **A month calendar and a list.** Shoot days, travel days and holds, colored by kind. Click a day to add one. The list groups days into trips or blocks, upcoming first, and can show past days too.
 - **Adds several days at once.** Pick a first and last date to add a day for each, with the same details.
 - **Links days to the project's people and locations,** so they're the same people and places the call sheets, releases and credits use. The side panel shows who's needed on the days coming up, and how often.
+- **Times within a day,** such as crew call, the interview and wrap. The list shows when each day starts and ends, and a call sheet started from the day starts with them.
+- **Flags conflicts:** someone needed on two days with the same date, such as a second unit or a hold left on the calendar. The editor warns as you pick people, and the side panel lists every conflict coming up.
+- **Adds people and locations from here.** Type a new person's name and role, or a new location, without leaving the day. They join the project when you save the day, so the call sheets, releases and credits have them too.
 - **Numbers shoot days within a trip,** such as "Day 2 of 5".
 - **Starts a call sheet from a shoot day,** with its date, day number, location and people, ready to finish in the [call sheet](../call-sheet/) tool. A day whose call sheet has moved to another date or place is flagged.
 - **Exports a calendar file** (`.ics`) with an all-day event for each day; holds show as tentative. It opens in Google Calendar, Apple Calendar and Outlook.
@@ -55,13 +58,11 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-A `shootDays` list. Each day has an `id`, a `date` and a `kind` (`shoot`, `travel` or `hold`), and optional `title` (what you're filming), `block` (the trip or block it belongs to), `locationId`, `personIds`, `callSheetId` and `notes`. Starting a call sheet adds an entry to `callSheets` with the day's date, `dayLabel`, `locationId` and `crew`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
+A `shootDays` list. Each day has an `id`, a `date` and a `kind` (`shoot`, `travel` or `hold`), and optional `title` (what you're filming), `block` (the trip or block it belongs to), `locationId`, `personIds`, `callSheetId`, `notes` and `schedule` (the day's times, each with an optional `time`, like `07:00`, and `what`). People and locations added here go into `people` and `locations`. Starting a call sheet adds an entry to `callSheets` with the day's date, `dayLabel`, `locationId` and `crew`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
-- Times within a day, beyond what the call sheet holds
-- Conflicts, such as one person needed in two places on the same day
-- Adding new people and locations from here; for now, add them in the call sheet tool
+- Conflicts with people's own availability, such as days off they've told you about
 
 ## License
 

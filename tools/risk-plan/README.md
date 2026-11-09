@@ -37,6 +37,8 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **Emergency contacts and the nearest hospitals.** Add hospitals already listed on [call sheets](../call-sheet/) for the plan's locations.
 - **Getting out:** a meeting point and an evacuation plan.
 - **Check-ins:** when, with whom and how, and the steps to take when someone misses one, starting from a default you can change.
+- **A check-in log during the shoot.** Log each check-in as it happens, for one person or the whole team: checked in, late, or missed. The plan shows when the next check-in is due and flags one that's passed without being logged. A missed check-in stays flagged until you mark them safe.
+- **Medical details, kept apart.** Blood type, allergies, medications, conditions, who to call and health insurance for each person on the plan. They never go into the project file. Save them to a file of their own, locked with a passphrase if you like, and print a confidential medical sheet for whoever is responsible for safety.
 - **Flags** hazards rated high or with nothing planned, and plans with no contacts, hospital or check-ins. The side panel lists upcoming shoot days at a location no plan covers.
 - **Prints for the crew:** contacts, hospitals, the way out, check-ins, and each hazard with what to do. **Prints for the insurer:** the production, dates, locations and team, the full risk assessment, the emergency plans and a line to sign. **Exports CSV** of the risk assessment. Also exports project data: project details, people, locations, third-party elements, contracts, assets, music cue sheet details or call sheets as separate CSV files.
 
@@ -57,18 +59,18 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-`riskPlans`: each has an `id`, `title`, `level` (`standard`, `elevated` or `hostile`), and optional `startDate`, `endDate`, `author`, `locationIds`, `personIds` (the team), `hazards`, `contacts`, `hospitals`, `meetingPoint`, `evacuation`, `checkIns` and `notes`.
+`riskPlans`: each has an `id`, `title`, `level` (`standard`, `elevated` or `hostile`), and optional `startDate`, `endDate`, `author`, `locationIds`, `personIds` (the team), `hazards`, `contacts`, `hospitals`, `meetingPoint`, `evacuation`, `checkIns`, `checkInLog` and `notes`.
 
 - Each hazard has an `id`, `hazard`, `likelihood` and `impact` (1 to 3), and optional `controls` (what you'll do) and `ownerId` (who makes sure, in `people`).
 - Each contact has an `id` and optional `name`, `role`, `phone` and `notes`. Each hospital has an `id` and optional `name`, `address`, `phone` and `notes`.
+- `checkInLog` lists check-ins as they happen, each with an `id`, `at` (local date and time, like `2026-11-10T08:05`), `status` (`ok`, `late` or `missed`), and optional `personId` (nobody means the whole team), `note` and `resolved` (when a missed one was marked safe).
 - `checkIns` has optional `times` (separated by commas), `contact`, `method` and `escalation`, the steps in order, each with `after` and `action`.
 
-It reads `people`, `locations`, `shootDays` and the hospitals on `callSheets`. A plan can have a `tripId`, a trip in `trips`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
+It reads `people`, `locations`, `shootDays` and the hospitals on `callSheets`. A plan can have a `tripId`, a trip in `trips`. Medical details are never written to the project file. They're saved to a separate `oft-medical` file: `people`, by person id, or `locked` (`salt`, `iv` and `data`, encrypted with AES-GCM using a key from the passphrase). Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
-- A check-in log during the shoot
-- Medical details for each person, kept separately and privately
+- Sending check-in reminders to people's phones, which needs a service outside the toolkit
 - Maps and routes
 
 ## License
