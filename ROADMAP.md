@@ -98,11 +98,11 @@ Each item has [its own issue](https://github.com/open-filmmaker-toolkit/toolkit/
 
 ### Imports
 
-- [ ] Expenses from a bank or card statement into the expense log ([#189](https://github.com/open-filmmaker-toolkit/toolkit/issues/189))
-- [ ] Contacts from an address book (vCard) into the funder CRM, partner CRM, press list and subject tracker ([#190](https://github.com/open-filmmaker-toolkit/toolkit/issues/190))
-- [ ] Festivals from a submission platform's export, and grants from a funder database's export ([#191](https://github.com/open-filmmaker-toolkit/toolkit/issues/191))
-- [ ] QC reports from a QC house's file into the QC tracker, and hash manifests into the archive log ([#192](https://github.com/open-filmmaker-toolkit/toolkit/issues/192))
-- [ ] A budget from another budgeting program's own file ([#193](https://github.com/open-filmmaker-toolkit/toolkit/issues/193))
+- [x] Expenses from a bank or card statement into the expense log ([#189](https://github.com/open-filmmaker-toolkit/toolkit/issues/189))
+- [x] Contacts from an address book (vCard) into the funder CRM, partner CRM, press list and subject tracker ([#190](https://github.com/open-filmmaker-toolkit/toolkit/issues/190))
+- [x] Festivals from a submission platform's export, and grants from a funder database's export ([#191](https://github.com/open-filmmaker-toolkit/toolkit/issues/191))
+- [x] QC reports from a QC house's file into the QC tracker, and hash manifests into the archive log ([#192](https://github.com/open-filmmaker-toolkit/toolkit/issues/192))
+- [x] A budget from another budgeting program's own file ([#193](https://github.com/open-filmmaker-toolkit/toolkit/issues/193))
 
 ### Exports
 

@@ -49,6 +49,7 @@ The rates in the documentary accounts start at zero for fringes and insurance: s
 
 - **Imports from a spreadsheet:** choose **Import from a spreadsheet** under the file buttons and pick a CSV file. One with the columns of the [spreadsheet template](../../templates/budget-template.csv) imports as it is; match any other columns once and the tool remembers. Problems, such as a date it can't read, show row by row before anything is added, and importing only adds.
 - **Several currencies, several fringes and caps.** A line's ⋯ button sets the currency of its rate and picks several fringes. A fringe can have a cap, so it applies only to wages up to that amount for each person, like a payroll tax that stops at a wage limit. Totals convert to the project currency at the exchange rates you type in under **Exchange rates**, and say which rates they used.
+- **Imports from another budgeting program.** Export the budget from the other program as a CSV, with its accounts and their detail lines, and import it here. Columns such as Acct, Description, Amount, Units, X, Rate, Subtotal and Fringes are read into accounts and lines, sections come from the Above the line, Production, Post and Other headings, and fringes are matched by name or added. Before anything is added, the tool lists what it left out, such as totals and lines with no amount or rate.
 
 ## Saving and file conflicts
 
@@ -64,7 +65,7 @@ A `budget` record with `accounts` (each with `id`, `code`, `name`, `section` and
 
 ## Not yet
 
-- Importing a budget from another budgeting program's own file
+- Reading another budgeting program's own file format; export a CSV from it first
 
 ## License
 

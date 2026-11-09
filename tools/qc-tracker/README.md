@@ -42,6 +42,7 @@ For anyone who doesn't use the tool, there's a [spreadsheet template](../../temp
 
 - **Imports from a spreadsheet:** choose **Import from a spreadsheet** under the file buttons and pick a CSV file. One with the columns of the [spreadsheet template](../../templates/qc-issues-template.csv) imports as it is; match any other columns once and the tool remembers. Problems, such as a date it can't read, show row by row before anything is added, and importing only adds.
 - **Links issues to cuts** in the [cut version tracker](../cut-tracker/): the cut an issue was found in and the cut that fixed it. The cut tracker shows each cut's open QC issues and fixes.
+- **Imports QC reports.** The spreadsheet import matches the columns QC houses use, such as TC In, TC Out, Grade, Category and Comment, and turns words like Critical, Warning and FYI into major, minor and note. It also reads a plain text report with one issue on each line that starts with a timecode; the report is named after the file.
 
 ## Saving and file conflicts
 
@@ -59,7 +60,7 @@ Everything else in the file is preserved. See the [data model notes](../../schem
 
 ## Not yet
 
-- Importing QC reports from a QC house's file
+- Reading QC reports sent as PDF or XML; save them as text or CSV first
 - Markers for an editing app
 
 ## License

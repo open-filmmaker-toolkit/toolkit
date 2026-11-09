@@ -47,6 +47,7 @@ This tool holds other people's contact details. Keep the project file somewhere 
 - **A calendar file of every date in the project**, gathered from every tool: choose **Calendar of every date** under the file buttons and pick which kinds of dates to include. Importing a newer file updates the same events instead of adding them twice.
 - **Imports from a spreadsheet:** choose **Import from a spreadsheet** under the file buttons and pick a CSV file. One with the columns of the [spreadsheet template](../../templates/funder-crm-template.csv) imports as it is; match any other columns once and the tool remembers. Problems, such as a date it can't read, show row by row before anything is added, and importing only adds.
 - **Shows the money in the [finance plan](../finance-plan/)** from each organization: sources linked to it, and sources from its applications, with their kind, status and amount.
+- **Imports contacts from an address book.** Choose **Import from an address book** under the file buttons and pick a .vcf file exported from Apple Contacts, Google Contacts or Outlook. Every contact is listed first, so you pick which to add. Each joins the funder named by their organization, which is added if it's new. A contact that matches one already here, by name or email, starts unticked; ticking it fills in only what it's missing.
 
 ## Saving and file conflicts
 
@@ -62,7 +63,7 @@ A `funders` list. Each organization has an `id`, a `type` and a `stage`, and opt
 
 ## Not yet
 
-- Importing contacts from an address book
+Nothing planned right now. If something you need is missing, [open an issue](https://github.com/open-filmmaker-toolkit/toolkit/issues).
 
 ## License
 

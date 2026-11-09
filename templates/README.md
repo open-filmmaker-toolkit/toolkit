@@ -121,6 +121,7 @@ Forms you sign, in [legal-forms](legal-forms/). They're under [CC0 1.0](../LICEN
 | Form | Document | Fill it in with |
 | --- | --- | --- |
 | Crew deal memo | [legal-forms/deal-memo-template.docx](legal-forms/deal-memo-template.docx) | [Deal memos](../tools/deal-memos/) |
+| Festival submissions | [festival-submissions-template.csv](festival-submissions-template.csv) | | [Festival submission tracker](../tools/festival-submissions/) |
 | Festival strategy | [festival-strategy-template.csv](festival-strategy-template.csv) | | [Festival strategy map](../tools/festival-strategy/) |
 | Stills caption sheet | [stills-caption-sheet-template.csv](stills-caption-sheet-template.csv) | | [Stills library](../tools/stills-library/) |
 | Rights availability | [rights-matrix-template.csv](rights-matrix-template.csv) | | [Rights availability matrix](../tools/rights-matrix/) |

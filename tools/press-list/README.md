@@ -49,6 +49,7 @@ This tool holds other people's contact details. Keep the project file somewhere 
 - **A calendar file of every date in the project**, gathered from every tool: choose **Calendar of every date** under the file buttons and pick which kinds of dates to include. Importing a newer file updates the same events instead of adding them twice.
 - **Imports from a spreadsheet:** choose **Import from a spreadsheet** under the file buttons and pick a CSV file. One with the columns of the [spreadsheet template](../../templates/press-list-template.csv) imports as it is; match any other columns once and the tool remembers. Problems, such as a date it can't read, show row by row before anything is added, and importing only adds.
 - **The press kit:** what's in the [EPK and press notes builder](../press-notes/), with a button that copies the logline, synopsis, director's statement, technical details and press contacts to paste into an email with a screener link.
+- **Imports contacts from an address book.** Choose **Import from an address book** under the file buttons and pick a .vcf file exported from Apple Contacts, Google Contacts or Outlook. Every contact is listed first, so you pick which to add. Each joins the outlet named by their organization, which is added if it's new, and their job title becomes their beat. A contact that matches one already here, by name or email, starts unticked; ticking it fills in only what it's missing.
 
 ## Saving and file conflicts
 
@@ -66,7 +67,7 @@ It also adds screenings to a shared `screenings` list, each with an `id` and opt
 
 ## Not yet
 
-- Importing contacts from an address book
+Nothing planned right now. If something you need is missing, [open an issue](https://github.com/open-filmmaker-toolkit/toolkit/issues).
 
 ## License
 

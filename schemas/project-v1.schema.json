@@ -2508,6 +2508,19 @@
           "type": "string",
           "description": "Hash manifest text or a reference to a manifest produced by another tool."
         },
+        "hashCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "How many files the manifest lists, when the archive log could read it."
+        },
+        "hashAlgorithm": {
+          "type": "string",
+          "description": "The hash the manifest uses, such as MD5, SHA-256 or xxHash64."
+        },
+        "manifestFile": {
+          "type": "string",
+          "description": "The name of the manifest file it was loaded from."
+        },
         "nextCheckDate": {
           "type": "string",
           "format": "date"
@@ -4124,6 +4137,10 @@
         },
         "receiptAssetId": {
           "$ref": "#/$defs/id"
+        },
+        "bankRef": {
+          "type": "string",
+          "description": "The bank's own id for the transaction, from an imported statement, so it isn't imported twice."
         },
         "notes": {
           "type": "string"

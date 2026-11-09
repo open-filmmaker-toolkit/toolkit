@@ -41,6 +41,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 This tool contains financial records. Keep the project file and any receipt files somewhere private; don't attach them to an issue.
 
 - **Other currencies.** An expense can have its own currency. Totals convert it at the exchange rate for its date, set under **Exchange rates**.
+- **Imports bank and card statements.** Choose **Import a bank or card statement** and pick the CSV, OFX or QFX file your bank or card exports. Every transaction is listed first: tick the ones to add and pick a budget account for each. Money coming in can't be added, and transactions with the same date and amount as one already in the log start unticked. If a CSV lists charges as positive numbers, tick **Charges are positive numbers in this file**.
 
 ## Saving and file conflicts
 
@@ -57,7 +58,7 @@ An `expenses` list. Each expense has an `id` and can include `date`, `amount`, `
 ## Not yet
 
 - Reading, embedding or copying receipt files; put them in the project folder yourself.
-- Importing expenses from a bank or card statement.
+- Matching a statement to receipts you already logged with a different date or amount
 
 ## License
 

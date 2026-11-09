@@ -47,6 +47,7 @@ The list holds contact details. Keep the project file and any printouts private.
 - **A calendar file of every date in the project**, gathered from every tool: choose **Calendar of every date** under the file buttons and pick which kinds of dates to include. Importing a newer file updates the same events instead of adding them twice.
 - **Imports from a spreadsheet:** choose **Import from a spreadsheet** under the file buttons and pick a CSV file. One with the columns of the [spreadsheet template](../../templates/subject-tracker-template.csv) imports as it is; match any other columns once and the tool remembers. Problems, such as a date it can't read, show row by row before anything is added, and importing only adds.
 - **Links subjects to locations,** and shows the research sources about them from the [research and archival log](../research-log/).
+- **Imports contacts from an address book.** Choose **Import from an address book** under the file buttons and pick a .vcf file exported from Apple Contacts, Google Contacts or Outlook. Every contact is listed first, so you pick which to add. Each becomes a subject you're researching, with their job, organization, email, phone and notes. A contact that matches one already here, by name or email, starts unticked; ticking it fills in only what it's missing.
 
 ## Saving and file conflicts
 
@@ -64,7 +65,7 @@ A `subjects` list. Each subject has an `id`, and optional `name`, `about`, `foun
 
 ## Not yet
 
-- Importing contacts from an address book
+Nothing planned right now. If something you need is missing, [open an issue](https://github.com/open-filmmaker-toolkit/toolkit/issues).
 
 ## License
 

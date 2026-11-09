@@ -482,6 +482,12 @@ function oftBuild() {
     imp.onclick = () => oftImport.open(OFT_IMPORT);
     links.prepend(imp);
   }
+  if (typeof oftVcard !== 'undefined' && typeof OFT_VCARD !== 'undefined') {
+    const vc = document.createElement('button');
+    vc.type = 'button'; vc.className = 'link-btn'; vc.id = 'oftVcardBtn'; vc.textContent = 'Import from an address book';
+    vc.onclick = () => oftVcard.open();
+    links.prepend(vc);
+  }
   if (typeof oftCosts !== 'undefined' && typeof OFT_COSTS !== 'undefined') {
     const cb = document.createElement('button');
     cb.type = 'button'; cb.className = 'link-btn'; cb.id = 'oftCostsBtn'; cb.textContent = 'Send costs to the budget';
