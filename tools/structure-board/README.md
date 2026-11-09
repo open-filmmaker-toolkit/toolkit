@@ -45,6 +45,7 @@ For anyone who doesn't use the tool, there's a [spreadsheet template](../../temp
 
 - **Imports from a spreadsheet:** choose **Import from a spreadsheet** under the file buttons and pick a CSV file. One with the columns of the [spreadsheet template](../../templates/structure-board-template.csv) imports as it is; match any other columns once and the tool remembers. Problems, such as a date it can't read, show row by row before anything is added, and importing only adds.
 - **Links cards to clips** in the [footage log](../footage-log/).
+- **Versions to compare.** Under the board, save the structure as it stands, then compare any saved version with the board now, act by act, with the cards that moved marked, or go back to it.
 
 ## Saving and file conflicts
 
@@ -64,7 +65,7 @@ It reads `people` and `paperEdit`. Cards can have `assetIds`, clips in `assets`.
 
 ## Not yet
 
-- Several versions of the structure to compare
+Nothing planned right now. If something you need is missing, [open an issue](https://github.com/open-filmmaker-toolkit/toolkit/issues).
 
 ## License
 

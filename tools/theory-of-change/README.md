@@ -43,6 +43,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 For anyone who doesn't use the tool, there's a [spreadsheet template](../../templates/theory-of-change-template.csv) with the same columns as the export.
 
 - **Imports from a spreadsheet:** choose **Import from a spreadsheet** under the file buttons and pick a CSV file. One with the columns of the [spreadsheet template](../../templates/theory-of-change-template.csv) imports as it is; match any other columns once and the tool remembers. Problems, such as a date it can't read, show row by row before anything is added, and importing only adds.
+- **Versions to compare.** Save the plan as it stands, then compare it with the plan now as it changes: the goal, audiences, activities, outcomes and indicators side by side, with what changed marked. Restore a saved version if you need to.
 
 ## Saving and file conflicts
 
@@ -60,7 +61,7 @@ Everything else in the file is preserved. See the [data model notes](../../schem
 
 ## Not yet
 
-- Versions to compare as the plan changes
+Nothing planned right now. If something you need is missing, [open an issue](https://github.com/open-filmmaker-toolkit/toolkit/issues).
 
 ## License
 

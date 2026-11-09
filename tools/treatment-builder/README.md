@@ -41,6 +41,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 
 For anyone who doesn't use the tool, there's a blank [Word template](../../templates/treatment-template.docx) with the same sections and targets.
 - **Exports to Word.** **Export to Word** saves the treatment as a .docx file, with the same headings and text as the printed version.
+- **More than one treatment.** **Make another treatment** starts one from a copy of the treatment open now, or blank, such as a short and a long version. Pick between them at the top. Each has its own sections, targets and versions. Other tools, such as the pitch deck, use the main treatment.
 
 ## Saving and file conflicts
 
@@ -63,7 +64,7 @@ Everything else in the file is preserved. See the [data model notes](../../schem
 
 ## Not yet
 
-- More than one treatment in a project, such as a short and a long version
+Nothing planned right now. If something you need is missing, [open an issue](https://github.com/open-filmmaker-toolkit/toolkit/issues).
 
 ## License
 

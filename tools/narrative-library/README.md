@@ -41,6 +41,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **Exports CSV and prints** every answer with its versions, counts and where each was sent. Also exports project data: project details, people, locations, third-party elements, contracts, assets, music cue sheet details or call sheets as separate CSV files.
 
 For anyone who doesn't use the tool, there's a blank [Word template](../../templates/grant-narrative-library-template.docx) with the usual answers and lengths.
+- **Compare two versions.** In an answer, **Compare two versions** puts any two of its versions side by side, with their lengths and the words that differ marked.
 
 ## Saving and file conflicts
 
@@ -56,7 +57,6 @@ A `narratives` list. Each answer has an `id`, a `title`, `versions` and optional
 
 ## Not yet
 
-- Comparing two versions side by side
 - Spell check beyond what your browser does
 
 ## License
