@@ -981,10 +981,20 @@ def test_budget(browser, fake):
     rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
     editor = next(r for r in rows if r[3] == 'Editor')
     check(rows[0][0] == 'Account number' and editor[4] == '32' and editor[11] == '78848.00' and rows[-1][1] == 'Total', 'CSV lists every line with its fringe, then the total')
+    pg.click('#addGlobalBtn'); pg.fill('#globals .g-name', 'Edit weeks'); pg.locator('#globals .g-name').dispatch_event('change'); pg.fill('#globals .g-val', '10'); pg.locator('#globals .g-val').dispatch_event('change')
+    pg.click('[data-line="line-1200-3"] [data-moreline]'); pg.select_option('#l-global', label='Edit weeks (10)'); pg.fill('#l-times', '4'); pg.click('#lineForm button[type="submit"]'); pg.wait_for_timeout(200)
+    check(pg.input_value('[data-line="line-1200-3"] [data-k="quantity"]') == '40' and pg.get_attribute('[data-line="line-1200-3"] [data-k="quantity"]', 'readonly') is not None and 'Quantity: Edit weeks × 4' in pg.inner_text('[data-line="line-1200-3"]'), "a line's quantity comes from a global")
+    pg.click('[data-line="line-1300-4"] [data-moreline]'); pg.select_option('#l-global', label='Edit weeks (10)'); pg.fill('#l-times', '4'); pg.click('#lineForm button[type="submit"]'); pg.wait_for_timeout(200)
+    pg.fill('#globals .g-val', '11'); pg.locator('#globals .g-val').dispatch_event('change'); pg.wait_for_timeout(200)
+    pg.locator('#topHead').click()
+    check(pg.input_value('[data-line="line-1200-3"] [data-k="quantity"]') == '44' and pg.input_value('[data-line="line-1300-4"] [data-k="quantity"]') == '44' and '$73,920.00' in pg.inner_text('[data-line="line-1300-4"] [data-tot]'), 'changing the global changes every line that uses it')
     pg.click('#printBtn'); pg.wait_for_timeout(200)
+    check('Used by 2 lines: Producer, Director' in pg.inner_text('#globals'), 'shows which lines use each global')
     check('Top sheet' in pg.inner_text('#report') and 'Permit fees' in pg.inner_text('#report'), 'prints the top sheet and detail')
     data = saved_project(pg, fake)
     b = data['budget']
+    pr = next(l for l in b['lines'] if l['id'] == 'line-1200-3')
+    check(b['globals'][0]['name'] == 'Edit weeks' and b['globals'][0]['value'] == 11 and pr['quantityGlobal'] == b['globals'][0]['id'] and pr['quantityTimes'] == 4 and pr['quantity'] == 44, 'saves globals, and the quantity they give each line')
     check(len(b['versions']) == 2 and any(a['name'] == 'Impact campaign' for a in b['accounts']) and b['markups'][0]['percent'] == 5 and
           next(l for l in b['lines'] if l['id'] == 'line-3000-16')['quantity'] == 32 and not any(l['id'] == 'line-2100-9' for l in b['lines']), 'the budget is saved')
     check(data['grants'] == original['grants'] and data['financePlan'] == original['financePlan'] and data['budgetFormats'] == original['budgetFormats'], "other tools' data is unchanged")
@@ -1172,6 +1182,15 @@ def test_cash_flow(browser, fake):
     check('cost not scheduled' not in pg.inner_text('#unsched'), 'schedules a percentage')
     pg.select_option('.mode[data-kind="lines"][data-id="line-1300-4"]', 'same'); pg.wait_for_timeout(100)
     check('Deferred' not in pg.inner_text('#unsched'), 'a line can go back to its account schedule')
+    pg.locator('[data-acct], .map').filter(has_text='Archive research').first.locator('details').evaluate('d => d.open = true')
+    pg.select_option('.mode[data-kind="lines"][data-id="line-1000-0"]', 'payments'); pg.wait_for_selector('#payDialog[open]')
+    pg.select_option('#p-by', 'percent'); pg.fill('#pp-d-0', '2026-02-01'); pg.fill('#pp-v-0', '30')
+    pg.click('#payAdd'); pg.fill('#pp-d-1', '2026-03-15'); pg.fill('#pp-v-1', '50'); pg.locator('#pp-v-1').dispatch_event('input')
+    check('$2,800 of $3,500 placed; $700 left unscheduled' in pg.inner_text('#payNote'), 'works out payments as percentages of the cost')
+    pg.click('#payForm button[type="submit"]'); pg.wait_for_timeout(200)
+    check('2 payments' in pg.inner_text('#sched') and 'cost not scheduled' in pg.inner_text('#unsched'), 'saves the payments and leaves the rest unscheduled')
+    pg.click('#oneAdd'); pg.select_option('#o-kind', 'in'); pg.fill('#o-label', 'Bridge loan'); pg.fill('#o-date', '2026-05-01'); pg.fill('#o-amount', '10000'); pg.click('#oneForm button[type="submit"]'); pg.wait_for_timeout(200)
+    check('Bridge loan' in pg.inner_text('#oneList') and '+$10,000' in pg.inner_text('#oneList'), 'adds one-off money coming in')
     pg.click('#settingsBtn'); pg.select_option('#s-period', 'week'); pg.click('#settingsSubmit'); pg.wait_for_timeout(200)
     check('weeks' in pg.inner_text('#count'), 'shows weeks')
     pg.click('#flowViewBtn')
@@ -1187,6 +1206,7 @@ def test_cash_flow(browser, fake):
     cf = data['cashFlow']
     check(cf['period'] == 'week' and cf['openingBalance'] == 20000 and cf['includeProspective'] is True and 'includePending' not in cf and
           cf['markups']['markup-contingency'] == {'mode': 'spread', 'from': '2027-01-01', 'to': '2027-12-31'} and 'line-1300-4' not in cf['lines'], 'the schedule is saved')
+    check(cf['lines']['line-1000-0'] == {'mode': 'payments', 'by': 'percent', 'payments': [{'date': '2026-02-01', 'percent': 30}, {'date': '2026-03-15', 'percent': 50}]} and cf['oneOffs'][0]['kind'] == 'in' and cf['oneOffs'][0]['amount'] == 10000, 'saves payments on dates and one-offs')
     check(data['budget'] == original['budget'] and data['financePlan'] == original['financePlan'], "the budget and finance plan are unchanged")
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
@@ -2147,13 +2167,24 @@ def test_budget_actuals(browser, fake):
     rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
     drone = next(r for r in rows if r[2] == 'Drone with operator')
     check(rows[0][:4] == ['Section', 'Account', 'Line', 'Budget'] and drone[4] == '3000.00' and drone[7] == '-600.00' and rows[-1][0] == 'Total', 'CSV has every line and the total')
+    pg.select_option('#perKind', 'month'); pg.fill('#perDate', '2026-05-20'); pg.locator('#perDate').dispatch_event('change'); pg.wait_for_timeout(100)
+    check('May 2026' in pg.inner_text('#table thead') and pg.locator('#table thead th').count() == 9, 'adds a column for spending in one month')
+    pg.fill('#saveLabel', 'All spending'); pg.click('#saveReportBtn'); pg.wait_for_timeout(100)
+    pg.fill('#asOf', '2026-05-13'); pg.locator('#asOf').dispatch_event('change'); pg.wait_for_timeout(100)
+    pg.click('#savedList [data-cmp]'); pg.wait_for_selector('#cmpDialog[open]')
+    cmpt = pg.inner_text('#cmpTable')
+    check('Drone with operator' not in cmpt and 'Total' in cmpt and '−' in cmpt and 'changed between All spending and Now' in pg.inner_text('#cmpNote'), 'compares a saved report with the report now, line by line')
+    pg.click('#cmpClose')
+    pg.fill('#asOf', ''); pg.locator('#asOf').dispatch_event('change'); pg.wait_for_timeout(100)
     pg.click('#printBtn'); pg.wait_for_timeout(200)
     r = pg.inner_text('#report')
     check('Cost report' in r and 'Summary' in r and 'Two more weeks of editing' in r and 'Contingency 10%' in r, 'prints the cost report')
+    check('Spent in May 2026' in r, 'prints the spending for the month')
     data = saved_project(pg, fake)
     ex = {e['id']: e for e in data['expenses']}
     check(ex['expense-motel']['budgetLineId'] == 'line-2200-10' and 'budgetLineId' not in ex['expense-lunch'] and any(e.get('lineId') == 'line-3000-16' and e['toComplete'] == 80000 for e in data['costReport']['estimates']) and 'asOf' not in data['costReport'],
           'the assignment and estimate are saved')
+    check(data['costReport']['period'] == {'kind': 'month', 'start': '2026-05-20'} and data['costReport']['saved'][0]['label'] == 'All spending' and data['costReport']['saved'][0]['rows']['total']['final'] > 0, 'saves the period and the saved report')
     check(data['budget'] == original['budget'] and [e for e in data['expenses'] if e['id'] != 'expense-motel'] == [e for e in original['expenses'] if e['id'] != 'expense-motel'], 'the budget and other expenses are unchanged')
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
@@ -2233,6 +2264,11 @@ def test_license_tracker(browser, fake):
     check('Payment overdue since Nov 1, 2026: $450' in due and 'Exercise by Dec 20, 2026: Add educational use' in due, 'flags an overdue payment and an option to exercise soon')
     pg.click('[data-edit="contract-muddy-water-license"]'); pg.check('#payments-0-paid'); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
     check('Nov 20' not in pg.inner_text('#due') and '$1,750 paid of $3,500' in pg.inner_text('[data-id="contract-muddy-water-license"]'), 'marks a payment paid')
+    pg.click('[data-edit="contract-fieldtone-license"]'); pg.fill('#f-mfn', 'Opening scene music'); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    pg.click('[data-edit="contract-muddy-water-license"]'); pg.fill('#f-mfn', 'opening scene music'); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    ft = pg.inner_text('[data-id="contract-fieldtone-license"]')
+    check('MFN with Muddy Water Hymn, sync and master: would rise to $3,500' in ft and 'MFN group: Opening scene music' in pg.inner_text('[data-id="contract-muddy-water-license"]'), 'flags a lower fee in a most-favored-nations group, and what it would rise to')
+    check('Opening scene music' in pg.inner_text('#mfn') and '+$3,350' in pg.inner_text('#mfn'), 'sums what the group would cost more')
     pg.click('#printBtn'); pg.wait_for_timeout(200)
     r = pg.inner_text('#report')
     check('License schedule' in r and 'Channel 6, 1993 flood report' in r and 'Add educational use' in r and 'Payments' in r, 'prints the license schedule')
@@ -2248,6 +2284,7 @@ def test_license_tracker(browser, fake):
     check(lic['type'] == 'license' and lic['thirdPartyElementIds'] == ['sample-08'] and lic['payments'][0]['amount'] == 450 and lic['options'][0]['deadline'] == '2026-12-20' and lic['id'] in el['contractIds']
           and a['type'] == 'license' and a['relativePath'] == 'licenses/channel6.pdf', 'the license is saved and linked to its element')
     check(mw['payments'][0]['paid'] is True and mw['payments'][0]['paidDate'] == '2026-11-07', 'the payment is saved as paid')
+    check(mw['mfnGroup'] == 'Opening scene music' and next(c for c in data['contracts'] if c['id'] == 'contract-fieldtone-license')['mfnGroup'] == 'Opening scene music', 'saves the group, matching its spelling')
     check([c for c in data['contracts'] if c.get('type') != 'license'] == [c for c in original['contracts'] if c.get('type') != 'license'], 'other contracts are unchanged')
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
@@ -2382,6 +2419,87 @@ def test_chain_of_title(browser, fake):
     check(data['contracts'] == original['contracts'] and data['people'] == original['people'], 'other data is unchanged')
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
+
+def test_deal_memo_timecards(browser, fake):
+    # Union rates, overtime, meal penalties, turnaround and timecards, from the daily reports' times.
+    d = json.loads(sample)
+    d['dailyReports'] = [
+        {'id': 'dr-a', 'shootDayId': 'shootday-may-1', 'callTime': '07:00', 'lunchStart': '13:30', 'lunchEnd': '14:00', 'wrapTime': '21:00',
+         'crew': [{'id': 'c1', 'personId': 'person-teo-ramirez', 'role': 'Director of photography', 'call': '07:00', 'wrap': '21:00', 'mealMinutes': 30},
+                  {'id': 'c2', 'personId': 'person-lena-ward', 'role': 'Director', 'mealMinutes': 30}]},
+        {'id': 'dr-b', 'shootDayId': 'shootday-may-2', 'callTime': '06:00', 'lunchStart': '12:00', 'lunchEnd': '12:30', 'wrapTime': '16:00',
+         'crew': [{'id': 'c3', 'personId': 'person-teo-ramirez', 'role': 'Director of photography', 'mealMinutes': 30},
+                  {'id': 'c4', 'personId': 'person-priya-nair', 'role': 'Editor', 'call': '09:00', 'wrap': '17:00', 'mealMinutes': 30}]}]
+    ctx, pg, errs = new_page(browser, 'deal-memos', fake)
+    if fake:
+        pg.evaluate('t => window.__file.text = t', json.dumps(d)); pg.click('#openBtn')
+    else:
+        pg.set_input_files('#fileInput', files=[{'name': 'p.oft.json', 'mimeType': 'application/json', 'buffer': json.dumps(d).encode()}])
+    pg.wait_for_function("document.getElementById('filmMeta').textContent.trim() !== ''")
+    check('1 week of daily reports' in pg.inner_text('#payState'), 'counts the weeks of daily reports (%s)' % pg.inner_text('#payState'))
+
+    pg.click('#ratesBtn')
+    check(pg.input_value('#r-dayHours') == '10' and pg.input_value('#r-turnaroundHours') == '10', 'rules start from the usual defaults')
+    pg.fill('#r-mealPenalty', '25')
+    pg.click('#urAddBtn')
+    pg.fill('#urRows .ur-row:last-child .u-role', 'Director of photography'); pg.fill('#urRows .ur-row:last-child .u-min', '800')
+    pg.set_input_files('#urInput', files=[{'name': 'rates.csv', 'mimeType': 'text/csv', 'buffer': b'Role,Agreement,Minimum,Per\nEditor,Editors Guild,2500,Week\nDirector of photography,Local 600,900,day\n'}])
+    pg.wait_for_timeout(200)
+    check(pg.locator('#urRows .ur-row').count() == 2 and pg.input_value('#urRows .ur-row:first-child .u-min') == '900', 'loads rates from a file, replacing a role already listed')
+    with pg.expect_download() as dl:
+        pg.click('#urCsvBtn')
+    rr = list(csv.reader(io.StringIO(open(dl.value.path(), encoding='utf-8-sig').read())))
+    check(rr[0] == ['Role', 'Agreement', 'Minimum', 'Per'] and ['Editor', 'Editors Guild', '2500', 'Week'] in rr, 'exports the rates in the same columns (%s)' % rr)
+    pg.click('#ratesForm button[type="submit"]'); pg.wait_for_timeout(200)
+    check('Below the Local 600 minimum of $900 a day' in pg.inner_text('[data-id="contract-deal-teo"]') and 'Below the Editors Guild minimum' in pg.inner_text('[data-id="contract-deal-priya"]'),
+          'flags deal memos below the minimum for their role')
+    pg.click('[data-edit="contract-deal-teo"]')
+    check(pg.is_visible('#minNote') and 'This rate is below it' in pg.inner_text('#minNote'), 'the memo shows the minimum and warns')
+    pg.fill('#f-rate', '950'); pg.locator('#f-rate').dispatch_event('input')
+    check('below' not in pg.inner_text('#minNote') and 'Local 600 minimum for Director of photography: $900 a day' in pg.inner_text('#minNote'), 'a rate above the minimum just shows it')
+    pg.click('#editorCancel')
+
+    pg.click('#timecardsBtn')
+    check(pg.is_visible('#tcNotPayroll') and "doesn't replace a payroll service" in pg.inner_text('#tcNotPayroll'), 'says plainly it is not a payroll service')
+    teo = pg.inner_text('#tcList [data-person="person-teo-ramirez"]')
+    check('13.5' in teo and 'Total $2,137.50' in teo and 'meal penalties $75.00' in teo and 'short turnaround $112.50' in teo, 'works out overtime, double time, meal penalties and a short turnaround (%s)' % teo)
+    check('No deal memo with a rate' in pg.inner_text('#tcList [data-person="person-lena-ward"]') and 'Total $2,200.00' in pg.inner_text('#tcList [data-person="person-priya-nair"]'),
+          'a weekly rate counts once, and someone without a memo gets hours only')
+    with pg.expect_download() as dl:
+        pg.click('#tcCsvBtn')
+    rows = list(csv.DictReader(io.StringIO(open(dl.value.path(), encoding='utf-8-sig').read())))
+    t = next(r for r in rows if r['Name'] == 'Teo Ramirez')
+    check(len(rows) == 3 and t['Week starting'] == '2026-05-11' and t['Overtime hours'] == '2' and t['Double-time hours'] == '1.5' and t['Meal penalties'] == '3' and t['Rest short (hours)'] == '1' and t['Total'] == '2137.5',
+          'the payroll summary has a row for each person (%s)' % t)
+    pg.click('#tcPrintBtn'); pg.wait_for_timeout(200)
+    r = pg.inner_text('#report')
+    check(r.startswith('Timecards, week of') and 'Approved for the production' in r and "isn't a payroll service" in r, 'prints the timecards to sign')
+    pg.click('#tcClose')
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    check(pg.inner_text('#report').startswith('Not legal advice'), 'printing a memo afterwards prints the memo')
+
+    pg.click('#addBtn')
+    pg.select_option('#f-kind', 'cast')
+    check(pg.inner_text('#f-personLabel') == 'Cast member', 'a cast memo asks for the cast member')
+    pg.select_option('#f-person', '__new'); pg.fill('#f-pname', 'Sam Lee'); pg.fill('#f-role', 'Narrator'); pg.fill('#f-rate', '400')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(300)
+    sam = pg.locator('#rows .row:has-text("Sam Lee")')
+    check('Cast' in sam.inner_text(), 'cast memos are marked in the list')
+    pg.select_option('#printSel', sam.get_attribute('data-id'))
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    r = pg.inner_text('#report')
+    check('Cast deal memo' in r and 'Cast member: Sam Lee' in r, 'prints a cast deal memo')
+    data = saved_project(pg, fake)
+    p = data['payroll']
+    check(p['rules'] == {'mealPenalty': 25} and len(p['rates']) == 2 and next(x for x in p['rates'] if x['role'] == 'Director of photography')['minimum'] == 900,
+          'saves only the changed rules, and the rates (%s)' % p)
+    m = next(c for c in data['contracts'] if c.get('type') == 'deal memo' and c.get('role') == 'Narrator')
+    s = next(x for x in data['people'] if x['name'] == 'Sam Lee')
+    check(m['dealKind'] == 'cast' and s.get('onCamera') is True and 'dealKind' not in next(c for c in data['contracts'] if c['id'] == 'contract-deal-teo'), 'saves the kind of memo, and new cast are on camera')
+    check(data['dailyReports'] == d['dailyReports'], 'the daily reports are unchanged')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
 
 def test_deal_memos(browser, fake):
     original = json.loads(sample)
@@ -3293,14 +3411,22 @@ def test_revenue_tracker(browser, fake):
     check("Free TV isn't in the deal's media" in au and 'over the $5,000.00 cap by $500.00' in au and "That's $500.00 too much" in au, 'checks media, the expense cap across statements and the fee on a new statement')
     pg.select_option('#bySel', 'quarter')
     check('2026 Q4' in pg.inner_text('#by'), 'groups by quarter')
+    pg.click('#addBtn'); pg.fill('#f-source', 'Nordlys Distribution (fictional)'); pg.fill('#f-date', '2026-11-01'); pg.fill('#f-gross', '20000'); pg.fill('#f-cur', 'EUR'); pg.locator('#f-cur').dispatch_event('input')
+    check("There's no exchange rate for EUR yet" in pg.inner_text('#curHint'), 'says when a currency has no rate yet')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    check('€20,000.00' in pg.inner_text('#rows') and 'No exchange rate for EUR yet' in pg.inner_text('#rows'), 'shows a statement in its own currency')
+    pg.click('#oftRatesBtn'); pg.fill('#oftRateRows .oft-rate-cur', 'EUR'); pg.fill('#oftRateRows .oft-rate-val', '1.1'); pg.click('#oftRatesForm button[type="submit"]'); pg.wait_for_timeout(200)
+    t = pg.inner_text('#totals')
+    check('$87,500.00' in t and '1 EUR = 1.1 USD' in pg.inner_text('#oftRatesNote') and '$22,000.00' in pg.inner_text('#rows'), 'converts it into the totals at the rate you set, and says which rate')
     with pg.expect_download() as d:
         pg.click('#csvBtn')
     rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
-    check(rows[0][0] == 'Source' and len(rows) == 4 and rows[1][9] == '7000', 'CSV lists every statement')
+    check(rows[0][0] == 'Source' and len(rows) == 5 and rows[0][-2:] == ['Currency', 'Due to you in the project currency'] and any(r[0] == 'Nordlys Distribution (fictional)' and r[-2:] == ['EUR', '22000'] for r in rows), 'CSV lists every statement, with its currency and the converted amount')
     pg.click('#printBtn'); pg.wait_for_timeout(200)
     check('By territory' in pg.inner_text('#report'), 'prints the statements and totals')
     data = saved_project(pg, fake)
-    s = next(x for x in data['revenueStatements'] if x['id'] not in ('statement-riverside-q3', 'statement-skyway-1'))
+    s = next(x for x in data['revenueStatements'] if x['id'] not in ('statement-riverside-q3', 'statement-skyway-1') and x.get('contractId'))
+    check(next(x for x in data['revenueStatements'] if x.get('source', '').startswith('Nordlys'))['currency'] == 'EUR' and data['project']['exchangeRates'] == [{'currency': 'EUR', 'rate': 1.1}], 'saves the currency and the rate')
     check(s['contractId'] == 'contract-dist-riverside-streaming' and s['gross'] == 10000 and s['net'] == 7000 and s['expenses'] == 1500, 'saves the statement')
     rs = next(c for c in data['contracts'] if c['id'] == 'contract-dist-riverside-streaming')
     check(rs['revenueTerms'] == {'feePercent': 20, 'expenseCap': 5000, 'reportingDays': 30, 'paymentDays': 15}, 'saves the deal terms on the deal')
@@ -3494,6 +3620,12 @@ def test_final_cost_report(browser, fake):
     pg.click('#printBtn'); pg.wait_for_timeout(200)
     r = pg.inner_text('#report')
     check('Final cost report' in r and '(draft)' not in r and 'Riverbend fund budget form' in r and "Accountant's sign-off" not in r, 'prints the final report')
+    pg.fill('#saveLabel', 'Draft to the funder'); pg.click('#saveReportBtn'); pg.wait_for_timeout(100)
+    pg.fill('#closeDate', '2026-05-12'); pg.locator('#closeDate').dispatch_event('change'); pg.wait_for_timeout(100)
+    pg.click('#savedList [data-cmp]'); pg.wait_for_selector('#cmpDialog[open]')
+    check('changed between Draft to the funder and Now' in pg.inner_text('#cmpNote') and 'Total' in pg.inner_text('#cmpTable') and '−' in pg.inner_text('#cmpTable'), 'compares a saved final cost report with the report now')
+    pg.click('#cmpClose')
+    pg.fill('#closeDate', ''); pg.locator('#closeDate').dispatch_event('change'); pg.wait_for_timeout(100)
     check(pg.is_hidden('#soFields'), 'the sign-off page is off to start with')
     pg.check('#so-on'); pg.wait_for_timeout(100)
     pg.fill('#so-name', 'Dana Whitfield'); pg.locator('#so-name').dispatch_event('change'); pg.fill('#so-cred', 'CPA'); pg.locator('#so-cred').dispatch_event('change'); pg.fill('#so-date', '2026-11-20'); pg.locator('#so-date').dispatch_event('change')
@@ -3503,6 +3635,7 @@ def test_final_cost_report(browser, fake):
     data = saved_project(pg, fake)
     f = data['finalCostReport']
     check(f['signOff'] == {'include': True, 'name': 'Dana Whitfield', 'credential': 'CPA', 'date': '2026-11-20'}, 'saves the sign-off, leaving out the usual wording %s' % f.get('signOff'))
+    check(f['saved'][0]['label'] == 'Draft to the funder' and f['saved'][0]['rows']['total']['final'] > 0, 'saves the saved report')
     check(f['status'] == 'final' and f['notes']['category-rb-personnel'] == 'Editing ran a week longer.' and f['notes']['account-2100'], 'saves notes and status')
     check(data['budget'] == original['budget'] and data['expenses'] == original['expenses'] and data['costReport'] == original['costReport'], 'the budget and expenses are unchanged')
     check(not errs, 'no page errors %s' % errs)
@@ -4365,11 +4498,43 @@ def test_money(browser, fake):
     prep = next((l for l in data['budget']['lines'] if l['id'] == teo['rates'][0].get('budgetLineId')), None)
     check(prep is not None and prep['rate'] == 500 and prep['quantity'] == 3 and 'Prep days' in prep['description'], 'another rate goes on its own budget line')
     rows = csv_of(pg)
-    check(rows[0][-1] == 'Other rates' and any('Prep days: $500 a day × 3' in r[-1] for r in rows), 'the CSV lists the other rates')
+    oi = rows[0].index('Other rates') if 'Other rates' in rows[0] else -1
+    check(oi >= 0 and any('Prep days: $500 a day × 3' in r[oi] for r in rows), 'the CSV lists the other rates')
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
 # waterfall / pari passu, corridors and interest, against a worked example
+def test_waterfall_pools(browser, fake):
+    d = json.loads(sample)
+    start = (datetime.date.today() - datetime.timedelta(days=731)).isoformat()
+    d['waterfall'] = {'pools': [{'id': 'pool-na', 'name': 'North America', 'territories': ['United States', 'Canada']}, {'id': 'pool-row', 'name': 'Rest of world', 'territories': ['France', 'Germany']}],
+        'tiers': [{'id': 't-fee', 'name': 'Sales fee', 'kind': 'gross', 'percent': 15, 'party': 'Sales agent'},
+            {'id': 't-exp', 'name': 'Sales expenses', 'kind': 'fixed', 'amount': 20000, 'party': 'Sales agent', 'byPool': {'pool-na': 10000, 'pool-row': 10000}},
+            {'id': 't-loan', 'name': 'Gap loan', 'kind': 'fixed', 'amount': 50000, 'party': 'Lender', 'interest': 10, 'interestFrom': start, 'compound': 'yearly'},
+            {'id': 't-net', 'name': 'Net profits', 'kind': 'split', 'splits': [{'party': 'Producers', 'share': 100}]}], 'scenarios': []}
+    d['revenueStatements'] = [{'id': 'st-us', 'source': 'US distributor', 'territory': 'United States', 'gross': 100000}, {'id': 'st-fr', 'source': 'French distributor', 'territory': 'France', 'gross': 5000}]
+    ctx, pg, errs = new_page(browser, 'waterfall', fake)
+    open_text(pg, fake, json.dumps(d, indent=2))
+    pg.select_option('#scenSel', 'actual'); pg.wait_for_timeout(100)
+    r = pg.inner_text('#results')
+    check('Rest of world: $4,250.00 of $10,000.00, $5,750.00 short, not made up from the other pools' in r and 'North America: $10,000.00 of $10,000.00' in r and '$5,750.00 still owed' in pg.inner_text('[data-id="t-exp"]'), 'without cross-collateralization, each pool recoups only from its own revenue')
+    loan = 50000 * (1.1 ** (731 / 365.25) - 1)
+    check(('Includes $%s interest, compounded yearly' % format(round(loan, 2), ',.2f')) in r or ('Includes $%s interest, compounded yearly' % format(round(loan, 2) + 0.01, ',.2f')) in r, 'compound interest, with how much (%s)' % round(loan, 2))
+    pg.click('[data-edit="t-exp"]'); pg.check('#f-crossed'); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    r = pg.inner_text('#results')
+    check("Cross-collateralized: Rest of world's shortfall of $5,750.00 made up from North America" in r and 'still owed' not in pg.inner_text('[data-id="t-exp"]'), 'cross-collateralized, one pool makes up the shortfall in another')
+    pg.select_option('#scenSel', ''); pg.fill('#try-pool-na', '40000'); pg.fill('#try-pool-row', '60000'); pg.wait_for_timeout(100)
+    check('$100,000.00' in pg.inner_text('#results'), 'tries an amount for each pool')
+    pg.click('#poolAdd'); pg.fill('#pools .pool:last-child .pl-name', 'Asia'); pg.locator('#pools .pool:last-child .pl-name').dispatch_event('change'); pg.wait_for_timeout(100)
+    pg.click('#printBtn'); pg.wait_for_timeout(200)
+    rep = pg.inner_text('#report')
+    check('compounded yearly' in rep and 'cross-collateralized' in rep, 'the printed summary explains both')
+    data = saved_project(pg, fake)
+    w = data['waterfall']
+    check(w['tiers'][1]['crossed'] is True and w['tiers'][1]['byPool'] == {'pool-na': 10000, 'pool-row': 10000} and w['tiers'][2]['compound'] == 'yearly' and w['pools'][2]['name'] == 'Asia', 'saves pools, cross-collateralization and compounding')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
 def test_waterfall_terms(browser, fake):
     d = json.loads(sample)
     start = (datetime.date.today() - datetime.timedelta(days=731)).isoformat()
@@ -4584,6 +4749,7 @@ def main():
         test_location_scout(browser, fake)
         print('== deal-memos / calendar, budget, signed copies and print')
         test_deal_memos(browser, fake)
+        test_deal_memo_timecards(browser, fake)
         print('== gear-list / gear, packages, costs and print')
         test_gear_list(browser, fake)
         print('== coi-permit-tracker / certificates, permits and shoot-day checks')
@@ -4698,6 +4864,7 @@ def main():
         test_money(browser, fake)
         print('== waterfall / pari passu, corridors and interest')
         test_waterfall_terms(browser, fake)
+        test_waterfall_pools(browser, fake)
         print('== edit imports / transcripts, markers and edit lists')
         test_edit_imports(browser, fake)
         print('== templates / columns match the tools\' exports')

@@ -33,6 +33,8 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 ## What it does
 
 - **Spreads the budget across the schedule.** Pick the dates each account is paid over, and the cost is split evenly across those months or weeks. Open an account to schedule a single line differently. Contingency and other percentages are scheduled the same way.
+- **Payments on dates.** For a cost that isn't paid evenly, such as a deposit and a final payment, choose **In payments on dates** and set each payment as an amount or a percentage of the cost. What the payments don't cover stays on the "Not on the schedule" list.
+- **One-offs.** Add costs and money coming in that aren't in the budget or the finance plan, such as a bridge loan or its repayment, each on its date and in its own currency if needed.
 - **Leaves out what isn't cash.** Mark a line or account as deferred (such as fees paid from revenue later) or in-kind, and it stays out of the cash going out.
 - **Adds the money coming in** from the [finance plan](../finance-plan/): each payment in the period it's expected. Confirmed money always counts; pending money counts unless you turn it off, and prospective money only if you turn it on. In-kind support and deferrals never count as cash.
 - **Shows the running balance** from the cash on hand at the start, period by period, with every period where it goes below zero marked short.
@@ -56,12 +58,11 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-A `cashFlow` record with `period` (`month` or `week`), optional `openingBalance`, `start` and `end` (dates), `includePending` (false to leave pending money out) and `includeProspective` (true to count it), and the schedule: `accounts`, `lines` and `markups`, each mapping a budget account, line or percentage id to `{ "mode": "spread", "from": date, "to": date }`, `{ "mode": "deferred" }` or `{ "mode": "in-kind" }`. A line's own schedule wins over its account's. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
+A `cashFlow` record with `period` (`month` or `week`), optional `openingBalance`, `start` and `end` (dates), `includePending` (false to leave pending money out) and `includeProspective` (true to count it), and the schedule: `accounts`, `lines` and `markups`, each mapping a budget account, line or percentage id to `{ "mode": "spread", "from": date, "to": date }`, `{ "mode": "payments", "by": "percent" (or missing for amounts), "payments": [{ "date", "amount" or "percent" }] }`, `{ "mode": "deferred" }` or `{ "mode": "in-kind" }`. A line's own schedule wins over its account's. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md). One-offs are in `oneOffs`, each with `id`, `kind` (`in` or `out`), `label`, `date`, `amount` and an optional `currency`.
 
 ## Not yet
 
-- Spreading a cost unevenly, such as a deposit and a final payment
-- One-off costs and income that aren't in the budget or the finance plan
+Nothing planned right now. If something you need is missing, [open an issue](https://github.com/open-filmmaker-toolkit/toolkit/issues).
 
 ## License
 

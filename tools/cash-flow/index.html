@@ -233,6 +233,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
 .flow td.spent { color: var(--ink-2); }
 .flow td.spent.over { color: var(--bad); font-weight: 600; }
 .unsched li.bad > span:first-child { color: var(--bad); }
+.pay-rows { display: grid; gap: 6px; }
+.pay-row { display: grid; grid-template-columns: minmax(0, 170px) minmax(0, 1fr) auto; gap: 6px; align-items: center; }
 </style>
 </head>
 <body>
@@ -308,6 +310,12 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <p class="lead">From the expense log, against what the plan has going out by today, for each account.</p>
         <ul class="unsched" id="spentList"></ul>
       </section>
+      <section class="card" aria-labelledby="oneHead">
+        <div class="card-head"><h2 id="oneHead">One-offs</h2></div>
+        <p class="lead">Costs and money coming in that aren't in the budget or the finance plan, such as a loan you repay or a fee you're owed.</p>
+        <ul class="unsched" id="oneList"></ul>
+        <div><button type="button" class="btn small" id="oneAdd">Add a one-off</button></div>
+      </section>
       <section class="card" aria-labelledby="unHead">
         <div class="card-head"><h2 id="unHead">Not on the schedule</h2><span class="count" id="unCount"></span></div>
         <ul class="unsched" id="unsched"></ul>
@@ -320,6 +328,36 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   </footer>
 </div>
 
+<dialog class="modal" id="payDialog" aria-labelledby="payTitle">
+  <form id="payForm" method="dialog" novalidate>
+    <div class="dlg-head"><h2 id="payTitle">Payments on dates</h2></div>
+    <div class="dlg-body">
+      <p class="hint">Such as a deposit when you book and the rest on delivery. Anything the payments don't cover stays on the "Not on the schedule" list.</p>
+      <div class="field"><label for="p-by">Set each payment as</label><select id="p-by"><option value="amount">An amount</option><option value="percent">A percentage of the cost</option></select></div>
+      <div class="pay-rows" id="payRows"></div>
+      <p><button type="button" class="btn small" id="payAdd">Add a payment</button></p>
+      <p class="hint" id="payNote" role="status"></p>
+    </div>
+    <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn" id="payCancel">Cancel</button><button type="submit" class="btn primary">Save</button></div>
+  </form>
+</dialog>
+<dialog class="modal" id="oneDialog" aria-labelledby="oneTitle">
+  <form id="oneForm" method="dialog" novalidate>
+    <div class="dlg-head"><h2 id="oneTitle">Add a one-off</h2></div>
+    <div class="dlg-body">
+      <div class="two">
+        <div class="field"><label for="o-kind">It's</label><select id="o-kind"><option value="out">A cost</option><option value="in">Money coming in</option></select></div>
+        <div class="field"><label for="o-date">On</label><input id="o-date" type="date"></div>
+      </div>
+      <div class="field"><label for="o-label">What it is</label><input id="o-label" type="text" autocomplete="off" placeholder="Repay the bridge loan"></div>
+      <div class="two">
+        <div class="field"><label for="o-amount">Amount</label><input id="o-amount" type="number" step="any" min="0" inputmode="decimal"></div>
+        <div class="field"><label for="o-cur">Currency, if not the project's</label><input id="o-cur" type="text" maxlength="3" autocomplete="off"></div>
+      </div>
+    </div>
+    <div class="dlg-foot"><button type="button" class="btn danger" id="oneDelete">Remove</button><span class="spacer"></span><button type="button" class="btn" id="oneCancel">Cancel</button><button type="submit" class="btn primary">Save</button></div>
+  </form>
+</dialog>
 <dialog class="modal" id="settingsDialog" aria-labelledby="settingsTitle">
   <form id="settingsForm" method="dialog" novalidate>
     <div class="dlg-head"><h2 id="settingsTitle">Periods and balance</h2></div>
@@ -545,7 +583,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     return ps.map(p => ({ date: p.date, amount: cents(!v.linked && s.currency ? oftMoney.convert(num(p.amount), s.currency, p.date) : num(p.amount) * scale) }));
   }
 
-  const MODES = [{ id: '', label: 'Not scheduled yet' }, { id: 'spread', label: 'Paid over' }, { id: 'deferred', label: 'Deferred, not paid now' }, { id: 'in-kind', label: 'In-kind, no cash' }];
+  const MODES = [{ id: '', label: 'Not scheduled yet' }, { id: 'spread', label: 'Paid over' }, { id: 'payments', label: 'In payments on dates' }, { id: 'deferred', label: 'Deferred, not paid now' }, { id: 'in-kind', label: 'In-kind, no cash' }];
   let view = 'flow';
 
   // Fills in only what this tool needs; everything else in the file is left as it was.
@@ -593,6 +631,14 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   }
   const periodLabel = p => (CF().period === 'week' ? `Week of ${fmtDate(p)}` : parse(p).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }));
 
+  // Payments on chosen dates, by amount or by percentage of the cost. What they don't cover stays unscheduled.
+  function paymentsOf(s, total) {
+    const rows = objs(s.payments).filter(x => isDate(x.date)), pct = s.by === 'percent';
+    const placed = rows.map(x => ({ date: x.date, amount: cents(pct ? total * num(x.percent) / 100 : num(x.amount)) })).filter(x => x.amount);
+    return { placed, rest: cents(total - placed.reduce((t, x) => t + x.amount, 0)) };
+  }
+  const oneOffs = () => objs(CF().oneOffs).filter(x => isDate(x.date) && num(x.amount));
+
   // ---------- The plan ----------
   // Every cost and every payment placed in a period, plus what couldn't be placed.
   function plan() {
@@ -608,6 +654,12 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const place = (s, amount, label) => {
       if (!amount) return;
       if (s && (s.mode === 'deferred' || s.mode === 'in-kind')) { noCash.push({ label, amount, mode: s.mode }); return; }
+      if (s && s.mode === 'payments') {
+        const ps = paymentsOf(s, amount);
+        for (const x of ps.placed) outs.push({ p: periodStart(x.date), label, amount: x.amount });
+        if (ps.rest > 0.005) unscheduledCosts.push({ label: `${label} (the rest)`, amount: ps.rest });
+        return;
+      }
       if (!s || s.mode !== 'spread' || !spread(s, amount, label)) unscheduledCosts.push({ label, amount });
     };
     for (const x of t.lines) {
@@ -615,6 +667,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       place(lineSched(x), x.total, `${a ? (a.account.code ? a.account.code + ' ' : '') + (a.account.name || '') + ': ' : ''}${x.line.description || 'Untitled line'}`);
     }
     for (const m of t.markups) place(sched(CF().markups[m.markup.id]), m.amount, `${m.markup.name || 'Percentage'} ${num(m.markup.percent)}%`);
+    for (const x of oneOffs()) (x.kind === 'in' ? ins : outs).push({ p: periodStart(x.date), label: `${x.label || (x.kind === 'in' ? 'Money in' : 'Cost')} (one-off)`, amount: cents(oftMoney.convert(num(x.amount), x.currency, x.date)) });
     const counts = st => st === 'confirmed' || (st === 'pending' && CF().includePending !== false) || (st === 'prospective' && CF().includeProspective === true);
     for (const s of sources()) {
       const v = sourceView(s);
@@ -691,6 +744,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     if (kind.length) un.push(`<li><span>In-kind</span><span class="n">${esc(money(kind.reduce((n, x) => n + x.amount, 0)))}</span></li>`);
     $('spentList').innerHTML = spentByAccount(pl).map(x => `<li${x.over ? ' class="bad"' : ''}><span>${esc(x.name)}${x.over ? ` <span class="tag">Over by ${esc(money(cents(x.spent - x.planned)))}</span>` : ''}</span><span class="n">${esc(money(x.spent))} of ${esc(money(x.planned))}</span></li>`).join('') || '<li class="empty-line">No expenses logged yet.</li>';
     $('unCount').textContent = uc.length + pl.undatedIncome.length ? String(uc.length + pl.undatedIncome.length) : '';
+    $('oneList').innerHTML = oneOffs().length ? [...oneOffs()].sort((a, b) => a.date.localeCompare(b.date)).map(x => `<li><span><button type="button" class="link-btn" data-one="${esc(x.id)}">${esc(x.label || 'One-off')}</button><span class="sub">${esc(fmtDate(x.date))}</span></span><span class="n">${x.kind === 'in' ? '+' : '−'}${esc(oftMoney.fmt(x.amount, x.currency))}</span></li>`).join('') : '<li class="empty-line">None yet.</li>';
     $('unsched').innerHTML = un.length ? un.join('') + (uc.length ? '<li><button type="button" class="btn small" id="goSched">Schedule the costs</button></li>' : '') : '<li class="empty-line">Every cost and payment is on the schedule.</li>';
   }
   // Each account's spending in the expense log against what the plan has going out through today.
@@ -701,6 +755,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       const s = lineSched(x);
       let amt = 0;
       if (s && s.mode === 'spread' && isDate(s.from)) { const ps = periodsBetween(s.from, isDate(s.to) && s.to >= s.from ? s.to : s.from); amt = cents(x.total * ps.filter(p => p <= now).length / ps.length); }
+      if (s && s.mode === 'payments') amt = cents(paymentsOf(s, x.total).placed.filter(y => periodStart(y.date) <= now).reduce((t, y) => t + y.amount, 0));
       plannedTo.set(x.line.accountId, cents((plannedTo.get(x.line.accountId) || 0) + amt));
     }
     const spent = new Map();
@@ -711,13 +766,14 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       return { name: a ? `${a.account.code ? a.account.code + ' ' : ''}${a.account.name || ''}` : 'No account', spent: amount, planned, over: amount > planned + 0.005 };
     }).sort((x, y) => (y.over ? 1 : 0) - (x.over ? 1 : 0) || y.spent - x.spent);
   }
-  function modeCells(s, kind, id, sameOption) {
+  function modeCells(s, kind, id, sameOption, amount) {
     const mode = s ? s.mode : (sameOption ? 'same' : '');
     const opts = (sameOption ? '<option value="same">Same as the account</option>' : '') + MODES.filter(m => !sameOption || m.id).map(m => `<option value="${m.id}"${mode === m.id ? ' selected' : ''}>${esc(m.label)}</option>`).join('');
     const show = s && s.mode === 'spread';
     return `<span class="ctl"><select class="mode" data-kind="${kind}" data-id="${esc(id)}" aria-label="When it's paid">${opts}</select>
       <input type="date" data-kind="${kind}" data-id="${esc(id)}" data-k="from" value="${esc(show ? s.from || '' : '')}" aria-label="From"${show ? '' : ' hidden'}>
-      <input type="date" data-kind="${kind}" data-id="${esc(id)}" data-k="to" value="${esc(show ? s.to || '' : '')}" aria-label="To"${show ? '' : ' hidden'}></span>`;
+      <input type="date" data-kind="${kind}" data-id="${esc(id)}" data-k="to" value="${esc(show ? s.to || '' : '')}" aria-label="To"${show ? '' : ' hidden'}>
+      ${s && s.mode === 'payments' ? `<button type="button" class="btn small" data-pay="${esc(id)}" data-kind="${kind}" data-amount="${esc(amount || 0)}">${objs(s.payments).length ? `${objs(s.payments).length} payment${objs(s.payments).length === 1 ? '' : 's'}` : 'Set the payments'}</button>` : ''}</span>`;
   }
   function renderSched() {
     const t = budgetTotals(doc.budget);
@@ -727,13 +783,13 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       const unset = a.lines.some(x => !lineSched(x));
       const own = a.lines.filter(x => sched(CF().lines[x.line.id])).length;
       return `<li class="map${unset ? ' unset' : ''}"><span class="nm">${a.account.code ? `<span class="code">${esc(a.account.code)}</span>` : ''}${esc(a.account.name || 'Unnamed account')}</span><span class="amt">${esc(money(a.total))}</span>
-        ${modeCells(as, 'accounts', a.account.id, false)}
+        ${modeCells(as, 'accounts', a.account.id, false, a.total)}
         <details${own ? ' open' : ''}><summary>${a.lines.length} line${a.lines.length === 1 ? '' : 's'}${own ? `, ${own} scheduled on ${own === 1 ? 'its' : 'their'} own` : ''}</summary><ul class="sub-maps">${a.lines.map(x =>
-          `<li><span>${esc(x.line.description || 'Untitled line')}</span><span class="amt">${esc(money(x.total))}</span>${modeCells(sched(CF().lines[x.line.id]), 'lines', x.line.id, true)}</li>`).join('')}</ul></details></li>`;
+          `<li><span>${esc(x.line.description || 'Untitled line')}</span><span class="amt">${esc(money(x.total))}</span>${modeCells(sched(CF().lines[x.line.id]), 'lines', x.line.id, true, x.total)}</li>`).join('')}</ul></details></li>`;
     }).join('')}</ul>`).join('');
     const marks = t.markups.length ? `<div class="sec-head"><h3>Percentages</h3></div><ul class="maps">${t.markups.map(m => {
       const ms = sched(CF().markups[m.markup.id]);
-      return `<li class="map${ms ? '' : ' unset'}"><span class="nm">${esc(m.markup.name || 'Percentage')} ${esc(num(m.markup.percent))}%</span><span class="amt">${esc(money(m.amount))}</span>${modeCells(ms, 'markups', m.markup.id, false)}</li>`;
+      return `<li class="map${ms ? '' : ' unset'}"><span class="nm">${esc(m.markup.name || 'Percentage')} ${esc(num(m.markup.percent))}%</span><span class="amt">${esc(money(m.amount))}</span>${modeCells(ms, 'markups', m.markup.id, false, m.amount)}</li>`;
     }).join('')}</ul>` : '';
     $('sched').innerHTML = secs + marks;
   }
@@ -745,9 +801,64 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       const pl = plan();
       const start = pl.rows.length ? pl.rows[0].p : periodStart(today());
       map[id] = Object.assign({ mode: 'spread' }, map[id] && map[id].mode === 'spread' ? map[id] : { from: start, to: start });
-    } else map[id] = { mode };
+    } else if (mode === 'payments') { map[id] = Object.assign({ mode: 'payments' }, map[id] && map[id].mode === 'payments' ? map[id] : {}); changed(); openPayments(kind, id); return; }
+    else map[id] = { mode };
     changed();
   }
+  // ---------- Payments on dates ----------
+  let payFor = null, draftPay = [];
+  function payTotal() { const el = $('sched').querySelector(`[data-pay="${CSS.escape(payFor.id)}"][data-kind="${payFor.kind}"]`); return el ? num(el.dataset.amount) : payFor.amount || 0; }
+  function openPayments(kind, id) {
+    const s = CF()[kind][id]; if (!s) return;
+    payFor = { kind, id };
+    if (view === 'sched') renderSched();
+    payFor.amount = payTotal();
+    $('p-by').value = s.by === 'percent' ? 'percent' : 'amount';
+    draftPay = objs(s.payments).map(x => Object.assign({}, x));
+    if (!draftPay.length) draftPay.push({ date: '' });
+    drawPay();
+    $('payDialog').showModal();
+  }
+  const pRow = (x, i) => `<div class="pay-row"><input type="date" id="pp-d-${i}" aria-label="Payment ${i + 1} date" value="${esc(x.date || '')}"><input type="number" id="pp-v-${i}" step="any" min="0" aria-label="Payment ${i + 1} ${$('p-by').value === 'percent' ? 'percentage' : 'amount'}" placeholder="${$('p-by').value === 'percent' ? '%' : 'Amount'}" value="${esc($('p-by').value === 'percent' ? (x.percent ?? '') : (x.amount ?? ''))}"><button type="button" class="btn small" data-ppdel="${i}" aria-label="Remove payment ${i + 1}">Remove</button></div>`;
+  function readPay() { const pct = $('p-by').value === 'percent'; draftPay = draftPay.map((x, i) => { if (!$(`pp-d-${i}`)) return x; const o = { date: $(`pp-d-${i}`).value }; const v = $(`pp-v-${i}`).value; if (v !== '') o[pct ? 'percent' : 'amount'] = Number(v); return o; }); }
+  function drawPay() { $('payRows').innerHTML = draftPay.map(pRow).join(''); payNote(); }
+  function payNote() {
+    readPay();
+    const s = { by: $('p-by').value, payments: draftPay }, r = paymentsOf(s, payFor.amount);
+    $('payNote').textContent = `${money(payFor.amount - r.rest)} of ${money(payFor.amount)} placed${r.rest > 0.005 ? `; ${money(r.rest)} left unscheduled` : r.rest < -0.005 ? `; ${money(-r.rest)} more than the cost` : ''}.`;
+  }
+  function savePayments() {
+    readPay();
+    const s = CF()[payFor.kind][payFor.id]; if (!s) return;
+    const pct = $('p-by').value === 'percent';
+    const rows = draftPay.filter(x => isDate(x.date) && (pct ? num(x.percent) : num(x.amount)));
+    if (pct) s.by = 'percent'; else delete s.by;
+    if (rows.length) s.payments = rows.map(x => ({ date: x.date, [pct ? 'percent' : 'amount']: pct ? num(x.percent) : num(x.amount) })); else delete s.payments;
+    $('payDialog').close();
+    changed();
+  }
+  // ---------- One-off costs and income ----------
+  let oneEditing = null;
+  function openOneOff(id) {
+    oneEditing = id ? objs(CF().oneOffs).find(x => x.id === id) || null : null;
+    const x = oneEditing || { kind: 'out', date: today() };
+    $('o-kind').value = x.kind === 'in' ? 'in' : 'out'; $('o-label').value = str(x.label); $('o-date').value = str(x.date); $('o-amount').value = x.amount == null ? '' : String(x.amount); $('o-cur').value = str(x.currency);
+    $('o-cur').placeholder = oftMoney.home();
+    $('oneDelete').hidden = !oneEditing;
+    $('oneTitle').textContent = oneEditing ? 'One-off' : 'Add a one-off';
+    $('oneDialog').showModal(); $('o-label').focus();
+  }
+  function saveOneOff() {
+    if (!$('o-label').value.trim()) { $('o-label').setCustomValidity('Say what it is.'); $('o-label').reportValidity(); return; }
+    if (!$('o-date').value) { $('o-date').setCustomValidity('Pick the date.'); $('o-date').reportValidity(); return; }
+    if (!(Number($('o-amount').value) > 0)) { $('o-amount').setCustomValidity('Enter an amount.'); $('o-amount').reportValidity(); return; }
+    const x = oneEditing || { id: newId('one-off') };
+    x.kind = $('o-kind').value; x.label = $('o-label').value.trim(); x.date = $('o-date').value; x.amount = Number($('o-amount').value);
+    const cur = $('o-cur').value.trim().toUpperCase(); if (/^[A-Z]{3}$/.test(cur) && cur !== oftMoney.home()) x.currency = cur; else delete x.currency;
+    if (!oneEditing) { if (!Array.isArray(CF().oneOffs)) CF().oneOffs = []; CF().oneOffs.push(x); }
+    $('oneDialog').close(); changed();
+  }
+  function removeOneOff() { CF().oneOffs = objs(CF().oneOffs).filter(x => x !== oneEditing); if (!CF().oneOffs.length) delete CF().oneOffs; $('oneDialog').close(); changed(); }
   function setDate(kind, id, k, value) {
     const s = CF()[kind][id];
     if (!s) return;
@@ -1025,6 +1136,19 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('flowViewBtn').onclick = () => { view = 'flow'; render(); };
     $('schedViewBtn').onclick = () => { view = 'sched'; render(); };
     $('unsched').addEventListener('click', ev => { if (ev.target.id === 'goSched') { view = 'sched'; render(); $('schedViewBtn').focus(); } });
+    $('sched').addEventListener('click', ev => { const b = ev.target.closest('[data-pay]'); if (b) openPayments(b.dataset.kind, b.dataset.pay); });
+    $('payAdd').onclick = () => { readPay(); draftPay.push({ date: '' }); drawPay(); $(`pp-d-${draftPay.length - 1}`).focus(); };
+    $('payRows').addEventListener('click', ev => { const b = ev.target.closest('[data-ppdel]'); if (!b) return; readPay(); draftPay.splice(+b.dataset.ppdel, 1); drawPay(); });
+    $('payRows').addEventListener('input', payNote);
+    $('p-by').addEventListener('change', () => { readPay(); const pct = $('p-by').value === 'percent'; draftPay = draftPay.map(x => ({ date: x.date, [pct ? 'percent' : 'amount']: pct ? x.amount : x.percent })); drawPay(); });
+    $('payForm').addEventListener('submit', ev => { ev.preventDefault(); savePayments(); });
+    $('payCancel').onclick = () => $('payDialog').close();
+    $('oneAdd').onclick = () => openOneOff(null);
+    $('oneList').addEventListener('click', ev => { const b = ev.target.closest('[data-one]'); if (b) openOneOff(b.dataset.one); });
+    $('oneForm').addEventListener('submit', ev => { ev.preventDefault(); saveOneOff(); });
+    $('oneForm').addEventListener('input', ev => { if (ev.target.setCustomValidity) ev.target.setCustomValidity(''); });
+    $('oneCancel').onclick = () => $('oneDialog').close();
+    $('oneDelete').onclick = removeOneOff;
     $('sched').addEventListener('change', ev => {
       const el = ev.target;
       if (el.classList.contains('mode')) setMode(el.dataset.kind, el.dataset.id, el.value);
@@ -1082,7 +1206,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     // Currencies other than the project's that money records use.
     function inUse() {
       const b = doc.budget || {}, f = doc.financePlan || {};
-      const recs = [...list(b.lines), ...list(f.sources), ...list(doc.contracts), ...list(doc.expenses)];
+      const recs = [...list(b.lines), ...list(f.sources), ...list(doc.contracts), ...list(doc.expenses), ...list(doc.revenueStatements)];
       return [...new Set(recs.map(r => up(r.currency)).filter(c => c && c !== home()))].sort();
     }
     const show = n => Number(n).toLocaleString(undefined, { maximumFractionDigits: 6 });

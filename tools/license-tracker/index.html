@@ -285,6 +285,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     </section>
 
     <div class="side">
+      <section class="card" aria-labelledby="mfnHead" id="mfnCard" hidden>
+        <div class="card-head"><h2 id="mfnHead">Most-favored nations</h2></div>
+        <p class="lead">Groups of licenses tied by most-favored-nations terms, and what the lower fees would rise to.</p>
+        <ul class="todo" id="mfn"></ul>
+      </section>
       <section class="card" aria-labelledby="dueHead">
         <div class="card-head"><h2 id="dueHead">Coming up</h2><span class="count" id="dueCount"></span></div>
         <p class="lead">Licenses that expire within 90 days, options to exercise within 60 days, and payments due within 30 days or overdue.</p>
@@ -339,6 +344,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <div class="field"><label for="f-fee">Fee</label><input id="f-fee" type="number" min="0" step="any" inputmode="decimal"><label for="f-cur" class="sub-label">Currency, if not the project's</label><input id="f-cur" type="text" maxlength="3" list="f-curlist" autocomplete="off" style="max-width: 8em; text-transform: uppercase"><datalist id="f-curlist"></datalist></div>
         <div class="field"><label for="f-credit">Credit it requires</label><input id="f-credit" type="text" placeholder="Courtesy of Riverside County Historical Society" autocomplete="off"></div>
       </div>
+      <div class="field"><label for="f-mfn">Most-favored-nations group</label><input id="f-mfn" type="text" list="mfnList" autocomplete="off" placeholder="Leave empty if it has no MFN terms"><datalist id="mfnList"></datalist><p class="hint" id="mfnHint">Licenses with the same group are tied by most-favored-nations terms: if one licensor is paid more, the others are owed the same. Put like with like, such as the songs in one scene.</p></div>
       <div class="group">
         <div class="list-head"><h3>Payments</h3><button type="button" class="btn small" data-add="payments">Add a payment</button></div>
         <div class="items" id="payments"></div>
@@ -576,6 +582,18 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     try { return new Intl.NumberFormat(undefined, { style: 'currency', currency: cur || doc.project.currency || 'USD', minimumFractionDigits: d, maximumFractionDigits: d }).format(Number(n)); }
     catch (e) { return Number(n).toFixed(d); }
   }
+  // Most-favored-nations groups: in each, every licensor is owed the highest fee, compared in the project currency.
+  const mfnGroups = () => { const m = new Map(); for (const c of licenses()) { const g = str(c.mfnGroup).trim(); if (!g) continue; const k = norm(g); if (!m.has(k)) m.set(k, { name: g, list: [] }); m.get(k).list.push(c); } return [...m.values()]; };
+  function mfnOf(c) {
+    const g = str(c.mfnGroup).trim(); if (!g) return null;
+    const grp = mfnGroups().find(x => norm(x.name) === norm(g)), withFee = grp.list.filter(x => x.fee != null && x.status !== 'declined');
+    if (withFee.length < 2 || c.fee == null) return { group: grp, top: null };
+    const top = withFee.reduce((a, b) => (inProject(b, b.fee, b.signedDate) > inProject(a, a.fee, a.signedDate) ? b : a));
+    const topIn = inProject(top, top.fee, top.signedDate), mine = inProject(c, c.fee, c.signedDate);
+    if (top === c || topIn - mine < 0.005) return { group: grp, top, raise: 0 };
+    const rate = c.currency ? (oftMoney.rateFor(c.currency, c.signedDate) || { rate: 1 }).rate : 1;
+    return { group: grp, top, raise: cents(topIn - mine), riseTo: cents(topIn / rate) };
+  }
   // What needs doing soon, worst first.
   function alerts(c) {
     const t = today(), out = [];
@@ -632,11 +650,18 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       const open = arr(c.options).filter(o => !o.exercised).length;
       if (open) flags.push(`<span class="flag linked">${open} option${open === 1 ? '' : 's'} open</span>`);
       if (c.status === 'signed' && !arr(c.assetIds).length) flags.push('<span class="flag changed">No signed copy recorded</span>');
+      const mf = mfnOf(c);
+      if (mf && mf.raise > 0) flags.push(`<span class="flag problem">MFN with ${esc(mf.top.title || mf.top.licensor || 'another license')}: would rise to ${esc(money(mf.riseTo, c.currency))}</span>`);
+      else if (mf) flags.push(`<span class="flag linked">MFN group: ${esc(mf.group.name)}</span>`);
       return `<li class="row" data-id="${esc(c.id)}"><span class="kd">${esc(KIND[kindOf(c)])}</span>
         <button type="button" class="what" data-edit="${esc(c.id)}"><span class="nm">${esc(c.title || 'Untitled license')}</span>${c.licensor ? `<span class="tt">${esc(c.licensor)}</span>` : ''}</button>
         <span class="rt">${c.fee != null ? esc(money(c.fee, c.currency)) : ''}${arr(c.payments).length ? `<span class="sub">${esc(money(paid(c), c.currency))} paid of ${esc(money(scheduled(c), c.currency))}</span>` : ''}</span>
         ${flags.length ? `<div class="flags">${flags.join('')}</div>` : ''}</li>`;
     }).join('');
+    const groups = mfnGroups();
+    $('mfnCard').hidden = !groups.length;
+    $('mfn').innerHTML = groups.map(g => { const ups = g.list.map(c => ({ c, m: mfnOf(c) })).filter(x => x.m && x.m.raise > 0), extra = cents(ups.reduce((t, x) => t + x.m.raise, 0)), top = (g.list.map(mfnOf).find(m => m && m.top) || {}).top;
+      return `<li><span>${esc(g.name)}<span class="sub">${esc(`${g.list.length} license${g.list.length === 1 ? '' : 's'}${top ? `, highest ${money(top.fee, top.currency)} (${top.title || top.licensor || 'license'})` : ''}`)}${ups.length ? `<br>${esc(ups.map(x => `${x.c.title || x.c.licensor}: ${money(x.c.fee, x.c.currency)} would rise to ${money(x.m.riseTo, x.c.currency)}`).join('; '))}` : ''}</span></span><span class="num">${extra ? `+${esc(money(extra))}` : 'Even'}</span></li>`; }).join('');
     const due = all.flatMap(c => alerts(c).map(a => ({ c, a }))).sort((x, y) => x.a.date.localeCompare(y.a.date));
     $('dueCount').textContent = due.length ? String(due.length) : '';
     $('due').innerHTML = due.length ? due.map(({ c, a }) => `<li><span><span class="${a.level}">${esc(a.text)}</span><span class="sub">${esc(c.title || 'License')}</span></span><button type="button" class="btn small" data-edit="${esc(c.id)}">Open</button></li>`).join('') : '<li class="empty-line">Nothing coming up.</li>';
@@ -669,6 +694,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const vals = { 'f-title': editing.title, 'f-kind': kindOf(editing), 'f-licensor': editing.licensor, 'f-status': editing.status in STATE ? editing.status : 'draft', 'f-media': editing.media, 'f-territory': editing.territory, 'f-term': editing.term,
       'f-signed': editing.signedDate, 'f-start': editing.effectiveDate, 'f-end': editing.expirationDate, 'f-fee': editing.fee, 'f-cur': editing.currency, 'f-credit': editing.requiredCredit, 'f-doc': a ? a.relativePath : '', 'f-notes': editing.notes };
     for (const [k, v] of Object.entries(vals)) $(k).value = v == null ? '' : String(v);
+    $('f-mfn').value = str(editing.mfnGroup); $('mfnList').innerHTML = mfnGroups().map(g => `<option value="${esc(g.name)}">`).join('');
     $('f-cur').placeholder = oftMoney.home(); $('f-curlist').innerHTML = oftMoney.currencies().map(x => `<option value="${esc(x)}">`).join('');
     $('licensorList').innerHTML = [...new Set(elements().map(e => e.rightsHolder).filter(Boolean))].map(v => `<option value="${esc(v)}">`).join('');
     const on = new Set(arr(editing.thirdPartyElementIds));
@@ -692,6 +718,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     if ($('f-fee').value !== '') c.fee = Number($('f-fee').value); else delete c.fee;
     const cur = $('f-cur').value.trim().toUpperCase();
     if (cur && /^[A-Z]{3}$/.test(cur) && cur !== oftMoney.home()) c.currency = cur; else delete c.currency;
+    const mg = $('f-mfn').value.trim(), same = mfnGroups().find(g => norm(g.name) === norm(mg)); if (mg) c.mfnGroup = same ? same.name : mg; else delete c.mfnGroup;
     if (c.status === 'signed' && !c.signedDate) c.signedDate = today();
     const ids = new Set(picked('elPicks')); const keep = arr(c.thirdPartyElementIds).filter(id => !element(id));
     c.thirdPartyElementIds = [...keep, ...ids]; if (!c.thirdPartyElementIds.length) delete c.thirdPartyElementIds;
@@ -720,13 +747,13 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   }
 
   // ---------- CSV and print ----------
-  const CSV_HEAD = ['License', 'Kind', 'Licensor', 'Status', 'Elements', 'Media', 'Territory', 'Term', 'Signed', 'Starts', 'Ends', 'Fee', 'Paid', 'Next payment due', 'Options not exercised', 'Next option deadline', 'Credit', 'Notes'];
+  const CSV_HEAD = ['License', 'Kind', 'Licensor', 'Status', 'Elements', 'Media', 'Territory', 'Term', 'Signed', 'Starts', 'Ends', 'Fee', 'Paid', 'Next payment due', 'Options not exercised', 'Next option deadline', 'Credit', 'Notes', 'Most-favored-nations group'];
   function exportCsv() {
     const rows = licenses().map(c => {
       const np = arr(c.payments).filter(p => !p.paid && isDay(p.due)).sort((a, b) => a.due.localeCompare(b.due))[0];
       const no = arr(c.options).filter(o => !o.exercised && isDay(o.deadline)).sort((a, b) => a.deadline.localeCompare(b.deadline))[0];
       return [c.title, KIND[kindOf(c)], c.licensor, STATE[c.status] || c.status, arr(c.thirdPartyElementIds).map(element).filter(Boolean).map(e => e.description).join('; '), c.media, c.territory, c.term, c.signedDate, c.effectiveDate, c.expirationDate,
-        c.fee != null ? cents(c.fee).toFixed(2) : '', paid(c).toFixed(2), np ? `${np.due} (${cents(num(np.amount)).toFixed(2)})` : '', arr(c.options).filter(o => !o.exercised).map(o => o.what).filter(Boolean).join('; '), no ? no.deadline : '', c.requiredCredit, c.notes];
+        c.fee != null ? cents(c.fee).toFixed(2) : '', paid(c).toFixed(2), np ? `${np.due} (${cents(num(np.amount)).toFixed(2)})` : '', arr(c.options).filter(o => !o.exercised).map(o => o.what).filter(Boolean).join('; '), no ? no.deadline : '', c.requiredCredit, c.notes, c.mfnGroup];
     });
     const csv = '﻿' + [CSV_HEAD, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
     const name = `${slug()}-licenses.csv`;
@@ -1029,7 +1056,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     // Currencies other than the project's that money records use.
     function inUse() {
       const b = doc.budget || {}, f = doc.financePlan || {};
-      const recs = [...list(b.lines), ...list(f.sources), ...list(doc.contracts), ...list(doc.expenses)];
+      const recs = [...list(b.lines), ...list(f.sources), ...list(doc.contracts), ...list(doc.expenses), ...list(doc.revenueStatements)];
       return [...new Set(recs.map(r => up(r.currency)).filter(c => c && c !== home()))].sort();
     }
     const show = n => Number(n).toLocaleString(undefined, { maximumFractionDigits: 6 });
@@ -1117,7 +1144,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   // Columns for importing from a spreadsheet, named as in this tool's template.
   const OFT_IMPORT = { noun: 'license', nouns: 'licenses', key: 'title', list: () => doc.contracts, make: () => ({ type: 'license', status: 'draft' }),
     fields: [['License', 'title'], ['Kind', 'licenseKind', 'enum', { values: KIND }], ['Licensor', 'licensor'], ['Status', 'status', 'enum', { values: STATE }], ['Elements', 'elements', 'list'], ['Media', 'media'], ['Territory', 'territory'], ['Term', 'term'],
-      ['Signed', 'signedDate', 'date'], ['Starts', 'effectiveDate', 'date'], ['Ends', 'expirationDate', 'date'], ['Fee', 'fee', 'num'], ['Paid', '', 'skip'], ['Next payment due', '', 'skip'], ['Options not exercised', 'options', 'list'], ['Next option deadline', 'optionDeadline', 'date'], ['Credit', 'requiredCredit'], ['Notes', 'notes']],
+      ['Signed', 'signedDate', 'date'], ['Starts', 'effectiveDate', 'date'], ['Ends', 'expirationDate', 'date'], ['Fee', 'fee', 'num'], ['Paid', '', 'skip'], ['Next payment due', '', 'skip'], ['Options not exercised', 'options', 'list'], ['Next option deadline', 'optionDeadline', 'date'], ['Credit', 'requiredCredit'], ['Notes', 'notes'], ['Most-favored-nations group', 'mfnGroup']],
     put: (r, x) => {
       if (r.elements) r.thirdPartyElementIds = r.elements.map(n => x.find(doc.thirdPartyElements, 'description', n, { prefix: 'element', fields: { type: 'Other', status: 'licensed' } }).id);
       if (r.options) r.options = r.options.map((what, i) => Object.assign({ id: x.newId('option'), what }, i === 0 && r.optionDeadline ? { deadline: r.optionDeadline } : {}));

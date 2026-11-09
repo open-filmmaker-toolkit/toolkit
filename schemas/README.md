@@ -87,6 +87,7 @@ The release tracker treats a contract as a release when its `type` contains "rel
 - Certificates of insurance and permits are contracts too, with `type` "certificate of insurance" or "permit", and refer to `locations` and `shootDays`. See the [COI and permit tracker](../tools/coi-permit-tracker/README.md#what-it-adds-to-the-project-file).
 - Licenses are contracts with `type` "license". The [license tracker](../tools/license-tracker/README.md#what-it-adds-to-the-project-file) adds their terms, payments and options, and links them to `thirdPartyElements` both ways. The [fair use log](../tools/fair-use-log/README.md#what-it-adds-to-the-project-file) adds `fairUse` to elements marked fair use.
 - Deal memos are contracts too, with `type` "deal memo"; they aren't releases. See the [deal memos](../tools/deal-memos/README.md#what-it-adds-to-the-project-file) for their fields.
+- Deal memos can be for crew, cast or contributors (`dealKind`). The `payroll` record holds the overtime, meal and turnaround rules and the minimum rates by role that deal memos uses for timecards; the timecards themselves are worked out from `dailyReports` and aren't saved.
 - Signed copies are `assets` with `type` "release scan" and a `relativePath` under `releases/`, relative to the project file.
 
 ## CSV exports
@@ -104,7 +105,7 @@ The credits builder keeps the end credits in a `credits` record: `entries` in th
 
 ## Money in several currencies
 
-`project.currency` is the project currency. Any money record can carry its own `currency` (a three-letter code): budget lines, finance plan sources, contracts such as licenses, and expenses. Totals convert to the project currency at `project.exchangeRates`, which the user types in and the tools never fetch: each has a `currency`, a `rate` (what one unit is worth in the project currency) and an optional `date` it applies from. An amount with no currency is in the project currency, so older files keep working. The conversion is shared code, copied from [`shared/money.js`](../shared/money.js).
+`project.currency` is the project currency. Any money record can carry its own `currency` (a three-letter code): budget lines, finance plan sources, contracts such as licenses, expenses and revenue statements. Totals convert to the project currency at `project.exchangeRates`, which the user types in and the tools never fetch: each has a `currency`, a `rate` (what one unit is worth in the project currency) and an optional `date` it applies from. An amount with no currency is in the project currency, so older files keep working. The conversion is shared code, copied from [`shared/money.js`](../shared/money.js).
 
 Budget lines can have several fringes in `fringeIds`; `fringeId` stays the first, for tools that read one. A fringe's optional `cap` limits it to wages up to that amount for each person on a line (the line's multiplier). A deal memo's other `rates`, such as prep or travel days, each keep their own budget line in `budgetLineId`. The budget math is shared code, copied from [`shared/budget.js`](../shared/budget.js).
 

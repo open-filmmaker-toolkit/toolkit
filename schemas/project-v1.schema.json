@@ -157,6 +157,7 @@
     "cashFlow": {
       "type": "object",
       "properties": {
+        "oneOffs": { "type": "array", "description": "Costs and money coming in that aren't in the budget or the finance plan.", "items": { "type": "object", "required": ["id"], "properties": { "id": { "$ref": "#/$defs/id" }, "kind": { "enum": ["in", "out"] }, "label": { "type": "string" }, "date": { "type": "string", "format": "date" }, "amount": { "type": "number", "minimum": 0 }, "currency": { "type": "string", "pattern": "^[A-Z]{3}$" } }, "additionalProperties": true } },
         "period": {
           "type": "string",
           "enum": [
@@ -390,6 +391,10 @@
     "paperEdit": {
       "$ref": "#/$defs/paperEdit",
       "description": "Transcripts and the scenes of bites picked from them, kept by the paper edit. A record rather than a collection."
+    },
+    "payroll": {
+      "$ref": "#/$defs/payroll",
+      "description": "Overtime, meal and turnaround rules and minimum rates by role, kept by deal memos for timecards. A record rather than a collection."
     },
     "costReport": {
       "$ref": "#/$defs/costReport",
@@ -839,6 +844,7 @@
       "type": "object",
       "description": "The recoupment waterfall: tiers in the order they are paid, and revenue scenarios, kept by the recoupment waterfall model.",
       "properties": {
+        "pools": { "type": "array", "description": "Territory pools whose revenue is recouped together.", "items": { "type": "object", "required": ["id"], "properties": { "id": { "$ref": "#/$defs/id" }, "name": { "type": "string" }, "territories": { "type": "array", "items": { "type": "string" } } }, "additionalProperties": true } },
         "tiers": {
           "type": "array",
           "description": "Tiers in payment order.",
@@ -851,6 +857,9 @@
               "id": {
                 "$ref": "#/$defs/id"
               },
+              "compound": { "enum": ["monthly", "yearly"], "description": "How a fixed tier's interest compounds. Missing means simple interest." },
+              "byPool": { "type": "object", "description": "For a fixed tier: how much each territory pool recoups, by pool id.", "additionalProperties": { "type": "number", "minimum": 0 } },
+              "crossed": { "type": "boolean", "description": "The pools are cross-collateralized: one pool's shortfall is made up from another's revenue." },
               "name": {
                 "type": "string"
               },
@@ -936,6 +945,7 @@
           "id": {
             "$ref": "#/$defs/id"
           },
+          "currency": { "type": "string", "pattern": "^[A-Z]{3}$", "description": "The statement's currency, when it isn't the project's. Totals convert it at project.exchangeRates." },
           "contractId": {
             "$ref": "#/$defs/id",
             "description": "The distribution deal in contracts, if there is one."
@@ -1425,6 +1435,7 @@
       "type": "object",
       "description": "The final cost report, kept by the final cost report tool: the date costs run to, whether it is final, and variance notes.",
       "properties": {
+        "saved": { "type": "array", "description": "Saved final cost reports, to compare with later ones.", "items": { "type": "object", "required": ["id"], "properties": { "id": { "$ref": "#/$defs/id" }, "label": { "type": "string" }, "savedAt": { "type": "string", "format": "date" }, "rows": { "type": "object", "description": "Each line, account or percentage by key, with what it stood at.", "additionalProperties": { "type": "object" } } }, "additionalProperties": true } },
         "signOff": { "type": "object", "description": "The accountant's sign-off page.", "properties": { "include": { "type": "boolean", "description": "Print the page." }, "name": { "type": "string" }, "firm": { "type": "string" }, "credential": { "type": "string" }, "statement": { "type": "string", "description": "What the accountant signs, when it isn't the tool's usual wording." }, "date": { "type": "string", "format": "date" } }, "additionalProperties": true },
         "closeDate": {
           "type": "string",
@@ -1547,6 +1558,39 @@
   },
   "additionalProperties": true,
   "$defs": {
+    "payroll": {
+      "type": "object",
+      "properties": {
+        "rules": {
+          "type": "object",
+          "description": "Only the rules changed from the defaults are kept.",
+          "properties": {
+            "dayHours": { "type": "number", "minimum": 0, "description": "Hours a day's rate covers; overtime starts after them. Default 10." },
+            "overtimeTimes": { "type": "number", "minimum": 0, "description": "Overtime pays this many times the hourly rate. Default 1.5." },
+            "doubleAfter": { "type": "number", "minimum": 0, "description": "Hours after which double time starts. Default 12." },
+            "doubleTimes": { "type": "number", "minimum": 0, "description": "Double time pays this many times the hourly rate. Default 2." },
+            "mealAfter": { "type": "number", "minimum": 0, "description": "Hours from call, or from the end of the meal, within which a meal is due. Default 6." },
+            "mealPenalty": { "type": "number", "minimum": 0, "description": "Penalty for each half hour, or part of one, that a meal is late. Default 0." },
+            "turnaroundHours": { "type": "number", "minimum": 0, "description": "Rest due between wrap and the next call. Default 10." }
+          }
+        },
+        "rates": {
+          "type": "array",
+          "description": "Minimum rates by role.",
+          "items": {
+            "type": "object",
+            "required": ["role"],
+            "properties": {
+              "id": { "type": "string" },
+              "role": { "type": "string" },
+              "agreement": { "type": "string", "description": "The union, guild or local agreement the minimum comes from." },
+              "minimum": { "type": "number", "minimum": 0 },
+              "rateUnit": { "type": "string", "enum": ["day", "week", "hour", "flat"] }
+            }
+          }
+        }
+      }
+    },
     "id": {
       "type": "string",
       "minLength": 1
@@ -1967,6 +2011,7 @@
           "$ref": "#/$defs/id"
         },
         "stillIds": { "type": "array", "items": { "$ref": "#/$defs/id" }, "description": "For a model release or property release: the stills it covers. These releases cover the photos only, not the film." },
+        "mfnGroup": { "type": "string", "description": "For a license: the most-favored-nations group it belongs to. Licenses in the same group are owed the highest fee in it." },
         "languages": { "type": "array", "items": { "type": "string" }, "description": "For a distribution deal limited to some languages. Missing means every language." },
         "holdbacks": { "type": "array", "description": "For a distribution deal: media no one can release in its territories until a date.", "items": { "type": "object", "properties": { "media": { "type": "string" }, "until": { "type": "string", "format": "date" } }, "additionalProperties": true } },
         "revenueTerms": { "type": "object", "description": "For a distribution deal: terms the revenue tracker checks statements against.", "properties": { "feePercent": { "type": "number", "minimum": 0, "maximum": 100 }, "expenseCap": { "type": "number", "minimum": 0 }, "reportingDays": { "type": "integer", "minimum": 0, "description": "Days after a period ends that its statement is due." }, "paymentDays": { "type": "integer", "minimum": 0, "description": "Days after a statement that payment is due." } }, "additionalProperties": true },
@@ -2066,6 +2111,15 @@
             "hour",
             "flat"
           ]
+        },
+        "dealKind": {
+          "type": "string",
+          "enum": [
+            "crew",
+            "cast",
+            "contributor"
+          ],
+          "description": "Who a deal memo is for. Missing means crew."
         },
         "overtime": {
           "type": "string"
@@ -3455,6 +3509,8 @@
         "id": {
           "$ref": "#/$defs/id"
         },
+        "quantityGlobal": { "$ref": "#/$defs/id", "description": "The global the quantity comes from. The quantity is kept up to date as the global's value times quantityTimes." },
+        "quantityTimes": { "type": "number", "description": "What the global is multiplied by for this line; 1 when missing." },
         "accountId": {
           "$ref": "#/$defs/id"
         },
@@ -3534,6 +3590,7 @@
     "budget": {
       "type": "object",
       "properties": {
+        "globals": { "type": "array", "description": "Named numbers lines can use for their quantity, such as shoot weeks.", "items": { "type": "object", "required": ["id"], "properties": { "id": { "$ref": "#/$defs/id" }, "name": { "type": "string" }, "value": { "type": "number" } }, "additionalProperties": true } },
         "accounts": {
           "type": "array",
           "items": {
@@ -4546,6 +4603,17 @@
                 "in-kind"
               ]
             }
+          },
+          "additionalProperties": true
+        },
+        {
+          "type": "object",
+          "description": "Paid on chosen dates, by amount or by percentage of the cost.",
+          "required": ["mode"],
+          "properties": {
+            "mode": { "const": "payments" },
+            "by": { "enum": ["percent"] },
+            "payments": { "type": "array", "items": { "type": "object", "properties": { "date": { "type": "string", "format": "date" }, "amount": { "type": "number", "minimum": 0 }, "percent": { "type": "number", "minimum": 0 } }, "additionalProperties": true } }
           },
           "additionalProperties": true
         }
@@ -5801,6 +5869,8 @@
     "costReport": {
       "type": "object",
       "properties": {
+        "period": { "type": "object", "description": "One week or month to report spending for, as well as the total.", "properties": { "kind": { "enum": ["week", "month"] }, "start": { "type": "string", "format": "date" } }, "additionalProperties": true },
+        "saved": { "type": "array", "description": "Saved cost reports, to compare with later ones.", "items": { "type": "object", "required": ["id"], "properties": { "id": { "$ref": "#/$defs/id" }, "label": { "type": "string" }, "savedAt": { "type": "string", "format": "date" }, "rows": { "type": "object", "description": "Each line, account or percentage by key, with what it stood at.", "additionalProperties": { "type": "object" } } }, "additionalProperties": true } },
         "asOf": {
           "type": "string",
           "format": "date",

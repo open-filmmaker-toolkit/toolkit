@@ -33,6 +33,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 ## What it does
 
 - **Detail lines by account.** Each line has a description, quantity, unit, an optional multiplier (such as two people) and a rate. Its total is quantity × multiplier × rate.
+- **Globals.** Name a number many lines share, such as shoot weeks or prep days, under **Globals**. Pick it for a line's quantity with ⋯, times a number if the line needs, say, two of it per week. Change the global and every line that uses it changes; each global says which lines use it. Other tools read the quantity it gives each line.
 - **Accounts in four sections:** above the line, production, post-production and other costs, each with an account number.
 - **Starts from the usual documentary accounts,** from development and research to festivals and outreach, if you'd rather not set them up yourself.
 - **Fringes.** Add payroll taxes, benefits or union contributions as percentages, and pick one on each payroll line. The line shows its fringe, and the top sheet shows each fringe's total.
@@ -59,11 +60,10 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-A `budget` record with `accounts` (each with `id`, `code`, `name`, `section` and optional `notes`), `lines` (each with `id`, `accountId`, and optional `description`, `quantity`, `unit`, `multiplier`, `rate` and `fringeId`), `fringes` and `markups` (each with `id`, `name` and `percent`), and `versions` (each with `id`, `label`, `at`, and copies of `accounts`, `lines`, `fringes` and `markups` as they were). `section` is `atl`, `production`, `post` or `other`. Amounts are in the project's `currency`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
+A `budget` record with `accounts` (each with `id`, `code`, `name`, `section` and optional `notes`), `lines` (each with `id`, `accountId`, and optional `description`, `quantity`, `unit`, `multiplier`, `rate` and `fringeId`, and `quantityGlobal` and `quantityTimes` when the quantity comes from a global), `globals` (each with `id`, `name` and `value`), `fringes` and `markups` (each with `id`, `name` and `percent`), and `versions` (each with `id`, `label`, `at`, and copies of `accounts`, `lines`, `fringes` and `markups` as they were). `section` is `atl`, `production`, `post` or `other`. Amounts are in the project's `currency`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
-- Globals, such as a shoot length every line can refer to
 - Importing a budget from another budgeting program's own file
 
 ## License

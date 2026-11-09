@@ -41,7 +41,7 @@ Looking for other free, open-source software for filmmaking, such as editing, so
 | [Shooting calendar](tools/shooting-calendar/) | Schedule shoot days, travel and holds. | First version |
 | [Interview prep](tools/interview-prep/) | Prepare research and questions for each interview. | First version |
 | [Location scout sheet](tools/location-scout/) | Record scouts with photos for the crew. | First version |
-| [Deal memos](tools/deal-memos/) | Print crew deal memos and send rates to the budget. | First version |
+| [Deal memos](tools/deal-memos/) | Print deal memos for crew and cast, send rates to the budget, and work out timecards. | First version |
 | [Gear list](tools/gear-list/) | Track your gear and what goes out each day. | First version |
 | [COI and permit tracker](tools/coi-permit-tracker/) | Track certificates and permits for each shoot day. | First version |
 | [Travel sheet](tools/travel-sheet/) | Put flights, hotels and contacts on one sheet. | First version |

@@ -241,6 +241,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
 .home-link { color: inherit; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
 .home-link:hover { text-decoration-thickness: 2px; }
 .ln .src { grid-column: 1 / -1; font-size: 12.5px; color: var(--ink-2); }
+.glob-rows { display: grid; gap: 8px; margin: 0 0 8px; }
+.glob { display: grid; grid-template-columns: minmax(0, 1fr) 90px auto; gap: 6px; align-items: center; }
+.glob input { min-width: 0; padding: 6px 8px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); color: var(--ink); font: inherit; }
+.g-used { grid-column: 1 / -1; font-size: 13px; color: var(--ink-3); }
+input.from-global { background: var(--hover); }
 </style>
 </head>
 <body>
@@ -307,6 +312,12 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <div class="card-head"><h2 id="topHead">Top sheet</h2></div>
         <table class="top" id="topSheet"></table>
       </section>
+      <section class="card" aria-labelledby="globHead">
+        <div class="card-head"><h2 id="globHead">Globals</h2></div>
+        <p class="hint">Numbers many lines share, such as shoot weeks or prep days. Change one here and every line that uses it changes too. Pick a global for a line's quantity with ⋯.</p>
+        <div class="glob-rows" id="globals"></div>
+        <div><button type="button" class="btn small" id="addGlobalBtn">Add a global</button></div>
+      </section>
       <section class="card" aria-labelledby="verHead">
         <div class="card-head"><h2 id="verHead">Versions</h2><span class="count" id="verCount"></span></div>
         <ul class="vlist" id="verList"></ul>
@@ -346,6 +357,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       <p class="hint" id="l-source" hidden></p>
       <div class="field"><label for="l-currency">Currency of the rate</label><input id="l-currency" type="text" maxlength="3" list="l-curlist" autocomplete="off" style="max-width: 8em; text-transform: uppercase"><datalist id="l-curlist"></datalist>
         <p class="hint">Leave it blank for the project currency. Other currencies convert at the exchange rates you set, under the file buttons.</p></div>
+      <div class="two">
+        <div class="field"><label for="l-global">Quantity</label><select id="l-global"></select></div>
+        <div class="field"><label for="l-times">Times</label><input id="l-times" type="number" step="any" min="0" placeholder="1"></div>
+      </div>
+      <p class="hint" id="l-globalHint"></p>
       <fieldset class="field"><legend>Fringes on this line</legend><div id="l-fringes"></div></fieldset>
     </div>
     <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn" id="lineCancel">Cancel</button><button type="submit" class="btn primary">Save</button></div>
@@ -630,12 +646,63 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     if (c) { const p = arr(doc.people).find(x => x && arr(c.personIds).includes(x.id)); return `From the deal memo for ${p ? p.name : 'a crew member'}. Its numbers change when the memo does.`; }
     return '';
   }
+  // ---------- Globals ----------
+  const globals = () => objs(B().globals);
+  const globalOf = l => l.quantityGlobal && globals().find(g => g.id === l.quantityGlobal);
+  const usedBy = g => B().lines.filter(l => l.quantityGlobal === g.id);
+  // Lines that use a global keep its value times theirs in quantity, so every tool reading the budget sees the right number.
+  function applyGlobals() {
+    for (const l of B().lines) {
+      if (!l.quantityGlobal) continue;
+      const g = globalOf(l);
+      if (!g) { delete l.quantityGlobal; delete l.quantityTimes; continue; }
+      l.quantity = Math.round(num(g.value) * (l.quantityTimes == null ? 1 : num(l.quantityTimes)) * 10000) / 10000;
+    }
+  }
+  function renderGlobals() {
+    const gs = globals(), rows = [...$('globals').querySelectorAll('[data-glob]')];
+    // Same globals as shown: update in place, so typing in one isn't lost.
+    if (gs.length && rows.length === gs.length && rows.every((r, i) => r.dataset.glob === gs[i].id)) {
+      rows.forEach((r, i) => { const g = gs[i], n = usedBy(g).length; r.querySelector('.g-used').textContent = n ? `Used by ${n} line${n === 1 ? '' : 's'}: ${usedBy(g).map(l => l.description || 'a line').slice(0, 4).join(', ')}${n > 4 ? ' and more' : ''}` : 'Not used yet'; });
+      return;
+    }
+    $('globals').innerHTML = gs.length ? gs.map(g => { const n = usedBy(g).length; return `<div class="glob" data-glob="${esc(g.id)}"><input type="text" class="g-name" value="${esc(g.name)}" placeholder="Shoot weeks" aria-label="Name" autocomplete="off"><input type="number" class="g-val" step="any" min="0" value="${esc(g.value ?? '')}" placeholder="0" aria-label="Value of ${esc(g.name || 'this global')}"><button type="button" class="icon-btn" data-delglob aria-label="Remove ${esc(g.name || 'this global')}">×</button><span class="g-used">${n ? `Used by ${n} line${n === 1 ? '' : 's'}: ${esc(usedBy(g).map(l => l.description || 'a line').slice(0, 4).join(', '))}${n > 4 ? ' and more' : ''}` : 'Not used yet'}</span></div>`; }).join('') : '<p class="hint">None yet.</p>';
+  }
+  function editGlobal(input) {
+    const row = input.closest('[data-glob]'), g = globals().find(x => x.id === row.dataset.glob); if (!g) return;
+    if (input.classList.contains('g-name')) { if (input.value.trim()) g.name = input.value.trim(); else delete g.name; }
+    else { if (input.value === '' || !isFinite(Number(input.value))) delete g.value; else g.value = Number(input.value); applyGlobals(); }
+    // Updates the lines in place rather than redrawing, so a click on the next thing isn't lost.
+    for (const l of usedBy(g)) {
+      const row = document.querySelector(`[data-line="${CSS.escape(l.id)}"]`); if (!row) continue;
+      const q = row.querySelector('[data-k="quantity"]'); q.value = String(l.quantity); q.setAttribute('aria-label', `Quantity, from ${g.name || 'a global'}`);
+      const src = row.querySelector('.src'); if (src) src.textContent = [sourceOf(l), `Quantity: ${g.name || 'a global'}${l.quantityTimes != null && num(l.quantityTimes) !== 1 ? ` × ${num(l.quantityTimes)}` : ''}.`].filter(Boolean).join(' ');
+    }
+    touched();
+    renderGlobals();
+  }
+  function addGlobal() {
+    if (!Array.isArray(B().globals)) B().globals = [];
+    B().globals.push({ id: newId('global'), name: '', value: 1 });
+    changed();
+    const ins = $('globals').querySelectorAll('.g-name'); if (ins.length) ins[ins.length - 1].focus();
+  }
+  function removeGlobal(id) {
+    const g = globals().find(x => x.id === id); if (!g) return;
+    const n = usedBy(g).length;
+    B().globals = globals().filter(x => x.id !== id);
+    if (!B().globals.length) delete B().globals;
+    applyGlobals();
+    changed();
+    toast(n ? `Removed ${g.name || 'the global'}. ${n} line${n === 1 ? ' keeps its' : 's keep their'} quantity as a number.` : `Removed ${g.name || 'the global'}.`);
+  }
   function lineHtml(l) {
     const fr = B().fringes;
-    const src = sourceOf(l);
+    const gl = globalOf(l);
+    const src = [sourceOf(l), gl && `Quantity: ${gl.name || 'a global'}${l.quantityTimes != null && num(l.quantityTimes) !== 1 ? ` × ${num(l.quantityTimes)}` : ''}.`].filter(Boolean).join(' ');
     return `<li class="ln${src ? ' has-src' : ''}" data-line="${esc(l.id)}">
       <input class="desc" data-k="description" type="text" value="${esc(l.description)}" placeholder="Description" aria-label="Description" autocomplete="off">
-      <input data-k="quantity" type="number" step="any" min="0" value="${esc(l.quantity ?? '')}" placeholder="Qty" aria-label="Quantity">
+      <input data-k="quantity" type="number" step="any" min="0" value="${esc(l.quantity ?? '')}" placeholder="Qty" aria-label="${gl ? `Quantity, from ${esc(gl.name || 'a global')}` : 'Quantity'}"${gl ? ' readonly class="from-global"' : ''}>
       <input data-k="unit" type="text" list="units" value="${esc(l.unit)}" placeholder="Unit" aria-label="Unit" autocomplete="off">
       <input data-k="multiplier" type="number" step="any" min="0" value="${esc(l.multiplier ?? '')}" placeholder="×1" aria-label="Multiplier, such as number of people">
       <input data-k="rate" type="number" step="any" min="0" value="${esc(l.rate ?? '')}" placeholder="Rate" aria-label="Rate">
@@ -664,6 +731,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     </section>`).join('') + `<datalist id="units">${UNITS.map(u => `<option value="${u}">`).join('')}</datalist>`;
     renderTotals();
     renderVersions();
+    renderGlobals();
   }
   // Updates every total in place, so typing in a line doesn't lose your place.
   function renderTotals() {
@@ -785,6 +853,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const ids = lineFringeIds(l);
     $('l-fringes').innerHTML = B().fringes.length ? B().fringes.map(f => `<label class="chk"><input type="checkbox" value="${esc(f.id)}"${ids.includes(f.id) ? ' checked' : ''}> <span>${esc(f.name || 'Fringe')} ${esc(num(f.percent))}%${num(f.cap) ? `, on wages up to ${esc(money(f.cap))} a person` : ''}</span></label>`).join('')
       : '<p class="hint">No fringes yet. Add them under Fringes and percentages.</p>';
+    $('l-global').innerHTML = `<option value="">Its own number</option>${globals().map(g => `<option value="${esc(g.id)}"${g.id === l.quantityGlobal ? ' selected' : ''}>${esc(g.name || 'Unnamed global')} (${esc(num(g.value))})</option>`).join('')}`;
+    $('l-times').value = l.quantityTimes == null ? '' : String(l.quantityTimes);
+    $('l-globalHint').textContent = globals().length ? 'Pick a global to use its number as this line\'s quantity, times the number beside it.' : 'Add globals in the side panel to share a number between lines.';
     $('lineTitle').textContent = l.description ? `Line: ${l.description}` : 'This line';
     $('l-source').textContent = sourceOf(l); $('l-source').hidden = !sourceOf(l);
     $('lineDialog').showModal();
@@ -797,6 +868,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const ids = [...$('l-fringes').querySelectorAll('input:checked')].map(x => x.value);
     delete l.fringeIds; delete l.fringeId;
     if (ids.length === 1) l.fringeId = ids[0]; else if (ids.length) { l.fringeId = ids[0]; l.fringeIds = ids; }
+    const gid = $('l-global').value, times = $('l-times').value;
+    if (gid) { l.quantityGlobal = gid; if (times !== '' && isFinite(Number(times)) && Number(times) !== 1) l.quantityTimes = Number(times); else delete l.quantityTimes; }
+    else { delete l.quantityGlobal; delete l.quantityTimes; }
+    applyGlobals();
     $('lineDialog').close();
     changed();
     if (cur && cur !== oftMoney.home() && !oftMoney.rateFor(cur)) toast(`Add an exchange rate for ${cur} so this line converts to ${oftMoney.home()}.`);
@@ -1163,6 +1238,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('deleteBtn').onclick = removeEditing;
     $('ratesBtn').onclick = openRates;
     $('lineForm').addEventListener('submit', ev => { ev.preventDefault(); saveLine(); });
+    $('addGlobalBtn').onclick = addGlobal;
+    $('globals').addEventListener('change', ev => { if (ev.target.matches('.g-name, .g-val')) editGlobal(ev.target); });
+    $('globals').addEventListener('click', ev => { const b = ev.target.closest('[data-delglob]'); if (b) removeGlobal(b.closest('[data-glob]').dataset.glob); });
     $('lineCancel').onclick = () => { $('lineDialog').close(); render(); };
     $('l-currency').addEventListener('input', () => $('l-currency').setCustomValidity(''));
     $('addFringeBtn').onclick = () => { $('fringeRows').insertAdjacentHTML('beforeend', rateRow({}, 'fringe')); $('fringeRows').lastElementChild.querySelector('input').focus(); };
@@ -1227,7 +1305,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     // Currencies other than the project's that money records use.
     function inUse() {
       const b = doc.budget || {}, f = doc.financePlan || {};
-      const recs = [...list(b.lines), ...list(f.sources), ...list(doc.contracts), ...list(doc.expenses)];
+      const recs = [...list(b.lines), ...list(f.sources), ...list(doc.contracts), ...list(doc.expenses), ...list(doc.revenueStatements)];
       return [...new Set(recs.map(r => up(r.currency)).filter(c => c && c !== home()))].sort();
     }
     const show = n => Number(n).toLocaleString(undefined, { maximumFractionDigits: 6 });

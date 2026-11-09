@@ -32,6 +32,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 
 ## What it does
 
+- **Saved reports to compare.** Save the report, such as the draft you sent, and compare it with a later one or the report now, account by account.
 - **Budget against final cost** for every account, with the variance.
 - **Layouts funders ask for:** by account, by line, a top sheet by section, or in a funder's own categories from the [budget converter](../budget-converter/).
 - **Costs to a date,** and draft or final.
@@ -54,13 +55,13 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-A `finalCostReport` record: `closeDate`, `status` ("final" when it is), `notes` by account, markup, section or funder category, and `signOff`: `include`, `name`, `firm`, `credential`, `statement` (only when you changed the wording) and `date`.
+A `finalCostReport` record: `closeDate`, `status` ("final" when it is), `saved` (saved reports, each with `id`, `label`, `savedAt` and `rows` by account), `notes` by account, markup, section or funder category, and `signOff`: `include`, `name`, `firm`, `credential`, `statement` (only when you changed the wording) and `date`.
 
 It reads `budget`, `expenses`, `costReport` and `budgetFormats`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
-- Comparing two final cost reports
+Nothing planned right now. If something you need is missing, [open an issue](https://github.com/open-filmmaker-toolkit/toolkit/issues).
 
 ## License
 

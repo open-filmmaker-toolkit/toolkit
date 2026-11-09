@@ -22,6 +22,7 @@ Started in a spreadsheet and want to move to the tool? Most tools can import a f
 | Shooting calendar | [shooting-calendar-template.csv](shooting-calendar-template.csv) | | [Shooting calendar](../tools/shooting-calendar/) |
 | Location scout sheet | [location-scout-template.csv](location-scout-template.csv) | [location-scout-template.docx](location-scout-template.docx) | [Location scout sheet](../tools/location-scout/) |
 | Deal memos | [deal-memos-template.csv](deal-memos-template.csv) | | [Deal memos](../tools/deal-memos/) |
+| Union rates | [union-rates-template.csv](union-rates-template.csv) | | [Deal memos](../tools/deal-memos/), under Rates and rules |
 | Gear list | [gear-list-template.csv](gear-list-template.csv) | | [Gear list](../tools/gear-list/) |
 | Certificates and permits | [certificates-and-permits-template.csv](certificates-and-permits-template.csv) | | [COI and permit tracker](../tools/coi-permit-tracker/) |
 | Travel sheet | [travel-sheet-template.csv](travel-sheet-template.csv) | | [Travel sheet](../tools/travel-sheet/) |

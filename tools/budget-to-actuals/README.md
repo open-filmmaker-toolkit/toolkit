@@ -32,6 +32,8 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 
 ## What it does
 
+- **Spending for one week or month** as well as the total: pick a month or a week, and the report gets a column for what was spent in it, and the print a section.
+- **Saved reports to compare.** Save the report as it stands, such as the one you send a funder each month, and compare it with a later saved one or the report now: each line that changed, with its budget, spending and estimated final then and now.
 - **Reads the [budget](../budget/) and the [expense log](../expense-log/).** Each line shows its budget, with fringes, and what's been spent on it.
 - **Expenses on the right line.** The expense log records an expense's account. When an account has one line, its expenses count against that line. When it has several, assign each expense to its line; until then it's shown as not assigned, and comes out of the account's estimate to complete.
 - **Estimate to complete.** It starts as whatever is left of the line's budget. Click a line to set your own estimate, such as when a line is done or you know more is coming, and add a note.
@@ -56,13 +58,13 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-A `costReport` record with optional `asOf` (the report date) and `estimates`, each with an `id`, a `lineId` (in `budget.lines`) or `markupId` (in `budget.markups`), and optional `toComplete` and `note`.
+A `costReport` record with optional `asOf` (the report date), `period` (`kind` of `week` or `month`, and a `start` date in it), `saved` (saved reports, each with `id`, `label`, `savedAt` and `rows`, what each line stood at) and `estimates`, each with an `id`, a `lineId` (in `budget.lines`) or `markupId` (in `budget.markups`), and optional `toComplete` and `note`.
 
 Assigning an expense to a line adds `budgetLineId` to it in `expenses`. It reads `budget` and `expenses`. Purchase orders go in `costReport.purchaseOrders`, each with an `id`, and optional `number`, `date`, `vendor`, `description`, `amount`, `lineId` and `accountId`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
-- Cost reports by period, and comparing two reports
+Nothing planned right now. If something you need is missing, [open an issue](https://github.com/open-filmmaker-toolkit/toolkit/issues).
 
 ## License
 
