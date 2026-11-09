@@ -37,6 +37,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **Costs to a date,** and draft or final.
 - **Variance notes** for any account or category. Variances over 10 percent without a note are listed.
 - **Final cost** is spending in the [expense log](../expense-log/) plus anything set still to pay in budget-to-actuals. Lines with nothing set still to pay are closed at what was spent.
+- **An accountant's sign-off page,** printed after the report when you turn it on: the totals, what the accountant is signing in wording you can change, and lines for the accountant and producer to sign and date.
 - **Prints** in the layout you pick and **exports CSV.**
 
 For anyone who doesn't use the tool, there's a [spreadsheet template](../../templates/final-cost-report-template.csv) with the same columns as the export.
@@ -53,13 +54,12 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-A `finalCostReport` record: `closeDate`, `status` ("final" when it is), and `notes` by account, markup, section or funder category.
+A `finalCostReport` record: `closeDate`, `status` ("final" when it is), `notes` by account, markup, section or funder category, and `signOff`: `include`, `name`, `firm`, `credential`, `statement` (only when you changed the wording) and `date`.
 
 It reads `budget`, `expenses`, `costReport` and `budgetFormats`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
-- An accountant's sign-off page
 - Comparing two final cost reports
 
 ## License

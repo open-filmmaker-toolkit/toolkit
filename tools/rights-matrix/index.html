@@ -156,6 +156,10 @@ table.grid { border-collapse: collapse; width: 100%; font-size: 13px; }
 .c-hold { background: var(--warn-bg); color: var(--warn); }
 .c-open { background: var(--good-bg); color: var(--good); }
 .c-clash { outline: 2px solid var(--bad); }
+.c-part { background: repeating-linear-gradient(135deg, var(--warn-bg) 0 6px, var(--sheet) 6px 12px); color: var(--ink); }
+.c-held { background: var(--hover); color: var(--ink-2); font-style: italic; }
+.hb-rows { display: grid; gap: 6px; }
+.hb-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 160px) auto; gap: 6px; align-items: center; }
 .workspace { grid-template-columns: minmax(0, 1fr); }
 .side { position: static; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; }
 @media (max-width: 900px) { .side { grid-template-columns: minmax(0, 1fr); } }
@@ -283,11 +287,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     <div class="side">
       <section class="card" aria-labelledby="keyHead">
         <div class="card-head"><h2 id="keyHead">Key</h2></div>
-        <p class="lead"><span class="cell c-sold">Sold</span> a signed deal holds the right. <span class="cell c-hold">On hold</span> a deal is being negotiated. <span class="cell c-open">Available</span> nobody holds it.</p>
+        <p class="lead"><span class="cell c-sold">Sold</span> a signed deal holds the right. <span class="cell c-hold">On hold</span> a deal is being negotiated. <span class="cell c-part">Part sold</span> a deal holds some languages or part of the territory. <span class="cell c-held">Held back</span> another deal keeps it off the market until a date. <span class="cell c-open">Available</span> nobody holds it.</p>
       </section>
       <section class="card" aria-labelledby="clashHead">
         <div class="card-head"><h2 id="clashHead">Overlaps</h2></div>
-        <p class="lead">Exclusive deals that cover the same territory and media at the same time.</p>
+        <p class="lead">Exclusive deals that cover the same territory, media and language at the same time, and deals that start before another deal's holdback ends.</p>
         <ul class="todo" id="clashes"></ul>
       </section>
       <section class="card" aria-labelledby="revHead">
@@ -312,13 +316,15 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <div class="field"><label for="f-status">Status</label><select id="f-status"><option value="negotiating">Negotiating (on hold)</option><option value="signed">Signed (sold)</option><option value="declined">Fell through</option></select></div>
       </div>
       <fieldset class="field"><legend>Territories</legend><div class="checks" id="f-terr"></div>
-        <label class="sr-only" for="f-terrOther">Other territories</label><input id="f-terrOther" type="text" autocomplete="off" placeholder="Other territories, separated by commas"></fieldset>
+        <label class="sr-only" for="f-terrOther">Other territories</label><input id="f-terrOther" type="text" autocomplete="off" placeholder="Other territories, separated by commas"><p class="hint">For part of a territory, write the territory, a colon and the part, such as Canada: French-speaking.</p></fieldset>
       <fieldset class="field"><legend>Media</legend><div class="checks" id="f-media"></div></fieldset>
       <div class="three">
         <div class="field"><label for="f-start">Term starts</label><input id="f-start" type="date"></div>
         <div class="field"><label for="f-end">Term ends</label><input id="f-end" type="date"></div>
         <div class="field"><label for="f-fee">Advance or fee</label><input id="f-fee" type="number" min="0" step="any" inputmode="decimal"></div>
       </div>
+      <div class="field"><label for="f-lang">Languages</label><input id="f-lang" type="text" autocomplete="off" placeholder="Leave empty for every language"><p class="hint">For a deal limited to some languages, such as French, separated by commas.</p></div>
+      <fieldset class="field"><legend>Holdbacks</legend><p class="hint">Media no one can release in this deal's territories until a date, such as no streaming until the theatrical window ends.</p><div class="hb-rows" id="hbRows"></div><p><button type="button" class="btn small" id="hbAdd">Add a holdback</button></p></fieldset>
       <label class="chkline"><input type="checkbox" id="f-excl" checked> Exclusive</label>
       <div class="field"><label for="f-notes">Notes, holdbacks and conditions</label><textarea id="f-notes" rows="3"></textarea></div>
     </div>
@@ -463,25 +469,55 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   let asOf = today(), editing = null;
   const addDays = (iso, n) => { const d = new Date(Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10) + n)); return d.toISOString().slice(0, 10); };
   const WORLD = /^(worldwide|world|all territories)$/i;
-  const covers = (c, t, m) => arr(c.mediaRights).includes(m) && arr(c.territories).some(x => WORLD.test(str(x).trim()) || norm(x) === norm(t));
+  // A part of a territory is written "Canada: French-speaking". A deal for the whole territory covers its parts.
+  const parentOf = t => (str(t).includes(':') ? str(t).split(':')[0].trim() : '');
+  const inTerr = (list, t) => arr(list).some(x => WORLD.test(str(x).trim()) || norm(x) === norm(t) || (parentOf(t) && norm(x) === norm(parentOf(t))));
+  const covers = (c, t, m) => arr(c.mediaRights).includes(m) && inTerr(c.territories, t);
+  // A deal for a part of the territory, or some languages only, holds only part of the right.
+  const coversPart = (c, t, m) => arr(c.mediaRights).includes(m) && arr(c.territories).some(x => parentOf(x) && norm(parentOf(x)) === norm(t));
+  const langs = c => arr(c.languages).map(x => str(x).trim()).filter(Boolean);
+  const langsMeet = (a, b) => !langs(a).length || !langs(b).length || langs(a).some(x => langs(b).some(y => norm(x) === norm(y)));
+  const holdbacks = c => arr(c.holdbacks).filter(h => h && MEDIA[h.media] && isDay(h.until));
   const live = (c, day) => c.status !== 'declined' && (!isDay(c.effectiveDate) || c.effectiveDate <= day) && (!isDay(c.expirationDate) || c.expirationDate >= day);
   const overlapTerm = (a, b) => (!isDay(a.expirationDate) || !isDay(b.effectiveDate) || b.effectiveDate <= a.expirationDate) && (!isDay(b.expirationDate) || !isDay(a.effectiveDate) || a.effectiveDate <= b.expirationDate);
   // Territories in the grid: the usual ones plus any a deal names.
   function territories() {
     const out = [...TERR];
-    for (const c of deals()) for (const t of arr(c.territories)) if (str(t).trim() && !WORLD.test(str(t).trim()) && !out.some(x => norm(x) === norm(t))) out.push(str(t).trim());
+    for (const c of deals()) for (const t of arr(c.territories)) {
+      const v = str(t).trim(); if (!v || WORLD.test(v) || out.some(x => norm(x) === norm(v))) continue;
+      const p = parentOf(v);
+      if (p && !out.some(x => norm(x) === norm(p))) out.push(p);
+      // A part goes right after its territory and any parts already listed.
+      if (p) { let i = out.findIndex(x => norm(x) === norm(p)); while (i + 1 < out.length && norm(parentOf(out[i + 1])) === norm(p)) i++; out.splice(i + 1, 0, v); } else out.push(v);
+    }
     return out;
   }
   function cell(t, m) {
     const on = deals().filter(c => covers(c, t, m) && live(c, asOf));
-    const sold = on.filter(c => c.status === 'signed'), hold = on.filter(c => c.status !== 'signed');
-    return { state: sold.length ? 'sold' : hold.length ? 'hold' : 'open', deals: sold.length ? sold : hold };
+    const whole = on.filter(c => !langs(c).length), sold = whole.filter(c => c.status === 'signed'), hold = whole.filter(c => c.status !== 'signed');
+    if (sold.length) return { state: 'sold', deals: sold };
+    if (hold.length) return { state: 'hold', deals: hold };
+    const part = [...on, ...deals().filter(c => coversPart(c, t, m) && live(c, asOf))];
+    if (part.length) return { state: 'part', deals: part };
+    const hb = deals().filter(c => c.status !== 'declined' && inTerr(c.territories, t)).flatMap(c => holdbacks(c).filter(h => h.media === m && h.until > asOf).map(h => ({ c, h }))).sort((a, b) => b.h.until.localeCompare(a.h.until))[0];
+    if (hb) return { state: 'held', deals: [hb.c], until: hb.h.until };
+    return { state: 'open', deals: [] };
+  }
+  // Deals that start a medium before another deal's holdback on it ends, in a territory both cover.
+  function holdbackClashes() {
+    const out = [], ds = deals().filter(c => c.status !== 'declined');
+    for (const a of ds) for (const h of holdbacks(a)) for (const b of ds) {
+      if (b === a || !arr(b.mediaRights).includes(h.media) || (isDay(b.effectiveDate) ? b.effectiveDate : '0000') >= h.until) continue;
+      const where = territories().filter(t => inTerr(a.territories, t) && inTerr(b.territories, t));
+      if (where.length) out.push({ a, b, h, where });
+    }
+    return out;
   }
   function clashes() {
     const out = [], ds = deals().filter(c => c.status !== 'declined' && c.exclusive !== false);
     for (let i = 0; i < ds.length; i++) for (let j = i + 1; j < ds.length; j++) {
       const a = ds[i], b = ds[j];
-      if (!overlapTerm(a, b)) continue;
+      if (!overlapTerm(a, b) || !langsMeet(a, b)) continue;
       const cells = [];
       for (const t of territories()) for (const m of Object.keys(MEDIA)) if (covers(a, t, m) && covers(b, t, m)) cells.push([t, m]);
       if (cells.length) out.push({ a, b, cells });
@@ -489,6 +525,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     return out;
   }
   const name = c => c.licensee || c.title || 'Deal';
+  const LABEL = { sold: 'Sold', hold: 'On hold', part: 'Part sold', held: 'Held back', open: 'Available' };
+  let draftHb = [];
+  const hbRow = (h, i) => `<div class="hb-row"><select id="hb-m-${i}" aria-label="Holdback ${i + 1} media">${Object.entries(MEDIA).map(([k, v]) => `<option value="${k}"${k === h.media ? ' selected' : ''}>${esc(v)}</option>`).join('')}</select><input type="date" id="hb-u-${i}" aria-label="Holdback ${i + 1} until" value="${esc(h.until || '')}"><button type="button" class="btn small" data-hbdel="${i}" aria-label="Remove holdback ${i + 1}">Remove</button></div>`;
+  const readHb = () => { draftHb = draftHb.map((h, i) => ($(`hb-m-${i}`) ? Object.assign({}, h, { media: $(`hb-m-${i}`).value, until: $(`hb-u-${i}`).value }) : h)); };
+  const drawHb = () => { $('hbRows').innerHTML = draftHb.map(hbRow).join('') || '<p class="hint">None.</p>'; };
 
   function render() {
     $('filmTitle').textContent = doc.project.title || 'Untitled film';
@@ -497,22 +538,27 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('fileState').innerHTML = (fileName ? esc(fileName) : 'Not saved to a file yet') + (dirty ? ' · <span class="dirty">Unsaved changes</span>' : '');
     document.title = `${doc.project.title ? doc.project.title + ' · ' : ''}Rights availability matrix · Open Filmmaker Toolkit`;
     $('asOf').value = asOf;
-    const ds = deals(), cl = clashes();
+    const ds = deals(), cl = clashes(), hcl = holdbackClashes();
     const clashCells = new Set(cl.flatMap(x => x.cells.map(([t, m]) => `${t}|${m}`)));
     $('count').textContent = `${ds.length} deal${ds.length === 1 ? '' : 's'}${cl.length ? ` · ${cl.length} overlap${cl.length === 1 ? '' : 's'}` : ''}`;
     $('grid').innerHTML = `<thead><tr><th scope="col">Territory</th>${Object.values(MEDIA).map(m => `<th scope="col">${esc(m)}</th>`).join('')}</tr></thead><tbody>${territories().map(t => `<tr><th scope="row">${esc(t)}</th>${Object.keys(MEDIA).map(m => {
       const c = cell(t, m); const until = c.deals.map(d => d.expirationDate).filter(isDay).sort()[0];
-      const label = c.state === 'sold' ? 'Sold' : c.state === 'hold' ? 'On hold' : 'Available';
-      return `<td><span class="cell c-${c.state}${clashCells.has(`${t}|${m}`) ? ' c-clash' : ''}" title="${esc(c.deals.map(name).join(', '))}">${label}${c.deals.length ? `<br>${esc(name(c.deals[0]))}${until ? `, to ${esc(fmtDate(until))}` : ''}` : ''}</span></td>`; }).join('')}</tr>`).join('')}</tbody>`;
+      const label = LABEL[c.state];
+      const extra = c.state === 'held' ? `<br>Until ${esc(fmtDate(c.until))}, for ${esc(name(c.deals[0]))}` : c.deals.length ? `<br>${esc(name(c.deals[0]))}${langs(c.deals[0]).length ? ` (${esc(langs(c.deals[0]).join(', '))})` : ''}${until ? `, to ${esc(fmtDate(until))}` : ''}` : '';
+      return `<td><span class="cell c-${c.state}${clashCells.has(`${t}|${m}`) ? ' c-clash' : ''}" title="${esc(c.deals.map(name).join(', '))}">${label}${extra}</span></td>`; }).join('')}</tr>`).join('')}</tbody>`;
     $('rows').innerHTML = ds.length ? ds.map(c => {
       const flags = [`<span class="flag linked">${esc(arr(c.territories).join(', ') || 'No territories')}</span>`, `<span class="flag linked">${esc(arr(c.mediaRights).map(m => MEDIA[m] || m).join(', ') || 'No media')}</span>`];
       if (c.exclusive === false) flags.push('<span class="flag linked">Non-exclusive</span>');
+      if (langs(c).length) flags.push(`<span class="flag linked">${esc(langs(c).join(', '))} only</span>`);
+      for (const h of holdbacks(c)) flags.push(`<span class="flag linked">No ${esc(MEDIA[h.media].toLowerCase())} until ${esc(fmtDate(h.until))}</span>`);
+      if (hcl.some(x => x.b === c)) flags.push('<span class="flag problem">Starts during another deal\'s holdback</span>');
       if (cl.some(x => x.a === c || x.b === c)) flags.push('<span class="flag problem">Overlaps another exclusive deal</span>');
       return `<li class="row" data-id="${esc(c.id)}"><span class="rt">${esc([c.effectiveDate && fmtDate(c.effectiveDate), c.expirationDate && `to ${fmtDate(c.expirationDate)}`].filter(Boolean).join(' ') || 'Term not set')}</span>
         <button type="button" class="what" data-edit="${esc(c.id)}"><span class="nm">${esc(name(c))}</span>${c.notes ? `<span class="tt">${esc(c.notes)}</span>` : ''}</button>
         <span class="st st-${c.status === 'signed' ? 'bad' : c.status === 'declined' ? 'quiet' : 'warn'}">${esc(STATUS[c.status] || 'Negotiating')}${c.fee ? `<span class="sub">${esc(money(c.fee))}</span>` : ''}</span>
         <div class="flags">${flags.join('')}</div></li>`; }).join('') : '<li class="empty-line">No distribution deals yet. Add one to see who holds which rights.</li>';
-    $('clashes').innerHTML = cl.length ? cl.map(x => `<li><span>${esc(name(x.a))} and ${esc(name(x.b))}<span class="sub">${esc(x.cells.slice(0, 3).map(([t, m]) => `${t}, ${MEDIA[m]}`).join('; '))}${x.cells.length > 3 ? ` and ${x.cells.length - 3} more` : ''}</span></span></li>`).join('') : '<li class="empty-line">No overlapping exclusive deals.</li>';
+    $('clashes').innerHTML = cl.length || hcl.length ? [...cl.map(x => `<li><span>${esc(name(x.a))} and ${esc(name(x.b))}<span class="sub">${esc(x.cells.slice(0, 3).map(([t, m]) => `${t}, ${MEDIA[m]}`).join('; '))}${x.cells.length > 3 ? ` and ${x.cells.length - 3} more` : ''}</span></span></li>`),
+      ...hcl.map(x => `<li><span>${esc(name(x.b))} starts before ${esc(name(x.a))}'s holdback ends<span class="sub">${esc(`No ${MEDIA[x.h.media].toLowerCase()} until ${fmtDate(x.h.until)}`)}; ${esc(name(x.b))} starts ${esc(isDay(x.b.effectiveDate) ? fmtDate(x.b.effectiveDate) : 'with no start date')} in ${esc(x.where.slice(0, 3).join(', '))}${x.where.length > 3 ? ` and ${x.where.length - 3} more` : ''}</span></span></li>`)].join('') : '<li class="empty-line">No overlapping exclusive deals.</li>';
     const soon = ds.filter(c => c.status === 'signed' && isDay(c.expirationDate) && c.expirationDate >= asOf && c.expirationDate <= addDays(asOf, 183)).sort((a, b) => a.expirationDate.localeCompare(b.expirationDate));
     $('reverts').innerHTML = soon.length ? soon.map(c => `<li><span>${esc(name(c))}<span class="sub">${esc(arr(c.territories).join(', '))}</span></span><span class="num">${esc(fmtDate(c.expirationDate))}</span></li>`).join('') : '<li class="empty-line">Nothing reverts in the next six months.</li>';
   }
@@ -527,6 +573,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('f-media').innerHTML = Object.entries(MEDIA).map(([k, v]) => `<label><input type="checkbox" value="${k}"${arr(c.mediaRights).includes(k) ? ' checked' : ''}> ${esc(v)}</label>`).join('');
     $('f-start').value = str(c.effectiveDate); $('f-end').value = str(c.expirationDate); $('f-fee').value = c.fee == null ? '' : String(c.fee);
     $('f-excl').checked = c.exclusive !== false; $('f-notes').value = str(c.notes);
+    $('f-lang').value = langs(c).join(', ');
+    draftHb = holdbacks(c).map(h => Object.assign({}, h)); drawHb();
     $('editorTitle').textContent = editing ? name(editing) : 'Add a deal';
     $('editor').showModal();
     $('f-licensee').focus();
@@ -544,6 +592,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     for (const [k, id] of [['effectiveDate', 'f-start'], ['expirationDate', 'f-end'], ['notes', 'f-notes']]) { const v = $(id).value.trim(); if (v) c[k] = v; else delete c[k]; }
     if ($('f-fee').value !== '') c.fee = Number($('f-fee').value); else delete c.fee;
     if ($('f-excl').checked) delete c.exclusive; else c.exclusive = false;
+    const lg = [...new Map($('f-lang').value.split(',').map(x => x.trim()).filter(Boolean).map(x => [norm(x), x])).values()];
+    if (lg.length) c.languages = lg; else delete c.languages;
+    readHb();
+    const hb = draftHb.filter(h => MEDIA[h.media] && isDay(h.until)).map(h => ({ media: h.media, until: h.until }));
+    if (hb.length) c.holdbacks = hb; else delete c.holdbacks;
     if (!editing) doc.contracts.push(c);
     $('editor').close(); changed();
   }
@@ -551,13 +604,13 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   function exportCsv() {
     const cl = new Set(clashes().flatMap(x => x.cells.map(([t, m]) => `${t}|${m}`)));
     const rows = [];
-    for (const t of territories()) for (const [m, label] of Object.entries(MEDIA)) { const c = cell(t, m); rows.push([t, label, c.state === 'sold' ? 'Sold' : c.state === 'hold' ? 'On hold' : 'Available', c.deals.map(name).join('; '), c.deals.map(d => d.expirationDate).filter(isDay).sort()[0] || '', cl.has(`${t}|${m}`) ? 'Yes' : '']); }
+    for (const t of territories()) for (const [m, label] of Object.entries(MEDIA)) { const c = cell(t, m); rows.push([t, label, LABEL[c.state], c.deals.map(d => `${name(d)}${langs(d).length ? ` (${langs(d).join(', ')})` : ''}`).join('; '), c.state === 'held' ? c.until : c.deals.map(d => d.expirationDate).filter(isDay).sort()[0] || '', cl.has(`${t}|${m}`) ? 'Yes' : '']); }
     exportRows(CSV_HEAD, rows, `rights-as-of-${asOf}`, 'right');
   }
   function renderReport() {
     $('report').innerHTML = `<h1>Rights availability</h1><p class="r-meta">${esc([doc.project.title, `As of ${fmtDate(asOf)}`].filter(Boolean).join(' · '))}</p>
-      <table class="r-grid"><thead><tr><th>Territory</th>${Object.values(MEDIA).map(m => `<th>${esc(m)}</th>`).join('')}</tr></thead><tbody>${territories().map(t => `<tr><th>${esc(t)}</th>${Object.keys(MEDIA).map(m => { const c = cell(t, m); return `<td>${c.state === 'sold' ? `<b>${esc(name(c.deals[0]))}</b>` : c.state === 'hold' ? `<i>Hold: ${esc(name(c.deals[0]))}</i>` : ''}</td>`; }).join('')}</tr>`).join('')}</tbody></table>
-      <p class="r-note">Blank cells are available. Bold is sold; italics are on hold while a deal is negotiated.</p>`;
+      <table class="r-grid"><thead><tr><th>Territory</th>${Object.values(MEDIA).map(m => `<th>${esc(m)}</th>`).join('')}</tr></thead><tbody>${territories().map(t => `<tr><th>${esc(t)}</th>${Object.keys(MEDIA).map(m => { const c = cell(t, m); return `<td>${c.state === 'sold' ? `<b>${esc(name(c.deals[0]))}</b>` : c.state === 'hold' ? `<i>Hold: ${esc(name(c.deals[0]))}</i>` : c.state === 'part' ? `Part: ${esc(c.deals.map(d => `${name(d)}${langs(d).length ? ` (${langs(d).join(', ')})` : ''}`).join(', '))}` : c.state === 'held' ? `Held back to ${esc(fmtDate(c.until))}` : ''}</td>`; }).join('')}</tr>`).join('')}</tbody></table>
+      <p class="r-note">Blank cells are available. Bold is sold; italics are on hold while a deal is negotiated. Part is sold for some languages or part of the territory; held back means another deal keeps it off the market until the date.</p>`;
   }
 
   // ---------- Project CSV ----------
@@ -788,6 +841,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('asOf').addEventListener('change', () => { asOf = $('asOf').value || today(); render(); });
     $('rows').addEventListener('click', ev => { const b = ev.target.closest('[data-edit]'); if (b) openEditor(b.dataset.edit); });
     $('editorForm').addEventListener('submit', ev => { ev.preventDefault(); saveEditor(); });
+    $('hbAdd').onclick = () => { readHb(); draftHb.push({ media: 'svod', until: '' }); drawHb(); $(`hb-u-${draftHb.length - 1}`).focus(); };
+    $('hbRows').addEventListener('click', ev => { const b = ev.target.closest('[data-hbdel]'); if (!b) return; readHb(); draftHb.splice(+b.dataset.hbdel, 1); drawHb(); });
     $('editorForm').addEventListener('input', ev => { if (ev.target.setCustomValidity) ev.target.setCustomValidity(''); });
     $('editorCancel').onclick = () => $('editor').close();
 

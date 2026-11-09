@@ -37,6 +37,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **Tech specs:** the formats you can send (DCP, Blu-ray, a file or link, DVD) and playback notes.
 - **The discussion** from the [discussion guide builder](../discussion-guide/): themes, questions, resources and partner organizations.
 - **A host checklist** by when: four weeks before, two weeks, the week before, the day and afterward, including sending you the attendance for the [impact report](../impact-report/). Remove items or add your own.
+- **A kit for each host.** Pick a partner from the [partner CRM](../partner-crm/) or a venue from [bookings](../bookings/) under **Kit for**. Add a note for that host, and change any of hosting, tech specs, promotion or contact for them only; everything else comes from the kit for every host. The print is headed with the host's name.
 - **Prints the kit,** with the checklist on its own page.
 
 ## Saving and file conflicts
@@ -49,13 +50,12 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-A `screeningKit` record: `hosting`, `tech`, `promotion` and `contact` text, `formats`, `imageIds` (approved stills and key art), `checklist` (your own items, with `when` and `text`), `removed` (built-in items taken out) and `hidden` (sections left out).
+A `screeningKit` record: `hosting`, `tech`, `promotion` and `contact` text, `formats`, `imageIds` (approved stills and key art), `checklist` (your own items, with `when` and `text`), `removed` (built-in items taken out), `hidden` (sections left out) and `hosts`: for each host, by `partner:` or `booking:` and its id, a `note` and any of `hosting`, `tech`, `promotion` and `contact` that differ from the kit for every host.
 
 It reads `pressNotes`, `treatment`, `discussionGuide`, `partners` and `assets`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
-- A different kit for each host
 - Sending the kit by email (the toolkit never connects to the internet)
 - Translations
 

@@ -147,6 +147,11 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .notice { margin: 0 0 12px; padding: 8px 10px; border-left: 3px solid var(--ink-2); background: var(--hover); font-size: 13.5px; color: var(--ink-2); }
 .mat { display: grid; grid-template-columns: minmax(0, 1fr) 150px; gap: 6px 10px; align-items: center; font-size: 14px; }
 .mat label { display: flex; gap: 6px; align-items: center; font-weight: 400; }
+.bo-rows { display: grid; gap: 6px; }
+.bo-row { display: grid; grid-template-columns: minmax(0, 150px) minmax(0, 1fr) minmax(0, 1fr) auto; gap: 6px; align-items: center; }
+@media (max-width: 520px) { .bo-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.field-label { font-weight: 600; font-size: 14px; }
+.bo-share { margin: 6px 0 0; font-size: 14px; }
 .mat input[type="date"] { padding: 4px 6px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); color: var(--ink); font: inherit; font-size: 13px; }
 
 dialog { border: 0; padding: 0; color: var(--ink); background: var(--sheet); box-shadow: 0 10px 40px rgba(10, 14, 22, 0.25); }
@@ -203,6 +208,12 @@ pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; b
   .report h1 { margin: 0; font: 700 18pt/1.2 var(--serif); }
   .report h2 { margin: 14pt 0 4pt; font: 700 12pt/1.2 var(--serif); break-after: avoid; page-break-after: avoid; }
   .report .r-meta { margin: 2pt 0 10pt; }
+  .report .r-invoice + .r-bo { break-before: page; page-break-before: always; }
+  .report .r-inv-head { display: flex; justify-content: space-between; gap: 20pt; margin-bottom: 12pt; }
+  .report .r-from { text-align: right; }
+  .report .r-facts { width: auto; margin: 0 0 12pt; }
+  .report .r-facts th { text-align: left; font-weight: 400; padding-right: 18pt; vertical-align: top; }
+  .report .r-pre { white-space: pre-line; }
   .report table { width: 100%; border-collapse: collapse; }
   .report th, .report td { padding: 4pt 5pt; border-bottom: 0.75pt solid #999999; text-align: left; vertical-align: top; }
   .report th { font-size: 9pt; border-bottom: 1pt solid #000000; }
@@ -322,12 +333,30 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <div class="field"><label for="f-invoiced">Invoiced on</label><input id="f-invoiced" type="date"></div>
         <div class="field"><label for="f-paid">Paid on</label><input id="f-paid" type="date"></div>
       </div>
+      <fieldset class="field" id="boGroup"><legend>Box office</legend>
+        <p class="hint">Each night's or week's admissions and gross from the venue's report.</p>
+        <div class="bo-rows" id="boRows"></div>
+        <p><button type="button" class="btn small" id="boAdd">Add a line</button></p>
+        <div class="two">
+          <div class="field"><label for="f-boTax">Taxes and fees taken off first</label><input id="f-boTax" type="number" min="0" step="any" inputmode="decimal"></div>
+          <div class="field"><span class="field-label">Your share</span><p class="bo-share" id="boShare" role="status"></p></div>
+        </div>
+      </fieldset>
+      <fieldset class="field"><legend>Invoice</legend>
+        <div class="two">
+          <div class="field"><label for="f-invNo">Invoice number</label><input id="f-invNo" type="text" autocomplete="off"></div>
+          <div class="field"><label for="f-invDue">Payment due</label><input id="f-invDue" type="date"></div>
+        </div>
+        <div class="field"><label for="f-invPay">How to pay</label><textarea id="f-invPay" rows="2" placeholder="Bank transfer details, or who to make a check out to"></textarea><p class="hint">Kept with this booking, and filled in from your last invoice.</p></div>
+      </fieldset>
       <fieldset class="field"><legend>Materials sent</legend><div class="mat" id="f-mat"></div></fieldset>
       <div id="oftLinks"></div>
       <div class="field"><label for="f-notes">Notes</label><textarea id="f-notes" rows="2"></textarea></div>
     </div>
     <div class="dlg-foot">
       <button type="button" class="btn danger" id="deleteBtn">Delete</button>
+      <button type="button" class="btn" id="invoiceBtn">Save and print the invoice</button>
+      <button type="button" class="btn" id="boPrintBtn">Save and print the box office report</button>
       <span class="spacer"></span>
       <button type="button" class="btn" id="editorCancel">Cancel</button>
       <button type="submit" class="btn primary" id="editorSubmit">Save</button>
@@ -505,11 +534,70 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('materials').innerHTML = soon.length ? soon.map(b => `<li><span>${esc(b.venue)}<span class="sub">${esc(waiting(b).map(k => MATERIALS[k]).join(', '))}</span></span><span class="num">${esc(fmtDate(b.startDate))}</span></li>`).join('') : '<li class="empty-line">Nothing waiting.</li>';
   }
 
+  // ---------- Box office and invoices ----------
+  const nums = v => (v === '' || v == null || !isFinite(Number(v)) ? null : Number(v));
+  const cents = n => Math.round(n * 100) / 100;
+  const boLines = b => arr(b.boxOffice).filter(x => x && typeof x === 'object');
+  function boxOffice(b) {
+    const gross = cents(boLines(b).reduce((t, x) => t + (nums(x.gross) || 0), 0)), adm = boLines(b).reduce((t, x) => t + (nums(x.admissions) || 0), 0);
+    const net = cents(Math.max(0, gross - (nums(b.boxOfficeTaxes) || 0))), share = cents(net * (nums(b.splitPercent) || 0) / 100);
+    return { gross, adm, net, share };
+  }
+  // What the invoice is for: the fee, or for a split deal your share of the box office.
+  const amountDue = b => (b.license === 'split' ? (boLines(b).length ? boxOffice(b).share : 0) : nums(b.fee) || 0);
+  function nextInvoiceNo() {
+    const y = today().slice(0, 4), used = doc.bookings.map(b => str(b.invoiceNumber)).filter(n => n.startsWith(`INV-${y}-`)).map(n => +n.slice(9) || 0);
+    return `INV-${y}-${String((used.length ? Math.max(...used) : 0) + 1).padStart(3, '0')}`;
+  }
+  let draftBo = [], printing = null;
+  function boRow(x, i) {
+    return `<div class="bo-row"><input type="date" id="bo-d-${i}" aria-label="Line ${i + 1} date" value="${esc(x.date || '')}"><input type="number" min="0" step="1" inputmode="numeric" id="bo-a-${i}" aria-label="Line ${i + 1} admissions" placeholder="Admissions" value="${esc(x.admissions == null ? '' : x.admissions)}"><input type="number" min="0" step="any" inputmode="decimal" id="bo-g-${i}" aria-label="Line ${i + 1} gross" placeholder="Gross" value="${esc(x.gross == null ? '' : x.gross)}"><button type="button" class="btn small" data-bodel="${i}" aria-label="Remove line ${i + 1}">Remove</button></div>`;
+  }
+  function readBo() { draftBo = draftBo.map((x, i) => $(`bo-d-${i}`) ? Object.assign({}, x, { date: $(`bo-d-${i}`).value, admissions: nums($(`bo-a-${i}`).value), gross: nums($(`bo-g-${i}`).value) }) : x); }
+  function drawBo() {
+    $('boRows').innerHTML = draftBo.map(boRow).join('') || '<p class="hint">No box office yet.</p>';
+    showShare();
+  }
+  function showShare() {
+    readBo();
+    const r = boxOffice({ boxOffice: draftBo, boxOfficeTaxes: nums($('f-boTax').value), splitPercent: nums($('f-split').value) });
+    $('boShare').textContent = draftBo.length ? `${money(r.share)}: ${$('f-split').value || 0}% of ${money(r.net)} net, from ${money(r.gross)} gross and ${r.adm} admission${r.adm === 1 ? '' : 's'}` : 'Add the box office to work it out.';
+  }
+  const showSplit = () => { $('boGroup').hidden = $('f-license').value !== 'split'; $('boPrintBtn').hidden = $('f-license').value !== 'split'; };
+  function printDoc(kind) {
+    const id = saveEditor(); if (!id) return;
+    printing = { kind, id };
+    renderReport(); window.print();
+  }
+  function invoiceHtml(b) {
+    const p = doc.project, r = boxOffice(b), amt = amountDue(b);
+    const line = b.license === 'split' ? `Your share of the box office: ${nums(b.splitPercent) || 0}% of ${money(r.net)} net` : `${LICENSE[b.license] || 'Screening license'}: ${p.title || 'the film'}`;
+    return `<section class="r-invoice"><div class="r-inv-head"><div><h1>Invoice</h1><p class="r-meta">${esc(b.invoiceNumber || '')}</p></div><div class="r-from"><b>${esc(p.company || p.producer || p.title || '')}</b>${p.producer && p.company ? `<br>${esc(p.producer)}` : ''}</div></div>
+      <table class="r-facts"><tbody><tr><th>Bill to</th><td>${esc(b.venue || '')}${b.contact ? `<br>${esc(b.contact)}` : ''}${b.email ? `<br>${esc(b.email)}` : ''}${b.city ? `<br>${esc(b.city)}` : ''}</td></tr>
+      <tr><th>Invoice date</th><td>${esc(fmtDate(b.invoicedDate || today()))}</td></tr>${b.invoiceDue ? `<tr><th>Payment due</th><td>${esc(fmtDate(b.invoiceDue))}</td></tr>` : ''}
+      <tr><th>For</th><td>${esc(p.title || 'The film')}${b.startDate ? `, ${esc(fmtDate(b.startDate))}${b.endDate && b.endDate !== b.startDate ? ` to ${esc(fmtDate(b.endDate))}` : ''}` : ''}</td></tr></tbody></table>
+      <table><thead><tr><th>Description</th><th class="r-n">Amount</th></tr></thead><tbody><tr><td>${esc(line)}</td><td class="r-n">${esc(money(amt))}</td></tr></tbody><tfoot><tr><th>Total due</th><th class="r-n">${esc(money(amt))}</th></tr></tfoot></table>
+      ${b.license === 'split' && boLines(b).length ? '<p class="r-sub">The box office report is attached.</p>' : ''}
+      ${b.invoicePayment ? `<h2>How to pay</h2><p class="r-pre">${esc(b.invoicePayment)}</p>` : ''}</section>`;
+  }
+  function boxOfficeHtml(b) {
+    const r = boxOffice(b), lines = boLines(b).slice().sort((x, y) => str(x.date).localeCompare(str(y.date)));
+    return `<section class="r-bo"><h1>Box office report</h1><p class="r-meta">${esc([doc.project.title, b.venue, b.city, `Printed ${fmtDate(today())}`].filter(Boolean).join(' · '))}</p>
+      <table><thead><tr><th>Date</th><th class="r-n">Admissions</th><th class="r-n">Gross</th></tr></thead><tbody>${lines.map(x => `<tr><td>${esc(x.date ? fmtDate(x.date) : '')}</td><td class="r-n">${esc(x.admissions == null ? '' : String(x.admissions))}</td><td class="r-n">${esc(money(nums(x.gross) || 0))}</td></tr>`).join('')}</tbody>
+      <tfoot><tr><th>Total</th><th class="r-n">${r.adm}</th><th class="r-n">${esc(money(r.gross))}</th></tr></tfoot></table>
+      <table class="r-facts"><tbody><tr><th>Gross box office</th><td class="r-n">${esc(money(r.gross))}</td></tr><tr><th>Taxes and fees taken off</th><td class="r-n">${esc(money(nums(b.boxOfficeTaxes) || 0))}</td></tr><tr><th>Net box office</th><td class="r-n">${esc(money(r.net))}</td></tr><tr><th>Our share (${nums(b.splitPercent) || 0}%)</th><td class="r-n"><b>${esc(money(r.share))}</b></td></tr><tr><th>The venue keeps</th><td class="r-n">${esc(money(cents(r.net - r.share)))}</td></tr></tbody></table></section>`;
+  }
+
   const BF = { venue: 'f-venue', kind: 'f-kind', contact: 'f-contact', email: 'f-email', city: 'f-city', startDate: 'f-start', endDate: 'f-end', status: 'f-status', license: 'f-license', fee: 'f-fee', splitPercent: 'f-split', payment: 'f-payment', invoicedDate: 'f-invoiced', paidDate: 'f-paid', notes: 'f-notes' };
   function openEditor(id) {
     editing = id ? doc.bookings.find(b => b.id === id) || null : null;
     const b = editing || { kind: filter === 'all' ? 'educational' : filter, status: 'inquiry', license: 'screening', payment: 'unpaid' };
     for (const [k, el] of Object.entries(BF)) $(el).value = b[k] == null ? '' : String(b[k]);
+    draftBo = boLines(b).map(x => Object.assign({}, x));
+    $('f-boTax').value = b.boxOfficeTaxes == null ? '' : String(b.boxOfficeTaxes);
+    $('f-invNo').value = str(b.invoiceNumber); $('f-invDue').value = str(b.invoiceDue);
+    $('f-invPay').value = str(b.invoicePayment || (doc.bookings.filter(x => x.invoicePayment).sort((x, y) => str(y.invoicedDate).localeCompare(str(x.invoicedDate)))[0] || {}).invoicePayment);
+    drawBo(); showSplit();
     const need = arr(b.materialsNeeded), s = sent(b);
     $('f-mat').innerHTML = Object.entries(MATERIALS).map(([k, v]) => `<label><input type="checkbox" data-need="${k}"${need.includes(k) ? ' checked' : ''}> ${esc(v)}</label><input type="date" data-sent="${k}" aria-label="${esc(v)} sent on" value="${esc(s[k] || '')}">`).join('');
     $('deleteBtn').hidden = !editing;
@@ -528,8 +616,14 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     for (const i of $('f-mat').querySelectorAll('[data-sent]')) if (i.value) s[i.dataset.sent] = i.value;
     if (need.length) b.materialsNeeded = need; else delete b.materialsNeeded;
     if (Object.keys(s).length) b.materials = s; else delete b.materials;
+    readBo();
+    const bo = draftBo.filter(x => x.date || x.admissions != null || x.gross != null).map(x => { const o = Object.assign({}, x, { id: x.id || newId('boxoffice') }); for (const k of ['date', 'admissions', 'gross']) if (o[k] === '' || o[k] == null) delete o[k]; return o; });
+    if (bo.length) b.boxOffice = bo; else delete b.boxOffice;
+    const tax = nums($('f-boTax').value); if (tax != null) b.boxOfficeTaxes = tax; else delete b.boxOfficeTaxes;
+    for (const [k, el] of [['invoiceNumber', 'f-invNo'], ['invoiceDue', 'f-invDue'], ['invoicePayment', 'f-invPay']]) { const v = $(el).value.trim(); if (v) b[k] = v; else delete b[k]; }
     if (!editing) doc.bookings.push(b);
     $('editor').close(); changed();
+    return b.id;
   }
   const CSV_HEAD = ['Venue or institution', 'Kind', 'Contact', 'Email', 'City', 'Starts', 'Ends', 'Status', 'License or terms', 'Fee', 'Box office share %', 'Payment', 'Invoiced on', 'Paid on', 'Materials needed', 'Materials sent', 'Notes'];
   function exportCsv() {
@@ -537,6 +631,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       PAY[pay(b)], b.invoicedDate, b.paidDate, arr(b.materialsNeeded).map(k => MATERIALS[k] || k).join('; '), Object.entries(sent(b)).map(([k, d]) => `${MATERIALS[k] || k} ${d}`).join('; '), b.notes]), 'bookings', 'booking');
   }
   function renderReport() {
+    const pb = printing && doc.bookings.find(b => b.id === printing.id);
+    if (pb) { $('report').innerHTML = printing.kind === 'invoice' ? invoiceHtml(pb) + (pb.license === 'split' && boLines(pb).length ? boxOfficeHtml(pb) : '') : boxOfficeHtml(pb); return; }
     const list = sorted(doc.bookings.filter(b => live(b) && (filter === 'all' || b.kind === filter)));
     $('report').innerHTML = `<h1>Bookings${filter === 'all' ? '' : `: ${esc(KIND[filter])}`}</h1><p class="r-meta">${esc([doc.project.title, `${list.length} booking${list.length === 1 ? '' : 's'}`, `Printed ${fmtDate(today())}`].filter(Boolean).join(' · '))}</p>
       <table><thead><tr><th>Date</th><th>Venue or institution</th><th>Kind</th><th>Terms</th><th class="r-n">Fee</th><th>Payment</th></tr></thead><tbody>${list.map(b => `<tr><td>${esc(b.startDate ? fmtDate(b.startDate) : '')}</td><td>${esc(b.venue)}${b.contact ? `<span class="r-sub">${esc(b.contact)}</span>` : ''}</td><td>${esc(KIND[b.kind] || '')}</td><td>${esc(LICENSE[b.license] || '')}</td><td class="r-n">${b.fee ? esc(money(b.fee)) : ''}</td><td>${esc(PAY[pay(b)])}</td></tr>`).join('')}</tbody></table>`;
@@ -753,7 +849,21 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('saveBtn').onclick = saveFile;
     $('editProjectBtn').onclick = openProjectDialog;
     $('filmTitle').onclick = openProjectDialog;
-    $('printBtn').onclick = () => { renderReport(); window.print(); };
+    $('printBtn').onclick = () => { printing = null; renderReport(); window.print(); };
+    window.addEventListener('afterprint', () => { printing = null; });
+    $('invoiceBtn').onclick = () => {
+      if (!$('f-invNo').value.trim()) $('f-invNo').value = nextInvoiceNo();
+      if (!$('f-invoiced').value) $('f-invoiced').value = today();
+      if ($('f-payment').value !== 'paid') $('f-payment').value = 'invoiced';
+      if (!$('f-invDue').value) { const d = new Date(`${$('f-invoiced').value}T12:00:00`); d.setDate(d.getDate() + 30); $('f-invDue').value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+      printDoc('invoice');
+    };
+    $('boPrintBtn').onclick = () => printDoc('boxoffice');
+    $('boAdd').onclick = () => { readBo(); draftBo.push({ date: $('f-start').value || '' }); drawBo(); const g = $(`bo-a-${draftBo.length - 1}`); if (g) g.focus(); };
+    $('boRows').addEventListener('click', ev => { const t = ev.target.closest('[data-bodel]'); if (!t) return; readBo(); draftBo.splice(+t.dataset.bodel, 1); drawBo(); });
+    $('boRows').addEventListener('input', showShare);
+    for (const id of ['f-boTax', 'f-split']) $(id).addEventListener('input', showShare);
+    $('f-license').addEventListener('change', showSplit);
     window.addEventListener('beforeprint', renderReport);
     $('projectCsvBtn').onclick = () => $('projectCsvDialog').showModal();
     $('projectCsvCancel').onclick = () => $('projectCsvDialog').close();

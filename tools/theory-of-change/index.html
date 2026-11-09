@@ -156,6 +156,12 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .tbox .sub { display: block; margin-top: 4px; font-size: 12.5px; color: var(--ink-3); }
 .tbox .ind { display: block; margin-top: 4px; padding-top: 4px; border-top: 1px dashed var(--rule); font-size: 12.5px; color: var(--ink-2); }
 .tcol .none { font-size: 13px; color: var(--ink-3); }
+.map-wrap { position: relative; }
+.arrows { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; color: var(--ink-3); }
+.tbox .ar { display: block; margin-top: 4px; font-size: 12.5px; color: var(--ink-2); }
+.tbox[aria-pressed="true"] { outline: 3px solid var(--accent, var(--ink)); outline-offset: 2px; }
+.drawing .tbox { cursor: crosshair; }
+.draw-note { margin: 0 0 8px; padding: 8px 10px; border-radius: 6px; background: var(--hover); font-size: 14px; }
 @media (max-width: 900px) { .map { grid-template-columns: minmax(0, 1fr); } .side { grid-template-columns: minmax(0, 1fr); } }
 
 dialog { border: 0; padding: 0; color: var(--ink); background: var(--sheet); box-shadow: 0 10px 40px rgba(10, 14, 22, 0.25); }
@@ -271,11 +277,13 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <span class="spacer"></span>
         <button type="button" class="btn primary" id="addBtn">Add an outcome</button>
         <button type="button" class="btn" id="indBtn">Add an indicator</button>
+        <button type="button" class="btn" id="drawBtn" aria-pressed="false">Draw arrows</button>
         <button type="button" class="btn" id="csvBtn">Export CSV</button>
         <button type="button" class="btn" id="printBtn">Print diagram</button>
       </div>
       <div class="goal"><h3><label for="goal">The change the film's campaign works toward</label></h3><textarea id="goal" rows="2" placeholder="Riverside residents have a say in how the new levee is planned."></textarea></div>
-      <div class="map" id="map"></div>
+      <p class="draw-note" id="drawNote" role="status" hidden></p>
+      <div class="map-wrap"><div class="map" id="map"></div><svg class="arrows" id="arrows" aria-hidden="true" focusable="false"></svg></div>
     </section>
     <div class="side">
       <section class="card" aria-labelledby="indHead">
@@ -303,6 +311,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       <div class="field" id="termField"><label for="f-term">When</label><select id="f-term"><option value="short">Short term: during the campaign</option><option value="medium">Medium term: within a year or two</option><option value="long">Long term: lasting change</option></select></div>
       <fieldset class="field" id="audField"><legend>Audiences</legend><div class="checks" id="f-aud"></div></fieldset>
       <fieldset class="field" id="outField"><legend>Leads to these outcomes</legend><div class="checks" id="f-out"></div></fieldset>
+      <div class="two" id="arField">
+        <div class="field"><label for="f-assume">Assumptions</label><textarea id="f-assume" rows="2" placeholder="What has to be true for this step to lead to the next"></textarea></div>
+        <div class="field"><label for="f-risk">Risks</label><textarea id="f-risk" rows="2" placeholder="What could stop it, and what you'd do"></textarea></div>
+      </div>
       <div id="indFields">
         <div class="field"><label for="f-outcome">Measures the outcome</label><select id="f-outcome"></select></div>
         <div class="three">
@@ -474,7 +486,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     if (document.activeElement !== $('goal')) $('goal').value = str(doc.theoryOfChange && doc.theoryOfChange.goal);
     const n = entries().length;
     $('count').textContent = n ? `${L('outcomes').length} outcome${L('outcomes').length === 1 ? '' : 's'} · ${L('indicators').length} indicator${L('indicators').length === 1 ? '' : 's'}` : '';
-    const box = (k, x, extra) => `<button type="button" class="tbox" data-kind="${k}" data-edit="${esc(x.id)}">${esc(label(k, x))}${extra || ''}</button>`;
+    const leads = (k, x) => { const to = arr(x.outcomeIds).map(id => find('outcomes', id)).filter(Boolean); return to.length ? `<span class="sr-only">Leads to: ${esc(to.map(o => short(label('outcomes', o))).join('; '))}.</span>` : ''; };
+    const ar = x => [x.assumptions && `<span class="ar">Assumes: ${esc(short(x.assumptions))}</span>`, x.risks && `<span class="ar">Risk: ${esc(short(x.risks))}</span>`].filter(Boolean).join('');
+    const box = (k, x, extra) => `<button type="button" class="tbox" data-kind="${k}" data-edit="${esc(x.id)}"${drawFrom ? ` aria-pressed="${drawFrom.id === x.id}"` : ''}>${esc(label(k, x))}${extra || ''}${ar(x)}${leads(k, x)}</button>`;
     const audNames = x => arr(x.audienceIds).map(id => find('audiences', id)).filter(Boolean).map(a => a.name || a.text).join(', ');
     const inds = o => L('indicators').filter(i => i.outcomeId === o.id).map(i => `<span class="ind">${esc(label('indicators', i))}${i.target != null ? `: ${esc(i.target)} ${esc(i.unit || '')}` : ''}</span>`).join('');
     const col = (title, k, items, btn) => `<div class="tcol"><h3>${esc(title)}${btn ? `<button type="button" data-add="${k}"${btn.term ? ` data-term="${btn.term}"` : ''}>Add</button>` : ''}</h3>${items.join('') || '<p class="none">None yet.</p>'}</div>`;
@@ -484,10 +498,46 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       ...['short', 'medium', 'long'].map(t => col(`${TERM[t]} outcomes`, 'outcomes', L('outcomes').filter(o => (o.term || 'short') === t).map(o => box('outcomes', o, inds(o))), { term: t }))].join('');
     $('indCount').textContent = L('indicators').length ? String(L('indicators').length) : '';
     $('indicators').innerHTML = L('indicators').length ? L('indicators').map(i => { const o = find('outcomes', i.outcomeId); return `<li><span>${esc(label('indicators', i))}<span class="sub">${esc([o && short(label('outcomes', o)), i.source].filter(Boolean).join(' · '))}</span></span><span class="num">${i.target != null ? `${esc(i.target)} ${esc(i.unit || '')}` : ''}</span></li>`; }).join('') : '<li class="empty-line">No indicators yet.</li>';
+    $('drawBtn').setAttribute('aria-pressed', String(drawing));
+    $('map').classList.toggle('drawing', drawing);
+    $('drawNote').hidden = !drawing;
+    $('drawNote').textContent = !drawing ? '' : drawFrom ? `Now pick the outcome "${short(label(drawFrom.kind, find(drawFrom.kind, drawFrom.id) || {}))}" leads to. Pick a box it already leads to, to take the arrow away.` : 'Pick an activity or outcome, then the outcome it leads to. Outcomes lead to outcomes in the same or a later column.';
+    requestAnimationFrame(drawArrows);
     const g = gaps();
     $('gaps').innerHTML = g.length ? g.map(x => `<li>${esc(x)}</li>`).join('') : '<li class="empty-line">Every outcome has an activity and an indicator.</li>';
   }
 
+  // Arrows from each activity and outcome to the outcomes it leads to, drawn when the columns sit side by side.
+  let drawing = false, drawFrom = null;
+  const TERMS = ['short', 'medium', 'long'];
+  function drawArrows() {
+    const svg = $('arrows'), wrap = svg.parentElement.getBoundingClientRect(), cols = [...$('map').children];
+    if (cols.length < 2 || Math.abs(cols[0].getBoundingClientRect().top - cols[1].getBoundingClientRect().top) > 2) { svg.innerHTML = ''; return; }
+    const at = (k, id) => $('map').querySelector(`.tbox[data-kind="${k}"][data-edit="${CSS.escape(id)}"]`);
+    let paths = '';
+    for (const k of ['activities', 'outcomes']) for (const x of L(k)) for (const to of arr(x.outcomeIds)) {
+      const a = at(k, x.id), b = at('outcomes', to); if (!a || !b) continue;
+      const r1 = a.getBoundingClientRect(), r2 = b.getBoundingClientRect();
+      const x1 = r1.right - wrap.left, y1 = r1.top + r1.height / 2 - wrap.top, x2 = r2.left - wrap.left - 2, y2 = r2.top + r2.height / 2 - wrap.top;
+      if (x2 <= x1) { const ys = r1.bottom - wrap.top, ye = r2.top - wrap.top, xm = r1.left + r1.width / 2 - wrap.left; paths += `<path d="M${xm} ${ys} L${xm} ${ye - 2}" marker-end="url(#arrowHead)"/>`; continue; }
+      const mx = (x1 + x2) / 2;
+      paths += `<path d="M${x1} ${y1} C${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}" marker-end="url(#arrowHead)"/>`;
+    }
+    svg.innerHTML = `<defs><marker id="arrowHead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="1.5">${paths}</g>`;
+  }
+  // Drawing mode: the first box picked is where the arrow starts, the second where it ends.
+  function pickForArrow(k, id) {
+    if (!drawFrom) { if (k === 'activities' || k === 'outcomes') drawFrom = { kind: k, id }; else toast('Arrows start at an activity or an outcome.', true); render(); return; }
+    if (k !== 'outcomes' || (drawFrom.kind === 'outcomes' && drawFrom.id === id)) { toast('An arrow ends at a different outcome.', true); return; }
+    const from = find(drawFrom.kind, drawFrom.id), to = find('outcomes', id);
+    if (drawFrom.kind === 'outcomes' && TERMS.indexOf(to.term || 'short') < TERMS.indexOf(from.term || 'short')) { toast('An outcome leads to one in the same or a later column.', true); return; }
+    const ids = arr(from.outcomeIds), had = ids.includes(id);
+    if (had) { from.outcomeIds = ids.filter(v => v !== id); if (!from.outcomeIds.length) delete from.outcomeIds; } else from.outcomeIds = [...ids, id];
+    toast(had ? 'Took the arrow away.' : `Drew an arrow to "${short(label('outcomes', to))}".`);
+    drawFrom = null;
+    changed();
+    const back = $('map').querySelector(`.tbox[data-edit="${CSS.escape(id)}"]`); if (back) back.focus();
+  }
   function openEditor(k, id, term) {
     kind = k;
     editing = id ? find(k, id) || null : null;
@@ -498,8 +548,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('termField').hidden = k !== 'outcomes'; $('f-term').value = x.term || 'short';
     $('audField').hidden = !(k === 'activities' || k === 'outcomes');
     $('f-aud').innerHTML = L('audiences').map(a => `<label><input type="checkbox" value="${esc(a.id)}"${arr(x.audienceIds).includes(a.id) ? ' checked' : ''}> ${esc(label('audiences', a))}</label>`).join('') || '<p class="hint">No audiences yet.</p>';
-    $('outField').hidden = k !== 'activities';
-    $('f-out').innerHTML = L('outcomes').map(o => `<label><input type="checkbox" value="${esc(o.id)}"${arr(x.outcomeIds).includes(o.id) ? ' checked' : ''}> ${esc(short(label('outcomes', o)))}</label>`).join('') || '<p class="hint">No outcomes yet.</p>';
+    $('outField').hidden = !(k === 'activities' || k === 'outcomes');
+    $('arField').hidden = !(k === 'activities' || k === 'outcomes');
+    $('f-assume').value = str(x.assumptions); $('f-risk').value = str(x.risks);
+    $('f-out').innerHTML = L('outcomes').filter(o => o !== editing && (k !== 'outcomes' || TERMS.indexOf(o.term || 'short') >= TERMS.indexOf(x.term || 'short'))).map(o => `<label><input type="checkbox" value="${esc(o.id)}"${arr(x.outcomeIds).includes(o.id) ? ' checked' : ''}> ${esc(short(label('outcomes', o)))}</label>`).join('') || '<p class="hint">No outcomes yet.</p>';
     $('indFields').hidden = k !== 'indicators';
     $('f-outcome').innerHTML = L('outcomes').map(o => `<option value="${esc(o.id)}">${esc(short(label('outcomes', o)))}</option>`).join('');
     if (x.outcomeId) $('f-outcome').value = x.outcomeId;
@@ -515,7 +567,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const ids = box => [...$(box).querySelectorAll('input:checked')].map(i => i.value);
     if (kind === 'outcomes') x.term = $('f-term').value;
     if (kind === 'activities' || kind === 'outcomes') { const a = ids('f-aud'); if (a.length) x.audienceIds = a; else delete x.audienceIds; }
-    if (kind === 'activities') { const o = ids('f-out'); if (o.length) x.outcomeIds = o; else delete x.outcomeIds; }
+    if (kind === 'activities' || kind === 'outcomes') {
+      const o = ids('f-out'); if (o.length) x.outcomeIds = o; else delete x.outcomeIds;
+      for (const [f, el] of [['assumptions', 'f-assume'], ['risks', 'f-risk']]) { const v = $(el).value.trim(); if (v) x[f] = v; else delete x[f]; }
+    }
     if (kind === 'indicators') {
       x.outcomeId = $('f-outcome').value;
       for (const [f, el, n] of [['target', 'f-target', 1], ['unit', 'f-unit'], ['baseline', 'f-baseline', 1], ['source', 'f-source']]) { const v = $(el).value.trim(); if (v === '') delete x[f]; else x[f] = n ? Number(v) : v; }
@@ -532,21 +587,22 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('editor').close(); changed();
   }
   function setGoal() { const v = $('goal').value.trim(); if (v) T().goal = v; else if (doc.theoryOfChange) delete doc.theoryOfChange.goal; changed(); }
-  const CSV_HEAD = ['Kind', 'Text', 'When', 'Audiences', 'Leads to', 'Measures', 'Target', 'Unit', 'Starting point', 'How measured', 'Notes'];
+  const CSV_HEAD = ['Kind', 'Text', 'When', 'Audiences', 'Leads to', 'Measures', 'Target', 'Unit', 'Starting point', 'How measured', 'Notes', 'Assumptions', 'Risks'];
   function exportCsv() {
     const names = (k, ids) => arr(ids).map(id => find(k, id)).filter(Boolean).map(x => label(k, x)).join('; ');
     const rows = [...L('audiences').map(a => ['Audience', label('audiences', a), '', '', '', '', '', '', '', '', a.notes]),
-      ...L('activities').map(a => ['Activity', label('activities', a), '', names('audiences', a.audienceIds), names('outcomes', a.outcomeIds), '', '', '', '', '', a.notes]),
-      ...L('outcomes').map(o => ['Outcome', label('outcomes', o), TERM[o.term || 'short'], names('audiences', o.audienceIds), '', '', '', '', '', '', o.notes]),
+      ...L('activities').map(a => ['Activity', label('activities', a), '', names('audiences', a.audienceIds), names('outcomes', a.outcomeIds), '', '', '', '', '', a.notes, a.assumptions, a.risks]),
+      ...L('outcomes').map(o => ['Outcome', label('outcomes', o), TERM[o.term || 'short'], names('audiences', o.audienceIds), names('outcomes', o.outcomeIds), '', '', '', '', '', o.notes, o.assumptions, o.risks]),
       ...L('indicators').map(i => ['Indicator', label('indicators', i), '', '', '', names('outcomes', [i.outcomeId]), i.target == null ? '' : i.target, i.unit, i.baseline == null ? '' : i.baseline, i.source, i.notes])];
     exportRows(CSV_HEAD, rows, 'theory-of-change', 'row');
   }
   function renderReport() {
     const col = (title, items) => `<div class="r-col"><h3>${esc(title)}</h3>${items.map(t => `<div class="r-box">${t}</div>`).join('')}</div>`;
     const inds = o => L('indicators').filter(i => i.outcomeId === o.id).map(i => `<span class="r-sub">&#9656; ${esc(label('indicators', i))}${i.target != null ? `: ${esc(i.target)} ${esc(i.unit || '')}` : ''}</span>`).join('');
+    const more = x => [arr(x.outcomeIds).map(id => find('outcomes', id)).filter(Boolean).length && `<span class="r-sub">&#8594; ${esc(arr(x.outcomeIds).map(id => find('outcomes', id)).filter(Boolean).map(o => short(label('outcomes', o))).join('; '))}</span>`, x.assumptions && `<span class="r-sub">Assumes: ${esc(x.assumptions)}</span>`, x.risks && `<span class="r-sub">Risk: ${esc(x.risks)}</span>`].filter(Boolean).join('');
     $('report').innerHTML = `<h1>Theory of change</h1><p class="r-meta">${esc([doc.project.title, `Printed ${fmtDate(today())}`].filter(Boolean).join(' · '))}</p>
-      <div class="r-map">${col('Audiences', L('audiences').map(a => esc(label('audiences', a))))}${col('Activities', L('activities').map(a => esc(label('activities', a))))}
-      ${['short', 'medium', 'long'].map(t => col(`${TERM[t]} outcomes`, L('outcomes').filter(o => (o.term || 'short') === t).map(o => esc(label('outcomes', o)) + inds(o)))).join('')}
+      <div class="r-map">${col('Audiences', L('audiences').map(a => esc(label('audiences', a))))}${col('Activities', L('activities').map(a => esc(label('activities', a)) + more(a)))}
+      ${['short', 'medium', 'long'].map(t => col(`${TERM[t]} outcomes`, L('outcomes').filter(o => (o.term || 'short') === t).map(o => esc(label('outcomes', o)) + more(o) + inds(o)))).join('')}
       ${col('Goal', [esc(str(doc.theoryOfChange && doc.theoryOfChange.goal) || 'Not written yet')])}</div>`;
   }
 
@@ -777,7 +833,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('indBtn').onclick = () => openEditor('indicators', null);
     $('csvBtn').onclick = exportCsv;
     $('goal').addEventListener('change', setGoal);
-    $('map').addEventListener('click', ev => { const a = ev.target.closest('[data-add]'); if (a) return openEditor(a.dataset.add, null, a.dataset.term); const b = ev.target.closest('[data-edit]'); if (b) openEditor(b.dataset.kind, b.dataset.edit); });
+    $('map').addEventListener('click', ev => { const a = ev.target.closest('[data-add]'); if (a) return openEditor(a.dataset.add, null, a.dataset.term); const b = ev.target.closest('[data-edit]'); if (!b) return; if (drawing) pickForArrow(b.dataset.kind, b.dataset.edit); else openEditor(b.dataset.kind, b.dataset.edit); });
+    $('drawBtn').onclick = () => { drawing = !drawing; drawFrom = null; render(); };
+    document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && drawing && !document.querySelector('dialog[open]')) { drawing = false; drawFrom = null; render(); } });
+    window.addEventListener('resize', () => requestAnimationFrame(drawArrows));
     $('deleteBtn').onclick = deleteItem;
     $('editorForm').addEventListener('submit', ev => { ev.preventDefault(); saveEditor(); });
     $('editorForm').addEventListener('input', ev => { if (ev.target.setCustomValidity) ev.target.setCustomValidity(''); });
@@ -805,7 +864,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   // Columns for importing from a spreadsheet, named as in this tool's template.
   const OFT_IMPORT = { noun: 'row', nouns: 'rows', key: 'text',
     fields: [['Kind', 'kind', 'enum', { values: { audiences: 'Audience', activities: 'Activity', outcomes: 'Outcome', indicators: 'Indicator' } }], ['Text', 'text'], ['When', 'term', 'enum', { values: TERM }], ['Audiences', 'audiences', 'list'], ['Leads to', 'leadsTo', 'list'],
-      ['Measures', 'measures'], ['Target', 'target', 'num'], ['Unit', 'unit'], ['Starting point', 'baseline', 'num'], ['How measured', 'source'], ['Notes', 'notes']],
+      ['Measures', 'measures'], ['Target', 'target', 'num'], ['Unit', 'unit'], ['Starting point', 'baseline', 'num'], ['How measured', 'source'], ['Notes', 'notes'], ['Assumptions', 'assumptions'], ['Risks', 'risks']],
     put: (r, x) => {
       const t = doc.theoryOfChange = doc.theoryOfChange && typeof doc.theoryOfChange === 'object' ? doc.theoryOfChange : {};
       for (const k of ['audiences', 'activities', 'outcomes', 'indicators']) t[k] = arr(t[k]);
@@ -815,7 +874,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       const rec = { id: r.id, [field]: r.text };
       if (r.notes) rec.notes = r.notes;
       if (kind === 'activities') { if (r.audiences) rec.audienceIds = r.audiences.map(n => ref('audiences', n)); if (r.leadsTo) rec.outcomeIds = r.leadsTo.map(n => ref('outcomes', n)); }
-      if (kind === 'outcomes') { if (r.term) rec.term = r.term; if (r.audiences) rec.audienceIds = r.audiences.map(n => ref('audiences', n)); }
+      if (kind === 'outcomes') { if (r.term) rec.term = r.term; if (r.audiences) rec.audienceIds = r.audiences.map(n => ref('audiences', n)); if (r.leadsTo) rec.outcomeIds = r.leadsTo.map(n => ref('outcomes', n)); }
+      if (kind === 'activities' || kind === 'outcomes') for (const k of ['assumptions', 'risks']) if (r[k]) rec[k] = r[k];
       if (kind === 'indicators') { if (r.measures) rec.outcomeId = ref('outcomes', r.measures); for (const k of ['target', 'unit', 'baseline', 'source']) if (r[k] != null) rec[k] = r[k]; }
       t[kind].push(rec);
     } };

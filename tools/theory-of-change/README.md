@@ -34,6 +34,8 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 
 - **The goal:** the change the campaign works toward.
 - **Audiences, activities and outcomes,** in columns from who you reach to what changes, with outcomes in the short, medium and long term. Activities point to the outcomes they lead to.
+- **Arrows** from each activity, and each outcome, to the outcomes it leads to. Pick **Draw arrows**, then a box and the outcome it leads to; pick the pair again to take the arrow away. Arrows show when the columns sit side by side; on a phone, each box says what it leads to.
+- **Assumptions and risks** for each activity and outcome: what has to be true for it to lead to the next step, and what could stop it. They show on the box and in the print.
 - **Indicators** for each outcome, with a target, unit, starting point and how you'll measure it. The [impact report](../impact-report/) records results against them.
 - **Gaps:** outcomes with no indicator or no activity leading to them, and audiences no activity reaches.
 - **Prints a one-page diagram** in landscape and **exports CSV.**
@@ -52,14 +54,12 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-A `theoryOfChange` record with `goal`, `audiences` (`name`), `activities` (`text`, `audienceIds`, `outcomeIds`), `outcomes` (`text`, `term` of `short`, `medium` or `long`, `audienceIds`) and `indicators` (`text`, `outcomeId`, `target`, `unit`, `baseline`, `source`). Each can have `notes`.
+A `theoryOfChange` record with `goal`, `audiences` (`name`), `activities` (`text`, `audienceIds`, `outcomeIds`), `outcomes` (`text`, `term` of `short`, `medium` or `long`, `audienceIds`, `outcomeIds` for the later outcomes it leads to) and `indicators` (`text`, `outcomeId`, `target`, `unit`, `baseline`, `source`). Each can have `notes`, and activities and outcomes can have `assumptions` and `risks`.
 
 Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
-- Drawing arrows between boxes
-- Assumptions and risks for each step
 - Versions to compare as the plan changes
 
 ## License

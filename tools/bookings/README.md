@@ -35,6 +35,8 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **Bookings** with the venue or institution, kind (educational, theatrical or community), contact, city, dates and status: inquiry, confirmed, done or cancelled.
 - **License or terms:** one screening, one- or three-year or lifetime educational licenses, a digital site license, a flat fee, a box office split with your share, or no fee.
 - **Invoicing and payment,** with invoices more than 30 days old flagged.
+- **Prints an invoice** for a booking: **Save and print the invoice** numbers it (such as INV-2026-001), dates it today with payment due in 30 days unless you set another date, marks it invoiced, and prints who it's to, what it's for, the amount and how to pay. How to pay is filled in from your last invoice.
+- **Box office reports for split deals.** Enter each night's or week's admissions and gross from the venue, and the taxes and fees taken off first, and it works out your share. **Save and print the box office report** prints the lines, the totals and the split; a split deal's invoice is for your share, with the report attached.
 - **Screening materials:** what each booking needs (DCP, Blu-ray, a file or link, artwork, the discussion guide or the screening kit) and when each was sent. Confirmed bookings in the next 30 days still waiting on something are listed.
 - **Fees** paid, invoiced and not invoiced, and **totals by month, quarter or year.**
 - **Prints** the list and **exports CSV.**
@@ -55,14 +57,13 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-A `bookings` collection: `venue`, `kind`, `contact`, `email`, `city`, `startDate`, `endDate`, `status`, `license`, `fee`, `splitPercent`, `payment` (`unpaid`, `invoiced` or `paid`), `invoicedDate`, `paidDate`, `materialsNeeded`, `materials` (the date each was sent) and `notes`.
+A `bookings` collection: `venue`, `kind`, `contact`, `email`, `city`, `startDate`, `endDate`, `status`, `license`, `fee`, `splitPercent`, `payment` (`unpaid`, `invoiced` or `paid`), `invoicedDate`, `paidDate`, `materialsNeeded`, `materials` (the date each was sent), `notes`, `boxOffice` (each line with `date`, `admissions` and `gross`), `boxOfficeTaxes`, `invoiceNumber`, `invoiceDue` and `invoicePayment`.
 
 A booking can have a `screeningId`, in `screenings`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
-- Invoices to print
-- Box office reports for split deals
+Nothing planned right now. If something you need is missing, [open an issue](https://github.com/open-filmmaker-toolkit/toolkit/issues).
 
 ## License
 

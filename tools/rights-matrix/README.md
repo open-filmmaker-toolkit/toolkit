@@ -35,6 +35,9 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **Distribution deals** with the distributor or buyer, territories (or Worldwide), media, term, advance or fee, exclusivity and notes on holdbacks. Status is negotiating (on hold), signed (sold) or fell through.
 - **The grid:** territories down the side and media across the top: theatrical, educational, free and pay TV, subscription streaming, rental and purchase, free streaming with ads, airline, and DVD and Blu-ray. Pick a date to see rights as of then.
 - **Overlaps:** exclusive deals that cover the same territory and media at the same time are flagged in the grid and listed.
+- **Parts of a territory,** such as Canada: French-speaking, listed under the territory. A deal for the whole territory covers its parts; a deal for a part shows the territory as part sold.
+- **Language rights.** A deal can cover only some languages. The grid shows it as part sold, with the languages, and deals for different languages don't count as overlapping.
+- **Holdbacks and windows.** A deal can keep media off the market in its territories until a date, such as no streaming until the theatrical window ends. Those cells show as held back, and a deal that starts that media before the date is flagged.
 - **Reverting soon:** signed deals that end in the next six months.
 - **Prints the grid** in landscape and **exports CSV**, one row for each territory and media.
 
@@ -54,15 +57,13 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-Distribution deals are `contracts` with `type` "distribution", `status` (`negotiating`, `signed` or `declined`), and `licensee`, `territories`, `mediaRights`, `effectiveDate`, `expirationDate`, `fee`, `exclusive` (false for a non-exclusive deal) and `notes`.
+Distribution deals are `contracts` with `type` "distribution", `status` (`negotiating`, `signed` or `declined`), and `licensee`, `territories`, `mediaRights`, `effectiveDate`, `expirationDate`, `fee`, `exclusive` (false for a non-exclusive deal), `languages` (when the deal covers only some), `holdbacks` (each with `media` and `until`) and `notes`. Part of a territory is written as the territory, a colon and the part, such as "Canada: French-speaking".
 
 Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
-- Holdbacks and windows between media
-- Language rights
-- Sub-territories, such as French-speaking Canada
+Nothing planned right now. If something you need is missing, [open an issue](https://github.com/open-filmmaker-toolkit/toolkit/issues).
 
 ## License
 

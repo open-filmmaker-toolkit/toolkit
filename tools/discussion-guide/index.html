@@ -50,6 +50,11 @@ textarea { display: block; width: 100%; min-height: 112px; padding: 9px 10px; bo
 .partner strong { display: block; }
 .partner small { display: block; color: var(--ink-2); overflow-wrap: anywhere; }
 .empty { color: var(--ink-2); font-size: 14px; }
+.versions { grid-column: 1 / -1; }
+.ver-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.ver-row select, .ver-row input { min-height: 38px; max-width: 100%; padding: 6px 10px; font: inherit; color: var(--ink); background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; }
+.ver-row input { flex: 1 1 220px; min-width: 0; }
+.btn.danger { color: var(--bad); }
 .actions { display: flex; flex-wrap: wrap; gap: 8px; }
 footer { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--rule); color: var(--ink-3); font-size: 13px; }
 .report { display: none; }
@@ -104,6 +109,14 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     </div>
   </header>
   <main class="guide" id="main">
+  <div class="versions card" aria-labelledby="verHead">
+    <h2 id="verHead">Which guide</h2>
+    <div class="ver-row"><label for="verSel" class="sr-only">Guide</label><select id="verSel"></select>
+      <label for="verName" class="sr-only" id="verNameLabel">Who it's for</label><input id="verName" type="text" autocomplete="off" placeholder="Who it's for, such as students">
+      <button type="button" class="btn" id="verAdd">Make a guide for them</button>
+      <button type="button" class="btn danger" id="verDelete" hidden>Remove this guide</button></div>
+    <p class="hint" id="verHint">The main guide. The screening kit uses this one. Make another for a different audience or screening, such as students or a library; it starts as a copy of this one.</p>
+  </div>
   <p class="intro">Shape a conversation for your screening. Synopsis and credits come from the project; themes, questions and resources are yours to adapt. Select outreach partners to include their organization and website.</p>
     <div class="column">
       <section class="card">
@@ -127,6 +140,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <h2>4. Resources and organizations</h2>
         <p>Add audience-facing links or resources here, one per line. Select any relevant organizations from the Partner CRM below.</p>
         <div class="field"><label for="resourceNotes">Resources and links</label><textarea id="resourceNotes" placeholder="Local organizations, websites, books, or next steps"></textarea></div>
+        <p class="actions"><button type="button" class="btn" id="resImportBtn">Add resources from a file</button></p>
+        <p class="hint">A text or CSV list, a page of links, or bookmarks your browser exported. Each link or line is added once.</p>
+        <input type="file" id="resInput" accept=".txt,.csv,.md,.html,.htm,.json,text/plain,text/csv,text/html,application/json" hidden>
         <div class="partners"><span class="group-label">Partner organizations</span><div id="partnerList" class="empty">Open a project with partners to choose organizations.</div></div>
       </section>
       <section class="card">
@@ -181,11 +197,16 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   let doc = blankDoc(), fileHandle = null, baselineText = null, fileName = null, dirty = false, toastTimer;
   function blankDoc() { return { format: FORMAT, formatVersion: VERSION, project: { title: '', company: '', producer: '', frameRate: 24, currency: 'USD' }, thirdPartyElements: [] }; }
   // The guide as shown: what's saved, with the treatment's synopsis to start from. Nothing is written to the file until you edit it.
+  // Guides for other audiences are kept in discussionGuide.versions; the main guide is discussionGuide itself.
+  let ver = '';
+  const main = () => (doc.discussionGuide && typeof doc.discussionGuide === 'object' && !Array.isArray(doc.discussionGuide) ? doc.discussionGuide : {});
+  const versions = () => arr(main().versions).filter(v => v && typeof v === 'object' && v.id);
+  const current = () => (ver && versions().find(v => v.id === ver)) || main();
   function guide() {
-    const saved = doc.discussionGuide && typeof doc.discussionGuide === 'object' && !Array.isArray(doc.discussionGuide) ? doc.discussionGuide : {};
+    const saved = current();
     const g = {};
     for (const k of ['synopsis', 'themes', 'questions', 'resourceNotes']) g[k] = typeof saved[k] === 'string' ? saved[k] : '';
-    if (!g.synopsis) g.synopsis = seedSynopsis();
+    if (!g.synopsis && !ver) g.synopsis = seedSynopsis();
     g.partnerIds = Array.isArray(saved.partnerIds) ? saved.partnerIds : [];
     return g;
   }
@@ -241,6 +262,12 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('fileState').innerHTML = `${esc(fileName || 'Not saved to a file yet')}${dirty ? ' · <span class="dirty">Unsaved changes</span>' : ''}`;
     document.title = `${doc.project.title ? `${doc.project.title} · ` : ''}Discussion guide · Open Filmmaker Toolkit`;
     for (const k of ['synopsis', 'themes', 'questions', 'resourceNotes']) $(k).value = g[k];
+    if (ver && !versions().some(v => v.id === ver)) ver = '';
+    $('verSel').innerHTML = `<option value="">Main guide</option>${versions().map(v => `<option value="${esc(v.id)}"${v.id === ver ? ' selected' : ''}>${esc(v.audience || 'Another audience')}</option>`).join('')}`;
+    $('verDelete').hidden = !ver; $('verAdd').hidden = !!ver;
+    $('verNameLabel').textContent = ver ? 'Who this guide is for' : "Who it's for";
+    if (document.activeElement !== $('verName')) $('verName').value = ver ? str(current().audience) : '';
+    $('verHint').textContent = ver ? `The guide for ${current().audience || 'another audience'}. Changes here don't touch the main guide.` : 'The main guide. The screening kit uses this one. Make another for a different audience or screening, such as students or a library; it starts as a copy of this one.';
     const partners = arr(doc.partners).filter(p => p && typeof p === 'object' && p.id && p.name);
     $('partnerList').className = partners.length ? '' : 'empty';
     $('partnerList').innerHTML = partners.length ? partners.map(p => `<label class="partner"><input type="checkbox" data-partner="${esc(p.id)}"${g.partnerIds.includes(p.id) ? ' checked' : ''}><span><strong>${esc(p.name)}</strong>${p.website ? `<small>${esc(p.website)}</small>` : ''}${p.notes ? `<small>${esc(p.notes)}</small>` : ''}</span></label>`).join('') : 'Open a project with partners to choose organizations.';
@@ -250,7 +277,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   }
   function sync() {
     if (!doc.discussionGuide || typeof doc.discussionGuide !== 'object' || Array.isArray(doc.discussionGuide)) doc.discussionGuide = {};
-    const g = doc.discussionGuide;
+    const g = current() === main() ? doc.discussionGuide : current();
     for (const k of ['synopsis', 'themes', 'questions', 'resourceNotes']) g[k] = $(k).value;
     g.partnerIds = [...document.querySelectorAll('[data-partner]:checked')].map(e => e.dataset.partner);
     dirty = true; renderHeader();
@@ -353,13 +380,67 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     download('\ufeff' + [headers, ...csvRows].map(row => row.map(csvCell).join(',')).join('\r\n') + '\r\n', `${slug()}-${key}.csv`, 'text/csv;charset=utf-8');
     $('projectCsvDialog').close(); notify(`Exported ${rows.length} ${key}.`);
   }
+  function addVersion() {
+    const name = $('verName').value.trim();
+    if (!name) { $('verName').setCustomValidity('Say who the guide is for.'); $('verName').reportValidity(); return; }
+    if (!doc.discussionGuide || typeof doc.discussionGuide !== 'object' || Array.isArray(doc.discussionGuide)) doc.discussionGuide = {};
+    const g = guide(), v = { id: `guide-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, audience: name, synopsis: g.synopsis, themes: g.themes, questions: g.questions, resourceNotes: g.resourceNotes, partnerIds: [...g.partnerIds] };
+    doc.discussionGuide.versions = [...versions(), v];
+    ver = v.id; dirty = true; render(); notify(`Made a guide for ${name}, starting from the one you had open.`);
+  }
+  function renameVersion() {
+    const v = current(), name = $('verName').value.trim(); if (!ver || !name || name === v.audience) return;
+    v.audience = name; dirty = true; render();
+  }
+  function removeVersion() {
+    const v = current(); if (!ver || !confirm(`Remove the guide for ${v.audience || 'this audience'}? The main guide stays.`)) return;
+    doc.discussionGuide.versions = versions().filter(x => x !== v);
+    if (!doc.discussionGuide.versions.length) delete doc.discussionGuide.versions;
+    ver = ''; dirty = true; render(); notify('Removed that guide.');
+  }
+  // Resources from a file: links from a web page or exported bookmarks, rows of a CSV, lines of text, or a shared list.
+  function resourcesFrom(text, name) {
+    const out = [];
+    if (/\.html?$/i.test(name) || /^\s*(<!doctype|<html|<dl)/i.test(text)) {
+      const d = new DOMParser().parseFromString(text, 'text/html');
+      for (const a of d.querySelectorAll('a[href]')) { const href = a.getAttribute('href'); if (!/^https?:\/\//i.test(href)) continue; const t = a.textContent.replace(/\s+/g, ' ').trim(); out.push(t && t !== href ? `${t} — ${href}` : href); }
+      return out;
+    }
+    if (/\.json$/i.test(name)) {
+      let data; try { data = JSON.parse(text); } catch { throw new Error("isn't a list the tool can read"); }
+      for (const it of arr(data && data.items)) { const t = typeof it === 'string' ? it : [it && (it.title || it.name || it.text), it && it.url].filter(Boolean).join(' — '); if (str(t).trim()) out.push(str(t).trim()); }
+      return out;
+    }
+    const rows = text.replace(/^\ufeff/, '').split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    if (/\.csv$/i.test(name)) {
+      const cells = l => { const o = []; let cur = '', q = false; for (let i = 0; i < l.length; i++) { const c = l[i]; if (q) { if (c === '"' && l[i + 1] === '"') { cur += '"'; i++; } else if (c === '"') q = false; else cur += c; } else if (c === '"') q = true; else if (c === ',') { o.push(cur); cur = ''; } else cur += c; } o.push(cur); return o.map(x => x.trim()); };
+      const head = cells(rows[0] || '').map(h => h.toLowerCase());
+      const hasHead = head.some(h => /^(name|title|organization|resource|url|link|website)$/.test(h));
+      const ni = head.findIndex(h => /^(name|title|organization|resource)$/.test(h)), ui = head.findIndex(h => /^(url|link|website)$/.test(h));
+      for (const r of rows.slice(hasHead ? 1 : 0)) { const c = cells(r); const nm = hasHead && ni >= 0 ? c[ni] : c[0], url = hasHead && ui >= 0 ? c[ui] : c.find(x => /^https?:\/\//i.test(x)); const t = [nm, url && url !== nm ? url : ''].filter(Boolean).join(' — '); if (t) out.push(t); }
+      return out;
+    }
+    return rows.map(l => l.replace(/^\s*(?:[-*•]|\d+[.)])\s+/, '').replace(/^\[([^\]]+)\]\((https?:[^)]+)\)$/, '$1 — $2')).filter(Boolean);
+  }
+  async function importResources(f) {
+    let found;
+    try { found = resourcesFrom(await f.text(), f.name); } catch (err) { notify(`${f.name} ${err.message || err}.`, true); return; }
+    const have = $('resourceNotes').value.split(/\r?\n/).map(l => l.trim()).filter(Boolean), seen = new Set(have.map(norm));
+    const urlOf = l => (l.match(/https?:\/\/\S+/) || [''])[0].replace(/[).,]+$/, '').toLowerCase();
+    const urls = new Set(have.map(urlOf).filter(Boolean));
+    const fresh = found.filter(l => { const u = urlOf(l); if (seen.has(norm(l)) || (u && urls.has(u))) return false; seen.add(norm(l)); if (u) urls.add(u); return true; });
+    if (!fresh.length) { notify(found.length ? `Everything in ${f.name} is already in the guide.` : `Couldn't find any resources in ${f.name}.`, !found.length); return; }
+    $('resourceNotes').value = [...have, ...fresh].join('\n');
+    sync();
+    notify(`Added ${fresh.length} resource${fresh.length === 1 ? '' : 's'} from ${f.name}${found.length > fresh.length ? `; ${found.length - fresh.length} were already there` : ''}.`);
+  }
   function renderReport() {
     const g = guide(), lines = (key) => g[key].split(/\r?\n/).map(s => s.trim()).filter(Boolean);
     const partners = arr(doc.partners).filter(p => p && g.partnerIds.includes(p.id));
     const credits = creditsLines();
     const resourceLines = lines('resourceNotes');
     $('report').innerHTML = `<h1>${esc(doc.project.title || 'Discussion guide')}</h1>
-      <p class="byline">Screening discussion guide${doc.project.company ? ` · ${esc(doc.project.company)}` : ''}</p>
+      <p class="byline">Screening discussion guide${ver && current().audience ? ` for ${esc(current().audience)}` : ''}${doc.project.company ? ` · ${esc(doc.project.company)}` : ''}</p>
       ${g.synopsis.trim() ? `<h2>1. About the film</h2><p>${esc(g.synopsis.trim())}</p>` : ''}
       ${lines('themes').length ? `<h2>2. Themes to explore</h2><ul>${lines('themes').map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
       ${lines('questions').length ? `<h2>3. Discussion questions</h2><ol>${lines('questions').map(x => `<li>${esc(x)}</li>`).join('')}</ol>` : ''}
@@ -938,6 +1019,14 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   /* oft-shared:tool end */
   for (const id of ['synopsis', 'themes', 'questions', 'resourceNotes']) $(id).addEventListener('input', sync);
   $('partnerList').addEventListener('change', sync);
+  $('verSel').addEventListener('change', () => { ver = $('verSel').value; render(); });
+  $('verAdd').onclick = addVersion;
+  $('verName').addEventListener('change', renameVersion);
+  $('verName').addEventListener('input', () => $('verName').setCustomValidity(''));
+  $('verName').addEventListener('keydown', e => { if (e.key === 'Enter' && !ver) { e.preventDefault(); addVersion(); } });
+  $('verDelete').onclick = removeVersion;
+  $('resImportBtn').onclick = () => $('resInput').click();
+  $('resInput').addEventListener('change', async e => { const f = e.target.files[0]; e.target.value = ''; if (f) await importResources(f); });
   $('openBtn').addEventListener('click', openFile);
   $('saveBtn').addEventListener('click', saveFile);
   $('newBtn').addEventListener('click', newProject);
