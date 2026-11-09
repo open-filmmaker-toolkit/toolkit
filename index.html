@@ -877,7 +877,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         const r = indexedDB.open('open-filmmaker-toolkit', 1);
         r.onupgradeneeded = () => r.result.createObjectStore('handles');
         r.onerror = () => res(null);
-        r.onsuccess = () => { const db = r.result; try { const tx = db.transaction('handles', op === 'get' ? 'readonly' : 'readwrite'); const s = tx.objectStore('handles'); const q = op === 'get' ? s.get(key) : op === 'del' ? s.delete(key) : s.put(val, key); tx.oncomplete = () => { db.close(); res(op === 'get' ? q.result || null : true); }; tx.onerror = tx.onabort = () => { db.close(); res(null); }; } catch { db.close(); res(null); } };
+        r.onsuccess = () => { const db = r.result; try { const tx = db.transaction('handles', op === 'get' ? 'readonly' : 'readwrite'); const s = tx.objectStore('handles'); const q = op === 'get' ? s.get(key) : op === 'del' ? s.delete(key) : s.put(val, key); tx.oncomplete = () => { db.close(); const v = q.result; res(op === 'get' ? (v && v.handle && v.handle.oftPath && window.oftDesktopHandle ? { ...v, handle: window.oftDesktopHandle(v.handle.oftPath) } : v) || null : true); }; tx.onerror = tx.onabort = () => { db.close(); res(null); }; } catch { db.close(); res(null); } };
       } catch { res(null); }
     });
   }

@@ -10,6 +10,8 @@ const oftStore = { get(k) { try { return localStorage.getItem(k); } catch { retu
 const oftMe = () => (oftStore.get('oft-user-name') || '').trim();
 const oftEsc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const oftEl = id => document.getElementById(id);
+// In the desktop app (desktop/bridge.js), a remembered file comes back from storage as plain data; this makes it a file handle again.
+const oftRevive = v => (v && v.handle && v.handle.oftPath && window.oftDesktopHandle ? { ...v, handle: window.oftDesktopHandle(v.handle.oftPath) } : v);
 function oftIdb(op, key, val) {
   return new Promise(res => {
     try {
@@ -22,7 +24,7 @@ function oftIdb(op, key, val) {
           const tx = db.transaction('handles', op === 'get' ? 'readonly' : 'readwrite');
           const s = tx.objectStore('handles');
           const q = op === 'get' ? s.get(key) : op === 'del' ? s.delete(key) : s.put(val, key);
-          tx.oncomplete = () => { db.close(); res(op === 'get' ? q.result || null : true); };
+          tx.oncomplete = () => { db.close(); res(op === 'get' ? oftRevive(q.result) || null : true); };
           tx.onerror = tx.onabort = () => { db.close(); res(null); };
         } catch { db.close(); res(null); }
       };
