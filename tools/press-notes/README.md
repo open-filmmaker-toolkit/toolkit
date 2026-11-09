@@ -36,7 +36,10 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **From the project:** the logline and synopses start from the [treatment](../treatment-builder/), credits come from the [credits builder](../credits-builder/), and festivals marked accepted in the [festival submission tracker](../festival-submissions/) are listed with their screenings.
 - **Bios are saved with each person,** so other tools can use them. Pick who to include, in order.
 - **Stills** from the [stills library](../stills-library/), or added from your computer, resized and kept in the project file, with a caption and photo credit. The first is used on the title page. Taking a still out of the press notes leaves it in the stills library.
+- **Press quotes** with who said them and where. Coverage logged in the [press list](../press-list/) is offered to quote from, with the outlet and writer filled in.
+- **A Q&A with the director:** questions and answers for journalists to quote from.
 - **Press contacts** with role, company, email and phone.
+- **Downloads an EPK folder** as one zip file: the press notes as a web page and as text, the stills, and a caption sheet. Choose the folder with your full-size stills and they go in at full size, matched by the full-resolution path in the stills library or by file name; any it can't find go in at the smaller size kept in the project, with a note saying which.
 - **Prints** a title page, then each section, with the stills two to a page. Also exports project data as separate CSV files.
 
 ## Saving and file conflicts
@@ -49,14 +52,13 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-A `pressNotes` record: `logline`, `shortSynopsis`, `longSynopsis`, `directorStatement`, `aboutProduction`, `bioIds` (people, in order), `stillIds` (assets, in order), `specs` (year, country, language, subtitles, format, aspect ratio and sound), `contacts` and `hidden` (sections left out).
+A `pressNotes` record: `logline`, `shortSynopsis`, `longSynopsis`, `directorStatement`, `aboutProduction`, `bioIds` (people, in order), `stillIds` (assets, in order), `specs` (year, country, language, subtitles, format, aspect ratio and sound), `contacts`, `qa` (each with `id`, `question` and `answer`), `quotes` (each with `id`, `text`, `author`, `outlet` and, when it came from the press list, `coverageId`) and `hidden` (sections left out).
 
 Bios are saved as `bio` on `people`. Stills are `assets` with `type` "still", the image in `data`, and `caption` and `photoCredit`. It reads `treatment`, `credits` and `festivals`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
-- A downloadable EPK folder with the stills at full size
-- Q&A and press quotes sections
+Nothing planned right now. If something you need is missing, [open an issue](https://github.com/open-filmmaker-toolkit/toolkit/issues).
 
 ## License
 

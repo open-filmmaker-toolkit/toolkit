@@ -258,13 +258,17 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <span class="spacer"></span>
         <button type="button" class="btn primary" id="addBtn">Add an item</button>
         <button type="button" class="btn" id="csvBtn">Export CSV</button>
+        <button type="button" class="btn" id="listSaveBtn">Save your items as a list</button>
+        <button type="button" class="btn" id="listOpenBtn">Add items from a list</button>
       </div>
+      <section id="oftReminders" aria-labelledby="oftRemHead" hidden></section>
       <div class="bar">
         <div class="views" role="group" aria-label="How sensitive is this shoot">
           <button type="button" id="stdBtn" aria-pressed="true">Standard</button>
           <button type="button" id="highBtn" aria-pressed="false">High-risk shoot</button>
         </div>
         <div class="field"><label for="whoSel">Checking off for</label><select id="whoSel"></select></div>
+        <div class="field" id="placeField" hidden><label for="placeSel">Country or border</label><select id="placeSel"></select></div>
       </div>
       <p class="empty-line" id="noCrew" hidden>Add the people on this shoot to tick items off for each of them. <button type="button" class="btn small" id="crewBtn2">Pick the crew</button></p>
       <div id="sections"></div>
@@ -302,6 +306,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       <div class="field"><label for="f-text">What to do</label><textarea id="f-text" rows="3" required placeholder="Agree a code word for when someone can't talk freely"></textarea></div>
       <div id="oftLinks"></div>
       <div class="field"><label for="f-section">Section</label><select id="f-section"></select></div>
+      <div class="field"><label for="f-place">Only for a country or border</label><input id="f-place" type="text" list="placeList" autocomplete="off" placeholder="Leave empty for every shoot"><datalist id="placeList"></datalist><p class="hint">Such as a country you're filming in, or a border crossing with its own rules.</p></div>
       <label class="check"><input type="checkbox" id="f-high"> Only for a high-risk shoot</label>
     </div>
     <div class="dlg-foot">
@@ -479,7 +484,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   ];
   const BUILT = SECTIONS.flatMap(s => s.items.map(([id, text, high]) => ({ id, text, high: !!high, section: s.id, builtIn: true })));
   let editing = null, isNew = false;
-  let who = '';
+  let who = '', view = '';
 
   // Fills in only what this tool needs; everything else in the file is left as it was.
   function normalize(d) {
@@ -504,7 +509,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const high = () => S().level === 'high';
   // Items on the checklist now: built-in ones not hidden, plus your own, without the high-risk ones on a standard shoot.
   const allItems = () => [...BUILT.filter(i => !S().hidden.includes(i.id)), ...S().items];
-  const shown = () => allItems().filter(i => high() || !i.high);
+  const shown = () => allItems().filter(i => (high() || !i.high) && (!view || !i.place || i.place === view));
+  // Countries and borders with items of their own.
+  const places = () => [...new Set(S().items.map(i => str(i.place).trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  const placeFor = t => places().find(p => [t.destination, t.name].some(x => norm(x) && (norm(x).includes(norm(p)) || norm(p).includes(norm(x))))) || '';
   const doneBy = id => arr(S().done[id]).filter(pid => S().personIds.includes(pid));
   const isDone = (id, pid) => arr(S().done[id]).includes(pid);
   function setDone(id, pid, on) {
@@ -521,6 +529,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('fileState').innerHTML = (fileName ? esc(fileName) : 'Not saved to a file yet') + (dirty ? ' · <span class="dirty">Unsaved changes</span>' : '');
     document.title = `${doc.project.title ? doc.project.title + ' · ' : ''}Security checklist · Open Filmmaker Toolkit`;
 
+    if (view && !places().includes(view)) view = '';
+    $('placeField').hidden = !places().length;
+    $('placeSel').innerHTML = `<option value="">Every country and border</option>` + places().map(p => `<option value="${esc(p)}"${p === view ? ' selected' : ''}>${esc(p)}</option>`).join('');
+    oftReminders.render();
     const c = crew(), items = shown();
     if (!c.some(p => p.id === who)) who = (c[0] || {}).id || '';
     $('count').textContent = `${items.length} items${c.length ? ` · ${c.length} ${c.length === 1 ? 'person' : 'people'}` : ''}`;
@@ -536,7 +548,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <ul class="cl-list">${its.map(i => {
           const n = doneBy(i.id).length, mine = who && isDone(i.id, who);
           return `<li class="${mine ? 'done' : ''}"><input type="checkbox" id="chk-${esc(i.id)}" data-check="${esc(i.id)}"${mine ? ' checked' : ''}${who ? '' : ' disabled'}>
-            <label for="chk-${esc(i.id)}">${esc(i.text)}${i.high ? '<span class="tag">High-risk</span>' : ''}${oftLinks.labels(i).map(l => `<span class="sub">${esc(l)}</span>`).join('')}</label>
+            <label for="chk-${esc(i.id)}">${esc(i.text)}${i.high ? '<span class="tag">High-risk</span>' : ''}${i.place ? `<span class="tag">${esc(i.place)}</span>` : ''}${oftLinks.labels(i).map(l => `<span class="sub">${esc(l)}</span>`).join('')}</label>
             <span class="meta">${c.length ? `${n} of ${c.length}` : ''} ${i.builtIn ? `<button type="button" data-hide="${esc(i.id)}">Not for us</button>` : `<button type="button" data-edit="${esc(i.id)}">Edit</button>`}</span></li>`;
         }).join('')}</ul></section>`;
     }).join('');
@@ -557,6 +569,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     editing = existing ? structuredClone(existing) : { id: newId('check'), section: 'devices' };
     $('f-section').innerHTML = SECTIONS.map(s => `<option value="${s.id}">${esc(s.label)}</option>`).join('');
     $('f-text').value = str(editing.text); $('f-section').value = editing.section; $('f-high').checked = !!editing.high;
+    $('f-place').value = str(editing.place || (isNew ? view : ''));
+    $('placeList').innerHTML = [...new Set([...places(), ...arr(doc.trips).map(t => str(t && t.destination).trim()).filter(Boolean)])].map(p => `<option value="${esc(p)}"></option>`).join('');
     $('editorTitle').textContent = isNew ? 'Add an item' : 'Edit item';
     $('deleteBtn').hidden = isNew;
     oftLinks.fill(editing);
@@ -569,6 +583,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const e = editing;
     e.text = t; e.section = $('f-section').value;
     if ($('f-high').checked) e.high = true; else delete e.high;
+    if ($('f-place').value.trim()) e.place = $('f-place').value.trim(); else delete e.place;
     oftLinks.save(e);
     if (isNew) S().items.push(e); else S().items[S().items.findIndex(i => i.id === e.id)] = e;
     $('editor').close();
@@ -602,11 +617,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   }
 
   // ---------- CSV and print ----------
-  const CSV_HEAD = ['Section', 'Item', 'For high-risk shoots', 'Person', 'Done'];
+  const CSV_HEAD = ['Section', 'Item', 'For high-risk shoots', 'Country or border', 'Person', 'Done'];
   function exportCsv() {
     const sec = id => SECTIONS.find(s => s.id === id).label;
     const c = crew();
-    const rows = shown().flatMap(i => (c.length ? c : [null]).map(p => [sec(i.section), i.text, i.high ? 'Yes' : '', p ? p.name : '', p ? (isDone(i.id, p.id) ? 'Yes' : 'No') : '']));
+    const rows = shown().flatMap(i => (c.length ? c : [null]).map(p => [sec(i.section), i.text, i.high ? 'Yes' : '', i.place || '', p ? p.name : '', p ? (isDone(i.id, p.id) ? 'Yes' : 'No') : '']));
     const csv = '﻿' + [CSV_HEAD, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
     const name = `${slug()}-security-checklist.csv`;
     download(csv, name, 'text/csv;charset=utf-8');
@@ -615,10 +630,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   function renderReport() {
     const c = crew(), items = shown();
     $('report').innerHTML = `<h1>Security checklist</h1>
-      <p class="r-meta">${esc([doc.project.title, high() ? 'High-risk shoot' : 'Standard shoot', `Printed ${fmtDate(today())}`].filter(Boolean).join(' · '))}</p>
+      <p class="r-meta">${esc([doc.project.title, high() ? 'High-risk shoot' : 'Standard shoot', view && `With the items for ${view}`, `Printed ${fmtDate(today())}`].filter(Boolean).join(' · '))}</p>
       ${SECTIONS.filter(s => items.some(i => i.section === s.id)).map(s => `<h2>${esc(s.label)}</h2>${high() ? `<p class="r-high"><b>High-risk shoot:</b> ${esc(s.high)}</p>` : ''}
         <table><thead><tr><th>Item</th>${c.map(p => `<th class="r-tick">${esc(p.name)}</th>`).join('') || '<th class="r-tick">Done</th>'}</tr></thead><tbody>
-        ${items.filter(i => i.section === s.id).map(i => `<tr><td>${esc(i.text)}${i.high ? ' (high-risk)' : ''}</td>${c.map(p => `<td class="r-tick">${isDone(i.id, p.id) ? '✓' : '☐'}</td>`).join('') || '<td class="r-tick">☐</td>'}</tr>`).join('')}</tbody></table>`).join('')}
+        ${items.filter(i => i.section === s.id).map(i => `<tr><td>${esc(i.text)}${i.high ? ' (high-risk)' : ''}${i.place ? ` (${esc(i.place)})` : ''}</td>${c.map(p => `<td class="r-tick">${isDone(i.id, p.id) ? '✓' : '☐'}</td>`).join('') || '<td class="r-tick">☐</td>'}</tr>`).join('')}</tbody></table>`).join('')}
       ${S().notes ? `<h2>Our plan for this production</h2><p class="r-notes">${esc(S().notes)}</p>` : ''}`;
   }
 
@@ -846,6 +861,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('projectForm').addEventListener('submit', ev => { ev.preventDefault(); saveProjectDialog(); });
     $('projectCancel').onclick = () => $('projectDialog').close();
     $('addBtn').onclick = () => openEditor(null);
+    $('listSaveBtn').onclick = () => oftLists.save();
+    $('listOpenBtn').onclick = () => oftLists.open();
+    $('placeSel').onchange = () => { view = $('placeSel').value; render(); };
     $('csvBtn').onclick = exportCsv;
     $('stdBtn').onclick = () => { if (high()) { S().level = 'standard'; changed(); } };
     $('highBtn').onclick = () => { if (!high()) { S().level = 'high'; changed(); } };
@@ -950,6 +968,161 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     return { fill, save, labels, SOURCES };
   })();
   /* oft-shared:links end */
+    // Reminders to go through the list again before each trip in the travel sheet.
+  function tripRec(id) {
+    if (!Array.isArray(S().tripChecks)) S().tripChecks = [];
+    let r = S().tripChecks.find(x => x && x.id === id);
+    if (!r) { r = { id }; S().tripChecks.push(r); }
+    return r;
+  }
+  const soonTrips = () => arr(doc.trips).filter(t => t && t.id && /^\d{4}-\d{2}-\d{2}$/.test(str(t.startDate))).filter(t => { const n = daysUntil(t.startDate); return n != null && n >= 0 && n <= 14; });
+  const OFT_REMINDERS = {
+    records: () => soonTrips().map(t => tripRec(t.id)),
+    open: () => { const b = $('sections').querySelector('input[data-check]:not(:checked)') || $('sections').querySelector('input'); if (b) b.focus(); },
+    what: 'A reminder shows two weeks before each trip in the travel sheet. Dismiss it once you have gone through the list again; it comes back if the trip moves.',
+    items: () => soonTrips().map(t => {
+      const n = daysUntil(t.startDate), items = shown(), c = crew();
+      const left = c.reduce((sum, p) => sum + items.filter(i => !isDone(i.id, p.id)).length, 0);
+      const pl = placeFor(t);
+      return { id: t.id, key: `trip:${t.startDate}`, when: t.startDate,
+        text: `${t.name || 'A trip'} starts ${n === 0 ? 'today' : n === 1 ? 'tomorrow' : `in ${n} days`}, on ${fmtDate(t.startDate)}. Go through the checklist again before you leave${pl ? `, with the items for ${pl}` : ''}${c.length && left ? `: ${left} tick${left === 1 ? '' : 's'} still to do across the crew` : ''}.` };
+    })
+  };
+  // Lists of items for a country or border, to share with other productions.
+  const OFT_LIST = {
+    kind: 'security-checklist', title: 'Security checklist items', noun: 'item', nouns: 'items',
+    items: () => S().items.filter(i => i.text).map(i => Object.assign({ text: i.text, section: i.section }, i.high ? { high: true } : {}, i.place ? { place: i.place } : {})),
+    label: i => str(i.text),
+    detail: i => [i.place ? `For ${i.place}` : 'Every shoot', (SECTIONS.find(s => s.id === i.section) || {}).label, i.high ? 'High-risk' : ''].filter(Boolean).join(' · '),
+    has: i => allItems().some(x => norm(x.text) === norm(i.text) && str(x.place) === str(i.place)),
+    add: items => { for (const i of items) { const e = { id: newId('check'), text: str(i.text), section: SECTIONS.some(s => s.id === i.section) ? i.section : 'physical' }; if (i.high) e.high = true; if (str(i.place).trim()) e.place = str(i.place).trim(); S().items.push(e); } changed(); return items.length; }
+  };
+  /* oft-shared:reminders begin. Copied from shared/reminders.js by .github/scripts/sync_shared.py; edit it there. */
+  // Reminders shown when you open a tool: what's coming up or overdue. A tool lists them in
+  // OFT_REMINDERS = { records: () => [...], items: () => [{ id, key, text, when?, late? }], open: id => ..., what? },
+  // puts <section id="oftReminders" hidden></section> where they should show, and calls
+  // oftReminders.render() whenever it renders. Each reminder has a key that changes when its
+  // date does; dismissing one keeps its key in the record's dismissedReminders, so a reminder
+  // comes back if the date moves.
+  const oftReminders = (() => {
+    const str = v => (v == null ? '' : String(v));
+    const e = s => str(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+    const R = () => (typeof OFT_REMINDERS !== 'undefined' ? OFT_REMINDERS : null);
+    const rec = id => (R() ? R().records().find(r => r && r.id === id) : null);
+    const dismissed = (r, key) => !!r && Array.isArray(r.dismissedReminders) && r.dismissedReminders.includes(key);
+    function due() {
+      if (!R()) return [];
+      return R().items().filter(i => i && i.id && i.key && !dismissed(rec(i.id), i.key))
+        .sort((a, b) => (b.late ? 1 : 0) - (a.late ? 1 : 0) || str(a.when).localeCompare(str(b.when)));
+    }
+    function dismiss(id, key) {
+      const r = rec(id);
+      if (!r) return;
+      // Only the reminders still showing are kept, so the list doesn't grow forever.
+      const live = new Set(R().items().filter(i => i.id === id).map(i => i.key));
+      r.dismissedReminders = [...new Set([...(Array.isArray(r.dismissedReminders) ? r.dismissedReminders : []).filter(k => live.has(k)), key])];
+      changed();
+    }
+    function render() {
+      const box = document.getElementById('oftReminders');
+      if (!box || !R()) return;
+      const list = due();
+      box.hidden = !list.length;
+      if (!list.length) { box.innerHTML = ''; return; }
+      box.innerHTML = `<div class="oft-rem-head"><h2 id="oftRemHead">Reminders</h2><span class="oft-rem-n">${list.length}</span></div>
+        <ul class="oft-rem-list" aria-labelledby="oftRemHead">${list.map(i => `<li class="${i.late ? 'late' : ''}"><span class="oft-rem-text">${e(i.text)}</span>
+          <span class="oft-rem-acts"><button type="button" class="btn small" data-rem-open="${e(i.id)}">Open</button><button type="button" class="btn small" data-rem-dismiss="${e(i.id)}" data-rem-key="${e(i.key)}" aria-label="Dismiss: ${e(i.text)}">Dismiss</button></span></li>`).join('')}</ul>
+        <p class="oft-rem-note">${e(R().what || 'Reminders show here when you open this tool. Dismiss one and it comes back only if its date changes.')}</p>`;
+    }
+    document.addEventListener('click', ev => {
+      const o = ev.target.closest('[data-rem-open]');
+      if (o) { R().open(o.dataset.remOpen); return; }
+      const d = ev.target.closest('[data-rem-dismiss]');
+      if (d) { const box = document.getElementById('oftReminders'); dismiss(d.dataset.remDismiss, d.dataset.remKey); const next = box && box.querySelector('[data-rem-dismiss]'); if (next) next.focus(); }
+    });
+    const css = document.createElement('style');
+    css.textContent = '#oftReminders { margin: 0 0 16px; padding: 12px 14px; border: 1px solid var(--rule); border-left: 4px solid var(--warn, #9a6700); border-radius: 8px; background: var(--sheet); }\n.oft-rem-head { display: flex; align-items: center; gap: 8px; }\n.oft-rem-head h2 { margin: 0; font-size: 16px; }\n.oft-rem-n { font-size: 13px; color: var(--ink-2); }\n.oft-rem-list { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; }\n.oft-rem-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; font-size: 14px; }\n.oft-rem-list li.late .oft-rem-text { font-weight: 600; }\n.oft-rem-text { flex: 1 1 240px; min-width: 0; overflow-wrap: anywhere; }\n.oft-rem-acts { display: flex; gap: 6px; }\n.oft-rem-note { margin: 8px 0 0; font-size: 13px; color: var(--ink-2); }\n@media print { #oftReminders { display: none !important; } }';
+    document.head.append(css);
+    return { render, due, dismiss };
+  })();
+  /* oft-shared:reminders end */
+  /* oft-shared:lists begin. Copied from shared/lists.js by .github/scripts/sync_shared.py; edit it there. */
+  // Lists to share between projects: funders and their usual deadlines, festivals, and the like.
+  // A list is a small JSON file, { format: "oft-list", formatVersion: 1, kind, title, savedAt, items },
+  // that a team keeps in a shared folder or passes around; nothing is fetched from anywhere.
+  // A tool describes its list in OFT_LIST = { kind, title, noun, nouns, items: () => [...],
+  // label: item => '', detail: item => '', has: item => bool, add: items => number }
+  // and calls oftLists.save() and oftLists.open() from its own buttons.
+  const oftLists = (() => {
+    const str = v => (v == null ? '' : String(v));
+    const e = s => str(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+    const L = () => OFT_LIST;
+    const plural = (n, a, b) => `${n} ${n === 1 ? a : b}`;
+    function save() {
+      const items = L().items();
+      if (!items.length) { toast(`There are no ${L().nouns} to put in a list yet.`); return; }
+      const out = { format: 'oft-list', formatVersion: 1, kind: L().kind, title: `${L().title}${doc.project && doc.project.title ? `, from ${doc.project.title}` : ''}`, savedAt: new Date().toISOString(), items };
+      const name = `${slug()}-${L().kind}-list.json`;
+      download(JSON.stringify(out, null, 2) + '\n', name, 'application/json');
+      toast(`Saved ${plural(items.length, L().noun, L().nouns)} to ${name}. Open it from another project to add them there.`);
+    }
+    function dialog() {
+      let dlg = document.getElementById('oftListDialog');
+      if (dlg) return dlg;
+      dlg = document.createElement('dialog');
+      dlg.className = 'oft-dialog'; dlg.id = 'oftListDialog'; dlg.setAttribute('aria-labelledby', 'oftListTitle');
+      dlg.innerHTML = `<h2 id="oftListTitle"></h2><p id="oftListIntro"></p>
+    <p><button type="button" class="btn small" id="oftListAll">Tick all</button> <button type="button" class="btn small" id="oftListNone">Untick all</button></p>
+    <fieldset class="oft-list-items" id="oftListItems"><legend class="oft-vh">Pick what to add</legend></fieldset>
+    <div class="oft-actions"><button type="button" class="btn" id="oftListCancel">Cancel</button><button type="button" class="btn primary" id="oftListAdd">Add</button></div>`;
+      document.body.append(dlg);
+      const css = document.createElement('style');
+      css.textContent = '.oft-list-items { border: 0; margin: 0 0 12px; padding: 0; min-width: 0; display: grid; gap: 6px; max-height: 50vh; overflow-y: auto; }\n.oft-list-items label { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; }\n.oft-list-items input { margin-top: 3px; }\n.oft-list-items small { display: block; color: var(--ink-2); }\n.oft-vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }';
+      document.head.append(css);
+      dlg.querySelector('#oftListCancel').onclick = () => dlg.close();
+      dlg.querySelector('#oftListAll').onclick = () => dlg.querySelectorAll('#oftListItems input:not(:disabled)').forEach(i => { i.checked = true; });
+      dlg.querySelector('#oftListNone').onclick = () => dlg.querySelectorAll('#oftListItems input').forEach(i => { i.checked = false; });
+      return dlg;
+    }
+    function show(list, fileName) {
+      const items = (Array.isArray(list.items) ? list.items : []).filter(x => x && typeof x === 'object');
+      const dlg = dialog(), $ = q => dlg.querySelector(q);
+      $('#oftListTitle').textContent = `Add from ${list.title || fileName}`;
+      const fresh = items.filter(i => !L().has(i)).length;
+      $('#oftListIntro').textContent = `${plural(items.length, L().noun, L().nouns)} in the list${items.length - fresh ? `, ${items.length - fresh} already in this project` : ''}. Pick the ones to add. Check their dates and details: a shared list is only as current as whoever saved it.`;
+      $('#oftListItems').innerHTML = '<legend class="oft-vh">Pick what to add</legend>' + items.map((it, k) => {
+        const have = L().has(it);
+        return `<label><input type="checkbox" value="${k}"${have ? ' disabled' : ' checked'}><span>${e(L().label(it))}<small>${e(have ? 'Already in this project' : L().detail(it))}</small></span></label>`;
+      }).join('');
+      $('#oftListAdd').onclick = () => {
+        const picked = [...dlg.querySelectorAll('#oftListItems input:checked')].map(i => items[+i.value]);
+        if (!picked.length) { dlg.close(); return; }
+        const n = L().add(picked);
+        dlg.close();
+        changed();
+        toast(`Added ${plural(n, L().noun, L().nouns)} from the list.`);
+      };
+      dlg.showModal();
+    }
+    function open() {
+      const input = document.createElement('input');
+      input.type = 'file'; input.accept = '.json,application/json'; input.hidden = true;
+      document.body.append(input);
+      input.onchange = async () => {
+        const f = input.files[0];
+        input.remove();
+        if (!f) return;
+        let list;
+        try { list = JSON.parse(await f.text()); } catch { toast(`${f.name} isn't a list file this tool can read.`); return; }
+        if (!list || list.format !== 'oft-list') { toast(`${f.name} isn't a shared list. Save one with "Save a list" in this tool.`); return; }
+        if (list.kind !== L().kind) { toast(`${f.name} is a list of ${str(list.kind) || 'something else'}, not ${L().nouns}.`); return; }
+        show(list, f.name);
+      };
+      input.click();
+    }
+    return { save, open, show };
+  })();
+  /* oft-shared:lists end */
   /* oft-shared:tool begin. Copied from shared/tool.js by .github/scripts/sync_shared.py; edit it there. */
   // Shared by every tool: your name, remembering the open file, who has it open,
   // who changed what, merging two copies and spotting conflicted copies.

@@ -36,6 +36,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **Status, due date, who's responsible, specs and where the file is** for each. Mark items not needed, rename them, or add your own.
 - **What the project already has:** approved stills, press notes, signed licenses and releases, credits and the latest QC result, with links to the [stills library](../stills-library/), [chain-of-title binder](../chain-of-title/), [music cue sheet](../music-cue-sheet/), [credits builder](../credits-builder/) and [QC tracker](../qc-tracker/).
 - **Delivering to** a distributor and an overall due date, with overdue items and items due in the next two weeks listed.
+- **A distributor's delivery schedule.** **Add a distributor's schedule** takes the list copied from their schedule, one item a line, and adds each as your own item marked with their name, in the section it most likely belongs to. Numbering, bullets and headings are left out, and so is anything already on the list. **Save your items as a list** writes them to a small file for another production, and **Add from a list** reads one back.
 - **Prints a checklist** by section and **exports CSV.**
 
 For anyone who doesn't use the tool, there's a [spreadsheet template](../../templates/deliverables-template.csv) with the same columns as the export.
@@ -53,13 +54,12 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-A `deliverables` record with `deliverTo`, `dueDate` and `items`. Items are kept only for what you've changed or added: each has an `id`, a `key` (a built-in item such as `dcp` or `cue`), and optional `status` (`todo`, `progress`, `delivered`, `accepted` or `na`), `due`, `owner`, `spec`, `path`, `note` and `title`. Your own items add `custom` and `section`.
+A `deliverables` record with `deliverTo`, `dueDate` and `items`. Items are kept only for what you've changed or added: each has an `id`, a `key` (a built-in item such as `dcp` or `cue`), and optional `status` (`todo`, `progress`, `delivered`, `accepted` or `na`), `due`, `owner`, `spec`, `path`, `note` and `title`. Your own items add `custom` and `section`, and `schedule` when they came from a distributor's delivery schedule.
 
 It reads `assets`, `contracts`, `credits`, `musicCueSheet`, `chainOfTitle`, `pressNotes` and `qc`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
-- Delivery schedules from specific distributors
 - More than one delivery at a time
 - Checking files on disk
 

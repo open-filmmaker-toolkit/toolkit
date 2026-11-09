@@ -1,0 +1,12 @@
+{
+  "format": "oft-list",
+  "formatVersion": 1,
+  "kind": "festivals",
+  "title": "Sample festival list (fictional festivals)",
+  "savedAt": "2026-11-01T12:00:00.000Z",
+  "items": [
+    { "name": "Riverbend Documentary Festival", "platform": "Submission platform (fictional)", "usualDeadline": "01-15", "fee": 60, "city": "Riverbend", "country": "United States", "region": "North America", "tier": 2, "premiere": "national" },
+    { "name": "Harbor Lights Nonfiction", "url": "https://example.org/harbor-lights", "platform": "Direct to festival (fictional)", "usualDeadline": "03-01", "fee": 50, "deadlines": [{ "label": "Early", "usual": "01-10", "fee": 30 }, { "label": "Regular", "usual": "03-01", "fee": 50 }, { "label": "Late", "usual": "03-20", "fee": 70 }], "city": "Harborview", "country": "United States", "region": "North America", "tier": 2, "premiere": "regional", "premiereRules": "Earlier online screenings are fine if they were geo-blocked to another country.", "usualStart": "06-04", "usualNotify": "04-30" },
+    { "name": "Saltmarsh Docs", "usualDeadline": "07-31", "fee": 25, "city": "Saltmarsh", "country": "Canada", "region": "North America", "tier": 3, "premiere": "none" }
+  ]
+}

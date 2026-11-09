@@ -161,6 +161,8 @@ dialog form { display: flex; flex-direction: column; height: 100%; max-height: i
 .hint { margin: 0; font-size: 13px; color: var(--ink-3); }
 .field input, .field select, .field textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); }
 .group { display: grid; gap: 8px; padding-top: 10px; border-top: 1px solid var(--rule-soft); }
+fieldset.group { border: 0; border-top: 1px solid var(--rule-soft); margin: 0; padding: 10px 0 0; min-width: 0; }
+fieldset.group legend { padding: 0; font-weight: 600; font-size: 14px; }
 .checks { display: grid; gap: 2px; max-height: 260px; overflow-y: auto; padding: 2px; }
 .check { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; align-items: start; padding: 5px 4px; border-radius: 6px; cursor: pointer; }
 .check:hover { background: var(--hover); }
@@ -258,6 +260,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <button type="button" class="btn" id="postBtn">Add a post</button>
         <button type="button" class="btn" id="icsBtn">Export calendar</button>
         <button type="button" class="btn" id="printBtn">Print</button>
+        <button type="button" class="btn" id="listSaveBtn">Save an award list</button>
+        <button type="button" class="btn" id="listOpenBtn">Add from a list</button>
       </div>
       <div class="tabs" id="filters" role="group" aria-label="Show">
         <button type="button" data-f="all" aria-pressed="true">Everything</button>
@@ -304,6 +308,19 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <div class="field"><label for="a-category">Category</label><input id="a-category" type="text" autocomplete="off" placeholder="Documentary feature"></div>
       </div>
       <div class="field"><label for="a-rules">Eligibility rules</label><textarea id="a-rules" rows="3" placeholder="Must screen in a qualifying run between these dates; no broadcast before"></textarea></div>
+      <fieldset class="group">
+        <legend>Rules the tool can check</legend>
+        <div class="two">
+          <div class="field"><label for="a-minMin">Running time at least, in minutes</label><input id="a-minMin" type="number" min="0" step="1" inputmode="numeric"></div>
+          <div class="field"><label for="a-maxMin">At most, in minutes</label><input id="a-maxMin" type="number" min="0" step="1" inputmode="numeric"></div>
+        </div>
+        <div class="two">
+          <div class="field"><label for="a-runDays">A theatrical run of at least, in days</label><input id="a-runDays" type="number" min="0" step="1" inputmode="numeric"></div>
+          <div class="field"><label for="a-runCities">In one of these cities</label><input id="a-runCities" type="text" autocomplete="off" placeholder="Leave empty for anywhere"></div>
+        </div>
+        <label class="check"><input type="checkbox" id="a-festWin"> Winning at a festival qualifies instead of a run</label>
+        <label class="check"><input type="checkbox" id="a-noTv"> It can't be on TV or streaming before it qualifies</label>
+      </fieldset>
       <div class="two">
         <div class="field"><label for="a-from">Eligible if first shown from</label><input id="a-from" type="date"></div>
         <div class="field"><label for="a-to">to</label><input id="a-to" type="date"></div>
@@ -517,6 +534,35 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const ok = (!isDay(a.windowStart) || f >= a.windowStart) && (!isDay(a.windowEnd) || f <= a.windowEnd);
     return { ok, text: `First shown ${fmtDate(f)}: ${ok ? 'inside' : 'outside'} the eligibility window` };
   }
+  // The rules an award can set that the project can answer: running time, a qualifying run, a festival win, and TV or streaming first.
+  const minutesOf = t => { const s = str(t).trim(), m = /^(\d+):(\d{2})(?::(\d{2}))?$/.exec(s); if (m) return m[3] != null ? +m[1] * 60 + +m[2] + +m[3] / 60 : +m[1] + +m[2] / 60; const n = /(\d+(?:\.\d+)?)\s*(h|hour|hours)?/i.exec(s); return n ? +n[1] * (n[2] ? 60 : 1) : null; };
+  const RC = a => (a.rulesCheck && typeof a.rulesCheck === 'object' ? a.rulesCheck : {});
+  function ruleChecks(a) {
+    const r = RC(a), out = [], len = minutesOf(doc.project.runningTime), num = v => (Number(v) > 0 ? Number(v) : null);
+    if (num(r.minMinutes) || num(r.maxMinutes)) {
+      if (len == null) out.push({ ok: null, text: 'No running time in the film details to check' });
+      else { const ok = (!num(r.minMinutes) || len >= num(r.minMinutes)) && (!num(r.maxMinutes) || len <= num(r.maxMinutes)); out.push({ ok, text: `Running time ${Math.round(len)} minutes: ${ok ? 'long enough' : num(r.minMinutes) && len < num(r.minMinutes) ? `shorter than ${num(r.minMinutes)}` : `longer than ${num(r.maxMinutes)}`}` }); }
+    }
+    const cities = arr(r.runCities).map(norm).filter(Boolean);
+    const runs = arr(doc.bookings).filter(b => b && b.kind === 'theatrical' && b.status !== 'declined' && b.status !== 'cancelled' && isDay(b.startDate) && (!cities.length || cities.includes(norm(b.city))))
+      .map(b => ({ b, days: isDay(b.endDate) ? Math.round((Date.parse(b.endDate) - Date.parse(b.startDate)) / 86400000) + 1 : 1 }))
+      .filter(x => (!isDay(a.windowStart) || x.b.startDate >= a.windowStart) && (!isDay(a.windowEnd) || x.b.startDate <= a.windowEnd));
+    const win = doc.festivals.filter(f => f.status === 'accepted' && f.laurel === 'winner' && [f.startDate, ...arr(f.screenings).map(s => s && s.date)].some(d => isDay(d) && (!isDay(a.windowStart) || d >= a.windowStart) && (!isDay(a.windowEnd) || d <= a.windowEnd)));
+    const best = runs.sort((x, y) => y.days - x.days)[0];
+    if (num(r.runDays)) {
+      if (r.festivalWin && win.length) out.push({ ok: true, text: `Qualifies with the win at ${win[0].name || 'a festival'}` });
+      else if (best && best.days >= num(r.runDays)) out.push({ ok: best.b.status === 'confirmed' ? true : null, text: `${best.days}-day run at ${best.b.venue || 'a cinema'}${best.b.status === 'confirmed' ? '' : ', not confirmed yet'}` });
+      else out.push({ ok: false, text: best ? `The longest run in the window is ${best.days} day${best.days === 1 ? '' : 's'}, short of ${num(r.runDays)}` : `No theatrical run of ${num(r.runDays)} days${cities.length ? ` in ${arr(r.runCities).join(', ')}` : ''} in the bookings${r.festivalWin ? ', and no festival win' : ''}` });
+    } else if (r.festivalWin) out.push(win.length ? { ok: true, text: `Qualifies with the win at ${win[0].name || 'a festival'}` } : { ok: false, text: 'No festival win yet in the window' });
+    if (r.noTv) {
+      const tv = arr(doc.contracts).filter(c => c && c.type === 'distribution' && c.status === 'signed' && /tv|television|broadcast|stream|svod|avod|tvod|vod/i.test([c.media, c.mediaRights, c.title].map(v => (Array.isArray(v) ? v.join(' ') : str(v))).join(' ')))
+        .map(c => ({ c, d: [c.startDate, c.effectiveDate].find(isDay) })).filter(x => x.d).sort((x, y) => x.d.localeCompare(y.d))[0];
+      const q = best ? best.b.startDate : firstShown();
+      if (tv && q && tv.d < q) out.push({ ok: false, text: `${tv.c.licensee || tv.c.title || 'A TV or streaming deal'} starts ${fmtDate(tv.d)}, before it qualifies` });
+      else out.push({ ok: tv ? true : null, text: tv ? `TV or streaming starts ${fmtDate(tv.d)}, after it qualifies` : 'No signed TV or streaming deal yet' });
+    }
+    return out;
+  }
   // Every dated item, from this tool and the rest of the project.
   function events() {
     const ev = [];
@@ -578,7 +624,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('agenda').innerHTML = (html ? html + '</ol>' : '') || (ev.length ? '<p class="hint">Nothing of this kind on the calendar.</p>' : '<p class="hint">Add dates to an award or a post to see them here.</p>');
     $('awCount').textContent = doc.awards.length ? String(doc.awards.length) : '';
     $('awards').innerHTML = doc.awards.length ? doc.awards.map(a => { const el = eligibility(a); const next = [a.deadline, a.nominationsDate, a.ceremonyDate].filter(d => isDay(d) && d >= today()).sort()[0];
-      return `<li><span>${esc(a.name || 'Award')}<span class="sub">${esc([a.category, AWARD[a.status] || 'Considering'].filter(Boolean).join(' · '))}</span>${el ? `<span class="sub ${el.ok === false ? 'st-bad' : ''}">${esc(el.text)}</span>` : ''}</span><span class="num">${next ? esc(fmtDate(next)) : ''}</span></li>`; }).join('')
+      return `<li><span>${esc(a.name || 'Award')}<span class="sub">${esc([a.category, AWARD[a.status] || 'Considering'].filter(Boolean).join(' · '))}</span>${el ? `<span class="sub ${el.ok === false ? 'st-bad' : ''}">${esc(el.text)}</span>` : ''}${ruleChecks(a).map(c => `<span class="sub ${c.ok === false ? 'st-bad' : ''}">${esc(c.text)}</span>`).join('')}</span><span class="num">${next ? esc(fmtDate(next)) : ''}</span></li>`; }).join('')
       : '<li class="empty-line">No awards yet.</li>';
     const sug = suggestions();
     $('suggest').innerHTML = sug.length ? sug.map(s => `<li><span>${esc(s.text)}</span><span class="num">${esc(fmtDate(s.date))}</span></li>`).join('') : '<li class="empty-line">Nothing to suggest. Mark a festival accepted, or set the release date in the film details.</li>';
@@ -591,7 +637,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const a = editing || { status: 'considering' };
     for (const [k, el] of Object.entries(AF)) $(el).value = a[k] == null ? '' : String(a[k]);
     const el = editing && eligibility(editing);
-    $('eligNote').textContent = el ? el.text : '';
+    $('eligNote').textContent = [el && el.text, ...(editing ? ruleChecks(editing).map(c => c.text) : [])].filter(Boolean).join('. ');
+    const r = RC(a);
+    $('a-minMin').value = str(r.minMinutes); $('a-maxMin').value = str(r.maxMinutes); $('a-runDays').value = str(r.runDays); $('a-runCities').value = arr(r.runCities).join(', ');
+    $('a-festWin').checked = !!r.festivalWin; $('a-noTv').checked = !!r.noTv;
     $('awardDelete').hidden = !editing;
     $('editorTitle').textContent = editing ? editing.name || 'Award' : 'Add an award';
     $('editor').showModal();
@@ -602,6 +651,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     if ($('a-from').value && $('a-to').value && $('a-to').value < $('a-from').value) { $('a-to').setCustomValidity('The window ends before it starts.'); $('a-to').reportValidity(); return; }
     const a = editing || { id: newId('award') };
     for (const [k, el] of Object.entries(AF)) { const v = $(el).value.trim(); if (v) a[k] = k === 'fee' ? Number(v) : v; else delete a[k]; }
+    const r = Object.assign({}, RC(a));
+    for (const [k, el] of [['minMinutes', 'a-minMin'], ['maxMinutes', 'a-maxMin'], ['runDays', 'a-runDays']]) { const v = $(el).value; if (v !== '' && Number(v) > 0) r[k] = Math.round(Number(v)); else delete r[k]; }
+    const cs = $('a-runCities').value.split(',').map(x => x.trim()).filter(Boolean); if (cs.length) r.runCities = cs; else delete r.runCities;
+    for (const [k, el] of [['festivalWin', 'a-festWin'], ['noTv', 'a-noTv']]) { if ($(el).checked) r[k] = true; else delete r[k]; }
+    if (Object.keys(r).length) a.rulesCheck = r; else delete a.rulesCheck;
     if (!editing) doc.awards.push(a);
     $('editor').close(); changed();
   }
@@ -639,7 +693,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const ev = events().filter(e => filter === 'all' || e.kind === filter);
     $('report').innerHTML = `<h1>Awards and social calendar</h1><p class="r-meta">${esc([doc.project.title, `Printed ${fmtDate(today())}`].filter(Boolean).join(' · '))}</p>
       <table><thead><tr><th>Date</th><th>What</th><th>Kind</th></tr></thead><tbody>${ev.map(e => `<tr><td>${esc(fmtDate(e.date))}</td><td>${esc(e.label)}${e.sub ? `<span class="r-sub">${esc(e.sub)}</span>` : ''}</td><td>${e.kind === 'award' ? 'Award' : e.kind === 'post' ? 'Post' : 'Festival'}</td></tr>`).join('')}</tbody></table>
-      ${doc.awards.length ? `<h2>Awards</h2><table><thead><tr><th>Award</th><th>Eligibility</th><th>Deadline</th><th>Fee</th><th>Status</th></tr></thead><tbody>${doc.awards.map(a => { const el = eligibility(a); return `<tr><td>${esc(a.name)}${a.category ? `<span class="r-sub">${esc(a.category)}</span>` : ''}</td><td>${esc(a.rules || '')}${el ? `<span class="r-sub">${esc(el.text)}</span>` : ''}</td><td>${esc(a.deadline ? fmtDate(a.deadline) : '')}</td><td>${a.fee ? esc(money(a.fee)) : ''}</td><td>${esc(AWARD[a.status] || 'Considering')}</td></tr>`; }).join('')}</tbody></table>` : ''}`;
+      ${doc.awards.length ? `<h2>Awards</h2><table><thead><tr><th>Award</th><th>Eligibility</th><th>Deadline</th><th>Fee</th><th>Status</th></tr></thead><tbody>${doc.awards.map(a => { const el = eligibility(a); return `<tr><td>${esc(a.name)}${a.category ? `<span class="r-sub">${esc(a.category)}</span>` : ''}</td><td>${esc(a.rules || '')}${el ? `<span class="r-sub">${esc(el.text)}</span>` : ''}${ruleChecks(a).map(c => `<span class="r-sub">${esc(c.text)}</span>`).join('')}</td><td>${esc(a.deadline ? fmtDate(a.deadline) : '')}</td><td>${a.fee ? esc(money(a.fee)) : ''}</td><td>${esc(AWARD[a.status] || 'Considering')}</td></tr>`; }).join('')}</tbody></table>` : ''}`;
   }
 
   // ---------- Project CSV ----------
@@ -866,6 +920,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('projectForm').addEventListener('submit', ev => { ev.preventDefault(); saveProjectDialog(); });
     $('projectCancel').onclick = () => $('projectDialog').close();
     $('addBtn').onclick = () => openEditor(null);
+    $('listSaveBtn').onclick = () => oftLists.save();
+    $('listOpenBtn').onclick = () => oftLists.open();
     $('emptyAddBtn').onclick = () => openEditor(null);
     $('emptyOpenBtn').onclick = openFile;
     $('postBtn').onclick = () => openPost(null);
@@ -1230,6 +1286,116 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     return { TOOLS, KINDS, PARTS, CONTACT, flags, glance, dates, ics, summary, today, addDays, fmt, calendarDialog, saveText, stem };
   })();
   /* oft-shared:project end */
+    // An award's lists to share between productions: its rules and usual dates, without your notes or status.
+  const mmdd = iso => (/^\d{4}-(\d{2})-(\d{2})$/.exec(str(iso)) || []).slice(1).join('-');
+  function nextDate(md, after) {
+    const m = /^(\d{2})-(\d{2})$/.exec(str(md)); if (!m) return '';
+    const base = after && isDay(after) ? after : today();
+    let y = +base.slice(0, 4); const iso = yy => `${yy}-${m[1]}-${m[2]}`;
+    if (iso(y) < base) y++;
+    return iso(y);
+  }
+  const OFT_LIST = {
+    kind: 'awards', title: 'Award list', noun: 'award', nouns: 'awards',
+    items: () => doc.awards.filter(a => str(a.name).trim()).map(a => {
+      const it = { name: a.name, category: a.category, rules: a.rules, rulesCheck: a.rulesCheck, usualWindowStart: mmdd(a.windowStart), usualWindowEnd: mmdd(a.windowEnd), usualDeadline: mmdd(a.deadline), fee: Number(a.fee) > 0 ? Number(a.fee) : undefined };
+      for (const k of Object.keys(it)) if (it[k] == null || it[k] === '') delete it[k];
+      return it;
+    }),
+    label: it => [it.name, it.category].filter(Boolean).join(': '),
+    detail: it => [it.usualDeadline ? `Usually due ${fmtDate(nextDate(it.usualDeadline)).replace(/,? \d{4}$/, '')}` : '', it.rules].filter(Boolean).join(' · '),
+    has: it => doc.awards.some(a => norm(a.name) === norm(it.name) && norm(a.category) === norm(it.category)),
+    add: list => {
+      for (const it of list) {
+        const a = { id: newId('award'), status: 'considering' };
+        for (const k of ['name', 'category', 'rules']) if (str(it[k]).trim()) a[k] = str(it[k]).trim();
+        if (it.rulesCheck && typeof it.rulesCheck === 'object' && !Array.isArray(it.rulesCheck)) a.rulesCheck = Object.assign({}, it.rulesCheck);
+        if (Number(it.fee) > 0) a.fee = Number(it.fee);
+        const ws = nextDate(it.usualWindowStart), we = nextDate(it.usualWindowEnd, ws), dl = nextDate(it.usualDeadline);
+        if (ws) a.windowStart = ws; if (we) a.windowEnd = we; if (dl) a.deadline = dl;
+        doc.awards.push(a);
+      }
+      changed();
+      return list.length;
+    }
+  };
+  /* oft-shared:lists begin. Copied from shared/lists.js by .github/scripts/sync_shared.py; edit it there. */
+  // Lists to share between projects: funders and their usual deadlines, festivals, and the like.
+  // A list is a small JSON file, { format: "oft-list", formatVersion: 1, kind, title, savedAt, items },
+  // that a team keeps in a shared folder or passes around; nothing is fetched from anywhere.
+  // A tool describes its list in OFT_LIST = { kind, title, noun, nouns, items: () => [...],
+  // label: item => '', detail: item => '', has: item => bool, add: items => number }
+  // and calls oftLists.save() and oftLists.open() from its own buttons.
+  const oftLists = (() => {
+    const str = v => (v == null ? '' : String(v));
+    const e = s => str(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+    const L = () => OFT_LIST;
+    const plural = (n, a, b) => `${n} ${n === 1 ? a : b}`;
+    function save() {
+      const items = L().items();
+      if (!items.length) { toast(`There are no ${L().nouns} to put in a list yet.`); return; }
+      const out = { format: 'oft-list', formatVersion: 1, kind: L().kind, title: `${L().title}${doc.project && doc.project.title ? `, from ${doc.project.title}` : ''}`, savedAt: new Date().toISOString(), items };
+      const name = `${slug()}-${L().kind}-list.json`;
+      download(JSON.stringify(out, null, 2) + '\n', name, 'application/json');
+      toast(`Saved ${plural(items.length, L().noun, L().nouns)} to ${name}. Open it from another project to add them there.`);
+    }
+    function dialog() {
+      let dlg = document.getElementById('oftListDialog');
+      if (dlg) return dlg;
+      dlg = document.createElement('dialog');
+      dlg.className = 'oft-dialog'; dlg.id = 'oftListDialog'; dlg.setAttribute('aria-labelledby', 'oftListTitle');
+      dlg.innerHTML = `<h2 id="oftListTitle"></h2><p id="oftListIntro"></p>
+    <p><button type="button" class="btn small" id="oftListAll">Tick all</button> <button type="button" class="btn small" id="oftListNone">Untick all</button></p>
+    <fieldset class="oft-list-items" id="oftListItems"><legend class="oft-vh">Pick what to add</legend></fieldset>
+    <div class="oft-actions"><button type="button" class="btn" id="oftListCancel">Cancel</button><button type="button" class="btn primary" id="oftListAdd">Add</button></div>`;
+      document.body.append(dlg);
+      const css = document.createElement('style');
+      css.textContent = '.oft-list-items { border: 0; margin: 0 0 12px; padding: 0; min-width: 0; display: grid; gap: 6px; max-height: 50vh; overflow-y: auto; }\n.oft-list-items label { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; }\n.oft-list-items input { margin-top: 3px; }\n.oft-list-items small { display: block; color: var(--ink-2); }\n.oft-vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }';
+      document.head.append(css);
+      dlg.querySelector('#oftListCancel').onclick = () => dlg.close();
+      dlg.querySelector('#oftListAll').onclick = () => dlg.querySelectorAll('#oftListItems input:not(:disabled)').forEach(i => { i.checked = true; });
+      dlg.querySelector('#oftListNone').onclick = () => dlg.querySelectorAll('#oftListItems input').forEach(i => { i.checked = false; });
+      return dlg;
+    }
+    function show(list, fileName) {
+      const items = (Array.isArray(list.items) ? list.items : []).filter(x => x && typeof x === 'object');
+      const dlg = dialog(), $ = q => dlg.querySelector(q);
+      $('#oftListTitle').textContent = `Add from ${list.title || fileName}`;
+      const fresh = items.filter(i => !L().has(i)).length;
+      $('#oftListIntro').textContent = `${plural(items.length, L().noun, L().nouns)} in the list${items.length - fresh ? `, ${items.length - fresh} already in this project` : ''}. Pick the ones to add. Check their dates and details: a shared list is only as current as whoever saved it.`;
+      $('#oftListItems').innerHTML = '<legend class="oft-vh">Pick what to add</legend>' + items.map((it, k) => {
+        const have = L().has(it);
+        return `<label><input type="checkbox" value="${k}"${have ? ' disabled' : ' checked'}><span>${e(L().label(it))}<small>${e(have ? 'Already in this project' : L().detail(it))}</small></span></label>`;
+      }).join('');
+      $('#oftListAdd').onclick = () => {
+        const picked = [...dlg.querySelectorAll('#oftListItems input:checked')].map(i => items[+i.value]);
+        if (!picked.length) { dlg.close(); return; }
+        const n = L().add(picked);
+        dlg.close();
+        changed();
+        toast(`Added ${plural(n, L().noun, L().nouns)} from the list.`);
+      };
+      dlg.showModal();
+    }
+    function open() {
+      const input = document.createElement('input');
+      input.type = 'file'; input.accept = '.json,application/json'; input.hidden = true;
+      document.body.append(input);
+      input.onchange = async () => {
+        const f = input.files[0];
+        input.remove();
+        if (!f) return;
+        let list;
+        try { list = JSON.parse(await f.text()); } catch { toast(`${f.name} isn't a list file this tool can read.`); return; }
+        if (!list || list.format !== 'oft-list') { toast(`${f.name} isn't a shared list. Save one with "Save a list" in this tool.`); return; }
+        if (list.kind !== L().kind) { toast(`${f.name} is a list of ${str(list.kind) || 'something else'}, not ${L().nouns}.`); return; }
+        show(list, f.name);
+      };
+      input.click();
+    }
+    return { save, open, show };
+  })();
+  /* oft-shared:lists end */
   /* oft-shared:tool begin. Copied from shared/tool.js by .github/scripts/sync_shared.py; edit it there. */
   // Shared by every tool: your name, remembering the open file, who has it open,
   // who changed what, merging two copies and spotting conflicted copies.

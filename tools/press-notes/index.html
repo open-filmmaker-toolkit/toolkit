@@ -134,6 +134,11 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .contact { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .preview { margin: 0; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 8px; font-size: 14px; white-space: pre-wrap; max-height: 300px; overflow: auto; }
 .sub-h { margin: 14px 0 6px; font-size: 15px; }
+.qa { display: grid; gap: 6px; }
+.cover-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.cover-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; font-size: 14px; }
+.cover-list li > span { flex: 1 1 220px; min-width: 0; }
+.cover-list .sub { display: block; color: var(--ink-3); font-size: 13px; }
 .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .chkline { display: flex; gap: 8px; align-items: center; font-size: 14px; }
 @media (max-width: 720px) {
@@ -208,6 +213,9 @@ pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; b
   .report .r-cover h1 { font-size: 30pt; }
   .report .r-kind { margin: 4pt 0 14pt; font-size: 11pt; letter-spacing: 0.15em; text-transform: uppercase; }
   .report .r-key { display: block; max-width: 100%; max-height: 95mm; margin: 0 auto 12pt; }
+  .report .r-quotes blockquote { margin: 0 0 8pt; padding-left: 10pt; border-left: 2pt solid #999; }
+  .report .r-quotes footer { font-size: 9.5pt; color: #444; }
+  .report .r-q { margin: 10pt 0 2pt; }
   .report .r-logline { max-width: 130mm; margin: 0 auto 10pt; font-size: 12pt; font-style: italic; }
   .report .r-contacts { display: flex; flex-wrap: wrap; justify-content: center; gap: 6pt 20pt; margin-top: 16pt; font-size: 9pt; text-align: left; }
   .report .r-contacts p { margin: 0; }
@@ -278,6 +286,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <div class="card-head"><h2 id="printHead">Print</h2></div>
         <p class="lead">Print the press notes, or save them as a PDF from the print dialog. Sections you leave out, or that are empty, aren't printed.</p>
         <div><button type="button" class="btn" id="printBtn">Print the press notes</button></div>
+        <p class="lead">Or download an EPK folder: the press notes as a web page and as text, the stills, and a caption sheet, in one zip file to send or upload.</p>
+        <div><button type="button" class="btn" id="epkBtn">Download the EPK folder</button></div>
       </section>
       <section class="card" aria-labelledby="missHead">
         <div class="card-head"><h2 id="missHead">Still to do</h2></div>
@@ -312,6 +322,16 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   </form>
 </dialog>
 <input type="file" id="stillInput" accept="image/*" multiple hidden>
+<input type="file" id="epkFolder" webkitdirectory multiple hidden>
+<dialog class="modal" id="epkDialog" aria-labelledby="epkTitle">
+  <div class="dlg-head"><h2 id="epkTitle">Download the EPK folder</h2></div>
+  <div class="dlg-body">
+    <p id="epkText"></p>
+    <p><button type="button" class="btn" id="epkFolderBtn">Choose the folder with the full-size stills</button></p>
+    <p class="hint" id="epkFolderNote" role="status"></p>
+  </div>
+  <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn" id="epkCancel">Cancel</button><button type="button" class="btn primary" id="epkGo">Download</button></div>
+</dialog>
 
 <dialog class="modal" id="projectDialog" aria-labelledby="projectDialogTitle">
   <form id="projectForm" method="dialog">
@@ -422,8 +442,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     { key: 'logline', title: 'Logline', kind: 'text', from: 'logline', hint: 'One or two sentences, for the title page.' },
     { key: 'shortSynopsis', title: 'Short synopsis', kind: 'text', from: 'shortSynopsis', hint: 'About 100 words, for programs and listings.' },
     { key: 'longSynopsis', title: 'Long synopsis', kind: 'text', from: 'longSynopsis', hint: 'A page or so, for press.' },
+    { key: 'quotes', title: 'Press quotes', kind: 'quotes', hint: 'Lines from reviews and articles, with who said them and where. Coverage logged in the press list is below to start from.' },
     { key: 'directorStatement', title: 'Director’s statement', kind: 'text', hint: 'Why you made the film, in your own voice.' },
     { key: 'aboutProduction', title: 'About the production', kind: 'text', hint: 'How the film was made: access, the shoot, the archive, the music.' },
+    { key: 'qa', title: 'Q&A with the director', kind: 'qa', hint: 'An interview for journalists to quote from. Write each question and its answer.' },
     { key: 'bios', title: 'Key creatives', kind: 'bios', hint: 'Pick who to include. Bios are saved with each person, so other tools can use them.' },
     { key: 'credits', title: 'Credits', kind: 'credits', hint: 'From the credits builder. Change the credits there.' },
     { key: 'festivals', title: 'Festivals and screenings', kind: 'festivals', hint: 'Festivals marked accepted in the festival submission tracker, with their screenings.' },
@@ -435,6 +457,12 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   let editing = null;
   let draftStills = [];
   let draftContacts = [];
+  let draftQa = [], draftQuotes = [];
+  const qas = () => arr(P().qa).filter(x => x && str(x.question).trim() && str(x.answer).trim());
+  const quotes = () => arr(P().quotes).filter(x => x && str(x.text).trim());
+  const quoteBy = q => [q.author, q.outlet].filter(x => str(x).trim()).join(', ');
+  // Coverage from the press list, to quote from.
+  const coverage = () => arr(doc.pressOutlets).filter(o => o && typeof o === 'object').flatMap(o => arr(o.coverage).filter(c => c && str(c.headline).trim()).map(c => ({ c, o })));
 
   // Fills in only what this tool needs; everything else in the file is left as it was.
   function normalize(d) {
@@ -488,6 +516,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     if (s.kind === 'specs') return Object.values(specs()).some(v => str(v).trim()) || doc.project.runningTime ? 'done' : 'todo';
     if (s.kind === 'stills') return stills().length ? 'done' : 'todo';
     if (s.kind === 'contacts') return contacts().length ? 'done' : 'todo';
+    if (s.kind === 'qa') return qas().length ? 'done' : 'todo';
+    if (s.kind === 'quotes') return quotes().length ? 'done' : 'todo';
     return 'todo';
   }
   const STATE = { done: 'Written', from: 'From the project', todo: 'Not done yet', off: 'Left out' };
@@ -499,6 +529,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     if (s.kind === 'specs') { const v = specs(); return [doc.project.runningTime && `Running time ${doc.project.runningTime}`, ...SPECS.filter(([k]) => str(v[k]).trim()).map(([k, l]) => `${l} ${v[k]}`)].filter(Boolean).join(' · '); }
     if (s.kind === 'stills') { const n = stills().length; return n ? `${n} still${n === 1 ? '' : 's'}${stills().some(a => !str(a.photoCredit).trim()) ? ', some without a photo credit' : ''}` : ''; }
     if (s.kind === 'contacts') return contacts().map(c => [c.role, c.name].filter(Boolean).join(': ')).join(' · ');
+    if (s.kind === 'qa') { const n = qas().length; return n ? `${n} question${n === 1 ? '' : 's'}` : ''; }
+    if (s.kind === 'quotes') return quotes().map(quoteBy).filter(Boolean).join(' · ') || (quotes().length ? `${quotes().length} quote${quotes().length === 1 ? '' : 's'}` : '');
     return '';
   }
   const entries = () => SECTIONS.filter(s => state(s) === 'done' || state(s) === 'from');
@@ -550,6 +582,19 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       <div class="acts"><button type="button" class="btn danger" data-cdel="${i}">Remove</button></div></div>`).join('') || '<p class="hint">No contacts yet.</p>';
   }
   function keepContactText() { draftContacts.forEach((c, i) => { if ($(`c-name-${i}`)) for (const [k, p] of [['role', 'c-role'], ['name', 'c-name'], ['company', 'c-org'], ['email', 'c-email'], ['phone', 'c-phone']]) c[k] = $(`${p}-${i}`).value; }); }
+  function drawQa() {
+    $('qaList').innerHTML = draftQa.map((x, i) => `<div class="pick"><div class="qa">${field(`qa-q-${i}`, `Question ${i + 1}`, x.question)}${field(`qa-a-${i}`, 'Answer', x.answer, 4)}</div>
+      <div class="acts"><button type="button" class="btn danger" data-qdel="${i}" aria-label="Remove question ${i + 1}">Remove</button></div></div>`).join('') || '<p class="hint">No questions yet.</p>';
+  }
+  function keepQa() { draftQa.forEach((x, i) => { if ($(`qa-q-${i}`)) { x.question = $(`qa-q-${i}`).value; x.answer = $(`qa-a-${i}`).value; } }); }
+  function drawQuotes() {
+    $('quoteList').innerHTML = draftQuotes.map((x, i) => `<div class="pick"><div class="qa">${field(`qt-t-${i}`, `Quote ${i + 1}`, x.text, 2)}<div class="two">${field(`qt-a-${i}`, 'Who said it', x.author)}${field(`qt-o-${i}`, 'Where', x.outlet)}</div></div>
+      <div class="acts"><button type="button" class="btn danger" data-qtdel="${i}" aria-label="Remove quote ${i + 1}">Remove</button></div></div>`).join('') || '<p class="hint">No quotes yet.</p>';
+    const used = new Set(draftQuotes.map(x => x.coverageId).filter(Boolean));
+    const cv = coverage().filter(x => !used.has(x.c.id));
+    $('coverList').innerHTML = cv.length ? cv.map(({ c, o }) => `<li><span>${esc(c.headline)}<span class="sub">${esc([o.name, c.date && fmtDate(c.date)].filter(Boolean).join(' · '))}</span></span><button type="button" class="btn small" data-cover="${esc(c.id)}">Quote from it</button></li>`).join('') : '<li class="empty-line">Nothing else logged in the press list.</li>';
+  }
+  function keepQuotes() { draftQuotes.forEach((x, i) => { if ($(`qt-t-${i}`)) { x.text = $(`qt-t-${i}`).value; x.author = $(`qt-a-${i}`).value; x.outlet = $(`qt-o-${i}`).value; } }); }
   function openEditor(key) {
     const s = SECTIONS.find(x => x.key === key); if (!s) return;
     editing = s;
@@ -577,6 +622,13 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     } else if (s.kind === 'stills') {
       draftStills = stills().map(a => ({ id: a.id, data: a.data, caption: str(a.caption), photoCredit: str(a.photoCredit) }));
       body = '<div id="stillList"></div><p><button type="button" class="btn" id="addStillBtn">Add stills from your computer</button></p><h3 class="sub-h">From the stills library</h3><div id="libList"></div>';
+    } else if (s.kind === 'qa') {
+      draftQa = arr(P().qa).filter(Boolean).map(x => Object.assign({}, x));
+      if (!draftQa.length) draftQa.push({ id: newId('qa') });
+      body = '<div id="qaList"></div><p><button type="button" class="btn" id="addQaBtn">Add a question</button></p>';
+    } else if (s.kind === 'quotes') {
+      draftQuotes = arr(P().quotes).filter(Boolean).map(x => Object.assign({}, x));
+      body = '<div id="quoteList"></div><p><button type="button" class="btn" id="addQuoteBtn">Add a quote</button></p><h3 class="sub-h">From the press list</h3><ul class="cover-list" id="coverList"></ul>';
     } else if (s.kind === 'contacts') {
       draftContacts = arr(P().contacts).filter(Boolean).map(c => Object.assign({}, c));
       if (!draftContacts.length) draftContacts.push({ id: newId('press-contact') });
@@ -585,6 +637,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('secBody').innerHTML = body;
     if (s.kind === 'stills') { drawStills(); drawLib(); }
     if (s.kind === 'contacts') drawContacts();
+    if (s.kind === 'qa') drawQa();
+    if (s.kind === 'quotes') drawQuotes();
     $('editor').showModal();
   }
   function saveEditor() {
@@ -613,6 +667,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       }
       setP('stillIds', draftStills.map(a => a.id));
     }
+    if (s.kind === 'qa') { keepQa(); setP('qa', draftQa.map(x => { const o = Object.assign({}, x, { id: x.id || newId('qa') }); for (const k of ['question', 'answer']) { const v = str(x[k]).trim(); if (v) o[k] = v; else delete o[k]; } return o; }).filter(x => x.question || x.answer)); }
+    if (s.kind === 'quotes') { keepQuotes(); setP('quotes', draftQuotes.map(x => { const o = Object.assign({}, x, { id: x.id || newId('quote') }); for (const k of ['text', 'author', 'outlet']) { const v = str(x[k]).trim(); if (v) o[k] = v; else delete o[k]; } return o; }).filter(x => x.text)); }
     if (s.kind === 'contacts') {
       keepContactText();
       const list = draftContacts.map(c => { const o = { id: c.id || newId('press-contact') }; for (const k of ['role', 'name', 'company', 'email', 'phone']) { const v = str(c[k]).trim(); if (v) o[k] = v; } return o; }).filter(c => c.name || c.email);
@@ -661,7 +717,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       ${on(sec.logline) ? `<p class="r-logline">${esc(textOf(sec.logline).text)}</p>` : ''}
       ${facts.length ? `<p class="r-meta">${esc(facts.join(' · '))}</p>` : ''}
       ${on(sec.contacts) ? `<div class="r-contacts">${contacts().map(c => `<p><b>${esc(c.role || 'Contact')}</b><br>${esc([c.name, c.company].filter(Boolean).join(', '))}${c.email ? `<br>${esc(c.email)}` : ''}${c.phone ? `<br>${esc(c.phone)}` : ''}</p>`).join('')}</div>` : ''}</section>`;
+    if (on(sec.quotes)) h += `<section class="r-sec r-quotes"><h2>Press quotes</h2>${quotes().map(q => `<blockquote><p>“${esc(q.text)}”</p>${quoteBy(q) ? `<footer>${esc(quoteBy(q))}</footer>` : ''}</blockquote>`).join('')}</section>`;
     for (const k of ['shortSynopsis', 'longSynopsis', 'directorStatement', 'aboutProduction']) if (on(sec[k])) h += `<section class="r-sec"><h2>${esc(sec[k].title)}</h2>${paras(textOf(sec[k]).text)}</section>`;
+    if (on(sec.qa)) h += `<section class="r-sec r-qa"><h2>${esc(sec.qa.title)}</h2>${qas().map(x => `<p class="r-q"><b>${esc(x.question)}</b></p>${paras(x.answer)}`).join('')}</section>`;
     if (on(sec.bios)) h += `<section class="r-sec"><h2>Key creatives</h2>${bioPeople().map(p => `<h3>${esc(p.name)}${arr(p.roles).length ? `, ${esc(arr(p.roles).join(', '))}` : ''}</h3>${paras(p.bio)}`).join('')}</section>`;
     if (on(sec.credits)) h += `<section class="r-sec"><h2>Credits</h2><table class="r-credits"><tbody>${creditLines().map(l => l.heading ? `<tr><th colspan="2" class="r-head">${esc(l.heading)}</th></tr>` : l.text ? `<tr><td colspan="2">${esc(l.text)}</td></tr>` : `<tr><th>${esc(l.role)}</th><td>${esc(l.names.join(', '))}</td></tr>`).join('')}</tbody></table></section>`;
     if (on(sec.festivals)) h += `<section class="r-sec"><h2>Festivals and screenings</h2>${festivalsIn().map(f => `<p><b>${esc(f.name)}</b>${f.screenings.map(s => `<br>${esc([fmtDate(s.date), s.time, s.venue].filter(Boolean).join(', '))}`).join('')}</p>`).join('')}</section>`;
@@ -903,8 +961,18 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       if (t.dataset.del != null) { keepStillText(); draftStills.splice(+t.dataset.del, 1); drawStills(); drawLib(); return; }
       if (t.dataset.lib != null) { keepStillText(); const a = asset(t.dataset.lib); if (a) draftStills.push({ id: a.id, data: a.data, caption: str(a.caption), photoCredit: str(a.photoCredit) }); drawStills(); drawLib(); return; }
       if (t.dataset.up != null) { keepStillText(); const i = +t.dataset.up; if (i > 0) [draftStills[i - 1], draftStills[i]] = [draftStills[i], draftStills[i - 1]]; drawStills(); return; }
-      if (t.dataset.cdel != null) { keepContactText(); draftContacts.splice(+t.dataset.cdel, 1); drawContacts(); }
+      if (t.dataset.cdel != null) { keepContactText(); draftContacts.splice(+t.dataset.cdel, 1); drawContacts(); return; }
+      if (t.id === 'addQaBtn') { keepQa(); draftQa.push({ id: newId('qa') }); drawQa(); const q = $(`qa-q-${draftQa.length - 1}`); if (q) q.focus(); return; }
+      if (t.dataset.qdel != null) { keepQa(); draftQa.splice(+t.dataset.qdel, 1); drawQa(); return; }
+      if (t.id === 'addQuoteBtn') { keepQuotes(); draftQuotes.push({ id: newId('quote') }); drawQuotes(); const q = $(`qt-t-${draftQuotes.length - 1}`); if (q) q.focus(); return; }
+      if (t.dataset.qtdel != null) { keepQuotes(); draftQuotes.splice(+t.dataset.qtdel, 1); drawQuotes(); return; }
+      if (t.dataset.cover != null) { keepQuotes(); const x = coverage().find(y => y.c.id === t.dataset.cover); if (x) { const by = (arr(x.o.contacts).find(p => p && p.id === x.c.contactId) || {}).name; draftQuotes.push({ id: newId('quote'), text: '', author: str(by), outlet: str(x.o.name), coverageId: x.c.id }); drawQuotes(); const q = $(`qt-t-${draftQuotes.length - 1}`); if (q) q.focus(); } }
     });
+    $('epkBtn').onclick = epkPick;
+    $('epkFolderBtn').onclick = () => $('epkFolder').click();
+    $('epkFolder').addEventListener('change', () => { fullFiles = [...$('epkFolder').files].filter(f => /^image\//.test(f.type) || /\.(jpe?g|png|gif|webp|tiff?|heic)$/i.test(f.name)); $('epkFolder').value = ''; epkPick(); });
+    $('epkCancel').onclick = () => $('epkDialog').close();
+    $('epkGo').onclick = downloadEpk;
     $('stillInput').addEventListener('change', async () => { const files = [...$('stillInput').files]; $('stillInput').value = ''; if (files.length) await addStills(files); });
     $('editorForm').addEventListener('submit', ev => { ev.preventDefault(); saveEditor(); });
     $('editorCancel').onclick = () => $('editor').close();
@@ -928,6 +996,106 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   document.documentElement.classList.remove('no-js');
   window.addEventListener('error', ev => toast(`Something went wrong: ${ev.message}. Save your work, then reload the page.`, true));
   window.addEventListener('unhandledrejection', ev => toast(`Something went wrong: ${ev.reason && ev.reason.message ? ev.reason.message : ev.reason}. Save your work, then reload the page.`, true));
+    // ---------- EPK folder ----------
+  // One .zip with the press notes as a web page and as text, the caption sheet, and the stills,
+  // at full size when you show where the full-size files are.
+  let fullFiles = null;
+  function epkPick() {
+    const st = stills(), linked = st.filter(a => str(a.relativePath).trim()).length;
+    $('epkText').textContent = st.length ? `${st.length} still${st.length === 1 ? '' : 's'} in the press notes${linked ? `, ${linked} with a full-size file noted in the stills library` : ''}. Choose the folder with the full-size files to put them in at full size; any it can't find go in at the size kept in the project.` : 'There are no stills in the press notes, so the folder will have the notes and nothing else.';
+    $('epkFolderNote').textContent = fullFiles ? `${fullFiles.length} file${fullFiles.length === 1 ? '' : 's'} in the folder you chose.` : '';
+    if (!$('epkDialog').open) $('epkDialog').showModal();
+  }
+  // The full-size file for a still: its path in the stills library, matched from the end, or failing that its file name.
+  function fullFor(a) {
+    if (!fullFiles) return null;
+    const p = str(a.relativePath).trim().replace(/\\/g, '/').toLowerCase(), base = p.split('/').pop() || str(a.name).toLowerCase();
+    const rel = f => str(f.webkitRelativePath || f.name).toLowerCase();
+    return (p && fullFiles.find(f => rel(f) === p || rel(f).endsWith('/' + p) || p.endsWith('/' + rel(f)))) || (base && fullFiles.find(f => f.name.toLowerCase() === base)) || null;
+  }
+  const dataBytes = u => { const b = atob(str(u).split(',')[1] || ''); const out = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) out[i] = b.charCodeAt(i); return out; };
+  const plain = () => {
+    renderReport();
+    const r = $('report').cloneNode(true);
+    for (const el of r.querySelectorAll('h1, h2, h3, p, tr, figcaption, li')) el.append('\n');
+    for (const el of r.querySelectorAll('h1, h2, section')) el.prepend('\n');
+    return r.textContent.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim() + '\n';
+  };
+  async function buildEpk() {
+    const files = [], st = stills(), base = slug(), full = [], small = [];
+    renderReport();
+    const css = [...document.querySelectorAll('style')].map(s => s.textContent).join('\n');
+    const title = esc(doc.project.title || 'Press notes');
+    files.push({ name: `${base}-epk/press-notes.html`, data: `<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>${title}: press notes</title>\n<style>${css}\n.report { display: block !important; position: static !important; }\nbody > .report { max-width: 50rem; margin: 0 auto; padding: 24px 16px; }</style>\n</head>\n<body>\n<div class="report">${$('report').innerHTML}</div>\n</body>\n</html>\n` });
+    files.push({ name: `${base}-epk/press-notes.txt`, data: plain() });
+    const rows = [['File', 'Caption', 'Photo credit']];
+    for (let i = 0; i < st.length; i++) {
+      const a = st[i], f = fullFor(a), n = String(i + 1).padStart(2, '0');
+      const stem = `${n}-${(str(a.caption || a.name).toLowerCase().replace(/\.[a-z0-9]+$/, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'still')}`;
+      let name;
+      if (f) { name = `stills/${stem}${(/\.[A-Za-z0-9]+$/.exec(f.name) || ['.jpg'])[0].toLowerCase()}`; files.push({ name: `${base}-epk/${name}`, data: new Uint8Array(await f.arrayBuffer()) }); full.push(name); }
+      else { name = `stills/${stem}.jpg`; files.push({ name: `${base}-epk/${name}`, data: dataBytes(a.data) }); small.push(name); }
+      rows.push([name, str(a.caption), str(a.photoCredit)]);
+    }
+    if (st.length) files.push({ name: `${base}-epk/stills/captions.csv`, data: '﻿' + rows.map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n' });
+    if (small.length) files.push({ name: `${base}-epk/stills/read-me.txt`, data: `These stills are the smaller copies kept in the project file, at most 1600 pixels on the long side, because the full-size files weren't in the folder chosen:\n\n${small.join('\n')}\n` });
+    return { blob: oftZip.make(files), full: full.length, small: small.length, name: `${base}-epk.zip` };
+  }
+  async function downloadEpk() {
+    try {
+      const r = await buildEpk();
+      download(r.blob, r.name, 'application/zip');
+      $('epkDialog').close();
+      toast(`Downloaded ${r.name}${r.full + r.small ? `, with ${r.full} still${r.full === 1 ? '' : 's'} at full size${r.small ? ` and ${r.small} at the smaller size` : ''}` : ''}.`);
+    } catch (e) { toast(`Couldn't make the EPK folder: ${e.message || e}`, true); }
+  }
+  /* oft-shared:zip begin. Copied from shared/zip.js by .github/scripts/sync_shared.py; edit it there. */
+  // Writing a .zip file in the browser, so a tool can hand over a folder of files as one download.
+  // Files are stored without compression: photos and PDFs are compressed already, and it keeps this small.
+  // oftZip.make([{ name: 'folder/file.txt', data: string | Uint8Array | ArrayBuffer, date?: Date }]) returns a Blob.
+  const oftZip = (() => {
+    let table = null;
+    function crc32(b) {
+      if (!table) { table = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; table[n] = c >>> 0; } }
+      let c = 0xffffffff;
+      for (let i = 0; i < b.length; i++) c = table[(c ^ b[i]) & 0xff] ^ (c >>> 8);
+      return (c ^ 0xffffffff) >>> 0;
+    }
+    const bytes = d => (typeof d === 'string' ? new TextEncoder().encode(d) : d instanceof Uint8Array ? d : new Uint8Array(d));
+    function dosTime(d) {
+      const t = (d.getHours() << 11) | (d.getMinutes() << 5) | Math.floor(d.getSeconds() / 2);
+      const day = ((Math.max(1980, d.getFullYear()) - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+      return [t, day];
+    }
+    function make(files) {
+      const parts = [], central = [];
+      let offset = 0;
+      const seen = new Set();
+      for (const f of files) {
+        // Two files can't share a name in a zip, so a repeat gets a number.
+        let name = String(f.name).replace(/\\/g, '/').replace(/^\/+/, '');
+        if (seen.has(name)) { const m = /^(.*?)(\.[^./]*)?$/.exec(name); let i = 2; while (seen.has(`${m[1]}-${i}${m[2] || ''}`)) i++; name = `${m[1]}-${i}${m[2] || ''}`; }
+        seen.add(name);
+        const data = bytes(f.data), nm = new TextEncoder().encode(name), crc = crc32(data), [time, day] = dosTime(f.date || new Date());
+        const local = new DataView(new ArrayBuffer(30));
+        [[0, 0x04034b50, 4], [4, 20, 2], [6, 0x0800, 2], [8, 0, 2], [10, time, 2], [12, day, 2], [14, crc, 4], [18, data.length, 4], [22, data.length, 4], [26, nm.length, 2], [28, 0, 2]]
+          .forEach(([at, v, n]) => (n === 4 ? local.setUint32(at, v, true) : local.setUint16(at, v, true)));
+        parts.push(local.buffer, nm, data);
+        const c = new DataView(new ArrayBuffer(46));
+        [[0, 0x02014b50, 4], [4, 20, 2], [6, 20, 2], [8, 0x0800, 2], [10, 0, 2], [12, time, 2], [14, day, 2], [16, crc, 4], [20, data.length, 4], [24, data.length, 4], [28, nm.length, 2], [30, 0, 2], [32, 0, 2], [34, 0, 2], [36, 0, 2], [38, 0, 4], [42, offset, 4]]
+          .forEach(([at, v, n]) => (n === 4 ? c.setUint32(at, v, true) : c.setUint16(at, v, true)));
+        central.push(c.buffer, nm);
+        offset += 30 + nm.length + data.length;
+      }
+      const size = central.reduce((n, p) => n + p.byteLength, 0);
+      const end = new DataView(new ArrayBuffer(22));
+      [[0, 0x06054b50, 4], [4, 0, 2], [6, 0, 2], [8, seen.size, 2], [10, seen.size, 2], [12, size, 4], [16, offset, 4], [20, 0, 2]]
+        .forEach(([at, v, n]) => (n === 4 ? end.setUint32(at, v, true) : end.setUint16(at, v, true)));
+      return new Blob([...parts, ...central, end.buffer], { type: 'application/zip' });
+    }
+    return { make, crc32 };
+  })();
+  /* oft-shared:zip end */
   /* oft-shared:tool begin. Copied from shared/tool.js by .github/scripts/sync_shared.py; edit it there. */
   // Shared by every tool: your name, remembering the open file, who has it open,
   // who changed what, merging two copies and spotting conflicted copies.

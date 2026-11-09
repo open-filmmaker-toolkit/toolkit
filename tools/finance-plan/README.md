@@ -62,6 +62,7 @@ A `financePlan` record with `sources`, and an optional `budgetTotal` used when t
 
 ## Not yet
 
+Nothing planned right now. If something you need is missing, [open an issue](https://github.com/open-filmmaker-toolkit/toolkit/issues).
 
 ## License
 

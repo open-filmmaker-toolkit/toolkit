@@ -37,6 +37,10 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **Shows the next deadlines first.** Planned festivals with an upcoming deadline come first, then planned ones whose deadline has passed, then submitted, accepted and declined. Each planned row says how many days are left. A deadline within two weeks is flagged, and so is one that has passed.
 - **Keeps screening dates for accepted festivals.** Add a date, time, venue and note for each screening. Accepted festivals show their next screening, and a side list shows every upcoming screening in date order.
 - **Adds up the fees:** what's still to pay on planned festivals and what you've paid on submitted ones, in the project's currency.
+- **Laurels, screening fees and travel** for accepted festivals: official selection, nominee or winner with the award's name and whether you have the laurel files, what the festival pays you to screen and whether it's paid, and what it covers for travel against what travel will cost you. The side panel adds up screening fees still owed and travel.
+- **Reminders** at the top when you open it: a deadline in the next two weeks or one that has passed, a decision that's late, a screening in the next week, and a screening fee not paid two weeks after the festival. Dismiss one and it comes back only if its date changes.
+- **Shares festival lists.** **Save a festival list** writes your festivals, their usual deadlines, fees, deadline tiers and premiere rules to a small list file, without waiver codes or notes. **Add from a list** opens one, from your team or an earlier project, and adds the festivals you pick with the next deadlines coming up. There's a [sample list](../../samples/shared-festival-list.json) of fictional festivals to try.
+- **Shows deadline tiers** set in the [festival strategy map](../festival-strategy/): early, regular and late, each with its fee. Reminders use the next one still open.
 - **Fills in the submitted date.** Change a festival to submitted and the date defaults to today. You can change it.
 - **Exports CSV and prints** the list on one page. Also exports project data: project details, people, locations, third-party elements, contracts, assets, music cue sheet details or call sheets as separate CSV files.
 
@@ -54,16 +58,13 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-A `festivals` list. Each festival has an `id` and a `status` (`planned`, `submitted`, `accepted` or `declined`), and optional `name`, `platform`, `url` (text), `deadline` (a date), `fee` (a number, in the project's currency), `waiverCode`, `submittedOn` (a date) and `notes`. An accepted festival can have `screenings`, each with an `id` and optional `date`, `time` (text), `venue` and `note`. Screenings are kept if you change the status later.
+A `festivals` list. Each festival has an `id` and a `status` (`planned`, `submitted`, `accepted` or `declined`), and optional `name`, `platform`, `url` (text), `deadline` (a date), `fee` (a number, in the project's currency), `waiverCode`, `submittedOn` (a date), `notes` and `dismissedReminders`. An accepted festival can also have `laurel` (`selection`, `nominee` or `winner`), `laurelAward`, `laurelFiles` (true once you have them), `screeningFee` and `screeningFeePaid`, `travelSupport` (what the festival covers) and `travelCost`. An accepted festival can have `screenings`, each with an `id` and optional `date`, `time` (text), `venue` and `note`. Screenings are kept if you change the status later.
 
 Everything else in the file is preserved, including fields this tool doesn't recognize. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
-- Reminders inside the tool
 - Importing festivals from a spreadsheet or a submission platform
-- Tracking laurels, screening fees or travel for each festival
-- A shared list of festivals and their usual deadlines
 
 ## License
 

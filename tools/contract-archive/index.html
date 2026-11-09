@@ -265,6 +265,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <button type="button" data-f="all" aria-pressed="true">All</button>
         <button type="button" data-f="missing" aria-pressed="false">Missing a signed copy</button>
         <button type="button" data-f="unsigned" aria-pressed="false">Not signed</button>
+        <button type="button" data-f="past" aria-pressed="false">Past their keep-until date</button>
       </div>
       <div id="sections"></div>
       <div class="empty" id="empty" hidden>
@@ -282,6 +283,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       <section class="card" aria-labelledby="sumHead">
         <div class="card-head"><h2 id="sumHead">Where it stands</h2></div>
         <dl class="totals" id="sums"></dl>
+      </section>
+      <section class="card" aria-labelledby="keepHead">
+        <div class="card-head"><h2 id="keepHead">How long to keep them</h2></div>
+        <div id="keep"></div>
+        <p class="hint">Counted from when each agreement ends, or from when it was signed if it has no end date. These are starting points, not advice: chain of title papers are usually kept for the life of the film, and payroll and insurance records for as long as your accountant and the law where you work say.</p>
       </section>
       <section class="card" aria-labelledby="treeHead">
         <div class="card-head"><h2 id="treeHead">Suggested folders</h2></div>
@@ -448,6 +454,19 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     ['insurance-and-permits', 'Insurance and permits', c => /insurance|permit/i.test(c.type)],
     ['other', 'Other agreements', () => true]];
   const DONE = ['signed', 'received', 'issued'];
+  // Years to keep each kind after it ends; 0 keeps it for good.
+  const KEEP = { 'releases/appearance': 0, 'releases/location': 0, 'releases/materials': 0, licenses: 0, crew: 7, distribution: 0, 'insurance-and-permits': 7, other: 7 };
+  const KEEP_CHOICES = [0, 3, 5, 7, 10];
+  const keepYears = path => { const r = A().retention, v = r && typeof r === 'object' ? r[path] : undefined; return Number.isInteger(v) && v >= 0 ? v : KEEP[path]; };
+  // When an agreement can go, or '' to keep it for good, or null when it has no date to count from.
+  function keepUntil(c) {
+    const y = keepYears(folderOf(c)[0]); if (!y) return '';
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(str(c.endDate || c.expirationDate || c.signedDate || c.effectiveDate || c.receivedDate));
+    if (!m) return null;
+    return `${+m[1] + y}-${m[2]}-${m[2] === '02' && m[3] === '29' ? '28' : m[3]}`;
+  }
+  const keepText = c => { const k = keepUntil(c); return k === '' ? 'For good' : k === null ? 'Needs a date' : fmtDate(k); };
+  const pastKeep = c => { const k = keepUntil(c); return !!k && daysUntil(k) < 0; };
   const A = () => (doc.contractArchive && typeof doc.contractArchive === 'object' ? doc.contractArchive : {});
   function setA(k, v) { const o = Object.assign({}, A()); if (v == null || v === '' || (typeof v === 'object' && !Object.keys(v).length)) delete o[k]; else o[k] = v; if (Object.keys(o).length) doc.contractArchive = o; else delete doc.contractArchive; }
   const archNotes = () => (A().notes && typeof A().notes === 'object' ? A().notes : {});
@@ -486,7 +505,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('count').textContent = ix.length ? `${ix.length} agreement${ix.length === 1 ? '' : 's'}${miss ? ` · ${miss} missing a signed copy` : ''}` : '';
     if (document.activeElement !== $('where')) $('where').value = str(A().location);
     $('checked').value = str(A().checkedDate);
-    const shown = ix.filter(x => filter === 'all' || (filter === 'missing' ? missing(x.c) : !signed(x.c)));
+    const shown = ix.filter(x => filter === 'all' || (filter === 'missing' ? missing(x.c) : filter === 'past' ? pastKeep(x.c) : !signed(x.c)));
     let html = '', cur = '';
     for (const x of shown) {
       if (x.path !== cur) { html += `${cur ? '</ol>' : ''}<h3 class="sec">${esc(x.label)} <span class="count">${esc(x.path)}/</span></h3><ol class="rows">`; cur = x.path; }
@@ -494,6 +513,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       if (who(c)) flags.push(`<span class="flag linked">${esc(who(c))}</span>`);
       for (const a of cp) flags.push(`<span class="flag new">${esc(a.relativePath || a.name || 'Signed copy')}</span>`);
       if (missing(c)) flags.push('<span class="flag problem">No signed copy linked</span>');
+      if (pastKeep(c)) flags.push(`<span class="flag problem">Kept past ${esc(fmtDate(keepUntil(c)))}</span>`);
+      else if (signed(c)) flags.push(`<span class="flag">${keepUntil(c) === '' ? 'Keep for good' : keepUntil(c) === null ? 'Keep-until needs a date' : `Keep until ${esc(fmtDate(keepUntil(c)))}`}</span>`);
       if (archNotes()[c.id]) flags.push(`<span class="flag linked">${esc(archNotes()[c.id])}</span>`);
       html += `<li class="row" data-id="${esc(c.id)}"><span class="rt">${esc(x.tab)}</span>
         <button type="button" class="what" data-edit="${esc(c.id)}"><span class="nm">${esc(c.title || c.type || 'Agreement')}</span><span class="tt">${esc([c.type, c.signedDate && `Signed ${fmtDate(c.signedDate)}`].filter(Boolean).join(' · '))}</span></button>
@@ -503,6 +524,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('sections').innerHTML = html ? html + '</ol>' : '<p class="hint">Nothing here.</p>';
     $('sums').innerHTML = `<dt>Filed with a signed copy</dt><dd>${ix.filter(x => signed(x.c) && !missing(x.c)).length}</dd><dt>Signed, copy missing</dt><dd>${miss}</dd><dt>Not signed yet</dt><dd>${uns}</dd><dt class="sum">Agreements</dt><dd class="sum">${ix.length}</dd>`;
     $('tree').textContent = treeText();
+    const past = ix.filter(x => pastKeep(x.c)).length;
+    if (past) $('sums').innerHTML += `<dt>Past their keep-until date</dt><dd>${past}</dd>`;
+    $('keep').innerHTML = FOLDERS.filter(([path]) => ix.some(x => x.path === path)).map(([path, label]) => `<div class="field"><label for="keep-${esc(path.replace(/\W/g, '-'))}">${esc(label)}</label><select id="keep-${esc(path.replace(/\W/g, '-'))}" data-keep="${esc(path)}">${KEEP_CHOICES.map(y => `<option value="${y}"${y === keepYears(path) ? ' selected' : ''}>${y ? `${y} years after it ends` : 'Keep for good'}</option>`).join('')}</select></div>`).join('');
   }
   function treeText() {
     const ix = indexed(), out = [`${slugify(doc.project.title || 'film')}-contracts/`];
@@ -519,7 +543,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     if (!c) return;
     editing = c;
     const x = indexed().find(y => y.c === c);
-    $('facts').innerHTML = [['Tab', x.tab], ['Folder', `${x.path}/`], ['Type', c.type], ['Status', c.status], ['Signed', c.signedDate && fmtDate(c.signedDate)], ['Parties', who(c)]].filter(f => f[1]).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('');
+    $('facts').innerHTML = [['Tab', x.tab], ['Folder', `${x.path}/`], ['Type', c.type], ['Status', c.status], ['Signed', c.signedDate && fmtDate(c.signedDate)], ['Parties', who(c)], ['Keep until', keepText(c)]].filter(f => f[1]).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('');
     const cur = copies(c)[0];
     $('f-asset').innerHTML = '<option value="">None</option>' + doc.assets.filter(a => str(a.relativePath).trim() || /^data:/.test(str(a.data))).filter(a => !['clip', 'still', 'key art', 'scout photo', 'camera card', 'sound card'].includes(a.type)).map(a => `<option value="${esc(a.id)}">${esc(a.name || a.relativePath)}</option>`).join('');
     $('f-asset').value = cur ? cur.id : '';
@@ -539,13 +563,13 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     setA('notes', n);
     $('editor').close(); changed();
   }
-  const CSV_HEAD = ['Tab', 'Folder', 'Agreement', 'Type', 'Status', 'Signed', 'Parties', 'Signed copy', 'Suggested file name', 'Archive note'];
-  function exportCsv() { exportRows(CSV_HEAD, indexed().map(x => [x.tab, `${x.path}/`, x.c.title, x.c.type, x.c.status, x.c.signedDate, who(x.c), copies(x.c).map(a => a.relativePath || a.name).join('; ') || (missing(x.c) ? 'Missing' : ''), `${x.tab}_${archName(x.c)}`, archNotes()[x.c.id]]), 'contract-archive-index', 'agreement'); }
+  const CSV_HEAD = ['Tab', 'Folder', 'Agreement', 'Type', 'Status', 'Signed', 'Parties', 'Signed copy', 'Suggested file name', 'Keep until', 'Archive note'];
+  function exportCsv() { exportRows(CSV_HEAD, indexed().map(x => [x.tab, `${x.path}/`, x.c.title, x.c.type, x.c.status, x.c.signedDate, who(x.c), copies(x.c).map(a => a.relativePath || a.name).join('; ') || (missing(x.c) ? 'Missing' : ''), `${x.tab}_${archName(x.c)}`, keepUntil(x.c) === '' ? 'For good' : keepUntil(x.c) || '', archNotes()[x.c.id]]), 'contract-archive-index', 'agreement'); }
   function exportTree() { const name = `${slug()}-archive-folders.txt`; download(treeText() + '\n', name, 'text/plain;charset=utf-8'); toast(`Exported the folder layout to ${name}`); }
   function renderReport() {
     const ix = indexed();
     $('report').innerHTML = `<h1>Contract and release archive</h1><p class="r-meta">${esc([doc.project.title, A().location && `Kept: ${A().location}`, A().checkedDate && `Checked ${fmtDate(A().checkedDate)}`, `Printed ${fmtDate(today())}`].filter(Boolean).join(' · '))}</p>
-      ${FOLDERS.map(([path, label]) => { const list = ix.filter(x => x.path === path); return list.length ? `<h2>${esc(label)}</h2><table><thead><tr><th style="width:8%">Tab</th><th>Agreement</th><th>Signed</th><th>Signed copy</th></tr></thead><tbody>${list.map(x => `<tr><td>${esc(x.tab)}</td><td>${esc(x.c.title || x.c.type)}${who(x.c) ? `<span class="r-sub">${esc(who(x.c))}</span>` : ''}</td><td>${esc(x.c.signedDate ? fmtDate(x.c.signedDate) : signed(x.c) ? 'Yes' : 'Not signed')}</td><td>${esc(copies(x.c).map(a => a.relativePath || a.name).join(', ') || (missing(x.c) ? 'MISSING' : ''))}</td></tr>`).join('')}</tbody></table>` : ''; }).join('')}`;
+      ${FOLDERS.map(([path, label]) => { const list = ix.filter(x => x.path === path); return list.length ? `<h2>${esc(label)}</h2><table><thead><tr><th style="width:8%">Tab</th><th>Agreement</th><th>Signed</th><th>Signed copy</th><th>Keep until</th></tr></thead><tbody>${list.map(x => `<tr><td>${esc(x.tab)}</td><td>${esc(x.c.title || x.c.type)}${who(x.c) ? `<span class="r-sub">${esc(who(x.c))}</span>` : ''}</td><td>${esc(x.c.signedDate ? fmtDate(x.c.signedDate) : signed(x.c) ? 'Yes' : 'Not signed')}</td><td>${esc(copies(x.c).map(a => a.relativePath || a.name).join(', ') || (missing(x.c) ? 'MISSING' : ''))}</td><td>${esc(keepText(x.c))}</td></tr>`).join('')}</tbody></table>` : ''; }).join('')}`;
   }
 
   // ---------- Project CSV ----------
@@ -777,6 +801,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('treeBtn').onclick = exportTree;
     $('where').addEventListener('change', () => { setA('location', $('where').value.trim()); changed(); });
     $('checked').addEventListener('change', () => { setA('checkedDate', $('checked').value); changed(); });
+    $('keep').addEventListener('change', ev => { const p = ev.target.dataset.keep; if (!p) return; const r = Object.assign({}, A().retention); const v = +ev.target.value; if (v === KEEP[p]) delete r[p]; else r[p] = v; setA('retention', r); changed(); });
     $('filters').addEventListener('click', ev => { const b = ev.target.closest('[data-f]'); if (b) { filter = b.dataset.f; render(); } });
     $('sections').addEventListener('click', ev => { const b = ev.target.closest('[data-edit]'); if (b) openEditor(b.dataset.edit); });
     $('editorForm').addEventListener('submit', ev => { ev.preventDefault(); saveEditor(); });

@@ -431,6 +431,8 @@
       "type": "object",
       "description": "Press notes and EPK sections, kept by the EPK and press notes builder.",
       "properties": {
+        "qa": { "type": "array", "description": "The Q&A with the director.", "items": { "type": "object", "properties": { "id": { "$ref": "#/$defs/id" }, "question": { "type": "string" }, "answer": { "type": "string" } }, "additionalProperties": true } },
+        "quotes": { "type": "array", "description": "Press quotes.", "items": { "type": "object", "properties": { "id": { "$ref": "#/$defs/id" }, "text": { "type": "string" }, "author": { "type": "string" }, "outlet": { "type": "string" }, "coverageId": { "$ref": "#/$defs/id", "description": "The coverage in the press list it was quoted from." } }, "additionalProperties": true } },
         "logline": {
           "type": "string"
         },
@@ -522,6 +524,7 @@
           "id": {
             "$ref": "#/$defs/id"
           },
+          "rulesCheck": { "type": "object", "description": "Rules the tool checks against the project.", "properties": { "minMinutes": { "type": "integer", "minimum": 0 }, "maxMinutes": { "type": "integer", "minimum": 0 }, "runDays": { "type": "integer", "minimum": 0, "description": "Days of theatrical run needed to qualify." }, "runCities": { "type": "array", "items": { "type": "string" } }, "festivalWin": { "type": "boolean", "description": "A festival win qualifies instead of a run." }, "noTv": { "type": "boolean", "description": "It can't be on TV or streaming before it qualifies." } }, "additionalProperties": true },
           "name": {
             "type": "string"
           },
@@ -640,6 +643,7 @@
               "id": {
                 "$ref": "#/$defs/id"
               },
+              "schedule": { "type": "string", "description": "The distributor whose delivery schedule the item came from." },
               "key": {
                 "type": "string",
                 "description": "A built-in item, such as dcp or cue, or the id of your own item."
@@ -1482,8 +1486,13 @@
     },
     "contractArchive": {
       "type": "object",
-      "description": "The contract and release archive: where it is kept, when it was checked, and notes by contract id.",
+      "description": "The contract and release archive: where it is kept, when it was checked, notes by contract id, and how many years to keep each kind of agreement after it ends.",
       "properties": {
+        "retention": {
+          "type": "object",
+          "description": "Years to keep agreements after they end, by archive folder (such as crew or licenses). 0 keeps them for good. Folders not listed use the tool's suggestions.",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        },
         "location": {
           "type": "string"
         },
@@ -1945,6 +1954,7 @@
         "id": {
           "$ref": "#/$defs/id"
         },
+        "stillIds": { "type": "array", "items": { "$ref": "#/$defs/id" }, "description": "For a model release or property release: the stills it covers. These releases cover the photos only, not the film." },
         "title": {
           "type": "string",
           "minLength": 1
@@ -2296,6 +2306,8 @@
         "relativePath": {
           "type": "string"
         },
+        "fullWidth": { "type": "integer", "minimum": 1, "description": "Width in pixels of the full-size file at relativePath, when a still was added from a folder." },
+        "fullHeight": { "type": "integer", "minimum": 1, "description": "Height in pixels of the full-size file at relativePath." },
         "mimeType": {
           "type": "string"
         },
@@ -4063,6 +4075,17 @@
         "id": {
           "$ref": "#/$defs/id"
         },
+        "deadlines": { "type": "array", "description": "Early, regular and late deadlines, each with its fee.", "items": { "type": "object", "properties": { "id": { "$ref": "#/$defs/id" }, "label": { "type": "string" }, "date": { "type": "string", "format": "date" }, "fee": { "type": "number", "minimum": 0 } }, "additionalProperties": true } },
+        "premiereAllows": { "type": "array", "description": "Earlier screenings the festival's premiere rules allow: home (in the film's home country) and small (at tier 4 festivals).", "items": { "type": "string", "enum": ["home", "small"] } },
+        "premiereRules": { "type": "string", "description": "Anything else the festival's premiere rules say." },
+        "laurel": { "type": "string", "enum": ["selection", "nominee", "winner"] },
+        "laurelAward": { "type": "string" },
+        "laurelFiles": { "type": "boolean", "description": "The laurel files have come from the festival." },
+        "screeningFee": { "type": "number", "minimum": 0, "description": "What the festival pays the film to screen." },
+        "screeningFeePaid": { "type": "boolean" },
+        "travelSupport": { "type": "string", "description": "What the festival covers for travel." },
+        "travelCost": { "type": "number", "minimum": 0, "description": "What travel to the festival costs the production." },
+        "dismissedReminders": { "type": "array", "items": { "type": "string" }, "description": "Keys of reminders dismissed in the festival submission tracker." },
         "name": {
           "type": "string"
         },
@@ -4213,6 +4236,9 @@
         "id": {
           "$ref": "#/$defs/id"
         },
+        "followUpDate": { "type": "string", "format": "date", "description": "When to follow up with the outlet." },
+        "followUpWhat": { "type": "string", "description": "What the follow-up is about." },
+        "dismissedReminders": { "type": "array", "items": { "type": "string" }, "description": "Keys of the reminders dismissed in the press list." },
         "name": {
           "type": "string"
         },
@@ -5358,6 +5384,11 @@
             "high"
           ]
         },
+        "tripChecks": {
+          "type": "array",
+          "description": "Reminders to go through the checklist again before each trip, by trip id, with the ones dismissed.",
+          "items": { "type": "object", "required": ["id"], "properties": { "id": { "$ref": "#/$defs/id" }, "dismissedReminders": { "type": "array", "items": { "type": "string" } } }, "additionalProperties": true }
+        },
         "personIds": {
           "type": "array",
           "items": {
@@ -5390,6 +5421,10 @@
               },
               "text": {
                 "type": "string"
+              },
+              "place": {
+                "type": "string",
+                "description": "The country or border the item is for. Items without one are for every shoot."
               },
               "high": {
                 "type": "boolean",
@@ -6153,6 +6188,7 @@
                     "id": {
                       "$ref": "#/$defs/id"
                     },
+                    "endSegId": { "$ref": "#/$defs/id", "description": "The next line, when the marked words run on into it." },
                     "segId": {
                       "$ref": "#/$defs/id"
                     },
@@ -6230,6 +6266,8 @@
               "title": {
                 "type": "string"
               },
+              "schedule": { "type": "string", "description": "The distributor whose delivery schedule the item came from." },
+              "languageCheck": { "type": "object", "description": "The last check of the agreement's file for work-for-hire or assignment language.", "properties": { "date": { "type": "string", "format": "date" }, "file": { "type": "string" }, "found": { "type": "array", "items": { "type": "string", "enum": ["work for hire", "assignment"] } } }, "additionalProperties": true },
               "section": {
                 "type": "string",
                 "enum": [

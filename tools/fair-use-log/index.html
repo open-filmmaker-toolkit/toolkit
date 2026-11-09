@@ -184,6 +184,11 @@ pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; b
   .row { grid-template-columns: minmax(0, 1fr); }
   .flags { grid-column: 1; }
 }
+.uses { display: grid; gap: 6px; margin-bottom: 6px; }
+.use { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 100px 30px; gap: 6px; align-items: center; }
+.use input { min-width: 0; padding: 6px 8px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); color: var(--ink); font: inherit; font-variant-numeric: tabular-nums; }
+.u-len { font-size: 13px; color: var(--ink-2); }
+.icon-btn { width: 30px; height: 30px; padding: 0; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); color: var(--ink-2); cursor: pointer; font-size: 15px; line-height: 1; }
 @media print {
   @page { size: portrait; margin: 16mm; }
   :root { color-scheme: light; }
@@ -294,6 +299,14 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     <div class="dlg-body">
       <dl class="facts" id="facts"></dl>
       <p class="hint">From the <a href="../clearance-log/index.html">clearance log</a>. Change these details there.</p>
+      <div class="group">
+        <h3 id="usesHead">Where it's used in the film</h3>
+        <p class="hint">One line for each place it appears, when it's used more than once. These are shared with the clearance log, and the edit list import there fills them in.</p>
+        <div class="uses" id="uses" role="group" aria-labelledby="usesHead"></div>
+        <div><button type="button" class="btn small" id="addUseBtn">Add a use</button> <span class="hint" id="usesTotal"></span></div>
+      </div>
+      <div class="field"><label for="f-situation">Which kind of use is it?</label><select id="f-situation"><option value="">Not sure yet</option><option value="critique">The film comments on or criticizes the work itself</option><option value="quotation">Quoting it to illustrate a point the film makes</option><option value="incidental">Caught in the background while filming something else</option><option value="historical">Part of a historical sequence</option><option value="other">Something else</option></select>
+        <p class="hint" id="situationHint"></p></div>
       <div class="factor">
         <h3>1. Purpose and character of the use</h3>
         <p class="ask">What does the film do with it that the original didn't? Is it the subject of comment or criticism, or used to illustrate a point the film makes? Is it there for its own sake, or as entertainment?</p>
@@ -450,7 +463,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const isDay = s => /^\d{4}-\d{2}-\d{2}$/.test(str(s));
   const isRelease = c => /release/i.test(str(c.type));
   // Materials releases cover someone's photos or documents, not appearing on camera or a place.
-  const coversAppearance = c => isRelease(c) && !/material/i.test(str(c.type));
+  const coversAppearance = c => isRelease(c) && !/material|model release|property release/i.test(str(c.type));
   function releaseState(c) {
     if (c.status === 'signed') return isDay(c.expirationDate) && c.expirationDate < today() ? 'expired' : 'signed';
     if (c.status === 'pending' || c.status === 'declined') return c.status;
@@ -466,6 +479,15 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   }
   const COVER_LABEL = { signed: 'Release signed', pending: 'Release not signed yet', expired: 'Release expired', declined: 'Release declined', missing: 'No release' };
 
+  // The four kinds of use in the Documentary Filmmakers' Statement of Best Practices in Fair Use, in our own words.
+  const BEST = 'https://cmsimpact.org/resource/documentarians-fair-use-and-best-practices';
+  const SITUATIONS = {
+    critique: { label: 'Critique of the work itself', hint: "The work is what the film is about: it comments on it or criticizes it. The statement's guidance is to use as much as the critique needs, and to make clear what's being critiqued." },
+    quotation: { label: 'Quotation to illustrate a point', hint: "The film quotes the work to make or support its own point, the way a writer quotes a book. The statement's guidance is that the quote should serve the argument and be attributed, not be there as decoration or in place of something you'd normally license." },
+    incidental: { label: 'Captured while filming something else', hint: "A song on a radio or a TV in the background, caught while you were filming. The statement's guidance is to keep it incidental: don't add it, cue it up or feature it, and don't use it as the score." },
+    historical: { label: 'Part of a historical sequence', hint: "Archival material that shows a moment in history, when it's the only or best way to show it. The statement's guidance is to use no more than the point needs, and to consider whether a license is reasonably available." },
+    other: { label: 'Another kind of use', hint: "The statement's four situations don't cover every fair use. Write up the four factors carefully and ask your attorney." },
+  };
   const MEMO = { draft: 'Draft', ready: 'Ready for the attorney', reviewed: 'Reviewed' };
   const WHERE = { us: 'The United States only', 'us-plus': 'The United States and other countries', outside: 'Outside the United States only', unknown: 'Not decided yet' };
   const FACTORS = ['purpose', 'nature', 'amount', 'market'];
@@ -494,7 +516,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const a = f(e.tcIn), b = f(e.tcOut);
     return a != null && b != null && b > a ? (b - a) / fps : null;
   }
-  const dur = e => { const s = useSecs(e); return s == null ? '' : s < 60 ? `${Math.round(s * 10) / 10} seconds` : `${Math.floor(s / 60)} min ${Math.round(s % 60)} s`; };
+  const usesOf = e => arr(e.uses).filter(u => u && typeof u === 'object' && (u.tcIn || u.tcOut));
+  const totalSecs = e => (usesOf(e).length ? usesOf(e).reduce((t, u) => t + (useSecs(u) || 0), 0) || null : useSecs(e));
+  const fmtSecs = s => (s == null ? '' : s < 60 ? `${Math.round(s * 10) / 10} seconds` : `${Math.floor(s / 60)} min ${Math.round(s % 60)} s`);
+  const dur = e => fmtSecs(totalSecs(e));
   const abroad = e => ['us-plus', 'outside'].includes(F(e).where);
 
   // ---------- Render ----------
@@ -514,7 +539,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('rows').innerHTML = all.map(e => {
       const st = memoState(e), flags = [];
       if (e.type) flags.push(`<span class="flag linked">${esc(e.type)}</span>`);
-      if (dur(e)) flags.push(`<span class="flag linked">${esc(dur(e))}</span>`);
+      if (dur(e)) flags.push(`<span class="flag linked">${esc(dur(e))}${usesOf(e).length > 1 ? `, in ${usesOf(e).length} places` : ''}</span>`);
+      if (SITUATIONS[F(e).situation]) flags.push(`<span class="flag linked">${esc(SITUATIONS[F(e).situation].label)}</span>`);
       const w = written(e);
       flags.push(`<span class="flag ${w === 4 ? 'new' : 'changed'}">${w} of 4 factors written</span>`);
       if (!F(e).where || F(e).where === 'unknown') flags.push('<span class="flag changed">Where it will be shown not set</span>');
@@ -527,7 +553,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     }).join('');
     const maybe = elements().filter(e => !CLEARED.includes(e.status) && e.status !== 'replace');
     $('maybeCount').textContent = maybe.length ? String(maybe.length) : '';
-    $('maybe').innerHTML = maybe.length ? maybe.map(e => `<li><span>${esc(e.description || 'Element')}<span class="sub">${esc([e.type, STATUS_LABEL[e.status] || e.status].filter(Boolean).join(' · '))}</span></span></li>`).join('') : '<li class="empty-line">Everything else is licensed, public domain or being replaced.</li>';
+    $('maybe').innerHTML = maybe.length ? maybe.map(e => `<li><span>${esc(e.description || 'Element')}<span class="sub">${esc([e.type, STATUS_LABEL[e.status] || e.status].filter(Boolean).join(' · '))}</span></span><button type="button" class="btn small" data-markfair="${esc(e.id)}">Mark fair use</button></li>`).join('') : '<li class="empty-line">Everything else is licensed, public domain or being replaced.</li>';
     if (printId && !all.some(e => e.id === printId)) printId = '';
     $('printSel').innerHTML = all.length ? '<option value="">Every fair use element</option>' + all.map(e => `<option value="${esc(e.id)}"${e.id === printId ? ' selected' : ''}>${esc(e.description || 'Element')}</option>`).join('') : '<option value="">Nothing marked fair use</option>';
     $('printSel').disabled = $('printBtn').disabled = !all.length;
@@ -535,7 +561,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
 
   // ---------- Editor ----------
   function facts(e) {
-    return [['Element', e.description], ['Type', e.type], ['Source', e.source], ['Rights holder', e.rightsHolder], ['In the film', [e.tcIn, e.tcOut].filter(Boolean).join(' to ') + (dur(e) ? ` (${dur(e)})` : '')], ['How it’s used', e.use], ['Notes', e.notes]].filter(x => str(x[1]).trim());
+    const where = usesOf(e).length > 1 ? usesOf(e).map(u => `${[u.tcIn, u.tcOut].filter(Boolean).join(' to ')}${useSecs(u) ? ` (${fmtSecs(useSecs(u))})` : ''}`).join('; ') + `, ${fmtSecs(totalSecs(e))} in all` : [e.tcIn, e.tcOut].filter(Boolean).join(' to ') + (dur(e) ? ` (${dur(e)})` : '');
+    return [['Element', e.description], ['Type', e.type], ['Source', e.source], ['Rights holder', e.rightsHolder], ['In the film', where], ['How it’s used', e.use], ['Kind of use', SITUATIONS[F(e).situation] && SITUATIONS[F(e).situation].label], ['Notes', e.notes]].filter(x => str(x[1]).trim());
   }
   function showWhere() { $('whereWarn').hidden = !['us-plus', 'outside'].includes($('f-where').value); }
   function openEditor(id) {
@@ -548,6 +575,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       'f-status': f.status || 'draft', 'f-attorney': f.attorney, 'f-reviewed': f.reviewedDate, 'f-advice': f.advice };
     for (const [k, v] of Object.entries(vals)) $(k).value = v == null ? '' : String(v);
     showWhere();
+    $('f-situation').value = SITUATIONS[f.situation] ? f.situation : '';
+    showSituation();
+    $('uses').innerHTML = (usesOf(e).length ? usesOf(e) : (e.tcIn || e.tcOut ? [{ tcIn: e.tcIn, tcOut: e.tcOut }] : [])).map(useRow).join('');
+    countUses();
     $('editorTitle').textContent = e.description || 'Fair use';
     $('editor').showModal();
     $('f-purpose').focus();
@@ -558,12 +589,39 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const map = { purpose: 'f-purpose', nature: 'f-nature', amount: 'f-amount', market: 'f-market', sourced: 'f-sourced', where: 'f-where', countries: 'f-countries', otherCountries: 'f-other', status: 'f-status', attorney: 'f-attorney', reviewedDate: 'f-reviewed', advice: 'f-advice' };
     for (const [k, id] of Object.entries(map)) { const v = $(id).value.trim(); if (v) f[k] = v; else delete f[k]; }
     if (f.where === 'unknown') delete f.where;
+    if ($('f-situation').value) f.situation = $('f-situation').value; else delete f.situation;
+    // Uses are the clearance log's: the first one is the element's time in and out.
+    const us = readUses();
+    if (us.length > 1 || (us.length === 1 && arr(editing.uses).length)) editing.uses = us; else if (!us.length) delete editing.uses;
+    if (us.length) { if (us[0].tcIn) editing.tcIn = us[0].tcIn; if (us[0].tcOut) editing.tcOut = us[0].tcOut; }
     if (f.status === 'reviewed' && !f.reviewedDate) f.reviewedDate = today();
     if (Object.keys(f).some(k => k !== 'status')) editing.fairUse = f; else delete editing.fairUse;
     editing.updatedAt = new Date().toISOString();
     printId = editing.id;
     $('editor').close();
     changed();
+  }
+
+  function showSituation() {
+    const x = SITUATIONS[$('f-situation').value];
+    $('situationHint').innerHTML = x ? `${esc(x.hint)} <a href="${BEST}" target="_blank" rel="noopener">Read the statement of best practices</a>.` : `The <a href="${BEST}" target="_blank" rel="noopener">Documentary Filmmakers' Statement of Best Practices in Fair Use</a> describes four common kinds of use.`;
+  }
+  const TC = /^\d{1,2}:\d{2}:\d{2}[:;]\d{2}$/;
+  const useRow = u => `<div class="use"><input type="text" class="u-in" value="${esc(u.tcIn)}" placeholder="01:02:03:04" aria-label="Time in"><input type="text" class="u-out" value="${esc(u.tcOut)}" placeholder="01:02:09:00" aria-label="Time out"><span class="u-len"></span><button type="button" class="icon-btn" data-deluse aria-label="Remove this use">×</button></div>`;
+  function readUses() {
+    return [...$('uses').querySelectorAll('.use')].map(r => Object.assign({}, r.querySelector('.u-in').value.trim() ? { tcIn: r.querySelector('.u-in').value.trim() } : {}, r.querySelector('.u-out').value.trim() ? { tcOut: r.querySelector('.u-out').value.trim() } : {})).filter(u => u.tcIn || u.tcOut);
+  }
+  function countUses() {
+    let t = 0;
+    for (const r of $('uses').querySelectorAll('.use')) { const sec = useSecs({ tcIn: r.querySelector('.u-in').value.trim(), tcOut: r.querySelector('.u-out').value.trim() }); r.querySelector('.u-len').textContent = sec ? fmtSecs(sec) : ''; t += sec || 0; }
+    $('usesTotal').textContent = t ? `${fmtSecs(t)} in all` : '';
+  }
+  function markFair(id) {
+    const e = element(id); if (!e) return;
+    e.status = 'fair-use'; e.updatedAt = new Date().toISOString();
+    changed();
+    toast(`Marked "${e.description || 'the element'}" fair use, here and in the clearance log. Write up why.`);
+    openEditor(id);
   }
 
   // ---------- CSV and print ----------
@@ -583,6 +641,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       <p class="r-meta">${esc([doc.project.title, doc.project.company, doc.project.cutVersion, `${list.length} element${list.length === 1 ? '' : 's'}`, `Prepared ${fmtDate(today())}`].filter(Boolean).join(' · '))}</p>
       ${list.map((e, i) => { const f = F(e); return `<section class="r-el"><h2>${i + 1}. ${esc(e.description || 'Element')}</h2>
         <table class="r-facts"><tbody>${facts(e).filter(x => x[0] !== 'Element').map(([k, v]) => `<tr><th>${esc(k)}</th><td>${esc(v)}</td></tr>`).join('')}${f.sourced ? `<tr><th>How we got it</th><td>${esc(f.sourced)}</td></tr>` : ''}</tbody></table>
+        ${SITUATIONS[f.situation] ? `<p class="r-meta">The documentary statement of best practices describes this kind of use: ${esc(SITUATIONS[f.situation].label.toLowerCase())}. ${esc(BEST)}</p>` : ''}
         <h3>Purpose and character of the use</h3>${para(f.purpose)}
         <h3>Nature of the original work</h3>${para(f.nature)}
         <h3>How much is used, and why</h3>${para(f.amount)}
@@ -820,6 +879,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('rows').addEventListener('click', ev => { const b = ev.target.closest('[data-edit]'); if (b) openEditor(b.dataset.edit); });
     $('printSel').addEventListener('change', () => { printId = $('printSel').value; });
     $('f-where').addEventListener('change', showWhere);
+    $('f-situation').addEventListener('change', showSituation);
+    $('addUseBtn').onclick = () => { $('uses').insertAdjacentHTML('beforeend', useRow({})); $('uses').lastElementChild.querySelector('input').focus(); };
+    $('uses').addEventListener('click', ev => { const b = ev.target.closest('[data-deluse]'); if (b) { b.closest('.use').remove(); countUses(); } });
+    $('uses').addEventListener('input', countUses);
+    $('maybe').addEventListener('click', ev => { const b = ev.target.closest('[data-markfair]'); if (b) markFair(b.dataset.markfair); });
     $('editorForm').addEventListener('submit', ev => { ev.preventDefault(); saveEditor(); });
     $('editorForm').addEventListener('input', ev => { if (ev.target.setCustomValidity) ev.target.setCustomValidity(''); });
     $('editorCancel').onclick = () => $('editor').close();

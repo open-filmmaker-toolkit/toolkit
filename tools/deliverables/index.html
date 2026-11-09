@@ -255,8 +255,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <span class="count" id="count"></span>
         <span class="spacer"></span>
         <button type="button" class="btn primary" id="addBtn">Add a deliverable</button>
+        <button type="button" class="btn" id="schedBtn">Add a distributor's schedule</button>
         <button type="button" class="btn" id="csvBtn">Export CSV</button>
         <button type="button" class="btn" id="printBtn">Print</button>
+        <button type="button" class="btn" id="listSaveBtn">Save your items as a list</button>
+        <button type="button" class="btn" id="listOpenBtn">Add from a list</button>
       </div>
       <div id="sections"></div>
     </section>
@@ -494,6 +497,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       return `<h3 class="sec">${esc(sl)}</h3><ol class="rows">${list.map(i => {
         const st = i.status || 'todo', d = due(i), flags = [], fp = fromProject(i.key);
         if (fp) flags.push(`<span class="flag linked">${esc(fp)}</span>`);
+        if (i.schedule) flags.push(`<span class="flag new">On ${esc(i.schedule)}'s schedule</span>`);
         if (i.owner) flags.push(`<span class="flag linked">${esc(i.owner)}</span>`);
         if (i.spec) flags.push(`<span class="flag linked">${esc(i.spec)}</span>`);
         if (!done(i) && d && d < today()) flags.push('<span class="flag problem">Overdue</span>');
@@ -541,8 +545,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   function deleteItem() { setD('items', saved().filter(x => (x.key || x.id) !== editing.key)); $('editor').close(); changed(); }
   function setHead() { setD('deliverTo', $('deliverTo').value.trim()); setD('dueDate', $('dueAll').value); changed(); }
 
-  const CSV_HEAD = ['Section', 'Deliverable', 'Status', 'Due', "Who's responsible", 'Specs', 'File', 'Note', 'From the project'];
-  function exportCsv() { exportRows(CSV_HEAD, items().map(i => [SECTIONS[i.section], i.title, STATUS[i.status || 'todo'], due(i), i.owner, i.spec, i.path, i.note, fromProject(i.key)]), 'deliverables', 'deliverable'); }
+  const CSV_HEAD = ['Section', 'Deliverable', 'Status', 'Due', "Who's responsible", 'Specs', 'File', 'Note', 'From the project', "Distributor's schedule"];
+  function exportCsv() { exportRows(CSV_HEAD, items().map(i => [SECTIONS[i.section], i.title, STATUS[i.status || 'todo'], due(i), i.owner, i.spec, i.path, i.note, fromProject(i.key), i.schedule]), 'deliverables', 'deliverable'); }
   function renderReport() {
     $('report').innerHTML = `<h1>Deliverables</h1><p class="r-meta">${esc([doc.project.title, D().deliverTo && `For ${D().deliverTo}`, D().dueDate && `Due ${fmtDate(D().dueDate)}`, `Printed ${fmtDate(today())}`].filter(Boolean).join(' · '))}</p>
       ${Object.entries(SECTIONS).map(([sk, sl]) => { const list = items().filter(i => i.section === sk && i.status !== 'na'); return list.length ? `<h2>${esc(sl)}</h2><table><thead><tr><th style="width:4%"></th><th>Deliverable</th><th>Status</th><th>Due</th><th>Who</th></tr></thead><tbody>${list.map(i => `<tr><td>${done(i) ? '&#10003;' : '&#9744;'}</td><td>${esc(i.title)}${i.spec ? `<span class="r-sub">${esc(i.spec)}</span>` : ''}${i.note ? `<span class="r-sub">${esc(i.note)}</span>` : ''}</td><td>${esc(STATUS[i.status || 'todo'])}</td><td>${esc(due(i) ? fmtDate(due(i)) : '')}</td><td>${esc(i.owner || '')}</td></tr>`).join('')}</tbody></table>` : ''; }).join('')}`;
@@ -772,6 +776,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('projectForm').addEventListener('submit', ev => { ev.preventDefault(); saveProjectDialog(); });
     $('projectCancel').onclick = () => $('projectDialog').close();
     $('addBtn').onclick = () => openEditor(null);
+    $('schedBtn').onclick = () => oftSchedule.open();
+    $('listSaveBtn').onclick = () => oftLists.save();
+    $('listOpenBtn').onclick = () => oftLists.open();
     $('csvBtn').onclick = exportCsv;
     $('deleteBtn').onclick = deleteItem;
     $('deliverTo').addEventListener('change', setHead);
@@ -802,7 +809,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   window.addEventListener('unhandledrejection', ev => toast(`Something went wrong: ${ev.reason && ev.reason.message ? ev.reason.message : ev.reason}. Save your work, then reload the page.`, true));
   // Columns for importing from a spreadsheet, named as in this tool's template.
   const OFT_IMPORT = { noun: 'deliverable', nouns: 'deliverables', key: 'title',
-    fields: [['Section', 'section', 'enum', { values: SECTIONS }], ['Deliverable', 'title'], ['Status', 'status', 'enum', { values: STATUS }], ['Due', 'due', 'date'], ["Who's responsible", 'owner'], ['Specs', 'spec'], ['File', 'path'], ['Note', 'note'], ['From the project', '', 'skip']],
+    fields: [['Section', 'section', 'enum', { values: SECTIONS }], ['Deliverable', 'title'], ['Status', 'status', 'enum', { values: STATUS }], ['Due', 'due', 'date'], ["Who's responsible", 'owner'], ['Specs', 'spec'], ['File', 'path'], ['Note', 'note'], ['From the project', '', 'skip'], ["Distributor's schedule", 'schedule']],
     put: r => {
       const d = doc.deliverables = doc.deliverables && typeof doc.deliverables === 'object' ? doc.deliverables : {}; d.items = arr(d.items);
       const b = BUILT.find(x => x.title.toLowerCase() === String(r.title).toLowerCase());
@@ -1317,6 +1324,157 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     return { TOOLS, KINDS, PARTS, CONTACT, flags, glance, dates, ics, summary, today, addDays, fmt, calendarDialog, saveText, stem };
   })();
   /* oft-shared:project end */
+    // A distributor's delivery schedule, pasted in, and lists of your own items to share.
+  const guessSection = t => (/caption|subtitle|\bsdh\b|\bscripts?\b|continuity|dialogue list|transcript/i.test(t) ? 'captions' : /mix|stem|m&e|music and effects|audio|sound|5\.1|stereo|atmos/i.test(t) ? 'sound' : /key art|poster|still|epk|press|trailer art|artwork|photo/i.test(t) ? 'artwork' : /licen|release|chain|title|e&o|errors and omissions|insurance|cue sheet|agreement|certificate|copyright|credit/i.test(t) ? 'legal' : 'picture');
+  const custom = () => saved().filter(x => x && x.custom);
+  const OFT_SCHEDULE = {
+    noun: 'deliverable', sections: Object.entries(SECTIONS), guess: guessSection,
+    has: (title, from) => items().some(i => norm(i.title) === norm(title) && (!from || !i.schedule || norm(i.schedule) === norm(from))),
+    add: (from, rows) => { setD('items', [...saved(), ...rows.map(r => ({ id: newId('deliverable'), custom: true, title: r.title, section: r.section, schedule: from }))].map(x => Object.assign(x, { key: x.key || x.id }))); changed(); return rows.length; }
+  };
+  const OFT_LIST = {
+    kind: 'delivery-schedule', title: 'Delivery schedule', noun: 'deliverable', nouns: 'deliverables',
+    items: () => custom().map(x => Object.assign({ title: x.title, section: x.section }, x.spec ? { spec: x.spec } : {}, x.schedule ? { schedule: x.schedule } : {})),
+    label: i => str(i.title), detail: i => [i.schedule && `${i.schedule}'s schedule`, SECTIONS[i.section], i.spec].filter(Boolean).join(' · '),
+    has: i => items().some(x => norm(x.title) === norm(i.title)),
+    add: list => { setD('items', [...saved(), ...list.map(i => Object.assign({ id: newId('deliverable'), custom: true, title: str(i.title), section: SECTIONS[i.section] ? i.section : guessSection(str(i.title)) }, i.spec ? { spec: str(i.spec) } : {}, i.schedule ? { schedule: str(i.schedule) } : {}))].map(x => Object.assign(x, { key: x.key || x.id }))); changed(); return list.length; }
+  };
+  /* oft-shared:schedule begin. Copied from shared/schedule.js by .github/scripts/sync_shared.py; edit it there. */
+  // Adding a distributor's delivery schedule: paste the list from their schedule, one item a line,
+  // and each becomes an item of your own, marked with the distributor's name. A tool defines
+  // OFT_SCHEDULE = { noun, sections: [[id, label]], guess: line => sectionId, has: (title, distributor) => bool,
+  // add: (distributor, [{ title, section }]) => number } and calls oftSchedule.open() from its own button.
+  const oftSchedule = (() => {
+    const str = v => (v == null ? '' : String(v));
+    const e = s => str(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+    const S = () => OFT_SCHEDULE;
+    // Lines from a pasted schedule: numbering, bullets and tick boxes taken off, headings and blanks left out.
+    function lines(text) {
+      return str(text).split(/\r?\n/).map(l => l.replace(/^\s*(?:[-*•▪◦☐□✓✔]|\(?[0-9a-zA-Z]{1,3}[.)]|\[\s?[xX]?\s?\])\s+/, '').replace(/\s+/g, ' ').trim())
+        .filter(l => l.length > 2 && !/:$/.test(l) && !/^(delivery schedule|deliverables?|page \d+)/i.test(l));
+    }
+    function dialog() {
+      let dlg = document.getElementById('oftSchedDialog');
+      if (dlg) return dlg;
+      dlg = document.createElement('dialog');
+      dlg.className = 'oft-dialog'; dlg.id = 'oftSchedDialog'; dlg.setAttribute('aria-labelledby', 'oftSchedTitle');
+      dlg.innerHTML = `<h2 id="oftSchedTitle">Add a distributor's delivery schedule</h2>
+    <p>Copy the list from the distributor's delivery schedule and paste it here, one item a line. Each line becomes an item marked with their name; you can change its section afterwards.</p>
+    <p><label for="oftSchedName">Distributor</label><br><input id="oftSchedName" type="text" autocomplete="off" placeholder="The distributor or platform"></p>
+    <p><label for="oftSchedText">Their schedule</label><br><textarea id="oftSchedText" rows="8"></textarea></p>
+    <p class="oft-sched-note" id="oftSchedNote" role="status"></p>
+    <div class="oft-actions"><button type="button" class="btn" id="oftSchedCancel">Cancel</button><button type="button" class="btn primary" id="oftSchedAdd">Add them</button></div>`;
+      document.body.append(dlg);
+      const css = document.createElement('style');
+      css.textContent = '#oftSchedDialog input, #oftSchedDialog textarea { width: 100%; box-sizing: border-box; font: inherit; }\n.oft-sched-note { font-size: 13px; color: var(--ink-2); min-height: 1.2em; }';
+      document.head.append(css);
+      const note = () => {
+        const name = dlg.querySelector('#oftSchedName').value.trim(), ls = lines(dlg.querySelector('#oftSchedText').value);
+        const fresh = ls.filter(l => !S().has(l, name));
+        dlg.querySelector('#oftSchedNote').textContent = ls.length ? `${fresh.length} ${fresh.length === 1 ? S().noun : S().noun + 's'} to add${ls.length > fresh.length ? `, ${ls.length - fresh.length} already on the list` : ''}.` : '';
+      };
+      dlg.addEventListener('input', note);
+      dlg.querySelector('#oftSchedCancel').onclick = () => dlg.close();
+      dlg.querySelector('#oftSchedAdd').onclick = () => {
+        const nameEl = dlg.querySelector('#oftSchedName'), textEl = dlg.querySelector('#oftSchedText'), name = nameEl.value.trim();
+        if (!name) { nameEl.setCustomValidity('Name the distributor.'); nameEl.reportValidity(); return; }
+        const ls = lines(textEl.value).filter(l => !S().has(l, name));
+        if (!ls.length) { textEl.setCustomValidity('Paste the items from the schedule.'); textEl.reportValidity(); return; }
+        const n = S().add(name, ls.map(title => ({ title, section: S().guess(title) })));
+        dlg.close();
+        toast(`Added ${n} ${n === 1 ? S().noun : S().noun + 's'} from ${name}'s schedule.`);
+      };
+      for (const id of ['oftSchedName', 'oftSchedText']) dlg.querySelector('#' + id).addEventListener('input', ev => ev.target.setCustomValidity(''));
+      return dlg;
+    }
+    function open() {
+      const dlg = dialog();
+      dlg.querySelector('#oftSchedName').value = '';
+      dlg.querySelector('#oftSchedText').value = '';
+      dlg.querySelector('#oftSchedNote').textContent = '';
+      dlg.showModal();
+      dlg.querySelector('#oftSchedName').focus();
+    }
+    return { open, lines };
+  })();
+  /* oft-shared:schedule end */
+  /* oft-shared:lists begin. Copied from shared/lists.js by .github/scripts/sync_shared.py; edit it there. */
+  // Lists to share between projects: funders and their usual deadlines, festivals, and the like.
+  // A list is a small JSON file, { format: "oft-list", formatVersion: 1, kind, title, savedAt, items },
+  // that a team keeps in a shared folder or passes around; nothing is fetched from anywhere.
+  // A tool describes its list in OFT_LIST = { kind, title, noun, nouns, items: () => [...],
+  // label: item => '', detail: item => '', has: item => bool, add: items => number }
+  // and calls oftLists.save() and oftLists.open() from its own buttons.
+  const oftLists = (() => {
+    const str = v => (v == null ? '' : String(v));
+    const e = s => str(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+    const L = () => OFT_LIST;
+    const plural = (n, a, b) => `${n} ${n === 1 ? a : b}`;
+    function save() {
+      const items = L().items();
+      if (!items.length) { toast(`There are no ${L().nouns} to put in a list yet.`); return; }
+      const out = { format: 'oft-list', formatVersion: 1, kind: L().kind, title: `${L().title}${doc.project && doc.project.title ? `, from ${doc.project.title}` : ''}`, savedAt: new Date().toISOString(), items };
+      const name = `${slug()}-${L().kind}-list.json`;
+      download(JSON.stringify(out, null, 2) + '\n', name, 'application/json');
+      toast(`Saved ${plural(items.length, L().noun, L().nouns)} to ${name}. Open it from another project to add them there.`);
+    }
+    function dialog() {
+      let dlg = document.getElementById('oftListDialog');
+      if (dlg) return dlg;
+      dlg = document.createElement('dialog');
+      dlg.className = 'oft-dialog'; dlg.id = 'oftListDialog'; dlg.setAttribute('aria-labelledby', 'oftListTitle');
+      dlg.innerHTML = `<h2 id="oftListTitle"></h2><p id="oftListIntro"></p>
+    <p><button type="button" class="btn small" id="oftListAll">Tick all</button> <button type="button" class="btn small" id="oftListNone">Untick all</button></p>
+    <fieldset class="oft-list-items" id="oftListItems"><legend class="oft-vh">Pick what to add</legend></fieldset>
+    <div class="oft-actions"><button type="button" class="btn" id="oftListCancel">Cancel</button><button type="button" class="btn primary" id="oftListAdd">Add</button></div>`;
+      document.body.append(dlg);
+      const css = document.createElement('style');
+      css.textContent = '.oft-list-items { border: 0; margin: 0 0 12px; padding: 0; min-width: 0; display: grid; gap: 6px; max-height: 50vh; overflow-y: auto; }\n.oft-list-items label { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; }\n.oft-list-items input { margin-top: 3px; }\n.oft-list-items small { display: block; color: var(--ink-2); }\n.oft-vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }';
+      document.head.append(css);
+      dlg.querySelector('#oftListCancel').onclick = () => dlg.close();
+      dlg.querySelector('#oftListAll').onclick = () => dlg.querySelectorAll('#oftListItems input:not(:disabled)').forEach(i => { i.checked = true; });
+      dlg.querySelector('#oftListNone').onclick = () => dlg.querySelectorAll('#oftListItems input').forEach(i => { i.checked = false; });
+      return dlg;
+    }
+    function show(list, fileName) {
+      const items = (Array.isArray(list.items) ? list.items : []).filter(x => x && typeof x === 'object');
+      const dlg = dialog(), $ = q => dlg.querySelector(q);
+      $('#oftListTitle').textContent = `Add from ${list.title || fileName}`;
+      const fresh = items.filter(i => !L().has(i)).length;
+      $('#oftListIntro').textContent = `${plural(items.length, L().noun, L().nouns)} in the list${items.length - fresh ? `, ${items.length - fresh} already in this project` : ''}. Pick the ones to add. Check their dates and details: a shared list is only as current as whoever saved it.`;
+      $('#oftListItems').innerHTML = '<legend class="oft-vh">Pick what to add</legend>' + items.map((it, k) => {
+        const have = L().has(it);
+        return `<label><input type="checkbox" value="${k}"${have ? ' disabled' : ' checked'}><span>${e(L().label(it))}<small>${e(have ? 'Already in this project' : L().detail(it))}</small></span></label>`;
+      }).join('');
+      $('#oftListAdd').onclick = () => {
+        const picked = [...dlg.querySelectorAll('#oftListItems input:checked')].map(i => items[+i.value]);
+        if (!picked.length) { dlg.close(); return; }
+        const n = L().add(picked);
+        dlg.close();
+        changed();
+        toast(`Added ${plural(n, L().noun, L().nouns)} from the list.`);
+      };
+      dlg.showModal();
+    }
+    function open() {
+      const input = document.createElement('input');
+      input.type = 'file'; input.accept = '.json,application/json'; input.hidden = true;
+      document.body.append(input);
+      input.onchange = async () => {
+        const f = input.files[0];
+        input.remove();
+        if (!f) return;
+        let list;
+        try { list = JSON.parse(await f.text()); } catch { toast(`${f.name} isn't a list file this tool can read.`); return; }
+        if (!list || list.format !== 'oft-list') { toast(`${f.name} isn't a shared list. Save one with "Save a list" in this tool.`); return; }
+        if (list.kind !== L().kind) { toast(`${f.name} is a list of ${str(list.kind) || 'something else'}, not ${L().nouns}.`); return; }
+        show(list, f.name);
+      };
+      input.click();
+    }
+    return { save, open, show };
+  })();
+  /* oft-shared:lists end */
   /* oft-shared:tool begin. Copied from shared/tool.js by .github/scripts/sync_shared.py; edit it there. */
   // Shared by every tool: your name, remembering the open file, who has it open,
   // who changed what, merging two copies and spotting conflicted copies.

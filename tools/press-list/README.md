@@ -38,6 +38,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **Tracks screening RSVPs** for each person: invited, coming, declined or attended. Screenings are shared with the [partner CRM](../partner-crm/), and you can add one right in the outlet.
 - **Edits and removes screenings** from the Screenings list in the side panel. Before removing one, it says which partners link to it and how many press RSVPs name it, and removes those links with it. Changes show in the partner CRM too.
 - **Logs coverage** with the date, kind (review, article, interview or mention), headline and link. Only web links are made clickable.
+- **Reminds you to follow up.** Set a date and what it's about, and a reminder shows at the top from a week before. A screener you sent two weeks ago with no RSVP or coverage since shows too. Dismiss a reminder and it comes back only if its date changes.
 - **Shows where each outlet stands:** not yet sent a screener, screener sent, coming to a screening, or covered the film. Filter by that, and search names, people, beats and headlines.
 - **Exports CSV and prints** one row per outlet. Also exports project data: project details, people, locations, third-party elements, contracts, assets, music cue sheet details, call sheets or screenings as separate CSV files.
 
@@ -59,13 +60,12 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-A `pressOutlets` list. Each outlet has an `id` and a `type`, and optional `name`, `website`, `notes`, `contacts` (each with `id`, and optional `name`, `beat`, `email`, `phone`), `screeners` (each with `id`, and optional `date`, `contactId`, `url` and `note`), `rsvps` (each with `id`, a `screeningId` and a `status` of `invited`, `yes`, `no` or `attended`, and an optional `contactId`) and `coverage` (each with `id`, and optional `date`, `kind`, `headline`, `url` and `contactId`).
+A `pressOutlets` list. Each outlet has an `id` and a `type`, and optional `name`, `website`, `notes`, `followUpDate` and `followUpWhat` (when to follow up and what about), `dismissedReminders`, `contacts` (each with `id`, and optional `name`, `beat`, `email`, `phone`), `screeners` (each with `id`, and optional `date`, `contactId`, `url` and `note`), `rsvps` (each with `id`, a `screeningId` and a `status` of `invited`, `yes`, `no` or `attended`, and an optional `contactId`) and `coverage` (each with `id`, and optional `date`, `kind`, `headline`, `url` and `contactId`).
 
 It also adds screenings to a shared `screenings` list, each with an `id` and optional `title`, `date`, `place`, `locationId` and `notes`, which the partner CRM uses too. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
-- Reminders for follow-ups with journalists
 - Importing contacts from an address book
 
 ## License

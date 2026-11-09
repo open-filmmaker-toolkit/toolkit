@@ -277,6 +277,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
 
   <main id="main" class="workspace">
     <section aria-labelledby="listHead">
+      <section id="oftReminders" aria-labelledby="oftRemHead" hidden></section>
       <div class="toolbar">
         <h2 id="listHead">Press</h2>
         <span class="count" id="count"></span>
@@ -336,6 +337,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <div class="field"><label for="f-website">Website</label><input id="f-website" type="url" placeholder="https://" autocomplete="off"></div>
       </div>
       <div class="field"><label for="f-notes">Notes</label><textarea id="f-notes" rows="3" placeholder="What they cover, their audience, who introduced you"></textarea></div>
+      <div class="two">
+        <div class="field"><label for="f-follow">Follow up by</label><input id="f-follow" type="date"></div>
+        <div class="field"><label for="f-followWhat">About</label><input id="f-followWhat" type="text" autocomplete="off" placeholder="The review copy, an interview slot"></div>
+      </div>
       <div class="group">
         <h3 id="cHead">People</h3>
         <div class="c-rows" id="cRows" role="group" aria-labelledby="cHead"></div>
@@ -575,6 +580,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('filmTitle').textContent = doc.project.title || 'Untitled film';
     $('filmTitle').classList.toggle('is-empty', !doc.project.title);
     $('filmMeta').textContent = [doc.project.company, doc.project.producer && `Producer: ${doc.project.producer}`].filter(Boolean).join(' · ');
+    oftReminders.render();
     $('fileState').innerHTML = (fileName ? esc(fileName) : 'Not saved to a file yet') + (dirty ? ' · <span class="dirty">Unsaved changes</span>' : '');
     document.title = `${doc.project.title ? doc.project.title + ' · ' : ''}Press list · Open Filmmaker Toolkit`;
 
@@ -680,7 +686,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('f-type').innerHTML = TYPES.map(t => `<option value="${t.id}">${esc(t.label)}</option>`).join('');
     $('rvStatus').innerHTML = RSVP.map(t => `<option value="${t.id}">${esc(t.label)}</option>`).join('');
     $('cvKind').innerHTML = COVERAGE.map(t => `<option value="${t.id}">${esc(t.label)}</option>`).join('');
-    for (const [k, v] of Object.entries({ 'f-name': editing.name, 'f-type': editing.type, 'f-website': editing.website, 'f-notes': editing.notes })) $(k).value = v == null ? '' : String(v);
+    for (const [k, v] of Object.entries({ 'f-name': editing.name, 'f-type': editing.type, 'f-website': editing.website, 'f-notes': editing.notes, 'f-follow': editing.followUpDate, 'f-followWhat': editing.followUpWhat })) $(k).value = v == null ? '' : String(v);
     $('cRows').innerHTML = list(editing, 'contacts').map(cRow).join('');
     for (const id of ['shDate', 'cvDate']) $(id).value = today();
     for (const id of ['shUrl', 'cvHeadline', 'cvUrl', 'scrTitle', 'scrPlace', 'scrDate']) $(id).value = '';
@@ -730,7 +736,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     if (!$('f-name').value.trim()) { $('f-name').setCustomValidity('Name the outlet.'); $('f-name').reportValidity(); return; }
     if ($('scrTitle').value.trim()) addScreening();
     const e = editing;
-    for (const [k, id] of [['name', 'f-name'], ['website', 'f-website'], ['notes', 'f-notes']]) { const v = $(id).value.trim(); if (v) e[k] = v; else delete e[k]; }
+    for (const [k, id] of [['name', 'f-name'], ['website', 'f-website'], ['notes', 'f-notes'], ['followUpDate', 'f-follow'], ['followUpWhat', 'f-followWhat']]) { const v = $(id).value.trim(); if (v) e[k] = v; else delete e[k]; }
     e.type = $('f-type').value;
     const contacts = readContacts();
     if (contacts.length) e.contacts = contacts; else delete e.contacts;
@@ -1650,6 +1656,71 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     return { all, sorted, refs, describe, remove, edit, listHtml };
   })();
   /* oft-shared:screenings end */
+    // Follow-ups you set, and screeners sent two weeks ago with nothing back.
+  const OFT_REMINDERS = {
+    records: () => entries(),
+    open: id => openEditor(id),
+    what: 'Follow-ups show here from a week before the date you set, and a screener shows two weeks after you sent it if nothing has come back. Dismiss one and it comes back only if its date changes.',
+    items: () => entries().flatMap(o => {
+      const out = [], name = o.name || 'an outlet', n = daysUntil(o.followUpDate);
+      if (n != null && n <= 7) out.push({ id: o.id, key: `follow:${o.followUpDate}`, when: o.followUpDate, late: n < 0,
+        text: `${n < 0 ? 'Overdue: follow' : 'Follow'} up with ${name}${o.followUpWhat ? ` about ${o.followUpWhat}` : ''} ${n === 0 ? 'today' : n === 1 ? 'tomorrow' : n < 0 ? `(it was due ${fmtDate(o.followUpDate)})` : `by ${fmtDate(o.followUpDate)}`}.` });
+      const sent = list(o, 'screeners').map(x => x.date).filter(d => daysUntil(d) != null).sort().pop();
+      const back = list(o, 'coverage').some(c => !c.date || c.date >= sent) || list(o, 'rsvps').some(r => r.status === 'yes' || r.status === 'attended' || r.status === 'no');
+      if (sent && !back && daysUntil(sent) <= -14 && !(n != null && n >= 0)) out.push({ id: o.id, key: `screener:${sent}`, when: sent,
+        text: `You sent ${name} a screener on ${fmtDate(sent)} and haven't heard back. Time to check in.` });
+      return out;
+    })
+  };
+  /* oft-shared:reminders begin. Copied from shared/reminders.js by .github/scripts/sync_shared.py; edit it there. */
+  // Reminders shown when you open a tool: what's coming up or overdue. A tool lists them in
+  // OFT_REMINDERS = { records: () => [...], items: () => [{ id, key, text, when?, late? }], open: id => ..., what? },
+  // puts <section id="oftReminders" hidden></section> where they should show, and calls
+  // oftReminders.render() whenever it renders. Each reminder has a key that changes when its
+  // date does; dismissing one keeps its key in the record's dismissedReminders, so a reminder
+  // comes back if the date moves.
+  const oftReminders = (() => {
+    const str = v => (v == null ? '' : String(v));
+    const e = s => str(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+    const R = () => (typeof OFT_REMINDERS !== 'undefined' ? OFT_REMINDERS : null);
+    const rec = id => (R() ? R().records().find(r => r && r.id === id) : null);
+    const dismissed = (r, key) => !!r && Array.isArray(r.dismissedReminders) && r.dismissedReminders.includes(key);
+    function due() {
+      if (!R()) return [];
+      return R().items().filter(i => i && i.id && i.key && !dismissed(rec(i.id), i.key))
+        .sort((a, b) => (b.late ? 1 : 0) - (a.late ? 1 : 0) || str(a.when).localeCompare(str(b.when)));
+    }
+    function dismiss(id, key) {
+      const r = rec(id);
+      if (!r) return;
+      // Only the reminders still showing are kept, so the list doesn't grow forever.
+      const live = new Set(R().items().filter(i => i.id === id).map(i => i.key));
+      r.dismissedReminders = [...new Set([...(Array.isArray(r.dismissedReminders) ? r.dismissedReminders : []).filter(k => live.has(k)), key])];
+      changed();
+    }
+    function render() {
+      const box = document.getElementById('oftReminders');
+      if (!box || !R()) return;
+      const list = due();
+      box.hidden = !list.length;
+      if (!list.length) { box.innerHTML = ''; return; }
+      box.innerHTML = `<div class="oft-rem-head"><h2 id="oftRemHead">Reminders</h2><span class="oft-rem-n">${list.length}</span></div>
+        <ul class="oft-rem-list" aria-labelledby="oftRemHead">${list.map(i => `<li class="${i.late ? 'late' : ''}"><span class="oft-rem-text">${e(i.text)}</span>
+          <span class="oft-rem-acts"><button type="button" class="btn small" data-rem-open="${e(i.id)}">Open</button><button type="button" class="btn small" data-rem-dismiss="${e(i.id)}" data-rem-key="${e(i.key)}" aria-label="Dismiss: ${e(i.text)}">Dismiss</button></span></li>`).join('')}</ul>
+        <p class="oft-rem-note">${e(R().what || 'Reminders show here when you open this tool. Dismiss one and it comes back only if its date changes.')}</p>`;
+    }
+    document.addEventListener('click', ev => {
+      const o = ev.target.closest('[data-rem-open]');
+      if (o) { R().open(o.dataset.remOpen); return; }
+      const d = ev.target.closest('[data-rem-dismiss]');
+      if (d) { const box = document.getElementById('oftReminders'); dismiss(d.dataset.remDismiss, d.dataset.remKey); const next = box && box.querySelector('[data-rem-dismiss]'); if (next) next.focus(); }
+    });
+    const css = document.createElement('style');
+    css.textContent = '#oftReminders { margin: 0 0 16px; padding: 12px 14px; border: 1px solid var(--rule); border-left: 4px solid var(--warn, #9a6700); border-radius: 8px; background: var(--sheet); }\n.oft-rem-head { display: flex; align-items: center; gap: 8px; }\n.oft-rem-head h2 { margin: 0; font-size: 16px; }\n.oft-rem-n { font-size: 13px; color: var(--ink-2); }\n.oft-rem-list { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; }\n.oft-rem-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; font-size: 14px; }\n.oft-rem-list li.late .oft-rem-text { font-weight: 600; }\n.oft-rem-text { flex: 1 1 240px; min-width: 0; overflow-wrap: anywhere; }\n.oft-rem-acts { display: flex; gap: 6px; }\n.oft-rem-note { margin: 8px 0 0; font-size: 13px; color: var(--ink-2); }\n@media print { #oftReminders { display: none !important; } }';
+    document.head.append(css);
+    return { render, due, dismiss };
+  })();
+  /* oft-shared:reminders end */
   /* oft-shared:tool begin. Copied from shared/tool.js by .github/scripts/sync_shared.py; edit it there. */
   // Shared by every tool: your name, remembering the open file, who has it open,
   // who changed what, merging two copies and spotting conflicted copies.

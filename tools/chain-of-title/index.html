@@ -131,6 +131,10 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .picks .sub { color: var(--ink-3); font-size: 12.5px; }
 .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .auto-note { margin: 0; padding: 8px 10px; border-radius: 6px; background: var(--hover); color: var(--ink-2); font-size: 14px; }
+.docs-result h3 { font-size: 15px; margin: 12px 0 4px; }
+.docs-result ul { margin: 0; padding-left: 20px; }
+.docs-result .lang { list-style: none; padding: 0; display: grid; gap: 6px; }
+.docs-result .sub { margin: 0 6px; color: var(--ink-3); font-size: 13px; }
 @media (max-width: 720px) {
   .two { grid-template-columns: 1fr; }
   .row { grid-template-columns: 36px minmax(0, 1fr); }
@@ -251,7 +255,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <span class="count" id="count"></span>
         <span class="spacer"></span>
         <button type="button" class="btn primary" id="addBtn">Add an item</button>
+        <button type="button" class="btn" id="schedBtn">Add a distributor's schedule</button>
         <button type="button" class="btn" id="csvBtn">Export CSV</button>
+        <button type="button" class="btn" id="listSaveBtn">Save your items as a list</button>
+        <button type="button" class="btn" id="listOpenBtn">Add from a list</button>
       </div>
       <p class="hint">The documents a distributor asks for to show the production owns or has the rights to everything in the film, in the order they usually go in the binder. Releases and licenses come from the project; open any item to link its document or mark it not needed. Not legal advice: your distributor's delivery schedule and your attorney decide what the binder needs.</p>
       <div id="sections"></div>
@@ -273,6 +280,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <p class="lead">An index with a tab number for each document, then a cover sheet for each tab.</p>
         <div><button type="button" class="btn" id="printBtn">Print the index and cover sheets</button></div>
       </section>
+      <section class="card" aria-labelledby="docsHead">
+        <div class="card-head"><h2 id="docsHead">The documents</h2></div>
+        <p class="lead">Join the documents in hand into one PDF, in tab order, or check the agreements for work-for-hire or assignment language. You choose the folder they're in; nothing leaves your computer.</p>
+        <div><button type="button" class="btn" id="docsBtn">Work with the documents</button></div>
+      </section>
     </div>
   </main>
 
@@ -281,6 +293,16 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   </footer>
 </div>
 
+<dialog class="modal" id="docsDialog" aria-labelledby="docsTitle">
+  <div class="dlg-head"><h2 id="docsTitle">The documents</h2></div>
+  <div class="dlg-body">
+    <p>Choose the folder your chain of title documents are in. Each document is found by the file recorded for it in the project, or by its name.</p>
+    <p><button type="button" class="btn" id="docsFolderBtn">Choose the folder</button> <span class="hint" id="docsFolderNote" role="status"></span></p>
+    <div class="docs-result" id="docsResult" role="status"></div>
+  </div>
+  <div class="dlg-foot"><button type="button" class="btn" id="checkBtn">Check the agreements' language</button><button type="button" class="btn" id="mergeBtn">Make one PDF</button><span class="spacer"></span><button type="button" class="btn" id="docsClose">Close</button></div>
+</dialog>
+<input type="file" id="docsFolder" webkitdirectory multiple hidden>
 <dialog class="drawer" id="editor" aria-labelledby="editorTitle">
   <form id="editorForm" method="dialog" novalidate>
     <div class="dlg-head"><h2 id="editorTitle">Item</h2></div>
@@ -418,7 +440,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const isDay = s => /^\d{4}-\d{2}-\d{2}$/.test(str(s));
   const isRelease = c => /release/i.test(str(c.type));
   // Materials releases cover someone's photos or documents, not appearing on camera or a place.
-  const coversAppearance = c => isRelease(c) && !/material/i.test(str(c.type));
+  const coversAppearance = c => isRelease(c) && !/material|model release|property release/i.test(str(c.type));
   function releaseState(c) {
     if (c.status === 'signed') return isDay(c.expirationDate) && c.expirationDate < today() ? 'expired' : 'signed';
     if (c.status === 'pending' || c.status === 'declined') return c.status;
@@ -549,6 +571,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         for (const c of d.contracts) flags.push(`<span class="flag linked">${esc(cLabel(c))}</span>`);
         for (const a of d.assets) flags.push(`<span class="flag linked">${esc(a.relativePath || a.name || 'File')}</span>`);
         if (x.state.why) flags.push(`<span class="flag ${x.state.id === 'missing' ? 'problem' : 'linked'}">${esc(x.state.why)}</span>`);
+        if (x.schedule) flags.push(`<span class="flag new">On ${esc(x.schedule)}'s schedule</span>`);
+        const lc = (saved(x.key) || {}).languageCheck;
+        if (lc && Array.isArray(lc.found)) flags.push(`<span class="flag ${lc.found.length ? 'linked' : 'problem'}">${esc(langText(x))}</span>`);
         return `<li class="row${x.state.id === 'na' ? ' na' : ''}" data-key="${esc(x.key)}"><span class="tab">${x.tab ? esc(String(x.tab)) : '—'}</span>
           <button type="button" class="what" data-edit="${esc(x.key)}"><span class="nm">${esc(x.title)}</span>${x.hint ? `<span class="tt">${esc(x.hint)}</span>` : ''}</button>
           <span class="st st-${x.state.id}">${esc(STATE_LABEL[x.state.id])}</span>
@@ -605,7 +630,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     if (a.length) r.assetIds = a; else delete r.assetIds;
     if (!r.key) r.key = r.id;
     const i = stored().findIndex(y => y.key === r.key);
-    const empty = !r.custom && !r.status && !r.note && !r.contractIds && !r.assetIds;
+    const empty = !r.custom && !r.status && !r.note && !r.contractIds && !r.assetIds && !r.languageCheck;
     if (i >= 0) { if (empty) stored().splice(i, 1); else stored()[i] = r; } else if (!empty) stored().push(r);
     $('editor').close();
     changed();
@@ -617,9 +642,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   }
 
   // ---------- CSV and print ----------
-  const CSV_HEAD = ['Tab', 'Section', 'Document', 'Status', 'Why', 'Agreements', 'Files', 'Note'];
+  const CSV_HEAD = ['Tab', 'Section', 'Document', 'Status', 'Why', 'Agreements', 'Files', 'Note', "Distributor's schedule", 'Agreement language'];
   function exportCsv() {
-    const rows = numbered(items()).map(x => { const d = docsOf(x); return [x.tab || '', SECTIONS.find(s => s.id === x.section).label, x.title, STATE_LABEL[x.state.id], x.state.why, d.contracts.map(cLabel).join('; '), d.assets.map(a => a.relativePath || a.name).join('; '), (saved(x.key) || {}).note]; });
+    const rows = numbered(items()).map(x => { const d = docsOf(x); return [x.tab || '', SECTIONS.find(s => s.id === x.section).label, x.title, STATE_LABEL[x.state.id], x.state.why, d.contracts.map(cLabel).join('; '), d.assets.map(a => a.relativePath || a.name).join('; '), (saved(x.key) || {}).note, x.schedule, langText(x)]; });
     const csv = '﻿' + [CSV_HEAD, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
     const name = `${slug()}-chain-of-title.csv`;
     download(csv, name, 'text/csv;charset=utf-8');
@@ -863,6 +888,15 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('projectForm').addEventListener('submit', ev => { ev.preventDefault(); saveProjectDialog(); });
     $('projectCancel').onclick = () => $('projectDialog').close();
     $('addBtn').onclick = () => openEditor(null);
+    $('schedBtn').onclick = () => oftSchedule.open();
+    $('listSaveBtn').onclick = () => oftLists.save();
+    $('listOpenBtn').onclick = () => oftLists.open();
+    $('docsBtn').onclick = openDocs;
+    $('docsFolderBtn').onclick = () => $('docsFolder').click();
+    $('docsFolder').addEventListener('change', () => { folder = [...$('docsFolder').files]; $('docsFolder').value = ''; openDocs(); });
+    $('docsClose').onclick = () => $('docsDialog').close();
+    $('mergeBtn').onclick = async () => { $('mergeBtn').disabled = true; try { await makePdf(); } finally { $('mergeBtn').disabled = false; } };
+    $('checkBtn').onclick = async () => { $('checkBtn').disabled = true; try { await checkLanguage(); } finally { $('checkBtn').disabled = false; } };
     $('csvBtn').onclick = exportCsv;
     for (const id of ['sections', 'missing']) $(id).addEventListener('click', ev => { const b = ev.target.closest('[data-edit]'); if (b) openEditor(b.dataset.edit); });
     $('editorForm').addEventListener('submit', ev => { ev.preventDefault(); saveEditor(); });
@@ -889,6 +923,418 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   document.documentElement.classList.remove('no-js');
   window.addEventListener('error', ev => toast(`Something went wrong: ${ev.message}. Save your work, then reload the page.`, true));
   window.addEventListener('unhandledrejection', ev => toast(`Something went wrong: ${ev.reason && ev.reason.message ? ev.reason.message : ev.reason}. Save your work, then reload the page.`, true));
+    // A distributor's delivery schedule, pasted in, and lists of your own items to share.
+  const guessSection = t => (/release/i.test(t) ? 'releases' : /licen|clearance|music|archiv|footage/i.test(t) ? 'licenses' : /copyright|title report|title opinion|title search/i.test(t) ? 'copyright' : /option|life rights|underlying|book|article/i.test(t) ? 'underlying' : /insurance|e&o|errors and omissions|cue sheet|opinion|certificate|lab access/i.test(t) ? 'other' : 'agreements');
+  const OFT_SCHEDULE = {
+    noun: 'document', sections: SECTIONS.map(s => [s.id, s.label]), guess: guessSection,
+    has: (title, from) => items().some(i => norm(i.title) === norm(title) && (!from || !i.schedule || norm(i.schedule) === norm(from))),
+    add: (from, rows) => { for (const r of rows) { const id = newId('binder'); stored().push({ id, key: id, custom: true, title: r.title, section: r.section, schedule: from }); } changed(); return rows.length; }
+  };
+  const OFT_LIST = {
+    kind: 'chain-of-title-schedule', title: 'Chain of title documents', noun: 'document', nouns: 'documents',
+    items: () => stored().filter(x => x.custom && x.title).map(x => Object.assign({ title: x.title, section: x.section }, x.schedule ? { schedule: x.schedule } : {})),
+    label: i => str(i.title), detail: i => [i.schedule && `${i.schedule}'s schedule`, (SECTIONS.find(s => s.id === i.section) || {}).label].filter(Boolean).join(' · '),
+    has: i => items().some(x => norm(x.title) === norm(i.title)),
+    add: list => { for (const i of list) { const id = newId('binder'); stored().push(Object.assign({ id, key: id, custom: true, title: str(i.title), section: SECTIONS.some(s => s.id === i.section) ? i.section : guessSection(str(i.title)) }, i.schedule ? { schedule: str(i.schedule) } : {})); } changed(); return list.length; }
+  };
+
+  // ---------- The documents themselves ----------
+  // You pick the folder the documents are in; nothing leaves the computer. Each item's files are found
+  // by the path recorded in the project, or failing that by file name.
+  let folder = null;
+  function fileFor(a) {
+    if (!folder) return null;
+    const p = str(a.relativePath).trim().replace(/\\/g, '/').toLowerCase(), base = p.split('/').pop() || str(a.name).toLowerCase();
+    const rel = f => str(f.webkitRelativePath || f.name).toLowerCase();
+    return (p && folder.find(f => rel(f) === p || rel(f).endsWith('/' + p) || p.endsWith('/' + rel(f)))) || (base && folder.find(f => f.name.toLowerCase() === base)) || null;
+  }
+  // The files for an item: its own, and for the crew deal memos, each signed deal memo's.
+  const filesOf = x => [...new Set([...docsOf(x).assets, ...(x.auto === 'dealmemos' ? doc.contracts.filter(c => c && c.type === 'deal memo').flatMap(c => arr(c.assetIds).map(asset).filter(Boolean)) : [])])];
+  function openDocs() {
+    $('docsFolderNote').textContent = folder ? `${folder.length} file${folder.length === 1 ? '' : 's'} in the folder you chose.` : 'No folder chosen yet.';
+    $('mergeBtn').disabled = $('checkBtn').disabled = !folder;
+    if (!$('docsDialog').open) { $('docsResult').innerHTML = ''; $('docsDialog').showModal(); }
+  }
+  async function makePdf() {
+    const list = numbered(items()).filter(x => x.state.id === 'have'), bufs = [], notPdf = [], notFound = [], bad = [];
+    for (const x of list) for (const a of filesOf(x)) {
+      const f = fileFor(a);
+      if (!f) { notFound.push(`${x.tab}. ${a.relativePath || a.name}`); continue; }
+      if (!oftDocs.isPdf(f)) { notPdf.push(`${x.tab}. ${f.name}`); continue; }
+      bufs.push({ x, f, buf: await f.arrayBuffer() });
+    }
+    if (!bufs.length) { $('docsResult').innerHTML = `<p>None of the documents in hand are PDFs in that folder.</p>${listOf('Not in the folder', notFound)}${listOf('Not PDFs', notPdf)}`; return; }
+    let merged = null, use = bufs;
+    for (;;) {
+      try { merged = await oftDocs.merge(use.map(b => b.buf)); break; }
+      catch (err) {
+        // Leave out the file that can't be read and try again with the rest.
+        let found = false;
+        for (const b of use) { try { await oftDocs.merge([b.buf]); } catch (e2) { bad.push(`${b.x.tab}. ${b.f.name}: ${e2.message || e2}`); use = use.filter(y => y !== b); found = true; break; } }
+        if (!found || !use.length) { $('docsResult').innerHTML = `<p>Couldn't join the PDFs: ${esc(err.message || err)}.</p>`; return; }
+      }
+    }
+    const name = `${slug()}-chain-of-title.pdf`;
+    download(merged.blob, name, 'application/pdf');
+    $('docsResult').innerHTML = `<p>Downloaded ${esc(name)}: ${use.length} document${use.length === 1 ? '' : 's'}, ${merged.pages} page${merged.pages === 1 ? '' : 's'}, in tab order.</p>${listOf('Not in the folder', notFound)}${listOf('Not PDFs, so left out', notPdf)}${listOf("Couldn't be read", bad)}`;
+  }
+  const listOf = (h, l) => (l.length ? `<h3>${esc(h)}</h3><ul>${l.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '');
+  // Words that make an agreement's work belong to the production: work made for hire, or an assignment.
+  const WFH = ['workmadeforhire', 'worksmadeforhire', 'workforhire', 'worksforhire'];
+  const ASSIGN = ['herebyassign', 'herebyirrevocablyassign', 'irrevocablyassign', 'herebytransfersandassign', 'herebygrantsandassign', 'righttitleandinterest'];
+  async function checkLanguage() {
+    const out = [];
+    for (const x of numbered(items()).filter(i => i.section === 'agreements' || i.section === 'underlying')) {
+      for (const a of filesOf(x)) {
+        const f = fileFor(a); if (!f) continue;
+        let found = [], problem = '';
+        try { const t = (await oftDocs.text(f)).toLowerCase().replace(/[^a-z]/g, ''); if (WFH.some(w => t.includes(w))) found.push('work for hire'); if (ASSIGN.some(w => t.includes(w))) found.push('assignment'); }
+        catch (err) { problem = `${f.name} ${err.message || err}`; }
+        out.push({ x, f, found, problem });
+      }
+    }
+    const today0 = today();
+    for (const r of out) {
+      if (r.problem) continue;
+      const rec = recFor(r.x);
+      rec.languageCheck = { date: today0, file: r.f.webkitRelativePath || r.f.name, found: r.found };
+      putRec(rec);
+    }
+    if (out.some(r => !r.problem)) changed();
+    $('docsResult').innerHTML = out.length ? `<ul class="lang">${out.map(r => `<li><b>${esc(r.x.title)}</b><span class="sub">${esc(r.f.name)}</span> ${r.problem ? `<span class="flag changed">${esc(r.problem)}</span>` : r.found.length ? `<span class="flag linked">Has ${esc(r.found.join(' and '))} language</span>` : '<span class="flag problem">No work-for-hire or assignment language found</span>'}</li>`).join('')}</ul><p class="hint">This only looks for the usual words. It isn't legal advice: have your attorney read the agreements.</p>` : '<p>No agreements with a file in that folder.</p>';
+  }
+  const recFor = x => structuredClone(saved(x.key) || { id: newId('binder'), key: x.key });
+  function putRec(r) { const i = stored().findIndex(y => y.key === r.key); if (i >= 0) stored()[i] = r; else stored().push(r); }
+  const langText = x => { const c = (saved(x.key) || {}).languageCheck; return c && Array.isArray(c.found) ? (c.found.length ? `Has ${c.found.join(' and ')} language (${c.file})` : `No work-for-hire or assignment language found in ${c.file}`) : ''; };
+  /* oft-shared:schedule begin. Copied from shared/schedule.js by .github/scripts/sync_shared.py; edit it there. */
+  // Adding a distributor's delivery schedule: paste the list from their schedule, one item a line,
+  // and each becomes an item of your own, marked with the distributor's name. A tool defines
+  // OFT_SCHEDULE = { noun, sections: [[id, label]], guess: line => sectionId, has: (title, distributor) => bool,
+  // add: (distributor, [{ title, section }]) => number } and calls oftSchedule.open() from its own button.
+  const oftSchedule = (() => {
+    const str = v => (v == null ? '' : String(v));
+    const e = s => str(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+    const S = () => OFT_SCHEDULE;
+    // Lines from a pasted schedule: numbering, bullets and tick boxes taken off, headings and blanks left out.
+    function lines(text) {
+      return str(text).split(/\r?\n/).map(l => l.replace(/^\s*(?:[-*•▪◦☐□✓✔]|\(?[0-9a-zA-Z]{1,3}[.)]|\[\s?[xX]?\s?\])\s+/, '').replace(/\s+/g, ' ').trim())
+        .filter(l => l.length > 2 && !/:$/.test(l) && !/^(delivery schedule|deliverables?|page \d+)/i.test(l));
+    }
+    function dialog() {
+      let dlg = document.getElementById('oftSchedDialog');
+      if (dlg) return dlg;
+      dlg = document.createElement('dialog');
+      dlg.className = 'oft-dialog'; dlg.id = 'oftSchedDialog'; dlg.setAttribute('aria-labelledby', 'oftSchedTitle');
+      dlg.innerHTML = `<h2 id="oftSchedTitle">Add a distributor's delivery schedule</h2>
+    <p>Copy the list from the distributor's delivery schedule and paste it here, one item a line. Each line becomes an item marked with their name; you can change its section afterwards.</p>
+    <p><label for="oftSchedName">Distributor</label><br><input id="oftSchedName" type="text" autocomplete="off" placeholder="The distributor or platform"></p>
+    <p><label for="oftSchedText">Their schedule</label><br><textarea id="oftSchedText" rows="8"></textarea></p>
+    <p class="oft-sched-note" id="oftSchedNote" role="status"></p>
+    <div class="oft-actions"><button type="button" class="btn" id="oftSchedCancel">Cancel</button><button type="button" class="btn primary" id="oftSchedAdd">Add them</button></div>`;
+      document.body.append(dlg);
+      const css = document.createElement('style');
+      css.textContent = '#oftSchedDialog input, #oftSchedDialog textarea { width: 100%; box-sizing: border-box; font: inherit; }\n.oft-sched-note { font-size: 13px; color: var(--ink-2); min-height: 1.2em; }';
+      document.head.append(css);
+      const note = () => {
+        const name = dlg.querySelector('#oftSchedName').value.trim(), ls = lines(dlg.querySelector('#oftSchedText').value);
+        const fresh = ls.filter(l => !S().has(l, name));
+        dlg.querySelector('#oftSchedNote').textContent = ls.length ? `${fresh.length} ${fresh.length === 1 ? S().noun : S().noun + 's'} to add${ls.length > fresh.length ? `, ${ls.length - fresh.length} already on the list` : ''}.` : '';
+      };
+      dlg.addEventListener('input', note);
+      dlg.querySelector('#oftSchedCancel').onclick = () => dlg.close();
+      dlg.querySelector('#oftSchedAdd').onclick = () => {
+        const nameEl = dlg.querySelector('#oftSchedName'), textEl = dlg.querySelector('#oftSchedText'), name = nameEl.value.trim();
+        if (!name) { nameEl.setCustomValidity('Name the distributor.'); nameEl.reportValidity(); return; }
+        const ls = lines(textEl.value).filter(l => !S().has(l, name));
+        if (!ls.length) { textEl.setCustomValidity('Paste the items from the schedule.'); textEl.reportValidity(); return; }
+        const n = S().add(name, ls.map(title => ({ title, section: S().guess(title) })));
+        dlg.close();
+        toast(`Added ${n} ${n === 1 ? S().noun : S().noun + 's'} from ${name}'s schedule.`);
+      };
+      for (const id of ['oftSchedName', 'oftSchedText']) dlg.querySelector('#' + id).addEventListener('input', ev => ev.target.setCustomValidity(''));
+      return dlg;
+    }
+    function open() {
+      const dlg = dialog();
+      dlg.querySelector('#oftSchedName').value = '';
+      dlg.querySelector('#oftSchedText').value = '';
+      dlg.querySelector('#oftSchedNote').textContent = '';
+      dlg.showModal();
+      dlg.querySelector('#oftSchedName').focus();
+    }
+    return { open, lines };
+  })();
+  /* oft-shared:schedule end */
+  /* oft-shared:lists begin. Copied from shared/lists.js by .github/scripts/sync_shared.py; edit it there. */
+  // Lists to share between projects: funders and their usual deadlines, festivals, and the like.
+  // A list is a small JSON file, { format: "oft-list", formatVersion: 1, kind, title, savedAt, items },
+  // that a team keeps in a shared folder or passes around; nothing is fetched from anywhere.
+  // A tool describes its list in OFT_LIST = { kind, title, noun, nouns, items: () => [...],
+  // label: item => '', detail: item => '', has: item => bool, add: items => number }
+  // and calls oftLists.save() and oftLists.open() from its own buttons.
+  const oftLists = (() => {
+    const str = v => (v == null ? '' : String(v));
+    const e = s => str(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+    const L = () => OFT_LIST;
+    const plural = (n, a, b) => `${n} ${n === 1 ? a : b}`;
+    function save() {
+      const items = L().items();
+      if (!items.length) { toast(`There are no ${L().nouns} to put in a list yet.`); return; }
+      const out = { format: 'oft-list', formatVersion: 1, kind: L().kind, title: `${L().title}${doc.project && doc.project.title ? `, from ${doc.project.title}` : ''}`, savedAt: new Date().toISOString(), items };
+      const name = `${slug()}-${L().kind}-list.json`;
+      download(JSON.stringify(out, null, 2) + '\n', name, 'application/json');
+      toast(`Saved ${plural(items.length, L().noun, L().nouns)} to ${name}. Open it from another project to add them there.`);
+    }
+    function dialog() {
+      let dlg = document.getElementById('oftListDialog');
+      if (dlg) return dlg;
+      dlg = document.createElement('dialog');
+      dlg.className = 'oft-dialog'; dlg.id = 'oftListDialog'; dlg.setAttribute('aria-labelledby', 'oftListTitle');
+      dlg.innerHTML = `<h2 id="oftListTitle"></h2><p id="oftListIntro"></p>
+    <p><button type="button" class="btn small" id="oftListAll">Tick all</button> <button type="button" class="btn small" id="oftListNone">Untick all</button></p>
+    <fieldset class="oft-list-items" id="oftListItems"><legend class="oft-vh">Pick what to add</legend></fieldset>
+    <div class="oft-actions"><button type="button" class="btn" id="oftListCancel">Cancel</button><button type="button" class="btn primary" id="oftListAdd">Add</button></div>`;
+      document.body.append(dlg);
+      const css = document.createElement('style');
+      css.textContent = '.oft-list-items { border: 0; margin: 0 0 12px; padding: 0; min-width: 0; display: grid; gap: 6px; max-height: 50vh; overflow-y: auto; }\n.oft-list-items label { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; }\n.oft-list-items input { margin-top: 3px; }\n.oft-list-items small { display: block; color: var(--ink-2); }\n.oft-vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }';
+      document.head.append(css);
+      dlg.querySelector('#oftListCancel').onclick = () => dlg.close();
+      dlg.querySelector('#oftListAll').onclick = () => dlg.querySelectorAll('#oftListItems input:not(:disabled)').forEach(i => { i.checked = true; });
+      dlg.querySelector('#oftListNone').onclick = () => dlg.querySelectorAll('#oftListItems input').forEach(i => { i.checked = false; });
+      return dlg;
+    }
+    function show(list, fileName) {
+      const items = (Array.isArray(list.items) ? list.items : []).filter(x => x && typeof x === 'object');
+      const dlg = dialog(), $ = q => dlg.querySelector(q);
+      $('#oftListTitle').textContent = `Add from ${list.title || fileName}`;
+      const fresh = items.filter(i => !L().has(i)).length;
+      $('#oftListIntro').textContent = `${plural(items.length, L().noun, L().nouns)} in the list${items.length - fresh ? `, ${items.length - fresh} already in this project` : ''}. Pick the ones to add. Check their dates and details: a shared list is only as current as whoever saved it.`;
+      $('#oftListItems').innerHTML = '<legend class="oft-vh">Pick what to add</legend>' + items.map((it, k) => {
+        const have = L().has(it);
+        return `<label><input type="checkbox" value="${k}"${have ? ' disabled' : ' checked'}><span>${e(L().label(it))}<small>${e(have ? 'Already in this project' : L().detail(it))}</small></span></label>`;
+      }).join('');
+      $('#oftListAdd').onclick = () => {
+        const picked = [...dlg.querySelectorAll('#oftListItems input:checked')].map(i => items[+i.value]);
+        if (!picked.length) { dlg.close(); return; }
+        const n = L().add(picked);
+        dlg.close();
+        changed();
+        toast(`Added ${plural(n, L().noun, L().nouns)} from the list.`);
+      };
+      dlg.showModal();
+    }
+    function open() {
+      const input = document.createElement('input');
+      input.type = 'file'; input.accept = '.json,application/json'; input.hidden = true;
+      document.body.append(input);
+      input.onchange = async () => {
+        const f = input.files[0];
+        input.remove();
+        if (!f) return;
+        let list;
+        try { list = JSON.parse(await f.text()); } catch { toast(`${f.name} isn't a list file this tool can read.`); return; }
+        if (!list || list.format !== 'oft-list') { toast(`${f.name} isn't a shared list. Save one with "Save a list" in this tool.`); return; }
+        if (list.kind !== L().kind) { toast(`${f.name} is a list of ${str(list.kind) || 'something else'}, not ${L().nouns}.`); return; }
+        show(list, f.name);
+      };
+      input.click();
+    }
+    return { save, open, show };
+  })();
+  /* oft-shared:lists end */
+  /* oft-shared:docs begin. Copied from shared/docs.js by .github/scripts/sync_shared.py; edit it there. */
+  // Reading and joining documents in the browser, with no library: the text of a Word document or a PDF,
+  // and several PDFs joined into one. PDFs locked with a password, and scans with no text in them, can't be read.
+  // oftDocs.text(file) resolves to the text, a line for each paragraph or line; oftDocs.merge([ArrayBuffer]) to a Blob.
+  const oftDocs = (() => {
+    const dec = new TextDecoder();
+    const latin = u => { let t = ''; for (let i = 0; i < u.length; i += 8192) t += String.fromCharCode.apply(null, u.subarray(i, i + 8192)); return t; };
+    const unlatin = s => { const u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i) & 255; return u; };
+    const inflate = async (bytes, raw) => new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream(raw ? 'deflate-raw' : 'deflate'))).arrayBuffer());
+    const canInflate = () => typeof DecompressionStream !== 'undefined';
+
+    // ---------- Word ----------
+    async function docxText(buf) {
+      const b = new Uint8Array(buf), dv = new DataView(buf);
+      let e = -1;
+      for (let i = b.length - 22; i >= Math.max(0, b.length - 66000); i--) if (dv.getUint32(i, true) === 0x06054b50) { e = i; break; }
+      if (e < 0) throw new Error("isn't a Word document");
+      let p = dv.getUint32(e + 16, true);
+      const n = dv.getUint16(e + 10, true);
+      for (let k = 0; k < n; k++) {
+        if (dv.getUint32(p, true) !== 0x02014b50) break;
+        const method = dv.getUint16(p + 10, true), size = dv.getUint32(p + 20, true), nl = dv.getUint16(p + 28, true), xl = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true), off = dv.getUint32(p + 42, true);
+        const fname = dec.decode(b.subarray(p + 46, p + 46 + nl));
+        p += 46 + nl + xl + cl;
+        if (fname !== 'word/document.xml') continue;
+        const start = off + 30 + dv.getUint16(off + 26, true) + dv.getUint16(off + 28, true), data = b.subarray(start, start + size);
+        let xml;
+        if (method === 0) xml = dec.decode(data);
+        else if (method === 8 && canInflate()) xml = dec.decode(await inflate(data, true));
+        else throw new Error("can't be unpacked in this browser");
+        const d = new DOMParser().parseFromString(xml, 'application/xml'), W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+        return [...d.getElementsByTagNameNS(W, 'p')].map(par => [...par.getElementsByTagNameNS(W, '*')].map(x => (x.localName === 't' ? x.textContent : x.localName === 'tab' || x.localName === 'br' ? ' ' : '')).join('')).join('\n');
+      }
+      throw new Error("isn't a Word document");
+    }
+
+    // ---------- PDF ----------
+    // Every object in the file, by number, with its dictionary as text and its stream as stored.
+    // Objects packed into object streams are unpacked; a later copy of an object replaces an earlier one.
+    async function parsePdf(buf) {
+      const b = new Uint8Array(buf), raw = latin(b);
+      if (!raw.startsWith('%PDF')) throw new Error("isn't a PDF");
+      if (/\/Encrypt\s/.test(raw)) throw new Error('is locked with a password');
+      const objs = new Map(), re = /(\d+)\s+(\d+)\s+obj\b/g;
+      let m;
+      while ((m = re.exec(raw))) {
+        const at = m.index + m[0].length, stop = raw.indexOf('endobj', at);
+        let body = raw.slice(at, stop < 0 ? undefined : stop);
+        const si = body.search(/\bstream\r?\n/);
+        const o = { dict: (si >= 0 ? body.slice(0, si) : body).trim() };
+        if (si >= 0) {
+          let st = at + si + 6; if (raw[st] === '\r') st++; if (raw[st] === '\n') st++;
+          const lm = /\/Length\s+(\d+)(?!\s+\d+\s+R)/.exec(o.dict);
+          let end = lm ? st + +lm[1] : -1;
+          if (end < 0 || raw.slice(end, end + 30).indexOf('endstream') < 0) { end = raw.indexOf('endstream', st); while (end > st && (raw[end - 1] === '\n' || raw[end - 1] === '\r')) end--; }
+          o.raw = b.subarray(st, end);
+        }
+        objs.set(+m[1], o);
+        if (stop > 0) re.lastIndex = stop;
+      }
+      const data = async o => {
+        if (!o.raw) return null;
+        if (o.data) return o.data;
+        if (/\/FlateDecode/.test(o.dict)) { if (!canInflate()) throw new Error("can't be read in this browser"); try { o.data = await inflate(o.raw); } catch { o.data = new Uint8Array(0); } }
+        else o.data = /\/Filter/.test(o.dict) ? new Uint8Array(0) : o.raw;
+        return o.data;
+      };
+      for (const o of [...objs.values()]) if (/\/Type\s*\/ObjStm/.test(o.dict)) {
+        const t = latin(await data(o)), n = +(/\/N\s+(\d+)/.exec(o.dict) || [])[1], first = +(/\/First\s+(\d+)/.exec(o.dict) || [])[1];
+        const nums = t.slice(0, first).trim().split(/\s+/).map(Number);
+        for (let k = 0; k < n; k++) { const from = first + nums[2 * k + 1], to = k + 1 < n ? first + nums[2 * k + 3] : t.length; if (!objs.has(nums[2 * k])) objs.set(nums[2 * k], { dict: t.slice(from, to).trim(), packed: true }); }
+      }
+      const roots = [...raw.matchAll(/\/Root\s+(\d+)\s+\d+\s+R/g)];
+      const root = roots.length ? +roots[roots.length - 1][1] : [...objs].find(([, o]) => /\/Type\s*\/Catalog/.test(o.dict))?.[0];
+      return { objs, root, data };
+    }
+    const ref = (dict, key) => { const m = new RegExp(`/${key}\\s+(\\d+)\\s+\\d+\\s+R`).exec(dict); return m ? +m[1] : null; };
+    const refs = (dict, key) => { const m = new RegExp(`/${key}\\s*\\[([^\\]]*)\\]`).exec(dict); return m ? [...m[1].matchAll(/(\d+)\s+\d+\s+R/g)].map(x => +x[1]) : ref(dict, key) != null ? [ref(dict, key)] : []; };
+    // The page objects in order, walking the page tree from the catalog.
+    function pages(p) {
+      const cat = p.objs.get(p.root), out = [], seen = new Set();
+      const walk = n => { if (seen.has(n)) return; seen.add(n); const o = p.objs.get(n); if (!o) return; if (/\/Type\s*\/Pages\b/.test(o.dict)) refs(o.dict, 'Kids').forEach(walk); else out.push(n); };
+      if (cat) { const r = ref(cat.dict, 'Pages'); if (r != null) walk(r); }
+      return out;
+    }
+    // bfchar and bfrange entries of a ToUnicode map: character codes to text.
+    function cmap(t) {
+      const map = new Map(), hex = h => { let s = ''; for (let i = 0; i + 4 <= h.length; i += 4) s += String.fromCharCode(parseInt(h.slice(i, i + 4), 16)); return s || String.fromCharCode(parseInt(h, 16)); };
+      for (const blk of t.matchAll(/beginbfchar([\s\S]*?)endbfchar/g)) for (const x of blk[1].matchAll(/<([0-9a-fA-F]+)>\s*<([0-9a-fA-F]+)>/g)) map.set(parseInt(x[1], 16), hex(x[2]));
+      for (const blk of t.matchAll(/beginbfrange([\s\S]*?)endbfrange/g)) for (const x of blk[1].matchAll(/<([0-9a-fA-F]+)>\s*<([0-9a-fA-F]+)>\s*(<[0-9a-fA-F]+>|\[[^\]]*\])/g)) {
+        const a = parseInt(x[1], 16), z = parseInt(x[2], 16);
+        if (x[3][0] === '[') [...x[3].matchAll(/<([0-9a-fA-F]+)>/g)].forEach((y, k) => map.set(a + k, hex(y[1])));
+        else { const base = x[3].slice(1, -1), lo = parseInt(base.slice(-4), 16), pre = base.length > 4 ? hex(base.slice(0, -4)) : ''; for (let c = a; c <= z && c - a < 65536; c++) map.set(c, pre + String.fromCharCode(lo + c - a)); }
+      }
+      return map;
+    }
+    // The fonts a page or form uses, by resource name: how to turn its character codes into text.
+    async function fonts(p, dict) {
+      const out = new Map();
+      let res = dict, r = ref(dict, 'Resources');
+      if (r != null && p.objs.get(r)) res = p.objs.get(r).dict;
+      let fd = /\/Font\s*<<([\s\S]*?)>>/.exec(res), fdText = fd ? fd[1] : '';
+      const fr = ref(res, 'Font'); if (!fd && fr != null && p.objs.get(fr)) fdText = p.objs.get(fr).dict;
+      for (const f of fdText.matchAll(/\/([^\s/<>\[\]()]+)\s+(\d+)\s+\d+\s+R/g)) {
+        const font = p.objs.get(+f[2]); if (!font) continue;
+        const tu = ref(font.dict, 'ToUnicode'), cm = tu != null && p.objs.get(tu);
+        out.set(f[1], { map: cm && cm.raw ? cmap(latin(await p.data(cm))) : null, two: /Type0|Identity-H/.test(font.dict) });
+      }
+      return out;
+    }
+    // Text shown by a content stream, a new line whenever the text moves down the page.
+    function lines(t, fontsOf) {
+      const out = []; let line = '', font = null, y = null;
+      const flush = () => { if (line.trim()) out.push(line.replace(/\s+/g, ' ').trim()); line = ''; };
+      const decode = bytes => { if (!font || !font.map) return bytes.map(c => String.fromCharCode(c)).join(''); const w = font.two ? 2 : 1; let s = ''; for (let i = 0; i + w <= bytes.length; i += w) { const c = w === 2 ? bytes[i] * 256 + bytes[i + 1] : bytes[i]; s += font.map.get(c) || ''; } return s; };
+      const lit = s => { const o = []; for (let i = 0; i < s.length; i++) { const c = s[i]; if (c !== '\\') { o.push(c.charCodeAt(0)); continue; } const n = s[++i], esc = { n: 10, r: 13, t: 9, b: 8, f: 12 }[n]; if (esc != null) o.push(esc); else if (/[0-7]/.test(n)) { let d = n; while (d.length < 3 && /[0-7]/.test(s[i + 1])) d += s[++i]; o.push(parseInt(d, 8) & 255); } else if (n === '\r' || n === '\n') { if (n === '\r' && s[i + 1] === '\n') i++; } else if (n != null) o.push(n.charCodeAt(0)); } return o; };
+      const hexb = h => { h = h.replace(/\s+/g, ''); if (h.length % 2) h += '0'; const o = []; for (let i = 0; i < h.length; i += 2) o.push(parseInt(h.slice(i, i + 2), 16)); return o; };
+      const str1 = k => (k[0] === '(' ? decode(lit(k.slice(1, -1))) : decode(hexb(k.slice(1, -1))));
+      const tok = /\((?:\\[\s\S]|[^\\)])*\)|<[0-9a-fA-F\s]*>|\[(?:\((?:\\[\s\S]|[^\\)])*\)|<[0-9a-fA-F\s]*>|[^\]])*\]|\/[^\s/\[\]()<>]+|-?\d*\.?\d+|[A-Za-z'"*]+/g;
+      const stack = [];
+      let mm;
+      while ((mm = tok.exec(t))) {
+        const k = mm[0];
+        if (!/^[A-Za-z'"*]+$/.test(k)) { stack.push(k); continue; }
+        const top = stack[stack.length - 1];
+        if (k === 'Tf') font = fontsOf.get(String(stack[stack.length - 2] || '').slice(1)) || null;
+        else if (k === 'Tj') { if (top) line += str1(top); }
+        else if (k === "'" || k === '"') { flush(); if (top) line += str1(top); }
+        else if (k === 'TJ') { for (const part of String(top || '').matchAll(/\((?:\\[\s\S]|[^\\)])*\)|<[0-9a-fA-F\s]*>|-?\d*\.?\d+/g)) { const q = part[0]; if (q[0] === '(' || q[0] === '<') line += str1(q); else if (+q < -200) line += ' '; } }
+        else if (k === 'Td' || k === 'TD') { if (+top) flush(); else line += ' '; }
+        else if (k === 'Tm') { const ny = +top; if (y == null || Math.abs(ny - y) > 1) flush(); else line += ' '; y = ny; }
+        else if (k === 'T*' || k === 'ET') flush();
+        stack.length = 0;
+      }
+      flush();
+      return out;
+    }
+    async function pdfText(buf) {
+      const p = await parsePdf(buf), out = [];
+      for (const n of pages(p)) {
+        const pg = p.objs.get(n), f = await fonts(p, pg.dict);
+        for (const c of refs(pg.dict, 'Contents')) { const o = p.objs.get(c); if (o && o.raw) out.push(...lines(latin(await p.data(o)), f)); }
+      }
+      return out.join('\n');
+    }
+
+    // Several PDFs as one: each file's page tree goes under a new one, so pages keep what they inherit.
+    async function merge(buffers) {
+      const chunks = [], offsets = [];
+      let size = 0, next = 3;
+      const put = u => { chunks.push(u); size += u.length; };
+      const kids = [];
+      let count = 0;
+      put(unlatin('%PDF-1.7\n%\xe2\xe3\xcf\xd3\n'));
+      for (const buf of buffers) {
+        const p = await parsePdf(buf), cat = p.objs.get(p.root), pr = cat && ref(cat.dict, 'Pages');
+        if (pr == null || !p.objs.get(pr)) throw new Error('has no pages to add');
+        const max = Math.max(...p.objs.keys()), off = next;
+        const remap = s => s.replace(/(\d+)\s+(\d+)\s+R\b/g, (x, a) => `${+a + off} 0 R`);
+        for (const [n, o] of p.objs) {
+          if (/\/Type\s*\/(XRef|ObjStm|Catalog)\b/.test(o.dict) || n === p.root) continue;
+          let dict = remap(o.dict);
+          if (n === pr) dict = dict.replace(/\/Parent\s+\d+\s+0\s+R/, '').replace(/^<</, '<< /Parent 2 0 R');
+          if (o.raw) dict = dict.replace(/\/Length\s+\d+(\s+\d+\s+R)?/, `/Length ${o.raw.length}`);
+          offsets[n + off] = size;
+          put(unlatin(`${n + off} 0 obj\n${dict}\n`));
+          if (o.raw) { put(unlatin('stream\n')); put(o.raw); put(unlatin('\nendstream\n')); }
+          put(unlatin('endobj\n'));
+        }
+        kids.push(pr + off);
+        count += pages(p).length;
+        next = off + max + 1;
+      }
+      offsets[1] = size; put(unlatin('1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n'));
+      offsets[2] = size; put(unlatin(`2 0 obj\n<< /Type /Pages /Kids [${kids.map(k => `${k} 0 R`).join(' ')}] /Count ${count} >>\nendobj\n`));
+      const xref = size;
+      let x = `xref\n0 ${next}\n0000000000 65535 f \n`;
+      for (let i = 1; i < next; i++) x += offsets[i] != null ? `${String(offsets[i]).padStart(10, '0')} 00000 n \n` : '0000000000 65535 f \n';
+      put(unlatin(`${x}trailer\n<< /Size ${next} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`));
+      return { blob: new Blob(chunks, { type: 'application/pdf' }), pages: count };
+    }
+
+    const isPdf = f => /\.pdf$/i.test(f.name) || f.type === 'application/pdf';
+    const isDocx = f => /\.docx$/i.test(f.name) || f.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    // The text of a file: Word, PDF, or anything that's already text.
+    async function text(file) {
+      if (isPdf(file)) { const t = await pdfText(await file.arrayBuffer()); if (!t.trim()) throw new Error("has no text to read. If it's a scan, run it through text recognition first"); return t; }
+      if (isDocx(file)) return docxText(await file.arrayBuffer());
+      return file.text();
+    }
+    return { text, merge, pdfText, docxText, isPdf, isDocx };
+  })();
+  /* oft-shared:docs end */
   /* oft-shared:tool begin. Copied from shared/tool.js by .github/scripts/sync_shared.py; edit it there. */
   // Shared by every tool: your name, remembering the open file, who has it open,
   // who changed what, merging two copies and spotting conflicted copies.

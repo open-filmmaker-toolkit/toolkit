@@ -569,7 +569,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const isNotice = c => /crowd notice/i.test(str(c.type));
   const releases = () => doc.contracts.filter(isRelease);
   // Materials releases let you use someone's photos or documents; they don't cover appearing on camera or a place.
-  const coversAppearance = c => isRelease(c) && !isNotice(c) && !/material/i.test(str(c.type));
+  const coversAppearance = c => isRelease(c) && !isNotice(c) && !/material|model release|property release/i.test(str(c.type));
   const DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
   function today() {
     const d = new Date();
