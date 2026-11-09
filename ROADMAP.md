@@ -56,7 +56,7 @@ The home page becomes a place to work, not just a list. Each step gets an issue 
 - [x] One calendar file for every date in the project, from the dashboard and from each tool with dates ([#149](https://github.com/open-filmmaker-toolkit/toolkit/issues/149))
 - [x] Import a filled-in spreadsheet template into the tool it matches, with columns matched by name, problems shown row by row, and nothing already there changed ([#150](https://github.com/open-filmmaker-toolkit/toolkit/issues/150))
 - [x] Read-only summaries of chosen parts of the project to share, leaving out contact details, notes and fees unless you include them ([#152](https://github.com/open-filmmaker-toolkit/toolkit/issues/152))
-- [ ] Install the hub as an app for offline use ([#205](https://github.com/open-filmmaker-toolkit/toolkit/issues/205))
+- [x] Install the hub as an app for offline use ([#205](https://github.com/open-filmmaker-toolkit/toolkit/issues/205))
 
 ## Milestone 6: Planned
 
@@ -120,7 +120,7 @@ Each item has [its own issue](https://github.com/open-filmmaker-toolkit/toolkit/
 ### Trust and polish
 
 - [ ] Translations of the tools, starting with Spanish and French ([#201](https://github.com/open-filmmaker-toolkit/toolkit/issues/201))
-- [ ] A guided first run on the home page that points you to the tools you'll need first ([#202](https://github.com/open-filmmaker-toolkit/toolkit/issues/202))
+- [x] A guided first run on the home page that points you to the tools you'll need first ([#202](https://github.com/open-filmmaker-toolkit/toolkit/issues/202))
 - [x] Versioned project files with automatic backups ([#203](https://github.com/open-filmmaker-toolkit/toolkit/issues/203))
 - [ ] Test by hand with VoiceOver and NVDA, and in Firefox and Safari ([#204](https://github.com/open-filmmaker-toolkit/toolkit/issues/204))
 

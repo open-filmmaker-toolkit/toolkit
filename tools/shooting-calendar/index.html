@@ -1624,6 +1624,17 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     return { TOOLS, KINDS, PARTS, CONTACT, flags, glance, dates, ics, summary, today, addDays, fmt, calendarDialog, saveText, stem };
   })();
   /* oft-shared:project end */
+  /* oft-shared:offline begin. Copied from shared/offline.js by .github/scripts/sync_shared.py; edit it there. */
+  // Offline use: when a page is opened from the toolkit's web address, the browser keeps a copy of every tool
+  // (see sw.js at the top of the repo), so the toolkit opens without an internet connection. A page opened
+  // as a file on your computer already works offline and doesn't need this.
+  const oftOffline = (() => {
+    const can = 'serviceWorker' in navigator && window.isSecureContext && /^https?:$/.test(window.location.protocol);
+    const root = new URL(document.querySelector('.home-link') ? '../../' : './', window.location.href);
+    const ready = can ? navigator.serviceWorker.register(new URL('sw.js', root), { scope: root.pathname }).then(() => navigator.serviceWorker.ready).catch(() => null) : Promise.resolve(null);
+    return { can, ready };
+  })();
+  /* oft-shared:offline end */
   /* oft-shared:tool begin. Copied from shared/tool.js by .github/scripts/sync_shared.py; edit it there. */
   // Shared by every tool: your name, remembering the open file, who has it open,
   // who changed what, merging two copies and spotting conflicted copies.

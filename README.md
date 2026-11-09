@@ -44,7 +44,7 @@ Free, open-source tools and templates for documentary and independent narrative 
 
 ## Quick start
 
-The easiest way in is the [toolkit's home page](https://open-filmmaker-toolkit.github.io/toolkit/): every tool, by stage of production, with how they connect. Click a tool to use it in your browser.
+The easiest way in is the [toolkit's home page](https://open-filmmaker-toolkit.github.io/toolkit/): every tool, by stage of production, with how they connect. Click a tool to use it in your browser. Open it once and you can [install it as an app](docs/offline.md) that works without an internet connection.
 
 To use the tools offline, or to work on them:
 

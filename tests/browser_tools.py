@@ -1483,6 +1483,81 @@ def test_versions(browser, fake):
     ctx.close()
 
 
+def test_first_run(browser, fake):
+    # The guided first run on the home page: two questions, tools to start with, a project file, and gone once dismissed.
+    ctx = browser.new_context(accept_downloads=True, viewport={'width': 375, 'height': 800})
+    pg = ctx.new_page()
+    errs = []
+    pg.on('pageerror', lambda e: errs.append(str(e)))
+    pg.goto('file://%s/index.html' % root)
+    check(pg.is_visible('#firstRun'), 'the first run shows on a first visit')
+    pg.check('input[name=frKind][value=fiction]'); pg.check('input[name=frStage][value=prep]')
+    pg.click('#firstRunForm button[type=submit]')
+    links = pg.locator('#firstRunList a')
+    check(links.count() == 5 and links.first.get_attribute('href') == 'tools/script-breakdown/index.html' and links.first.inner_text() == 'Script breakdown'
+          and pg.evaluate('document.activeElement.textContent') == 'Script breakdown', 'suggests five tools to start with, and moves focus to them')
+    check(pg.evaluate('document.documentElement.scrollWidth') <= 375, 'fits at phone width')
+    pg.fill('#firstRunTitleInput', 'Night Harbor')
+    with pg.expect_download() as d:
+        pg.click('#firstRunStart')
+    started = json.loads(open(d.value.path(), encoding='utf-8').read())
+    check(d.value.suggested_filename == 'night-harbor.oft.json' and started['format'] == 'open-filmmaker-toolkit/project' and started['formatVersion'] == 1 and started['project']['title'] == 'Night Harbor',
+          'starts a project file with the title')
+    check('Script breakdown' in pg.inner_text('#firstRunSaved'), 'says where to open it')
+    pg.reload()
+    check(pg.is_hidden('#firstRun'), 'not shown again after starting a project')
+    pg.click('#firstRunShow')
+    check(pg.is_visible('#firstRun'), 'can be brought back')
+    pg.click('#firstRunSkip')
+    pg.reload()
+    check(pg.is_hidden('#firstRun'), 'stays dismissed')
+    ctx.close()
+    ctx = browser.new_context()
+    pg = ctx.new_page()
+    pg.goto('file://%s/index.html' % root)
+    pg.set_input_files('#projectInput', files=[{'name': 'p.oft.json', 'mimeType': 'application/json', 'buffer': sample.encode()}])
+    pg.wait_for_timeout(300)
+    check(pg.is_hidden('#firstRun'), 'opening a project puts the first run away')
+    ctx.close()
+    check(not errs, 'no page errors %s' % errs)
+
+
+def test_offline(browser, fake):
+    # Installed from the web: the service worker keeps every page, and the toolkit opens with no connection.
+    import functools, http.server, socketserver, threading
+    manifest = json.loads((root / 'manifest.webmanifest').read_text())
+    check(manifest['display'] == 'standalone' and all((root / i['src']).is_file() for i in manifest['icons']), 'the web app manifest names icons that exist')
+    class Quiet(http.server.SimpleHTTPRequestHandler):
+        def log_message(self, *a):
+            pass
+    handler = functools.partial(Quiet, directory=str(root))
+    srv = socketserver.ThreadingTCPServer(('127.0.0.1', 0), handler)
+    srv.daemon_threads = True
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    base = 'http://127.0.0.1:%d/' % srv.server_address[1]
+    tools = sorted(p.parent.name for p in (root / 'tools').glob('*/index.html'))
+    ctx = browser.new_context()
+    pg = ctx.new_page()
+    errs = []
+    pg.on('pageerror', lambda e: errs.append('%s: %s' % (pg.url, e)))
+    try:
+        pg.goto(base + 'index.html')
+        pg.wait_for_function("document.getElementById('offlineState').textContent.length > 0", timeout=30000)
+        n = pg.evaluate("caches.open('oft-pages-v1').then(c => c.keys()).then(k => k.map(r => new URL(r.url).pathname))")
+        check(all(any(x.endswith('/tools/%s/index.html' % t) for x in n) for t in tools) and 'opens offline' in pg.inner_text('#offlineState'), 'every tool is kept for offline use (%d pages)' % len(n))
+        # Stop the server, so nothing can come from the network.
+        srv.shutdown(); srv.server_close()
+        for t in ['budget', 'call-sheet', tools[-1]]:
+            pg.goto(base + 'tools/%s/index.html' % t)
+            check(pg.locator('.home-link').count() == 1 and pg.evaluate('!!navigator.serviceWorker.controller'), '%s opens offline' % t)
+        pg.goto(base + 'index.html')
+        check(pg.locator('#offlineNote').count() == 1, 'the home page opens offline')
+    finally:
+        ctx.close()
+        srv.shutdown()
+    check(not errs, 'no page errors %s' % errs)
+
+
 def test_hub(browser, fake):
     for scheme, vp in [('light', {'width': 1280, 'height': 900}), ('dark', PHONE)]:
         ctx = browser.new_context(viewport=vp, color_scheme=scheme)
@@ -4672,8 +4747,10 @@ def test_shared_file(browser, fake):
 
 def test_remember_file(browser, fake):
     import http.server, threading, functools
-    handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(root))
-    handler.log_message = lambda *a: None
+    class Quiet(http.server.SimpleHTTPRequestHandler):
+        def log_message(self, *a):
+            pass
+    handler = functools.partial(Quiet, directory=str(root))
     srv = http.server.ThreadingHTTPServer(('127.0.0.1', 0), handler)
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     base = 'http://127.0.0.1:%d' % srv.server_address[1]
@@ -5298,6 +5375,8 @@ def main():
         print('== home page / tools, search and links')
         test_hub(browser, fake)
         test_versions(browser, fake)
+        test_offline(browser, fake)
+        test_first_run(browser, fake)
         print('== location-scout / scouts, photos and releases')
         test_location_scout(browser, fake)
         print('== deal-memos / calendar, budget, signed copies and print')
