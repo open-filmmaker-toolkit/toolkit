@@ -1458,6 +1458,31 @@ def test_field_journal(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
+def test_versions(browser, fake):
+    # Earlier versions: each save keeps a copy in the browser, with what restoring it would undo.
+    ctx, pg, errs = new_page(browser, 'deal-memos', fake)
+    open_sample(pg, fake)
+    def retitle(t):
+        pg.click('#editProjectBtn'); pg.fill('#p-title', t); pg.click('#projectForm button[type=submit]'); pg.wait_for_timeout(100)
+        saved_project(pg, fake); pg.wait_for_timeout(200)
+    retitle('Version A')
+    retitle('Version B')
+    pg.click('#oftVersionsBtn'); pg.wait_for_selector('#oftVersionsDialog[open]')
+    items = pg.locator('#oftVersionsList li')
+    check(items.count() == 3 and items.nth(0).locator('[data-restore]').count() == 0 and 'changed title in Project details' in items.nth(1).inner_text() and items.nth(2).locator('[data-restore]').count() == 1,
+          'keeps the file before the first save and each save after, with what restoring undoes (%s)' % [items.nth(i).inner_text() for i in range(items.count())])
+    items.nth(2).locator('[data-restore]').click(); pg.wait_for_timeout(200)
+    check(pg.inner_text('#filmTitle') == 'The River Keeps' and 'Unsaved' in pg.inner_text('#fileState') and pg.is_hidden('#oftVersionsDialog'), 'restores a version, unsaved until you save')
+    data = saved_project(pg, fake)
+    check(data['project']['title'] == 'The River Keeps' and len([c for c in data['contracts'] if c.get('type') == 'deal memo']) == 3, 'saving keeps the restored version')
+    pg.reload(); pg.wait_for_timeout(300)
+    open_sample(pg, fake)
+    pg.click('#oftVersionsBtn'); pg.wait_for_selector('#oftVersionsDialog[open]')
+    check(pg.locator('#oftVersionsList li').count() >= 3, 'the copies are still there after the page is closed')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+
 def test_hub(browser, fake):
     for scheme, vp in [('light', {'width': 1280, 'height': 900}), ('dark', PHONE)]:
         ctx = browser.new_context(viewport=vp, color_scheme=scheme)
@@ -5215,6 +5240,7 @@ def main():
         test_field_journal(browser, fake)
         print('== home page / tools, search and links')
         test_hub(browser, fake)
+        test_versions(browser, fake)
         print('== location-scout / scouts, photos and releases')
         test_location_scout(browser, fake)
         print('== deal-memos / calendar, budget, signed copies and print')
