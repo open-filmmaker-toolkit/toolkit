@@ -187,6 +187,11 @@ dialog form { display: flex; flex-direction: column; height: 100%; max-height: i
 .hint { margin: 0; font-size: 13px; color: var(--ink-3); }
 .field input, .field select, .field textarea, .party-row input, .party-row select { width: 100%; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); }
 .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ep-row { display: grid; grid-template-columns: 90px minmax(0, 1fr) auto; gap: 8px; align-items: end; }
+.ep-rows { display: grid; gap: 8px; }
+.inline-check { display: flex; gap: 8px; align-items: center; font-size: 14px; font-weight: 600; }
+.inline-check input { width: 18px; height: 18px; }
+.reel-row td { font-weight: 700; padding-top: 10px; }
 .req { color: var(--s-replace); font-weight: 400; }
 
 .issues { margin: 0; padding: 10px 14px 10px 32px; border-radius: 8px; background: var(--s-info-bg); font-size: 14px; }
@@ -326,10 +331,13 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
           <option value="ready">Ready</option>
           <option value="replace">Being replaced</option>
         </select>
+        <select id="sheetFor" aria-label="Which cue sheet" hidden></select>
         <span class="spacer"></span>
+        <button type="button" class="btn" id="seriesBtn">Episodes and reels</button>
         <button type="button" class="btn" id="markersBtn">Import cue markers</button>
         <input type="file" id="markersFile" accept=".edl,.csv,.txt,.tsv,text/plain,text/csv" hidden>
         <button type="button" class="btn" id="csvBtn">Export CSV</button>
+        <button type="button" class="btn" id="filingBtn">Export for electronic filing</button>
         <button type="button" class="btn" id="printBtn" title="Always prints every cue, whatever the filters">Print cue sheet</button>
         <button type="button" class="btn primary" id="addBtn">Add cue</button>
       </div>
@@ -392,6 +400,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
           <input id="f-cueId" name="cueId" placeholder="1M2" autocomplete="off">
         </div>
       </div>
+      <div class="field" id="f-episodeField" hidden>
+        <label for="f-episode">Episode</label>
+        <select id="f-episode"></select>
+      </div>
       <div class="field">
         <label for="f-usage">How it's used</label>
         <select id="f-usage" name="usage"></select>
@@ -450,6 +462,24 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       <button type="button" class="btn" id="duplicateBtn">Duplicate</button>
       <button type="button" class="btn danger" id="deleteBtn">Delete</button>
     </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="seriesDialog" aria-labelledby="seriesTitle">
+  <form id="seriesForm" method="dialog" novalidate>
+    <div class="dlg-head"><h2 id="seriesTitle">Episodes and reels</h2></div>
+    <div class="dlg-body">
+      <p class="hint">For a series, list the episodes and give each cue its episode. Each episode then gets its own cue sheet: pick it next to the search.</p>
+      <div class="ep-rows" id="epRows" role="group" aria-label="Episodes"></div>
+      <p><button type="button" class="btn" id="epAddBtn">Add an episode</button></p>
+      <label class="inline-check"><input type="checkbox" id="reelSplit"> Split the cue sheet by reel</label>
+      <div class="field">
+        <label for="reelStarts">Reels start at</label>
+        <input id="reelStarts" placeholder="01:00:00:00, 01:20:00:00, 01:41:30:00" autocomplete="off">
+        <p class="hint">The timecode each reel starts at, separated by commas. Leave it blank if each reel starts on the hour, as in 01:00:00:00 for reel 1 and 02:00:00:00 for reel 2.</p>
+      </div>
+    </div>
+    <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn" id="seriesCancel">Cancel</button><button type="submit" class="btn primary">Save</button></div>
   </form>
 </dialog>
 
@@ -728,8 +758,26 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       onApply: n => { if (!n) return; changed(); toast(`Applied ${n} change${n === 1 ? '' : 's'} from ${f.name}`); } });
   }
 
+  // ---------- Episodes and reels ----------
+  let sheetFor = '';
+  const episodes = () => (Array.isArray(doc.musicCueSheet.episodes) ? doc.musicCueSheet.episodes : []).filter(x => x && typeof x === 'object' && x.id);
+  const episodeOf = e => (e.music && typeof e.music === 'object' ? str(e.music.episodeId) : '');
+  const episodeLabel = ep => (ep ? [ep.number && `Episode ${ep.number}`, ep.title].filter(Boolean).join(': ') || 'Untitled episode' : '');
+  const inScope = e => !sheetFor || episodeOf(e) === sheetFor;
+  const reelStarts = () => (Array.isArray(doc.musicCueSheet.reelStarts) ? doc.musicCueSheet.reelStarts : []).map(t => tcToFrames(t)).filter(f => f != null && !Number.isNaN(f)).sort((a, b) => a - b);
+  // Reel 1, 2 and so on: from the starts given, or by the hour of the cue's time in.
+  function reelOf(e) {
+    const f = tcToFrames(e.tcIn);
+    if (f == null || Number.isNaN(f)) return null;
+    const starts = reelStarts();
+    if (starts.length) { const k = starts.filter(x => x <= f).length; return k || 1; }
+    const hour = 3600 * Math.round(rate()), first = Math.floor(programStart(els().filter(isMusic)) / 3600);
+    return Math.max(1, Math.floor(f / hour) - first + 1);
+  }
+  const splitting = () => !!doc.musicCueSheet.splitByReel;
+
   function cues() {
-    return els().map((e, i) => ({ e, i })).filter(x => isMusic(x.e)).sort((a, b) => {
+    return els().map((e, i) => ({ e, i })).filter(x => isMusic(x.e) && inScope(x.e)).sort((a, b) => {
       const fa = tcToFrames(a.e.tcIn), fb = tcToFrames(b.e.tcIn);
       const va = fa == null || Number.isNaN(fa) ? Infinity : fa;
       const vb = fb == null || Number.isNaN(fb) ? Infinity : fb;
@@ -808,6 +856,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
 
   // ---------- Rendering ----------
   function render() {
+    renderScope();
     renderHeader();
     renderOverview();
     renderTable();
@@ -936,7 +985,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const parties = (lst, side) => lst.length ? lst.map(x => `<div class="pl"><span>${esc(x.role || ROLES[side][0].code)}</span><span>${esc(x.name)}</span><span>${esc(x.society)}</span><span class="pct">${x.share == null ? '' : esc(fmtPct(x.share))}</span></div>`).join('') : '';
     $('report').innerHTML = `
       <h1>${esc(p.title || 'Untitled film')}</h1>
-      <p class="sheet-name">Music cue sheet</p>
+      <p class="sheet-name">Music cue sheet${sheetFor ? `, ${esc(episodeLabel(episodes().find(x => x.id === sheetFor)))}` : ''}</p>
       ${notReady ? `<p class="draft">Draft: ${notReady} of ${list.length} cues still need information or are being replaced. Check them before sending this sheet.</p>` : ''}
       <dl class="head">${head.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>
       <table>
@@ -947,7 +996,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <tbody>
           ${list.map((e, i) => {
             const m = musicOf(e);
-            return `<tr>
+            const r = splitting() ? reelOf(e) : null, prev = i && splitting() ? reelOf(list[i - 1]) : undefined;
+            const reelHead = splitting() && r !== prev ? `<tr class="reel-row"><td colspan="9">${r ? `Reel ${r}` : 'No reel'}: ${fmtClock(list.filter(x => reelOf(x) === r).reduce((t, x) => t + (cueSeconds(durationOf(x)) || 0), 0), true)} of music</td></tr>` : '';
+            return `${reelHead}<tr>
               <td>${i + 1}</td>
               <td>${esc(m.cueId)}</td>
               <td><strong>${esc(titleOf(e))}</strong>${m.artist ? `<br><span class="small">${esc(m.artist)}</span>` : ''}</td>
@@ -1050,6 +1101,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     form.elements.artist.value = m.artist;
     form.elements.cueId.value = m.cueId;
     form.elements.usage.value = usageByCode[m.usage] ? m.usage : '';
+    $('f-episodeField').hidden = !episodes().length;
+    $('f-episode').innerHTML = '<option value="">Not in an episode</option>' + episodes().map(x => `<option value="${esc(x.id)}">${esc(episodeLabel(x))}</option>`).join('');
+    $('f-episode').value = e ? episodeOf(e) : sheetFor;
     form.elements.tcIn.value = e ? str(e.tcIn) : '';
     form.elements.tcOut.value = e ? str(e.tcOut) : '';
     for (const k of ['title', 'tcIn', 'tcOut']) form.elements[k].setCustomValidity('');
@@ -1115,10 +1169,12 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       writers: readSide('writers'),
       publishers: readSide('publishers'),
     };
+    const epId = $('f-episode').value;
     let e;
     if (editingId) {
       e = els().find(x => x.id === editingId);
       e.music = Object.assign({}, e.music && typeof e.music === 'object' ? e.music : {}, music);
+      if (epId) e.music.episodeId = epId; else delete e.music.episodeId;
       e.tcIn = f.tcIn.value.trim();
       e.tcOut = f.tcOut.value.trim();
       if (!str(e.description).trim()) e.description = music.title;
@@ -1126,6 +1182,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     } else {
       e = { id: newId() };
       for (const k of ELEMENT_TEXT) e[k] = '';
+      if (epId) music.episodeId = epId;
       Object.assign(e, { description: music.title, type: 'Music', status: 'not-started', tcIn: f.tcIn.value.trim(), tcOut: f.tcOut.value.trim(), cost: null, music, createdAt: now, updatedAt: now });
       els().push(e);
     }
@@ -1409,17 +1466,68 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   }
   const joinParties = list => list.map(p => [p.role, p.name, p.society && `(${p.society})`, p.share == null ? '' : fmtPct(p.share)].filter(Boolean).join(' ')).join('; ');
   function exportCsv() {
-    const head = ['Seq', 'Cue', 'Title', 'Artist', 'Usage code', 'Usage', 'Time in', 'Time out', 'Duration', 'Duration (seconds)', 'Composers and authors', 'Publishers', 'Cue sheet', 'Still needed', 'Clearance status'];
+    const head = ['Seq', 'Cue', 'Title', 'Artist', 'Usage code', 'Usage', 'Time in', 'Time out', 'Duration', 'Duration (seconds)', 'Composers and authors', 'Publishers', 'Cue sheet', 'Still needed', 'Clearance status', 'Reel', 'Episode'];
     const rows = cues().map((e, i) => {
       const m = musicOf(e);
       const d = cueSeconds(durationOf(e));
       return [i + 1, m.cueId, titleOf(e), m.artist, m.usage, usageByCode[m.usage] ? usageByCode[m.usage].label : '', e.tcIn, e.tcOut,
-        fmtClock(d), d == null ? '' : d, joinParties(m.writers), joinParties(m.publishers), stateLabel(stateOf(e)), issuesOf(e).join(' | '), STATUS_LABELS[e.status] || ''];
+        fmtClock(d), d == null ? '' : d, joinParties(m.writers), joinParties(m.publishers), stateLabel(stateOf(e)), issuesOf(e).join(' | '), STATUS_LABELS[e.status] || '', reelOf(e) || '', episodeLabel(episodes().find(x => x.id === episodeOf(e)))];
     });
     const csv = '﻿' + [head, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
     const name = `${slug()}-music-cue-sheet.csv`;
     download(csv, name, 'text/csv;charset=utf-8');
     toast(`Exported ${rows.length} cue${rows.length === 1 ? '' : 's'} to ${name}`);
+  }
+
+  // One row for each composer, author and publisher on each cue, the layout electronic cue sheet filing
+  // and cue sheet services import. Check the column names against your society's own template.
+  function exportFiling() {
+    const list = cues(), p = doc.project, ep = episodes().find(x => x.id === sheetFor);
+    const head = ['Production', 'Episode', 'Reel', 'Seq', 'Cue number', 'Cue title', 'Usage code', 'Duration (seconds)', 'Duration', 'Time in', 'Time out', 'Interested party', 'Role code', 'Role', 'Society', 'Share %', 'Artist'];
+    const label = code => ([...ROLES.writers, ...ROLES.publishers].find(r => r.code === code) || {}).label || '';
+    const rows = [];
+    list.forEach((e, i) => {
+      const m = musicOf(e), d = cueSeconds(durationOf(e));
+      const base = [p.title, episodeLabel(ep || episodes().find(x => x.id === episodeOf(e))), reelOf(e) || '', i + 1, m.cueId, titleOf(e), m.usage, d == null ? '' : d, fmtClock(d), e.tcIn, e.tcOut];
+      const parties = [...m.writers.map(x => [x, x.role || 'C']), ...m.publishers.map(x => [x, x.role || 'E'])];
+      if (!parties.length) rows.push([...base, e.status === 'public-domain' ? 'Public domain' : '', '', '', '', '', m.artist]);
+      for (const [x, code] of parties) rows.push([...base, x.name, code, label(code), x.society, x.share == null ? '' : x.share, m.artist]);
+    });
+    const csv = '\ufeff' + [head, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
+    const name = `${slug()}${ep ? `-episode-${slugify(ep.number || ep.title)}` : ''}-cue-sheet-filing.csv`;
+    download(csv, name, 'text/csv;charset=utf-8');
+    toast(`Exported ${list.length} cue${list.length === 1 ? '' : 's'}, one row for each writer and publisher, to ${name}`);
+  }
+  const slugify = v => str(v).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'episode';
+  const epRow = ep => `<div class="ep-row" data-id="${esc(ep.id || '')}"><div class="field"><label>Number</label><input class="ep-n" value="${esc(ep.number || '')}" autocomplete="off"></div><div class="field"><label>Title</label><input class="ep-t" value="${esc(ep.title || '')}" autocomplete="off"></div><button type="button" class="btn" data-delep>Remove</button></div>`;
+  function labelEps() { $('epRows').querySelectorAll('.ep-row').forEach((r, i) => r.querySelectorAll('input').forEach(inp => { inp.id = `ep-${i}-${inp.className}`; inp.previousElementSibling.htmlFor = inp.id; })); }
+  function openSeries() {
+    $('epRows').innerHTML = episodes().map(epRow).join('');
+    labelEps();
+    $('reelSplit').checked = splitting();
+    $('reelStarts').value = (Array.isArray(doc.musicCueSheet.reelStarts) ? doc.musicCueSheet.reelStarts : []).join(', ');
+    $('reelStarts').setCustomValidity('');
+    $('seriesDialog').showModal();
+  }
+  function saveSeries() {
+    const starts = $('reelStarts').value.split(/[\s,;]+/).map(t => t.trim()).filter(Boolean);
+    if (starts.some(t => { const f = tcToFrames(t); return f == null || Number.isNaN(f); })) { $('reelStarts').setCustomValidity('Use hours:minutes:seconds:frames, like 01:20:00:00, separated by commas.'); $('reelStarts').reportValidity(); return; }
+    const eps = [...$('epRows').querySelectorAll('.ep-row')].map(r => ({ id: r.dataset.id || newId(), number: r.querySelector('.ep-n').value.trim(), title: r.querySelector('.ep-t').value.trim() })).filter(x => x.number || x.title)
+      .map(x => { if (!x.number) delete x.number; if (!x.title) delete x.title; return x; });
+    const mc = doc.musicCueSheet;
+    if (eps.length) mc.episodes = eps; else delete mc.episodes;
+    if ($('reelSplit').checked) mc.splitByReel = true; else delete mc.splitByReel;
+    if (starts.length) mc.reelStarts = starts; else delete mc.reelStarts;
+    // Cues in an episode that was removed go back to the whole film.
+    for (const e of els()) if (isMusic(e) && episodeOf(e) && !eps.some(x => x.id === episodeOf(e))) delete e.music.episodeId;
+    if (!eps.some(x => x.id === sheetFor)) sheetFor = '';
+    $('seriesDialog').close();
+    changed();
+  }
+  function renderScope() {
+    const eps = episodes();
+    $('sheetFor').hidden = !eps.length;
+    $('sheetFor').innerHTML = `<option value="">Whole series</option>` + eps.map(x => `<option value="${esc(x.id)}"${x.id === sheetFor ? ' selected' : ''}>${esc(episodeLabel(x))}</option>`).join('');
   }
 
   const csvCollections = {
@@ -1486,6 +1594,14 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('projectCsvCancel').onclick = () => $('projectCsvDialog').close();
     $('projectCsvForm').addEventListener('submit', ev => { ev.preventDefault(); exportProjectCsv(); $('projectCsvDialog').close(); });
     $('printBtn').onclick = () => { renderReport(); window.print(); };
+    $('filingBtn').onclick = exportFiling;
+    $('seriesBtn').onclick = openSeries;
+    $('seriesCancel').onclick = () => $('seriesDialog').close();
+    $('seriesForm').addEventListener('submit', ev => { ev.preventDefault(); saveSeries(); });
+    $('reelStarts').addEventListener('input', () => $('reelStarts').setCustomValidity(''));
+    $('epAddBtn').onclick = () => { $('epRows').insertAdjacentHTML('beforeend', epRow({ number: String($('epRows').children.length + 1) })); labelEps(); $('epRows').lastElementChild.querySelector('.ep-t').focus(); };
+    $('epRows').addEventListener('click', ev => { const b = ev.target.closest('[data-delep]'); if (b) { b.closest('.ep-row').remove(); labelEps(); } });
+    $('sheetFor').addEventListener('change', () => { sheetFor = $('sheetFor').value; render(); });
     window.addEventListener('beforeprint', renderReport);
 
     $('fileInput').addEventListener('change', async () => {

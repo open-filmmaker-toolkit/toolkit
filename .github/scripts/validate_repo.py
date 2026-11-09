@@ -412,6 +412,8 @@ for sample in sorted((ROOT / "samples").glob("*.oft.json")):
 OPTIONAL_HOSTS = {
     "tools/call-sheet": {"photon.komoot.io", "api.open-meteo.com"},
 }
+# XML namespace names look like links but are only labels inside files a tool writes, such as Word documents.
+NAMESPACE_HOSTS = {"schemas.openxmlformats.org", "purl.org", "www.w3.org"}
 URL_HOST = re.compile(r"https?://([^/\s\"'`)<>]+)", re.IGNORECASE)
 EXTERNAL = re.compile(
     r"""(?:\b(?:src|action|poster)\s*=\s*["']?\s*(?:https?:)?//"""
@@ -439,7 +441,7 @@ for tool in sorted((ROOT / "tools").iterdir()):
                 fail(f"{rel}/index.html:{number}: possible network request or external resource")
             for host in URL_HOST.findall(line) if allowed else []:
                 # github.com is only linked to (the guide to shared files), never fetched.
-                if host.lower() not in allowed and host.lower() != "github.com":
+                if host.lower() not in allowed and host.lower() != "github.com" and host.lower() not in NAMESPACE_HOSTS:
                     fail(f"{rel}/index.html:{number}: link to {host} is not an allowed host for this tool")
 
 # Plain templates: spreadsheets and Word documents only, each listed in templates/README.md.

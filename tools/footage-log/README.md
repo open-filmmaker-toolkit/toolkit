@@ -43,6 +43,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 For anyone who doesn't use the tool, there's a [spreadsheet template](../../templates/footage-log-template.csv) with the same columns as the export.
 
 - **Imports from a spreadsheet:** choose **Import from a spreadsheet** under the file buttons and pick a CSV file. One with the columns of the [spreadsheet template](../../templates/footage-log-template.csv) imports as it is; match any other columns once and the tool remembers. Problems, such as a date it can't read, show row by row before anything is added, and importing only adds.
+- **Exports an Avid bin (ALE).** Each clip in the current view, with its start and end timecode from the log, its card as the tape and its file name, plus description, date, people, location, keywords, rating and notes as columns. Media Composer imports it as a bin; relink the clips to your footage. It uses the project frame rate.
 
 ## Saving and file conflicts
 
@@ -62,7 +63,6 @@ It reads `people`, `locations`, `shootDays` and `mediaReports`. Everything else 
 
 - Reading each clip's length, timecode and other metadata from the file itself
 - Thumbnails
-- Exporting an Avid ALE
 
 ## License
 
