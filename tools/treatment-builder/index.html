@@ -154,6 +154,8 @@ dialog { border: 0; padding: 0; color: var(--ink); background: var(--sheet); box
 dialog::backdrop { background: rgba(16, 20, 28, 0.42); }
 dialog.drawer { margin: 0 0 0 auto; width: min(600px, 100vw); height: 100dvh; max-height: 100dvh; max-width: 100vw; border-left: 1px solid var(--rule); }
 dialog.modal { width: min(560px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); border-radius: 10px; }
+.tr-pick { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; margin: 0 0 14px; }
+.tr-pick .field { flex: 1 1 220px; }
 dialog form { display: flex; flex-direction: column; height: 100%; max-height: inherit; }
 .dlg-head { padding: 20px 24px 12px; border-bottom: 1px solid var(--rule-soft); }
 .dlg-head h2 { margin: 0; font: 600 22px/1.25 var(--serif); }
@@ -258,6 +260,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   <main id="main" class="workspace">
     <section aria-labelledby="secsHead">
       <h2 class="sr-only" id="secsHead">Treatment</h2>
+      <div class="tr-pick">
+        <div class="field"><label for="trSel">Treatment</label><select id="trSel"></select></div>
+        <button type="button" class="btn" id="trNewBtn">Make another treatment</button>
+        <button type="button" class="btn" id="trEditBtn" hidden>Rename or remove</button>
+      </div>
       <div class="sections" id="sections"></div>
     </section>
 
@@ -302,6 +309,18 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       <span class="spacer"></span>
       <button type="button" class="btn primary" id="compareClose">Close</button>
     </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="trDialog" aria-labelledby="trTitle">
+  <form id="trForm" method="dialog" novalidate>
+    <div class="dlg-head"><h2 id="trTitle">Another treatment</h2></div>
+    <div class="dlg-body">
+      <div class="field"><label for="trName">Name</label><input id="trName" type="text" placeholder="Short version" autocomplete="off"></div>
+      <div class="field" id="trFromBox"><label for="trFrom">Start from</label><select id="trFrom"><option value="copy">A copy of the treatment open now</option><option value="blank">Blank sections</option></select></div>
+      <p class="hint">Each treatment has its own sections, targets and versions. Other tools, such as the pitch deck, use the main treatment.</p>
+    </div>
+    <div class="dlg-foot"><button type="button" class="btn danger" id="trDelBtn" hidden>Remove this treatment</button><span class="spacer"></span><button type="button" class="btn" id="trCancel">Cancel</button><button type="submit" class="btn primary" id="trSave">Make it</button></div>
   </form>
 </dialog>
 
@@ -434,11 +453,53 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     if (t.targets !== undefined && (typeof t.targets !== 'object' || Array.isArray(t.targets))) delete t.targets;
     if (t.units !== undefined && (typeof t.units !== 'object' || Array.isArray(t.units))) delete t.units;
     if (t.versions !== undefined && !Array.isArray(t.versions)) delete t.versions;
+    if (t.others !== undefined && !Array.isArray(t.others)) delete t.others;
+    for (const o of arr(t.others)) if (o && typeof o === 'object' && (!o.sections || typeof o.sections !== 'object' || Array.isArray(o.sections))) o.sections = {};
     d.format = FORMAT;
     d.formatVersion = FORMAT_VERSION;
     return d;
   }
-  const T = () => doc.treatment;
+  // More than one treatment: the main one in treatment, and others, such as a short version, in treatment.others.
+  let which = '';
+  const others = () => arr(doc.treatment.others).filter(o => o && typeof o === 'object' && o.id);
+  const T = () => (which && others().find(o => o.id === which)) || doc.treatment;
+  const trName = () => (which && T() !== doc.treatment ? str(T().name) || 'Untitled treatment' : 'Main treatment');
+  function renderPick() {
+    if (which && !others().some(o => o.id === which)) which = '';
+    $('trSel').innerHTML = `<option value="">Main treatment</option>` + others().map(o => `<option value="${esc(o.id)}"${o.id === which ? ' selected' : ''}>${esc(o.name || 'Untitled treatment')}</option>`).join('');
+    $('trEditBtn').hidden = !which;
+  }
+  function openTr(edit) {
+    $('trTitle').textContent = edit ? `Rename or remove ${trName()}` : 'Make another treatment';
+    $('trName').value = edit ? str(T().name) : '';
+    $('trFromBox').hidden = edit; $('trDelBtn').hidden = !edit;
+    $('trSave').textContent = edit ? 'Save' : 'Make it';
+    $('trDialog').dataset.edit = edit ? '1' : '';
+    $('trDialog').showModal();
+    $('trName').focus();
+  }
+  function saveTr() {
+    const name = $('trName').value.trim();
+    if (!name) { $('trName').setCustomValidity('Give it a name, such as Short version.'); $('trName').reportValidity(); return; }
+    if ($('trDialog').dataset.edit) T().name = name;
+    else {
+      const o = { id: newId('treatment'), name, sections: $('trFrom').value === 'copy' ? structuredClone(T().sections) : {} };
+      if ($('trFrom').value === 'copy') for (const k of ['targets', 'units']) if (T()[k]) o[k] = structuredClone(T()[k]);
+      doc.treatment.others = [...others(), o];
+      which = o.id;
+    }
+    $('trDialog').close();
+    changed();
+  }
+  function removeTr() {
+    const gone = trName();
+    doc.treatment.others = others().filter(o => o.id !== which);
+    if (!doc.treatment.others.length) delete doc.treatment.others;
+    which = '';
+    $('trDialog').close();
+    changed();
+    toast(`Removed ${gone}. Open the file again without saving to get it back.`);
+  }
   const textOf = key => str(T().sections[key]);
   const entries = () => SECTIONS.filter(s => textOf(s.key).trim());
   const versions = () => arr(T().versions).filter(v => v && typeof v === 'object');
@@ -465,6 +526,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     builtFor = doc;
   }
   function render() {
+    renderPick();
     $('filmTitle').textContent = doc.project.title || 'Untitled film';
     $('filmTitle').classList.toggle('is-empty', !doc.project.title);
     $('filmMeta').textContent = [doc.project.company, doc.project.producer && `Producer: ${doc.project.producer}`].filter(Boolean).join(' · ');
@@ -632,7 +694,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   }
   function renderReport() {
     $('report').innerHTML = `<div class="r-title"><h1>${esc(doc.project.title || 'Untitled film')}</h1>
-      <p class="r-meta">Treatment${doc.project.company ? ` · ${esc(doc.project.company)}` : ''} · ${esc(new Date().toLocaleDateString(undefined, { dateStyle: 'long' }))}</p></div>
+      <p class="r-meta">${esc(which ? trName() : 'Treatment')}${doc.project.company ? ` · ${esc(doc.project.company)}` : ''} · ${esc(new Date().toLocaleDateString(undefined, { dateStyle: 'long' }))}</p></div>
       ${filled().map(s => `<section class="r-sec"><h2>${esc(s.title)}</h2>${textOf(s.key).trim().split(/\n\s*\n/).map(p => `<p>${esc(p).replace(/\n/g, '<br>')}</p>`).join('')}</section>`).join('')}`;
   }
 
@@ -876,6 +938,13 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('outline').addEventListener('click', ev => { const a = ev.target.closest('[data-jump]'); if (a) { ev.preventDefault(); $(`sec-${a.dataset.jump}`).scrollIntoView({ behavior: 'smooth' }); $(`t-${a.dataset.jump}`).focus({ preventScroll: true }); } });
     $('mdBtn').onclick = () => exportAs('md');
     $('txtBtn').onclick = () => exportAs('txt');
+    $('trSel').addEventListener('change', () => { which = $('trSel').value; render(); });
+    $('trNewBtn').onclick = () => openTr(false);
+    $('trEditBtn').onclick = () => openTr(true);
+    $('trCancel').onclick = () => $('trDialog').close();
+    $('trDelBtn').onclick = removeTr;
+    $('trForm').addEventListener('submit', ev => { ev.preventDefault(); saveTr(); });
+    $('trName').addEventListener('input', () => $('trName').setCustomValidity(''));
     $('saveVersionBtn').onclick = saveVersion;
     $('versionLabel').addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.preventDefault(); saveVersion(); } });
     $('versions').addEventListener('click', ev => { const b = ev.target.closest('[data-compare]'); if (b) openCompare(b.dataset.compare); });

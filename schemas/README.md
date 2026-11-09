@@ -115,6 +115,8 @@ The [clearance log](../tools/clearance-log/README.md) reads an edit list and giv
 
 Supers can name a place or a date (`kind`) and list later appearances (`alsoAppears`). Credits can carry a `billing` order. The paper edit keeps `dropFrame` and `audio` for its exports. The music cue sheet keeps `episodes`, `splitByReel` and `reelStarts` in `musicCueSheet`, and each cue's episode in `music.episodeId`.
 
+Versions to compare: `structure.versions` and `theoryOfChange.versions` keep saved copies with an `id`, `at` and `label`; `impactReport.saved` keeps reports for earlier periods. `treatment.others` holds more treatments, such as a short version, and `deliverables.others` more deliveries, each with its own items. Other tools read the main treatment and list every delivery.
+
 ## Concurrent edits
 
 When a browser supports direct file access, a tool compares the opened file with the last version it read or saved before writing. If the file changed, the user can reload the latest version, save their edits to a separate copy, or explicitly overwrite the newer file. The user can also merge: records are matched by `id`, changes to different records or fields are combined, and fields changed on both sides are shown for the user to choose. The check cannot lock the file against a simultaneous write, so teams should save in one tool at a time. See [Working on a shared file](../docs/sharing-a-project.md).

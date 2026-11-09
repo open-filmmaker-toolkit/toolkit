@@ -1391,10 +1391,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       }
 
       // Deliverables checklist
-      const del = d.deliverables || {};
-      for (const i of deliverables(d)) {
+      for (const del of deliveries(d)) for (const i of deliverables(del)) {
         const due = isDay(i.due) ? i.due : isDay(del.dueDate) ? del.dueDate : '';
-        if (!['delivered', 'accepted', 'na'].includes(i.status) && due && due <= addDays(t, 14)) add('deliverables', i.id, `Deliver ${i.title || i.key || 'an item'}`, due, i.owner || '');
+        if (!['delivered', 'accepted', 'na'].includes(i.status) && due && due <= addDays(t, 14)) add('deliverables', i.id, `Deliver ${i.title || i.key || 'an item'}${del !== d.deliverables && del.deliverTo ? ` to ${del.deliverTo}` : ''}`, due, i.owner || '');
       }
 
       // Funder CRM and partner CRM next steps, subject tracker follow-ups
@@ -1416,9 +1415,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
 
     // The deliverables checklist's usual list, merged with the items the project changed or added.
     const BUILT = { dcp: 'Digital cinema package (DCP)', master: 'Master with titles (ProRes)', textless: 'Textless master and textless elements', hd: 'Broadcast master', trailer: 'Trailer', mix51: '5.1 mix', stereo: 'Stereo mix', me: 'Music and effects (M&E) mix', stems: 'Dialogue, music and effects stems', cc: 'Closed captions', sdh: 'Subtitles for the deaf and hard of hearing (SDH)', dcl: 'Dialogue and continuity list', subs: 'Subtitles in other languages', keyart: 'Key art', stills: 'Production stills', epk: 'Press notes and EPK', chain: 'Chain-of-title documents', eo: 'Errors and omissions (E&O) insurance certificate', cue: 'Music cue sheet', credits: 'Final credits list', licenses: 'Music and archival licenses', releases: 'Appearance and location releases', qc: 'Quality control (QC) report' };
-    function deliverables(d) {
-      const saved = arr((d.deliverables || {}).items).filter(x => x && (x.key || x.id));
-      return Object.entries(BUILT).map(([key, title]) => Object.assign({ id: `deliverable-${key}`, key, title, status: 'todo' }, saved.find(s => s.key === key) || {}, { title: (saved.find(s => s.key === key) || {}).title || title }))
+    // The main delivery, and any others, such as a second distributor, in deliverables.others.
+    const deliveries = d => { const m = d.deliverables && typeof d.deliverables === 'object' ? d.deliverables : {}; return [m, ...arr(m.others).filter(o => o && typeof o === 'object' && o.id)]; };
+    function deliverables(del) {
+      const saved = arr((del || {}).items).filter(x => x && (x.key || x.id));
+      return Object.entries(BUILT).map(([key, title]) => Object.assign({ id: del && del.id ? `${del.id}-${key}` : `deliverable-${key}`, key, title, status: 'todo' }, saved.find(s => s.key === key) || {}, { title: (saved.find(s => s.key === key) || {}).title || title }))
         .concat(saved.filter(s => !s.key || !BUILT[s.key]));
     }
 
@@ -1471,9 +1472,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       for (const s of arr(d.screenings).filter(Boolean)) add('release', 'press-list', s.id, 'date', s.date, s.title || s.name || 'Screening');
       for (const b of arr(d.bookings).filter(Boolean)) if (b.status !== 'declined' && b.status !== 'cancelled') add('release', 'bookings', b.id, 'start', b.startDate, `${b.kind === 'educational' ? 'License starts' : 'Booking'}: ${b.venue || 'venue'}`, b.kind === 'educational' ? '' : b.endDate);
       for (const p of arr(d.socialPosts).filter(Boolean)) add('release', 'awards-social', p.id, 'date', p.date, `Post${p.platform ? ` on ${p.platform}` : ''}${p.text ? `: ${str(p.text).slice(0, 60)}` : ''}`);
-      const del = d.deliverables || {};
-      add('delivery', 'deliverables', 'deliverables', 'due', del.dueDate, `Delivery due${del.deliverTo ? `: ${del.deliverTo}` : ''}`);
-      for (const i of deliverables(d)) if (!['delivered', 'accepted', 'na'].includes(i.status) && isDay(i.due) && i.due !== del.dueDate) add('delivery', 'deliverables', i.id, 'due', i.due, `Deliver: ${i.title}`);
+      for (const del of deliveries(d)) {
+        add('delivery', 'deliverables', del.id || 'deliverables', 'due', del.dueDate, `Delivery due${del.deliverTo ? `: ${del.deliverTo}` : ''}`);
+        for (const i of deliverables(del)) if (!['delivered', 'accepted', 'na'].includes(i.status) && isDay(i.due) && i.due !== del.dueDate) add('delivery', 'deliverables', i.id, 'due', i.due, `Deliver: ${i.title}`);
+      }
       for (const c of arr(d.cuts).filter(Boolean)) arr(c.screenings).forEach((s, i) => s && add('delivery', 'cut-tracker', c.id, `screening-${s.id || i}`, s.date, `Feedback screening: ${c.name || c.title || 'cut'}`));
       for (const f of arr(d.funders).filter(Boolean)) arr(f.nextSteps).forEach((s, i) => s && !s.done && add('contacts', 'funder-crm', f.id, `step-${s.id || i}`, s.due, `${s.text || 'Next step'} (${f.name || 'funder'})`));
       for (const p of arr(d.partners).filter(Boolean)) arr(p.commitments).forEach((s, i) => s && !s.done && add('contacts', 'partner-crm', p.id, `step-${s.id || i}`, s.due, `${s.text || 'Commitment'} (${p.name || 'partner'})`));
@@ -1575,10 +1577,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         sections.push(['Festival plan', table(['Festival', 'Place', 'Starts', 'Deadline', 'Status'].concat(o.fees ? ['Fee'] : [], o.notes ? ['Notes'] : []), rows)]);
       }
       if (want.has('delivery')) {
-        const del = d.deliverables || {};
         const STATUS = { todo: 'To do', progress: 'In progress', delivered: 'Delivered', accepted: 'Accepted', na: 'Not needed' };
-        const rows = deliverables(d).filter(i => i.status !== 'na').map(i => [i.title, STATUS[i.status] || i.status || '', i.due ? fmt(i.due) : del.dueDate ? fmt(del.dueDate) : '', i.spec || '']);
+        for (const del of deliveries(d)) {
+        const rows = deliverables(del).filter(i => i.status !== 'na').map(i => [i.title, STATUS[i.status] || i.status || '', i.due ? fmt(i.due) : del.dueDate ? fmt(del.dueDate) : '', i.spec || '']);
         sections.push(['Deliverables', `${del.deliverTo ? `<p>To ${esc(del.deliverTo)}${del.dueDate ? `, due ${esc(fmt(del.dueDate))}` : ''}.</p>` : ''}${table(['Item', 'Status', 'Due', 'Spec'], rows)}`]);
+        }
       }
       if (want.has('impact')) {
         const toc = d.theoryOfChange || {}, res = (d.impactReport || {}).results || {};

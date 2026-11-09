@@ -43,6 +43,7 @@ For anyone who doesn't use the tool, there's a [spreadsheet template](../../temp
 
 - **Imports from a spreadsheet:** choose **Import from a spreadsheet** under the file buttons and pick a CSV file. One with the columns of the [spreadsheet template](../../templates/impact-results-template.csv) imports as it is; match any other columns once and the tool remembers. Problems, such as a date it can't read, show row by row before anything is added, and importing only adds.
 - **Charts.** The results against their targets, and the audience at each screening, as bar charts with the numbers in a table beneath. They print with the report.
+- **Other periods side by side.** Save the report for a period, change the dates for the next one, and compare any two periods side by side: screenings, audience, summary and each result.
 
 ## Saving and file conflicts
 
@@ -60,7 +61,6 @@ It reads `theoryOfChange`, `screenings`, `bookings` and `partners`. Everything e
 
 ## Not yet
 
-- Reports for more than one period side by side
 - Survey results (the toolkit never collects data from the public)
 
 ## License

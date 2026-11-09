@@ -43,6 +43,7 @@ For anyone who doesn't use the tool, there's a [spreadsheet template](../../temp
 
 - **A calendar file of every date in the project**, gathered from every tool: choose **Calendar of every date** under the file buttons and pick which kinds of dates to include. Importing a newer file updates the same events instead of adding them twice.
 - **Imports from a spreadsheet:** choose **Import from a spreadsheet** under the file buttons and pick a CSV file. One with the columns of the [spreadsheet template](../../templates/deliverables-template.csv) imports as it is; match any other columns once and the tool remembers. Problems, such as a date it can't read, show row by row before anything is added, and importing only adds.
+- **More than one delivery.** **Add another delivery** for a second distributor or a broadcaster. Each delivery has its own name, due date and checklist; pick between them under Delivering to. The home page and the project summary list them all.
 
 ## Saving and file conflicts
 
@@ -60,7 +61,6 @@ It reads `assets`, `contracts`, `credits`, `musicCueSheet`, `chainOfTitle`, `pre
 
 ## Not yet
 
-- More than one delivery at a time
 - Checking files on disk
 
 ## License

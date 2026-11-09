@@ -267,8 +267,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     <div class="side">
       <section class="card" aria-labelledby="toHead">
         <div class="card-head"><h2 id="toHead">Delivering to</h2></div>
+        <div class="field" id="delPickBox" hidden><label for="delPick">Delivery</label><select id="delPick"></select></div>
         <div class="field"><label for="deliverTo">Distributor or broadcaster</label><input id="deliverTo" type="text" autocomplete="off" list="dealList" placeholder="From the delivery schedule"><datalist id="dealList"></datalist></div>
         <div class="field"><label for="dueAll">Delivery due</label><input id="dueAll" type="date"></div>
+        <p class="del-acts"><button type="button" class="btn small" id="delAddBtn">Add another delivery</button> <button type="button" class="btn small" id="delDelBtn" hidden>Remove this delivery</button></p>
+        <p class="hint">Each delivery, such as to a distributor and to a broadcaster, has its own checklist, due date and statuses.</p>
       </section>
       <section class="card" aria-labelledby="sumHead">
         <div class="card-head"><h2 id="sumHead">Where it stands</h2></div>
@@ -451,7 +454,36 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const TOOLS = { stills: ['../stills-library/index.html', 'stills library'], keyart: ['../stills-library/index.html', 'stills library'], epk: ['../press-notes/index.html', 'EPK and press notes builder'], chain: ['../chain-of-title/index.html', 'chain-of-title binder'],
     eo: ['../chain-of-title/index.html', 'chain-of-title binder'], cue: ['../music-cue-sheet/index.html', 'music cue sheet'], credits: ['../credits-builder/index.html', 'credits builder'], licenses: ['../license-tracker/index.html', 'license tracker'],
     releases: ['../release-tracker/index.html', 'release tracker'], qc: ['../qc-tracker/index.html', 'QC tracker'] };
-  const D = () => (doc.deliverables && typeof doc.deliverables === 'object' ? doc.deliverables : {});
+  // More than one delivery: the first in deliverables, and others in deliverables.others, each with its own items.
+  let which = '';
+  const main = () => (doc.deliverables && typeof doc.deliverables === 'object' ? doc.deliverables : {});
+  const others = () => arr(main().others).filter(o => o && typeof o === 'object' && o.id);
+  const D = () => (which && others().find(o => o.id === which)) || main();
+  const delName = (o, i) => str(o.deliverTo).trim() || (i ? `Delivery ${i + 1}` : 'First delivery');
+  function renderDeliveries() {
+    if (which && !others().some(o => o.id === which)) which = '';
+    const all = [main(), ...others()];
+    $('delPickBox').hidden = all.length < 2;
+    $('delPick').innerHTML = all.map((o, i) => `<option value="${i ? esc(o.id) : ''}"${(i ? o.id : '') === which ? ' selected' : ''}>${esc(delName(o, i))}</option>`).join('');
+    $('delDelBtn').hidden = !which;
+  }
+  function addDelivery() {
+    const o = { id: newId('delivery') };
+    const m = doc.deliverables = main();
+    m.others = [...others(), o];
+    which = o.id;
+    changed();
+    $('deliverTo').focus();
+    toast('Added a delivery with the usual checklist. Name who it\'s for and when it\'s due.');
+  }
+  function removeDelivery() {
+    const o = D(), name = delName(o, 1);
+    main().others = others().filter(x => x !== o);
+    if (!main().others.length) delete main().others;
+    which = '';
+    changed();
+    toast(`Removed the delivery to ${name}. Open the file again without saving to get it back.`);
+  }
   const saved = () => arr(D().items).filter(x => x && (x.key || x.id));
   let editing = null;
   // What the rest of the project says about an item, to help decide its status.
@@ -478,9 +510,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const entries = () => items().filter(i => i.status !== 'na');
   const due = i => (/^\d{4}-\d{2}-\d{2}$/.test(str(i.due)) ? i.due : /^\d{4}-\d{2}-\d{2}$/.test(str(D().dueDate)) ? D().dueDate : '');
   const done = i => i.status === 'delivered' || i.status === 'accepted' || i.status === 'na';
-  function setD(k, v) { const d = Object.assign({}, D()); if (v == null || v === '' || (Array.isArray(v) && !v.length)) delete d[k]; else d[k] = v; if (Object.keys(d).length) doc.deliverables = d; else delete doc.deliverables; }
+  function setD(k, v) { if (which) { const o = D(); if (v == null || v === '' || (Array.isArray(v) && !v.length)) delete o[k]; else o[k] = v; return; } const d = Object.assign({}, D()); if (v == null || v === '' || (Array.isArray(v) && !v.length)) delete d[k]; else d[k] = v; if (Object.keys(d).length) doc.deliverables = d; else delete doc.deliverables; }
 
   function render() {
+    renderDeliveries();
     $('filmTitle').textContent = doc.project.title || 'Untitled film';
     $('filmTitle').classList.toggle('is-empty', !doc.project.title);
     $('filmMeta').textContent = [doc.project.company, doc.project.producer && `Producer: ${doc.project.producer}`].filter(Boolean).join(' · ');
@@ -782,6 +815,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('csvBtn').onclick = exportCsv;
     $('deleteBtn').onclick = deleteItem;
     $('deliverTo').addEventListener('change', setHead);
+    $('delPick').addEventListener('change', () => { which = $('delPick').value; render(); });
+    $('delAddBtn').onclick = addDelivery;
+    $('delDelBtn').onclick = removeDelivery;
     $('dueAll').addEventListener('change', setHead);
     $('sections').addEventListener('click', ev => { const b = ev.target.closest('[data-edit]'); if (b) openEditor(b.dataset.edit); });
     $('editorForm').addEventListener('submit', ev => { ev.preventDefault(); saveEditor(); });
@@ -811,7 +847,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const OFT_IMPORT = { noun: 'deliverable', nouns: 'deliverables', key: 'title',
     fields: [['Section', 'section', 'enum', { values: SECTIONS }], ['Deliverable', 'title'], ['Status', 'status', 'enum', { values: STATUS }], ['Due', 'due', 'date'], ["Who's responsible", 'owner'], ['Specs', 'spec'], ['File', 'path'], ['Note', 'note'], ['From the project', '', 'skip'], ["Distributor's schedule", 'schedule']],
     put: r => {
-      const d = doc.deliverables = doc.deliverables && typeof doc.deliverables === 'object' ? doc.deliverables : {}; d.items = arr(d.items);
+      const d = which ? D() : (doc.deliverables = doc.deliverables && typeof doc.deliverables === 'object' ? doc.deliverables : {}); d.items = arr(d.items);
       const b = BUILT.find(x => x.title.toLowerCase() === String(r.title).toLowerCase());
       if (b) { if (d.items.some(i => i && i.key === b.key)) return false; r.key = b.key; delete r.title; delete r.section; if (r.due && r.due === d.dueDate) delete r.due; if (r.status === 'todo') delete r.status; }
       else if (!r.section) r.section = 'legal';
@@ -1100,10 +1136,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       }
 
       // Deliverables checklist
-      const del = d.deliverables || {};
-      for (const i of deliverables(d)) {
+      for (const del of deliveries(d)) for (const i of deliverables(del)) {
         const due = isDay(i.due) ? i.due : isDay(del.dueDate) ? del.dueDate : '';
-        if (!['delivered', 'accepted', 'na'].includes(i.status) && due && due <= addDays(t, 14)) add('deliverables', i.id, `Deliver ${i.title || i.key || 'an item'}`, due, i.owner || '');
+        if (!['delivered', 'accepted', 'na'].includes(i.status) && due && due <= addDays(t, 14)) add('deliverables', i.id, `Deliver ${i.title || i.key || 'an item'}${del !== d.deliverables && del.deliverTo ? ` to ${del.deliverTo}` : ''}`, due, i.owner || '');
       }
 
       // Funder CRM and partner CRM next steps, subject tracker follow-ups
@@ -1125,9 +1160,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
 
     // The deliverables checklist's usual list, merged with the items the project changed or added.
     const BUILT = { dcp: 'Digital cinema package (DCP)', master: 'Master with titles (ProRes)', textless: 'Textless master and textless elements', hd: 'Broadcast master', trailer: 'Trailer', mix51: '5.1 mix', stereo: 'Stereo mix', me: 'Music and effects (M&E) mix', stems: 'Dialogue, music and effects stems', cc: 'Closed captions', sdh: 'Subtitles for the deaf and hard of hearing (SDH)', dcl: 'Dialogue and continuity list', subs: 'Subtitles in other languages', keyart: 'Key art', stills: 'Production stills', epk: 'Press notes and EPK', chain: 'Chain-of-title documents', eo: 'Errors and omissions (E&O) insurance certificate', cue: 'Music cue sheet', credits: 'Final credits list', licenses: 'Music and archival licenses', releases: 'Appearance and location releases', qc: 'Quality control (QC) report' };
-    function deliverables(d) {
-      const saved = arr((d.deliverables || {}).items).filter(x => x && (x.key || x.id));
-      return Object.entries(BUILT).map(([key, title]) => Object.assign({ id: `deliverable-${key}`, key, title, status: 'todo' }, saved.find(s => s.key === key) || {}, { title: (saved.find(s => s.key === key) || {}).title || title }))
+    // The main delivery, and any others, such as a second distributor, in deliverables.others.
+    const deliveries = d => { const m = d.deliverables && typeof d.deliverables === 'object' ? d.deliverables : {}; return [m, ...arr(m.others).filter(o => o && typeof o === 'object' && o.id)]; };
+    function deliverables(del) {
+      const saved = arr((del || {}).items).filter(x => x && (x.key || x.id));
+      return Object.entries(BUILT).map(([key, title]) => Object.assign({ id: del && del.id ? `${del.id}-${key}` : `deliverable-${key}`, key, title, status: 'todo' }, saved.find(s => s.key === key) || {}, { title: (saved.find(s => s.key === key) || {}).title || title }))
         .concat(saved.filter(s => !s.key || !BUILT[s.key]));
     }
 
@@ -1180,9 +1217,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       for (const s of arr(d.screenings).filter(Boolean)) add('release', 'press-list', s.id, 'date', s.date, s.title || s.name || 'Screening');
       for (const b of arr(d.bookings).filter(Boolean)) if (b.status !== 'declined' && b.status !== 'cancelled') add('release', 'bookings', b.id, 'start', b.startDate, `${b.kind === 'educational' ? 'License starts' : 'Booking'}: ${b.venue || 'venue'}`, b.kind === 'educational' ? '' : b.endDate);
       for (const p of arr(d.socialPosts).filter(Boolean)) add('release', 'awards-social', p.id, 'date', p.date, `Post${p.platform ? ` on ${p.platform}` : ''}${p.text ? `: ${str(p.text).slice(0, 60)}` : ''}`);
-      const del = d.deliverables || {};
-      add('delivery', 'deliverables', 'deliverables', 'due', del.dueDate, `Delivery due${del.deliverTo ? `: ${del.deliverTo}` : ''}`);
-      for (const i of deliverables(d)) if (!['delivered', 'accepted', 'na'].includes(i.status) && isDay(i.due) && i.due !== del.dueDate) add('delivery', 'deliverables', i.id, 'due', i.due, `Deliver: ${i.title}`);
+      for (const del of deliveries(d)) {
+        add('delivery', 'deliverables', del.id || 'deliverables', 'due', del.dueDate, `Delivery due${del.deliverTo ? `: ${del.deliverTo}` : ''}`);
+        for (const i of deliverables(del)) if (!['delivered', 'accepted', 'na'].includes(i.status) && isDay(i.due) && i.due !== del.dueDate) add('delivery', 'deliverables', i.id, 'due', i.due, `Deliver: ${i.title}`);
+      }
       for (const c of arr(d.cuts).filter(Boolean)) arr(c.screenings).forEach((s, i) => s && add('delivery', 'cut-tracker', c.id, `screening-${s.id || i}`, s.date, `Feedback screening: ${c.name || c.title || 'cut'}`));
       for (const f of arr(d.funders).filter(Boolean)) arr(f.nextSteps).forEach((s, i) => s && !s.done && add('contacts', 'funder-crm', f.id, `step-${s.id || i}`, s.due, `${s.text || 'Next step'} (${f.name || 'funder'})`));
       for (const p of arr(d.partners).filter(Boolean)) arr(p.commitments).forEach((s, i) => s && !s.done && add('contacts', 'partner-crm', p.id, `step-${s.id || i}`, s.due, `${s.text || 'Commitment'} (${p.name || 'partner'})`));
@@ -1284,10 +1322,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         sections.push(['Festival plan', table(['Festival', 'Place', 'Starts', 'Deadline', 'Status'].concat(o.fees ? ['Fee'] : [], o.notes ? ['Notes'] : []), rows)]);
       }
       if (want.has('delivery')) {
-        const del = d.deliverables || {};
         const STATUS = { todo: 'To do', progress: 'In progress', delivered: 'Delivered', accepted: 'Accepted', na: 'Not needed' };
-        const rows = deliverables(d).filter(i => i.status !== 'na').map(i => [i.title, STATUS[i.status] || i.status || '', i.due ? fmt(i.due) : del.dueDate ? fmt(del.dueDate) : '', i.spec || '']);
+        for (const del of deliveries(d)) {
+        const rows = deliverables(del).filter(i => i.status !== 'na').map(i => [i.title, STATUS[i.status] || i.status || '', i.due ? fmt(i.due) : del.dueDate ? fmt(del.dueDate) : '', i.spec || '']);
         sections.push(['Deliverables', `${del.deliverTo ? `<p>To ${esc(del.deliverTo)}${del.dueDate ? `, due ${esc(fmt(del.dueDate))}` : ''}.</p>` : ''}${table(['Item', 'Status', 'Due', 'Spec'], rows)}`]);
+        }
       }
       if (want.has('impact')) {
         const toc = d.theoryOfChange || {}, res = (d.impactReport || {}).results || {};

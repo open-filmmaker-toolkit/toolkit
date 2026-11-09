@@ -630,6 +630,7 @@
       "type": "object",
       "description": "The deliverables checklist: who it is for, when it is due, and the items you have changed or added.",
       "properties": {
+        "others": {"type": "array", "description": "Other deliveries, such as to a broadcaster, each with an id, deliverTo, dueDate and its own items.", "items": {"type": "object", "required": ["id"]}},
         "deliverTo": {
           "type": "string"
         },
@@ -1137,6 +1138,7 @@
       "type": "object",
       "description": "How the campaign leads to change, kept by the theory of change builder.",
       "properties": {
+        "versions": {"type": "array", "description": "Saved versions to compare and restore, each with an id, at, label and a copy of the record as it was.", "items": {"type": "object"}},
         "goal": {
           "type": "string"
         },
@@ -1366,6 +1368,7 @@
       "type": "object",
       "description": "The impact report, kept by the impact report tool.",
       "properties": {
+        "saved": {"type": "array", "description": "Reports saved for other periods: periodStart, periodEnd, summary, results, and the indicator names, screenings and audience as they were.", "items": {"type": "object"}},
         "periodStart": {
           "type": "string",
           "format": "date"
@@ -3162,6 +3165,7 @@
       "type": "object",
       "description": "The film's treatment, written in the treatment builder.",
       "properties": {
+        "others": {"type": "array", "description": "Other treatments, such as a short version, each with an id, name, sections and its own targets, units and versions.", "items": {"type": "object", "required": ["id"]}},
         "sections": {
           "type": "object",
           "properties": {
@@ -6020,6 +6024,7 @@
     "structure": {
       "type": "object",
       "properties": {
+      "versions": {"type": "array", "description": "Saved versions to compare and restore, each with an id, at, label and a copy of the record as it was.", "items": {"type": "object"}},
         "acts": {
           "type": "array",
           "items": {
