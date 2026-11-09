@@ -472,7 +472,7 @@ def test_name_supers(browser, fake):
     with pg.expect_download() as d:
         pg.click('#csvBtn')
     lines = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
-    check(lines[0] == ['First appears', 'Name', 'Title', 'Notes', 'Since last export'] and lines[1][:2] == ['01:00:30:00', 'Ruth A. Hammond'] and lines[1][4].startswith('Changed'),
+    check(lines[0] == ['First appears', 'Name', 'Title', 'Notes', 'Since last export', 'Also appears', 'Kind'] and lines[1][:2] == ['01:00:30:00', 'Ruth A. Hammond'] and lines[1][4].startswith('Changed'),
           'export lists supers in order with what changed')
     check('No changes since then' in pg.inner_text('#since') and 'New since export' not in pg.inner_text('#rows'), 'export resets the change flags')
 
