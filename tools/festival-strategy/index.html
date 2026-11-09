@@ -1111,7 +1111,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       const grants = arr(d.grants).filter(Boolean);
       for (const r of arr(d.grantReports).filter(Boolean)) {
         const g = grants.find(x => x.id === r.grantId);
-        if (g && g.status === 'awarded' && r.status !== 'submitted' && isDay(r.dueDate) && r.dueDate <= addDays(t, 60)) add('grant-reports', g.id, `${g.funder || g.name || 'Grant'} final report`, r.dueDate);
+        if (g && g.status === 'awarded' && r.status !== 'submitted' && isDay(r.dueDate) && r.dueDate <= addDays(t, 60)) add('grant-reports', r.kind === 'interim' ? r.id : g.id, `${g.funder || g.name || 'Grant'} ${r.kind === 'interim' ? (r.title || 'interim report') : 'final report'}`, r.dueDate);
       }
       for (const g of grants) if (['researching', 'drafting'].includes(g.status) && isDay(g.deadline) && g.deadline >= t && g.deadline <= addDays(t, 60)) add('grant-calendar', g.id, `Apply to ${g.name || g.funder || 'a grant'}`, g.deadline);
 
@@ -1182,7 +1182,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       const out = [];
       const add = (kind, slug, id, field, date, title, end) => { if (isDay(date)) out.push({ kind, slug, tool: TOOLS[slug], id, uid: `${id}-${field}`, date, end: isDay(end) && end > date ? end : '', title }); };
       for (const g of arr(d.grants).filter(Boolean)) { add('grants', 'grant-calendar', g.id, 'deadline', g.deadline, `Deadline: ${g.name || g.funder || 'grant'}`); add('grants', 'grant-calendar', g.id, 'decision', g.decisionOn, `Decision expected: ${g.name || g.funder || 'grant'}`); }
-      for (const r of arr(d.grantReports).filter(Boolean)) { const g = arr(d.grants).find(x => x && x.id === r.grantId) || {}; add('grants', 'grant-reports', r.id, 'due', r.dueDate, `Final report due: ${g.funder || g.name || 'grant'}`); }
+      for (const r of arr(d.grantReports).filter(Boolean)) { const g = arr(d.grants).find(x => x && x.id === r.grantId) || {}; add('grants', 'grant-reports', r.id, 'due', r.dueDate, `${r.kind === 'interim' ? (r.title || 'Interim report') : 'Final report'} due: ${g.funder || g.name || 'grant'}`); }
       for (const s of arr(d.shootDays).filter(Boolean)) add('shoot', 'shooting-calendar', s.id, 'date', s.date, `${s.kind === 'travel' ? 'Travel day' : s.kind === 'hold' ? 'Hold' : 'Shoot day'}${s.title || s.label ? `: ${s.title || s.label}` : ''}`);
       const shootDates = new Set(arr(d.shootDays).map(s => s && s.date));
       for (const c of arr(d.callSheets).filter(Boolean)) if (!shootDates.has(c.date)) add('shoot', 'call-sheet', c.id, 'date', c.date, `Call sheet${c.title ? `: ${c.title}` : ''}`);

@@ -126,39 +126,48 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .slide-btn:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
 
 /* A slide. Sizes use container units, so the same slide scales to the preview and the printed page. */
-.slide { position: relative; aspect-ratio: 16 / 9; container-type: inline-size; overflow: hidden; background: #f4f1ea; color: #1b1e25; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 0 0 1px rgba(0,0,0,.08); font-family: var(--sans); }
+.slide { position: relative; aspect-ratio: 16 / 9; container-type: inline-size; overflow: hidden; background: var(--s-bg, #f4f1ea); color: var(--s-ink, #1b1e25); border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 0 0 1px rgba(0,0,0,.08); font-family: var(--s-sans, var(--sans)); }
 .deck.letter .slide, .report.letter .slide { aspect-ratio: 11 / 8.5; }
 .s-pad { position: absolute; inset: 0; padding: 6cqw 7cqw; display: flex; flex-direction: column; gap: 2.2cqw; }
-.s-kicker { font-size: 1.5cqw; letter-spacing: 0.14em; text-transform: uppercase; color: #6e5428; font-weight: 700; }
-.s-h { font: 600 4.4cqw/1.1 var(--serif); margin: 0; }
-.s-body { font: 2cqw/1.5 var(--serif); white-space: pre-line; overflow: hidden; }
+.s-kicker { font-size: 1.5cqw; letter-spacing: 0.14em; text-transform: uppercase; color: var(--s-accent, #6e5428); font-weight: 700; }
+.s-h { font: 600 4.4cqw/1.1 var(--s-head, var(--serif)); margin: 0; }
+.s-body { font: 2cqw/1.5 var(--s-text, var(--serif)); white-space: pre-line; overflow: hidden; }
 .s-body.small { font-size: 1.7cqw; }
 .s-split { display: grid; grid-template-columns: 1fr 1fr; gap: 4cqw; min-height: 0; flex: 1; }
 .s-split.left { grid-template-columns: 1fr 1fr; }
 .s-split.left .s-img { order: -1; }
-.s-img { min-height: 0; background: #d9d4ca; border-radius: 0.6cqw; overflow: hidden; }
+.s-img { min-height: 0; background: var(--s-tile, #d9d4ca); border-radius: 0.6cqw; overflow: hidden; }
 .s-img img, .s-full img, .s-grid img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.s-full { position: absolute; inset: 0; background: #1b1e25; }
-.s-caption { position: absolute; left: 0; right: 0; bottom: 0; padding: 3cqw 7cqw; background: linear-gradient(transparent, rgba(0,0,0,.65)); color: #f4f1ea; font: 2cqw/1.4 var(--serif); }
-.s-title { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: 7cqw; background: #1b1e25; color: #f4f1ea; }
+.s-full { position: absolute; inset: 0; background: var(--s-dark, #1b1e25); }
+.s-caption { position: absolute; left: 0; right: 0; bottom: 0; padding: 3cqw 7cqw; background: linear-gradient(transparent, rgba(0,0,0,.65)); color: var(--s-dark-ink, #f4f1ea); font: 2cqw/1.4 var(--s-text, var(--serif)); }
+.s-title { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: 7cqw; background: var(--s-dark, #1b1e25); color: var(--s-dark-ink, #f4f1ea); }
 .s-title .s-bg { position: absolute; inset: 0; opacity: 0.55; }
 .s-title .s-bg img { width: 100%; height: 100%; object-fit: cover; }
 .s-title > :not(.s-bg) { position: relative; }
-.s-title .s-name { font: 600 7.5cqw/1.02 var(--serif); margin: 0 0 2cqw; }
-.s-title .s-tag { font: 2.3cqw/1.45 var(--serif); max-width: 70cqw; margin: 0; }
+.s-title .s-name { font: 600 7.5cqw/1.02 var(--s-head, var(--serif)); margin: 0 0 2cqw; }
+.s-title .s-tag { font: 2.3cqw/1.45 var(--s-text, var(--serif)); max-width: 70cqw; margin: 0; }
 .s-title .s-foot { margin-top: 3cqw; font-size: 1.5cqw; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.8; }
 .s-grid { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(var(--cols, 3), 1fr); grid-auto-rows: 1fr; gap: 1.4cqw; }
-.s-grid > div { min-height: 0; overflow: hidden; border-radius: 0.5cqw; background: #d9d4ca; }
+.s-grid > div { min-height: 0; overflow: hidden; border-radius: 0.5cqw; background: var(--s-tile, #d9d4ca); }
 .s-people { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.4cqw 4cqw; align-content: start; }
-.s-person .r { display: block; font-size: 1.45cqw; letter-spacing: 0.1em; text-transform: uppercase; color: #6e5428; font-weight: 700; }
-.s-person .n { display: block; font: 600 2.3cqw/1.25 var(--serif); }
+.s-person .r { display: block; font-size: 1.45cqw; letter-spacing: 0.1em; text-transform: uppercase; color: var(--s-accent, #6e5428); font-weight: 700; }
+.s-person .n { display: block; font: 600 2.3cqw/1.25 var(--s-head, var(--serif)); }
 .s-comps { display: grid; grid-template-columns: repeat(var(--cols, 3), 1fr); gap: 3cqw; align-content: start; }
-.s-comp .t { font: 600 2.4cqw/1.2 var(--serif); }
-.s-comp .m { font-size: 1.45cqw; color: #4b5060; margin: 0.6cqw 0; }
+.s-comp .t { font: 600 2.4cqw/1.2 var(--s-head, var(--serif)); }
+.s-comp .m { font-size: 1.45cqw; color: var(--s-muted, #4b5060); margin: 0.6cqw 0; }
 .s-comp .f { font-size: 1.6cqw; font-weight: 700; }
-.s-comp .w { font: 1.65cqw/1.4 var(--serif); margin-top: 0.8cqw; }
-.s-note { margin-top: auto; font-size: 1.15cqw; color: #5a5f6e; }
-.s-empty { color: #8a8f9c; font-style: italic; }
+.s-comp .w { font: 1.65cqw/1.4 var(--s-text, var(--serif)); margin-top: 0.8cqw; }
+.s-note { margin-top: auto; font-size: 1.15cqw; color: var(--s-muted, #5a5f6e); }
+.s-empty { color: var(--s-muted, #8a8f9c); font-style: italic; }
+.s-video { position: absolute; inset: 0; background: var(--s-dark, #1b1e25); color: var(--s-dark-ink, #f4f1ea); display: flex; flex-direction: column; justify-content: flex-end; padding: 7cqw; gap: 1.4cqw; }
+.s-video .s-bg { position: absolute; inset: 0; opacity: 0.45; }
+.s-video .s-bg img { width: 100%; height: 100%; object-fit: cover; }
+.s-video > :not(.s-bg) { position: relative; }
+.s-play { position: absolute !important; top: 50%; left: 50%; width: 11cqw; height: 11cqw; margin: -8cqw 0 0 -5.5cqw; border-radius: 50%; border: 0.5cqw solid currentColor; }
+.s-play::after { content: ""; position: absolute; left: 40%; top: 28%; border-style: solid; border-width: 2.4cqw 0 2.4cqw 4cqw; border-color: transparent transparent transparent currentColor; }
+.s-video .s-h { color: inherit; }
+.s-video .s-url { font: 600 2cqw/1.3 var(--s-sans, var(--sans)); overflow-wrap: anywhere; color: inherit; }
+.s-video .s-pw { font-size: 1.6cqw; opacity: 0.85; }
 
 .imgs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 6px 0 8px; }
 .imgs figure { margin: 0; position: relative; aspect-ratio: 4 / 3; border-radius: 5px; overflow: hidden; background: var(--rule-soft); }
@@ -169,6 +178,10 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .pick-imgs label:has(input:checked) { border-color: var(--ink); }
 .pick-imgs input { position: absolute; top: 6px; left: 6px; width: 18px; height: 18px; margin: 0; }
 .pick-imgs img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.look-bar { flex-wrap: wrap; gap: 10px 16px; font-size: 14px; }
+.look-bar label { display: inline-flex; align-items: center; gap: 6px; }
+.look-bar select { padding: 4px 8px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); color: var(--ink); font: inherit; }
+.look-bar input[type=color] { width: 40px; height: 28px; padding: 2px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); }
 .from { list-style: none; margin: 4px 0 0; padding: 0; font-size: 14px; display: grid; gap: 4px; }
 @media (max-width: 900px) { .workspace { grid-template-columns: 1fr; } }
 
@@ -291,6 +304,13 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
           <label><input type="radio" name="size" value="letter"> Letter, for a printed lookbook</label>
         </span>
       </div>
+      <div class="toolbar look-bar">
+        <label>Theme <select id="themeSel"></select></label>
+        <label>Type <select id="fontSel"></select></label>
+        <label>Accent <input type="color" id="accentIn"></label>
+        <button type="button" class="btn small" id="accentReset">Theme's accent</button>
+        <span class="hint" id="accentHint" aria-live="polite"></span>
+      </div>
       <div class="deck" id="deck"></div>
       <div class="empty" id="empty" hidden>
         <h2>No slides yet</h2>
@@ -334,6 +354,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
           <label><input type="radio" name="layout" value="right" checked> Right of the text</label>
           <label><input type="radio" name="layout" value="left"> Left of the text</label>
         </span></div>
+      <div class="field" data-show="link"><label for="f-link">Link to the video</label><input id="f-link" type="text" placeholder="https://vimeo.com/…" autocomplete="off"><p class="hint">Printed on the slide, and clickable in a saved PDF. The tool never opens it.</p></div>
+      <div class="field" data-show="link"><label for="f-password">Password, if it has one</label><input id="f-password" type="text" autocomplete="off"></div>
       <div class="group" data-show="images"><h3 id="pickHead">Images</h3><p class="hint" id="pickHint"></p><div class="pick-imgs" id="pickImgs" role="group" aria-labelledby="pickHead"></div></div>
       <label class="check"><input type="checkbox" id="f-hidden"><span class="who">Leave this slide out of the deck</span></label>
     </div>
@@ -455,8 +477,33 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     look: { label: 'The look: a grid of images', show: ['heading', 'body', 'images'], heading: 'Heading', body: 'A line or two under the images', images: 'Up to six images.', max: 6 },
     image: { label: 'Full-page image', show: ['body', 'images'], body: 'Caption', images: 'The image.', max: 1 },
     team: { label: 'Team, from the project', show: ['heading', 'body'], heading: 'Heading', body: 'A line under the team, such as past films', hint: 'Lists the crew in your project, with their roles. Add or fix people in the project, and the slide follows.' },
+    video: { label: 'Trailer or video link', show: ['heading', 'body', 'link', 'images'], heading: 'Heading', body: 'A line about the video', images: 'A still to show behind the play button, if you want one.', max: 1, hint: 'A slide can\'t play video, so this one shows the link, and its password if there is one, for anyone reading the deck.' },
     comps: { label: 'Comps, from the comps tracker', show: ['heading', 'body'], heading: 'Heading', body: 'A line under the comps', hint: 'Shows the comps ticked "In the pitch" in the comps tracker, with one sourced figure each.' },
   };
+  // Looks for the slides. Colors are checked for contrast; fonts are ones most computers already have.
+  const THEMES = {
+    paper: { label: 'Paper', bg: '#f4f1ea', ink: '#1b1e25', accent: '#6e5428', dark: '#1b1e25', darkInk: '#f4f1ea', muted: '#4b5060', tile: '#d9d4ca' },
+    night: { label: 'Night', bg: '#15181f', ink: '#eef0f4', accent: '#e2b86b', dark: '#000000', darkInk: '#f4f1ea', muted: '#aab0bd', tile: '#2a2f3a' },
+    white: { label: 'White', bg: '#ffffff', ink: '#111111', accent: '#b3261e', dark: '#111111', darkInk: '#ffffff', muted: '#555555', tile: '#e6e6e6' },
+    river: { label: 'River', bg: '#eef3f6', ink: '#0f2633', accent: '#1f5f7a', dark: '#0f2633', darkInk: '#eef3f6', muted: '#3f5866', tile: '#cfdde5' },
+  };
+  const FONTS = {
+    classic: { label: 'Classic serif', head: 'var(--serif)', text: 'var(--serif)' },
+    modern: { label: 'Clean sans', head: '"Helvetica Neue", Helvetica, Arial, system-ui, sans-serif', text: '"Helvetica Neue", Helvetica, Arial, system-ui, sans-serif' },
+    mixed: { label: 'Sans headings, serif text', head: '"Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif', text: 'Georgia, "Times New Roman", serif' },
+    book: { label: 'Book', head: '"Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif', text: '"Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif' },
+    typewriter: { label: 'Typewriter headings', head: '"Courier New", Courier, ui-monospace, monospace', text: 'Georgia, "Times New Roman", serif' },
+  };
+  const theme = () => THEMES[P().theme] || THEMES.paper;
+  const fonts = () => FONTS[P().font] || FONTS.classic;
+  const isHex = v => /^#[0-9a-f]{6}$/i.test(str(v));
+  const accent = () => (isHex(P().accent) ? P().accent : theme().accent);
+  function lum(hex) { const c = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255).map(v => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; }
+  const contrast = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m); return (x + 0.05) / (y + 0.05); };
+  function lookVars() {
+    const t = theme(), f = fonts();
+    return `--s-bg:${t.bg};--s-ink:${t.ink};--s-accent:${accent()};--s-dark:${t.dark};--s-dark-ink:${t.darkInk};--s-muted:${t.muted};--s-tile:${t.tile};--s-head:${f.head};--s-text:${f.text}`;
+  }
   const SIZES = { widescreen: { label: 'widescreen', page: '13.333in 7.5in' }, letter: { label: 'letter', page: '11in 8.5in' } };
   const MAX_SIDE = 1600;
   let editing = null;
@@ -489,13 +536,19 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const img = i => i ? `<img src="${esc(i.data)}" alt="${esc(i.name || '')}">` : '';
 
   // ---------- A slide as HTML ----------
-  function slideHtml(s) {
+  function slideHtml(s, forPrint) {
     const imgs = imagesOf(s);
     const h = esc(s.heading || '');
     const body = esc(s.body || '');
     if (s.kind === 'title') return `<div class="s-title">${imgs[0] ? `<div class="s-bg">${img(imgs[0])}</div>` : ''}
       <p class="s-name">${h || esc(doc.project.title || 'Untitled film')}</p>${body ? `<p class="s-tag">${body}</p>` : ''}
       ${doc.project.company ? `<p class="s-foot">${esc(doc.project.company)}</p>` : ''}</div>`;
+    if (s.kind === 'video') {
+      const url = str(s.link).trim(), web = /^https?:\/\/\S+$/i.test(url);
+      const shown = url ? (forPrint && web ? `<a class="s-url" href="${esc(url)}">${esc(url)}</a>` : `<span class="s-url">${esc(url)}</span>`) : '<span class="s-url s-empty">Add the link to the video</span>';
+      return `<div class="s-video">${imgs[0] ? `<div class="s-bg">${img(imgs[0])}</div>` : ''}<span class="s-play" aria-hidden="true"></span>
+        ${h ? `<p class="s-h">${h}</p>` : ''}${body ? `<p class="s-body small" style="color:inherit">${body}</p>` : ''}${shown}${s.password ? `<span class="s-pw">Password: ${esc(s.password)}</span>` : ''}</div>`;
+    }
     if (s.kind === 'image') return `<div class="s-full">${img(imgs[0])}${body ? `<div class="s-caption">${body}</div>` : ''}</div>`;
     if (s.kind === 'look') {
       const n = Math.min(imgs.length, 6);
@@ -539,6 +592,13 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const slides = entries();
     document.querySelector(`input[name=size][value="${P().size}"]`).checked = true;
     $('deck').className = `deck ${P().size}`;
+    $('deck').style.cssText = lookVars();
+    $('themeSel').value = THEMES[P().theme] ? P().theme : 'paper';
+    $('fontSel').value = FONTS[P().font] ? P().font : 'classic';
+    $('accentIn').value = accent();
+    $('accentReset').hidden = !isHex(P().accent);
+    const ratio = contrast(accent(), theme().bg);
+    $('accentHint').textContent = ratio < 4.5 ? `This accent is hard to read on the ${theme().label.toLowerCase()} background (${ratio.toFixed(1)} to 1). Small text needs 4.5 to 1.` : '';
     const shown = slides.filter(s => !s.hidden).length;
     $('count').textContent = slides.length ? `${shown} slide${shown === 1 ? '' : 's'}${shown < slides.length ? `, ${slides.length - shown} left out` : ''}` : '';
     $('empty').hidden = !!slides.length;
@@ -589,6 +649,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('f-kind').value = editing.kind;
     $('f-heading').value = str(editing.heading);
     $('f-body').value = str(editing.body);
+    $('f-link').value = str(editing.link);
+    $('f-password').value = str(editing.password);
     document.querySelector(`input[name=layout][value="${editing.layout === 'left' ? 'left' : 'right'}"]`).checked = true;
     $('f-hidden').checked = !!editing.hidden;
     syncKind();
@@ -614,6 +676,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const set = (key, v) => { if (v) e[key] = v; else delete e[key]; };
     set('heading', k.show.includes('heading') ? $('f-heading').value.trim() : '');
     set('body', k.show.includes('body') ? $('f-body').value.replace(/\s+$/, '') : '');
+    set('link', k.show.includes('link') ? $('f-link').value.trim() : '');
+    set('password', k.show.includes('link') ? $('f-password').value.trim() : '');
     set('layout', k.show.includes('layout') && document.querySelector('input[name=layout]:checked').value === 'left' ? 'left' : '');
     const picked = k.show.includes('images') ? [...$('pickImgs').querySelectorAll('input:checked')].map(i => i.value) : [];
     if (picked.length > (k.max || 0)) { $('pickHint').textContent = `This kind of slide takes ${k.max === 1 ? 'one image' : `up to ${k.max} images`}. Untick ${picked.length - k.max}.`; return; }
@@ -673,7 +737,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   // ---------- Print ----------
   function renderReport() {
     $('report').className = `report ${P().size}`;
-    $('report').innerHTML = entries().filter(s => !s.hidden).map(s => `<div class="slide">${slideHtml(s)}</div>`).join('');
+    $('report').style.cssText = lookVars();
+    $('report').innerHTML = entries().filter(s => !s.hidden).map(s => `<div class="slide">${slideHtml(s, true)}</div>`).join('');
     let style = document.getElementById('pageSize');
     if (!style) { style = document.createElement('style'); style.id = 'pageSize'; document.head.appendChild(style); }
     style.textContent = `@media print { @page { size: ${SIZES[P().size].page}; margin: 0; } }`;
@@ -906,6 +971,13 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('draftBtn').onclick = draftFromProject;
     $('emptyOpenBtn').onclick = openFile;
     document.querySelectorAll('input[name=size]').forEach(r => r.addEventListener('change', () => { P().size = r.value; changed(); }));
+    $('themeSel').innerHTML = Object.entries(THEMES).map(([k, v]) => `<option value="${k}">${esc(v.label)}</option>`).join('');
+    $('fontSel').innerHTML = Object.entries(FONTS).map(([k, v]) => `<option value="${k}">${esc(v.label)}</option>`).join('');
+    const setLook = (k, v, dflt) => { if (v && v !== dflt) P()[k] = v; else delete P()[k]; changed(); };
+    $('themeSel').onchange = () => setLook('theme', $('themeSel').value, 'paper');
+    $('fontSel').onchange = () => setLook('font', $('fontSel').value, 'classic');
+    $('accentIn').onchange = () => setLook('accent', $('accentIn').value.toLowerCase(), theme().accent);
+    $('accentReset').onclick = () => setLook('accent', '', '');
     $('deck').addEventListener('click', ev => {
       const b = ev.target.closest('button');
       if (!b) return;

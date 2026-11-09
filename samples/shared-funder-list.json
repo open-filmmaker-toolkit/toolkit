@@ -1,0 +1,12 @@
+{
+  "format": "oft-list",
+  "formatVersion": 1,
+  "kind": "funders",
+  "title": "Sample funder list (fictional funders)",
+  "savedAt": "2026-11-01T12:00:00.000Z",
+  "items": [
+    { "funder": "Riverbend Documentary Fund", "program": "Production grant, 2027 round", "usualDeadline": "02-12", "deadlineTime": "11:59 pm Pacific", "amount": "Up to $40,000", "materials": ["Narrative", "Budget", "Work sample", "Bios"] },
+    { "funder": "Lakeshore Story Foundation", "program": "Research and development", "usualDeadline": "05-15", "amount": "Up to $15,000", "eligibility": "First or second feature documentaries", "materials": ["Narrative", "Budget", "Treatment"] },
+    { "funder": "Tri-County Arts Council", "program": "Media artist fellowship", "usualDeadline": "09-01", "amount": "$10,000", "eligibility": "Artists living in the three counties" }
+  ]
+}

@@ -33,8 +33,9 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 ## What it does
 
 - **Reads the budget** from the [budget tool](../budget/), in the same project file.
-- **Maps accounts to a funder's categories.** Choose a category for each account, or open it to send a single line somewhere else. Fringes go with their lines or to a category of their own, and each percentage, such as contingency, goes to a category or is left out.
-- **Starts from a common format:** top sheet sections, phases of production, or the cost categories on US federal form SF-424A. Each fills in the categories and maps what it can; check the rest against the funder's own form.
+- **Maps accounts to a funder's categories.** Choose a category for each account, or open it to send a single line somewhere else, or split a line between two categories by percentage, such as a producer who is also the editor. Fringes go with their lines or to a category of their own, and each percentage, such as contingency, goes to a category or is left out.
+- **Starts from a common format:** top sheet sections, phases of production, personnel and project costs (like many private foundation forms), or the cost categories on US federal form SF-424A. Each fills in the categories and maps what it can; check the rest against the funder's own form.
+- **Follows forms with their own line items.** When the funder's form lists line items under headings, such as Director and Editor under Personnel, give each line item its heading as a section. The converted budget, the printout and the CSV show each section with its total.
 - **Flags lines that don't map,** and shows the converted total next to the budget total, with what's not mapped yet and what you left out on purpose.
 - **Saves each mapping** in the project file, and links it to an application in the [grant calendar](../grant-calendar/) if you want.
 - **Saves a format file** you can open in another project. It maps by account number and name, so it works with any budget that uses the same accounts.
@@ -56,12 +57,10 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-A `budgetFormats` list. Each format has an `id`, a `name`, `categories` (each with `id` and `name`), and mappings: `accountMap` and `lineMap` (account or line id to category id), `markupMap` (percentage id to category id), and optional `fringeTo` (`line`, or a category id). An empty string means left out on purpose; anything missing isn't mapped yet. Optional `grantId` points to a grant in `grants`, and `notes` say what the funder allows. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
+A `budgetFormats` list. Each format has an `id`, a `name`, `categories` (each with `id`, `name` and an optional `section`, the heading it sits under on the funder's form), and mappings: `accountMap` and `lineMap` (account or line id to category id), `markupMap` (percentage id to category id), optional `fringeTo` (`line`, or a category id), and optional `lineSplits` (line id to `{ categoryId, percent }`: that percent of the line, and of its fringe when fringes go with the line, goes to the second category). An empty string means left out on purpose; anything missing isn't mapped yet. Optional `grantId` points to a grant in `grants`, and `notes` say what the funder allows. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
-- Funder forms with their own line items rather than categories
-- Splitting one line across two categories
 - More common formats, as they're contributed
 
 ## License

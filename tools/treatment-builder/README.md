@@ -11,7 +11,7 @@
 
 # Treatment builder
 
-Write a documentary or narrative treatment from a structured outline: logline, short and long synopsis, characters and subjects, story and structure, visual approach, access, why now, and team. Each section counts its words against a target you can change. Save a version before a draft goes out, and see exactly what changed since.
+Write a documentary or narrative treatment from a structured outline: logline, short and long synopsis, characters and subjects, story and structure, visual approach, access, why now, and team. Each section counts its words, or its characters, against a target you can change. Save a version before a draft goes out, and see exactly what changed since.
 
 Part of the [Open Filmmaker Toolkit](../../README.md). Tracking issue: [#44](https://github.com/open-filmmaker-toolkit/toolkit/issues/44).
 
@@ -33,7 +33,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 ## What it does
 
 - **Sections for each part of a treatment,** with a short note on what goes in each.
-- **Counts words against a target.** Each section starts with a typical target (50 words for a logline, 150 for a short synopsis, 750 for a long one, and so on). Change any target to match a funder's limit. Counts turn amber near the target and red over it, and the outline on the side shows every section at a glance.
+- **Counts words against a target.** Each section starts with a typical target (50 words for a logline, 150 for a short synopsis, 750 for a long one, and so on). Change any target to match a funder's limit, and switch a section to count characters, spaces included, when the funder limits those instead. Counts turn amber near the target and red over it, and the outline on the side shows every section at a glance.
 - **Pulls subjects and team from the project.** **Add subjects from the project** adds a line for each person on camera or interviewed, with what the subject tracker says about them, and for possible subjects you haven't added to the project yet. **Add the team from the project** adds each crew member's role and name. Lines already in the section aren't added twice. Write them up in your own words from there.
 - **Keeps versions.** **Save version** keeps a named copy of every section. **Compare** shows what changed since then, section by section, with removed words struck through and added words highlighted. You can also go back to a saved version.
 - **Exports** to PDF through the print dialog, and as Markdown or plain text.
@@ -54,14 +54,14 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 A `treatment` object:
 
 - `sections`: the text of each section, by key: `logline`, `shortSynopsis`, `longSynopsis`, `subjects`, `structure`, `approach`, `access`, `whyNow` and `team`. Empty sections are left out.
-- `targets`: word targets you changed from the defaults, by the same keys.
+- `targets`: targets you changed from the defaults, by the same keys.
+- `units`: sections counted in characters instead of words, as `"characters"` by key.
 - `versions`: saved versions, each with an `id`, `at` (when it was saved), a `label` and a copy of `sections`.
 
 Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
-- Character counts, for funders who limit characters instead of words. The grant narrative library has them, for answers you reuse
 - More than one treatment in a project, such as a short and a long version
 - Export to Word
 

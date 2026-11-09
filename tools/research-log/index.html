@@ -75,6 +75,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .chip button { padding: 4px 10px; border: 0; background: none; cursor: pointer; font-size: 13px; font-weight: 600; }
 .chip button:hover { background: var(--hover); }
 .chip .sub { font-weight: 400; color: var(--ink-3); margin-left: 4px; }
+.cites { margin: 4px 0 12px; padding-left: 22px; display: grid; gap: 8px; font-size: 14px; }
+.cites li { overflow-wrap: anywhere; }
 .empty-line { margin: 4px 0; color: var(--ink-2); font-size: 14px; }
 .changes { margin: 0; padding-left: 18px; font-size: 14px; }
 .changes li + li { margin-top: 2px; }
@@ -246,6 +248,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <span class="spacer"></span>
         <button type="button" class="btn primary" id="addBtn">Add source</button>
         <button type="button" class="btn" id="csvBtn">Export CSV</button>
+        <button type="button" class="btn" id="citeBtn">Citations</button>
         <button type="button" class="btn" id="printBtn">Print</button>
       </div>
       <div class="tabs" role="tablist" aria-label="Which log">
@@ -303,6 +306,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <div class="field"><label for="f-archive" id="archiveLabel">Archive or collection</label><input id="f-archive" type="text" autocomplete="off"></div>
         <div class="field"><label for="f-itemId" id="itemLabel">Item ID</label><input id="f-itemId" type="text" placeholder="Reel 14, 00:12:30" autocomplete="off"></div>
       </div>
+      <div class="two" id="citeFields">
+        <div class="field"><label for="f-author">Author</label><input id="f-author" type="text" placeholder="Last name, first name" autocomplete="off"></div>
+        <div class="field"><label for="f-published">Published</label><input id="f-published" type="text" placeholder="1966, or June 3, 1985" autocomplete="off"></div>
+        <div class="field"><label for="f-accessed">Looked at online</label><input id="f-accessed" type="date"><p class="hint">For citing a web page.</p></div>
+      </div>
       <div class="field"><label for="f-link">Link or call number</label><input id="f-link" type="text" placeholder="Catalog page, finding aid or call number" autocomplete="off"><p class="hint">Stored as text. The tool never opens it.</p></div>
       <div class="two">
         <div class="field"><label for="f-rightsHolder">Rights holder</label><input id="f-rightsHolder" type="text" autocomplete="off"></div>
@@ -324,6 +332,16 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       <button type="submit" class="btn primary" id="editorSubmit">Save</button>
     </div>
   </form>
+</dialog>
+
+<dialog class="modal" id="citeDialog" aria-labelledby="citeTitle">
+  <div class="dlg-head"><h2 id="citeTitle">Citations for research sources</h2></div>
+  <div class="dlg-body">
+    <div class="field"><label for="citeStyle">Style</label><select id="citeStyle"><option value="chicago">Chicago (bibliography)</option><option value="apa">APA</option><option value="mla">MLA</option></select></div>
+    <ol class="cites" id="citeList"></ol>
+    <p class="hint">Built from the author, title, publisher, date and link you logged, for the research sources you're using or have checked. Check them against the style guide before they go out: the tool can't tell a book from an article, so italics and quotation marks may need fixing.</p>
+  </div>
+  <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn" id="citeClose">Close</button><button type="button" class="btn primary" id="citeDownload">Download as text</button></div>
 </dialog>
 
 <dialog class="modal" id="projectDialog" aria-labelledby="projectDialogTitle">
@@ -508,6 +526,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('rows').hidden = !list.length;
     $('noMatch').hidden = !all.length || !!list.length;
     for (const el of [$('statusFilter').parentElement, document.querySelector('.tabs'), $('csvBtn'), $('printBtn')]) el.hidden = !all.length;
+    $('citeBtn').hidden = !all.some(s => s.kind === 'research');
     $('rows').innerHTML = list.map(s => {
       const flags = [];
       for (const l of oftLinks.labels(s)) flags.push(`<span class="flag linked">${esc(l)}</span>`);
@@ -541,7 +560,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   }
 
   // ---------- Editor ----------
-  const FIELDS = { title: 'f-title', archive: 'f-archive', itemId: 'f-itemId', link: 'f-link', rightsHolder: 'f-rightsHolder', contact: 'f-contact', rightsNotes: 'f-rights', notes: 'f-notes' };
+  const FIELDS = { title: 'f-title', author: 'f-author', published: 'f-published', accessed: 'f-accessed', archive: 'f-archive', itemId: 'f-itemId', link: 'f-link', rightsHolder: 'f-rightsHolder', contact: 'f-contact', rightsNotes: 'f-rights', notes: 'f-notes' };
   function openEditor(id, preset) {
     const existing = id && entries().find(s => s.id === id);
     isNew = !existing;
@@ -565,7 +584,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const k = document.querySelector('input[name=kind]:checked').value;
     $('f-status').innerHTML = STATUSES[k].map(s => `<option value="${s.id}">${esc(s.label)}</option>`).join('');
     $('f-status').value = STATUSES[k].some(s => s.id === status) ? status : STATUSES[k][0].id;
-    $('archiveLabel').textContent = k === 'archival' ? 'Archive or collection' : 'Author or publisher';
+    $('archiveLabel').textContent = k === 'archival' ? 'Archive or collection' : 'Publisher, journal or site';
+    $('citeFields').hidden = k !== 'research';
     $('itemLabel').textContent = k === 'archival' ? 'Item ID' : 'Title, issue or page';
   }
   function syncLinked() {
@@ -639,6 +659,43 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const el = sendToClearance(s);
     changed();
     toast(`Sent "${el.description}" to the clearance log as ${el.type.toLowerCase()}, not started.`);
+  }
+
+  // ---------- Citations ----------
+  // Research sources as citations in a standard style, from the fields logged. A guide, not a style checker.
+  const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const MLA_MONTHS = ['Jan.', 'Feb.', 'Mar.', 'Apr.', 'May', 'June', 'July', 'Aug.', 'Sept.', 'Oct.', 'Nov.', 'Dec.'];
+  const isoDay = v => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str(v)); return m ? { y: +m[1], m: +m[2] - 1, d: +m[3] } : null; };
+  const yearOf = v => (str(v).match(/\b(1[5-9]\d\d|20\d\d)\b/) || [])[1] || '';
+  const stop = t => { t = str(t).trim(); return !t ? '' : /[.?!"”]$/.test(t) ? t : `${t}.`; };
+  const quoted = t => (/^["“]/.test(str(t).trim()) ? str(t).trim() : `“${str(t).trim()}”`);
+  function cite(s, style) {
+    const a = str(s.author).trim(), t = str(s.title).trim(), pub = str(s.archive).trim(), part = str(s.itemId).trim(), when = str(s.published).trim(), link = str(s.link).trim();
+    const acc = isoDay(s.accessed), web = /^https?:\/\//i.test(link);
+    if (style === 'apa') {
+      const head = a ? `${stop(a)} (${yearOf(when) || 'n.d.'}).` : `${stop(t)} (${yearOf(when) || 'n.d.'}).`;
+      return [head, a ? stop(t) : '', stop([pub, part].filter(Boolean).join(', ')), link].filter(Boolean).join(' ');
+    }
+    // A title in quotation marks takes its period inside them.
+    const qt = /^["“]/.test(t) ? stop(t) : `“${t.replace(/[.]$/, '')}.”`;
+    if (style === 'mla') {
+      return [a ? stop(a) : '', qt, stop([pub, when, part].filter(Boolean).join(', ')), link ? stop(link) : '', acc && web ? `Accessed ${acc.d} ${MLA_MONTHS[acc.m]} ${acc.y}.` : ''].filter(Boolean).join(' ');
+    }
+    return [a ? stop(a) : '', stop(t), stop([pub, part, when].filter(Boolean).join(', ')), acc && web ? `Accessed ${MONTHS[acc.m]} ${acc.d}, ${acc.y}.` : '', link ? stop(link) : ''].filter(Boolean).join(' ');
+  }
+  const citable = () => entries().filter(s => s.kind === 'research' && s.status !== 'not-using' && str(s.title).trim())
+    .sort((a, b) => sortKey(a).localeCompare(sortKey(b)));
+  // Sorted by author, or by title without quotation marks or a leading "The", "A" or "An".
+  const sortKey = s => str(s.author || s.title).replace(/^["“]/, '').replace(/^(the|a|an)\s+/i, '');
+  function renderCites() {
+    const all = citable(), style = $('citeStyle').value;
+    $('citeList').innerHTML = all.length ? all.map(s => `<li>${esc(cite(s, style))}</li>`).join('') : '<li class="empty-line">No research sources to cite yet.</li>';
+    $('citeDownload').disabled = !all.length;
+  }
+  function downloadCites() {
+    const style = $('citeStyle').value, name = `${slug()}-citations-${style}.txt`;
+    download(citable().map(s => cite(s, style)).join('\n\n') + '\n', name, 'text/plain;charset=utf-8');
+    toast(`Saved ${citable().length} citation${citable().length === 1 ? '' : 's'} to ${name}`);
   }
 
   // ---------- CSV and print ----------
@@ -898,6 +955,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('emptyAddBtn').onclick = () => openEditor(null);
     $('emptyOpenBtn').onclick = openFile;
     $('csvBtn').onclick = exportCsv;
+    $('citeBtn').onclick = () => { renderCites(); $('citeDialog').showModal(); };
+    $('citeStyle').onchange = renderCites;
+    $('citeClose').onclick = () => $('citeDialog').close();
+    $('citeDownload').onclick = downloadCites;
     $('search').addEventListener('input', render);
     $('statusFilter').addEventListener('change', render);
     document.querySelector('.tabs').addEventListener('click', ev => { const b = ev.target.closest('[data-kind]'); if (b) { kind = b.dataset.kind; render(); } });
@@ -935,7 +996,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   window.addEventListener('unhandledrejection', ev => toast(`Something went wrong: ${ev.reason && ev.reason.message ? ev.reason.message : ev.reason}. Save your work, then reload the page.`, true));
   // Columns for importing from a spreadsheet, named as in this tool's template.
   const OFT_IMPORT = { noun: 'source', nouns: 'sources', key: 'title', list: () => doc.sources, make: () => ({ kind: 'research' }),
-    fields: [['Log', 'kind', 'enum', { values: { archival: 'Archival lead', research: 'Research source' } }], ['What it is', 'title'], ['Status', 'status'], ['Type', 'type'], ['Archive or collection', 'archive'], ['Item ID', 'itemId'], ['Link or call number', 'link'],
+    fields: [['Log', 'kind', 'enum', { values: { archival: 'Archival lead', research: 'Research source' } }], ['What it is', 'title'], ['Author', 'author'], ['Published', 'published'], ['Status', 'status'], ['Type', 'type'], ['Archive or collection', 'archive'], ['Item ID', 'itemId'], ['Link or call number', 'link'],
       ['Rights holder', 'rightsHolder'], ['Contact', 'contact'], ['Estimated cost', 'cost', 'num'], ['Currency', 'currency'], ['Rights notes', 'rightsNotes'], ['Notes', 'notes'], ['Clearance', '', 'skip']],
     put: r => { const list = STATUSES[r.kind] || STATUSES.research; const st = list.find(s => s.id === r.status || String(s.label).toLowerCase() === String(r.status || '').toLowerCase()); r.status = st ? st.id : list[0].id; if (r.currency && r.currency.toUpperCase() === String(doc.project.currency || '').toUpperCase()) delete r.currency; doc.sources.push(r); } };
   /* oft-shared:import begin. Copied from shared/import.js by .github/scripts/sync_shared.py; edit it there. */

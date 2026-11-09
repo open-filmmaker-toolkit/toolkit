@@ -129,6 +129,9 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .sub-maps .amt { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink-2); }
 .sub-maps select { padding: 4px 6px; font-size: 13px; }
 .sub-maps li.unmapped select { border-color: var(--bad); }
+.sub-maps .split { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: flex-end; font-size: 13px; color: var(--ink-2); }
+.sub-maps .split input { width: 64px; padding: 4px 6px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); color: var(--ink); font: inherit; }
+.conv tr.sec th { text-align: left; padding: 8px 0 2px; font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-2); }
 .conv { width: 100%; border-collapse: collapse; font-size: 14px; }
 .conv td { padding: 4px 0; vertical-align: top; }
 .conv td.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; padding-left: 10px; }
@@ -139,7 +142,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .checks li.bad { color: var(--bad); }
 .checks li.ok { color: var(--good); }
 .cat-rows { display: grid; gap: 6px; }
-.cat-row { display: grid; grid-template-columns: minmax(0, 1fr) 30px; gap: 8px; align-items: center; }
+.cat-row { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) 30px; gap: 8px; align-items: center; }
 .cat-row input { min-width: 0; padding: 7px 9px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); }
 .icon-btn { width: 30px; height: 30px; padding: 0; border: 1px solid transparent; border-radius: 6px; background: none; color: var(--ink-2); cursor: pointer; font-size: 16px; line-height: 1; }
 .icon-btn:hover { border-color: var(--rule); color: var(--ink); }
@@ -214,6 +217,7 @@ pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; b
   .report .r-note { margin-top: 14pt; font-size: 8pt; color: #333333; }
   .report .n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .report .r-tot td { font-weight: 700; border-top: 1pt solid #000000; }
+  .report .r-sec th { text-align: left; padding-top: 8pt; font-size: 9pt; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 0; }
   .report .r-grand td { font-weight: 700; font-size: 12pt; border-top: 2pt solid #000000; }
 }
 .skip-link { position: absolute; left: 12px; top: -80px; z-index: 1000; padding: 8px 14px; border: 2px solid var(--focus, #2f6fdb); border-radius: 6px; background: var(--sheet, #ffffff); color: var(--ink, #1a2130); font-weight: 600; text-decoration: none; }
@@ -315,9 +319,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       <div class="field" id="presetField"><label for="f-preset">Start from</label><select id="f-preset"></select><p class="hint" id="presetHint"></p></div>
       <div class="field"><label for="f-grant">Application in the grant calendar</label><select id="f-grant"></select></div>
       <div class="group">
-        <h3 id="catHead">The funder's categories</h3>
-        <p class="hint">In the order the funder's form lists them.</p>
+        <h3 id="catHead">The funder's categories or line items</h3>
+        <p class="hint">In the order the funder's form lists them. If the form lists its own line items under headings, such as "Director" and "Editor" under "Personnel", type each line item with its heading as the section, and the totals follow the form.</p>
         <div class="cat-rows" id="catRows" role="group" aria-labelledby="catHead"></div>
+        <datalist id="secList"></datalist>
         <div><button type="button" class="btn small" id="addCatBtn">Add a category</button></div>
       </div>
       <div class="field"><label for="f-notes">Notes</label><textarea id="f-notes" rows="2" placeholder="What the funder allows: contingency, overhead, in-kind"></textarea></div>
@@ -524,6 +529,12 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       categories: ['Personnel', 'Fringe benefits', 'Travel', 'Equipment', 'Supplies', 'Contractual', 'Other', 'Indirect charges'],
       fringes: 'Fringe benefits', keywords: { 'Travel': ['travel', 'lodging', 'per diem', 'mileage'], 'Equipment': ['equipment'], 'Supplies': ['supplies', 'expendable'] },
       markups: { overhead: 'Indirect charges', indirect: 'Indirect charges' } },
+    { id: 'foundation', name: 'Personnel and project costs', note: 'People, then the costs of making and sharing the film, then fees. Many private foundation forms ask for something like this.',
+      categories: ['Salaries and fees', 'Consultants and contractors', 'Equipment', 'Travel', 'Supplies and materials', 'Post-production', 'Outreach and distribution', 'Fiscal sponsor fee', 'Other'],
+      sections: { atl: 'Salaries and fees', post: 'Post-production' },
+      keywords: { 'Equipment': ['equipment', 'camera', 'gear'], 'Travel': ['travel', 'lodging', 'per diem', 'mileage'], 'Supplies and materials': ['supplies', 'expendable', 'materials'],
+        'Outreach and distribution': ['outreach', 'festival', 'distribution', 'marketing', 'impact'] },
+      markups: { sponsor: 'Fiscal sponsor fee', fee: 'Fiscal sponsor fee', contingency: 'Other', insurance: 'Other' } },
   ];
   let current = null; // id of the format on screen
   let editing = null;
@@ -541,6 +552,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       f.categories = objs(f.categories);
       for (const c of f.categories) if (!c.id) c.id = newId('category');
       for (const k of ['accountMap', 'lineMap', 'markupMap']) if (!f[k] || typeof f[k] !== 'object' || Array.isArray(f[k])) f[k] = {};
+      if (f.lineSplits !== undefined && (!f.lineSplits || typeof f.lineSplits !== 'object' || Array.isArray(f.lineSplits))) delete f.lineSplits;
     }
     d.format = FORMAT;
     d.formatVersion = FORMAT_VERSION;
@@ -557,6 +569,25 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const own = target(f, f.lineMap[x.line.id]);
     return own !== undefined ? own : target(f, f.accountMap[x.line.accountId]);
   }
+  // Part of a line sent to a second category: { categoryId, percent }, with the rest going where the line goes.
+  function splitOf(f, x) {
+    const sp = f.lineSplits && f.lineSplits[x.line.id];
+    if (!sp || !f.categories.some(c => c.id === sp.categoryId)) return null;
+    const p = Number(sp.percent);
+    return p > 0 && p < 100 ? { categoryId: sp.categoryId, percent: p } : null;
+  }
+  // Categories under a funder's own headings, for forms that list line items in sections.
+  const sectionOf = c => str(c.section).trim();
+  function sectioned(cats) {
+    const out = [];
+    for (const x of cats) {
+      const name = sectionOf(x.cat);
+      let g = out.find(o => o.name === name && o === out[out.length - 1]);
+      if (!g) { g = { name, cats: [], total: 0 }; out.push(g); }
+      g.cats.push(x); g.total = cents(g.total + x.total);
+    }
+    return out;
+  }
   // The converted budget: each line (and its fringe) and each percentage, sent to a category, left out, or not mapped.
   function convert(f) {
     const t = budgetTotals(doc.budget);
@@ -571,9 +602,16 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     for (const x of t.lines) {
       const acc = t.accounts.find(a => a.account.id === x.line.accountId);
       const label = `${acc ? (acc.account.code ? acc.account.code + ' ' : '') + (acc.account.name || '') + ': ' : ''}${x.line.description || 'Untitled line'}`;
-      const where = lineTarget(f, x);
-      if (fringeTo === 'line' || !x.fringe) put(where, { label, amount: x.total });
-      else { put(where, { label, amount: x.sub }); put(fringeTo, { label: `Fringe on ${label}`, amount: x.fringe }); }
+      const where = lineTarget(f, x), sp = where !== undefined && where !== '' ? splitOf(f, x) : null;
+      // A split line sends its share of the line, and of its fringe, to the second category.
+      const send = (to, item) => {
+        if (!sp) { put(to, item); return; }
+        const part = cents(item.amount * sp.percent / 100);
+        put(to, { label: `${item.label} (${num(100 - sp.percent)}%)`, amount: cents(item.amount - part) });
+        put(to === where ? sp.categoryId : to, { label: `${item.label} (${num(sp.percent)}%)`, amount: part });
+      };
+      if (fringeTo === 'line' || !x.fringe) send(where, { label, amount: x.total });
+      else { send(where, { label, amount: x.sub }); put(fringeTo, { label: `Fringe on ${label}`, amount: x.fringe }); }
     }
     for (const m of t.markups) put(target(f, f.markupMap[m.markup.id]), { label: `${m.markup.name || 'Percentage'} ${num(m.markup.percent)}%`, amount: m.amount });
     for (const c of cats) c.total = cents(c.items.reduce((n, i) => n + i.amount, 0));
@@ -622,9 +660,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <span class="amt">${esc(money(a.total))}</span>
         <select data-account="${esc(a.account.id)}" aria-label="Category for ${esc(a.account.name || 'this account')}">${options(f, av, '')}</select>
         <details${overrides ? ' open' : ''}><summary>${a.lines.length} line${a.lines.length === 1 ? '' : 's'}${overrides ? `, ${overrides} sent elsewhere` : ''}</summary><ul class="sub-maps">${a.lines.map(x => {
-          const lv = target(f, f.lineMap[x.line.id]);
+          const lv = target(f, f.lineMap[x.line.id]), sp = splitOf(f, x), d = esc(x.line.description || 'this line');
           return `<li class="${lineTarget(f, x) === undefined ? 'unmapped' : ''}"><span>${esc(x.line.description || 'Untitled line')}</span><span class="amt">${esc(money(x.total))}</span>
-            <select data-line="${esc(x.line.id)}" aria-label="Category for ${esc(x.line.description || 'this line')}"><option value="same"${lv === undefined ? ' selected' : ''}>Same as the account</option>${f.categories.map(cat => `<option value="${esc(cat.id)}"${lv === cat.id ? ' selected' : ''}>${esc(cat.name || 'Untitled category')}</option>`).join('')}<option value=""${lv === '' ? ' selected' : ''}>Leave out</option></select></li>`;
+            <select data-line="${esc(x.line.id)}" aria-label="Category for ${d}"><option value="same"${lv === undefined ? ' selected' : ''}>Same as the account</option>${f.categories.map(cat => `<option value="${esc(cat.id)}"${lv === cat.id ? ' selected' : ''}>${esc(cat.name || 'Untitled category')}</option>`).join('')}<option value=""${lv === '' ? ' selected' : ''}>Leave out</option></select>
+            <span class="split"><select data-split="${esc(x.line.id)}" aria-label="Send part of ${d} to"><option value="">Don't split</option>${f.categories.map(cat => `<option value="${esc(cat.id)}"${sp && sp.categoryId === cat.id ? ' selected' : ''}>Split with ${esc(cat.name || 'Untitled category')}</option>`).join('')}</select>${sp ? `<input type="number" min="1" max="99" step="any" data-splitpct="${esc(x.line.id)}" value="${esc(num(sp.percent))}" aria-label="Percent of ${d} to send there"> %` : ''}</span></li>`;
         }).join('')}</ul></details></li>`;
     }).join('')}</ul>`).join('');
     const ft = f.fringeTo === undefined || f.fringeTo === 'line' ? 'line' : target(f, f.fringeTo);
@@ -638,7 +677,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     }
     $('mapping').innerHTML = sec + (extras.length ? `<div class="sec-head"><h3>Fringes and percentages</h3></div><ul class="maps">${extras.join('')}</ul>` : '');
 
-    const rows = c.cats.map(x => `<tr><td>${esc(x.cat.name || 'Untitled category')}</td><td class="n">${esc(money(x.total))}</td></tr>`);
+    const rows = sectioned(c.cats).flatMap(g => [...(g.name ? [`<tr class="sec"><th scope="rowgroup" colspan="2">${esc(g.name)}</th></tr>`] : []),
+      ...g.cats.map(x => `<tr><td>${esc(x.cat.name || 'Untitled category')}</td><td class="n">${esc(money(x.total))}</td></tr>`),
+      ...(g.name ? [`<tr class="muted"><td>Total for ${esc(g.name)}</td><td class="n">${esc(money(g.total))}</td></tr>`] : [])]);
     rows.push(`<tr class="t"><td>Converted total</td><td class="n">${esc(money(c.total))}</td></tr>`);
     rows.push(`<tr class="muted"><td>Budget total</td><td class="n">${esc(money(c.t.grand))}</td></tr>`);
     if (c.unmappedTotal) rows.push(`<tr class="bad"><td>Not mapped yet</td><td class="n">${esc(money(c.unmappedTotal))}</td></tr>`);
@@ -662,9 +703,22 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     changed();
   }
 
+  function setSplit(lineId, categoryId, percent) {
+    const f = fmt();
+    if (!f) return;
+    const was = (f.lineSplits || {})[lineId] || {};
+    const cat = categoryId === null ? was.categoryId : categoryId;
+    const p = percent === null ? (Number(was.percent) || 50) : Number(percent);
+    if (!f.lineSplits) f.lineSplits = {};
+    if (cat && p > 0 && p < 100) f.lineSplits[lineId] = { categoryId: cat, percent: p };
+    else if (!cat) delete f.lineSplits[lineId];
+    if (!Object.keys(f.lineSplits).length) delete f.lineSplits;
+    changed();
+  }
+
   // ---------- Formats ----------
   function catRow(c) {
-    return `<div class="cat-row" data-id="${esc(c.id || '')}"><input type="text" value="${esc(c.name)}" placeholder="Personnel" aria-label="Category name" autocomplete="off"><button type="button" class="icon-btn" data-delcat aria-label="Remove this category">×</button></div>`;
+    return `<div class="cat-row" data-id="${esc(c.id || '')}"><input type="text" class="cat-name" value="${esc(c.name)}" placeholder="Personnel" aria-label="Category or line item" autocomplete="off"><input type="text" class="cat-sec" value="${esc(c.section)}" placeholder="Section, if the form has them" aria-label="The form's section for this item" autocomplete="off" list="secList"><button type="button" class="icon-btn" data-delcat aria-label="Remove this category">×</button></div>`;
   }
   function openEditor(id) {
     const existing = id && entries().find(f => f.id === id);
@@ -678,6 +732,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('presetHint').textContent = PRESETS[0].note;
     $('f-grant').innerHTML = '<option value="">None</option>' + grants().map(g => `<option value="${esc(g.id)}"${editing.grantId === g.id ? ' selected' : ''}>${esc(grantName(g))}</option>`).join('');
     $('catRows').innerHTML = editing.categories.map(catRow).join('');
+    $('secList').innerHTML = [...new Set(entries().flatMap(f => f.categories.map(sectionOf)).filter(Boolean))].map(x => `<option value="${esc(x)}">`).join('');
     $('editorTitle').textContent = isNew ? 'Add a funder format' : 'Edit funder format';
     $('deleteBtn').hidden = isNew;
     $('editor').showModal();
@@ -710,7 +765,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const notes = $('f-notes').value.trim();
     if (notes) e.notes = notes; else delete e.notes;
     if ($('f-grant').value) e.grantId = $('f-grant').value; else delete e.grantId;
-    e.categories = [...$('catRows').querySelectorAll('.cat-row')].map(r => ({ id: r.dataset.id || newId('category'), name: r.querySelector('input').value.trim() })).filter(c => c.name);
+    e.categories = [...$('catRows').querySelectorAll('.cat-row')].map(r => {
+      const c = Object.assign({}, editing.categories.find(x => x.id === r.dataset.id), { id: r.dataset.id || newId('category'), name: r.querySelector('.cat-name').value.trim() });
+      const sec = r.querySelector('.cat-sec').value.trim(); if (sec) c.section = sec; else delete c.section;
+      return c;
+    }).filter(c => c.name);
     if (isNew) {
       const p = PRESETS.find(x => x.id === $('f-preset').value);
       if (p && p.id !== 'blank') applyPreset(e, p);
@@ -734,7 +793,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const accs = objs(doc.budget && doc.budget.accounts);
     const key = a => (a.code ? `${a.code} ` : '') + (a.name || '');
     const name = id => (id === '' ? '' : catName(f, id));
-    const out = { format: FORMAT_FILE, formatVersion: 1, name: f.name, categories: f.categories.map(c => c.name), notes: f.notes,
+    const out = { format: FORMAT_FILE, formatVersion: 1, name: f.name, categories: f.categories.map(c => (sectionOf(c) ? { name: c.name, section: sectionOf(c) } : c.name)), notes: f.notes,
       accounts: Object.fromEntries(accs.filter(a => target(f, f.accountMap[a.id]) !== undefined).map(a => [key(a), name(f.accountMap[a.id])])),
       fringes: f.fringeTo === undefined || f.fringeTo === 'line' ? 'line' : name(target(f, f.fringeTo) ?? ''),
       percentages: Object.fromEntries(objs(doc.budget && doc.budget.markups).filter(m => target(f, f.markupMap[m.id]) !== undefined).map(m => [m.name || 'Percentage', name(f.markupMap[m.id])])) };
@@ -747,7 +806,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     let data;
     try { data = JSON.parse(text); } catch (e) { toast(`${fileLabel} isn't a format file.`, true); return; }
     if (!data || data.format !== FORMAT_FILE || !Array.isArray(data.categories)) { toast(`${fileLabel} isn't a budget format file from the toolkit.`, true); return; }
-    const f = { id: newId('budget-format'), name: str(data.name) || 'Imported format', categories: data.categories.map(n => ({ id: newId('category'), name: str(n) })).filter(c => c.name), accountMap: {}, lineMap: {}, markupMap: {} };
+    const f = { id: newId('budget-format'), name: str(data.name) || 'Imported format', categories: data.categories.map(n => Object.assign({ id: newId('category'), name: str(n && typeof n === 'object' ? n.name : n) }, n && typeof n === 'object' && str(n.section).trim() ? { section: str(n.section).trim() } : {})).filter(c => c.name), accountMap: {}, lineMap: {}, markupMap: {} };
     if (data.notes) f.notes = str(data.notes);
     const byName = n => (n === '' ? '' : (f.categories.find(c => c.name === n) || {}).id);
     const accs = objs(doc.budget && doc.budget.accounts);
@@ -770,15 +829,18 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   }
 
   // ---------- CSV and print ----------
-  const CSV_HEAD = ['Category', 'Item', 'Amount'];
+  const CSV_HEAD = ['Section', 'Category', 'Item', 'Amount'];
   function exportCsv() {
     const f = fmt(); const c = convert(f);
     const rows = [];
-    for (const x of c.cats) { for (const i of x.items) rows.push([x.cat.name, i.label, i.amount.toFixed(2)]); rows.push([x.cat.name, `Total for ${x.cat.name}`, x.total.toFixed(2)]); }
-    rows.push(['', 'Converted total', c.total.toFixed(2)]);
-    for (const i of c.unmapped) rows.push(['Not mapped yet', i.label, i.amount.toFixed(2)]);
-    for (const i of c.left) rows.push(['Left out', i.label, i.amount.toFixed(2)]);
-    rows.push(['', 'Budget total', c.t.grand.toFixed(2)]);
+    for (const g of sectioned(c.cats)) {
+      for (const x of g.cats) { for (const i of x.items) rows.push([g.name, x.cat.name, i.label, i.amount.toFixed(2)]); rows.push([g.name, x.cat.name, `Total for ${x.cat.name}`, x.total.toFixed(2)]); }
+      if (g.name) rows.push([g.name, '', `Total for ${g.name}`, g.total.toFixed(2)]);
+    }
+    rows.push(['', '', 'Converted total', c.total.toFixed(2)]);
+    for (const i of c.unmapped) rows.push(['', 'Not mapped yet', i.label, i.amount.toFixed(2)]);
+    for (const i of c.left) rows.push(['', 'Left out', i.label, i.amount.toFixed(2)]);
+    rows.push(['', '', 'Budget total', c.t.grand.toFixed(2)]);
     const csv = '﻿' + [CSV_HEAD, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
     const name = `${slug()}-budget-${norm(f.name).replace(/ /g, '-') || 'format'}.csv`;
     download(csv, name, 'text/csv;charset=utf-8');
@@ -790,7 +852,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const c = convert(f);
     const g = f.grantId && grants().find(x => x.id === f.grantId);
     $('report').innerHTML = `<h1>Budget</h1><p class="r-meta">${esc([doc.project.title, doc.project.company, g ? `For ${grantName(g)}` : f.name, `Printed ${fmtDate(today())}`].filter(Boolean).join(' · '))}</p>
-      <table><thead><tr><th>Category</th><th class="n">Amount</th></tr></thead><tbody>${c.cats.map(x => `<tr><td>${esc(x.cat.name)}</td><td class="n">${esc(money(x.total))}</td></tr>`).join('')}
+      <table><thead><tr><th>Category</th><th class="n">Amount</th></tr></thead><tbody>${sectioned(c.cats).map(g => `${g.name ? `<tr class="r-sec"><th colspan="2">${esc(g.name)}</th></tr>` : ''}${g.cats.map(x => `<tr><td>${esc(x.cat.name)}</td><td class="n">${esc(money(x.total))}</td></tr>`).join('')}${g.name ? `<tr class="r-tot"><td>Total for ${esc(g.name)}</td><td class="n">${esc(money(g.total))}</td></tr>` : ''}`).join('')}
       <tr class="r-grand"><td>Total</td><td class="n">${esc(money(c.total))}</td></tr></tbody></table>
       ${c.cats.filter(x => x.items.length).map(x => `<h2>${esc(x.cat.name)}</h2><table><tbody>${x.items.map(i => `<tr><td>${esc(i.label)}</td><td class="n">${esc(money(i.amount, true))}</td></tr>`).join('')}
         <tr class="r-tot"><td>Total for ${esc(x.cat.name)}</td><td class="n">${esc(money(x.total, true))}</td></tr></tbody></table>`).join('')}
@@ -1035,6 +1097,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       else if (s.dataset.line) setMap('lineMap', s.dataset.line, s.value);
       else if (s.dataset.markup) setMap('markupMap', s.dataset.markup, s.value);
       else if (s.id === 'fringeTo') { const f = fmt(); if (s.value === 'line') delete f.fringeTo; else f.fringeTo = s.value; changed(); }
+      else if (s.dataset.split !== undefined) setSplit(s.dataset.split, s.value, null);
+      else if (s.dataset.splitpct !== undefined) setSplit(s.dataset.splitpct, null, s.value);
     });
     $('f-preset').addEventListener('change', choosePreset);
     $('addCatBtn').onclick = () => { $('catRows').insertAdjacentHTML('beforeend', catRow({})); $('catRows').lastElementChild.querySelector('input').focus(); };

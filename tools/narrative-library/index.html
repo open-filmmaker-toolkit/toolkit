@@ -127,7 +127,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .sent .sub { display: block; color: var(--ink-3); font-size: 13px; }
 /* Editor */
 .v-edit { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--rule); border-radius: 8px; background: var(--paper); }
-.v-top { display: grid; grid-template-columns: 110px 130px minmax(0, 1fr) auto; gap: 8px; align-items: end; }
+.v-top { display: grid; grid-template-columns: 100px 120px 120px minmax(0, 1fr) auto; gap: 8px; align-items: end; }
 .v-top label { display: block; font-size: 12.5px; color: var(--ink-2); margin-bottom: 3px; }
 .v-top input, .v-top select { width: 100%; min-width: 0; padding: 7px 9px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); }
 .v-edit textarea { width: 100%; min-height: 120px; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); font: inherit; line-height: 1.5; resize: vertical; }
@@ -141,7 +141,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .icon-btn:hover { border-color: var(--rule); color: var(--ink); }
 /* Application set */
 .set-list { display: grid; gap: 8px; }
-.set-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 10px; align-items: center; font-size: 14px; }
+.set-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 6px 10px; align-items: center; font-size: 14px; }
+.set-prompt { grid-column: 1 / -1; min-width: 0; width: 100%; padding: 6px 9px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); color: var(--ink); font: inherit; font-size: 13.5px; }
 .set-row select { min-width: 0; width: 100%; padding: 7px 9px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); }
 .set-out { width: 100%; min-height: 180px; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); font: 13.5px/1.5 var(--sans, inherit); resize: vertical; }
 .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -310,6 +311,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <h3 id="verHead">Versions</h3>
         <p class="hint">One version for each length funders ask for. Characters count spaces, the way most application forms do.</p>
         <div class="versions" id="versions" role="group" aria-labelledby="verHead"></div>
+        <datalist id="langList"></datalist>
         <div><button type="button" class="btn small" id="addVersionBtn">Add a version</button></div>
       </div>
       <div class="field"><label for="f-notes">Notes</label><textarea id="f-notes" rows="2" placeholder="What reviewers liked, what to change next time"></textarea></div>
@@ -331,6 +333,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <div class="field"><label for="setGrant">Application</label><select id="setGrant"></select></div>
         <div class="field" id="setFunderField"><label for="setFunder">Funder</label><input id="setFunder" type="text" autocomplete="off" placeholder="Who you're sending it to"></div>
       </div>
+      <div class="field" id="setLangField"><label for="setLang">Language</label><select id="setLang"></select></div>
+      <p class="hint">Under each answer, paste the funder's own question if you like. It's saved with the application, so next time you can see what they asked.</p>
       <div class="set-list" id="setList"></div>
       <div class="field"><label for="setOut">Copy this into the application</label><textarea id="setOut" class="set-out" readonly></textarea></div>
       <div class="two">
@@ -485,7 +489,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const useName = u => `${u.grantId && grant(u.grantId) ? grantName(grant(u.grantId)) : u.funder || 'A funder no longer in the grant calendar'}${u.use ? `, ${u.use}` : ''}`;
   const words = t => (str(t).trim() ? str(t).trim().split(/\s+/).length : 0);
   const chars = t => [...str(t)].length;
-  const versionLabel = v => v.label || (Number(v.limit) > 0 ? `${Number(v.limit).toLocaleString()} ${v.unit === 'characters' ? 'characters' : 'words'}` : 'No limit');
+  const versionLabel = v => [v.label || (Number(v.limit) > 0 ? `${Number(v.limit).toLocaleString()} ${v.unit === 'characters' ? 'characters' : 'words'}` : 'No limit'), str(v.language).trim()].filter(Boolean).join(', ');
+  const languages = () => [...new Set(entries().flatMap(versionsOf).map(v => str(v.language).trim()).filter(Boolean))].sort();
+  const asked = u => (str(u.prompt).trim() ? `, asked “${str(u.prompt).trim()}”` : '');
   // How a version's text measures against its limit.
   function measure(v) {
     const n = v.unit === 'characters' ? chars(v.text) : words(v.text);
@@ -531,7 +537,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
           const u = uses(v);
           return `<li><div class="vh"><b>${esc(versionLabel(v))}</b><span class="${m.cls}">${esc(m.text)}</span>${v.updated ? `<span>Updated ${esc(fmtDate(v.updated))}</span>` : ''}</div>
             ${str(v.text).trim() ? `<p class="vt">${esc(v.text)}</p>` : '<p class="vt empty-line">Not written yet.</p>'}
-            ${u.length ? `<p class="vu">Sent to ${esc(u.map(x => `${useName(x)}${x.date ? ` (${fmtDate(x.date)})` : ''}`).join(', '))}</p>` : ''}</li>`;
+            ${u.length ? `<p class="vu">Sent to ${esc(u.map(x => `${useName(x)}${x.date ? ` (${fmtDate(x.date)})` : ''}${asked(x)}`).join('; '))}</p>` : ''}</li>`;
         }).join('')}</ul>` : ''}
       </li>`;
     }).join('');
@@ -565,12 +571,13 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       <div class="v-top">
         <div><label>Limit</label><input type="number" class="v-limit" min="1" step="1" inputmode="numeric" value="${esc(v.limit ?? '')}" aria-label="Limit"></div>
         <div><label>Counted in</label><select class="v-unit" aria-label="Counted in">${UNITS.map(u => `<option value="${u.id}"${v.unit === u.id ? ' selected' : ''}>${u.label}</option>`).join('')}</select></div>
+        <div><label>Language</label><input type="text" class="v-lang" value="${esc(v.language ?? '')}" placeholder="English" autocomplete="off" aria-label="Language" list="langList"></div>
         <div class="v-label"><label>Name, if not the length</label><input type="text" class="v-name" value="${esc(v.label ?? '')}" placeholder="For broadcasters" autocomplete="off" aria-label="Version name"></div>
         <button type="button" class="icon-btn" data-delversion aria-label="Remove this version">×</button>
       </div>
       <textarea class="v-text" aria-label="Text">${esc(v.text ?? '')}</textarea>
       <p class="v-count" aria-live="polite"></p>
-      ${uses(v).length ? `<ul class="v-uses">${uses(v).map((u, i) => `<li data-use="${i}"><span>Sent to ${esc(useName(u))}${u.date ? `, ${esc(fmtDate(u.date))}` : ''}</span><button type="button" class="icon-btn" data-deluse aria-label="Forget this">×</button></li>`).join('')}</ul>` : ''}
+      ${uses(v).length ? `<ul class="v-uses">${uses(v).map((u, i) => `<li data-use="${i}"><span>Sent to ${esc(useName(u))}${u.date ? `, ${esc(fmtDate(u.date))}` : ''}${esc(asked(u))}</span><button type="button" class="icon-btn" data-deluse aria-label="Forget this">×</button></li>`).join('')}</ul>` : ''}
     </div>`;
   }
   function editVersion(el) {
@@ -581,6 +588,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     if (lim !== '' && Number(lim) > 0) v.limit = Math.round(Number(lim)); else delete v.limit;
     const name = el.querySelector('.v-name').value.trim();
     if (name) v.label = name; else delete v.label;
+    const lang = el.querySelector('.v-lang').value.trim();
+    if (lang) v.language = lang; else delete v.language;
     return v;
   }
   function updateCount(el) {
@@ -596,6 +605,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     editing.originalText = Object.fromEntries(versionsOf(editing).map(v => [v.id, str(v.text)]));
     $('f-title').value = str(editing.title);
     $('f-notes').value = str(editing.notes);
+    $('langList').innerHTML = [...new Set(['English', 'Spanish', 'French', ...languages()])].map(l => `<option value="${esc(l)}">`).join('');
     $('versions').innerHTML = byLimit(versionsOf(editing)).map(versionHtml).join('');
     for (const el of $('versions').querySelectorAll('.v-edit')) updateCount(el);
     $('editorTitle').textContent = isNew ? 'Add an answer' : 'Edit answer';
@@ -646,6 +656,9 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('setGrant').innerHTML = [...open, ...rest].map(g => `<option value="${esc(g.id)}">${esc(grantName(g))}${g.deadline ? `, due ${esc(fmtDate(g.deadline))}` : ''}</option>`).join('') +
       '<option value="">Not in the grant calendar</option>';
     $('setDate').value = today();
+    const langs = languages();
+    $('setLangField').hidden = !langs.length;
+    $('setLang').innerHTML = '<option value="">Any language</option>' + (langs.length ? '<option value="-">Without a language set</option>' : '') + langs.map(l => `<option value="${esc(l)}">${esc(l)}</option>`).join('');
     fillSet();
     $('setDialog').showModal();
   }
@@ -653,22 +666,27 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   function fillSet() {
     const gid = $('setGrant').value;
     $('setFunderField').hidden = !!gid;
-    $('setList').innerHTML = entries().filter(a => versionsOf(a).length).map(a => {
-      const vs = byLimit(versionsOf(a));
+    const lang = $('setLang').value;
+    const inLang = v => !lang || (lang === '-' ? !str(v.language).trim() : str(v.language).trim() === lang);
+    $('setList').innerHTML = entries().filter(a => versionsOf(a).some(inLang)).map(a => {
+      const vs = byLimit(versionsOf(a)).filter(inLang);
       const sent = gid && vs.find(v => uses(v).some(u => u.grantId === gid && !u.use));
-      return `<label class="set-row"><span>${esc(a.title || 'Untitled answer')}</span><select data-answer="${esc(a.id)}"><option value="">Leave out</option>${vs.map(v => `<option value="${esc(v.id)}"${sent && sent.id === v.id ? ' selected' : ''}>${esc(versionLabel(v))}: ${esc(measure(v).text)}</option>`).join('')}</select></label>`;
-    }).join('');
+      const was = gid && versionsOf(a).flatMap(v => uses(v)).find(u => u.grantId === gid && !u.use && str(u.prompt).trim());
+      return `<div class="set-row"><label for="set-${esc(a.id)}">${esc(a.title || 'Untitled answer')}</label><select id="set-${esc(a.id)}" data-answer="${esc(a.id)}"><option value="">Leave out</option>${vs.map(v => `<option value="${esc(v.id)}"${sent && sent.id === v.id ? ' selected' : ''}>${esc(versionLabel(v))}: ${esc(measure(v).text)}</option>`).join('')}</select>
+        <input type="text" class="set-prompt" data-prompt="${esc(a.id)}" value="${esc(was ? was.prompt : '')}" placeholder="The funder's question, if you want to keep it" aria-label="The funder's question for ${esc(a.title || 'this answer')}" autocomplete="off"></div>`;
+    }).join('') || '<p class="hint">No answers in that language yet.</p>';
     setText();
   }
   function picked() {
     return [...$('setList').querySelectorAll('select')].map(s => {
       const a = entries().find(x => x.id === s.dataset.answer);
       const v = a && versionsOf(a).find(x => x.id === s.value);
-      return v ? { a, v } : null;
+      const p = $('setList').querySelector(`[data-prompt="${CSS.escape(s.dataset.answer)}"]`);
+      return v ? { a, v, prompt: p ? p.value.trim() : '' } : null;
     }).filter(Boolean);
   }
   function setText() {
-    $('setOut').value = picked().map(({ a, v }) => `${a.title || 'Untitled answer'} (${versionLabel(v)})\n\n${str(v.text).trim()}`).join('\n\n\n');
+    $('setOut').value = picked().map(({ a, v, prompt }) => `${a.title || 'Untitled answer'} (${versionLabel(v)})${prompt ? `\n${prompt}` : ''}\n\n${str(v.text).trim()}`).join('\n\n\n');
   }
   async function copySet() {
     const text = $('setOut').value;
@@ -692,11 +710,11 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const list = picked();
     if (!list.length) { toast('Pick at least one answer first.', true); return; }
     const date = $('setDate').value || today();
-    for (const { a, v } of list) {
+    for (const { a, v, prompt } of list) {
       // One version of each answer per application: sending a different length replaces the earlier one.
       if (gid) for (const other of versionsOf(a)) if (other !== v && Array.isArray(other.uses)) { other.uses = other.uses.filter(u => !(u && u.grantId === gid && !u.use)); if (!other.uses.length) delete other.uses; }
       const rest = uses(v).filter(u => u.use || !(gid ? u.grantId === gid : !u.grantId && norm(u.funder) === norm(funder)));
-      v.uses = [...rest, gid ? { grantId: gid, date } : { funder, date }];
+      v.uses = [...rest, Object.assign(gid ? { grantId: gid, date } : { funder, date }, prompt ? { prompt } : {})];
     }
     changed();
     fillSet();
@@ -707,7 +725,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const CSV_HEAD = ['Answer', 'Version', 'Limit', 'Counted in', 'Words', 'Characters', 'Over the limit by', 'Text', 'Updated', 'Sent to', 'Notes'];
   function exportCsv() {
     const rows = entries().flatMap(a => byLimit(versionsOf(a)).map(v => [a.title, versionLabel(v), v.limit, v.unit, words(v.text), chars(v.text), measure(v).over > 0 ? measure(v).over : '',
-      v.text, v.updated, uses(v).map(u => `${useName(u)}${u.date ? ` (${u.date})` : ''}`).join('; '), a.notes]));
+      v.text, v.updated, uses(v).map(u => `${useName(u)}${u.date ? ` (${u.date})` : ''}${asked(u)}`).join('; '), a.notes]));
     const csv = '﻿' + [CSV_HEAD, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
     const name = `${slug()}-grant-answers.csv`;
     download(csv, name, 'text/csv;charset=utf-8');
@@ -977,6 +995,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('setBtn').onclick = openSet;
     $('setGrant').addEventListener('change', fillSet);
     $('setList').addEventListener('change', setText);
+    $('setList').addEventListener('input', ev => { if (ev.target.closest('.set-prompt')) setText(); });
+    $('setLang').addEventListener('change', fillSet);
     $('setFunder').addEventListener('input', () => $('setFunder').setCustomValidity(''));
     $('setCopyBtn').onclick = copySet;
     $('setTxtBtn').onclick = downloadSet;
