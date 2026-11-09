@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Open Filmmaker Toolkit: free tools for documentary and indie filmmakers</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="docs/assets/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="docs/assets/icon-192.png">
+<meta name="theme-color" content="#111111">
 <meta name="description" content="Small, free tools for the business side of making a documentary or indie film: budgets, releases, grant deadlines, call sheets, clearances and credits. They run in your browser and keep your project on your computer.">
 <style>
 :root {
@@ -88,6 +92,7 @@ a:hover { text-decoration-thickness: 2px; }
 .cols li + li { margin-top: 4px; }
 footer { margin-top: 48px; padding-top: 16px; border-top: 3px solid var(--ink); font-size: 13.5px; color: var(--ink-2); }
 footer p { margin: 0 0 8px; max-width: 80ch; }
+.link-btn { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; }
 @media (max-width: 860px) {
   .intro, .cols { grid-template-columns: 1fr; }
   .phase { grid-template-columns: 1fr; }
@@ -251,6 +256,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
 
   <footer>
     <p>These tools never send data over the internet, and the site has no cookies or analytics.</p>
+    <p id="offlineNote">Use the toolkit without an internet connection: <a href="docs/offline.md">install it as an app</a>. <span id="offlineState"></span> <button type="button" class="link-btn" id="installBtn" hidden>Install the toolkit</button></p>
     <p>The templates aren't legal advice. Have a lawyer review anything you sign. See <a href="https://github.com/open-filmmaker-toolkit/toolkit#not-legal-advice">Not legal advice</a>.</p>
     <p>Code is <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/LICENSE">GPL-3.0-or-later</a>, and templates and guides are <a href="https://github.com/open-filmmaker-toolkit/toolkit/blob/main/LICENSES/CC-BY-SA-4.0.txt">CC BY-SA 4.0</a>. Made by Basil Shadid, Alex Perrault and <a href="https://github.com/open-filmmaker-toolkit/toolkit/graphs/contributors">contributors</a>. The <a href="https://github.com/open-filmmaker-toolkit/toolkit">source is on GitHub</a>.</p>
   </footer>
@@ -295,6 +301,28 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
 <script>
 (() => {
   'use strict';
+  /* oft-shared:offline begin. Copied from shared/offline.js by .github/scripts/sync_shared.py; edit it there. */
+  // Offline use: when a page is opened from the toolkit's web address, the browser keeps a copy of every tool
+  // (see sw.js at the top of the repo), so the toolkit opens without an internet connection. A page opened
+  // as a file on your computer already works offline and doesn't need this.
+  const oftOffline = (() => {
+    const can = 'serviceWorker' in navigator && window.isSecureContext && /^https?:$/.test(window.location.protocol);
+    const root = new URL(document.querySelector('.home-link') ? '../../' : './', window.location.href);
+    const ready = can ? navigator.serviceWorker.register(new URL('sw.js', root), { scope: root.pathname }).then(() => navigator.serviceWorker.ready).catch(() => null) : Promise.resolve(null);
+    return { can, ready };
+  })();
+  /* oft-shared:offline end */
+  // Says when every tool has been saved for offline use, and offers to install where the browser allows it.
+  oftOffline.ready.then(reg => { if (reg) document.getElementById('offlineState').textContent = 'Every tool is saved on this device, so it opens offline too.'; });
+  let installPrompt = null;
+  window.addEventListener('beforeinstallprompt', ev => { ev.preventDefault(); installPrompt = ev; document.getElementById('installBtn').hidden = false; });
+  document.getElementById('installBtn').addEventListener('click', async () => {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    try { await installPrompt.userChoice; } catch { /* closed */ }
+    installPrompt = null;
+    document.getElementById('installBtn').hidden = true;
+  });
   /* oft-shared:project begin. Copied from shared/project.js by .github/scripts/sync_shared.py; edit it there. */
   // Shared by the home page and the tools: what needs you across the project,
   // every date in it as one calendar file, and read-only summaries to share.

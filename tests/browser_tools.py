@@ -1483,6 +1483,42 @@ def test_versions(browser, fake):
     ctx.close()
 
 
+def test_offline(browser, fake):
+    # Installed from the web: the service worker keeps every page, and the toolkit opens with no connection.
+    import functools, http.server, socketserver, threading
+    manifest = json.loads((root / 'manifest.webmanifest').read_text())
+    check(manifest['display'] == 'standalone' and all((root / i['src']).is_file() for i in manifest['icons']), 'the web app manifest names icons that exist')
+    class Quiet(http.server.SimpleHTTPRequestHandler):
+        def log_message(self, *a):
+            pass
+    handler = functools.partial(Quiet, directory=str(root))
+    srv = socketserver.ThreadingTCPServer(('127.0.0.1', 0), handler)
+    srv.daemon_threads = True
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    base = 'http://127.0.0.1:%d/' % srv.server_address[1]
+    tools = sorted(p.parent.name for p in (root / 'tools').glob('*/index.html'))
+    ctx = browser.new_context()
+    pg = ctx.new_page()
+    errs = []
+    pg.on('pageerror', lambda e: errs.append('%s: %s' % (pg.url, e)))
+    try:
+        pg.goto(base + 'index.html')
+        pg.wait_for_function("document.getElementById('offlineState').textContent.length > 0", timeout=30000)
+        n = pg.evaluate("caches.open('oft-pages-v1').then(c => c.keys()).then(k => k.map(r => new URL(r.url).pathname))")
+        check(all(any(x.endswith('/tools/%s/index.html' % t) for x in n) for t in tools) and 'opens offline' in pg.inner_text('#offlineState'), 'every tool is kept for offline use (%d pages)' % len(n))
+        # Stop the server, so nothing can come from the network.
+        srv.shutdown(); srv.server_close()
+        for t in ['budget', 'call-sheet', tools[-1]]:
+            pg.goto(base + 'tools/%s/index.html' % t)
+            check(pg.locator('.home-link').count() == 1 and pg.evaluate('!!navigator.serviceWorker.controller'), '%s opens offline' % t)
+        pg.goto(base + 'index.html')
+        check(pg.locator('#offlineNote').count() == 1, 'the home page opens offline')
+    finally:
+        ctx.close()
+        srv.shutdown()
+    check(not errs, 'no page errors %s' % errs)
+
+
 def test_hub(browser, fake):
     for scheme, vp in [('light', {'width': 1280, 'height': 900}), ('dark', PHONE)]:
         ctx = browser.new_context(viewport=vp, color_scheme=scheme)
@@ -4672,8 +4708,10 @@ def test_shared_file(browser, fake):
 
 def test_remember_file(browser, fake):
     import http.server, threading, functools
-    handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(root))
-    handler.log_message = lambda *a: None
+    class Quiet(http.server.SimpleHTTPRequestHandler):
+        def log_message(self, *a):
+            pass
+    handler = functools.partial(Quiet, directory=str(root))
     srv = http.server.ThreadingHTTPServer(('127.0.0.1', 0), handler)
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     base = 'http://127.0.0.1:%d' % srv.server_address[1]
@@ -5298,6 +5336,7 @@ def main():
         print('== home page / tools, search and links')
         test_hub(browser, fake)
         test_versions(browser, fake)
+        test_offline(browser, fake)
         print('== location-scout / scouts, photos and releases')
         test_location_scout(browser, fake)
         print('== deal-memos / calendar, budget, signed copies and print')

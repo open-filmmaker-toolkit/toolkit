@@ -38,6 +38,22 @@ def sync(text):
     return text
 
 
+# The service worker (sw.js) keeps a copy of every page, so the toolkit works offline once installed.
+SW = ROOT / 'sw.js'
+PAGES_RE = re.compile(r'(// oft-pages begin).*?(\n[ \t]*// oft-pages end)', re.S)
+
+
+def sw_pages():
+    files = ['./', 'index.html', 'manifest.webmanifest', 'docs/assets/icon.svg', 'docs/assets/icon-192.png', 'docs/assets/icon-512.png']
+    files += [p.relative_to(ROOT).as_posix() for p in sorted(ROOT.glob('tools/*/index.html'))]
+    files += [p.relative_to(ROOT).as_posix() for p in sorted(ROOT.glob('samples/*')) if p.is_file()]
+    return files
+
+
+def sync_sw(text):
+    return PAGES_RE.sub(lambda m: m.group(1) + ''.join("\n  '%s'," % f for f in sw_pages()) + m.group(2), text, count=1)
+
+
 def check():
     """Returns a list of pages whose shared code differs from shared/."""
     bad = []
@@ -45,6 +61,8 @@ def check():
         text = p.read_text(encoding='utf-8')
         if blocks_in(text) and sync(text) != text:
             bad.append(str(p.relative_to(ROOT)))
+    if SW.is_file() and sync_sw(SW.read_text(encoding='utf-8')) != SW.read_text(encoding='utf-8'):
+        bad.append('sw.js')
     return bad
 
 
@@ -59,3 +77,7 @@ if __name__ == '__main__':
         if new != text:
             p.write_text(new, encoding='utf-8')
             print('Updated', p.relative_to(ROOT))
+    if SW.is_file():
+        text = SW.read_text(encoding='utf-8')
+        if sync_sw(text) != text:
+            SW.write_text(sync_sw(text), encoding='utf-8')

@@ -56,7 +56,7 @@ The home page becomes a place to work, not just a list. Each step gets an issue 
 - [x] One calendar file for every date in the project, from the dashboard and from each tool with dates ([#149](https://github.com/open-filmmaker-toolkit/toolkit/issues/149))
 - [x] Import a filled-in spreadsheet template into the tool it matches, with columns matched by name, problems shown row by row, and nothing already there changed ([#150](https://github.com/open-filmmaker-toolkit/toolkit/issues/150))
 - [x] Read-only summaries of chosen parts of the project to share, leaving out contact details, notes and fees unless you include them ([#152](https://github.com/open-filmmaker-toolkit/toolkit/issues/152))
-- [ ] Install the hub as an app for offline use ([#205](https://github.com/open-filmmaker-toolkit/toolkit/issues/205))
+- [x] Install the hub as an app for offline use ([#205](https://github.com/open-filmmaker-toolkit/toolkit/issues/205))
 
 ## Milestone 6: Planned
 
