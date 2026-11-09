@@ -45,6 +45,8 @@ For anyone who doesn't use the tool, there's a blank [spreadsheet template](../.
 
 - **Imports from a spreadsheet:** choose **Import from a spreadsheet** under the file buttons and pick a CSV file. One with the columns of the [spreadsheet template](../../templates/name-supers-template.csv) imports as it is; match any other columns once and the tool remembers. Problems, such as a date it can't read, show row by row before anything is added, and importing only adds.
 - **Imports markers from the edit:** DaVinci Resolve markers exported as an EDL, Premiere Pro's marker list, Avid's marker text, or a CSV with a timecode and a name. A marker named "Ruth Hammond - Retired schoolteacher" becomes her super, matched to the person in the project. What would change, such as a super that moved, shows before anything is applied.
+- **Places, dates and later appearances.** A super can name a place or a date as well as a person, and can list the later times it appears again.
+- **Exports for titling tools:** FCPXML titles for Final Cut Pro and DaVinci Resolve, SRT for Premiere Pro, Resolve and most titling apps, WebVTT, and Avid SubCap for Media Composer. Every appearance of every super with a timecode is included, for as many seconds as you choose.
 
 ## Saving and file conflicts
 
@@ -58,15 +60,14 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 A `supers` object:
 
-- `entries`: each super has an `id`, and either a `personId` (a person in `people`, whose `name` is used) or a `name`, plus optional `title`, `firstAppears` (timecode as HH:MM:SS:FF) and `notes`.
+- `entries`: each super has an `id`, and either a `personId` (a person in `people`, whose `name` is used) or a `name`, plus optional `title`, `firstAppears` (timecode as HH:MM:SS:FF), `alsoAppears` (later timecodes), `kind` (`place` or `date`; missing means a person) and `notes`.
 - `lastExport`: when the list was last exported for graphics (`at`), the `cutVersion` it was for, and the `entries` as they were then (`id`, `name`, `title`, `firstAppears`).
 
 Fixing a spelling in the editor changes that person's `name` in `people`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
-- More than one appearance per super, and supers for places or dates
-- Exports for specific titling tools, beyond CSV
+Nothing planned right now. If something you need is missing, [open an issue](https://github.com/open-filmmaker-toolkit/toolkit/issues).
 
 ## License
 

@@ -46,6 +46,7 @@ For anyone who doesn't use the tool, there's a blank [Word outline](../../templa
 ## Images
 
 **Add images** takes stills and reference images from your computer. Each one is resized to 1,600 pixels on its longest side and kept inside the project file, so the deck opens the same in any browser and nothing is uploaded. A dozen images adds a few megabytes to the project file. Use stills you have the rights to show, and check what the people in them agreed to.
+- **Exports to PowerPoint.** The deck as a .pptx file, with each slide that isn't left out, its text and pictures, and the deck's colors and fonts. Keynote and Google Slides open it too. It's written in the browser, without any added code.
 
 ## Saving and file conflicts
 
@@ -68,7 +69,6 @@ Everything else in the file is preserved. See the [data model notes](../../schem
 
 ## Not yet
 
-- Export to PowerPoint or Keynote
 - Playing video on a slide
 
 ## License

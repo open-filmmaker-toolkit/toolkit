@@ -40,6 +40,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **Exports project data.** Save project details, people, locations, third-party elements, contracts, assets, music cue sheet details or call sheets as separate CSV files.
 
 For anyone who doesn't use the tool, there's a blank [Word template](../../templates/treatment-template.docx) with the same sections and targets.
+- **Exports to Word.** **Export to Word** saves the treatment as a .docx file, with the same headings and text as the printed version.
 
 ## Saving and file conflicts
 
@@ -63,7 +64,6 @@ Everything else in the file is preserved. See the [data model notes](../../schem
 ## Not yet
 
 - More than one treatment in a project, such as a short and a long version
-- Export to Word
 
 ## License
 

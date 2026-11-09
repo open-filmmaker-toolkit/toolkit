@@ -63,6 +63,9 @@ Roles: C composer, A author (lyrics), CA composer and author, AR arranger, E pub
 
 - **Imports from a spreadsheet:** choose **Import from a spreadsheet** under the file buttons and pick a CSV file. One with the columns of the [spreadsheet template](../../templates/music-cue-sheet-template.csv) imports as it is; match any other columns once and the tool remembers. Problems, such as a date it can't read, show row by row before anything is added, and importing only adds.
 - **Imports cue timings from the edit's markers** (Resolve, Premiere Pro, Avid or CSV), matched to music in the clearance log by cue number, such as 1M5, or title. What would change shows before it's applied, and music that isn't in the log yet can be added.
+- **Series and episodes.** Under **Episodes and reels**, list the episodes and give each cue its episode. Pick an episode next to the search to see, print and export its own cue sheet.
+- **Split by reel.** Tick **Split the cue sheet by reel**, and the printed sheet groups the cues by reel, with the music in each. Give the timecode each reel starts at, or leave it blank when each reel starts on the hour. The CSV has the reel and episode of each cue.
+- **Electronic filing.** **Export for electronic filing** writes a CSV with one row for each composer, author and publisher on each cue, with role codes, societies and shares, the layout electronic filing and cue sheet services import. Check the column names against your society's own template before you upload it.
 
 ## What it adds to the project file
 
@@ -77,13 +80,13 @@ The shared [version 1 schema](../../schemas/project-v1.schema.json) documents th
     {
       "type": "Music",
       "music": {
-        "title": "Muddy Water Hymn", "artist": "The Low Waters", "cueId": "1M5", "usage": "BV",
+        "title": "Muddy Water Hymn", "artist": "The Low Waters", "cueId": "1M5", "usage": "BV", "episodeId": "…",
         "writers": [{ "name": "Earl Whitaker", "role": "C", "society": "BMI", "share": 60 }],
         "publishers": [{ "name": "Delta Song Publishing", "role": "E", "society": "BMI", "share": 100 }]
       }
     }
   ],
-  "musicCueSheet": { "musicSupervisor": "" }
+  "musicCueSheet": { "musicSupervisor": "", "episodes": [{ "id": "…", "number": "1", "title": "Pilot" }], "splitByReel": true, "reelStarts": ["01:00:00:00", "01:20:00:00"] }
 }
 ```
 
@@ -91,9 +94,7 @@ Running time, distributor and release date live in `project` because other tools
 
 ## Not yet
 
-- Series and episodes
-- Splitting a cue sheet by reel
-- Electronic filing formats for performing rights organizations
+- Checking the electronic filing export against each performing rights organization's own upload template
 
 ## License
 

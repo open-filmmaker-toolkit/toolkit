@@ -66,6 +66,8 @@ A contract can also say where the credit goes and how big it is: in the opening 
 - **Two columns, separated by a tab:** the credit and the first name on one line, more names below with an empty first column. This pastes into a spreadsheet or a two-column title template.
 
 For anyone who doesn't use the tool, there's a blank [end credits template](../../templates/end-credits-template.docx) in Word, with a table of required credits to tick off, and a two-column [spreadsheet version](../../templates/end-credits-template.csv).
+- **Billing order.** Give a credit a billing number, and credits under the same heading, or in the opening titles, are listed by it, 1 first.
+- **Crawl formats.** Besides the two text layouts, export the credits as a spreadsheet for crawl services, with a row for each line and its section, kind, size, card and billing, or as FCPXML titles for Final Cut Pro and DaVinci Resolve: a card for each opening title and the end crawl as one long title to roll.
 
 ## Saving and file conflicts
 
@@ -77,7 +79,7 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-A `credits` object with an ordered `entries` list and an optional `notCredited` list of people left out on purpose. Each entry has an `id` and a `kind`, and optional `placement` (`opening` for the opening titles; the end credits when it's missing), `size` (a percentage of standard size, such as `150`) and `ownCard`:
+A `credits` object with an ordered `entries` list and an optional `notCredited` list of people left out on purpose. Each entry has an `id` and a `kind`, and optional `billing` (its place under its heading, 1 first), `placement` (`opening` for the opening titles; the end credits when it's missing), `size` (a percentage of standard size, such as `150`) and `ownCard`:
 
 | `kind` | Fields |
 | --- | --- |

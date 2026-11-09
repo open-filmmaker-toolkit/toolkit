@@ -472,7 +472,7 @@ def test_name_supers(browser, fake):
     with pg.expect_download() as d:
         pg.click('#csvBtn')
     lines = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
-    check(lines[0] == ['First appears', 'Name', 'Title', 'Notes', 'Since last export'] and lines[1][:2] == ['01:00:30:00', 'Ruth A. Hammond'] and lines[1][4].startswith('Changed'),
+    check(lines[0] == ['First appears', 'Name', 'Title', 'Notes', 'Since last export', 'Also appears', 'Kind'] and lines[1][:2] == ['01:00:30:00', 'Ruth A. Hammond'] and lines[1][4].startswith('Changed'),
           'export lists supers in order with what changed')
     check('No changes since then' in pg.inner_text('#since') and 'New since export' not in pg.inner_text('#rows'), 'export resets the change flags')
 
@@ -2013,6 +2013,259 @@ def test_footage_log(browser, fake):
     ctx.close()
 
 VTT_SAMPLE = 'WEBVTT\n\n00:00:01.000 --> 00:00:04.500\n<v Ruth Hammond>I kept it under the floorboards.\n\n00:00:05.000 --> 00:00:09.000\n<v Ruth Hammond>Nobody asked, so I never said.\n\n00:00:10.000 --> 00:00:12.000\n<v Lena Ward>Will you read it?\n'
+
+def open_data(pg, fake, data):
+    if fake:
+        pg.evaluate('t => window.__file.text = t', json.dumps(data)); pg.click('#openBtn')
+    else:
+        pg.set_input_files('#fileInput', files=[{'name': 'p.oft.json', 'mimeType': 'application/json', 'buffer': json.dumps(data).encode()}])
+    pg.wait_for_function("document.getElementById('filmMeta').textContent.trim() !== ''")
+
+
+def download_text(pg, selector):
+    with pg.expect_download() as d:
+        pg.click(selector)
+    return d.value.suggested_filename, open(d.value.path(), encoding='utf-8', newline='').read()
+
+
+def test_titling_exports(browser, fake):
+    # Supers for titling tools, with places and later appearances, and the credits as a crawl sheet and FCPXML titles.
+    import xml.etree.ElementTree as ET
+    ctx, pg, errs = new_page(browser, 'name-supers', fake)
+    open_sample(pg, fake)
+    pg.click('[data-edit="super-ruth"]')
+    pg.fill('#f-also', '01:30:00:00')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(150)
+    pg.click('#addBtn')
+    pg.select_option('#f-kind', 'place')
+    check(pg.is_hidden('#f-personField') and pg.inner_text('#f-nameLabel') == 'Place on screen', 'a super can be for a place')
+    pg.fill('#f-name', 'Riverside, Iowa'); pg.fill('#f-title', 'Spring 1965'); pg.fill('#f-tc', '01:00:30:00')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(150)
+    pg.select_option('#tFps', '23.976'); pg.select_option('#tFormat', 'srt')
+    _, srt = download_text(pg, '#titlesBtn')
+    check(srt.count('-->') == 6 and srt.startswith('1\r\n00:00:30,030 --> 00:00:35,035\r\nRiverside, Iowa\r\nSpring 1965') and srt.count('Ruth Hammond') == 2, 'exports SRT with every appearance (%s)' % srt[:120])
+    pg.select_option('#tFormat', 'subcap')
+    _, sc = download_text(pg, '#titlesBtn')
+    check(sc.startswith('@ This file written with the Avid Caption plugin') and '<begin subtitles>' in sc and '01:02:14:08 01:02:19:08\r\nRuth Hammond\r\nRetired schoolteacher, Riverside' in sc, 'exports Avid SubCap')
+    pg.select_option('#tFormat', 'fcpxml')
+    _, fx = download_text(pg, '#titlesBtn')
+    ts = ET.fromstring(fx.split('\n', 2)[2]).findall('.//title')
+    check(len(ts) == 6 and all(t.get('lane') == '1' for t in ts) and ts[0].find('text/text-style').text == 'Riverside, Iowa\nSpring 1965', 'exports FCPXML titles')
+    rows = csv_of(pg)
+    h = rows[0]
+    ruth = next(r for r in rows if r[1] == 'Ruth Hammond'); place = next(r for r in rows if r[1] == 'Riverside, Iowa')
+    check(h[-2:] == ['Also appears', 'Kind'] and ruth[h.index('Also appears')] == '01:30:00:00' and place[h.index('Kind')] == 'A place', 'the CSV has later appearances and the kind')
+    data = saved_project(pg, fake)
+    e = {x.get('name') or x.get('personId'): x for x in data['supers']['entries']}
+    check(e['Riverside, Iowa']['kind'] == 'place' and e['person-ruth-hammond']['alsoAppears'] == ['01:30:00:00'] and 'kind' not in e['person-ruth-hammond'], 'saves the kind and later appearances')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+    ctx, pg, errs = new_page(browser, 'credits-builder', fake)
+    open_sample(pg, fake)
+    pg.click('[data-edit="credit-dp"]')
+    pg.fill('#f-billing', '1')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(150)
+    pg.click('#exportBtn')
+    pg.check('input[name=layout][value=sheet]')
+    check(pg.inner_text('#exportPreview').startswith('Section,Kind,Credit,Name,Size,Own card,Billing'), 'previews the crawl sheet')
+    with pg.expect_download() as d:
+        pg.click('#downloadTxtBtn')
+    rows = list(csv.reader(io.StringIO(open(d.value.path(), encoding='utf-8-sig').read())))
+    credits = [r for r in rows if r[1] == 'Credit' and r[2]]
+    check(d.value.suggested_filename.endswith('-crawl-sheet.csv') and credits[0][2] == 'Director of photography' and credits[0][6] == '1' and credits[1][2] == 'Directed by', 'billing puts a credit first under its heading (%s)' % credits[:2])
+    pg.click('#exportBtn')
+    pg.check('input[name=layout][value=fcpxml]')
+    with pg.expect_download() as d:
+        pg.click('#downloadTxtBtn')
+    fx = open(d.value.path(), encoding='utf-8').read()
+    ts = ET.fromstring(fx.split('\n', 2)[2]).findall('.//title')
+    crawl = ts[-1].find('text/text-style').text
+    check(len(ts) >= 1 and 'Director of photography' in crawl and crawl.index('Director of photography') < crawl.index('Directed by'), 'exports the credits as FCPXML titles')
+    data = saved_project(pg, fake)
+    check(next(x for x in data['credits']['entries'] if x['id'] == 'credit-dp')['billing'] == 1, 'saves the billing')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+
+def office_parts(path):
+    # Every part of a Word or PowerPoint file, checked to be well-formed XML.
+    import zipfile, xml.etree.ElementTree as ET
+    z = zipfile.ZipFile(path)
+    parts = {n: z.read(n) for n in z.namelist()}
+    bad = [n for n, b in parts.items() if (n.endswith('.xml') or n.endswith('.rels')) and not _parses(b)]
+    return parts, bad
+
+
+def _parses(b):
+    import xml.etree.ElementTree as ET
+    try:
+        ET.fromstring(b)
+        return True
+    except ET.ParseError:
+        return False
+
+
+def test_office_exports(browser, fake):
+    # The pitch deck to PowerPoint, and the call sheet and treatment to Word, opened and read back.
+    ctx, pg, errs = new_page(browser, 'pitch-deck', fake)
+    open_sample(pg, fake)
+    with pg.expect_download() as d:
+        pg.click('#pptxBtn')
+    parts, bad = office_parts(d.value.path())
+    pres = parts['ppt/presentation.xml'].decode()
+    slides = sorted(n for n in parts if re.match(r'ppt/slides/slide\d+\.xml$', n))
+    shown = [x for x in json.loads(sample)['pitchDeck']['slides'] if not x.get('hidden')]
+    allxml = ''.join(parts[n].decode() for n in slides)
+    check(d.value.suggested_filename.endswith('.pptx') and not bad and pres.count('<p:sldId ') == len(shown) == len(slides) and 'sldSz cx="12192000"' in pres, 'exports a PowerPoint file with each slide that is shown (%s)' % bad)
+    check('The River Keeps' in parts['ppt/slides/slide1.xml'].decode() and any(n.startswith('ppt/media/') for n in parts) and 'r:embed=' in parts['ppt/slides/slide1.xml'].decode()
+          and 'Director of photography: Teo Ramirez' in allxml and 'The story' in allxml and 'Contact' not in allxml, 'the slides keep their text and pictures, and the team comes from the project')
+    check('/ppt/slides/slide%d.xml' % len(slides) in parts['[Content_Types].xml'].decode(), 'every slide is listed in the package')
+    try:
+        import pptx
+        check(len(pptx.Presentation(d.value.path()).slides) == len(shown), 'python-pptx opens the deck')
+    except ImportError:
+        pass
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+    ctx, pg, errs = new_page(browser, 'call-sheet', fake)
+    open_sample(pg, fake)
+    pg.locator('[data-id]').first.click(); pg.wait_for_timeout(200)
+    with pg.expect_download() as d:
+        pg.click('#docxBtn')
+    parts, bad = office_parts(d.value.path())
+    body = parts['word/document.xml'].decode()
+    check(d.value.suggested_filename.endswith('.docx') and not bad and 'Call sheet' in body and 'General call' in body and '<w:tbl>' in body and 'w:val="Heading1"/></w:pPr><w:r><w:t xml:space="preserve">Crew and cast' in body,
+          'exports the call sheet to Word with its headings and tables')
+    try:
+        import docx
+        check(any(t.rows for t in docx.Document(d.value.path()).tables), 'python-docx opens the call sheet')
+    except ImportError:
+        pass
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+    ctx, pg, errs = new_page(browser, 'treatment-builder', fake)
+    open_sample(pg, fake)
+    with pg.expect_download() as d:
+        pg.click('#docxBtn')
+    parts, bad = office_parts(d.value.path())
+    body = parts['word/document.xml'].decode()
+    check(not bad and 'w:val="Title"/></w:pPr><w:r><w:t xml:space="preserve">The River Keeps' in body and 'Ruth Hammond kept a diary' in body, 'exports the treatment to Word')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+
+def test_cue_sheet_series(browser, fake):
+    # Episodes, reels and the electronic filing layout in the music cue sheet.
+    ctx, pg, errs = new_page(browser, 'music-cue-sheet', fake)
+    open_sample(pg, fake)
+    check(pg.is_hidden('#sheetFor'), 'no episode picker without episodes')
+    pg.click('#seriesBtn')
+    pg.click('#epAddBtn'); pg.fill('#epRows .ep-row:nth-child(1) .ep-t', 'Pilot')
+    pg.click('#epAddBtn'); pg.fill('#epRows .ep-row:nth-child(2) .ep-t', 'The levee')
+    pg.check('#reelSplit'); pg.fill('#reelStarts', '00:00:00:00, 00:10:00:00')
+    pg.click('#seriesForm button[type=submit]'); pg.wait_for_timeout(150)
+    check(pg.is_visible('#sheetFor') and pg.locator('#sheetFor option').count() == 3, 'the cue sheet can be for the whole series or one episode')
+    pg.click('tr[data-id="sample-09"] .el-name')
+    check(pg.is_visible('#f-episodeField'), 'a cue can be given its episode')
+    pg.select_option('#f-episode', label='Episode 1: Pilot')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(150)
+    pg.select_option('#sheetFor', label='Episode 1: Pilot')
+    check(pg.locator('#rows tr[data-id]').count() == 1, 'one episode shows only its cues')
+    pg.click('#printBtn'); pg.wait_for_timeout(150)
+    r = pg.inner_text('#report')
+    check('Music cue sheet, Episode 1: Pilot' in r and 'Main Title' in r and 'Levee at Night' not in r, 'prints the episode cue sheet')
+    pg.select_option('#sheetFor', '')
+    pg.click('#printBtn'); pg.wait_for_timeout(150)
+    r = pg.inner_text('#report')
+    check('Reel 1' in r and 'Reel 2' in r and r.index('Reel 1') < r.index('Levee at Night') < r.index('Reel 2') < r.index('Muddy Water Hymn'), 'splits the printed cue sheet by reel')
+    rows = csv_of(pg)
+    h = rows[0]
+    hymn = next(x for x in rows if x[2] == 'Muddy Water Hymn')
+    main = next(x for x in rows if x[2].startswith('The River Keeps'))
+    check(h[-2:] == ['Reel', 'Episode'] and hymn[h.index('Reel')] == '2' and main[h.index('Episode')] == 'Episode 1: Pilot', 'the CSV has the reel and episode')
+    filing = csv_of(pg, '#filingBtn')
+    fh = filing[0]
+    check(fh[:6] == ['Production', 'Episode', 'Reel', 'Seq', 'Cue number', 'Cue title'] and 'Interested party' in fh and 'Share %' in fh, 'exports the electronic filing layout')
+    roles = [x[fh.index('Role code')] for x in filing[1:] if x[fh.index('Cue title')] == 'Muddy Water Hymn']
+    check(len(filing) == 1 + 3 + 2 + 2 + 1 + 2 + 3 and roles[:3] == ['C', 'A', 'E'], 'one row for each writer and publisher on each cue (%d rows, %s)' % (len(filing), roles))
+    data = saved_project(pg, fake)
+    mc = data['musicCueSheet']
+    cue = next(e for e in data['thirdPartyElements'] if e['id'] == 'sample-09')
+    check([e.get('title') for e in mc['episodes']] == ['Pilot', 'The levee'] and mc['splitByReel'] is True and mc['reelStarts'] == ['00:00:00:00', '00:10:00:00'] and cue['music']['episodeId'] == mc['episodes'][0]['id'],
+          'saves the episodes, reels and the cue episode')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+
+def test_edit_exports(browser, fake):
+    # Files for editing apps: an ALE from the footage log, FCPXML, Premiere XML and EDLs from the paper edit, and QC markers.
+    import xml.etree.ElementTree as ET
+    ctx, pg, errs = new_page(browser, 'footage-log', fake)
+    open_sample(pg, fake)
+    name, ale = download_text(pg, '#aleBtn')
+    lines = ale.split('\r\n')
+    cols = lines[lines.index('Column') + 1].split('\t')
+    row = dict(zip(cols, next(l for l in lines if l.startswith('A001C001\t')).split('\t')))
+    check(name.endswith('.ale') and lines[0] == 'Heading' and 'FPS\t23.976' in lines and cols[:6] == ['Name', 'Tracks', 'Start', 'End', 'Tape', 'Source File'],
+          'the footage log exports an Avid ALE')
+    check(row['Start'] == '08:04:10:00' and row['End'] == '08:30:48:10' and row['Tape'] == 'A001' and row['Source File'] == 'A001C001.mov' and 'levee' in row['Description'] and row['Rating'] == '5',
+          'each clip has its timecodes, card and log (%s)' % row)
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+    d = json.loads(sample)
+    d['paperEdit']['scenes'][1]['bites'][0]['speaker'] = 'Lena Ward'
+    ctx, pg, errs = new_page(browser, 'paper-edit', fake)
+    open_data(pg, fake, d)
+    check(pg.is_hidden('#dropBox'), 'drop frame is only offered at 29.97 and 59.94')
+    _, fx = download_text(pg, '#fcpxmlBtn')
+    root_ = ET.fromstring(fx.split('\n', 2)[2])
+    spine = root_.find('.//spine')
+    clips = spine.findall('asset-clip')
+    check(root_.get('version') == '1.9' and root_.find('.//format').get('frameDuration') == '1001/24000s' and len(clips) == 3 and clips[0].get('start') == '%d/24000s' % ((8 * 3600 + 4 * 60 + 10) * 24 * 1001 + round(10.2 * 24000 / 1001) * 1001)
+          and root_.find('.//asset').find('media-rep').get('src').endswith('footage/2026-05-12/A001/A001C001.mov'), 'exports FCPXML with each bite at its source timecode')
+    pg.select_option('#audioMode', 'separate')
+    _, fx = download_text(pg, '#fcpxmlBtn')
+    clips = ET.fromstring(fx.split('\n', 2)[2]).find('.//spine').findall('asset-clip')
+    lanes = [c.find('asset-clip').get('lane') for c in clips]
+    check(all(c.get('srcEnable') == 'video' for c in clips) and lanes == ['-1', '-2', '-1'], 'separate audio goes on its own lane for each speaker (%s)' % lanes)
+    _, xm = download_text(pg, '#xmemlBtn')
+    seq = ET.fromstring(xm.split('\n', 2)[2]).find('sequence')
+    vt, at = seq.find('media/video').findall('track'), seq.find('media/audio').findall('track')
+    check(len(vt) == 1 and len(vt[0].findall('clipitem')) == 3 and len(at) == 4 and len(at[0].findall('clipitem')) == 2 and len(at[2].findall('clipitem')) == 1 and seq.find('timecode/string').text == '01:00:00:00',
+          'exports Premiere XML with a pair of audio tracks for each speaker')
+    _, edl = download_text(pg, '#edlBtn')
+    ev = [l for l in edl.split('\r\n') if re.match(r'^\d{3}  ', l)]
+    check(len(ev) == 6 and ' V     C ' in ev[0] and ' A     C ' in ev[1] and ' A2    C ' in ev[3], 'the EDL puts picture and sound on separate lines')
+    pg.select_option('#fps', '29.97'); pg.wait_for_timeout(100)
+    check(pg.is_visible('#dropBox'), 'drop frame is offered at 29.97')
+    pg.check('#dropFrame'); pg.wait_for_timeout(100)
+    _, edl = download_text(pg, '#edlBtn')
+    ev = [l for l in edl.split('\r\n') if re.match(r'^\d{3}  ', l)]
+    check('FCM: DROP FRAME' in edl and ev[0].split()[-1].count(';') == 1 and ev[0].split()[-2].startswith('01:00:00;00'), 'drop-frame edit lists use drop-frame timecode (%s)' % ev[0])
+    data = saved_project(pg, fake)
+    check(data['paperEdit']['dropFrame'] is True and data['paperEdit']['audio'] == 'separate' and data['paperEdit']['frameRate'] == '29.97', 'saves drop frame and the audio choice')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+    ctx, pg, errs = new_page(browser, 'qc-tracker', fake)
+    open_sample(pg, fake)
+    pg.select_option('#mkFps', '23.976')
+    _, mk = download_text(pg, '#mkBtn')
+    check('|C:ResolveColorRed |M:Major, Sound: Dialogue peaks over -10 dBTP |D:108' in mk and 'Dead pixel' not in mk and 'Caption off screen' in mk, 'exports open and disputed issues as Resolve markers')
+    pg.select_option('#mkFormat', 'avid')
+    _, mk = download_text(pg, '#mkBtn')
+    check('QC\t01:22:40:00\tV1\tred\tMajor, Sound: Dialogue peaks over -10 dBTP\t108' in mk, 'exports an Avid marker list (%s)' % mk[:200])
+    pg.select_option('#mkFormat', 'fcpxml'); pg.uncheck('#mkOpen')
+    _, mk = download_text(pg, '#mkBtn')
+    m = ET.fromstring(mk.split('\n', 2)[2]).findall('.//marker')
+    check(len(m) == 4 and m[0].get('value').startswith('Minor, Captions'), 'exports every issue as Final Cut Pro markers when asked')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
 
 def test_paper_edit(browser, fake):
     original = json.loads(sample)
@@ -5020,6 +5273,10 @@ def main():
         test_footage_log(browser, fake)
         print('== paper-edit / transcripts, bites, scenes and the edit list')
         test_paper_edit(browser, fake)
+        test_edit_exports(browser, fake)
+        test_cue_sheet_series(browser, fake)
+        test_office_exports(browser, fake)
+        test_titling_exports(browser, fake)
         print('== structure-board / cards, drag, threads and print')
         test_structure_board(browser, fake)
         print('== cut-tracker / notes, carrying and the locked cut')

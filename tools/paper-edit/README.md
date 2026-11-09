@@ -46,6 +46,8 @@ Test the edit list with a few bites in your editing app before you depend on it.
 
 - **Shares transcripts with the interview log.** A transcript imported in either tool shows in both, linked to its interview.
 - **Brings in favorite moments** from the [interview log](../interview-log/) as bites: choose **Add favorite moments** in Scenes. A moment marked from a transcript in the paper edit keeps its timecodes; the others come in with the clip they're linked to, to time later. Each bite keeps its `momentId`, so a moment isn't brought in twice.
+- **Exports for editing apps:** an edit list (EDL), FCPXML for Final Cut Pro and DaVinci Resolve, and XML for Premiere Pro. Each bite comes in at its source timecode, named after its clip, so relink the offline media to your footage. Choose whether the sound stays with the picture or goes on its own tracks, one for each speaker.
+- **Drop-frame timecode** at 29.97 and 59.94 fps. Turn it on under Print and export, and the timecodes and edit lists use it.
 
 ## Saving and file conflicts
 
@@ -57,7 +59,7 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-A `paperEdit` record with `frameRate`, `recordStart` (where the sequence starts), `transcripts` and `scenes`.
+A `paperEdit` record with `frameRate`, `recordStart` (where the sequence starts), `dropFrame` (true for drop-frame timecode), `audio` (`separate` when the sound goes on its own tracks), `transcripts` and `scenes`.
 
 - Each transcript has an `id`, `name`, `format` (`srt`, `vtt` or `text`), `segments` (each with an `id`, `text`, and optional `start` and `end` in seconds from the start of the clip, and `speaker`), and optional `interviewId`, `personId`, `clipId` (a clip in the footage log), `clipName`, `reel` and `startTc`.
 - Each scene has an `id`, `title` and `bites`. Each bite has an `id`, `transcriptId`, `segmentIds`, `text`, and optional `in` and `out` in seconds, `speaker`, `note`, and `clipName`, `reel`, `sourceName`, `tcIn` and `tcOut`, kept so a bite keeps its source if its transcript is removed.
@@ -66,8 +68,7 @@ It reads `people`, `interviews` and the clips in `assets`. A bite brought in fro
 
 ## Not yet
 
-- Drop-frame timecode
-- FCPXML and AAF exports, and separate audio tracks in the edit list
+- AAF exports. Avid Media Composer imports the EDL instead
 
 ## License
 

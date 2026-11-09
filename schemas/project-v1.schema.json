@@ -1951,6 +1951,10 @@
         "cueId": {
           "type": "string"
         },
+        "episodeId": {
+          "type": "string",
+          "description": "The episode in musicCueSheet.episodes this cue is in, for a series."
+        },
         "usage": {
           "enum": [
             "BI",
@@ -2567,6 +2571,28 @@
       "properties": {
         "musicSupervisor": {
           "type": "string"
+        },
+        "episodes": {
+          "type": "array",
+          "description": "Episodes of a series, each with its own cue sheet.",
+          "items": {
+            "type": "object",
+            "required": ["id"],
+            "properties": {
+              "id": { "type": "string" },
+              "number": { "type": "string" },
+              "title": { "type": "string" }
+            }
+          }
+        },
+        "splitByReel": {
+          "type": "boolean",
+          "description": "Print and export the cue sheet split by reel."
+        },
+        "reelStarts": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "The timecode each reel starts at, HH:MM:SS:FF. Without it, each reel starts on the hour."
         }
       },
       "additionalProperties": true
@@ -2779,6 +2805,11 @@
             "type": "string"
           },
           "description": "For a music or archival block, the songs or sources left out, as lowercase keys of their title or name."
+        },
+        "billing": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "For a credit, its place under its heading: 1 comes first, and credits without a billing follow in their own order."
         }
       },
       "additionalProperties": true
@@ -2858,6 +2889,15 @@
         "firstAppears": {
           "type": "string",
           "description": "Timecode in the cut where the super first appears, as HH:MM:SS:FF."
+        },
+        "alsoAppears": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Later timecodes where the same super appears again."
+        },
+        "kind": {
+          "enum": ["person", "place", "date"],
+          "description": "What the super names. Missing means a person."
         },
         "notes": {
           "type": "string"
@@ -5719,6 +5759,14 @@
         "recordStart": {
           "type": "string",
           "description": "Where the sequence starts, HH:MM:SS:FF."
+        },
+        "dropFrame": {
+          "type": "boolean",
+          "description": "Drop-frame timecode, at 29.97 and 59.94."
+        },
+        "audio": {
+          "enum": ["separate"],
+          "description": "Exports put the sound on its own tracks, one for each speaker. Missing means with the picture."
         },
         "transcripts": {
           "type": "array",

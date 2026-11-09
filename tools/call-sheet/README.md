@@ -45,6 +45,7 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 - **A calendar file of every date in the project**, gathered from every tool: choose **Calendar of every date** under the file buttons and pick which kinds of dates to include. Importing a newer file updates the same events instead of adding them twice.
 - **Release status** for people on camera and the location, from the [release tracker](../release-tracker/), in the editor and on the printed sheet.
 - **The day's permits and insurance certificates** from the [certificate and permit tracker](../coi-permit-tracker/): the ones that name the shoot day, or its location when they name no days.
+- **Exports to Word.** In a day, **Export to Word** saves that call sheet as a .docx file with the same sections, tables and notes as the printed sheet.
 
 ## Saving and file conflicts
 
@@ -67,7 +68,6 @@ A `callSheets` array. Each entry has an `id` and `date`, and optionally times, a
 
 ## Not yet
 
-- A DOCX export (the spreadsheet export and blank template cover plain-file use)
 - Sending the sheet to the crew
 
 ## License
