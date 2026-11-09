@@ -217,6 +217,10 @@ select { background-color: var(--sheet); color: var(--ink); }
 input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:focus, input[type="time"]:focus-within { outline: 2px solid var(--focus, #2f6fdb); outline-offset: 2px; }
 .home-link { color: inherit; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
 .home-link:hover { text-decoration-thickness: 2px; }
+.save-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; }
+.save-row input { flex: 1 1 160px; min-width: 0; padding: 6px 8px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); color: var(--ink); font: inherit; }
+.acts { display: flex; gap: 6px; }
+dialog.wide { width: min(900px, calc(100vw - 32px)); }
 </style>
 </head>
 <body>
@@ -281,7 +285,17 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <div class="meter" aria-hidden="true"><span id="meterBar"></span></div>
         <p class="lead" id="meterText"></p>
         <table class="sums" id="sums"></table>
+        <div class="two" style="margin-top:10px">
+          <div class="field"><label for="perKind">Spending for one period</label><select id="perKind"><option value="">None</option><option value="month">A month</option><option value="week">A week</option></select></div>
+          <div class="field"><label for="perDate">Period with this day</label><input id="perDate" type="date"></div>
+        </div>
         <div class="field" style="margin-top:10px"><label for="asOf">Report as of</label><input id="asOf" type="date"><p class="hint">Counts expenses up to this date. Leave it empty for all of them.</p></div>
+      </section>
+      <section class="card" aria-labelledby="savedHead">
+        <div class="card-head"><h2 id="savedHead">Saved reports</h2></div>
+        <p class="lead">Save the report as it stands, such as the one you send a funder each month, and compare it with a later one line by line.</p>
+        <div class="save-row"><label for="saveLabel" class="sr-only">Name for this report</label><input id="saveLabel" type="text" autocomplete="off" placeholder="October cost report"><button type="button" class="btn small" id="saveReportBtn">Save this report</button></div>
+        <ul class="todo" id="savedList"></ul>
       </section>
       <section class="card" aria-labelledby="poHead">
         <div class="card-head"><h2 id="poHead">Purchase orders</h2><span class="count" id="poCount"></span><span class="spacer"></span><button type="button" class="link-btn" id="addPoBtn">Add a purchase order</button></div>
@@ -336,6 +350,15 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   </form>
 </dialog>
 
+<dialog class="modal wide" id="cmpDialog" aria-labelledby="cmpTitle">
+  <div class="dlg-head"><h2 id="cmpTitle">Compare two cost reports</h2></div>
+  <div class="dlg-body">
+    <div class="two"><div class="field"><label for="cmpA">From</label><select id="cmpA"></select></div><div class="field"><label for="cmpB">To</label><select id="cmpB"></select></div></div>
+    <p class="hint" id="cmpNote" role="status"></p>
+    <div class="tablewrap"><table class="cr" id="cmpTable"></table></div>
+  </div>
+  <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn" id="cmpClose">Close</button></div>
+</dialog>
 <dialog class="modal" id="poDialog" aria-labelledby="poTitle">
   <form id="poForm" method="dialog" novalidate>
     <div class="dlg-head"><h2 id="poTitle">Purchase order</h2></div>
@@ -573,9 +596,20 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const final = cents(spent + etc);
     return { budget: cents(budget), committed: cents(committed), open, remaining: cents(budget - spent - open), spent: cents(spent), etc: cents(etc), set, final, variance: cents(budget - final), note: e && e.note };
   }
+  // One week or month, for a report of what was spent in it as well as the total.
+  const per = () => (C().period && (C().period.kind === 'month' || C().period.kind === 'week') && isDate(C().period.start) ? C().period : null);
+  function perRange() {
+    const p = per(); if (!p) return null;
+    const d = new Date(`${p.start}T12:00:00`), iso = x => `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`;
+    if (p.kind === 'month') return { from: iso(new Date(d.getFullYear(), d.getMonth(), 1)), to: iso(new Date(d.getFullYear(), d.getMonth() + 1, 0)) };
+    const mon = new Date(d); mon.setDate(d.getDate() - ((d.getDay() + 6) % 7)); const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+    return { from: iso(mon), to: iso(sun) };
+  }
+  const perLabel = () => { const r = perRange(); if (!r) return ''; return per().kind === 'month' ? new Date(`${r.from}T12:00:00`).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }) : `Week of ${fmtDate(r.from)}`; };
   function report() {
     const T = B();
     const ex = expenses();
+    const pr = perRange(), inP = e => !!pr && isDate(e.date) && e.date >= pr.from && e.date <= pr.to;
     const byLine = new Map(), byAcct = new Map(), loose = [];
     for (const e of ex) {
       const p = placeOf(e, T);
@@ -584,20 +618,22 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       else byAcct.set(p.accountId, [...(byAcct.get(p.accountId) || []), e]);
     }
     const sumOf = l => cents(arr(l).reduce((t, e) => t + oftMoney.amountOf(e), 0));
+    const sumP = l => sumOf(arr(l).filter(inP));
     const com = commitments(T), comOf = id => cents((com.get(id) || []).reduce((t, x) => t + x.amount, 0));
     const sections = T.sections.filter(s => s.accounts.length).map(s => ({ section: s.section, accounts: s.accounts.map(a => {
-      const lines = a.lines.map(x => Object.assign({ line: x.line, key: x.line.id, expenses: byLine.get(x.line.id) || [] }, row(x.total, sumOf(byLine.get(x.line.id)), x.line.id, comOf(x.line.id)), { commitments: com.get(x.line.id) || [] }));
+      const lines = a.lines.map(x => Object.assign({ line: x.line, key: x.line.id, expenses: byLine.get(x.line.id) || [] }, row(x.total, sumOf(byLine.get(x.line.id)), x.line.id, comOf(x.line.id)), { commitments: com.get(x.line.id) || [], period: sumP(byLine.get(x.line.id)) }));
       // Spending in the account that isn't on a line comes out of what's left on its lines without a set estimate.
       const un = byAcct.get(a.account.id) || [], U = sumOf(un);
       const t = k => cents(lines.reduce((x, l) => x + l[k], 0));
       const left = cents(lines.filter(l => !l.set).reduce((x, l) => x + l.etc, 0));
       const etc = cents(lines.filter(l => l.set).reduce((x, l) => x + l.etc, 0) + Math.max(0, left - U));
       const spent = cents(t('spent') + U), budget = t('budget'), final = cents(spent + etc);
-      if (un.length) lines.push({ unassigned: true, key: `unassigned:${a.account.id}`, expenses: un, spent: U });
+      const period = cents(t('period') + sumP(un));
+      if (un.length) lines.push({ unassigned: true, key: `unassigned:${a.account.id}`, expenses: un, spent: U, period: sumP(un) });
       const committed = t('committed'), open = t('open');
-      return { account: a.account, lines, budget, committed, open, remaining: cents(budget - spent - open), spent, etc, final, variance: cents(budget - final), absorbed: un.length ? Math.min(U, left) : 0 };
+      return { account: a.account, lines, budget, committed, open, remaining: cents(budget - spent - open), spent, etc, final, variance: cents(budget - final), absorbed: un.length ? Math.min(U, left) : 0, period };
     }) }));
-    const markups = T.markups.map(m => Object.assign({ markup: m.markup, key: `markup:${m.markup.id}` }, row(m.amount, 0, `markup:${m.markup.id}`)));
+    const markups = T.markups.map(m => Object.assign({ markup: m.markup, key: `markup:${m.markup.id}`, period: 0 }, row(m.amount, 0, `markup:${m.markup.id}`)));
     const all = [...sections.flatMap(s => s.accounts), ...markups];
     // Spending outside the budget counts in the totals, with nothing budgeted against it.
     const t = k => cents(all.reduce((x, r) => x + r[k], 0));
@@ -606,7 +642,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     total.open = cents(all.reduce((x, r) => x + (r.open || 0), 0));
     total.remaining = cents(total.budget - total.spent - total.open);
     total.variance = cents(total.budget - total.final);
-    return { T, sections, markups, loose, looseTotal: lt, total };
+    total.period = cents(all.reduce((x, r) => x + (r.period || 0), 0) + sumP(loose));
+    return { T, sections, markups, loose, looseTotal: lt, loosePeriod: sumP(loose), total };
   }
   const lineName = l => [l.code, l.description].filter(Boolean).join(' ') || 'Unnamed line';
   const acctName = a => [a.code, a.name].filter(Boolean).join(' ') || 'Unnamed account';
@@ -630,14 +667,15 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('count').textContent = has ? `${n} expense${n === 1 ? '' : 's'}${asOf() ? ` to ${fmtDate(asOf())}` : ''}` : '';
     $('addBtn').textContent = need ? `Assign expenses to lines (${need})` : 'Assign expenses to lines';
     if (document.activeElement !== $('asOf')) $('asOf').value = asOf();
-    const head = '<thead><tr><th>Account and line</th><th class="n">Budget</th><th class="n">Committed</th><th class="n">Spent</th><th class="n">Remaining</th><th class="n">To complete</th><th class="n">Estimated final</th><th class="n">Variance</th></tr></thead>';
-    const cells = r => `<td class="n">${esc(money(r.budget))}</td><td class="n">${r.committed ? esc(money(r.committed)) : '—'}</td><td class="n">${esc(money(r.spent, true))}</td><td class="n${r.remaining < 0 ? ' over' : ''}">${esc(money(r.remaining))}</td><td class="n${r.set ? '' : ' est'}">${esc(money(r.etc))}</td><td class="n">${esc(money(r.final))}</td>${varCell(r.variance)}`;
-    $('table').innerHTML = head + '<tbody>' + R.sections.map(s => `<tr class="sec"><td colspan="8">${esc(s.section.label)}</td></tr>` + s.accounts.map(a =>
+    const P = !!perRange(), pc = v => (P ? `<td class="n">${v ? esc(money(v, true)) : '—'}</td>` : ''), cols = P ? 9 : 8;
+    const head = '<thead><tr><th>Account and line</th><th class="n">Budget</th><th class="n">Committed</th><th class="n">Spent</th>' + (P ? `<th class="n">${esc(perLabel())}</th>` : '') + '<th class="n">Remaining</th><th class="n">To complete</th><th class="n">Estimated final</th><th class="n">Variance</th></tr></thead>';
+    const cells = r => `<td class="n">${esc(money(r.budget))}</td><td class="n">${r.committed ? esc(money(r.committed)) : '—'}</td><td class="n">${esc(money(r.spent, true))}</td>${pc(r.period)}<td class="n${r.remaining < 0 ? ' over' : ''}">${esc(money(r.remaining))}</td><td class="n${r.set ? '' : ' est'}">${esc(money(r.etc))}</td><td class="n">${esc(money(r.final))}</td>${varCell(r.variance)}`;
+    $('table').innerHTML = head + '<tbody>' + R.sections.map(s => `<tr class="sec"><td colspan="${cols}">${esc(s.section.label)}</td></tr>` + s.accounts.map(a =>
       `<tr class="acct"><td>${esc(acctName(a.account))}</td>${cells(a)}</tr>` + a.lines.map(l =>
-        (l.unassigned ? `<tr class="line"><td><button type="button" data-assign>Not assigned to a line<span class="sub">${l.expenses.length} expense${l.expenses.length === 1 ? '' : 's'}, taken from the account's estimate to complete. Click to assign.</span></button></td><td class="n">—</td><td class="n">—</td><td class="n">${esc(money(l.spent, true))}</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">—</td></tr>`
+        (l.unassigned ? `<tr class="line"><td><button type="button" data-assign>Not assigned to a line<span class="sub">${l.expenses.length} expense${l.expenses.length === 1 ? '' : 's'}, taken from the account's estimate to complete. Click to assign.</span></button></td><td class="n">—</td><td class="n">—</td><td class="n">${esc(money(l.spent, true))}</td>${pc(l.period)}<td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">—</td></tr>`
           : `<tr class="line"><td><button type="button" data-line="${esc(l.key)}">${esc(lineName(l.line))}${l.note ? `<span class="sub">${esc(l.note)}</span>` : ''}</button></td>${cells(l)}</tr>`)).join('')).join('')).join('')
-      + (R.markups.length ? `<tr class="sec"><td colspan="8">Percentages</td></tr>` + R.markups.map(m => `<tr class="line"><td><button type="button" data-line="${esc(m.key)}">${esc(m.markup.name || 'Percentage')} ${esc(num(m.markup.percent))}%${m.note ? `<span class="sub">${esc(m.note)}</span>` : ''}</button></td>${cells(m)}</tr>`).join('') : '')
-      + (R.loose.length ? `<tr class="sec"><td colspan="8">Not in the budget</td></tr><tr class="line"><td>${R.loose.length} expense${R.loose.length === 1 ? '' : 's'}</td><td class="n">—</td><td class="n">—</td><td class="n">${esc(money(R.looseTotal, true))}</td><td class="n">—</td><td class="n">—</td><td class="n">${esc(money(R.looseTotal))}</td>${varCell(-R.looseTotal)}</tr>` : '')
+      + (R.markups.length ? `<tr class="sec"><td colspan="${cols}">Percentages</td></tr>` + R.markups.map(m => `<tr class="line"><td><button type="button" data-line="${esc(m.key)}">${esc(m.markup.name || 'Percentage')} ${esc(num(m.markup.percent))}%${m.note ? `<span class="sub">${esc(m.note)}</span>` : ''}</button></td>${cells(m)}</tr>`).join('') : '')
+      + (R.loose.length ? `<tr class="sec"><td colspan="${cols}">Not in the budget</td></tr><tr class="line"><td>${R.loose.length} expense${R.loose.length === 1 ? '' : 's'}</td><td class="n">—</td><td class="n">—</td><td class="n">${esc(money(R.looseTotal, true))}</td>${pc(R.loosePeriod)}<td class="n">—</td><td class="n">—</td><td class="n">${esc(money(R.looseTotal))}</td>${varCell(-R.looseTotal)}</tr>` : '')
       + `<tr class="tot"><td>Total</td>${cells(T)}</tr></tbody>`;
     const pct = T.budget ? Math.min(100, Math.round(T.spent / T.budget * 100)) : 0;
     $('meterBar').style.width = `${pct}%`;
@@ -651,7 +689,50 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('looseCount').textContent = R.loose.length ? String(R.loose.length) : '';
     $('loose').innerHTML = R.loose.map(e => `<li><span>${esc(e.description || e.payee || 'Expense')}<span class="sub">${esc([e.date && fmtDate(e.date), e.payee].filter(Boolean).join(' · '))}</span></span><span>${esc(money(e.amount, true))}</span></li>`).join('');
     $('printBtn').disabled = !has;
+    $('perKind').value = per() ? per().kind : ''; if (document.activeElement !== $('perDate')) $('perDate').value = per() ? per().start : ''; $('perDate').disabled = !per() && !$('perKind').value;
+    renderSaved();
     renderPos();
+  }
+
+  // ---------- Saved reports ----------
+  const saved = () => objs(C().saved);
+  // A report as it stands, line by line, to compare with later.
+  function snapshot() {
+    const R = report(), rows = {};
+    const keep = (key, label, r) => { rows[key] = { label, budget: r.budget, spent: r.spent, etc: r.etc, final: r.final }; };
+    for (const s of R.sections) for (const a of s.accounts) { keep(`account:${a.account.id}`, acctName(a.account), a); for (const l of a.lines) if (!l.unassigned) keep(l.key, `${acctName(a.account)}: ${lineName(l.line)}`, l); }
+    for (const m of R.markups) keep(m.key, `${m.markup.name || 'Percentage'} ${num(m.markup.percent)}%`, m);
+    keep('total', 'Total', R.total);
+    return rows;
+  }
+  function saveReport() {
+    const label = $('saveLabel').value.trim() || `Cost report, ${fmtDate(asOf() || today())}`;
+    if (!Array.isArray(C().saved)) C().saved = [];
+    C().saved.push(Object.assign({ id: newId('cost-report'), label, savedAt: today(), rows: snapshot() }, asOf() ? { asOf: asOf() } : {}));
+    $('saveLabel').value = '';
+    changed();
+    toast(`Saved "${label}". Compare it with a later report from Saved reports.`);
+  }
+  function renderSaved() {
+    const list = saved();
+    $('savedList').innerHTML = list.length ? list.map(r => `<li><span>${esc(r.label || 'Saved report')}<span class="sub">${esc([`Saved ${fmtDate(r.savedAt)}`, r.asOf && `as of ${fmtDate(r.asOf)}`, r.rows && r.rows.total ? `final ${money(r.rows.total.final)}` : ''].filter(Boolean).join(', '))}</span></span><span class="acts"><button type="button" class="btn small" data-cmp="${esc(r.id)}">Compare</button><button type="button" class="btn small" data-delrep="${esc(r.id)}" aria-label="Remove ${esc(r.label || 'saved report')}">Remove</button></span></li>`).join('') : '<li class="empty-line">None yet.</li>';
+  }
+  // Two reports side by side: a saved one, and another saved one or the report now.
+  function openCompare(id) {
+    $('cmpA').innerHTML = saved().map(r => `<option value="${esc(r.id)}"${r.id === id ? ' selected' : ''}>${esc(r.label)}</option>`).join('');
+    $('cmpB').innerHTML = `<option value="now">The report now</option>${saved().map(r => `<option value="${esc(r.id)}">${esc(r.label)}</option>`).join('')}`;
+    drawCompare();
+    $('cmpDialog').showModal();
+  }
+  function drawCompare() {
+    const a = saved().find(r => r.id === $('cmpA').value), bid = $('cmpB').value, b = bid === 'now' ? { label: 'Now', rows: snapshot() } : saved().find(r => r.id === bid);
+    if (!a || !b) { $('cmpTable').innerHTML = ''; return; }
+    const keys = [...new Set([...Object.keys(a.rows || {}), ...Object.keys(b.rows || {})])].filter(k => k !== 'total');
+    keys.push('total');
+    const d = (x, y) => { const v = cents(num(y) - num(x)); return v ? `${v > 0 ? '+' : '−'}${money(Math.abs(v))}` : '—'; };
+    const changedRows = keys.map(k => ({ k, x: (a.rows || {})[k] || {}, y: (b.rows || {})[k] || {} })).filter(r => r.k === 'total' || ['budget', 'spent', 'final'].some(f => Math.abs(num(r.x[f]) - num(r.y[f])) > 0.005));
+    $('cmpTable').innerHTML = `<thead><tr><th>Line</th><th class="n">Budget</th><th class="n">Spent</th><th class="n">Final then</th><th class="n">Final now</th><th class="n">Change in final</th></tr></thead><tbody>${changedRows.map(r => `<tr${r.k === 'total' ? ' class="tot"' : r.k.startsWith('account:') ? ' class="acct"' : ''}><td>${esc(r.y.label || r.x.label || r.k)}${!(b.rows || {})[r.k] ? '<span class="sub">Gone since</span>' : !(a.rows || {})[r.k] ? '<span class="sub">New since</span>' : ''}</td><td class="n">${esc(d(r.x.budget, r.y.budget))}</td><td class="n">${esc(d(r.x.spent, r.y.spent))}</td><td class="n">${esc(money(num(r.x.final)))}</td><td class="n">${esc(money(num(r.y.final)))}</td><td class="n">${esc(d(r.x.final, r.y.final))}</td></tr>`).join('')}</tbody>`;
+    $('cmpNote').textContent = changedRows.length > 1 ? `${changedRows.length - 1} line${changedRows.length === 2 ? '' : 's'} changed between ${a.label} and ${b.label}.` : `Nothing changed between ${a.label} and ${b.label}.`;
   }
 
   // ---------- Purchase orders ----------
@@ -779,6 +860,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         ${R.markups.map(m => `<tr><td>${esc(m.markup.name || 'Percentage')} ${esc(num(m.markup.percent))}%</td>${cells(m)}</tr>`).join('')}
         ${R.loose.length ? `<tr><td>Not in the budget</td><td class="n">—</td><td class="n">—</td><td class="n">${esc(money(R.looseTotal))}</td><td class="n">—</td><td class="n">—</td><td class="n">${esc(money(R.looseTotal))}</td><td class="n">${esc(v(-R.looseTotal))}</td></tr>` : ''}
         <tr class="r-tot"><td>Total</td>${cells(T)}</tr></tbody></table>
+      ${perRange() ? `<h2>Spent in ${esc(perLabel())}</h2><table><thead><tr><th></th><th class="n">This period</th><th class="n">Spent to date</th><th class="n">Budget</th></tr></thead><tbody>${R.sections.flatMap(s => s.accounts).filter(a => a.period).map(a => `<tr><td>${esc(acctName(a.account))}</td><td class="n">${esc(money(a.period))}</td><td class="n">${esc(money(a.spent))}</td><td class="n">${esc(money(a.budget))}</td></tr>`).join('')}${R.loosePeriod ? `<tr><td>Not in the budget</td><td class="n">${esc(money(R.loosePeriod))}</td><td class="n">${esc(money(R.looseTotal))}</td><td class="n">—</td></tr>` : ''}<tr class="r-tot"><td>Total</td><td class="n">${esc(money(T.period))}</td><td class="n">${esc(money(T.spent))}</td><td class="n">${esc(money(T.budget))}</td></tr></tbody></table>` : ''}
       <h2>Detail</h2><table>${h}<tbody>${R.sections.map(s => s.accounts.map(a => `<tr class="r-acct"><td>${esc(acctName(a.account))}</td>${cells(a)}</tr>` + a.lines.map(l => l.unassigned ? `<tr><td class="r-line">Not assigned to a line<br><i>Taken from the account's estimate to complete</i></td><td class="n">—</td><td class="n">—</td><td class="n">${esc(money(l.spent))}</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">—</td></tr>` : `<tr><td class="r-line">${esc(lineName(l.line))}${l.note ? `<br><i>${esc(l.note)}</i>` : ''}</td>${cells(l)}</tr>`).join('')).join('')).join('')}</tbody></table>
       <p class="r-note">Committed is signed deal memos and purchase orders. Remaining is the budget less what's spent and what's committed but not yet spent. Estimated final cost is what's spent plus the estimate to complete; the estimate is what's left of the budget, or what's committed and not yet spent if that's more, unless set. Variance is the budget less the estimated final cost.</p>`;
   }
@@ -1016,6 +1098,12 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('emptyOpenBtn').onclick = openFile;
     $('csvBtn').onclick = exportCsv;
     $('table').addEventListener('click', ev => { const b = ev.target.closest('button'); if (!b) return; if (b.dataset.line) openLine(b.dataset.line); else if (b.hasAttribute('data-assign')) openEditor(); });
+    $('perKind').addEventListener('change', () => { const k = $('perKind').value; if (!k) delete C().period; else C().period = { kind: k, start: $('perDate').value || asOf() || today() }; changed(); });
+    $('perDate').addEventListener('change', () => { if (!$('perKind').value || !$('perDate').value) return; C().period = { kind: $('perKind').value, start: $('perDate').value }; changed(); });
+    $('saveReportBtn').onclick = saveReport;
+    $('savedList').addEventListener('click', ev => { const c = ev.target.closest('[data-cmp]'); if (c) { openCompare(c.dataset.cmp); return; } const d = ev.target.closest('[data-delrep]'); if (d) { C().saved = saved().filter(r => r.id !== d.dataset.delrep); if (!C().saved.length) delete C().saved; changed(); } });
+    for (const id of ['cmpA', 'cmpB']) $(id).addEventListener('change', drawCompare);
+    $('cmpClose').onclick = () => $('cmpDialog').close();
     $('asOf').addEventListener('change', () => { if ($('asOf').value) C().asOf = $('asOf').value; else delete C().asOf; changed(); });
     $('editorForm').addEventListener('submit', ev => { ev.preventDefault(); saveEditor(); });
     $('editorCancel').onclick = () => $('editor').close();

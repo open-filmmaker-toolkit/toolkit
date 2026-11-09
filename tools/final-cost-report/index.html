@@ -230,6 +230,15 @@ pre.export { margin: 0; max-height: 260px; overflow: auto; padding: 10px 12px; b
 input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:focus, input[type="time"]:focus-within { outline: 2px solid var(--focus, #2f6fdb); outline-offset: 2px; }
 .home-link { color: inherit; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
 .home-link:hover { text-decoration-thickness: 2px; }
+.save-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; }
+.save-row input { flex: 1 1 160px; min-width: 0; padding: 6px 8px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); color: var(--ink); font: inherit; }
+.acts { display: flex; gap: 6px; }
+dialog.wide { width: min(820px, calc(100vw - 32px)); }
+.tablewrap { overflow-x: auto; }
+table.cmp { width: 100%; border-collapse: collapse; font-size: 14px; }
+table.cmp th, table.cmp td { padding: 5px 8px; border-bottom: 1px solid var(--rule-soft); text-align: left; }
+table.cmp .n { text-align: right; font-variant-numeric: tabular-nums; }
+table.cmp tr.tot td { font-weight: 600; }
 </style>
 </head>
 <body>
@@ -297,6 +306,12 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
         <p class="lead">Funders usually ask why a line went more than 10 percent over or under. Click an account to add a note.</p>
         <ul class="todo" id="needs"></ul>
       </section>
+      <section class="card" aria-labelledby="savedHead">
+        <div class="card-head"><h2 id="savedHead">Saved reports</h2></div>
+        <p class="lead">Save this report, such as the draft you sent, and compare it with a later one account by account.</p>
+        <div class="save-row"><label for="saveLabel" class="sr-only">Name for this report</label><input id="saveLabel" type="text" autocomplete="off" placeholder="Draft sent to the funder"><button type="button" class="btn small" id="saveReportBtn">Save this report</button></div>
+        <ul class="todo" id="savedList"></ul>
+      </section>
       <section class="card" aria-labelledby="signHead">
         <div class="card-head"><h2 id="signHead">Accountant's sign-off</h2></div>
         <p class="lead">A last page for the accountant to sign, after the report. Change the wording to what your accountant and funder use.</p>
@@ -321,6 +336,15 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   </footer>
 </div>
 
+<dialog class="modal wide" id="cmpDialog" aria-labelledby="cmpTitle">
+  <div class="dlg-head"><h2 id="cmpTitle">Compare two final cost reports</h2></div>
+  <div class="dlg-body">
+    <div class="two"><div class="field"><label for="cmpA">From</label><select id="cmpA"></select></div><div class="field"><label for="cmpB">To</label><select id="cmpB"></select></div></div>
+    <p class="hint" id="cmpNote" role="status"></p>
+    <div class="tablewrap"><table class="cmp" id="cmpTable"></table></div>
+  </div>
+  <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn" id="cmpClose">Close</button></div>
+</dialog>
 <dialog class="drawer" id="editor" aria-labelledby="editorTitle">
   <form id="editorForm" method="dialog" novalidate>
     <div class="dlg-head"><h2 id="editorTitle">Variance note</h2></div>
@@ -570,6 +594,34 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     return [...m.values()];
   }
   const variance = g => cents(g.budget - g.final);
+  // ---------- Saved reports ----------
+  const savedReports = () => arr(F().saved).filter(x => x && typeof x === 'object' && x.id);
+  function snapshot() { const out = {}; let b = 0, f = 0; for (const g of groups('account')) { out[g.key] = { label: g.label, budget: g.budget, final: g.final }; b += g.budget; f += g.final; } out.total = { label: 'Total', budget: cents(b), final: cents(f) }; return out; }
+  function saveReport() {
+    const label = $('saveLabel').value.trim() || `Final cost report, ${fmtDate(today())}`;
+    setF('saved', [...savedReports(), Object.assign({ id: newId('final-report'), label, savedAt: today(), status: F().status === 'final' ? 'final' : 'draft', rows: snapshot() }, isDate(F().closeDate) ? { closeDate: F().closeDate } : {})]);
+    $('saveLabel').value = '';
+    changed();
+    toast(`Saved "${label}".`);
+  }
+  function renderSaved() {
+    const list = savedReports();
+    $('savedList').innerHTML = list.length ? list.map(r => `<li><span>${esc(r.label)}<span class="sub">${esc([`Saved ${fmtDate(r.savedAt)}`, r.status === 'final' ? 'final' : 'draft', r.rows && r.rows.total ? `final cost ${money(r.rows.total.final)}` : ''].filter(Boolean).join(', '))}</span></span><span class="acts"><button type="button" class="btn small" data-cmp="${esc(r.id)}">Compare</button><button type="button" class="btn small" data-delrep="${esc(r.id)}" aria-label="Remove ${esc(r.label)}">Remove</button></span></li>`).join('') : '<li class="empty-line">None yet.</li>';
+  }
+  function openCompare(id) {
+    $('cmpA').innerHTML = savedReports().map(r => `<option value="${esc(r.id)}"${r.id === id ? ' selected' : ''}>${esc(r.label)}</option>`).join('');
+    $('cmpB').innerHTML = `<option value="now">The report now</option>${savedReports().map(r => `<option value="${esc(r.id)}">${esc(r.label)}</option>`).join('')}`;
+    drawCompare(); $('cmpDialog').showModal();
+  }
+  function drawCompare() {
+    const a = savedReports().find(r => r.id === $('cmpA').value), bid = $('cmpB').value, b = bid === 'now' ? { label: 'Now', rows: snapshot() } : savedReports().find(r => r.id === bid);
+    if (!a || !b) { $('cmpTable').innerHTML = ''; return; }
+    const keys = [...new Set([...Object.keys(a.rows || {}), ...Object.keys(b.rows || {})])].filter(k => k !== 'total').concat('total');
+    const d = (x, y) => { const v = cents(num(y) - num(x)); return v ? `${v > 0 ? '+' : '−'}${money(Math.abs(v))}` : '—'; };
+    const ch = keys.map(k => ({ k, x: (a.rows || {})[k] || {}, y: (b.rows || {})[k] || {} })).filter(r => r.k === 'total' || ['budget', 'final'].some(f => Math.abs(num(r.x[f]) - num(r.y[f])) > 0.005));
+    $('cmpTable').innerHTML = `<thead><tr><th>Account</th><th class="n">Budget change</th><th class="n">Final then</th><th class="n">Final now</th><th class="n">Change</th></tr></thead><tbody>${ch.map(r => `<tr${r.k === 'total' ? ' class="tot"' : ''}><td>${esc(r.y.label || r.x.label || r.k)}</td><td class="n">${esc(d(r.x.budget, r.y.budget))}</td><td class="n">${esc(money(num(r.x.final)))}</td><td class="n">${esc(money(num(r.y.final)))}</td><td class="n">${esc(d(r.x.final, r.y.final))}</td></tr>`).join('')}</tbody>`;
+    $('cmpNote').textContent = ch.length > 1 ? `${ch.length - 1} account${ch.length === 2 ? '' : 's'} changed between ${a.label} and ${b.label}.` : `Nothing changed between ${a.label} and ${b.label}.`;
+  }
   const pct = g => (g.budget ? (g.final - g.budget) / g.budget * 100 : g.final ? Infinity : 0);
   const needsNote = g => Math.abs(pct(g)) > 10 && Math.abs(variance(g)) >= 1 && !str(notes()[g.key]).trim();
 
@@ -588,6 +640,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     const fopts = formats().map(f => `<option value="format:${esc(f.id)}">${esc(f.name || 'Funder format')}</option>`).join('');
     $('layout').innerHTML = '<option value="account">By account</option><option value="line">By line</option><option value="top">Top sheet</option>' + fopts;
     if (![...$('layout').options].some(o => o.value === layout)) layout = 'account';
+    renderSaved();
     const so = SO();
     $('so-on').checked = !!so.include; $('soFields').hidden = !so.include;
     for (const [k, id] of [['name', 'so-name'], ['firm', 'so-firm'], ['credential', 'so-cred'], ['date', 'so-date']]) if (document.activeElement !== $(id)) $(id).value = str(so[k]);
@@ -902,6 +955,10 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
     $('closeDate').addEventListener('change', () => { setF('closeDate', $('closeDate').value); changed(); });
     $('status').addEventListener('change', () => { setF('status', $('status').value === 'final' ? 'final' : ''); changed(); });
     for (const id of ['so-on', 'so-name', 'so-firm', 'so-cred', 'so-text', 'so-date']) $(id).addEventListener('change', readSignOff);
+    $('saveReportBtn').onclick = saveReport;
+    $('savedList').addEventListener('click', ev => { const c = ev.target.closest('[data-cmp]'); if (c) { openCompare(c.dataset.cmp); return; } const x = ev.target.closest('[data-delrep]'); if (x) { setF('saved', savedReports().filter(r => r.id !== x.dataset.delrep)); changed(); } });
+    for (const id of ['cmpA', 'cmpB']) $(id).addEventListener('change', drawCompare);
+    $('cmpClose').onclick = () => $('cmpDialog').close();
     $('table').addEventListener('click', ev => { const b = ev.target.closest('[data-note]'); if (b) openEditor(b.dataset.note); });
     $('f-key').addEventListener('change', showFacts);
     $('editorForm').addEventListener('submit', ev => { ev.preventDefault(); saveEditor(); });

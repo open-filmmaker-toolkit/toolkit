@@ -1431,6 +1431,7 @@
       "type": "object",
       "description": "The final cost report, kept by the final cost report tool: the date costs run to, whether it is final, and variance notes.",
       "properties": {
+        "saved": { "type": "array", "description": "Saved final cost reports, to compare with later ones.", "items": { "type": "object", "required": ["id"], "properties": { "id": { "$ref": "#/$defs/id" }, "label": { "type": "string" }, "savedAt": { "type": "string", "format": "date" }, "rows": { "type": "object", "description": "Each line, account or percentage by key, with what it stood at.", "additionalProperties": { "type": "object" } } }, "additionalProperties": true } },
         "signOff": { "type": "object", "description": "The accountant's sign-off page.", "properties": { "include": { "type": "boolean", "description": "Print the page." }, "name": { "type": "string" }, "firm": { "type": "string" }, "credential": { "type": "string" }, "statement": { "type": "string", "description": "What the accountant signs, when it isn't the tool's usual wording." }, "date": { "type": "string", "format": "date" } }, "additionalProperties": true },
         "closeDate": {
           "type": "string",
@@ -5822,6 +5823,8 @@
     "costReport": {
       "type": "object",
       "properties": {
+        "period": { "type": "object", "description": "One week or month to report spending for, as well as the total.", "properties": { "kind": { "enum": ["week", "month"] }, "start": { "type": "string", "format": "date" } }, "additionalProperties": true },
+        "saved": { "type": "array", "description": "Saved cost reports, to compare with later ones.", "items": { "type": "object", "required": ["id"], "properties": { "id": { "$ref": "#/$defs/id" }, "label": { "type": "string" }, "savedAt": { "type": "string", "format": "date" }, "rows": { "type": "object", "description": "Each line, account or percentage by key, with what it stood at.", "additionalProperties": { "type": "object" } } }, "additionalProperties": true } },
         "asOf": {
           "type": "string",
           "format": "date",
