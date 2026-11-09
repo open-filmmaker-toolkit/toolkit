@@ -48,9 +48,11 @@ jobs:
       - name: Install what the app and its test need
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq libwebkit2gtk-4.1-dev librsvg2-dev libayatana-appindicator3-dev libxdo-dev webkit2gtk-driver xvfb xdotool
+          sudo apt-get install -y -qq libwebkit2gtk-4.1-dev librsvg2-dev libayatana-appindicator3-dev libxdo-dev xvfb xdotool
+          # WebKitWebDriver is in webkitgtk-webdriver on newer Ubuntu, and webkit2gtk-driver on older.
+          sudo apt-get install -y -qq webkitgtk-webdriver || sudo apt-get install -y -qq webkit2gtk-driver
           cargo install tauri-driver --locked
-          pip install selenium
+          python3 -m pip install --break-system-packages selenium
 
       # Opens, saves, exports, carries the project between tools, prints and reopens, with the real dialogs.
       - name: Build and test the app
