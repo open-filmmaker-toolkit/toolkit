@@ -125,6 +125,7 @@ Each item has [its own issue](https://github.com/open-filmmaker-toolkit/toolkit/
 - [x] A guided first run on the home page that points you to the tools you'll need first ([#202](https://github.com/open-filmmaker-toolkit/toolkit/issues/202))
 - [x] Versioned project files with automatic backups ([#203](https://github.com/open-filmmaker-toolkit/toolkit/issues/203))
 - [ ] Test by hand with VoiceOver and NVDA, and in Firefox and Safari ([#204](https://github.com/open-filmmaker-toolkit/toolkit/issues/204))
+- [x] A simpler home page: the tools by stage, without the search box or "How the tools connect"
 
 ### Desktop app
 

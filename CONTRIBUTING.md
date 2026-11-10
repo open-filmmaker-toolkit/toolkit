@@ -37,7 +37,7 @@ These rules are what make the toolkit free, private and easy to maintain. Pull r
 - **Usable by everyone.** Meets WCAG 2.2 AA: works with a keyboard, starts with a "Skip to the tool" link to `main#main`, has visible focus (including on date and time fields) and labels on every field, keeps text at 4.5:1 contrast or more in light and dark mode, has buttons at least 24 pixels across, and doesn't scroll sideways at 320 pixels wide. Use the shared color variables (`--ink-3` for secondary text, `--good` and `--bad` for flags) rather than new grays, and check new pages with [axe](https://github.com/dequelabs/axe-core) or your browser's accessibility checker.
 - **The desktop app is separate.** [`desktop/`](desktop/README.md) wraps the same pages in an app with its own build and dependencies. None of that reaches the tools: a tool must still work opened straight from a computer, with nothing installed.
 - **Fictional sample data only.** Files in `samples/` must never contain real people, productions or contracts.
-- **List it on the home page.** A new tool gets a card in [`index.html`](index.html), with the same name and "Use it for" line as in [TOOLS.md](TOOLS.md), and a place in a workflow if it hands work to another tool. CI checks the two match.
+- **List it on the home page.** A new tool gets a card in [`index.html`](index.html), with the same name and "Use it for" line as in [TOOLS.md](TOOLS.md). CI checks the two match.
 
 ### Before you open a pull request
 
