@@ -1665,7 +1665,7 @@ def test_translations(browser, fake):
     pg.add_init_script("if (!sessionStorage.getItem('set')) { localStorage.setItem('oft-lang', 'es'); sessionStorage.setItem('set', '1'); }")
     pg.goto('file://%s/index.html' % root); pg.wait_for_timeout(300)
     check(pg.inner_text('h1') == 'Herramientas gratuitas para cineastas documentales e independientes' and pg.evaluate('document.documentElement.lang') == 'es'
-          and pg.locator('a[href="tools/budget/index.html"]').first.inner_text() == 'Presupuesto' and pg.locator('#q').get_attribute('placeholder').startswith('Busca'), 'the home page reads in Spanish')
+          and pg.locator('a[href="tools/budget/index.html"]').first.inner_text() == 'Presupuesto' and pg.locator('#finder a[href="#prep"]').inner_text() != 'Prep and shoot', 'the home page reads in Spanish')
     check(pg.locator('#oftLang option').count() == 3, 'every page offers the languages there are')
     link = pg.locator('a[href*="sharing-a-project"]').first
     check(link.inner_text() == 'cómo trabajar en un archivo compartido' and 'sharing-a-project' in link.get_attribute('href'), 'links keep their address in a translated sentence')
@@ -1703,13 +1703,11 @@ def test_hub(browser, fake):
     ctx = browser.new_context(); pg = ctx.new_page(); errs = []
     pg.on('pageerror', lambda e: errs.append(str(e)))
     pg.goto('file://%s/index.html' % root)
-    pg.fill('#q', 'release')
-    visible = pg.locator('.tool:not([hidden]) h4').all_inner_texts()
-    check('Release tracker' in visible and 'Budget' not in visible and pg.is_visible('#prep') and not pg.is_visible('#develop'), 'search shows only the tools that match, and hides stages with none')
-    pg.fill('#q', 'zzzz nothing')
-    check(pg.is_visible('#noMatch') and pg.locator('.tool:not([hidden])').count() == 0, 'search with no match offers to request a tool')
-    pg.fill('#q', '')
-    check(pg.locator('.tool:not([hidden])').count() == len(TOOLS), 'clearing the search shows every tool again')
+    # The home page keeps it simple: the tools by stage, with no search box and no "How the tools connect".
+    check(pg.locator('#q, input[type=search]').count() == 0 and pg.locator('#workflows').count() == 0 and pg.locator('a[href="#workflows"]').count() == 0, 'the home page has no search box or "How the tools connect"')
+    check(pg.locator('.tool:visible').count() == len(TOOLS) and pg.is_visible('#finder a[href="#prep"]'), 'every tool shows, with links to each stage')
+    pg.click('#finder a[href="#prep"]'); pg.wait_for_timeout(900)
+    check(pg.evaluate("Math.abs(document.getElementById('prep').getBoundingClientRect().top) < 120"), 'a stage link jumps to that stage')
     pg.click('.tool h4 a >> nth=0'); pg.wait_for_load_state('load')
     check('/tools/subject-tracker/' in pg.url and pg.title().startswith('Subject tracker'), 'a tool opens from the home page')
     check(not errs, 'no page errors %s' % errs)
