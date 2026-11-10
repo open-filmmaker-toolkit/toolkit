@@ -128,6 +128,15 @@ Each item has [its own issue](https://github.com/open-filmmaker-toolkit/toolkit/
 - [x] A simpler home page: the intro, then Start here, then the tools by stage, without the search box, "How the tools connect" or "Jump to" links
 - [x] Start a new project from the home page's Start here box, in place of the first-run questions
 
+### A project you work through
+
+Once you open a project, the toolkit is about that project, not the full set of tools.
+
+- [x] A project page: Overview and the parts of the film (People, Places, Story, Schedule, Money, Clearances, Release) down the side. Each part shows what needs you there and its tools, and People and Places list everyone and every place. "All tools" goes back to the full set, with the project still open.
+- [ ] People and Places you can add to and edit in one place, with "Paste a list"; Location scout becomes Locations
+- [ ] Set up a new project in four steps from Start a new project: basics, people, places and dates
+- [ ] Let your own AI assistant, like the Claude app, work on a project through MCP. Desktop app only, off unless you turn it on, and every change approved by you.
+
 ### Desktop app
 
 An app that saves straight back to your project file on every computer, using the same tools as the website. See [desktop/](desktop/README.md).

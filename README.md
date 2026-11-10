@@ -44,7 +44,7 @@ Free, open-source tools and templates for documentary and independent narrative 
 
 ## Quick start
 
-The easiest way in is the [toolkit's home page](https://open-filmmaker-toolkit.github.io/toolkit/): every tool, by stage of production, with how they connect. Click a tool to use it in your browser. Open it once and you can [install it as an app](docs/offline.md) that works without an internet connection.
+The easiest way in is the [toolkit's home page](https://open-filmmaker-toolkit.github.io/toolkit/): every tool, by stage of production. Click a tool to use it in your browser. Open it once and you can [install it as an app](docs/offline.md) that works without an internet connection.
 
 To use the tools offline, or to work on them:
 
@@ -151,7 +151,7 @@ All 67 are first versions: they work, and they're still changing. To ask for ano
 - **Work together without a server.** Keep the file in a folder your sync app shares. The tools say who has it open and who changed what, and merge two copies when people save at once. See [Working on a shared file](docs/sharing-a-project.md).
 - **Earlier versions.** Each time a tool saves the project, the browser keeps a copy, and any of the last few can be restored. See [Keeping your project safe](docs/backups.md).
 - **In Spanish and French, with more welcome.** Pick a language at the top of a tool. Translations are spreadsheets anyone can add to; see [translations](translations/README.md).
-- **See the whole project.** Open the project file on the [home page](https://open-filmmaker-toolkit.github.io/toolkit/) to see what needs you across every tool, add every date to your calendar, or make a read-only summary to share.
+- **See the whole project.** Open the project file on the [home page](https://open-filmmaker-toolkit.github.io/toolkit/) and it becomes your project: what needs you across every tool, and the parts of the film (People, Places, Story, Schedule, Money, Clearances and Release), each with its own tools. From there you can add every date to your calendar or make a read-only summary to share.
 - **Plain templates too.** Most tools also have a blank spreadsheet or Word [template](templates/) for people who'd rather not use the tool.
 
 ## Shared project file

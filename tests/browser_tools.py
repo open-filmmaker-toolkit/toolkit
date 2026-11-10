@@ -4977,6 +4977,54 @@ def test_carry_project(browser, fake):
     ctx.close()
 
 
+def test_project_page(browser, fake):
+    # With a project open, the home page is the project: the parts of the film down the side, nothing else.
+    ctx = browser.new_context(viewport={'width': 1280, 'height': 900})
+    ctx.add_init_script(NO_PICKERS)
+    pg = ctx.new_page(); errs = []
+    pg.on('pageerror', lambda e: errs.append(str(e)))
+    pg.goto('file://%s/index.html' % root)
+    catalog = set(pg.evaluate("[...document.querySelectorAll('#catalog .tool h4 a')].map(a => a.getAttribute('href'))"))
+    pg.set_input_files('#projectInput', files=[{'name': 'river.oft.json', 'mimeType': 'application/json', 'buffer': sample.encode()}])
+    pg.wait_for_selector('#dashboard .needs')
+    names = pg.locator('.parts button > span:first-child').all_inner_texts()
+    check(names == ['Overview', 'People', 'Places', 'Story', 'Schedule', 'Money', 'Clearances', 'Release'], 'the parts of the film are down the side, in order (%s)' % names)
+    check(pg.get_attribute('.parts [data-part="overview"]', 'aria-current') == 'true' and pg.is_visible('.glance'), 'a project opens on Overview')
+    check(not pg.is_visible('#catalog') and not pg.is_visible('#other') and not pg.is_visible('#help'), 'the project page has no tool list, "Other software" or "Help out"')
+    nav = pg.locator('.bar nav > :visible').all_inner_texts()
+    check(nav == ['river.oft.json', 'All tools'], 'the top bar has only the file and All tools (%s)' % nav)
+    seen = []
+    for part in ['people', 'places', 'story', 'schedule', 'money', 'clearances', 'release']:
+        pg.click('.parts [data-part="%s"]' % part)
+        check(pg.evaluate("document.activeElement.id") == 'partH', '%s: the part opens with its heading focused' % part)
+        seen += pg.evaluate("[...document.querySelectorAll('#partBody .part-tools a')].map(a => a.getAttribute('href'))")
+        flagged = pg.locator('#partBody .needs li').count()
+        badge = pg.locator('.parts [data-part="%s"] .n' % part)
+        check(flagged == (int(badge.inner_text()) if badge.count() else 0), '%s: the number beside it is what needs you there' % part)
+    check(len(seen) == len(set(seen)) and set(seen) == catalog, 'every tool is in exactly one part')
+    pg.click('.parts [data-part="people"]')
+    rows = pg.locator('#partBody .part-list tbody tr').all_inner_texts()
+    people = json.loads(sample)
+    loose = [x for x in people['subjects'] if not x.get('personId')]
+    check(len(rows) == len(people['people']) + len(loose) and any('Doris Kemp' in r and 'Subject' in r for r in rows), 'People lists everyone, subjects included')
+    pg.click('.parts [data-part="places"]')
+    check(pg.locator('#partBody .part-list tbody tr').count() == len(people['locations']) and 'Riverside levee' in pg.inner_text('#partBody'), 'Places lists every place')
+    pg.click('.parts [data-part="money"]')
+    pg.reload(); pg.wait_for_selector('#dashboard .parts')
+    check(pg.get_attribute('.parts [data-part="money"]', 'aria-current') == 'true', 'coming back to the page keeps the part you were on')
+    pg.click('#showTools')
+    check(pg.is_visible('#catalog') and pg.is_visible('#other') and pg.is_visible('#navProject') and not pg.is_visible('#dashboard'), 'All tools shows the front door, with the project still open')
+    pg.click('#navProject')
+    check(pg.is_visible('.parts') and not pg.is_visible('#catalog'), 'and Your project comes back to it')
+    pg.set_input_files('#projectInput', files=[{'name': 'river.oft.json', 'mimeType': 'application/json', 'buffer': sample.encode()}])
+    pg.wait_for_selector('#dashboard .glance')
+    check(pg.get_attribute('.parts [data-part="overview"]', 'aria-current') == 'true', 'opening a project again starts on Overview')
+    pg.set_viewport_size({'width': 390, 'height': 844})
+    check(horizontal_overflow(pg) <= 1, 'the project page fits at phone width')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+
 def test_dashboard(browser, fake):
     ctx = browser.new_context(accept_downloads=True, viewport={'width': 1280, 'height': 900})
     ctx.add_init_script(STUB_PRINT + NO_PICKERS)
@@ -5693,6 +5741,7 @@ def main():
         test_remember_file(browser, fake)
         print('== home page / project dashboard, calendar file and summaries')
         test_dashboard(browser, fake)
+        test_project_page(browser, fake)
         test_carry_project(browser, fake)
         test_browser_note(browser, fake)
         print('== shared code / the calendar file in a tool with dates')
