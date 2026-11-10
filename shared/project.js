@@ -19,7 +19,7 @@ const oftProject = (() => {
     'coi-permit-tracker': 'COI and permit tracker', 'license-tracker': 'License tracker', deliverables: 'Deliverables checklist', 'funder-crm': 'Funder CRM',
     'partner-crm': 'Partner CRM', 'subject-tracker': 'Subject tracker', 'rights-matrix': 'Rights availability matrix', 'name-supers': 'Name supers list',
     'awards-social': 'Awards and social calendars', 'shooting-calendar': 'Shooting calendar', 'call-sheet': 'Call sheet', 'travel-sheet': 'Travel sheet',
-    'location-scout': 'Location scout sheet', 'interview-prep': 'Interview prep', 'finance-plan': 'Finance plan', 'cut-tracker': 'Cut version tracker',
+    'location-scout': 'Locations', 'people': 'People', 'interview-prep': 'Interview prep', 'finance-plan': 'Finance plan', 'cut-tracker': 'Cut version tracker',
     'press-list': 'Press list', 'revenue-tracker': 'Revenue tracker', 'impact-report': 'Impact report', 'clearance-log': 'Clearance log', budget: 'Budget',
     'final-cost-report': 'Final cost report', 'deal-memos': 'Deal memos', 'risk-plan': 'Risk plans', 'theory-of-change': 'Theory of change builder',
   };
@@ -327,5 +327,5 @@ const oftProject = (() => {
     dlg.querySelector('#oftCalNote').textContent = all.length ? '' : 'There are no dates in this project yet.';
     dlg.showModal();
   }
-  return { TOOLS, KINDS, PARTS, CONTACT, flags, glance, dates, ics, summary, today, addDays, fmt, calendarDialog, saveText, stem };
+  return { TOOLS, KINDS, PARTS, CONTACT, flags, glance, dates, ics, summary, today, addDays, fmt, calendarDialog, saveText, stem, budgetRows };
 })();

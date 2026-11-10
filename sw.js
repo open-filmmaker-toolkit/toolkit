@@ -55,6 +55,7 @@ const PAGES = [
   'tools/narrative-library/index.html',
   'tools/paper-edit/index.html',
   'tools/partner-crm/index.html',
+  'tools/people/index.html',
   'tools/pitch-deck/index.html',
   'tools/press-list/index.html',
   'tools/press-notes/index.html',

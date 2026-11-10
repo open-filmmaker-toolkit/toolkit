@@ -9,7 +9,7 @@
   <img alt="Status: first version" src="https://img.shields.io/badge/status-first%20version-d29922" />
 </p>
 
-# Location scout sheet
+# Locations
 
 Record what you learn when you visit a place you might film: who to call, when you can get in, power, sound, light, parking, restrooms, cell signal and permits, with your own photos. Link it to the place in your project and its location release, and print a scout report for the crew.
 
@@ -32,6 +32,8 @@ To try it with data, click **Open file** and choose [`samples/the-river-keeps.of
 
 ## What it does
 
+- **Every place in the film,** listed first: each place with its address, its scouts and what they found, and whether its location release is signed. **Add a place** or edit one, and **Add a scout** from any place. A place another tool still uses can't be removed, and the tool says where it's used.
+- **Paste a list of places.** Paste one place per line, from your treatment, a spreadsheet or an email, with the address or city after a comma. You see every row first, and places already in the project are unticked. Plain text matching, with no AI.
 - **One scout for each visit,** with the date, who scouted, a verdict (good to film, maybe, or not for us), and who to call there.
 - **The things a crew asks about:** access and hours, power, sound, light, parking and load-in, restrooms, cell signal, and permits and permission, plus notes.
 - **Photos that stay on your computer.** Add scout photos, with captions. They're resized to 1280 pixels on the long side and kept in the project file. Nothing is uploaded.

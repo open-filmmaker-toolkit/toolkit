@@ -12,6 +12,7 @@ Looking for other free, open-source software for filmmaking, such as editing, so
 
 | Tool | Use it for | Status |
 | --- | --- | --- |
+| [People](tools/people/) | Everyone in the film: subjects, crew and contacts. | First version |
 | [Subject tracker](tools/subject-tracker/) | Track people you might film and when to follow up. | First version |
 | [Research and archival log](tools/research-log/) | Log archival leads and sources. | First version |
 | [Comps tracker](tools/comps-tracker/) | Track comparable films and where each number came from. | First version |
@@ -40,7 +41,7 @@ Looking for other free, open-source software for filmmaking, such as editing, so
 | [Shot list and storyboard](tools/shot-list/) | Plan the shots for each scene, with frames. | First version |
 | [Shooting calendar](tools/shooting-calendar/) | Schedule shoot days, travel and holds. | First version |
 | [Interview prep](tools/interview-prep/) | Prepare research and questions for each interview. | First version |
-| [Location scout sheet](tools/location-scout/) | Record scouts with photos for the crew. | First version |
+| [Locations](tools/location-scout/) | Every place in the film, with scouts and photos. | First version |
 | [Deal memos](tools/deal-memos/) | Print deal memos for crew and cast, send rates to the budget, and work out timecards. | First version |
 | [Gear list](tools/gear-list/) | Track your gear and what goes out each day. | First version |
 | [COI and permit tracker](tools/coi-permit-tracker/) | Track certificates and permits for each shoot day. | First version |

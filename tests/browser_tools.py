@@ -27,10 +27,10 @@ from playwright.sync_api import sync_playwright
 
 root = pathlib.Path(__file__).resolve().parents[1]
 sample = (root / 'samples/the-river-keeps.oft.json').read_text()
-TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan', 'funder-crm', 'cash-flow', 'shooting-calendar', 'interview-prep', 'field-journal', 'location-scout', 'deal-memos', 'gear-list', 'coi-permit-tracker', 'travel-sheet', 'risk-plan', 'security-checklist', 'camera-sound-reports', 'interview-log', 'daily-production-report', 'expense-log', 'festival-submissions', 'press-list', 'partner-crm', 'discussion-guide', 'archive-log', 'footage-log', 'paper-edit', 'structure-board', 'cut-tracker', 'budget-to-actuals', 'fair-use-log', 'license-tracker', 'clearance-report', 'chain-of-title', 'festival-strategy', 'press-notes', 'stills-library', 'awards-social', 'rights-matrix', 'deliverables', 'qc-tracker', 'waterfall', 'revenue-tracker', 'bookings', 'theory-of-change', 'screening-kit', 'impact-report', 'final-cost-report', 'grant-reports', 'contract-archive', 'script-breakdown', 'stripboard', 'day-out-of-days', 'sides', 'shot-list']
+TOOLS = ['clearance-log', 'music-cue-sheet', 'call-sheet', 'release-tracker', 'credits-builder', 'name-supers', 'people', 'subject-tracker', 'research-log', 'comps-tracker', 'treatment-builder', 'pitch-deck', 'grant-calendar', 'narrative-library', 'budget', 'budget-converter', 'finance-plan', 'funder-crm', 'cash-flow', 'shooting-calendar', 'interview-prep', 'field-journal', 'location-scout', 'deal-memos', 'gear-list', 'coi-permit-tracker', 'travel-sheet', 'risk-plan', 'security-checklist', 'camera-sound-reports', 'interview-log', 'daily-production-report', 'expense-log', 'festival-submissions', 'press-list', 'partner-crm', 'discussion-guide', 'archive-log', 'footage-log', 'paper-edit', 'structure-board', 'cut-tracker', 'budget-to-actuals', 'fair-use-log', 'license-tracker', 'clearance-report', 'chain-of-title', 'festival-strategy', 'press-notes', 'stills-library', 'awards-social', 'rights-matrix', 'deliverables', 'qc-tracker', 'waterfall', 'revenue-tracker', 'bookings', 'theory-of-change', 'screening-kit', 'impact-report', 'final-cost-report', 'grant-reports', 'contract-archive', 'script-breakdown', 'stripboard', 'day-out-of-days', 'sides', 'shot-list']
 COLLECTIONS = ['project', 'people', 'locations', 'thirdPartyElements', 'contracts', 'assets', 'musicCueSheet', 'callSheets']
 PRINT_BTN = {'shot-list': '#printBtn', 'sides': '#printBtn', 'stripboard': '#printBtn', 'day-out-of-days': '#printBtn', 'script-breakdown': '#printBtn', 'contract-archive': '#printBtn', 'grant-reports': '#printBtn', 'final-cost-report': '#printBtn', 'impact-report': '#printBtn', 'screening-kit': '#printBtn', 'theory-of-change': '#printBtn', 'bookings': '#printBtn', 'revenue-tracker': '#printBtn', 'waterfall': '#printBtn', 'qc-tracker': '#printBtn', 'deliverables': '#printBtn', 'rights-matrix': '#printBtn', 'awards-social': '#printBtn', 'stills-library': '#printBtn', 'press-notes': '#printBtn', 'festival-strategy': '#printBtn', 'clearance-log': '#printBtn', 'music-cue-sheet': '#printBtn', 'call-sheet': '#printAllBtn', 'release-tracker': '#printBtn',
-             'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn', 'treatment-builder': '#printBtn', 'pitch-deck': '#printBtn', 'grant-calendar': '#printBtn', 'narrative-library': '#printBtn', 'budget': '#printBtn', 'budget-converter': '#printBtn', 'finance-plan': '#printBtn', 'funder-crm': '#printBtn', 'cash-flow': '#printBtn', 'shooting-calendar': '#printBtn', 'interview-prep': '#printBtn', 'field-journal': '#printBtn', 'location-scout': '#printBtn', 'deal-memos': '#printBtn', 'gear-list': '#printBtn', 'coi-permit-tracker': '#printBtn', 'travel-sheet': '#printBtn', 'risk-plan': '#printBtn', 'security-checklist': '#printBtn', 'camera-sound-reports': '#printBtn', 'interview-log': '#printBtn', 'daily-production-report': '#printBtn', 'expense-log': '#printBtn', 'festival-submissions': '#printBtn', 'press-list': '#printBtn', 'partner-crm': '#printBtn', 'discussion-guide': '#printBtn', 'archive-log': '#printBtn', 'footage-log': '#printBtn', 'paper-edit': '#printBtn', 'structure-board': '#printBtn', 'cut-tracker': '#printBtn', 'budget-to-actuals': '#printBtn', 'fair-use-log': '#printBtn', 'license-tracker': '#printBtn', 'clearance-report': '#printBtn', 'chain-of-title': '#printBtn'}
+             'credits-builder': '#printBtn', 'name-supers': '#printBtn', 'people': '#printBtn', 'subject-tracker': '#printBtn', 'research-log': '#printBtn', 'comps-tracker': '#printBtn', 'treatment-builder': '#printBtn', 'pitch-deck': '#printBtn', 'grant-calendar': '#printBtn', 'narrative-library': '#printBtn', 'budget': '#printBtn', 'budget-converter': '#printBtn', 'finance-plan': '#printBtn', 'funder-crm': '#printBtn', 'cash-flow': '#printBtn', 'shooting-calendar': '#printBtn', 'interview-prep': '#printBtn', 'field-journal': '#printBtn', 'location-scout': '#printBtn', 'deal-memos': '#printBtn', 'gear-list': '#printBtn', 'coi-permit-tracker': '#printBtn', 'travel-sheet': '#printBtn', 'risk-plan': '#printBtn', 'security-checklist': '#printBtn', 'camera-sound-reports': '#printBtn', 'interview-log': '#printBtn', 'daily-production-report': '#printBtn', 'expense-log': '#printBtn', 'festival-submissions': '#printBtn', 'press-list': '#printBtn', 'partner-crm': '#printBtn', 'discussion-guide': '#printBtn', 'archive-log': '#printBtn', 'footage-log': '#printBtn', 'paper-edit': '#printBtn', 'structure-board': '#printBtn', 'cut-tracker': '#printBtn', 'budget-to-actuals': '#printBtn', 'fair-use-log': '#printBtn', 'license-tracker': '#printBtn', 'clearance-report': '#printBtn', 'chain-of-title': '#printBtn'}
 PHONE = {'width': 390, 'height': 844}
 # The button that opens each tool's main dialog, for the phone-width check. Most tools use #addBtn.
 DIALOG_BTN = {'sides': '#editProjectBtn', 'day-out-of-days': '#settingsBtn', 'impact-report': '#addBtn', 'screening-kit': '#addBtn', 'theory-of-change': '#addBtn', 'stills-library': '[data-edit]', 'treatment-builder': '[data-compare]', 'cash-flow': '#settingsBtn', 'discussion-guide': '#projectCsvBtn'}
@@ -1483,6 +1483,70 @@ def test_versions(browser, fake):
     ctx.close()
 
 
+def test_project_setup(browser, fake):
+    # Start a new project in four steps: basics, people, places and dates. Only the title is required.
+    ctx = browser.new_context(accept_downloads=True, viewport={'width': 1280, 'height': 900})
+    ctx.add_init_script(NO_PICKERS)
+    pg = ctx.new_page(); errs = []
+    pg.on('pageerror', lambda e: errs.append(str(e)))
+    pg.goto('file://%s/index.html' % root)
+    pg.click('#newProject')
+    steps = pg.locator('#setupSteps li').all_inner_texts()
+    check(steps == ['Basics', 'People', 'Places', 'Dates'] and pg.get_attribute('#setupSteps li[data-step="0"]', 'aria-current') == 'step' and not pg.is_visible('#newSkip'), 'setup has four steps, and the first one can\'t be skipped')
+    pg.click('#newNext')
+    check("film's title" in pg.inner_text('#newErr') and pg.is_visible('.step[data-step="0"]'), 'the title is required')
+    pg.fill('#newFilmTitle', 'Fact Checkers'); pg.check('input[name="newKind"][value="documentary"]')
+    pg.fill('#newLogline', 'The people who check what we read.'); pg.select_option('#newStage', 'production')
+    pg.click('#newNext')
+    check(pg.is_visible('.step[data-step="1"]') and pg.evaluate("document.activeElement.id") == 'newPeople', 'then people, with the paste box ready')
+    pg.fill('#newPeople', 'Maria Chen, subject\nSam Ito, cinematographer\nPriya Raman, research chief\nSam Ito')
+    check("You'll add 3 people" in pg.inner_text('#newPeopleCount'), 'it counts the people, without repeats')
+    pg.click('#newBack')
+    check(pg.input_value('#newFilmTitle') == 'Fact Checkers', 'Back keeps what you typed')
+    pg.click('#newNext'); pg.click('#newNext')
+    pg.fill('#newPlaces', 'Newsroom, 5 Main St\nCourthouse')
+    pg.click('#newNext')
+    rows = pg.locator('#newDates .setup-date')
+    rows.nth(0).locator('input[type=date]').fill('2027-02-01'); rows.nth(0).locator('input[type=text]').fill('Newsroom day 1')
+    rows.nth(1).locator('input[type=date]').fill('2027-01-15'); rows.nth(1).locator('input[type=text]').fill('State arts grant'); rows.nth(1).locator('select').select_option('grant')
+    pg.click('#newDateAdd')
+    rows.nth(2).locator('input[type=date]').fill('2027-03-01'); rows.nth(2).locator('input[type=text]').fill('True/False'); rows.nth(2).locator('select').select_option('festival')
+    with pg.expect_download() as d:
+        pg.click('#newNext')
+    made = json.loads(open(d.value.path(), encoding='utf-8').read())
+    pr = made['project']
+    check(pr['title'] == 'Fact Checkers' and pr['kind'] == 'documentary' and pr['stage'] == 'production' and pr['logline'] == 'The people who check what we read.', 'the basics are in the file')
+    maria = next(x for x in made['people'] if x['name'] == 'Maria Chen')
+    check(len(made['people']) == 3 and maria.get('onCamera') and any(x.get('personId') == maria['id'] for x in made['subjects']) and next(x for x in made['people'] if x['name'] == 'Sam Ito')['roles'] == ['cinematographer'],
+          'people are in the file, and subjects are in the subject tracker')
+    check([l['name'] for l in made['locations']] == ['Newsroom', 'Courthouse'] and made['locations'][0]['address'] == '5 Main St', 'places are in the file')
+    check(made['shootDays'][0]['date'] == '2027-02-01' and made['grants'][0]['deadline'] == '2027-01-15' and made['festivals'][0]['name'] == 'True/False' and made['festivals'][0]['status'] == 'planned',
+          'dates go to the shooting calendar, grant calendar and festival submissions')
+    pg.wait_for_selector('#dashTitle')
+    check('Fact Checkers' in pg.inner_text('#dashTitle') and 'The people who check what we read.' in pg.inner_text('#partBody'), 'the project opens on Overview, with its logline')
+    check("Next for a film that's shooting" in pg.inner_text('#partBody') and pg.locator('.next-up a[href="tools/call-sheet/index.html"]').count() == 1, 'Overview suggests what comes next for where you are')
+    pg.click('.parts [data-part="people"]')
+    check(pg.locator('#partBody .part-acts a[href="tools/people/index.html#paste"]').count() == 1 and pg.locator('#partBody .part-glance div').count() == 4, 'People has Paste a list and a summary')
+    check('3' in pg.inner_text('#partBody .part-glance div:first-child'), 'the summary counts everyone')
+    pg.click('.parts [data-part="money"]')
+    check('Not started' in pg.inner_text('#partBody .part-glance') and '1' in pg.inner_text('#partBody .part-glance div:nth-child(3)'), 'Money sums up the budget and grants')
+    pg.click('.parts [data-part="places"]')
+    pg.click('#partBody .part-acts a[href="tools/location-scout/index.html#paste"]')
+    pg.wait_for_selector('#oftPaste[open]')
+    check('Newsroom' in pg.inner_text('#places'), 'Paste a list opens in Locations, with the project')
+    pg.keyboard.press('Escape')
+    # Where you are can be changed in any tool's Film details.
+    pg.click('#editProjectBtn')
+    check(pg.input_value('#p-oftStage') == 'production' and pg.input_value('#p-oftLogline') == 'The people who check what we read.', 'Film details shows where you are and the logline')
+    pg.select_option('#p-oftStage', 'post')
+    pg.click('#projectForm button[type=submit]')
+    pg.click('.home-link'); pg.wait_for_selector('#dashTitle')
+    pg.click('.parts [data-part="overview"]')
+    check("Next for a film that's editing" in pg.inner_text('#partBody'), 'changing it there changes what Overview suggests')
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
+
 def test_new_project(browser, fake):
     # The Start here box: open a project, get the sample, or start a new project, which saves a file and opens it.
     for picker in (True, False):
@@ -1498,13 +1562,16 @@ def test_new_project(browser, fake):
         pg.click('#newProject')
         check(pg.is_visible('#newDialog') and pg.evaluate("document.activeElement.id") == 'newFilmTitle', 'it asks for the title')
         pg.fill('#newFilmTitle', 'Night Harbor')
+        for _ in range(3):
+            pg.click('#newNext')
+        check(pg.inner_text('#newNext') == 'Make the project file', 'the last setup step makes the file')
         if picker:
-            pg.click('#newForm button[type=submit]'); pg.wait_for_selector('#dashTitle')
+            pg.click('#newNext'); pg.wait_for_selector('#dashTitle')
             made = json.loads(pg.evaluate('window.__file.text'))
             check(pg.evaluate('window.__writes') == 1 and made['project']['title'] == 'Night Harbor' and made['formatVersion'] == 1, 'it saves the new project where you choose')
         else:
             with pg.expect_download() as d:
-                pg.click('#newForm button[type=submit]')
+                pg.click('#newNext')
             made = json.loads(open(d.value.path(), encoding='utf-8').read())
             check(d.value.suggested_filename == 'night-harbor.oft.json' and made['project']['title'] == 'Night Harbor', 'without the file picker, it downloads the new project')
             pg.wait_for_selector('#dashTitle')
@@ -1692,12 +1759,90 @@ def test_hub(browser, fake):
         widths = pg.evaluate("['.bar', '.intro > div > p', '.start', 'footer p', '.stage'].map(q => Math.round(document.querySelector(q).getBoundingClientRect().width))")
         check(max(widths) - min(widths) <= 2, 'the header, intro, Start here box, footer and tools are all the same width (%s)' % widths)
     pg.click('.tool h4 a >> nth=0'); pg.wait_for_load_state('load')
-    check('/tools/subject-tracker/' in pg.url and pg.title().startswith('Subject tracker'), 'a tool opens from the home page')
+    check('/tools/people/' in pg.url and pg.title().startswith('People'), 'a tool opens from the home page')
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
 
 # A 2x2 PNG, for adding a photo without any image files in the repo.
 TINY_PNG = base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGP8z8DAwMDAxMDAwMDAAAANHQEDK+mmyAAAAABJRU5ErkJggg==')
+
+def test_people(browser, fake):
+    # People: everyone in the film in one list, with Paste a list and the subject tracker kept in step.
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'people', fake)
+    open_sample(pg, fake)
+    check(pg.locator('#rows .row').count() == len(original['people']), 'lists everyone in the project')
+    check('Doris Kemp' in pg.inner_text('#looseList'), 'lists subjects who are not here yet')
+    pg.click('#looseList [data-link]')
+    check(pg.locator('#rows .row').count() == len(original['people']) + 1 and 'Doris Kemp' in pg.inner_text('#rows'), 'Add to People brings a subject in')
+    pg.click('#pasteBtn')
+    pg.fill('#oftPasteText', 'Maria Chen, subject\n- Sam Ito, cinematographer\nAna Reyes, producer\nMaria Chen')
+    pg.wait_for_timeout(100)
+    boxes = pg.locator('#oftPasteRows input')
+    check(boxes.count() == 4 and [boxes.nth(i).is_checked() for i in range(4)] == [True, True, False, False] and 'Already in the project' in pg.inner_text('#oftPasteRows') and 'Listed twice' in pg.inner_text('#oftPasteRows'),
+          'Paste a list shows every row, with people already here and repeats unticked')
+    check(pg.inner_text('#oftPasteAdd') == 'Add 2 people', 'and says how many it will add')
+    pg.click('#oftPasteAdd'); pg.wait_for_timeout(200)
+    check(pg.locator('#rows .row').count() == len(original['people']) + 3, 'adds the ticked people')
+    pg.click('[data-filter="subject"]')
+    check('Maria Chen' in pg.inner_text('#rows') and 'Sam Ito' not in pg.inner_text('#rows'), 'someone pasted as a subject is a subject')
+    pg.click('[data-filter="all"]')
+    pg.click('#rows [data-edit="person-ana-reyes"]')
+    pg.click('#deleteBtn'); pg.wait_for_timeout(200)
+    check(pg.is_visible('#editor') and "can't be removed" in pg.inner_text('#toast'), "someone another tool uses can't be removed")
+    pg.fill('#f-roles', 'Producer, Director')
+    pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    sam = pg.locator('#rows .row', has_text='Sam Ito').get_attribute('data-id')
+    pg.click('#rows [data-edit="%s"]' % sam)
+    pg.once('dialog', lambda d: d.accept())
+    pg.click('#deleteBtn'); pg.wait_for_timeout(200)
+    check('Sam Ito' not in pg.inner_text('#rows'), 'someone no tool uses can be removed')
+    data = saved_project(pg, fake)
+    maria = next(x for x in data['people'] if x['name'] == 'Maria Chen')
+    ana = next(x for x in data['people'] if x['id'] == 'person-ana-reyes')
+    doris = next(x for x in data['subjects'] if x['name'] == 'Doris Kemp')
+    check(any(x.get('personId') == maria['id'] for x in data['subjects']) and doris.get('personId') in [x['id'] for x in data['people']], 'the subject tracker is kept in step')
+    check(ana['roles'] == ['Producer', 'Director'] and ana['email'] == 'ana@example.org', 'editing keeps the rest of the record')
+    check(data['locations'] == original['locations'] and data['contracts'] == original['contracts'], "other tools' data is unchanged")
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+    # The home page's People part links here to paste a list.
+    ctx, pg, errs = new_page(browser, 'people', fake)
+    pg.goto(pg.url.split('#')[0] + '#paste'); pg.reload(); pg.wait_for_timeout(700)
+    check(pg.is_visible('#oftPaste') and '#' not in pg.url, 'a #paste link opens Paste a list')
+    ctx.close()
+
+
+def test_location_places(browser, fake):
+    # Locations: every place in the film, with its scouts, and Paste a list.
+    original = json.loads(sample)
+    ctx, pg, errs = new_page(browser, 'location-scout', fake)
+    open_sample(pg, fake)
+    check(pg.locator('#places .row').count() == len(original['locations']) and 'Not scouted yet' in pg.inner_text('[data-place="location-hammond-house"]'), 'lists every place, with what its scouts found')
+    check('Scout' in pg.inner_text('[data-place="location-riverside-levee"]') and pg.locator('[data-place="location-riverside-levee"] [data-edit]').count() >= 1, "a place shows its scouts")
+    pg.click('[data-place="location-hammond-house"] [data-scout]')
+    check(pg.is_visible('#editor') and pg.input_value('#f-location') == 'location-hammond-house', 'Add a scout starts a scout of that place')
+    pg.click('#editorCancel')
+    pg.click('#pastePlacesBtn')
+    pg.fill('#oftPasteText', 'Boat launch, River Road\nCounty archive\nRiverside levee')
+    pg.wait_for_timeout(100)
+    pg.click('#oftPasteAdd'); pg.wait_for_timeout(200)
+    check(pg.locator('#places .row').count() == len(original['locations']) + 2 and 'River Road' in pg.inner_text('#places'), 'Paste a list adds new places, not ones already here')
+    pg.click('[data-place-edit="location-grain-elevator"]')
+    check('Used in' in pg.inner_text('#placeUsed'), 'editing a place says where else it is used')
+    pg.fill('#pl-city', 'Riverside'); pg.click('#placeSave'); pg.wait_for_timeout(200)
+    boat = pg.locator('#places .row', has_text='Boat launch').get_attribute('data-place')
+    pg.click('[data-place-edit="%s"]' % boat)
+    pg.once('dialog', lambda d: d.accept())
+    pg.click('#placeDelete'); pg.wait_for_timeout(200)
+    check('Boat launch' not in pg.inner_text('#places'), 'a place nothing uses can be removed')
+    data = saved_project(pg, fake)
+    el = next(l for l in data['locations'] if l['id'] == 'location-grain-elevator')
+    check(el['city'] == 'Riverside' and el['name'] == next(l for l in original['locations'] if l['id'] == 'location-grain-elevator')['name'] and any(l['name'] == 'County archive' for l in data['locations']), 'places are saved in the project')
+    check(data['scouts'] == original['scouts'] and data['people'] == original['people'], "scouts and other tools' data are unchanged")
+    check(not errs, 'no page errors %s' % errs)
+    ctx.close()
+
 
 def test_location_scout(browser, fake):
     original = json.loads(sample)
@@ -5620,8 +5765,13 @@ def main():
         test_versions(browser, fake)
         test_offline(browser, fake)
         test_new_project(browser, fake)
+        test_project_setup(browser, fake)
         test_compare_versions(browser, fake)
         test_translations(browser, fake)
+        print('== people')
+        test_people(browser, fake)
+        print('== location-scout / places')
+        test_location_places(browser, fake)
         print('== location-scout / scouts, photos and releases')
         test_location_scout(browser, fake)
         print('== deal-memos / calendar, budget, signed copies and print')
