@@ -1689,6 +1689,8 @@ def test_hub(browser, fake):
     if pg.viewport_size['width'] > 900:
         intro, start = pg.evaluate("[document.querySelector('.intro h1').getBoundingClientRect(), document.querySelector('.start').getBoundingClientRect()].map(r => [r.left, r.bottom, r.top])")
         check(start[2] > intro[1] and abs(start[0] - intro[0]) < 2, 'the Start here box sits under the intro, not beside it')
+        widths = pg.evaluate("['.bar', '.intro > div > p', '.start', 'footer p', '.stage'].map(q => Math.round(document.querySelector(q).getBoundingClientRect().width))")
+        check(max(widths) - min(widths) <= 2, 'the header, intro, Start here box, footer and tools are all the same width (%s)' % widths)
     pg.click('.tool h4 a >> nth=0'); pg.wait_for_load_state('load')
     check('/tools/subject-tracker/' in pg.url and pg.title().startswith('Subject tracker'), 'a tool opens from the home page')
     check(not errs, 'no page errors %s' % errs)
