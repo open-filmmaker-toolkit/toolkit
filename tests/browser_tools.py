@@ -5137,8 +5137,8 @@ def test_project_page(browser, fake):
     check(names == ['Overview', 'People', 'Places', 'Story', 'Schedule', 'Money', 'Clearances', 'Release'], 'the parts of the film are down the side, in order (%s)' % names)
     check(pg.get_attribute('.parts [data-part="overview"]', 'aria-current') == 'true' and pg.is_visible('.glance'), 'a project opens on Overview')
     check(not pg.is_visible('#catalog') and not pg.is_visible('#other') and not pg.is_visible('#help'), 'the project page has no tool list, "Other software" or "Help out"')
-    nav = pg.locator('.bar nav > :visible').all_inner_texts()
-    check(nav == ['river.oft.json', 'All tools'], 'the top bar has only the file and All tools (%s)' % nav)
+    nav = pg.locator('.bar nav > :visible:not(.nav-lang)').all_inner_texts()
+    check(nav == ['river.oft.json', 'All tools'] and pg.is_visible('.bar #oftLang'), 'the top bar has only the file, All tools and the language menu (%s)' % nav)
     seen = []
     for part in ['people', 'places', 'story', 'schedule', 'money', 'clearances', 'release']:
         pg.click('.parts [data-part="%s"]' % part)
