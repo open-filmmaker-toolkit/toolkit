@@ -18,6 +18,7 @@ Then check what step one is for:
 - **Export.** Export something, like the crew list from the call sheet. The app asks where to save it.
 - **Print.** Print a call sheet or a report. The Mac print dialog should open with the printout, and you can save it as a PDF from there.
 - **Reopen.** Quit the app and open it again. A tool should offer to open the file you had open.
+- **Connect project folder.** In the release tracker, open a release and choose **Connect project folder**. The folder dialog should open in your project file's folder. Attach a scan and save, and the scan should appear in a `scans` folder next to your project file.
 
 ## How it works
 
@@ -25,12 +26,14 @@ The tools already save through the file picker that Chrome and Edge have and Saf
 
 - turns downloads into a save dialog
 - opens web links in your browser instead of in the app
+- gives the tools a folder picker, for **Connect project folder** and for finding conflicted copies your sync app made
+- hides what only applies on the website, like installing the toolkit as an app (anything marked `class="web-only"`)
 - on a Mac, tells each tool to build its printout before the print dialog opens
 
 The app is built with [Tauri](https://tauri.app). It uses the browser engine already on the computer: Safari's engine on a Mac, Edge's on Windows, and WebKitGTK on Linux. That keeps the download to a few megabytes.
 
 - [`stage.py`](stage.py) copies the toolkit's pages into `dist/` for the app to load. Nothing in them is changed.
-- [`src-tauri/`](src-tauri) is the app itself: the window, the plugins for dialogs, files and links, and [what the pages are allowed to do](src-tauri/capabilities/default.json). That's picking files, reading and writing the files you pick, printing, and opening web links in your browser.
+- [`src-tauri/`](src-tauri) is the app itself: the window, the plugins for dialogs, files and links, and [what the pages are allowed to do](src-tauri/capabilities/default.json). That's picking files and folders, reading and writing the files you pick and what's inside the folders you pick, printing, and opening web links in your browser.
 - The app makes no network requests of its own. The call sheet's optional weather lookup works as it does on the website, only when you click it.
 
 The tools have no build step and no dependencies, and that doesn't change. Everything to do with building the app stays in this folder.
@@ -54,6 +57,8 @@ npx tauri build                  # make an installer for this computer
 - saving back to the same file
 - exporting
 - carrying the project to another tool and saving there
+- connecting the project folder, finding a conflicted copy in it, and writing a scan into a folder inside it
+- hiding the website-only notes
 - printing
 - reopening the remembered file after a restart
 
@@ -65,7 +70,5 @@ There's no way to drive the app automatically on a Mac, so the Mac checks above 
 
 - Signing for Mac and Windows, so there's no warning the first time you open it
 - Windows and Linux installers in the workflow (the code is ready; only Linux is tested)
-- Connecting a project folder, used for scans and stills in the release tracker and elsewhere. The app doesn't offer it yet.
-- Hiding what doesn't apply in the app, like "install the toolkit as an app" on the home page
 - A Releases page and a link from the home page
 - Updates. For now, you download a new version.

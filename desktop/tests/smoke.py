@@ -1,5 +1,6 @@
 # Drives the desktop app on Linux: open a project with the real file dialog, save it back to the same file,
-# export a file, carry the project to another tool, reopen the remembered file after a restart, and print.
+# export a file, carry the project to another tool, connect the project folder, reopen the remembered file after a
+# restart, and print. Also checks the website-only notes are hidden.
 # Needs a debug build (npx tauri build --debug --no-bundle), tauri-driver, WebKitWebDriver, Xvfb, xdotool
 # and selenium. Run from the desktop folder: python3 tests/smoke.py
 import json, os, shutil, subprocess, sys, tempfile, time
@@ -32,7 +33,8 @@ def windows(word):
 
 def answer_dialog(path, title_words=('Open', 'Save'), before=()):
     # The app's file dialogs are GTK dialogs. There's no window manager under Xvfb, so focus the dialog,
-    # open its location box, type the full path and press Enter, and try again until the dialog closes.
+    # open its location box, type the full path and press Enter, and try again until
+    # the dialog closes.
     # `before` is the windows there were before the click that opens the dialog.
     before = set(before)
     for _ in range(60):
@@ -58,6 +60,28 @@ def answer_dialog(path, title_words=('Open', 'Save'), before=()):
         for w in windows('.'):
             if w not in before and w != wid and 'Replace' in xdo('getwindowname', w):
                 xdo('windowfocus', '--sync', w); xdo('key', 'Return'); time.sleep(0.5)
+        if wid not in windows('.'):
+            return True
+    return False
+
+
+def choose_folder(before=()):
+    # The folder dialog opens in the project file's folder, so choosing it is a click on the button at its
+    # bottom right. (Typing a folder's path there only goes into it.)
+    before = set(before)
+    for _ in range(60):
+        new = [w for w in windows('.') if w not in before and 'Folder' in xdo('getwindowname', w)]
+        if new:
+            break
+        time.sleep(0.25)
+    else:
+        return False
+    wid = new[-1]
+    time.sleep(1.5)
+    geo = dict(l.split('=') for l in xdo('getwindowgeometry', '--shell', wid).split())
+    for _ in range(3):
+        xdo('mousemove', '--window', wid, str(int(geo['WIDTH']) - 50), str(int(geo['HEIGHT']) - 24)); xdo('click', '1')
+        time.sleep(1)
         if wid not in windows('.'):
             return True
     return False
@@ -109,6 +133,7 @@ try:
     check(wait(d, "document.querySelector('h1')"), 'the app opens the home page')
     check(wait(d, 'typeof window.showSaveFilePicker === "function" && window.__TAURI__'), 'the bridge gives pages a file picker')
     check(wait(d, "document.getElementById('homeBrowser') && document.getElementById('homeBrowser').hidden"), 'the "saves a new copy" note stays hidden in the app')
+    check(wait(d, "document.getElementById('offlineNote') && getComputedStyle(document.getElementById('offlineNote')).display === 'none'"), 'the "install it as an app" note is hidden in the app')
 
     go(d, 'tools/call-sheet/index.html')
     shown = windows('.')
@@ -139,6 +164,29 @@ try:
     rename(d, 'The River Keeps (budget)')
     d.find_element(By.ID, 'saveBtn').click(); time.sleep(1.5)
     check(json.load(open(PROJECT, encoding='utf-8'))['project']['title'] == 'The River Keeps (budget)', 'saving in the second tool writes to the same file')
+
+    # Connect project folder: a conflicted copy next to the project file shows up, and a tool can make a folder
+    # inside the project folder and write a file there, the way the release tracker copies in scans.
+    shutil.copy(PROJECT, os.path.join(WORK, 'river (conflicted copy).oft.json'))
+    shown = windows('.')
+    d.execute_script("document.getElementById('oftFolderBtn').click()")
+    check(choose_folder(before=shown), 'Choose the folder shows a folder dialog')
+    check(wait(d, "!document.getElementById('oftCopies').hidden"), 'the tool finds the conflicted copy in the folder')
+    os.remove(os.path.join(WORK, 'river (conflicted copy).oft.json'))
+    go(d, 'tools/release-tracker/index.html')
+    d.execute_script("const b = document.querySelector('#peopleCov .is-missing .cov-sig'); if (b) b.click();")
+    check(wait(d, "!document.getElementById('connectFolderBtn').hidden"), 'the release tracker offers Connect project folder')
+    shown = windows('.')
+    d.execute_script("document.getElementById('connectFolderBtn').click()")
+    check(choose_folder(before=shown), 'Connect project folder shows a folder dialog')
+    check(wait(d, "/Connected/.test(document.getElementById('toast').textContent)"), 'and connects the folder the project file is in')
+    d.execute_script("""const path = arguments[0];
+      (async () => { const dir = window.oftDesktopHandle(path, 'directory');
+        const sub = await dir.getDirectoryHandle('scans', { create: true });
+        const w = await (await sub.getFileHandle('release.txt', { create: true })).createWritable();
+        await w.write('signed'); await w.close(); window.__dirTest = (await dir.resolve(await sub.getFileHandle('release.txt'))).join('/'); })().catch(e => { window.__dirTest = String(e); });""", WORK)
+    wait(d, 'window.__dirTest')
+    check(d.execute_script('return window.__dirTest') == 'scans/release.txt' and open(os.path.join(WORK, 'scans', 'release.txt')).read() == 'signed', 'a tool can make a folder in the project folder and save a file there')
 
     # Under WebDriver, WebKitGTK ignores window.print(), so ask the app to print the way it does on a Mac.
     d.execute_script("setTimeout(() => window.__TAURI_INTERNALS__.invoke('plugin:webview|print'), 50)")

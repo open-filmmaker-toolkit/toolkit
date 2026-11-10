@@ -145,7 +145,8 @@ An app that saves straight back to your project file on every computer, using th
 - [x] A first build for testing on a Mac: open, save back to the same file, export, print, and carry the project between tools
 - [ ] Sign it for Mac and Windows
 - [ ] Windows and Linux installers
-- [ ] Connect a project folder in the app
+- [x] Connect a project folder in the app, for scans and conflicted copies
+- [x] Hide what only applies on the website, like installing the toolkit as an app
 - [ ] Releases page, and a link from the home page
 
 ### Smaller items, tool by tool
