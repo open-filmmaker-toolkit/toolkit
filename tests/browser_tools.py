@@ -1645,7 +1645,7 @@ def test_translations(browser, fake):
     pg.add_init_script("if (!sessionStorage.getItem('set')) { localStorage.setItem('oft-lang', 'es'); sessionStorage.setItem('set', '1'); }")
     pg.goto('file://%s/index.html' % root); pg.wait_for_timeout(300)
     check(pg.inner_text('h1') == 'Herramientas gratuitas para cineastas documentales e independientes' and pg.evaluate('document.documentElement.lang') == 'es'
-          and pg.locator('a[href="tools/budget/index.html"]').first.inner_text() == 'Presupuesto' and pg.locator('#finder a[href="#prep"]').inner_text() != 'Prep and shoot', 'the home page reads in Spanish')
+          and pg.locator('a[href="tools/budget/index.html"]').first.inner_text() == 'Presupuesto' and pg.inner_text('#prep-h') != 'Prep and shoot', 'the home page reads in Spanish')
     check(pg.locator('#oftLang option').count() == 3, 'every page offers the languages there are')
     link = pg.locator('a[href*="sharing-a-project"]').first
     check(link.inner_text() == 'cómo trabajar en un archivo compartido' and 'sharing-a-project' in link.get_attribute('href'), 'links keep their address in a translated sentence')
@@ -1685,9 +1685,10 @@ def test_hub(browser, fake):
     pg.goto('file://%s/index.html' % root)
     # The home page keeps it simple: the tools by stage, with no search box and no "How the tools connect".
     check(pg.locator('#q, input[type=search]').count() == 0 and pg.locator('#workflows').count() == 0 and pg.locator('a[href="#workflows"]').count() == 0, 'the home page has no search box or "How the tools connect"')
-    check(pg.locator('.tool:visible').count() == len(TOOLS) and pg.is_visible('#finder a[href="#prep"]'), 'every tool shows, with links to each stage')
-    pg.click('#finder a[href="#prep"]'); pg.wait_for_timeout(900)
-    check(pg.evaluate("Math.abs(document.getElementById('prep').getBoundingClientRect().top) < 120"), 'a stage link jumps to that stage')
+    check(pg.locator('.tool:visible').count() == len(TOOLS) and pg.locator('#finder').count() == 0 and 'Jump to' not in pg.inner_text('body'), 'every tool shows, with no "Jump to" links')
+    if pg.viewport_size['width'] > 900:
+        intro, start = pg.evaluate("[document.querySelector('.intro h1').getBoundingClientRect(), document.querySelector('.start').getBoundingClientRect()].map(r => [r.left, r.bottom, r.top])")
+        check(start[2] > intro[1] and abs(start[0] - intro[0]) < 2, 'the Start here box sits under the intro, not beside it')
     pg.click('.tool h4 a >> nth=0'); pg.wait_for_load_state('load')
     check('/tools/subject-tracker/' in pg.url and pg.title().startswith('Subject tracker'), 'a tool opens from the home page')
     check(not errs, 'no page errors %s' % errs)
