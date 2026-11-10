@@ -1896,7 +1896,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const oftEsc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const oftEl = id => document.getElementById(id);
   // In the desktop app (desktop/bridge.js), a remembered file comes back from storage as plain data; this makes it a file handle again.
-  const oftRevive = v => (v && v.handle && v.handle.oftPath && window.oftDesktopHandle ? { ...v, handle: window.oftDesktopHandle(v.handle.oftPath) } : v);
+  const oftRevive = v => (!v || !window.oftDesktopHandle ? v : v.oftPath ? window.oftDesktopHandle(v.oftPath, v.kind) : v.handle && v.handle.oftPath ? { ...v, handle: window.oftDesktopHandle(v.handle.oftPath, v.handle.kind) } : v);
   function oftIdb(op, key, val) {
     return new Promise(res => {
       try {
