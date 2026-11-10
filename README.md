@@ -69,6 +69,7 @@ The toolkit has two halves:
 
 | Tool | Phase | Use it for |
 | --- | --- | --- |
+| [People](tools/people/) | Development | Everyone in the film: subjects, crew and contacts. |
 | [Subject tracker](tools/subject-tracker/) | Development | Track people you might film and when to follow up. |
 | [Research and archival log](tools/research-log/) | Development | Log archival leads and sources. |
 | [Comps tracker](tools/comps-tracker/) | Development | Track comparable films and where each number came from. |
@@ -87,7 +88,7 @@ The toolkit has two halves:
 | [Shot list and storyboard](tools/shot-list/) | Pre-production | Plan the shots for each scene, with frames. |
 | [Shooting calendar](tools/shooting-calendar/) | Pre-production | Schedule shoot days, travel and holds. |
 | [Interview prep](tools/interview-prep/) | Pre-production | Prepare research and questions for each interview. |
-| [Location scout sheet](tools/location-scout/) | Pre-production | Record scouts with photos for the crew. |
+| [Locations](tools/location-scout/) | Pre-production | Every place in the film, with scouts and photos. |
 | [Deal memos](tools/deal-memos/) | Pre-production | Print crew deal memos and send rates to the budget. |
 | [Gear list](tools/gear-list/) | Pre-production | Track your gear and what goes out each day. |
 | [COI and permit tracker](tools/coi-permit-tracker/) | Pre-production | Track certificates and permits for each shoot day. |
@@ -151,6 +152,7 @@ All 67 are first versions: they work, and they're still changing. To ask for ano
 - **Work together without a server.** Keep the file in a folder your sync app shares. The tools say who has it open and who changed what, and merge two copies when people save at once. See [Working on a shared file](docs/sharing-a-project.md).
 - **Earlier versions.** Each time a tool saves the project, the browser keeps a copy, and any of the last few can be restored. See [Keeping your project safe](docs/backups.md).
 - **In Spanish and French, with more welcome.** Pick a language at the top of a tool. Translations are spreadsheets anyone can add to; see [translations](translations/README.md).
+- **Start a project in four steps.** **Start a new project** on the home page asks for the title, then lets you paste the people and places from your treatment and add the dates you know. Only the title is required.
 - **See the whole project.** Open the project file on the [home page](https://open-filmmaker-toolkit.github.io/toolkit/) and it becomes your project: what needs you across every tool, and the parts of the film (People, Places, Story, Schedule, Money, Clearances and Release), each with its own tools. From there you can add every date to your calendar or make a read-only summary to share.
 - **Plain templates too.** Most tools also have a blank spreadsheet or Word [template](templates/) for people who'd rather not use the tool.
 

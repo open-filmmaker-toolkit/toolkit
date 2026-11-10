@@ -133,8 +133,9 @@ Each item has [its own issue](https://github.com/open-filmmaker-toolkit/toolkit/
 Once you open a project, the toolkit is about that project, not the full set of tools.
 
 - [x] A project page: Overview and the parts of the film (People, Places, Story, Schedule, Money, Clearances, Release) down the side. Each part shows what needs you there and its tools, and People and Places list everyone and every place. "All tools" goes back to the full set, with the project still open.
-- [ ] People and Places you can add to and edit in one place, with "Paste a list"; Location scout becomes Locations
-- [ ] Set up a new project in four steps from Start a new project: basics, people, places and dates
+- [x] People and Places you can add to and edit in one place, with "Paste a list": a new People tool, and Location scout becomes Locations, with every place first
+- [x] Set up a new project in four steps from Start a new project: basics, people, places and dates. Only the title is required.
+- [x] A short summary at the top of each part, and suggestions on Overview from where you are. Kind of film, logline and where you are can be changed under Edit film details in any tool.
 - [ ] Let your own AI assistant, like the Claude app, work on a project through MCP. Desktop app only, off unless you turn it on, and every change approved by you.
 
 ### Desktop app

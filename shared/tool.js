@@ -552,6 +552,29 @@ function oftWatchDialogs() {
   const watch = () => document.querySelectorAll('dialog').forEach(d => { if (seen.has(d)) return; seen.add(d); new MutationObserver(() => { if (d.open) show(d); }).observe(d, { attributes: true, attributeFilter: ['open'] }); });
   watch();
 }
+// ---------- Film details: kind of film, logline and where you are ----------
+// Every tool's Film details dialog gets these three, so they can be changed from any tool.
+// The home page suggests what to do next from where you are.
+const OFT_FILM = [['kind', 'p-oftKind'], ['logline', 'p-oftLogline'], ['stage', 'p-oftStage']];
+function oftFilmExtras() {
+  const form = document.getElementById('projectForm'), dlg = document.getElementById('projectDialog');
+  if (!form || !dlg || document.getElementById('p-oftKind')) return;
+  const body = form.querySelector('.dlg-body');
+  const wrap = document.createElement('div');
+  wrap.innerHTML = `<div class="field"><label for="p-oftKind">Kind of film</label><select id="p-oftKind"><option value="">Not set</option><option value="documentary">Documentary</option><option value="scripted">Scripted</option></select></div>
+<div class="field"><label for="p-oftLogline">Logline</label><input id="p-oftLogline" type="text" placeholder="One line about the film" autocomplete="off"></div>
+<div class="field"><label for="p-oftStage">Where you are</label><select id="p-oftStage"><option value="">Not set</option><option value="development">Developing and raising money</option><option value="production">Shooting</option><option value="post">Editing</option><option value="release">Releasing</option></select></div>`;
+  const fields = [...wrap.children];
+  if (body) body.append(...fields); else { const foot = form.querySelector('.dlg-foot, .actions, .acts') || form.lastElementChild; for (const f of fields) form.insertBefore(f, foot); }
+  const fill = () => { const p = (doc && doc.project) || {}; for (const [k, id] of OFT_FILM) oftEl(id).value = p[k] == null ? '' : String(p[k]); };
+  new MutationObserver(() => { if (dlg.open) fill(); }).observe(dlg, { attributes: true, attributeFilter: ['open'] });
+  // Runs before the tool's own save, which then marks the change.
+  form.addEventListener('submit', () => {
+    if (!doc.project || typeof doc.project !== 'object') doc.project = {};
+    for (const [k, id] of OFT_FILM) { const v = oftEl(id).value.trim(); if (v) doc.project[k] = v; else delete doc.project[k]; }
+  }, true);
+}
+
 function oftBuild() {
   const style = document.createElement('style');
   style.textContent = `.oft-links { margin: 8px 0 0; display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 13px; }
@@ -684,6 +707,7 @@ function oftBuild() {
   oftEl('oftCopiesHide').onclick = () => { oftEl('oftCopies').hidden = true; };
   const cancel = oftEl('conflictCancelBtn');
   if (cancel) { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn primary'; b.id = 'conflictMergeBtn'; b.textContent = 'Merge both'; b.onclick = oftMergeConflict; cancel.parentElement.prepend(b); }
+  oftFilmExtras();
   if (!window.showSaveFilePicker && !oftStore.get(OFT_NOTE_DONE)) {
     oftEl('oftBrowserText').innerHTML = oftBrowserNote();
     oftEl('oftBrowser').hidden = false;

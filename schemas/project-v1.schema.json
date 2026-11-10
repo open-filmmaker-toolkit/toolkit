@@ -1601,6 +1601,9 @@
     "project": {
       "type": "object",
       "properties": {
+        "kind": { "type": "string", "enum": ["documentary", "scripted"], "description": "Documentary or scripted. Set when the project is set up, and under Edit film details." },
+        "logline": { "type": "string", "description": "One line about the film." },
+        "stage": { "type": "string", "enum": ["development", "production", "post", "release"], "description": "Where the film is: developing and raising money, shooting, editing or releasing. The home page suggests what to do next from it." },
         "title": {
           "type": "string"
         },

@@ -8,6 +8,7 @@ Started in a spreadsheet and want to move to the tool? Most tools can import a f
 
 | Template | Spreadsheet | Document | Matches the tool |
 | --- | --- | --- | --- |
+| People | [people-template.csv](people-template.csv) | | [People](../tools/people/) |
 | Subject tracker | [subject-tracker-template.csv](subject-tracker-template.csv) | | [Subject tracker](../tools/subject-tracker/) |
 | Research and archival log | [research-log-template.csv](research-log-template.csv) | | [Research and archival log](../tools/research-log/) |
 | Comps tracker | [comps-tracker-template.csv](comps-tracker-template.csv) | | [Comps tracker](../tools/comps-tracker/) |
@@ -20,7 +21,7 @@ Started in a spreadsheet and want to move to the tool? Most tools can import a f
 | Script breakdown | [script-breakdown-template.csv](script-breakdown-template.csv) | | [Script breakdown](../tools/script-breakdown/) |
 | Shot list | [shot-list-template.csv](shot-list-template.csv) | | [Shot list and storyboard](../tools/shot-list/) |
 | Shooting calendar | [shooting-calendar-template.csv](shooting-calendar-template.csv) | | [Shooting calendar](../tools/shooting-calendar/) |
-| Location scout sheet | [location-scout-template.csv](location-scout-template.csv) | [location-scout-template.docx](location-scout-template.docx) | [Location scout sheet](../tools/location-scout/) |
+| Locations (scouts) | [location-scout-template.csv](location-scout-template.csv) | [location-scout-template.docx](location-scout-template.docx) | [Location scout sheet](../tools/location-scout/) |
 | Deal memos | [deal-memos-template.csv](deal-memos-template.csv) | | [Deal memos](../tools/deal-memos/) |
 | Union rates | [union-rates-template.csv](union-rates-template.csv) | | [Deal memos](../tools/deal-memos/), under Rates and rules |
 | Gear list | [gear-list-template.csv](gear-list-template.csv) | | [Gear list](../tools/gear-list/) |
@@ -65,7 +66,7 @@ Started in a spreadsheet and want to move to the tool? Most tools can import a f
 - **Script breakdown.** One row for each scene: its number and heading, length in eighths of a page, the cast, a column for each kind of element (extras, props, wardrobe and the rest, separated by semicolons), the location and what happens.
 - **Shot list.** One row for each shot: the scene number or a group such as b-roll, the shot number, size, angle, movement, lens, what we see, notes and whether it's done. Frames stay in the tool.
 - **Shooting calendar.** One row for each shoot day, travel day or hold: the trip, what you're filming, where, who's needed, and whether the call sheet is started.
-- **Location scout sheet.** One row for each scout: the place, when and who, the verdict, who to call, and access, power, sound, light, parking, restrooms, signal and permits. The document is a sheet to print and fill in on the visit.
+- **Locations (scouts).** One row for each scout: the place, when and who, the verdict, who to call, and access, power, sound, light, parking, restrooms, signal and permits. The document is a sheet to print and fill in on the visit.
 - **Deal memos.** One row for each crew deal memo: role, dates, rate, guarantee, kit fee, overtime, payment terms, credit and status. To sign one, use the deal memo form under legal forms.
 - **Gear list.** One row for each piece of gear: department, how many, owned, borrowed or rented and from whom, day and week rates, replacement value, serial numbers and the days it's packed for.
 - **Certificates and permits.** One row for each certificate of insurance or filming permit: who it's from, status, when you asked and got it, the dates it covers, who's named on it or its conditions, and the locations and shoot days it's for.
