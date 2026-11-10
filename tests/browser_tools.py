@@ -1714,6 +1714,7 @@ def test_translations(browser, fake):
     check(pg.inner_text('h1') == 'Herramientas gratuitas para cineastas documentales e independientes' and pg.evaluate('document.documentElement.lang') == 'es'
           and pg.locator('a[href="tools/budget/index.html"]').first.inner_text() == 'Presupuesto' and pg.inner_text('#prep-h') != 'Prep and shoot', 'the home page reads in Spanish')
     check(pg.locator('#oftLang option').count() == 3, 'every page offers the languages there are')
+    check(pg.locator('header.bar #oftLang').count() == 1, 'the home page has the language menu in the top bar')
     link = pg.locator('a[href*="sharing-a-project"]').first
     check(link.inner_text() == 'cómo trabajar en un archivo compartido' and 'sharing-a-project' in link.get_attribute('href'), 'links keep their address in a translated sentence')
     pg.goto('file://%s/tools/release-tracker/index.html' % root); pg.wait_for_timeout(300)
@@ -5136,8 +5137,8 @@ def test_project_page(browser, fake):
     check(names == ['Overview', 'People', 'Places', 'Story', 'Schedule', 'Money', 'Clearances', 'Release'], 'the parts of the film are down the side, in order (%s)' % names)
     check(pg.get_attribute('.parts [data-part="overview"]', 'aria-current') == 'true' and pg.is_visible('.glance'), 'a project opens on Overview')
     check(not pg.is_visible('#catalog') and not pg.is_visible('#other') and not pg.is_visible('#help'), 'the project page has no tool list, "Other software" or "Help out"')
-    nav = pg.locator('.bar nav > :visible').all_inner_texts()
-    check(nav == ['river.oft.json', 'All tools'], 'the top bar has only the file and All tools (%s)' % nav)
+    nav = pg.locator('.bar nav > :visible:not(.nav-lang)').all_inner_texts()
+    check(nav == ['river.oft.json', 'All tools'] and pg.is_visible('.bar #oftLang'), 'the top bar has only the file, All tools and the language menu (%s)' % nav)
     seen = []
     for part in ['people', 'places', 'story', 'schedule', 'money', 'clearances', 'release']:
         pg.click('.parts [data-part="%s"]' % part)
