@@ -1483,59 +1483,39 @@ def test_versions(browser, fake):
     ctx.close()
 
 
-def test_home_columns(browser, fake):
-    # On a wide screen the "not sure where to begin" prompt sits under the intro text, in the left column.
-    ctx = browser.new_context(viewport={'width': 1440, 'height': 900})
-    pg = ctx.new_page()
-    pg.goto('file://%s/index.html' % root)
-    pg.wait_for_timeout(300)
-    left, right = pg.evaluate("[document.querySelector('#firstRunShow').getBoundingClientRect().right, document.querySelector('.start').getBoundingClientRect().left]")
-    check(left < right, 'the first-run prompt is in the left column, beside the start box (%s < %s)' % (round(left), round(right)))
-    check(pg.locator('.start #firstRunShow').count() == 0, 'the start box no longer holds the prompt')
-    pg.click('#firstRunShow')
-    check(pg.is_visible('#firstRun'), 'the prompt still opens the questions')
-    ctx.close()
+def test_new_project(browser, fake):
+    # The Start here box: open a project, get the sample, or start a new project, which saves a file and opens it.
+    for picker in (True, False):
+        ctx = browser.new_context(accept_downloads=True, viewport={'width': 375, 'height': 800})
+        ctx.add_init_script(FAKE_PICKERS if picker else NO_PICKERS)
+        pg = ctx.new_page(); errs = []
+        pg.on('pageerror', lambda e: errs.append(str(e)))
+        pg.goto('file://%s/index.html' % root)
+        if picker:
+            check(pg.locator('#firstRun, #firstRunShow').count() == 0 and 'two questions' not in pg.inner_text('body'), 'the home page has no first-run questions')
+            box = pg.evaluate("[...document.querySelectorAll('.start .open-box .btn')].filter(b => b.offsetParent).map(b => [b.textContent, Math.round(b.getBoundingClientRect().top)])")
+            check([b[0] for b in box] == ['Open your project file', 'Get the sample project', 'Start a new project'] and box[2][1] > box[0][1], 'Start a new project sits under the open and sample buttons')
+        pg.click('#newProject')
+        check(pg.is_visible('#newDialog') and pg.evaluate("document.activeElement.id") == 'newFilmTitle', 'it asks for the title')
+        pg.fill('#newFilmTitle', 'Night Harbor')
+        if picker:
+            pg.click('#newForm button[type=submit]'); pg.wait_for_selector('#dashTitle')
+            made = json.loads(pg.evaluate('window.__file.text'))
+            check(pg.evaluate('window.__writes') == 1 and made['project']['title'] == 'Night Harbor' and made['formatVersion'] == 1, 'it saves the new project where you choose')
+        else:
+            with pg.expect_download() as d:
+                pg.click('#newForm button[type=submit]')
+            made = json.loads(open(d.value.path(), encoding='utf-8').read())
+            check(d.value.suggested_filename == 'night-harbor.oft.json' and made['project']['title'] == 'Night Harbor', 'without the file picker, it downloads the new project')
+            pg.wait_for_selector('#dashTitle')
+        check('Night Harbor' in pg.inner_text('#dashTitle') and not pg.is_visible('#newDialog'), 'and opens it on the home page')
+        check(pg.evaluate('document.documentElement.scrollWidth') <= 375, 'fits at phone width')
+        pg.goto('file://%s/tools/budget/index.html' % root)
+        pg.wait_for_function("document.getElementById('filmTitle').textContent.includes('Night Harbor')")
+        check(True, 'the tools open the new project too')
+        check(not errs, 'no page errors %s' % errs)
+        ctx.close()
 
-
-def test_first_run(browser, fake):
-    # The guided first run on the home page: two questions, tools to start with, a project file, and gone once dismissed.
-    ctx = browser.new_context(accept_downloads=True, viewport={'width': 375, 'height': 800})
-    pg = ctx.new_page()
-    errs = []
-    pg.on('pageerror', lambda e: errs.append(str(e)))
-    pg.goto('file://%s/index.html' % root)
-    check(pg.is_visible('#firstRun'), 'the first run shows on a first visit')
-    pg.check('input[name=frKind][value=fiction]'); pg.check('input[name=frStage][value=prep]')
-    pg.click('#firstRunForm button[type=submit]')
-    links = pg.locator('#firstRunList a')
-    check(links.count() == 5 and links.first.get_attribute('href') == 'tools/script-breakdown/index.html' and links.first.inner_text() == 'Script breakdown'
-          and pg.evaluate('document.activeElement.textContent') == 'Script breakdown', 'suggests five tools to start with, and moves focus to them')
-    check(pg.evaluate('document.documentElement.scrollWidth') <= 375, 'fits at phone width')
-    pg.fill('#firstRunTitleInput', 'Night Harbor')
-    with pg.expect_download() as d:
-        pg.click('#firstRunStart')
-    started = json.loads(open(d.value.path(), encoding='utf-8').read())
-    check(d.value.suggested_filename == 'night-harbor.oft.json' and started['format'] == 'open-filmmaker-toolkit/project' and started['formatVersion'] == 1 and started['project']['title'] == 'Night Harbor',
-          'starts a project file with the title')
-    check('Script breakdown' in pg.inner_text('#firstRunSaved'), 'says where to open it')
-    pg.reload()
-    pg.wait_for_selector('#dashTitle')
-    check(pg.is_hidden('#firstRun') and 'Night Harbor' in pg.inner_text('#dashTitle'), 'not shown again after starting a project, which is now the open one')
-    pg.click('#closeProject')
-    pg.click('#firstRunShow')
-    check(pg.is_visible('#firstRun'), 'can be brought back')
-    pg.click('#firstRunSkip')
-    pg.reload()
-    check(pg.is_hidden('#firstRun'), 'stays dismissed')
-    ctx.close()
-    ctx = browser.new_context()
-    pg = ctx.new_page()
-    pg.goto('file://%s/index.html' % root)
-    pg.set_input_files('#projectInput', files=[{'name': 'p.oft.json', 'mimeType': 'application/json', 'buffer': sample.encode()}])
-    pg.wait_for_timeout(300)
-    check(pg.is_hidden('#firstRun'), 'opening a project puts the first run away')
-    ctx.close()
-    check(not errs, 'no page errors %s' % errs)
 
 
 def test_offline(browser, fake):
@@ -5588,8 +5568,7 @@ def main():
         test_hub(browser, fake)
         test_versions(browser, fake)
         test_offline(browser, fake)
-        test_home_columns(browser, fake)
-        test_first_run(browser, fake)
+        test_new_project(browser, fake)
         test_compare_versions(browser, fake)
         test_translations(browser, fake)
         print('== location-scout / scouts, photos and releases')
