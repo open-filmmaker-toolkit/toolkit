@@ -1715,6 +1715,7 @@ def test_translations(browser, fake):
           and pg.locator('a[href="tools/budget/index.html"]').first.inner_text() == 'Presupuesto' and pg.inner_text('#prep-h') != 'Prep and shoot', 'the home page reads in Spanish')
     check(pg.locator('#oftLang option').count() == 3, 'every page offers the languages there are')
     check(pg.locator('header.bar #oftLang').count() == 1, 'the home page has the language menu in the top bar')
+    check(pg.locator('meta[property="og:image"]').get_attribute('content').endswith('/docs/assets/share.png'), 'the page has a link preview image')
     link = pg.locator('a[href*="sharing-a-project"]').first
     check(link.inner_text() == 'cómo trabajar en un archivo compartido' and 'sharing-a-project' in link.get_attribute('href'), 'links keep their address in a translated sentence')
     pg.goto('file://%s/tools/release-tracker/index.html' % root); pg.wait_for_timeout(300)
