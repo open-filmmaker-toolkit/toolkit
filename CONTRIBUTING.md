@@ -38,6 +38,7 @@ These rules are what make the toolkit free, private and easy to maintain. Pull r
 - **The desktop app is separate.** [`desktop/`](desktop/README.md) wraps the same pages in an app with its own build and dependencies. None of that reaches the tools: a tool must still work opened straight from a computer, with nothing installed.
 - **Fictional sample data only.** Files in `samples/` must never contain real people, productions or contracts.
 - **List it on the home page.** A new tool gets a card in [`index.html`](index.html), with the same name and "Use it for" line as in [TOOLS.md](TOOLS.md). CI checks the two match.
+- **Give it a link preview.** Copy the `og:` and `twitter:card` tags from another tool's `<head>`, with the tool's own name, description and address. They make the preview card when someone shares a link to the tool. CI checks they match the page.
 
 ### Before you open a pull request
 

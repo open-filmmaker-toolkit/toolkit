@@ -59,6 +59,7 @@ The home page becomes a place to work, not just a list. Each step gets an issue 
 - [x] Install the hub as an app for offline use ([#205](https://github.com/open-filmmaker-toolkit/toolkit/issues/205))
 - [x] Open a project once and it stays open as you move between the home page and any tool in the same tab, with changes not saved yet, and no "leave this page?" question on the way
 - [x] Say which browsers save straight back to the file, and in Firefox and Safari, how to save over the same file instead of collecting copies
+- [x] A preview card with the logo when you share a link to the home page or a tool in a message or on social media
 
 ## Milestone 6: Planned
 

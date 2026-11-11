@@ -439,7 +439,8 @@ for tool in sorted((ROOT / "tools").iterdir()):
         for number, line in enumerate(page.read_text(encoding="utf-8").splitlines(), 1):
             if EXTERNAL.search(line) and not (allowed and re.search(r"\bfetch\s*\(", line) and not re.search(r"XMLHttpRequest|sendBeacon|WebSocket|importScripts|(?:src|action|poster)\s*=|@import|url\(", line, re.I)):
                 fail(f"{rel}/index.html:{number}: possible network request or external resource")
-            for host in URL_HOST.findall(line) if allowed else []:
+            # Link preview tags (<meta property="og:...">) name the toolkit's own site for other apps; the page never loads them.
+            for host in URL_HOST.findall(line) if allowed and not line.startswith('<meta property="og:') else []:
                 # github.com is only linked to (the guide to shared files), never fetched.
                 if host.lower() not in allowed and host.lower() != "github.com" and host.lower() not in NAMESPACE_HOSTS:
                     fail(f"{rel}/index.html:{number}: link to {host} is not an allowed host for this tool")
@@ -563,6 +564,26 @@ for page in sync_shared.check():
 for tool in sorted((ROOT / "tools").glob("*/index.html")):
     if "/* oft-shared:tool begin." not in tool.read_text(encoding="utf-8"):
         fail(f"{tool.relative_to(ROOT)}: doesn't include the shared tool code from shared/tool.js")
+
+# Link previews: when someone shares a page in a message or on social media, the preview card comes from these.
+PAGES_URL = "https://open-filmmaker-toolkit.github.io/toolkit/"
+for page in [ROOT / "index.html", *sorted((ROOT / "tools").glob("*/index.html"))]:
+    text = page.read_text(encoding="utf-8")
+    rel = page.relative_to(ROOT).as_posix()
+    url = PAGES_URL + rel[: -len("index.html")]
+    desc = re.search(r'<meta name="description" content="([^"]*)">', text)
+    og = dict(re.findall(r'<meta property="og:([a-z:_]+)" content="([^"]*)">', text))
+    if not og:
+        fail(f"{rel}: has no link preview tags (og:title and the rest). Copy them from another tool's <head>.")
+        continue
+    if og.get("url") != url:
+        fail(f"{rel}: og:url should be {url}")
+    if not desc or og.get("description") != desc.group(1):
+        fail(f"{rel}: og:description should match the page's description")
+    if og.get("image") != PAGES_URL + "docs/assets/share.png" or not (ROOT / "docs/assets/share.png").exists():
+        fail(f"{rel}: og:image should be {PAGES_URL}docs/assets/share.png")
+    if '<meta name="twitter:card" content="summary_large_image">' not in text:
+        fail(f"{rel}: needs the twitter:card tag for a large preview")
 
 if errors:
     print("\n".join(errors))
