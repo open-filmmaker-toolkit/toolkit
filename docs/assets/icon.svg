@@ -1,10 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Open Filmmaker Toolkit">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="6 11 40 30" width="64" height="48" role="img" aria-label="Open Filmmaker Toolkit">
   <title>Open Filmmaker Toolkit</title>
-  <!-- the logo's mark on a square that fills the space, so it also works as a maskable app icon -->
-  <rect width="64" height="64" fill="#111111"/>
-  <g transform="translate(7.3 7.3) scale(0.95)">
-    <g fill="none" stroke="#ffffff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M18.5 13 8.5 26l10 13"/><path d="M33.5 13l10 13-10 13"/><path d="M22.8 19.8v12.4L31.8 26z"/>
-    </g>
+  <!-- the logo's mark on its own, dark on a light browser tab and light on a dark one -->
+  <style>g { stroke: #111111; } @media (prefers-color-scheme: dark) { g { stroke: #f2f2f2; } }</style>
+  <g fill="none" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M18.5 13 8.5 26l10 13"/><path d="M33.5 13l10 13-10 13"/><path d="M22.8 19.8v12.4L31.8 26z"/>
   </g>
 </svg>
