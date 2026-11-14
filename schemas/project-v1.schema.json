@@ -6665,6 +6665,14 @@
           "type": "string",
           "description": "What we see."
         },
+        "sourceIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true,
+          "description": "Sources in sources, kept by the research and archival log, that this shot uses or rests on: the archival it shows, or the research behind what it claims."
+        },
         "notes": {
           "type": "string"
         },

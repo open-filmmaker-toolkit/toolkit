@@ -3358,7 +3358,10 @@
       "movement": "Crane or jib",
       "lens": "24mm",
       "description": "The levee at night, lanterns strung along the sandbag line in the rain",
-      "notes": "Rain towers on before we roll",
+      "notes": "Rain towers on before we roll. Build the sandbag line the way it looks in the Front Street photo.",
+      "sourceIds": [
+        "source-sandbag"
+      ],
       "done": true
     },
     {
@@ -3380,7 +3383,10 @@
       "movement": "Static",
       "lens": "50mm",
       "description": "The water line on Mr. Pryor's post, lantern light on the water",
-      "notes": "Insert; can be shot on the second day"
+      "notes": "Insert; can be shot on the second day. Mark the water line at the crest the Corps report gives.",
+      "sourceIds": [
+        "source-army-report"
+      ]
     },
     {
       "id": "shot-2a",

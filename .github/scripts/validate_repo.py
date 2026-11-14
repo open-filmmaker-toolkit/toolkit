@@ -87,6 +87,10 @@ for sample in sorted((ROOT / "samples").glob("*.oft.json")):
     source_ids = [item.get("id") for item in data.get("sources", []) if isinstance(item, dict)]
     if len(source_ids) != len(set(source_ids)):
         fail(f"{name}: duplicate IDs in sources")
+    for shot in data.get("shots", []):
+        for source_id in shot.get("sourceIds", []) if isinstance(shot, dict) else []:
+            if source_id not in source_ids:
+                fail(f"{name}: shot {shot.get('id')} sourceIds points to missing source {source_id}")
     for source in data.get("sources", []):
         if source.get("elementId") and source["elementId"] not in ids["thirdPartyElements"]:
             fail(f"{name}: source {source.get('id')} elementId points to a missing third-party element")

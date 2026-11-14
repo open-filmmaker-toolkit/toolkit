@@ -193,6 +193,7 @@ From each tool's "Not yet" list.
 - [x] Screening kit: a kit for each host ([#243](https://github.com/open-filmmaker-toolkit/toolkit/issues/243))
 - [x] Security checklist: country checklists and reminders before trips ([#244](https://github.com/open-filmmaker-toolkit/toolkit/issues/244))
 - [x] Shooting calendar: times within a day, conflicts, and adding people and places ([#245](https://github.com/open-filmmaker-toolkit/toolkit/issues/245))
+- [x] Shot list: link each shot to the sources behind it in the research log, and show them in the sample
 - [x] Stills library: a folder of stills at full size and releases for stills ([#246](https://github.com/open-filmmaker-toolkit/toolkit/issues/246))
 - [x] Structure board: index cards to print ([#247](https://github.com/open-filmmaker-toolkit/toolkit/issues/247))
 - [x] Theory of change: arrows, and assumptions and risks ([#248](https://github.com/open-filmmaker-toolkit/toolkit/issues/248))

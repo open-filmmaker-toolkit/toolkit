@@ -28,13 +28,14 @@ Part of the [Open Filmmaker Toolkit](../../README.md). Tracking issue: [#171](ht
 
 Open `index.html` in a browser. It's one self-contained file with no installs, no accounts and no network requests.
 
-To try it with data, click **Open file** and choose [`samples/the-river-keeps.oft.json`](../../samples/the-river-keeps.oft.json) from the top of the repo. It has shots for two reenactment scenes and some river b-roll. Everything in the sample is made up.
+To try it with data, click **Open file** and choose [`samples/the-river-keeps.oft.json`](../../samples/the-river-keeps.oft.json) from the top of the repo. It has shots for two reenactment scenes and some river b-roll, and two shots linked to the sources behind them. Everything in the sample is made up.
 
 ## What it does
 
 - **Groups shots by scene,** in script order, using the scenes from the [script breakdown](../script-breakdown/). Without a script, as for most documentary shoots, give shots a group instead, such as "River b-roll".
 - **Numbers shots for you:** 3A, 3B and so on within scene 3, or 1, 2, 3 within a group. Change any number.
 - **Size, angle, movement and lens** for each shot, chosen from the usual terms, with what we see and notes.
+- **Links each shot to its sources** in the [research and archival log](../research-log/): the archival clip a shot uses, or the document behind what it shows. This is how a documentary keeps each claim on screen tied to where it came from. The list and the printed shot list show a shot's sources, and the research log shows which shots use each source.
 - **A frame for each shot.** Add a picture and it's made smaller (at most 640 pixels wide) and kept in the project file, so it travels with the project.
 - **Two views:** a list and a storyboard grid. Filter by scene and hide the shots already done. The side panel shows how many are done, overall and for each scene.
 - **Prints as a shot list,** a table for each scene with small frames, or **as a storyboard,** three frames across with what we see under each. **Exports CSV** with every column but the frames. Also exports project data: project details, people, locations, third-party elements, contracts, assets, music cue sheet details, call sheets, scenes or shots as separate CSV files.
@@ -53,11 +54,12 @@ If you close the tab without saving, the page keeps a recovery copy in this brow
 
 ## What it adds to the project file
 
-A `shots` list. Each shot has an `id`, and optional `sceneId` (in `scenes`) or `group`, `number`, `size`, `angle`, `movement`, `lens`, `description`, `notes`, `frame` (the picture, as a data URL) and `done`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
+A `shots` list. Each shot has an `id`, and optional `sceneId` (in `scenes`) or `group`, `number`, `size`, `angle`, `movement`, `lens`, `description`, `notes`, `sourceIds` (sources in `sources`, from the research log), `frame` (the picture, as a data URL) and `done`. Everything else in the file is preserved. See the [data model notes](../../schemas/README.md).
 
 ## Not yet
 
 - Drawing frames in the tool
+- Sources in the CSV export and import
 - Shot lists for each shoot day, from the stripboard
 - Overhead diagrams of camera and actor positions
 
