@@ -4628,6 +4628,7 @@ def test_day_out_of_days(browser, fake):
 
 def test_sides(browser, fake):
     ctx, pg, errs = new_page(browser, 'sides', fake)
+    pg.clock.set_fixed_time('2026-11-01T09:00:00')  # the sides open on the next shoot day, so pin today before the sample's November days
     open_sample(pg, fake)
     check(pg.input_value('#daySel') == 'shootday-nov-1' and pg.locator('#pages .sp').count() == 2, 'opens on the next day with scenes, one side per script page')
     pages = pg.inner_text('#pages')
@@ -4645,6 +4646,7 @@ def test_sides(browser, fake):
     d = json.loads(sample)
     d['script']['text'] = d['script']['text'].replace('INT. HAMMOND HOUSE - ATTIC - DAY #4#', 'INT. BARN - DAY #9#')
     ctx, pg, errs = new_page(browser, 'sides', fake)
+    pg.clock.set_fixed_time('2026-11-01T09:00:00')
     open_text(pg, fake, json.dumps(d))
     check('Not in the script text' in pg.inner_text('#onList') and pg.locator('#pages .sp').count() == 1, 'a scheduled scene that isn\'t in the script text is pointed out')
     ctx.close()
