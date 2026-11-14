@@ -547,6 +547,8 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       else if (s.kind === 'archival' && s.status === 'ready-to-license') flags.push(`<span class="flag changed">Ready, not in the clearance log yet <button type="button" data-send="${esc(s.id)}">Send it</button></span>`);
       if (s.cost != null && s.cost !== '') flags.push(`<span class="flag cost">About ${esc(money(s.cost, currencyOf(s)))}</span>`);
       if (s.kind === 'archival' && s.type) flags.push(`<span class="flag linked">${esc(s.type)}</span>`);
+      const shots = (Array.isArray(doc.shots) ? doc.shots : []).filter(x => x && Array.isArray(x.sourceIds) && x.sourceIds.includes(s.id));
+      if (shots.length) flags.push(`<span class="flag linked">${esc(`Used in ${shots.length === 1 ? 'shot' : 'shots'} ${shots.map(x => x.number || 'without a number').join(', ')}`)}</span>`);
       const where = [s.archive, s.itemId].filter(Boolean).join(' · ');
       return `<li class="row${s.status === 'not-using' ? ' is-dropped' : ''}" data-id="${esc(s.id)}">
         <span class="st st-${esc(s.status)}">${esc(statusLabel(s))}</span>
@@ -1200,7 +1202,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
   const OFT_LINKS = [{ key: 'subjectIds', label: "Subjects it's about", short: 'Subjects', from: 'subjects', many: true }, { key: 'cardId', label: "Where it's used in the cut, on the structure board", short: 'In the cut', from: 'cards' }];
   /* oft-shared:links begin. Copied from shared/links.js by .github/scripts/sync_shared.py; edit it there. */
   // Links from a record in one tool to records another tool keeps: a trip, a shoot day, an interview,
-  // clips, subjects, a card on the structure board, a screening or gear. A tool lists its links in
+  // clips, subjects, a card on the structure board, a screening, gear or a source in the research log. A tool lists its links in
   // OFT_LINKS, as [{ key, label, from, many?, hint? }], puts <div id="oftLinks"></div> in its editor,
   // and calls oftLinks.fill(record) when the editor opens, oftLinks.save(record) when it saves, and
   // oftLinks.labels(record) for what to show in the list.
@@ -1219,6 +1221,7 @@ input[type="date"]:focus, input[type="date"]:focus-within, input[type="time"]:fo
       locations: () => list(doc.locations).map(l => ({ id: l.id, label: l.name || 'Unnamed location' })),
       cards: () => list(doc.structure && doc.structure.cards).map(c => ({ id: c.id, label: c.title || 'Untitled card' })),
       screenings: () => list(doc.screenings).slice().sort((a, b) => str(a.date).localeCompare(str(b.date))).map(s => ({ id: s.id, label: [s.title || 'Untitled screening', day(s.date)].filter(Boolean).join(', ') })),
+      sources: () => list(doc.sources).map(s => ({ id: s.id, label: s.title || 'Untitled source' })),
       gear: () => list(doc.gear && doc.gear.items).map(g => ({ id: g.id, label: [g.name || 'Unnamed item', g.serial && `serial ${g.serial}`].filter(Boolean).join(', ') })),
     };
     const specs = () => (typeof OFT_LINKS !== 'undefined' ? OFT_LINKS : []);

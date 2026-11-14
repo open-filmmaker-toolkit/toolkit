@@ -1,5 +1,5 @@
 // Links from a record in one tool to records another tool keeps: a trip, a shoot day, an interview,
-// clips, subjects, a card on the structure board, a screening or gear. A tool lists its links in
+// clips, subjects, a card on the structure board, a screening, gear or a source in the research log. A tool lists its links in
 // OFT_LINKS, as [{ key, label, from, many?, hint? }], puts <div id="oftLinks"></div> in its editor,
 // and calls oftLinks.fill(record) when the editor opens, oftLinks.save(record) when it saves, and
 // oftLinks.labels(record) for what to show in the list.
@@ -18,6 +18,7 @@ const oftLinks = (() => {
     locations: () => list(doc.locations).map(l => ({ id: l.id, label: l.name || 'Unnamed location' })),
     cards: () => list(doc.structure && doc.structure.cards).map(c => ({ id: c.id, label: c.title || 'Untitled card' })),
     screenings: () => list(doc.screenings).slice().sort((a, b) => str(a.date).localeCompare(str(b.date))).map(s => ({ id: s.id, label: [s.title || 'Untitled screening', day(s.date)].filter(Boolean).join(', ') })),
+    sources: () => list(doc.sources).map(s => ({ id: s.id, label: s.title || 'Untitled source' })),
     gear: () => list(doc.gear && doc.gear.items).map(g => ({ id: g.id, label: [g.name || 'Unnamed item', g.serial && `serial ${g.serial}`].filter(Boolean).join(', ') })),
   };
   const specs = () => (typeof OFT_LINKS !== 'undefined' ? OFT_LINKS : []);
