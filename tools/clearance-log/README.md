@@ -92,7 +92,7 @@ Status values are `not-started`, `requested`, `negotiating`, `licensed`, `fair-u
 
 ## Not yet
 
-- Installing as an offline app (works offline now as a saved file; installable once the site is published)
+Nothing planned right now. If something you need is missing, [open an issue](https://github.com/open-filmmaker-toolkit/toolkit/issues).
 
 ## License
 
