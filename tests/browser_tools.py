@@ -2546,13 +2546,28 @@ def test_cue_sheet_series(browser, fake):
     hymn = next(x for x in rows if x[2] == 'Muddy Water Hymn')
     main = next(x for x in rows if x[2].startswith('The River Keeps'))
     check(h[-2:] == ['Reel', 'Episode'] and hymn[h.index('Reel')] == '2' and main[h.index('Episode')] == 'Episode 1: Pilot', 'the CSV has the reel and episode')
-    filing = csv_of(pg, '#filingBtn')
+    pg.click('#filingBtn')
+    check(pg.is_visible('#filingDialog') and pg.inner_text('#filingMissing') == 'The template needs a category.', 'filing asks for the template\'s details and says what\'s missing')
+    filing = csv_of(pg, '#filingCsvBtn')
     fh = filing[0]
     check(fh[:6] == ['Production', 'Episode', 'Reel', 'Seq', 'Cue number', 'Cue title'] and 'Interested party' in fh and 'Share %' in fh, 'exports the electronic filing layout')
     roles = [x[fh.index('Role code')] for x in filing[1:] if x[fh.index('Cue title')] == 'Muddy Water Hymn']
     check(len(filing) == 1 + 3 + 2 + 2 + 1 + 2 + 3 and roles[:3] == ['C', 'A', 'E'], 'one row for each writer and publisher on each cue (%d rows, %s)' % (len(filing), roles))
+    # The ASCAP and BMI template: the same sheet and cells as theirs, one row for each writer and publisher.
+    pg.click('#filingBtn'); pg.select_option('#fl-category', 'Movie'); pg.select_option('#fl-version', 'Theatrical'); pg.fill('#fl-network', 'Festival')
+    with pg.expect_download() as d:
+        pg.click('#filingXlsxBtn')
+    sheet = xlsx_cells(d.value.path())
+    seq = [r for r in range(20, 80) if sheet.get('A%d' % r)]
+    hymn_row = next(r for r in seq if sheet.get('B%d' % r) == 'Muddy Water Hymn')
+    check(d.value.suggested_filename.endswith('-cue-sheet-ascap-bmi.xlsx') and sheet.get('A15') == 'S_pesD3-6-2' and sheet.get('R19') == 'Shares' and sheet.get('L19') == 'Role'
+          and sheet.get('D9') == 'Movie' and sheet.get('D10') == 'Theatrical' and sheet.get('D11') == 'Festival', 'exports the ASCAP and BMI template, with the filing details on top')
+    check(sheet.get('L%d' % hymn_row) == 'Composer' and sheet.get('N%d' % hymn_row) and sheet.get('L%d' % (hymn_row + 2)) == 'Publisher' and sheet.get('O%d' % (hymn_row + 2))
+          and not sheet.get('A%d' % (hymn_row + 1)) and 0 < float(sheet.get('R%d' % hymn_row)) <= 1, 'one row for each writer and publisher, names split for writers and shares as fractions')
+    check(int(sheet.get('J%d' % hymn_row)) * 60 + int(sheet.get('K%d' % hymn_row)) > 0 and sheet.get('D14') is not None, 'gives each cue its duration and adds up the music')
     data = saved_project(pg, fake)
     mc = data['musicCueSheet']
+    check(mc.get('filing', {}).get('category') == 'Movie' and mc['filing'].get('version') == 'Theatrical', 'saves the filing details')
     cue = next(e for e in data['thirdPartyElements'] if e['id'] == 'sample-09')
     check([e.get('title') for e in mc['episodes']] == ['Pilot', 'The levee'] and mc['splitByReel'] is True and mc['reelStarts'] == ['00:00:00:00', '00:10:00:00'] and cue['music']['episodeId'] == mc['episodes'][0]['id'],
           'saves the episodes, reels and the cue episode')
@@ -5456,6 +5471,22 @@ def open_text(pg, fake, text):
     else:
         pg.set_input_files('#fileInput', files=[{'name': 'proj.oft.json', 'mimeType': 'application/json', 'buffer': text.encode()}])
     pg.wait_for_function("document.getElementById('filmMeta').textContent.trim() !== ''")
+
+def xlsx_cells(path):
+    # The cells of the first sheet of an .xlsx file, as text, without a spreadsheet library.
+    import zipfile, xml.etree.ElementTree as ET
+    ns = {'m': 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'}
+    z = zipfile.ZipFile(path)
+    shared = [''.join(t.text or '' for t in si.iter('{%s}t' % ns['m'])) for si in ET.fromstring(z.read('xl/sharedStrings.xml')).findall('m:si', ns)] if 'xl/sharedStrings.xml' in z.namelist() else []
+    out = {}
+    for c in ET.fromstring(z.read('xl/worksheets/sheet1.xml')).iter('{%s}c' % ns['m']):
+        if c.get('t') == 'inlineStr':
+            out[c.get('r')] = ''.join(t.text or '' for t in c.iter('{%s}t' % ns['m']))
+        elif c.find('m:v', ns) is not None:
+            v = c.find('m:v', ns).text
+            out[c.get('r')] = shared[int(v)] if c.get('t') == 's' else v
+    return out
+
 
 def csv_of(pg, btn='#csvBtn'):
     with pg.expect_download() as d:

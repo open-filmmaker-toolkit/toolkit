@@ -109,10 +109,11 @@ Each item has [its own issue](https://github.com/open-filmmaker-toolkit/toolkit/
 
 ### Exports
 
-- [ ] An Avid ALE from the footage log, FCPXML and AAF from the paper edit with drop-frame timecode, and QC markers for an editing app ([#194](https://github.com/open-filmmaker-toolkit/toolkit/issues/194))
+- [x] An Avid ALE from the footage log, FCPXML from the paper edit with drop-frame timecode, and QC markers for an editing app ([#194](https://github.com/open-filmmaker-toolkit/toolkit/issues/194))
+- [ ] AAF from the paper edit, once someone can test it in Media Composer. Until then, the EDL and ALE cover Avid.
 - [x] Exports for titling tools and crawl services from name supers and the credits builder ([#195](https://github.com/open-filmmaker-toolkit/toolkit/issues/195))
 - [x] The pitch deck as PowerPoint or Keynote, and the call sheet and treatment as Word documents ([#196](https://github.com/open-filmmaker-toolkit/toolkit/issues/196))
-- [ ] Electronic cue sheet formats for performing rights organizations, series and episodes, and splitting a cue sheet by reel ([#197](https://github.com/open-filmmaker-toolkit/toolkit/issues/197))
+- [x] Electronic cue sheets on the ASCAP and BMI template, series and episodes, and splitting a cue sheet by reel ([#197](https://github.com/open-filmmaker-toolkit/toolkit/issues/197))
 
 ### Versions and views
 
