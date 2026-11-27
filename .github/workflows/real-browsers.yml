@@ -42,7 +42,7 @@ jobs:
 
       - name: Install Selenium
         timeout-minutes: 3
-        run: python -m pip install --disable-pip-version-check "selenium==4.27.1"
+        run: python -m pip install --disable-pip-version-check "selenium==4.54.0"
 
       - name: Turn on Safari automation
         if: matrix.browser == 'safari'

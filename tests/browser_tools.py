@@ -5031,8 +5031,8 @@ def test_shared_file(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
     # Someone else has it open
-    since = (datetime.datetime.utcnow() - datetime.timedelta(minutes=20)).strftime('%Y-%m-%dT%H:%M:%S.000Z')
-    old = (datetime.datetime.utcnow() - datetime.timedelta(hours=9)).strftime('%Y-%m-%dT%H:%M:%S.000Z')
+    since = (datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(minutes=20)).strftime('%Y-%m-%dT%H:%M:%S.000Z')
+    old = (datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=9)).strftime('%Y-%m-%dT%H:%M:%S.000Z')
     busy = copy_with(openBy=[{'name': 'Ana', 'since': since, 'tool': 'budget'}, {'name': 'Old', 'since': old}])
     ctx, pg, errs = new_page(browser, 'name-supers', fake, "localStorage.setItem('oft-user-name', 'Sam'); window.__file.text = %s;" % json.dumps(busy))
     open_sample(pg, fake); pg.wait_for_timeout(300)
