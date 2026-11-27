@@ -45,9 +45,10 @@ def languages():
 
 def i18n_data(page_text):
     import json
-    src = re.sub(r'/\* oft-shared:i18n begin.*?oft-shared:i18n end \*/', '', page_text, flags=re.S)
-    unesc = lambda t: t.replace('&lt;', '<').replace('&gt;', '>').replace('&amp;', '&')
-    used = lambda k: all(unesc(seg).strip() in src for seg in re.split(r'</?\w+>', k) if seg.strip())
+    import html
+    # Compare decoded text on both sides: a page may write an apostrophe as &#x27; or an ampersand as &amp;.
+    src = html.unescape(re.sub(r'/\* oft-shared:i18n begin.*?oft-shared:i18n end \*/', '', page_text, flags=re.S))
+    used = lambda k: all(html.unescape(seg).strip() in src for seg in re.split(r'</?\w+>', k) if seg.strip())
     out = {}
     for code, lang in sorted(languages().items()):
         out[code] = {'name': lang['name'], 'label': lang['label'], 'strings': {k: v for k, v in sorted(lang['strings'].items()) if used(k)}}

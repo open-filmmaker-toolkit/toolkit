@@ -4,7 +4,6 @@ Open Filmmaker Toolkit home,Accueil d'Open Filmmaker Toolkit
 On this page,Sur cette page
 Your project,Votre projet
 Tools,Outils
-How they connect,Comment ils se relient
 Other software,Autres logiciels
 Help out,Contribuer
 Free tools for documentary and indie filmmakers,Des outils gratuits pour le documentaire et le cinéma indépendant
@@ -17,20 +16,13 @@ Get the sample project,Télécharger le projet d'exemple
 Or drop a <code>.oft.json</code> file on this page. It stays on your computer.,Ou déposez un fichier <code>.oft.json</code> sur cette page. Il reste sur votre ordinateur.
 Open it,L'ouvrir
 "The sample project is a made-up documentary. Open it here, or in any tool with <b>Open file</b>.","Le projet d'exemple est un documentaire inventé. Ouvrez-le ici, ou dans n'importe quel outil avec <b>Open file</b>."
-"For your own film, choose <b>New project</b> and save the file.","Pour votre propre film, choisissez <b>New project</b> et enregistrez le fichier."
 Working with other people? Read <a>working on a shared file</a>.,Vous travaillez à plusieurs ? Lisez <a>travailler sur un fichier partagé</a>.
-"To work offline, <a>download the toolkit</a> and open <code>index.html</code>.","Pour travailler hors ligne, <a>téléchargez la boîte à outils</a> et ouvrez <code>index.html</code>."
-Find a tool,Trouver un outil
-Find a tool: try “release” or “grant”,Trouver un outil : essayez « release » ou « grant »
-Stages,Étapes
 Develop and fund,Développer et financer
 Prep and shoot,Préparer et tourner
 Edit and clear,Monter et libérer les droits
 Launch,Sortir le film
 Impact and wrap,Impact et clôture
-Nothing matches. <a>Tell us what you need</a>.,Aucun résultat. <a>Dites-nous ce dont vous avez besoin</a>.
 The tools,Les outils
-67 tools.,67 outils.
 "Research the film, pitch it and raise the money.","Faites les recherches, présentez le film et trouvez le financement."
 Development,Développement
 <a>Subject tracker</a>,<a>Suivi des personnages</a>
@@ -75,7 +67,8 @@ See which days each cast member works.,Voyez quels jours travaille chaque coméd
 <a>Interview prep</a>,<a>Préparation des entretiens</a>
 Prepare research and questions for each interview.,Préparez les recherches et les questions de chaque entretien.
 <a>Locations</a>,<a>Lieux</a>
-Record scouts with photos for the crew.,Consignez les repérages avec des photos pour l'équipe.
+"Everyone in the film: subjects, crew and contacts.",
+"Every place in the film, with scouts and photos.",
 <a>Deal memos</a>,<a>Lettres d’engagement</a>
 "Print deal memos for crew and cast, send rates to the budget, and work out timecards.","Imprimez les lettres d’engagement, envoyez les tarifs au budget et calculez les feuilles de temps."
 <a>Gear list</a>,<a>Liste du matériel</a>
@@ -182,68 +175,9 @@ Close out the budget with final costs.,Clôturez le budget avec les coûts finau
 Write each grant's final report before it's due.,Rédigez le rapport final de chaque subvention avant l'échéance.
 <a>Contract and release archive</a>,<a>Archive des contrats et autorisations</a>
 Index every signed contract and release for the long term.,Indexez chaque contrat et autorisation signés pour le long terme.
-How the tools connect,Comment les outils se relient
-Work in one tool carries into the next. Here are some common paths.,Ce que vous faites dans un outil passe au suivant. Voici quelques parcours courants.
-Pitch the film,Présenter le film
-<a>Subject tracker</a> <span>→</span> <a>Treatment builder</a> <span>→</span> <a>Comps tracker</a> <span>→</span> <a>Pitch deck builder</a>,<a>Suivi des personnages</a> <span>→</span> <a>Rédaction du traitement</a> <span>→</span> <a>Suivi des films comparables</a> <span>→</span> <a>Création du dossier de présentation</a>
-"Your subjects, treatment and comps fill the deck.","Vos personnages, votre traitement et les films comparables remplissent le dossier."
 Schedule a scripted shoot,Planifier un tournage de fiction
-<a>Script breakdown</a> <span>→</span> <a>Stripboard</a> <span>→</span> <a>Day-out-of-days</a> <span>→</span> <a>Shooting calendar</a> <span>→</span> <a>Call sheet</a> <span>→</span> <a>Sides</a>,<a>Dépouillement du scénario</a> <span>→</span> <a>Plan de travail en bandes</a> <span>→</span> <a>Jours de travail par personne</a> <span>→</span> <a>Calendrier de tournage</a> <span>→</span> <a>Feuille de service</a> <span>→</span> <a>Pages du jour</a>
-"Break the script down, put its scenes on shoot days, and the cast's days and the call sheets follow.","Dépouillez le scénario, répartissez ses scènes sur les jours de tournage, et les jours des comédiens et les feuilles de service suivent."
-Raise the money,Trouver le financement
-<a>Grant calendar</a> <span>→</span> <a>Grant narrative library</a> <span>→</span> <a>Funder CRM</a> <span>→</span> <a>Finance plan</a>,<a>Calendrier des subventions</a> <span>→</span> <a>Bibliothèque de textes pour les subventions</a> <span>→</span> <a>Contacts des financeurs</a> <span>→</span> <a>Plan de financement</a>
-"Deadlines, answers and funder talks add up in the finance plan.","Échéances, réponses et échanges avec les financeurs se retrouvent dans le plan de financement."
-Budget and cash,Budget et trésorerie
 <a>Budget</a> <span>→</span> <a>Budget converter</a> <span>→</span> <a>Finance plan</a> <span>→</span> <a>Cash flow</a>,<a>Budget</a> <span>→</span> <a>Convertisseur de budget</a> <span>→</span> <a>Plan de financement</a> <span>→</span> <a>Trésorerie</a>
-"Build one budget, reshape it for each funder, and see when cash runs short.","Construisez un seul budget, adaptez-le à chaque financeur et voyez quand la trésorerie manquera."
-Plan the shoot,Préparer le tournage
-<a>Location scout sheet</a> <span>→</span> <a>Interview prep</a> <span>→</span> <a>Shooting calendar</a> <span>→</span> <a>Call sheet</a> <span>→</span> <a>Release tracker</a>,<a>Fiche de repérage</a> <span>→</span> <a>Préparation des entretiens</a> <span>→</span> <a>Calendrier de tournage</a> <span>→</span> <a>Feuille de service</a> <span>→</span> <a>Suivi des autorisations</a>
-"Scouts, interviews and shoot days feed each call sheet.","Repérages, entretiens et jours de tournage alimentent chaque feuille de service."
-Hire the crew,Engager l'équipe
-<a>Deal memos</a> <span>→</span> <a>Budget</a> <span>→</span> <a>Call sheet</a> <span>→</span> <a>Credits builder</a>,<a>Lettres d’engagement</a> <span>→</span> <a>Budget</a> <span>→</span> <a>Feuille de service</a> <span>→</span> <a>Création du générique</a>
-"Deal memo rates go into the budget, and promised credits go into the end credits.","Les tarifs des lettres d’engagement vont au budget, et les crédits promis au générique."
-Ready each day,Préparer chaque journée
-<a>Shooting calendar</a> <span>→</span> <a>Gear list</a> <span>→</span> <a>COI and permit tracker</a> <span>→</span> <a>Call sheet</a>,<a>Calendrier de tournage</a> <span>→</span> <a>Liste du matériel</a> <span>→</span> <a>Suivi des assurances et autorisations</a> <span>→</span> <a>Feuille de service</a>
-"Each day gets its gear, certificates and permits.","Chaque jour a son matériel, ses attestations et ses autorisations."
-Travel safely,Voyager en sécurité
-<a>Shooting calendar</a> <span>→</span> <a>Travel sheet</a> <span>→</span> <a>Risk and hostile-environment plans</a> <span>→</span> <a>Security checklist</a>,<a>Calendrier de tournage</a> <span>→</span> <a>Feuille de voyage</a> <span>→</span> <a>Plans de risques et environnements hostiles</a> <span>→</span> <a>Liste de sécurité</a>
-"Each trip gets a travel sheet, risk plan and security checklist.","Chaque voyage a sa feuille de voyage, son plan de risques et sa liste de sécurité."
-From shoot to edit,Du tournage au montage
-<a>Camera and sound reports</a> <span>→</span> <a>Footage log</a> <span>→</span> <a>Interview log</a> <span>→</span> <a>Paper edit</a>,<a>Rapports image et son</a> <span>→</span> <a>Journal des rushes</a> <span>→</span> <a>Journal des entretiens</a> <span>→</span> <a>Montage papier</a>
-Logged cards and transcripts become a paper edit.,Les cartes consignées et les transcriptions deviennent un montage papier.
-Edit to lock,Jusqu'au montage définitif
-<a>Paper edit</a> <span>→</span> <a>Structure board</a> <span>→</span> <a>Cut version tracker</a> <span>→</span> <a>Clearance log</a> <span>→</span> <a>Music cue sheet</a>,<a>Montage papier</a> <span>→</span> <a>Tableau de structure</a> <span>→</span> <a>Suivi des versions du montage</a> <span>→</span> <a>Journal des droits</a> <span>→</span> <a>Relevé musical</a>
-"Bites become scenes, notes attach to them, and the locked cut feeds the clearances.","Les extraits deviennent des scènes, les notes s’y rattachent, et le montage définitif alimente les droits."
-Track the spending,Suivre les dépenses
 <a>Budget</a> <span>→</span> <a>Expense log</a> <span>→</span> <a>Budget-to-actuals</a>,<a>Budget</a> <span>→</span> <a>Journal des dépenses</a> <span>→</span> <a>Budget et dépenses réelles</a>
-Log spending and see which lines run over.,Notez les dépenses et voyez quelles lignes dépassent.
-Clear the film,Libérer les droits du film
-<a>Research and archival log</a> <span>→</span> <a>Clearance log</a> <span>→</span> <a>Music cue sheet</a> <span>→</span> <a>Credits builder</a>,<a>Journal de recherche et d'archives</a> <span>→</span> <a>Journal des droits</a> <span>→</span> <a>Relevé musical</a> <span>→</span> <a>Création du générique</a>
-"Archival leads become clearances, cue sheet entries and credits.","Les pistes d'archives deviennent des droits, des entrées du relevé musical et des crédits."
-Ready for E&amp;O and delivery,Prêt pour l’assurance E&amp;O et la livraison
-<a>Clearance log</a> <span>→</span> <a>License tracker</a> <span>→</span> <a>Fair use log</a> <span>→</span> <a>Annotated-transcript clearance report</a> <span>→</span> <a>Chain-of-title binder</a>,<a>Journal des droits</a> <span>→</span> <a>Suivi des licences</a> <span>→</span> <a>Journal du fair use</a> <span>→</span> <a>Rapport de droits sur la transcription annotée</a> <span>→</span> <a>Dossier de chaîne des droits</a>
-"License, write up fair use, annotate the script and build the binder.","Obtenez les licences, rédigez le fair use, annotez le texte et constituez le dossier."
-Plan the festival run,Préparer le parcours en festivals
-<a>Festival strategy map</a> <span>→</span> <a>Festival submission tracker</a> <span>→</span> <a>Awards and social calendars</a>,<a>Stratégie de festivals</a> <span>→</span> <a>Suivi des inscriptions aux festivals</a> <span>→</span> <a>Calendriers des prix et des réseaux sociaux</a>
-"Pick festivals that protect your premiere, track each entry, and plan the posts and awards around them.","Choisissez des festivals qui protègent votre première, suivez chaque inscription et prévoyez les publications et les prix autour."
-Get the word out,Faire connaître le film
-<a>Stills library</a> <span>→</span> <a>EPK and press notes builder</a> <span>→</span> <a>Press list</a> <span>→</span> <a>Screening kit builder</a>,<a>Photothèque</a> <span>→</span> <a>Création du dossier de presse</a> <span>→</span> <a>Liste de presse</a> <span>→</span> <a>Création du kit de projection</a>
-"Approved stills go into the press notes, the press notes go to press, and hosts get a kit.","Les photos validées vont dans le dossier de presse, le dossier va à la presse, et les organisateurs reçoivent un kit."
-Sell and deliver,Vendre et livrer
-<a>Rights availability matrix</a> <span>→</span> <a>Deliverables checklist</a> <span>→</span> <a>QC tracker</a> <span>→</span> <a>Chain-of-title binder</a>,<a>Matrice des droits disponibles</a> <span>→</span> <a>Liste des livrables</a> <span>→</span> <a>Suivi du contrôle qualité</a> <span>→</span> <a>Dossier de chaîne des droits</a>
-"Track the rights you've sold, then deliver the masters, a clean QC and the paperwork.","Suivez les droits vendus, puis livrez les masters, un contrôle qualité propre et les documents."
-Follow the money,Suivre l'argent
-<a>Rights availability matrix</a> <span>→</span> <a>Revenue tracker</a> <span>→</span> <a>Recoupment waterfall model</a> <span>→</span> <a>Educational and theatrical booking trackers</a>,<a>Matrice des droits disponibles</a> <span>→</span> <a>Suivi des recettes</a> <span>→</span> <a>Modèle de récupération en cascade</a> <span>→</span> <a>Suivi des licences éducatives et des projections</a>
-"Statements from each deal add up, and the waterfall shows who gets paid.","Les relevés de chaque contrat s’additionnent, et la cascade montre qui est payé."
-Run the impact campaign,Mener la campagne d'impact
-<a>Theory of change builder</a> <span>→</span> <a>Partner CRM</a> <span>→</span> <a>Screening kit builder</a> <span>→</span> <a>Educational and theatrical booking trackers</a> <span>→</span> <a>Impact report</a>,<a>Création de la théorie du changement</a> <span>→</span> <a>Contacts des partenaires</a> <span>→</span> <a>Création du kit de projection</a> <span>→</span> <a>Suivi des licences éducatives et des projections</a> <span>→</span> <a>Rapport d'impact</a>
-"Plan the change, equip hosts, book screenings, and report what happened.","Planifiez le changement, équipez les organisateurs, réservez les projections et rendez compte de ce qui s'est passé."
-Close it out,Tout clôturer
-<a>Budget-to-actuals</a> <span>→</span> <a>Final cost report</a> <span>→</span> <a>Grant final reports</a> <span>→</span> <a>Contract and release archive</a> <span>→</span> <a>Archive log</a>,<a>Budget et dépenses réelles</a> <span>→</span> <a>Rapport des coûts finaux</a> <span>→</span> <a>Rapports finaux des subventions</a> <span>→</span> <a>Archive des contrats et autorisations</a> <span>→</span> <a>Journal d'archivage</a>
-"Close the budget, report to each funder, and file every contract and copy.","Clôturez le budget, rendez compte à chaque financeur, et classez chaque contrat et copie."
-Get the names right,Bien écrire les noms
-<a>Subject tracker</a> <span>→</span> <a>Name supers list</a> <span>→</span> <a>Credits builder</a>,<a>Suivi des personnages</a> <span>→</span> <a>Liste des synthés</a> <span>→</span> <a>Création du générique</a>
-"Enter a name once, and it's spelled the same everywhere.","Saisissez un nom une fois, et il est écrit pareil partout."
 Other free software we like,D'autres logiciels gratuits que nous aimons
 "We don't build editors or mixers. Good free ones exist, and we <a>list the ones we've checked</a>.","Nous ne faisons pas de logiciels de montage ni de mixage. Il en existe de bons et gratuits, et nous <a>listons ceux que nous avons essayés</a>."
 "Editing: Kdenlive, Shotcut","Montage : Kdenlive, Shotcut"
@@ -531,7 +465,7 @@ Your screening license covers one public screening. Please contact us before cha
 Language,Langue
 Start a new project,Commencer un nouveau projet
 "For your own film, choose <b>Start a new project</b> and save the file where you keep your film's work.","Pour votre propre film, choisissez <b>Commencer un nouveau projet</b> et enregistrez le fichier là où vous gardez le travail de votre film."
-"This makes a project file for your film. Every tool reads and saves it, and it stays on your computer.","Cela crée un fichier de projet pour votre film. Chaque outil le lit et l'enregistre, et il reste sur votre ordinateur."
+"Four short steps make a project file for your film. Only the title is needed now, and you can change anything later. The file stays on your computer.",
 Your film's title,Le titre de votre film
 Make the project file,Créer le fichier du projet
 A working title is fine,Un titre provisoire suffit
