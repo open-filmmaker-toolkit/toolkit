@@ -57,7 +57,7 @@ Choose **Merge both** in that warning to combine your changes with the ones in t
 - **Exports CSV** with one row per cue. The blank [spreadsheet template](../../templates/music-cue-sheet-template.csv) uses the same columns, without the ones the tool works out, and there's a [Word version](../../templates/music-cue-sheet-template.docx) to fill in or print, for anyone who doesn't use the tool.
 - **Exports project data.** Save project details, people, locations, third-party elements, contracts, assets, music cue sheet details or call sheets as separate CSV files. Nested values stay as JSON inside their cell.
 
-Usage codes: BI background instrumental, BV background vocal, VI visual instrumental, VV visual vocal, MT main title, ET end title.
+Usage codes: BI background instrumental, BV background vocal, VI visual instrumental, VV visual vocal, MT main title, ET end title, Logo company logo.
 
 Roles: C composer, A author (lyrics), CA composer and author, AR arranger, E publisher, AM administrator, SE sub-publisher.
 
@@ -65,7 +65,9 @@ Roles: C composer, A author (lyrics), CA composer and author, AR arranger, E pub
 - **Imports cue timings from the edit's markers** (Resolve, Premiere Pro, Avid or CSV), matched to music in the clearance log by cue number, such as 1M5, or title. What would change shows before it's applied, and music that isn't in the log yet can be added.
 - **Series and episodes.** Under **Episodes and reels**, list the episodes and give each cue its episode. Pick an episode next to the search to see, print and export its own cue sheet.
 - **Split by reel.** Tick **Split the cue sheet by reel**, and the printed sheet groups the cues by reel, with the music in each. Give the timecode each reel starts at, or leave it blank when each reel starts on the hour. The CSV has the reel and episode of each cue.
-- **Electronic filing.** **Export for electronic filing** writes a CSV with one row for each composer, author and publisher on each cue, with role codes, societies and shares, the layout electronic filing and cue sheet services import. Check the column names against your society's own template before you upload it.
+- **Electronic filing.** **Export for electronic filing** asks for the details the top of a cue sheet needs (original or revision, category, version, network or source, when it was first shown, production number, other titles and the mailing address), saves them with the project, and says what the template still needs. Then:
+  - **Download for ASCAP and BMI** writes an Excel file on the template ASCAP and BMI share for filing through RapidCue: the same sheet, cells, codes and roles as theirs, with one row for each writer and publisher on each cue. Writers' names are split into first and last, publishers go in by name, shares are percentages, and public domain is `PD`. The time in and out are counted from the start of the program. Email it to cuesheets@rapidcue.com or upload it to RapidCue.
+  - **Rows for each writer (CSV)** writes one row for each composer, author and publisher on each cue, with role codes, societies and shares, for cue sheet services that import a flat list.
 
 ## What it adds to the project file
 
@@ -94,7 +96,8 @@ Running time, distributor and release date live in `project` because other tools
 
 ## Not yet
 
-- Checking the electronic filing export against each performing rights organization's own upload template
+- Other societies' own templates, such as PRS, SOCAN and APRA AMCOS. Their sheets ask for the same things in a different layout.
+- Entering IPI numbers in the tool. The template's IPI column is filled in when a writer or publisher has an `ipi` in the project file.
 
 ## License
 

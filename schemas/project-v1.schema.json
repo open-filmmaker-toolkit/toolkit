@@ -1969,6 +1969,7 @@
             "VV",
             "MT",
             "ET",
+            "Logo",
             ""
           ]
         },
@@ -1998,6 +1999,10 @@
         },
         "society": {
           "type": "string"
+        },
+        "ipi": {
+          "type": "string",
+          "description": "The writer's or publisher's IPI number, if known. Optional on the ASCAP and BMI template."
         },
         "share": {
           "type": [
@@ -2594,6 +2599,21 @@
         "splitByReel": {
           "type": "boolean",
           "description": "Print and export the cue sheet split by reel."
+        },
+        "filing": {
+          "type": "object",
+          "description": "Details for the top of the ASCAP and BMI cue sheet template, filed through RapidCue. The template's own wording is used for classification, category and version.",
+          "properties": {
+            "classification": { "enum": ["Original", "Revision"] },
+            "category": { "type": "string", "description": "From the template's list, such as Movie, Cinema or Series." },
+            "version": { "type": "string", "description": "From the template's list, such as Theatrical, Cable or Internet." },
+            "network": { "type": "string", "description": "Network or source, where it first shows." },
+            "airdate": { "type": "string", "description": "When it was first shown, YYYY-MM-DD." },
+            "productionNumber": { "type": "string" },
+            "aka": { "type": "string", "description": "Other titles for the program." },
+            "mailingAddress": { "type": "string", "description": "The production company's mailing address." }
+          },
+          "additionalProperties": true
         },
         "reelStarts": {
           "type": "array",
