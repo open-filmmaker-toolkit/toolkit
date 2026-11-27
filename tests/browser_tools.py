@@ -237,6 +237,7 @@ window.showDirectoryPicker = async () => fsDir('', 'River Keeps');
 
 def test_release_tracker(browser, fake):
     ctx, pg, errs = new_page(browser, 'release-tracker', fake, extra=FAKE_DIR if fake else '')
+    pg.clock.set_fixed_time('2026-11-01T09:00:00')  # coverage depends on which releases have run out, so pin today
     open_sample(pg, fake)
     check(pg.inner_text('#covHeadline') == '2 of 7 covered', 'coverage counts the sample (%s)' % pg.inner_text('#covHeadline'))
     missing = pg.locator('.cov-line.is-missing').all_inner_texts()
@@ -820,6 +821,7 @@ def saved_project(pg, fake):
 
 def test_grant_calendar(browser, fake):
     ctx, pg, errs = new_page(browser, 'grant-calendar', fake)
+    pg.clock.set_fixed_time('2026-11-01T09:00:00')  # deadlines and reminders count from today
     open_sample(pg, fake)
     names = [t.split('\n')[0] for t in pg.locator('#rows .row .nm').all_inner_texts()]
     check(names == ['Riverbend Documentary Fund', 'Prairie State Arts Board', 'Northern Light Media Foundation', 'Eastgate Film Initiative', 'Riverside County Heritage Trust'],
@@ -833,7 +835,7 @@ def test_grant_calendar(browser, fake):
 
     pg.click('#calViewBtn')
     pg.click('#thisMonth')
-    now = datetime.date.today()
+    now = datetime.date(2026, 11, 1)
     steps = (2027 * 12 + 1) - (now.year * 12 + now.month - 1)
     for _ in range(abs(steps)):
         pg.click('#nextMonth' if steps > 0 else '#prevMonth')
@@ -853,12 +855,12 @@ def test_grant_calendar(browser, fake):
     names = [t.split('\n')[0] for t in pg.locator('#rows .row .nm').all_inner_texts()]
     check(names[:3] == ['Riverbend Documentary Fund', 'Test Fund', 'Prairie State Arts Board'] and '0 of 4 materials ready' in pg.inner_text('#rows'), 'a new grant starts with the usual materials and sorts by deadline')
     check(not pg.is_visible('#oftReminders'), 'no reminders when nothing is close')
-    soon = (datetime.date.today() + datetime.timedelta(days=5)).isoformat()
+    soon = (datetime.date(2026, 11, 1) + datetime.timedelta(days=5)).isoformat()
     pg.click('[data-id="grant-prairie-arts"] [data-edit]'); old_deadline = pg.input_value('#f-deadline'); pg.fill('#f-deadline', soon); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
     check(pg.is_visible('#oftReminders') and 'Prairie State Arts Board: Media artist grant is due in 5 days' in pg.inner_text('#oftReminders'), 'reminds you of a deadline coming up')
     pg.click('[data-rem-dismiss]'); pg.wait_for_timeout(200)
     check(not pg.is_visible('#oftReminders'), 'dismisses a reminder')
-    pg.click('[data-id="grant-prairie-arts"] [data-edit]'); pg.select_option('#f-remind', '3'); pg.fill('#f-deadline', (datetime.date.today() - datetime.timedelta(days=2)).isoformat()); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
+    pg.click('[data-id="grant-prairie-arts"] [data-edit]'); pg.select_option('#f-remind', '3'); pg.fill('#f-deadline', (datetime.date(2026, 11, 1) - datetime.timedelta(days=2)).isoformat()); pg.click('#editorSubmit'); pg.wait_for_timeout(200)
     check("deadline was" in pg.inner_text('#oftReminders'), 'a dismissed reminder comes back when the date changes, and a passed deadline is flagged')
     pg.click('[data-rem-open]'); pg.wait_for_timeout(100)
     check(pg.is_visible('#editor') and pg.input_value('#f-funder') == 'Prairie State Arts Board', 'a reminder opens its grant')
@@ -895,7 +897,7 @@ def test_grant_calendar(browser, fake):
     data = saved_project(pg, fake)
     rb = next(g for g in data['grants'] if g['id'] == 'grant-riverbend')
     lake = next(g for g in data['grants'] if g.get('funder') == 'Lakeshore Story Foundation')
-    check(lake['status'] == 'researching' and lake['deadline'].endswith('-05-15') and lake['deadline'] >= datetime.date.today().isoformat() and [m['name'] for m in lake['materials']] == ['Narrative', 'Budget', 'Treatment'], 'a funder from a list gets its next deadline and materials')
+    check(lake['status'] == 'researching' and lake['deadline'].endswith('-05-15') and lake['deadline'] >= datetime.date(2026, 11, 1).isoformat() and [m['name'] for m in lake['materials']] == ['Narrative', 'Budget', 'Treatment'], 'a funder from a list gets its next deadline and materials')
     check(len(data['grants']) == 6 and rb['materials'][2] == {'name': 'Work sample, 10 minutes', 'done': True} and rb['materials'][-1] == {'name': 'Fiscal sponsor letter'}, 'grants are saved')
     versions = {v['id']: v for a in data['narratives'] for v in a['versions']}
     check({'grantId': 'grant-riverbend'}.items() <= versions['version-synopsis-350c']['uses'][0].items(), 'the linked answer is recorded on the library version')
@@ -1156,6 +1158,7 @@ def test_finance_plan(browser, fake):
 def test_funder_crm(browser, fake):
     original = json.loads(sample)
     ctx, pg, errs = new_page(browser, 'funder-crm', fake)
+    pg.clock.set_fixed_time('2026-11-01T09:00:00')  # next steps count from today
     open_sample(pg, fake)
     names = [t.split('\n')[0] for t in pg.locator('#rows .row .nm').all_inner_texts()]
     check(names == ['Riverbend Documentary Fund', 'Northern Light Media Foundation', 'Regional public television', 'Riverside County Heritage Trust', 'Eastgate Film Initiative'],
@@ -1203,6 +1206,7 @@ def test_funder_crm(browser, fake):
     check(not errs, 'no page errors %s' % errs)
     ctx.close()
     ctx, pg, errs = new_page(browser, 'funder-crm', fake)
+    pg.clock.set_fixed_time('2026-11-01T09:00:00')  # next steps count from today
     open_sample(pg, fake)
     pg.click('#fromGrantsBtn')
     pg.click('#grantsForm button[type=submit]'); pg.wait_for_timeout(200)
@@ -1263,10 +1267,11 @@ def test_cash_flow(browser, fake):
 def test_shooting_calendar(browser, fake):
     original = json.loads(sample)
     ctx, pg, errs = new_page(browser, 'shooting-calendar', fake)
+    pg.clock.set_fixed_time('2026-11-01T09:00:00')  # conflicts are only listed for days still to come
     open_sample(pg, fake)
     check(pg.inner_text('#count') == '4 shoot days · 2 travel · 1 hold', 'counts shoot days, travel days and holds')
     pg.click('#thisMonth')
-    now = datetime.date.today()
+    now = datetime.date(2026, 11, 1)
     steps = (2026 * 12 + 4) - (now.year * 12 + now.month - 1)
     for _ in range(abs(steps)):
         pg.click('#nextMonth' if steps > 0 else '#prevMonth')
@@ -2970,6 +2975,7 @@ VTT_CLEAR = 'WEBVTT\n\n00:00:01.000 --> 00:00:05.000\nWe spoke with Ruth Hammond
 def test_clearance_report(browser, fake):
     original = json.loads(sample)
     ctx, pg, errs = new_page(browser, 'clearance-report', fake)
+    pg.clock.set_fixed_time('2026-11-01T09:00:00')  # what counts as not cleared depends on today
     open_sample(pg, fake)
     check(pg.locator('#lines > li').count() == 6 and '7 marks · 4 not cleared' in pg.inner_text('#count') and pg.locator('#open li').count() == 4, 'shows the script, its marks and what is not cleared')
     check('Riverside Courier (defunct)' not in pg.inner_text('#open') and 'Leon Pryor: Release not signed yet' in pg.inner_text('#open'), 'reads clearances from the clearance log and releases')
@@ -3998,6 +4004,7 @@ def test_month_views(browser, fake):
 def test_awards_social(browser, fake):
     original = json.loads(sample)
     ctx, pg, errs = new_page(browser, 'awards-social', fake)
+    pg.clock.set_fixed_time('2026-11-01T09:00:00')  # suggested posts are only for festivals still to come
     open_sample(pg, fake)
     ag = pg.inner_text('#agenda')
     check('Entry deadline: Riverbend Documentary Awards' in ag and 'Screening: Prairie Docs' in ag and 'premieres at Prairie Docs' in ag, 'puts awards, festivals and posts on one calendar')
