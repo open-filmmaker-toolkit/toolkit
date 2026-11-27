@@ -1719,6 +1719,8 @@ def test_translations(browser, fake):
     pg.goto('file://%s/index.html' % root); pg.wait_for_timeout(300)
     check(pg.inner_text('h1') == 'Herramientas gratuitas para cineastas documentales e independientes' and pg.evaluate('document.documentElement.lang') == 'es'
           and pg.locator('a[href="tools/budget/index.html"]').first.inner_text() == 'Presupuesto' and pg.inner_text('#prep-h') != 'Prep and shoot', 'the home page reads in Spanish')
+    card = pg.locator('a[href="tools/budget-converter/index.html"]').first.locator('xpath=ancestor::li[1]').inner_text()
+    check('Convierte tu presupuesto' in card, "a card line with an apostrophe is translated too (%s)" % card.replace('\n', ' / '))
     check(pg.locator('#oftLang option').count() == 3, 'every page offers the languages there are')
     check(pg.locator('header.bar #oftLang').count() == 1, 'the home page has the language menu in the top bar')
     check(pg.locator('meta[property="og:image"]').get_attribute('content').endswith('/docs/assets/share.png'), 'the page has a link preview image')
