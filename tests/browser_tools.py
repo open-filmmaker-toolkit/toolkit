@@ -3937,6 +3937,14 @@ def test_small_screen_fixes(browser, fake):
     over = pg.evaluate('document.documentElement.scrollWidth - document.documentElement.clientWidth')
     check(over <= 1, 'the paper edit doesn\'t scroll sideways at 320px (%spx)' % over)
     ctx.close()
+    # The budget's one column grew to fit the Add account button, so the page scrolled sideways.
+    for loaded in (False, True):
+        ctx, pg, errs = new_page(browser, 'budget', fake, viewport={'width': 320, 'height': 700})
+        if loaded:
+            open_sample(pg, fake)
+        over = pg.evaluate('document.documentElement.scrollWidth - document.documentElement.clientWidth')
+        check(over <= 1, 'the budget doesn\'t scroll sideways at 320px, %s (%spx)' % ('with the sample' if loaded else 'empty', over))
+        ctx.close()
     ctx, pg, errs = new_page(browser, 'screening-kit', fake, color_scheme='dark')
     open_sample(pg, fake)
     a, b = pg.evaluate("['kitLang', 'hostSel'].map(id => { const s = getComputedStyle(document.getElementById(id)); return s.backgroundColor + ' ' + s.color; })")
